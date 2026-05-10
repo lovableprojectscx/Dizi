@@ -1041,6 +1041,15 @@ export function PublicCatalog({ store }: { store: Store }) {
                   height: cfg.layout === "editorial" ? "200px" : cfg.layout === "overlay" || cfg.layout === "magazine" ? "320px" : "260px",
                 }}
               >
+                {/* Close button (aspita) */}
+                <button 
+                  onClick={() => setViewingProduct(null)}
+                  className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all"
+                  style={{ borderRadius: cfg.cardRounded }}
+                >
+                  <X className="h-6 w-6" />
+                </button>
+
                 <img
                   src={viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
                   alt={viewingProduct.name}
