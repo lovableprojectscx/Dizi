@@ -102,7 +102,24 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     isDark: false, imgRounded: "999px", cardRounded: "1rem",
     cardShadow: "hover:shadow-lg hover:shadow-stone-200/80", cardBorder: true, headerStyle: "minimal", layout: "arch",
   },
+  /* ── Nuevos modelos Elite ──────────────────────────── */
+  sunset_glow: {
+    vars: { "--background": "#1a0a2e", "--card": "#2d1040", "--primary": "#fb923c", "--border": "#7c2d8e" } as any,
+    isDark: true, imgRounded: "1.25rem", cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-orange-700/40", cardBorder: false, headerStyle: "bold", layout: "overlay",
+  },
+  forest_deep: {
+    vars: { "--background": "#0d1f0f", "--card": "#1a2e1c", "--primary": "#4ade80", "--border": "#166534" } as any,
+    isDark: true, imgRounded: "0.875rem", cardRounded: "1rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-green-900/60", cardBorder: false, headerStyle: "clean", layout: "grid",
+  },
 };
+
+/**
+ * Modelos con fondo bloqueado — su diseño visual depende del fondo original
+ * y no debe ser sobrescrito por el color personalizado del usuario.
+ */
+const BG_LOCKED_MODELS = new Set(["nocturno", "aurora", "luxury", "dark_fashion", "slash", "sunset_glow"]);
 
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 
@@ -125,18 +142,67 @@ export function PublicCatalog({ store }: { store: Store }) {
   const modelId = store.model || "minimalista";
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
-  // Apply brand color and background color overrides, inject foreground vars based on isDark
+  // Calculate luminance of a hex color (0 = black, 1 = white)
+  const hexLuminance = (hex: string): number => {
+    const h = hex.replace("#", "");
+    if (h.length < 6) return 1;
+    const r = parseInt(h.slice(0, 2), 16) / 255;
+    const g = parseInt(h.slice(2, 4), 16) / 255;
+    const b = parseInt(h.slice(4, 6), 16) / 255;
+    const toLinear = (c: number) => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  };
+
+  // If user set a custom bgColor AND model doesn't have a locked background, apply it
+  const rawBg = (store as any).bgColor as string | undefined;
+  const customBg = BG_LOCKED_MODELS.has(modelId) ? undefined : rawBg;
+  const effectiveIsDark = customBg
+    ? hexLuminance(customBg) < 0.18   // threshold: < 18% luminance = dark bg
+    : cfg.isDark;
+
+  // Blend hex color with white — pure JS, no color-mix (max browser compat)
+  const blendWithWhite = (hex: string, amount: number): string => {
+    const h = hex.replace("#", "");
+    if (h.length < 6) return hex;
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    const blend = (c: number) => Math.round(c + (255 - c) * amount).toString(16).padStart(2, "0");
+    return `#${blend(r)}${blend(g)}${blend(b)}`;
+  };
+
+  // Derive card background from custom bg — slightly lighter for contrast
+  const effectiveCardBg = customBg
+    ? blendWithWhite(customBg, effectiveIsDark ? 0.12 : 0.08)
+    : undefined;
+
+  // Gradient backgrounds for locked models that have a special identity
+  const MODEL_GRADIENTS: Record<string, string> = {
+    aurora:      "radial-gradient(ellipse at 20% 50%, #2d1b6e 0%, #0d0d1a 50%, #1a0830 100%)",
+    nocturno:    "linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
+    sunset_glow: "radial-gradient(ellipse at 80% 20%, #7c2d8e 0%, #1a0a2e 45%, #0f0520 100%)",
+    luxury:      "linear-gradient(180deg, #09090b 0%, #18101a 50%, #09090b 100%)",
+    dark_fashion:"linear-gradient(180deg, #111111 0%, #1a1a1a 100%)",
+    slash:       "linear-gradient(150deg, #0d1117 0%, #1c1728 50%, #0d1117 100%)",
+  };
+  const modelGradient = MODEL_GRADIENTS[modelId];
+
+  // Apply brand color and background color overrides
+  // All foreground vars recalculated from effectiveIsDark so any model+bg combo stays readable
   const themeVars: React.CSSProperties = {
     ...cfg.vars,
-    // Foreground is always explicit so dark models don't inherit Tailwind's default dark text
-    "--foreground":      cfg.isDark ? "#f0f0f0" : "#111111",
-    "--foreground-muted": cfg.isDark ? "#a0a0a0" : "#6b7280",
-    "--muted-foreground": cfg.isDark ? "#94a3b8" : "#64748b",
-    "--muted":           cfg.isDark ? (cfg.vars as any)["--border"] || "#1e293b" : "#f1f5f9",
-    "--secondary":       cfg.isDark ? "#1e293b" : "#f8fafc",
+    "--foreground":       effectiveIsDark ? "#f0f0f0" : "#111111",
+    "--foreground-muted": effectiveIsDark ? "#a0a0a0" : "#6b7280",
+    "--muted-foreground": effectiveIsDark ? "#94a3b8" : "#64748b",
+    "--muted":            effectiveIsDark ? "#1e293b" : "#f1f5f9",
+    "--secondary":        effectiveIsDark ? "#1e2535" : "#f8fafc",
+    "--border":           effectiveIsDark ? "#334155" : "#e2e8f0",
     ...(store.brandColor ? { "--primary": store.brandColor } : {}),
-    ...((store as any).bgColor ? { "--background": (store as any).bgColor } : {}),
-  };
+    ...(customBg ? { "--background": customBg } : {}),
+    ...(effectiveCardBg ? { "--card": effectiveCardBg } : {}),
+    // Gradient for locked models — sets the actual background-image CSS property
+    ...(modelGradient ? { backgroundImage: modelGradient } : {}),
+  } as React.CSSProperties;
 
   /* ── Derived data ────────────────────────────────── */
   const filtered = useMemo(() => {
@@ -182,7 +248,7 @@ export function PublicCatalog({ store }: { store: Store }) {
   /* ── Render ──────────────────────────────────────── */
   return (
     <div
-      className={cn("min-h-screen bg-background text-foreground transition-colors duration-300", cfg.isDark ? "dark" : "")}
+      className={cn("min-h-screen bg-background text-foreground transition-colors duration-300", effectiveIsDark ? "dark" : "")}
       style={themeVars}
       translate="no"
     >
@@ -686,7 +752,7 @@ export function PublicCatalog({ store }: { store: Store }) {
                         <button
                           onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
                           className="h-9 px-4 text-xs font-black uppercase tracking-widest transition hover:opacity-80"
-                          style={{ backgroundColor: "var(--primary)", color: cfg.isDark ? "#000" : "#fff" }}
+                          style={{ backgroundColor: "var(--primary)", color: effectiveIsDark ? "#000" : "#fff" }}
                         >
                           <Plus className="h-3.5 w-3.5 inline" />
                         </button>
@@ -756,7 +822,7 @@ export function PublicCatalog({ store }: { store: Store }) {
                       <button
                         onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
                         className="h-7 w-7 flex items-center justify-center transition hover:opacity-80"
-                        style={{ backgroundColor: "var(--primary)", color: cfg.isDark ? "#000" : "#fff", borderRadius: "999px" }}
+                        style={{ backgroundColor: "var(--primary)", color: effectiveIsDark ? "#000" : "#fff", borderRadius: "999px" }}
                       >
                         <Plus className="h-3 w-3" />
                       </button>
@@ -819,7 +885,7 @@ export function PublicCatalog({ store }: { store: Store }) {
         style={{
           borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
           backgroundColor: "var(--primary)",
-          color: cfg.isDark ? "#000" : "#fff",
+          color: effectiveIsDark ? "#000" : "#fff",
           boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
         }}
         aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
@@ -949,7 +1015,7 @@ export function PublicCatalog({ store }: { store: Store }) {
               className="w-full h-12 font-bold transition hover:opacity-90 flex items-center justify-center gap-2 text-sm"
               style={{
                 backgroundColor: "var(--primary)",
-                color: cfg.isDark ? "#000" : "#fff",
+                color: effectiveIsDark ? "#000" : "#fff",
                 borderRadius: cfg.cardRounded,
                 ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
               }}
@@ -1003,13 +1069,13 @@ export function PublicCatalog({ store }: { store: Store }) {
                   alt={viewingProduct.name}
                   className="h-full w-full object-cover"
                   style={{
-                    filter: cfg.isDark && (cfg.layout === "overlay" || cfg.layout === "magazine") ? "brightness(0.85)" : "none",
+                    filter: effectiveIsDark && (cfg.layout === "overlay" || cfg.layout === "magazine") ? "brightness(0.85)" : "none",
                   }}
                   onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"; }}
                 />
 
                 {/* Dark overlay for dark themes */}
-                {cfg.isDark && <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />}
+                {effectiveIsDark && <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />}
 
                 {/* Sale badge — style adapts to model */}
                 {viewingProduct.isOnSale && (
@@ -1025,7 +1091,7 @@ export function PublicCatalog({ store }: { store: Store }) {
                 )}
 
                 {/* For dark/magazine: show price on image */}
-                {(cfg.layout === "magazine" || (cfg.isDark && cfg.layout === "overlay")) && (
+                {(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
                   <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
                     <p className={cn("text-white font-black text-2xl", cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase" : "")}>
                       {formatPrice(viewingProduct.price)}
@@ -1056,7 +1122,7 @@ export function PublicCatalog({ store }: { store: Store }) {
                 </h2>
 
                 {/* Price — only show below image for non-dark overlay models */}
-                {!(cfg.layout === "magazine" || (cfg.isDark && cfg.layout === "overlay")) && (
+                {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
                   <div className="flex items-baseline gap-3">
                     <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
                       {formatPrice(viewingProduct.price)}
@@ -1083,7 +1149,7 @@ export function PublicCatalog({ store }: { store: Store }) {
                     </p>
                     <p
                       className="text-sm leading-relaxed whitespace-pre-line"
-                      style={{ color: "var(--foreground)", opacity: cfg.isDark ? 0.85 : 0.75 }}
+                      style={{ color: "var(--foreground)", opacity: effectiveIsDark ? 0.85 : 0.75 }}
                     >
                       {viewingProduct.description}
                     </p>
@@ -1137,8 +1203,8 @@ export function PublicCatalog({ store }: { store: Store }) {
                   style={{
                     borderRadius: cfg.cardRounded,
                     backgroundColor: "var(--primary)",
-                    color: cfg.isDark ? "#000" : "#fff",
-                    ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase", fontSize: "11px" } : {}),
+                    color: effectiveIsDark ? "#000" : "#fff",
+                                        ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
                   }}
                   onClick={() => { cartAdd(store.id, viewingProduct.id); setViewingProduct(null); setCartOpen(true); }}
                 >

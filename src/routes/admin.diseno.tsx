@@ -89,6 +89,8 @@ interface ModelDef {
   accentColor: string;
   borderRadius: string;
   isDark?: boolean;
+  /** Si true, el modelo tiene un fondo único (degradado/imagen CSS) que no se puede personalizar */
+  bgLocked?: boolean;
 }
 
 const MODELS: ModelDef[] = [
@@ -134,8 +136,8 @@ const MODELS: ModelDef[] = [
   /* ══ PLAN PRO — 4 modelos ═══════════════════════════════ */
   {
     id: "nocturno", name: "Nocturno", layout: "overlay",
-    desc: "Dark mode de alto impacto. Cards portrait 3:4 con texto sobre imagen oscura.",
-    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true,
+    desc: "Dark mode de alto impacto. Cards portrait 3:4 con texto sobre imagen oscura. Fondo exclusivo.",
+    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true, bgLocked: true,
     bg: "#0f172a", cardBg: "#1e293b", primaryColor: "#818cf8",
     textColor: "#f1f5f9", accentColor: "#312e81", borderRadius: "16px",
   },
@@ -155,8 +157,8 @@ const MODELS: ModelDef[] = [
   },
   {
     id: "aurora", name: "Aurora Glass", layout: "tiles",
-    desc: "Tiles glassmorphism oscuros con acentos púrpura. 1 banner ancho + 2 cuadros.",
-    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true,
+    desc: "Tiles glassmorphism con degradado cósmico. Fondo único irrepetible.",
+    planLevel: 2, badge: "Pro ✦", imgShape: "rounded", isDark: true, bgLocked: true,
     bg: "#0d0d1a", cardBg: "#1a1040", primaryColor: "#a855f7",
     textColor: "#e2d9f3", accentColor: "#2d1b6e", borderRadius: "24px",
   },
@@ -164,31 +166,46 @@ const MODELS: ModelDef[] = [
   /* ══ PLAN ILIMITADO — 3 modelos elite ══════════════════ */
   {
     id: "luxury", name: "Luxury Gold", layout: "editorial",
-    desc: "Lista tipo Net-a-Porter: imagen cuadrada + info detallada. Oscuro, dorado, intemporal.",
-    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
+    desc: "Lista tipo Net-a-Porter: imagen cuadrada + info detallada. Oscuro, dorado, intemporal. Fondo exclusivo.",
+    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true, bgLocked: true,
     bg: "#09090b", cardBg: "#18181b", primaryColor: "#ca8a04",
     textColor: "#fafafa", accentColor: "#292524", borderRadius: "4px",
   },
   {
     id: "dark_fashion", name: "Dark Fashion", layout: "magazine",
-    desc: "Revista editorial oscura: banners full-width alternados con pares verticales 3:4.",
-    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
+    desc: "Revista editorial oscura: banners full-width alternados con pares verticales 3:4. Fondo exclusivo.",
+    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true, bgLocked: true,
     bg: "#111111", cardBg: "#1c1c1c", primaryColor: "#f5f5f5",
     textColor: "#f5f5f5", accentColor: "#2a2a2a", borderRadius: "0px",
   },
   {
     id: "slash", name: "Slash Diagonal", layout: "diagonal",
-    desc: "Cortes diagonales de alto impacto. Imagen slanted + texto. Estilo Nike / streetwear.",
-    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
+    desc: "Cortes diagonales de alto impacto. Imagen slanted + texto. Estilo Nike / streetwear. Fondo exclusivo.",
+    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true, bgLocked: true,
     bg: "#0d1117", cardBg: "#1c2128", primaryColor: "#faec45",
     textColor: "#f0f0f0", accentColor: "#21262d", borderRadius: "0px",
   },
   {
     id: "arch_studio", name: "Arch Studio", layout: "arch",
-    desc: "Marcos en arco tipo ventana. Tipografía ligera y elegante. Perfumería y lujo.",
+    desc: "Marcos en arco tipo ventana. Tipografía ligera y elegante. Fondo personalizable.",
     planLevel: 3, badge: "Elite", imgShape: "rounded",
     bg: "#faf9f6", cardBg: "#f4f2ed", primaryColor: "#9c6b4e",
     textColor: "#2c1a0e", accentColor: "#e8e0d5", borderRadius: "999px",
+  },
+  {
+    id: "sunset_glow", name: "Sunset Glow", layout: "overlay",
+    desc: "Degradado atardecer en el fondo — naranja, rosa y morado — con cards portrait flotantes.",
+    planLevel: 3, badge: "Elite ✦", imgShape: "rounded", isDark: true, bgLocked: true,
+    bg: "#1a0a2e", cardBg: "#2d1040", primaryColor: "#fb923c",
+    textColor: "#ffe4d6", accentColor: "#7c2d8e", borderRadius: "20px",
+  },
+  {
+    id: "forest_deep", name: "Forest Deep", layout: "grid",
+    desc: "Bosque oscuro con viñeta verde. Fotográfico y orgánico. Fondo personalizable.",
+    planLevel: 3, badge: "Elite", imgShape: "rounded",
+    bg: "#0d1f0f", cardBg: "#1a2e1c", primaryColor: "#4ade80",
+    textColor: "#d1fae5", accentColor: "#166534", borderRadius: "14px",
+    isDark: true,
   },
 ];
 
@@ -679,10 +696,26 @@ function DisenoPage() {
   const [bgColor, setBgColor] = useState((store as any).bgColor || "");
   const userLevel = PLAN_LEVELS[store.plan];
 
+  // Determinar si el modelo actualmente seleccionado tiene fondo bloqueado
+  const selectedModelDef = MODELS.find(m => m.id === selectedModel);
+  const isBgLocked = selectedModelDef?.bgLocked === true;
+
+  // Si el modelo tiene fondo bloqueado, siempre ignorar el bgColor del estado
+  const effectiveBgColor = isBgLocked ? "" : bgColor;
+
   const isDirty =
     selectedModel !== (store.model || "minimalista") ||
     brandColor !== (store.brandColor || "") ||
-    bgColor !== ((store as any).bgColor || "");
+    effectiveBgColor !== ((store as any).bgColor || "");
+
+  const handleModelSelect = (modelId: string) => {
+    const def = MODELS.find(m => m.id === modelId);
+    setSelectedModel(modelId);
+    // Si el nuevo modelo tiene fondo bloqueado, limpiar el bgColor del estado
+    if (def?.bgLocked) {
+      setBgColor("");
+    }
+  };
 
   const save = async () => {
     const toastId = toast.loading("Guardando diseño...");
@@ -690,7 +723,7 @@ function DisenoPage() {
       await update(store.id, {
         model: selectedModel as any,
         brandColor: brandColor || undefined,
-        bgColor: bgColor || undefined,
+        bgColor: effectiveBgColor || undefined,
       } as any);
       toast.success("🎨 Diseño aplicado a tu catálogo", { id: toastId });
     } catch (err) {
@@ -748,37 +781,56 @@ function DisenoPage() {
         </div>
 
         {/* Color de Fondo */}
-        <div className="rounded-2xl border bg-card p-5 space-y-4">
+        <div className={cn("rounded-2xl border bg-card p-5 space-y-4", isBgLocked && "opacity-60")}>
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Image className="h-4 w-4 text-primary" />
+            <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", isBgLocked ? "bg-muted" : "bg-primary/10")}>
+              {isBgLocked
+                ? <Lock className="h-4 w-4 text-muted-foreground" />
+                : <Image className="h-4 w-4 text-primary" />
+              }
             </div>
             <div>
               <h2 className="font-bold text-sm">Color de Fondo</h2>
-              <p className="text-[11px] text-muted-foreground">Cambia el fondo de cualquier modelo</p>
+              <p className="text-[11px] text-muted-foreground">
+                {isBgLocked
+                  ? `"${selectedModelDef?.name}" tiene un fondo exclusivo bloqueado`
+                  : "Cambia el fondo de tu catálogo"
+                }
+              </p>
             </div>
-            {bgColor && (
+            {!isBgLocked && bgColor && (
               <button onClick={() => setBgColor("")}
                 className="ml-auto text-[10px] text-destructive hover:underline font-medium">Quitar</button>
             )}
           </div>
-          <ColorSwatch
-            colors={BG_COLORS}
-            selected={bgColor}
-            onSelect={setBgColor}
-            allowCustom
-            customLabel="Fondo personalizado"
-          />
+          {isBgLocked ? (
+            <div className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-3 flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full shrink-0 shadow-inner"
+                style={{ background: `linear-gradient(135deg, ${selectedModelDef?.bg}, ${selectedModelDef?.cardBg})` }} />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Fondo único del modelo</p>
+                <p className="text-[10px] text-muted-foreground">Este diseño incluye un degradado o paleta especial que define su identidad</p>
+              </div>
+            </div>
+          ) : (
+            <ColorSwatch
+              colors={BG_COLORS}
+              selected={bgColor}
+              onSelect={setBgColor}
+              allowCustom
+              customLabel="Fondo personalizado"
+            />
+          )}
         </div>
       </div>
 
       {/* Vista previa del combo seleccionado */}
-      {(brandColor || bgColor) && (
+      {(brandColor || effectiveBgColor) && (
         <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-4">
           <div className="flex gap-2 shrink-0">
-            {bgColor && (
+            {effectiveBgColor && (
               <div className="h-8 w-8 rounded-full border-2 border-primary/30 shadow"
-                style={{ backgroundColor: bgColor }} />
+                style={{ backgroundColor: effectiveBgColor }} />
             )}
             {brandColor && (
               <div className="h-8 w-8 rounded-full border-2 border-primary/30 shadow"
@@ -788,8 +840,8 @@ function DisenoPage() {
           <div className="text-sm">
             <span className="font-semibold">Personalización activa</span>
             <span className="text-muted-foreground ml-2">
-              {bgColor && `Fondo: ${bgColor}`}
-              {bgColor && brandColor && " · "}
+              {effectiveBgColor && `Fondo: ${effectiveBgColor}`}
+              {effectiveBgColor && brandColor && " · "}
               {brandColor && `Acento: ${brandColor}`}
             </span>
           </div>
@@ -847,7 +899,7 @@ function DisenoPage() {
                     return (
                       <div
                         key={model.id}
-                        onClick={() => !isLocked && setSelectedModel(model.id)}
+                        onClick={() => !isLocked && handleModelSelect(model.id)}
                         className={cn(
                           "group relative rounded-2xl overflow-hidden border-2 transition-all duration-300",
                           isLocked
@@ -879,6 +931,14 @@ function DisenoPage() {
 
                         {/* Preview visual */}
                         <div className="relative">
+                          {model.bgLocked && !isLocked && (
+                            <div className="absolute top-3 right-3 z-20">
+                              <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white rounded-full px-2 py-1">
+                                <Lock className="h-2.5 w-2.5" />
+                                <span className="text-[7px] font-bold">Fondo único</span>
+                              </div>
+                            </div>
+                          )}
                           {model.badge && !isLocked && (
                             <div className="absolute top-3 left-3 z-20">
                               <Badge className="bg-black/40 backdrop-blur-md text-white border-none text-[8px] font-bold tracking-widest uppercase py-1 px-2">
