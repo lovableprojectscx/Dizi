@@ -30,8 +30,7 @@ function RegisterPage() {
   const [password, setPassword] = useState("");
 
   const BRAND_COLORS = [
-    { id: "default", name: "Dizi Original", hex: "#FF823A" },
-    { id: "coral",   name: "Coral",         hex: "#FF823A" },
+    { id: "coral",   name: "Coral (Dizi)",   hex: "#FF823A" },
     { id: "menta",   name: "Menta",          hex: "#7bc740" },
     { id: "lavanda", name: "Lavanda",        hex: "#BC84EE" },
     { id: "indigo",  name: "Índigo",         hex: "#1E293B" },
