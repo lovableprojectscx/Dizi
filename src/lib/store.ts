@@ -233,8 +233,9 @@ export const useApp = create<AppState>()(
         await supabase.from("products").update({ visible: newVisible }).eq("id", productId);
       },
       upsertCategory: async (storeId, cat) => {
-        const catId = cat.id || uid();
-        const c = { ...cat, id: catId };
+        const isNew = !cat.id;
+        const tempId = cat.id || "temp-" + uid();
+        const c = { ...cat, id: tempId };
         
         // Optimistic update
         set((s) => ({
@@ -251,22 +252,28 @@ export const useApp = create<AppState>()(
         }));
         
         try {
-          const { error } = await supabase.from("categories").upsert({
-            id: c.id,
-            store_id: storeId,
-            name: c.name,
-          });
+          const payload: any = { store_id: storeId, name: c.name };
+          if (!isNew) payload.id = c.id;
+
+          const { data, error } = await supabase.from("categories").upsert(payload).select().single();
           
           if (error) {
             console.error("Error upserting category:", error);
             toast.error("No se pudo guardar la categoría");
-            // Rollback if needed or refetch
-            const { data } = await supabase.from("categories").select("*").eq("store_id", storeId);
-            if (data) {
-              set((s) => ({
-                stores: s.stores.map(st => st.id === storeId ? { ...st, categories: data } : st)
-              }));
-            }
+            return;
+          }
+
+          if (data && isNew) {
+            // Replace temp ID with real DB ID
+            set((s) => ({
+              stores: s.stores.map((st) => {
+                if (st.id !== storeId) return st;
+                return {
+                  ...st,
+                  categories: st.categories.map((ca) => (ca.id === tempId ? { id: data.id, name: data.name } : ca)),
+                };
+              }),
+            }));
           }
         } catch (e) {
           console.error(e);
