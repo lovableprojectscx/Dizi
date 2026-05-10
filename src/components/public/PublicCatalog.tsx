@@ -186,6 +186,7 @@ export function PublicCatalog({ store }: { store: Store }) {
     // Make muted-foreground CSS variable available too
     "--muted-foreground": cfg.isDark ? "#94a3b8" : "#64748b",
     "--muted":           cfg.isDark ? (cfg.vars as any)["--border"] || "#1e293b" : "#f1f5f9",
+    "--secondary":       cfg.isDark ? "#1e293b" : "#f8fafc",
     ...(store.brandColor ? { "--primary": store.brandColor } : {}),
   };
 
