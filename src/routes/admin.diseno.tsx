@@ -6,6 +6,8 @@ import { Lock, Check, Sparkles, Crown, Palette } from "lucide-react";
 import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/admin/diseno")({
   component: DisenoPage,
@@ -505,6 +507,7 @@ function DisenoPage() {
   const store = useApp((s) => s.stores.find((st) => st.id === id))!;
   const update = useApp((s) => s.updateStore);
 
+  const [activeTab, setActiveTab] = useState(String(PLAN_LEVELS[store.plan]));
   const [selectedModel, setSelectedModel] = useState(store.model || "minimalista");
   const [brandColor, setBrandColor] = useState(store.brandColor || "");
   const userLevel = PLAN_LEVELS[store.plan];
@@ -617,93 +620,113 @@ function DisenoPage() {
         )}
       </div>
 
-      {/* ── Model Grid / Slider ──────────────────────── */}
-      {planGroups.map((group) => {
-        const groupModels = MODELS.filter((m) => m.planLevel === group.level);
-        const locked = group.level > userLevel;
+      {/* ── Tabs Navigation ─────────────────────────── */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible">
+          <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-muted p-1 text-muted-foreground w-auto min-w-full sm:min-w-0">
+            {planGroups.map((group) => (
+              <TabsTrigger
+                key={group.level}
+                value={String(group.level)}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                {group.label.split(" — ")[0]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-        return (
-          <div key={group.level} className="space-y-4">
-            {/* Section label */}
-            <div className="flex items-center gap-3">
-              <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${group.color}`}>
-                {group.label.replace("Gratis — ", "")}
-              </span>
-              {locked && (
-                <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
-                  <Lock className="h-3 w-3" /> Requiere mejora
-                </span>
-              )}
-            </div>
+        {planGroups.map((group) => {
+          const groupModels = MODELS.filter((m) => m.planLevel === group.level);
+          const locked = group.level > userLevel;
 
-            {/* Cards - Horizontal Scroll on Mobile, Grid on Desktop */}
-            <div className="flex overflow-x-auto pb-4 gap-4 -mx-4 px-4 scrollbar-none sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:pb-0 sm:mx-0 sm:px-0">
-              {groupModels.map((model) => {
-                const isLocked = model.planLevel > userLevel;
-                const isSelected = selectedModel === model.id;
-                const isActive = (store.model || "minimalista") === model.id;
-
-                return (
-                  <div
-                    key={model.id}
-                    onClick={() => !isLocked && setSelectedModel(model.id)}
-                    className={cn(
-                      "relative min-w-[280px] sm:min-w-0 rounded-2xl overflow-hidden border-2 transition-all duration-200 shrink-0 sm:shrink",
-                      isLocked
-                        ? "opacity-60 cursor-not-allowed grayscale-[20%]"
-                        : "cursor-pointer hover:shadow-xl hover:-translate-y-0.5",
-                      isSelected
-                        ? "border-primary shadow-xl shadow-primary/20 -translate-y-1"
-                        : "border-border hover:border-primary/40"
+          return (
+            <TabsContent key={group.level} value={String(group.level)} className="mt-8 animate-in fade-in-50 duration-300">
+              <div className="space-y-6">
+                {/* Header info */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-bold text-lg">{group.label}</h2>
+                    {locked && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <Lock className="h-3 w-3" /> Requiere actualización de plan
+                      </p>
                     )}
-                  >
-                    {/* Selection indicator */}
-                    {isSelected && !isLocked && (
-                      <div className="absolute top-3 right-3 z-10 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
-                        <Check className="h-4 w-4" />
-                      </div>
-                    )}
-
-                    {/* Lock icon */}
-                    {isLocked && (
-                      <div className="absolute top-3 right-3 z-10 h-7 w-7 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-sm">
-                        <Lock className="h-3.5 w-3.5" />
-                      </div>
-                    )}
-
-                    {/* Badge */}
-                    {model.badge && !isSelected && !isLocked && (
-                      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-md bg-black/40 backdrop-blur-md text-white text-[8px] font-bold tracking-[0.2em] uppercase">
-                        {model.badge}
-                      </div>
-                    )}
-
-                    {/* Preview */}
-                    <ModelPreview model={model} storeName={store.name} />
-
-                    {/* Info footer */}
-                    <div className="px-4 py-3 bg-card border-t flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-sm truncate">{model.name}</p>
-                          {isActive && (
-                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded tracking-tighter shrink-0">
-                              ACTIVO
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight line-clamp-1">
-                          {model.desc}
-                        </p>
-                      </div>
-                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+                  {locked && (
+                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest bg-muted border-none">Bloqueado</Badge>
+                  )}
+                </div>
+
+                {/* Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {groupModels.map((model) => {
+                    const isLocked = model.planLevel > userLevel;
+                    const isSelected = selectedModel === model.id;
+                    const isActive = (store.model || "minimalista") === model.id;
+
+                    return (
+                      <div
+                        key={model.id}
+                        onClick={() => !isLocked && setSelectedModel(model.id)}
+                        className={cn(
+                          "group relative rounded-2xl overflow-hidden border-2 transition-all duration-300",
+                          isLocked
+                            ? "opacity-60 cursor-not-allowed grayscale-[30%]"
+                            : "cursor-pointer hover:shadow-2xl hover:-translate-y-1",
+                          isSelected
+                            ? "border-primary shadow-2xl shadow-primary/20 -translate-y-1"
+                            : "border-border hover:border-primary/40 bg-card"
+                        )}
+                      >
+                        {/* Status overlays */}
+                        {isSelected && !isLocked && (
+                          <div className="absolute top-4 right-4 z-20 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
+                            <Check className="h-5 w-5" />
+                          </div>
+                        )}
+                        {isLocked && (
+                          <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
+                             <div className="h-10 w-10 rounded-full bg-white/90 shadow-xl flex items-center justify-center">
+                               <Lock className="h-5 w-5 text-muted-foreground" />
+                             </div>
+                             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Premium</span>
+                          </div>
+                        )}
+
+                        {/* Preview */}
+                        <div className="relative">
+                          {model.badge && !isLocked && (
+                            <div className="absolute top-4 left-4 z-20">
+                              <Badge className="bg-black/40 backdrop-blur-md text-white border-none text-[8px] font-bold tracking-widest uppercase py-1 px-2">
+                                {model.badge}
+                              </Badge>
+                            </div>
+                          )}
+                          <ModelPreview model={model} storeName={store.name} />
+                        </div>
+
+                        {/* Info Footer */}
+                        <div className="p-4 border-t bg-card/50 flex flex-col gap-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-sm">{model.name}</span>
+                            {isActive && (
+                              <Badge className="h-5 px-1.5 text-[9px] font-bold bg-primary/10 text-primary border-none">ACTIVO</Badge>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                            {model.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </TabsContent>
+          );
+        })}
+      </Tabs>
 
       {/* ── Upgrade CTA ─────────────────────────────── */}
       {store.plan !== "ilimitado" && (
