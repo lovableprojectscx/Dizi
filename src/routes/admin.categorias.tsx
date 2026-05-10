@@ -3,8 +3,18 @@ import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, Plus, Check, X } from "lucide-react";
+import { Pencil, Trash2, Plus, Check, X, Loader2, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/admin/categorias")({
   component: CategoriesPage,
@@ -16,14 +26,40 @@ function CategoriesPage() {
   const upsert = useApp((s) => s.upsertCategory);
   const del = useApp((s) => s.deleteCategory);
   const [newName, setNewName] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [open, setOpen] = useState(false);
+  
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
-  const add = () => {
+  const add = async () => {
     if (!newName.trim()) return;
-    upsert(store.id, { id: "", name: newName.trim() });
-    setNewName("");
-    toast.success("Categoría creada");
+    setIsAdding(true);
+    try {
+      await upsert(store.id, { id: "", name: newName.trim() });
+      setNewName("");
+      setOpen(false);
+      toast.success("Categoría creada con éxito");
+    } catch (e) {
+      toast.error("Hubo un error al crear la categoría");
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const saveEdit = async (cId: string) => {
+    if (!editName.trim()) return;
+    setIsEditing(true);
+    try {
+      await upsert(store.id, { id: cId, name: editName.trim() });
+      setEditId(null);
+      toast.success("Categoría actualizada");
+    } catch (e) {
+      toast.error("Error al actualizar");
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   return (
@@ -34,16 +70,58 @@ function CategoriesPage() {
           Organiza tus productos por categorías para que tus clientes encuentren más rápido.
         </p>
       </div>
-      <div className="flex gap-2">
-        <Input
-          placeholder="Nueva categoría..."
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && add()}
-        />
-        <Button onClick={add}>
-          <Plus className="h-4 w-4 mr-1" /> Agregar
-        </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/30 p-4 rounded-2xl border">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <LayoutGrid className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-bold text-sm">Gestionar Categorías</p>
+            <p className="text-[11px] text-muted-foreground">{store.categories.length} categorías registradas</p>
+          </div>
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="font-bold gap-2 shadow-lg shadow-primary/20">
+              <Plus className="h-4 w-4" /> Nueva Categoría
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Crear Categoría</DialogTitle>
+              <DialogDescription>
+                Asigna un nombre a tu categoría para organizar tus productos.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Nombre de la categoría
+                </label>
+                <Input
+                  id="name"
+                  placeholder="Ej: Menú del día, Bebidas, Postres..."
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && add()}
+                  autoFocus
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button onClick={add} disabled={isAdding || !newName.trim()}>
+                {isAdding ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Check className="h-4 w-4 mr-2" />
+                )}
+                {isAdding ? "Guardando..." : "Crear Categoría"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <div className="border rounded-xl divide-y bg-card">
         {store.categories.length === 0 && (
@@ -74,12 +152,10 @@ function CategoriesPage() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => {
-                      upsert(store.id, { id: c.id, name: editName });
-                      setEditId(null);
-                    }}
+                    disabled={isEditing}
+                    onClick={() => saveEdit(c.id)}
                   >
-                    <Check className="h-4 w-4" />
+                    {isEditing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   </Button>
                   <Button size="icon" variant="ghost" onClick={() => setEditId(null)}>
                     <X className="h-4 w-4" />
