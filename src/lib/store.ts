@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { Category, PlanId, Product, Store, Invite } from "./types";
 import { initialStores } from "./mock-data";
 import { supabase } from "./supabase";
+import { toast } from "sonner";
 
 // ── Helpers para mapeo BD <-> App ──
 const mapStoreFromDB = (row: any): Store => ({
@@ -235,6 +236,7 @@ export const useApp = create<AppState>()(
         const catId = cat.id || uid();
         const c = { ...cat, id: catId };
         
+        // Optimistic update
         set((s) => ({
           stores: s.stores.map((st) => {
             if (st.id !== storeId) return st;
@@ -248,11 +250,27 @@ export const useApp = create<AppState>()(
           }),
         }));
         
-        await supabase.from("categories").upsert({
-          id: c.id,
-          store_id: storeId,
-          name: c.name,
-        });
+        try {
+          const { error } = await supabase.from("categories").upsert({
+            id: c.id,
+            store_id: storeId,
+            name: c.name,
+          });
+          
+          if (error) {
+            console.error("Error upserting category:", error);
+            toast.error("No se pudo guardar la categoría");
+            // Rollback if needed or refetch
+            const { data } = await supabase.from("categories").select("*").eq("store_id", storeId);
+            if (data) {
+              set((s) => ({
+                stores: s.stores.map(st => st.id === storeId ? { ...st, categories: data } : st)
+              }));
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
       },
       deleteCategory: async (storeId, catId) => {
         set((s) => ({
