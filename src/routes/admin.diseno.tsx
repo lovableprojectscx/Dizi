@@ -684,13 +684,19 @@ function DisenoPage() {
     brandColor !== (store.brandColor || "") ||
     bgColor !== ((store as any).bgColor || "");
 
-  const save = () => {
-    update(store.id, {
-      model: selectedModel as any,
-      brandColor: brandColor || undefined,
-      bgColor: bgColor || undefined,
-    } as any);
-    toast.success("🎨 Diseño aplicado a tu catálogo");
+  const save = async () => {
+    const toastId = toast.loading("Guardando diseño...");
+    try {
+      await update(store.id, {
+        model: selectedModel as any,
+        brandColor: brandColor || undefined,
+        bgColor: bgColor || undefined,
+      } as any);
+      toast.success("🎨 Diseño aplicado a tu catálogo", { id: toastId });
+    } catch (err) {
+      console.error("[save diseño]", err);
+      toast.error("Error al guardar. Revisa la consola.", { id: toastId });
+    }
   };
 
   const planGroups = [
