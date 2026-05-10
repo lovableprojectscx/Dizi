@@ -71,7 +71,7 @@ const MODELS: ModelDef[] = [
   {
     id: "minimalista", name: "Minimalista", layout: "grid",
     desc: "Limpio, moderno y atemporal. Funciona para cualquier tipo de negocio.",
-    planLevel: 0, badge: "⚡ Más popular", imgShape: "rounded",
+    planLevel: 0, badge: "Popular", imgShape: "rounded",
     bg: "#ffffff", cardBg: "#f8fafc", primaryColor: "#4f46e5", textColor: "#1e293b", accentColor: "#e0e7ff", borderRadius: "12px",
   },
   {
@@ -81,32 +81,28 @@ const MODELS: ModelDef[] = [
     bg: "#fdfaf5", cardBg: "#fef9ef", primaryColor: "#92400e", textColor: "#451a03", accentColor: "#fef3c7", borderRadius: "6px",
   },
 
-  /* ════════════════════════════════════════════
-     PLAN EMPRENDEDOR (5 modelos)
-     Overlay portrait, hero banner, colores vivos
-  ════════════════════════════════════════════ */
   {
     id: "nature_mint", name: "Nature Mint", layout: "grid",
     desc: "Verde teal fresco y moderno. Ideal para salud, bienestar, cafés y naturáles.",
-    planLevel: 1, badge: "🌿 Fresh", imgShape: "rounded",
+    planLevel: 1, badge: "Fresh", imgShape: "rounded",
     bg: "#f0fefb", cardBg: "#ffffff", primaryColor: "#0d9488", textColor: "#134e4a", accentColor: "#99f6e4", borderRadius: "24px",
   },
   {
     id: "vibrante", name: "Vibrante", layout: "overlay",
     desc: "Energético y audaz. Layout tipo Instagram Shopping con imágenes 3:4.",
-    planLevel: 1, badge: "⭐ Premium", imgShape: "rounded",
+    planLevel: 1, badge: "Premium", imgShape: "rounded",
     bg: "#fff7ed", cardBg: "#ffffff", primaryColor: "#ea580c", textColor: "#431407", accentColor: "#ffedd5", borderRadius: "20px",
   },
   {
     id: "eco", name: "Eco Nature", layout: "hero",
     desc: "Primer producto destacado tipo hero banner + galería circular.",
-    planLevel: 1, badge: "⭐ Premium", imgShape: "circle",
+    planLevel: 1, badge: "Premium", imgShape: "circle",
     bg: "#f0fdf4", cardBg: "#ffffff", primaryColor: "#16a34a", textColor: "#14532d", accentColor: "#dcfce7", borderRadius: "999px",
   },
   {
     id: "terracotta", name: "Terracotta", layout: "editorial",
-    desc: "Mercado artesanal: lista horizontal con imagen cuadrada + nombre y precio visibles. Cálido, íntimo, hecho a mano.",
-    planLevel: 1, badge: "🏺 Artisan", imgShape: "square",
+    desc: "Mercado artesanal: lista horizontal con imagen cuadrada. Cálido e íntimo.",
+    planLevel: 1, badge: "Artisan", imgShape: "square",
     bg: "#faf5f0", cardBg: "#f5ece3", primaryColor: "#c2410c", textColor: "#431407", accentColor: "#fed7aa", borderRadius: "6px",
   },
   {
@@ -116,50 +112,46 @@ const MODELS: ModelDef[] = [
     bg: "#fdf2f8", cardBg: "#ffffff", primaryColor: "#db2777", textColor: "#831843", accentColor: "#fce7f3", borderRadius: "999px",
   },
 
-  /* ════════════════════════════════════════════
-     PLAN PRO (7 modelos)
-     Editorial, tiles, dark modes moderados
-  ════════════════════════════════════════════ */
   {
     id: "nocturno", name: "Nocturno", layout: "overlay",
     desc: "Dark mode de alto impacto. Cards en portrait con texto sobre imagen.",
-    planLevel: 2, badge: "💎 Pro", imgShape: "rounded", isDark: true,
+    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true,
     bg: "#0f172a", cardBg: "#1e293b", primaryColor: "#818cf8", textColor: "#f1f5f9", accentColor: "#312e81", borderRadius: "16px",
   },
   {
     id: "boutique", name: "Boutique", layout: "spotlight",
-    desc: "Editorial fashion: 1 producto estrella grande + 2 complementarios apilados. Inspirado en escaparates de moda.",
-    planLevel: 2, badge: "💎 Pro", imgShape: "rounded",
+    desc: "Editorial fashion: 1 producto estrella grande + 2 complementarios apilados.",
+    planLevel: 2, badge: "Pro", imgShape: "rounded",
     bg: "#faf9f7", cardBg: "#f5efe8", primaryColor: "#9333ea", textColor: "#2d1b69", accentColor: "#ede9fe", borderRadius: "16px",
   },
   {
     id: "moderno", name: "Moderno Bold", layout: "overlay",
     desc: "Cards portrait en blanco y negro. Inspirado en ZARA editorial.",
-    planLevel: 2, badge: "🔥 Tendencia", imgShape: "square",
+    planLevel: 2, badge: "Tendencia", imgShape: "square",
     bg: "#fafafa", cardBg: "#18181b", primaryColor: "#27272a", textColor: "#fafafa", accentColor: "#27272a", borderRadius: "2px",
   },
   {
     id: "tropical", name: "Tropical", layout: "grid",
-    desc: "Luminoso y veraniego con imágenes circulares. Para turismo y comida caribeña.",
-    planLevel: 2, badge: "💎 Pro", imgShape: "circle",
+    desc: "Luminoso y veraniego con imágenes circulares. Para turismo y comida.",
+    planLevel: 2, badge: "Pro", imgShape: "circle",
     bg: "#ecfdf5", cardBg: "#ffffff", primaryColor: "#d97706", textColor: "#064e3b", accentColor: "#d1fae5", borderRadius: "999px",
   },
   {
     id: "corporativo", name: "Corporativo", layout: "editorial",
-    desc: "Lista profesional con descripción visible. Para servicios y consultoras B2B.",
-    planLevel: 2, badge: "💎 Pro", imgShape: "rounded",
+    desc: "Lista profesional con descripción visible. Para servicios y consultoras.",
+    planLevel: 2, badge: "Pro", imgShape: "rounded",
     bg: "#eff6ff", cardBg: "#ffffff", primaryColor: "#1d4ed8", textColor: "#1e3a5f", accentColor: "#dbeafe", borderRadius: "8px",
   },
   {
     id: "sakura", name: "Sakura Edit", layout: "editorial",
-    desc: "Minimalismo japonés: lista horizontal, tipografía ultraligera ALL CAPS, rosa sutil.",
-    planLevel: 2, badge: "🌸 Wabi-Sabi", imgShape: "square",
+    desc: "Minimalismo japonés: lista horizontal, tipografía ligera y rosa sutil.",
+    planLevel: 2, badge: "Wabi-Sabi", imgShape: "square",
     bg: "#fff5f7", cardBg: "#fdf2f8", primaryColor: "#be185d", textColor: "#4a1942", accentColor: "#fce7f3", borderRadius: "0px",
   },
   {
     id: "retro_pop", name: "Retro Pop", layout: "tiles",
-    desc: "Bauhaus meets Memphis: banners anchos alternados con cuadros dinámicos. Audaz y memorable.",
-    planLevel: 2, badge: "🎵 Retro", imgShape: "rounded",
+    desc: "Banners anchos alternados con cuadros dinámicos. Audaz y memorable.",
+    planLevel: 2, badge: "Retro", imgShape: "rounded",
     bg: "#fffbeb", cardBg: "#fef3c7", primaryColor: "#dc2626", textColor: "#1c1917", accentColor: "#fcd34d", borderRadius: "8px",
   },
 
@@ -170,56 +162,56 @@ const MODELS: ModelDef[] = [
   ════════════════════════════════════════════ */
   {
     id: "luxury", name: "Luxury Gold", layout: "editorial",
-    desc: "Lista horizontal tipo Net-a-Porter. Imagen + info detallada al lado.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "square", isDark: true,
+    desc: "Lista horizontal tipo Net-a-Porter. Imagen + info detallada.",
+    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
     bg: "#09090b", cardBg: "#18181b", primaryColor: "#ca8a04", textColor: "#fafafa", accentColor: "#292524", borderRadius: "4px",
   },
   {
     id: "neon", name: "Neon City", layout: "overlay",
     desc: "Cards portrait cyberpunk con texto neón sobre imagen oscura.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "square", isDark: true,
+    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
     bg: "#030712", cardBg: "#0c1120", primaryColor: "#06b6d4", textColor: "#e0f2fe", accentColor: "#083344", borderRadius: "0px",
   },
   {
     id: "dark_fashion", name: "Dark Fashion", layout: "magazine",
-    desc: "Revista editorial: banners full-width alternados con pares verticales 3:4. Inspirado en Vogue.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "square", isDark: true,
+    desc: "Revista editorial: banners full-width alternados con pares verticales.",
+    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
     bg: "#111111", cardBg: "#1c1c1c", primaryColor: "#f5f5f5", textColor: "#f5f5f5", accentColor: "#2a2a2a", borderRadius: "0px",
   },
   {
     id: "miami", name: "Miami Nights", layout: "overlay",
-    desc: "Neon púrpura/fucsia sobre dark profundo. Cards portrait al ritmo de la noche.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "rounded", isDark: true,
+    desc: "Neon púrpura/fucsia sobre dark profundo. Layout nocturno.",
+    planLevel: 3, badge: "Elite", imgShape: "rounded", isDark: true,
     bg: "#0f0520", cardBg: "#1a0a35", primaryColor: "#f0abfc", textColor: "#fdf4ff", accentColor: "#4c1d95", borderRadius: "16px",
   },
   {
     id: "monochrome", name: "Monochrome", layout: "magazine",
-    desc: "Blanco y negro puro estilo fotografía editorial. Para marcas de alta moda sin color.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "square",
+    desc: "Blanco y negro puro estilo fotografía editorial.",
+    planLevel: 3, badge: "Elite", imgShape: "square",
     bg: "#ffffff", cardBg: "#f5f5f5", primaryColor: "#0a0a0a", textColor: "#0a0a0a", accentColor: "#e5e5e5", borderRadius: "0px",
   },
   {
     id: "aurora", name: "Aurora Dark", layout: "tiles",
-    desc: "Glassmorphism oscuro con acentos púrpura. Tiles anchos + cuadros. Inspirado en Apple Vision Pro.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "rounded", isDark: true,
+    desc: "Glassmorphism oscuro con acentos púrpura. Estilo moderno.",
+    planLevel: 3, badge: "Elite", imgShape: "rounded", isDark: true,
     bg: "#0d0d1a", cardBg: "#1a1040", primaryColor: "#a855f7", textColor: "#e2d9f3", accentColor: "#2d1b6e", borderRadius: "24px",
   },
   {
     id: "obsidian", name: "Obsidian Spot", layout: "spotlight",
-    desc: "Layout Spotlight: 1 producto grande a la izquierda + 2 pequeños apilados. Inspirado en Farfetch.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "rounded", isDark: true,
+    desc: "Layout Spotlight: 1 producto grande + 2 pequeños apilados.",
+    planLevel: 3, badge: "Elite", imgShape: "rounded", isDark: true,
     bg: "#0a0a14", cardBg: "#12122a", primaryColor: "#4f8ef7", textColor: "#e0e0e0", accentColor: "#1e2050", borderRadius: "12px",
   },
   {
-    id: "slash", name: "Slash / Diagonal", layout: "diagonal",
-    desc: "Cortes diagonales con clip-path en cada imagen. Estilo Nike / Adidas / Streetwear de alto impacto.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "square", isDark: true,
+    id: "slash", name: "Slash Diagonal", layout: "diagonal",
+    desc: "Cortes diagonales de alto impacto. Estilo deportivo.",
+    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
     bg: "#0d1117", cardBg: "#1c2128", primaryColor: "#faec45", textColor: "#f0f0f0", accentColor: "#21262d", borderRadius: "0px",
   },
   {
     id: "arch_studio", name: "Arch Studio", layout: "arch",
-    desc: "Marcos en arco tipo ventana gótica. Imagen en arco 3:4 + texto debajo. Estilo AESOP / Byredo / perfumería de lujo.",
-    planLevel: 3, badge: "👑 Elite", imgShape: "rounded",
+    desc: "Marcos en arco tipo ventana. Estilo perfumería de lujo.",
+    planLevel: 3, badge: "Elite", imgShape: "rounded",
     bg: "#faf9f6", cardBg: "#f4f2ed", primaryColor: "#9c6b4e", textColor: "#2c1a0e", accentColor: "#e8e0d5", borderRadius: "999px",
   },
 ];
@@ -625,7 +617,7 @@ function DisenoPage() {
         )}
       </div>
 
-      {/* ── Model Grid ──────────────────────────────── */}
+      {/* ── Model Grid / Slider ──────────────────────── */}
       {planGroups.map((group) => {
         const groupModels = MODELS.filter((m) => m.planLevel === group.level);
         const locked = group.level > userLevel;
@@ -634,18 +626,18 @@ function DisenoPage() {
           <div key={group.level} className="space-y-4">
             {/* Section label */}
             <div className="flex items-center gap-3">
-              <span className={`text-xs font-bold px-3 py-1 rounded-full ${group.color}`}>
-                {group.label}
+              <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest ${group.color}`}>
+                {group.label.replace("Gratis — ", "")}
               </span>
               {locked && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> Requiere plan superior
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
+                  <Lock className="h-3 w-3" /> Requiere mejora
                 </span>
               )}
             </div>
 
-            {/* Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Cards - Horizontal Scroll on Mobile, Grid on Desktop */}
+            <div className="flex overflow-x-auto pb-4 gap-4 -mx-4 px-4 scrollbar-none sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:pb-0 sm:mx-0 sm:px-0">
               {groupModels.map((model) => {
                 const isLocked = model.planLevel > userLevel;
                 const isSelected = selectedModel === model.id;
@@ -656,32 +648,32 @@ function DisenoPage() {
                     key={model.id}
                     onClick={() => !isLocked && setSelectedModel(model.id)}
                     className={cn(
-                      "relative rounded-2xl overflow-hidden border-2 transition-all duration-200",
+                      "relative min-w-[280px] sm:min-w-0 rounded-2xl overflow-hidden border-2 transition-all duration-200 shrink-0 sm:shrink",
                       isLocked
-                        ? "opacity-50 cursor-not-allowed grayscale-[30%]"
+                        ? "opacity-60 cursor-not-allowed grayscale-[20%]"
                         : "cursor-pointer hover:shadow-xl hover:-translate-y-0.5",
                       isSelected
                         ? "border-primary shadow-xl shadow-primary/20 -translate-y-1"
                         : "border-border hover:border-primary/40"
                     )}
                   >
-                    {/* Selection checkmark */}
+                    {/* Selection indicator */}
                     {isSelected && !isLocked && (
-                      <div className="absolute top-3 right-3 z-10 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
+                      <div className="absolute top-3 right-3 z-10 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
                         <Check className="h-4 w-4" />
                       </div>
                     )}
 
                     {/* Lock icon */}
                     {isLocked && (
-                      <div className="absolute top-3 right-3 z-10 h-7 w-7 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur">
+                      <div className="absolute top-3 right-3 z-10 h-7 w-7 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-sm">
                         <Lock className="h-3.5 w-3.5" />
                       </div>
                     )}
 
                     {/* Badge */}
                     {model.badge && !isSelected && !isLocked && (
-                      <div className="absolute top-3 left-3 z-10 px-2 py-0.5 rounded-full bg-black/40 backdrop-blur text-white text-[9px] font-bold tracking-wide">
+                      <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-md bg-black/40 backdrop-blur-md text-white text-[8px] font-bold tracking-[0.2em] uppercase">
                         {model.badge}
                       </div>
                     )}
@@ -695,22 +687,14 @@ function DisenoPage() {
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-sm truncate">{model.name}</p>
                           {isActive && (
-                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">
+                            <span className="text-[9px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded tracking-tighter shrink-0">
                               ACTIVO
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight line-clamp-1">
                           {model.desc}
                         </p>
-                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: model.primaryColor + "20", color: model.primaryColor }}>
-                            {model.imgShape === "circle" ? "🔵 Circular" : model.imgShape === "square" ? "◼ Cuadrada" : "⬛ Redondeada"}
-                          </span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                            {model.layout === "overlay" ? "📸 Portrait overlay" : model.layout === "editorial" ? "📋 Lista editorial" : model.layout === "hero" ? "⭐ Hero + galería" : model.layout === "magazine" ? "📖 Revista editorial" : model.layout === "tiles" ? "🖼️ Tiles dinámicos" : model.layout === "spotlight" ? "🎯 Spotlight" : model.layout === "diagonal" ? "⚡ Diagonal slash" : model.layout === "arch" ? "🏛️ Arch studio" : "▦ Grilla"}
-                          </span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -723,21 +707,21 @@ function DisenoPage() {
 
       {/* ── Upgrade CTA ─────────────────────────────── */}
       {store.plan !== "ilimitado" && (
-        <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 flex items-center gap-4">
-          <Crown className="h-9 w-9 text-amber-500 shrink-0" />
+        <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 flex items-center gap-4">
+          <Crown className="h-9 w-9 text-blue-500 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-amber-900">¿Quieres todos los diseños?</p>
-            <p className="text-sm text-amber-800 mt-0.5">
-              Actualiza tu plan y desbloquea los {MODELS.filter(m => m.planLevel > userLevel).length} modelos premium restantes.
+            <p className="font-bold text-blue-900">Desbloquea todos los diseños</p>
+            <p className="text-sm text-blue-800 mt-0.5">
+              Actualiza tu plan y obtén acceso a los {MODELS.filter(m => m.planLevel > userLevel).length} modelos premium restantes.
             </p>
           </div>
           <a
             href="https://wa.me/51925176472?text=Hola,%20quiero%20actualizar%20mi%20plan%20en%20Dizi"
             target="_blank"
             rel="noreferrer"
-            className="shrink-0 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-lg"
+            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-lg"
           >
-            Actualizar plan
+            Saber más
           </a>
         </div>
       )}
