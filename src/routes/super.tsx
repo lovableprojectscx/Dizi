@@ -43,6 +43,14 @@ function SuperLayout() {
     navigate({ to: "/super/login" });
   };
 
+  if (path === "/super/login") {
+    return (
+      <main className="min-h-screen">
+        <Outlet />
+      </main>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
