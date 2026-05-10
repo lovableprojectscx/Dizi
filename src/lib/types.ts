@@ -39,6 +39,7 @@ export interface Store {
   countryCode: string; // e.g. 51
   logo?: string;
   brandColor?: string;
+  bgColor?: string;
   plan: PlanId;
   active: boolean;
   createdAt: string;

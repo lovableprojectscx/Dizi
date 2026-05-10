@@ -16,6 +16,7 @@ const mapStoreFromDB = (row: any): Store => ({
   plan: row.plan as PlanId,
   model: row.model,
   brandColor: row.brand_color,
+  bgColor: row.bg_color,
   ownerId: row.owner_id,
   active: row.active,
   isPublished: row.is_published,
@@ -101,6 +102,7 @@ export const useApp = create<AppState>()(
         if (patch.logo !== undefined) dbPatch.logo = patch.logo;
         if (patch.model !== undefined) dbPatch.model = patch.model;
         if (patch.brandColor !== undefined) dbPatch.brand_color = patch.brandColor;
+        if ((patch as any).bgColor !== undefined) dbPatch.bg_color = (patch as any).bgColor;
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
         
         if (Object.keys(dbPatch).length > 0) {

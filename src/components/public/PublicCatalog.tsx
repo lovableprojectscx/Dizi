@@ -33,8 +33,9 @@ type ModelConfig = {
 };
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
+  /* ── Plan Semilla ──────────────────────────────────── */
   minimalista: {
-    vars: { "--background": "#ffffff", "--card": "#f8fafc", "--primary": "#FF823A", "--border": "#e2e8f0" } as any,
+    vars: { "--background": "#ffffff", "--card": "#f8fafc", "--primary": "#4f46e5", "--border": "#e2e8f0" } as any,
     isDark: false, imgRounded: "0.75rem", cardRounded: "1rem",
     cardShadow: "hover:shadow-md", cardBorder: true, headerStyle: "clean", layout: "grid",
   },
@@ -43,107 +44,54 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     isDark: false, imgRounded: "0.25rem", cardRounded: "0.375rem",
     cardShadow: "hover:shadow-sm", cardBorder: true, headerStyle: "clean", layout: "grid",
   },
+  /* ── Plan Emprendedor ──────────────────────────────── */
+  nature_mint: {
+    vars: { "--background": "#f0fefb", "--card": "#ffffff", "--primary": "#0d9488", "--border": "#99f6e4" } as any,
+    isDark: false, imgRounded: "1.25rem", cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-lg hover:shadow-teal-200/60", cardBorder: true, headerStyle: "clean", layout: "grid",
+  },
+  vibrante: {
+    vars: { "--background": "#fff7ed", "--card": "#ffffff", "--primary": "#ea580c", "--border": "#ffedd5" } as any,
+    isDark: false, imgRounded: "1rem", cardRounded: "1.25rem",
+    cardShadow: "hover:shadow-xl hover:shadow-orange-300/40", cardBorder: false, headerStyle: "bold", layout: "overlay",
+  },
+  eco: {
+    vars: { "--background": "#f0fdf4", "--card": "#ffffff", "--primary": "#16a34a", "--border": "#bbf7d0" } as any,
+    isDark: false, imgRounded: "9999px", cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-lg hover:shadow-green-200/60", cardBorder: true, headerStyle: "clean", layout: "hero",
+  },
+  /* ── Plan Pro ──────────────────────────────────────── */
   nocturno: {
     vars: { "--background": "#0f172a", "--card": "#1e293b", "--primary": "#818cf8", "--border": "#334155" } as any,
     isDark: true, imgRounded: "0.875rem", cardRounded: "1rem",
     cardShadow: "hover:shadow-2xl hover:shadow-indigo-900/60", cardBorder: false, headerStyle: "bold", layout: "overlay",
   },
-  vibrante: {
-    vars: { "--background": "#fff7ed", "--card": "#ffffff", "--primary": "#FF823A", "--border": "#ffedd5" } as any,
-    isDark: false, imgRounded: "1rem", cardRounded: "1.25rem",
-    cardShadow: "hover:shadow-xl hover:shadow-orange-300/40", cardBorder: false, headerStyle: "bold", layout: "overlay",
-  },
-  eco: {
-    vars: { "--background": "#f0fdf4", "--card": "#ffffff", "--primary": "#DCFD8B", "--border": "#bbf7d0" } as any,
-    isDark: false, imgRounded: "9999px", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-lg hover:shadow-green-200/60", cardBorder: true, headerStyle: "clean", layout: "hero",
-  },
-  luxury: {
-    vars: { "--background": "#09090b", "--card": "#18181b", "--primary": "#ca8a04", "--border": "#3f3010" } as any,
-    isDark: true, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-2xl hover:shadow-yellow-900/40", cardBorder: true, headerStyle: "minimal", layout: "editorial",
-  },
-  pastel: {
-    vars: { "--background": "#fdf2f8", "--card": "#ffffff", "--primary": "#BC84EE", "--border": "#fce7f3" } as any,
-    isDark: false, imgRounded: "9999px", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-lg hover:shadow-pink-200/60", cardBorder: false, headerStyle: "clean", layout: "hero",
-  },
-  moderno: {
-    vars: { "--background": "#fafafa", "--card": "#18181b", "--primary": "#27272a", "--border": "#e4e4e7" } as any,
-    isDark: false, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-2xl", cardBorder: false, headerStyle: "bold", layout: "overlay",
-  },
   boutique: {
-    vars: { "--background": "#faf9f7", "--card": "#f5efe8", "--primary": "#BC84EE", "--border": "#ede9fe" } as any,
+    vars: { "--background": "#faf9f7", "--card": "#f5efe8", "--primary": "#9333ea", "--border": "#ede9fe" } as any,
     isDark: false, imgRounded: "0.75rem", cardRounded: "1rem",
     cardShadow: "hover:shadow-xl hover:shadow-purple-200/50", cardBorder: false, headerStyle: "minimal", layout: "spotlight",
-  },
-  neon: {
-    vars: { "--background": "#030712", "--card": "#0c1120", "--primary": "#06b6d4", "--border": "#164e63" } as any,
-    isDark: true, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-2xl hover:shadow-cyan-500/20", cardBorder: true, headerStyle: "bold", layout: "overlay",
-  },
-  dark_fashion: {
-    vars: { "--background": "#111111", "--card": "#1c1c1c", "--primary": "#f5f5f5", "--border": "#2a2a2a" } as any,
-    isDark: true, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-2xl", cardBorder: false, headerStyle: "minimal", layout: "magazine",
-  },
-  tropical: {
-    vars: { "--background": "#ecfdf5", "--card": "#ffffff", "--primary": "#d97706", "--border": "#d1fae5" } as any,
-    isDark: false, imgRounded: "9999px", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-lg hover:shadow-amber-200/50", cardBorder: false, headerStyle: "bold", layout: "grid",
   },
   corporativo: {
     vars: { "--background": "#eff6ff", "--card": "#ffffff", "--primary": "#1d4ed8", "--border": "#bfdbfe" } as any,
     isDark: false, imgRounded: "0.375rem", cardRounded: "0.5rem",
     cardShadow: "hover:shadow-md", cardBorder: true, headerStyle: "clean", layout: "editorial",
   },
-  /* ── 8 NUEVOS MODELOS ────────────────────────────────── */
-  /* Plan Semilla */
-  nature_mint: {
-    vars: { "--background": "#f0fefb", "--card": "#ffffff", "--primary": "#0d9488", "--border": "#99f6e4" } as any,
-    isDark: false, imgRounded: "1.25rem", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-lg hover:shadow-teal-200/60", cardBorder: true, headerStyle: "clean", layout: "grid",
-  },
-  /* Plan Emprendedor */
-  retro_pop: {
-    vars: { "--background": "#fffbeb", "--card": "#fef3c7", "--primary": "#dc2626", "--border": "#fcd34d" } as any,
-    isDark: false, imgRounded: "0.5rem", cardRounded: "0.75rem",
-    cardShadow: "hover:shadow-xl hover:shadow-yellow-300/50", cardBorder: true, headerStyle: "bold", layout: "tiles",
-  },
-  terracotta: {
-    vars: { "--background": "#faf5f0", "--card": "#f5ece3", "--primary": "#c2410c", "--border": "#fed7aa" } as any,
-    isDark: false, imgRounded: "0.5rem", cardRounded: "0.5rem",
-    cardShadow: "hover:shadow-md hover:shadow-orange-100/80", cardBorder: true, headerStyle: "clean", layout: "editorial",
-  },
-  /* Plan Pro */
   aurora: {
     vars: { "--background": "#0d0d1a", "--card": "#1a1040", "--primary": "#a855f7", "--border": "#2d1b6e" } as any,
     isDark: true, imgRounded: "1.25rem", cardRounded: "1.5rem",
     cardShadow: "hover:shadow-2xl hover:shadow-purple-700/50", cardBorder: false, headerStyle: "bold", layout: "tiles",
   },
-  sakura: {
-    vars: { "--background": "#fff5f7", "--card": "#fdf2f8", "--primary": "#be185d", "--border": "#fce7f3" } as any,
-    isDark: false, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-md", cardBorder: true, headerStyle: "minimal", layout: "editorial",
+  /* ── Plan Ilimitado ────────────────────────────────── */
+  luxury: {
+    vars: { "--background": "#09090b", "--card": "#18181b", "--primary": "#ca8a04", "--border": "#3f3010" } as any,
+    isDark: true, imgRounded: "0px", cardRounded: "0px",
+    cardShadow: "hover:shadow-2xl hover:shadow-yellow-900/40", cardBorder: true, headerStyle: "minimal", layout: "editorial",
   },
-  /* Plan Ilimitado */
-  miami: {
-    vars: { "--background": "#0f0520", "--card": "#1a0a35", "--primary": "#f0abfc", "--border": "#4c1d95" } as any,
-    isDark: true, imgRounded: "1rem", cardRounded: "1.25rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-fuchsia-700/40", cardBorder: false, headerStyle: "bold", layout: "overlay",
+  dark_fashion: {
+    vars: { "--background": "#111111", "--card": "#1c1c1c", "--primary": "#f5f5f5", "--border": "#2a2a2a" } as any,
+    isDark: true, imgRounded: "0px", cardRounded: "0px",
+    cardShadow: "hover:shadow-2xl", cardBorder: false, headerStyle: "minimal", layout: "magazine",
   },
-  monochrome: {
-    vars: { "--background": "#ffffff", "--card": "#f5f5f5", "--primary": "#0a0a0a", "--border": "#e5e5e5" } as any,
-    isDark: false, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-xl hover:shadow-black/10", cardBorder: true, headerStyle: "minimal", layout: "magazine",
-  },
-  obsidian: {
-    vars: { "--background": "#0a0a14", "--card": "#12122a", "--primary": "#4f8ef7", "--border": "#1e2050" } as any,
-    isDark: true, imgRounded: "0.75rem", cardRounded: "0.875rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-blue-900/60", cardBorder: true, headerStyle: "bold", layout: "spotlight",
-  },
-  /* ─ Formas radicales ─ */
   slash: {
     vars: { "--background": "#0d1117", "--card": "#1c2128", "--primary": "#faec45", "--border": "#21262d" } as any,
     isDark: true, imgRounded: "0px", cardRounded: "0px",
@@ -177,17 +125,17 @@ export function PublicCatalog({ store }: { store: Store }) {
   const modelId = store.model || "minimalista";
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
-  // Apply brand color override if set, and always inject foreground vars based on isDark
+  // Apply brand color and background color overrides, inject foreground vars based on isDark
   const themeVars: React.CSSProperties = {
     ...cfg.vars,
     // Foreground is always explicit so dark models don't inherit Tailwind's default dark text
     "--foreground":      cfg.isDark ? "#f0f0f0" : "#111111",
     "--foreground-muted": cfg.isDark ? "#a0a0a0" : "#6b7280",
-    // Make muted-foreground CSS variable available too
     "--muted-foreground": cfg.isDark ? "#94a3b8" : "#64748b",
     "--muted":           cfg.isDark ? (cfg.vars as any)["--border"] || "#1e293b" : "#f1f5f9",
     "--secondary":       cfg.isDark ? "#1e293b" : "#f8fafc",
     ...(store.brandColor ? { "--primary": store.brandColor } : {}),
+    ...((store as any).bgColor ? { "--background": (store as any).bgColor } : {}),
   };
 
   /* ── Derived data ────────────────────────────────── */

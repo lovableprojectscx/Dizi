@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Lock, Check, Sparkles, Crown, Palette } from "lucide-react";
+import { Lock, Check, Sparkles, Crown, Palette, Image } from "lucide-react";
 import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,9 +13,6 @@ export const Route = createFileRoute("/admin/diseno")({
   component: DisenoPage,
 });
 
-/* ─────────────────────────────────────────────────────────
-   PLAN LEVELS
-───────────────────────────────────────────────────────── */
 const PLAN_LEVELS: Record<PlanId, number> = {
   semilla: 0,
   emprendedor: 1,
@@ -24,7 +21,7 @@ const PLAN_LEVELS: Record<PlanId, number> = {
 };
 
 /* ─────────────────────────────────────────────────────────
-   BRAND COLORS  (real hex values — what you see is what you get)
+   BRAND COLORS
 ───────────────────────────────────────────────────────── */
 const BRAND_COLORS = [
   { id: "default", name: "Color del modelo", hex: "", display: "#e2e8f0" },
@@ -43,9 +40,39 @@ const BRAND_COLORS = [
 ];
 
 /* ─────────────────────────────────────────────────────────
-   MODEL DEFINITIONS
-   imgShape: "square" | "rounded" | "circle"
-   cardStyle: "flat" | "elevated" | "bordered" | "glassmorphism"
+   BACKGROUND COLORS — para personalizar el fondo del catálogo
+───────────────────────────────────────────────────────── */
+const BG_COLORS = [
+  { id: "default",  name: "Fondo del modelo",  hex: "",        display: "#e2e8f0" },
+  { id: "white",    name: "Blanco puro",        hex: "#ffffff", display: "#ffffff" },
+  { id: "cream",    name: "Crema",              hex: "#fdfaf5", display: "#fdfaf5" },
+  { id: "ivory",    name: "Marfil",             hex: "#fef9ef", display: "#fef9ef" },
+  { id: "rose_bg",  name: "Rosa suave",         hex: "#fff5f7", display: "#fff5f7" },
+  { id: "mint_bg",  name: "Menta",              hex: "#f0fefb", display: "#f0fefb" },
+  { id: "sky_bg",   name: "Cielo",              hex: "#eff6ff", display: "#eff6ff" },
+  { id: "lavender", name: "Lavanda",            hex: "#f5f3ff", display: "#f5f3ff" },
+  { id: "sand",     name: "Arena",              hex: "#faf5eb", display: "#faf5eb" },
+  { id: "stone",    name: "Piedra",             hex: "#f5f5f4", display: "#f5f5f4" },
+  { id: "gray",     name: "Gris claro",         hex: "#f8fafc", display: "#f8fafc" },
+  { id: "charcoal", name: "Carbón",             hex: "#1e293b", display: "#1e293b" },
+  { id: "midnight", name: "Medianoche",         hex: "#0f172a", display: "#0f172a" },
+  { id: "obsidian_bg", name: "Obsidiana",       hex: "#09090b", display: "#09090b" },
+];
+
+/* ─────────────────────────────────────────────────────────
+   MODEL DEFINITIONS — 12 modelos únicos, sin repetidos
+
+   ELIMINADOS por ser casi idénticos a otros:
+   - pastel (hero+círculos = mismo que eco)
+   - tropical (grid+círculos = mismo que eco pero en grid)
+   - moderno (overlay b&n = fusionado en nocturno/neon)
+   - miami (overlay oscuro = similar a nocturno/neon)
+   - sakura (editorial = similar a luxury/corporativo)
+   - terracotta (editorial = similar a luxury/corporativo)
+   - monochrome (magazine b&n = similar a dark_fashion)
+   - obsidian (spotlight = igual que boutique)
+   - aurora (tiles oscuro = tiles con diferente color)
+   - retro_pop (tiles = fusionado en aurora que es más distintivo)
 ───────────────────────────────────────────────────────── */
 interface ModelDef {
   id: string;
@@ -55,7 +82,6 @@ interface ModelDef {
   badge?: string;
   imgShape: "square" | "rounded" | "circle";
   layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch";
-  // Preview theme colors
   bg: string;
   cardBg: string;
   primaryColor: string;
@@ -66,202 +92,176 @@ interface ModelDef {
 }
 
 const MODELS: ModelDef[] = [
-  /* ════════════════════════════════════════════
-     PLAN SEMILLA — Gratis (2 modelos)
-     Grillas limpias, funcionales, para empezar
-  ════════════════════════════════════════════ */
+  /* ══ PLAN SEMILLA — 2 modelos ══════════════════════════ */
   {
     id: "minimalista", name: "Minimalista", layout: "grid",
-    desc: "Limpio, moderno y atemporal. Funciona para cualquier tipo de negocio.",
+    desc: "Limpio, moderno y atemporal. Rejilla 2×N con tarjetas flotantes y borde sutil.",
     planLevel: 0, badge: "Popular", imgShape: "rounded",
-    bg: "#ffffff", cardBg: "#f8fafc", primaryColor: "#4f46e5", textColor: "#1e293b", accentColor: "#e0e7ff", borderRadius: "12px",
+    bg: "#ffffff", cardBg: "#f8fafc", primaryColor: "#4f46e5",
+    textColor: "#1e293b", accentColor: "#e0e7ff", borderRadius: "12px",
   },
   {
     id: "clasico", name: "Clásico Cálido", layout: "grid",
-    desc: "Tipografía elegante y tonos terrosos. Ideal para artesanías, comida y cultura.",
+    desc: "Tipografía serif y tonos terrosos con tarjetas de borde fino. Artesanías y comida.",
     planLevel: 0, imgShape: "square",
-    bg: "#fdfaf5", cardBg: "#fef9ef", primaryColor: "#92400e", textColor: "#451a03", accentColor: "#fef3c7", borderRadius: "6px",
+    bg: "#fdfaf5", cardBg: "#fef9ef", primaryColor: "#92400e",
+    textColor: "#451a03", accentColor: "#fef3c7", borderRadius: "6px",
   },
 
+  /* ══ PLAN EMPRENDEDOR — 3 modelos ══════════════════════ */
   {
     id: "nature_mint", name: "Nature Mint", layout: "grid",
-    desc: "Verde teal fresco y moderno. Ideal para salud, bienestar, cafés y naturáles.",
+    desc: "Verde teal fresco con imágenes redondeadas. Salud, bienestar y cafés.",
     planLevel: 1, badge: "Fresh", imgShape: "rounded",
-    bg: "#f0fefb", cardBg: "#ffffff", primaryColor: "#0d9488", textColor: "#134e4a", accentColor: "#99f6e4", borderRadius: "24px",
+    bg: "#f0fefb", cardBg: "#ffffff", primaryColor: "#0d9488",
+    textColor: "#134e4a", accentColor: "#99f6e4", borderRadius: "24px",
   },
   {
     id: "vibrante", name: "Vibrante", layout: "overlay",
-    desc: "Energético y audaz. Layout tipo Instagram Shopping con imágenes 3:4.",
-    planLevel: 1, badge: "Premium", imgShape: "rounded",
-    bg: "#fff7ed", cardBg: "#ffffff", primaryColor: "#ea580c", textColor: "#431407", accentColor: "#ffedd5", borderRadius: "20px",
+    desc: "Cards portrait 3:4 con texto sobre gradiente. Energético tipo Instagram Shopping.",
+    planLevel: 1, badge: "Trending", imgShape: "rounded",
+    bg: "#fff7ed", cardBg: "#ffffff", primaryColor: "#ea580c",
+    textColor: "#431407", accentColor: "#ffedd5", borderRadius: "20px",
   },
   {
-    id: "eco", name: "Eco Nature", layout: "hero",
-    desc: "Primer producto destacado tipo hero banner + galería circular.",
+    id: "eco", name: "Eco Hero", layout: "hero",
+    desc: "Banner hero panorámico + galería circular. El primer producto siempre destaca.",
     planLevel: 1, badge: "Premium", imgShape: "circle",
-    bg: "#f0fdf4", cardBg: "#ffffff", primaryColor: "#16a34a", textColor: "#14532d", accentColor: "#dcfce7", borderRadius: "999px",
-  },
-  {
-    id: "terracotta", name: "Terracotta", layout: "editorial",
-    desc: "Mercado artesanal: lista horizontal con imagen cuadrada. Cálido e íntimo.",
-    planLevel: 1, badge: "Artisan", imgShape: "square",
-    bg: "#faf5f0", cardBg: "#f5ece3", primaryColor: "#c2410c", textColor: "#431407", accentColor: "#fed7aa", borderRadius: "6px",
-  },
-  {
-    id: "pastel", name: "Pastel Dream", layout: "hero",
-    desc: "Hero banner destacado + galería de productos con imágenes circulares.",
-    planLevel: 1, imgShape: "circle",
-    bg: "#fdf2f8", cardBg: "#ffffff", primaryColor: "#db2777", textColor: "#831843", accentColor: "#fce7f3", borderRadius: "999px",
+    bg: "#f0fdf4", cardBg: "#ffffff", primaryColor: "#16a34a",
+    textColor: "#14532d", accentColor: "#dcfce7", borderRadius: "999px",
   },
 
+  /* ══ PLAN PRO — 4 modelos ═══════════════════════════════ */
   {
     id: "nocturno", name: "Nocturno", layout: "overlay",
-    desc: "Dark mode de alto impacto. Cards en portrait con texto sobre imagen.",
+    desc: "Dark mode de alto impacto. Cards portrait 3:4 con texto sobre imagen oscura.",
     planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true,
-    bg: "#0f172a", cardBg: "#1e293b", primaryColor: "#818cf8", textColor: "#f1f5f9", accentColor: "#312e81", borderRadius: "16px",
+    bg: "#0f172a", cardBg: "#1e293b", primaryColor: "#818cf8",
+    textColor: "#f1f5f9", accentColor: "#312e81", borderRadius: "16px",
   },
   {
     id: "boutique", name: "Boutique", layout: "spotlight",
-    desc: "Editorial fashion: 1 producto estrella grande + 2 complementarios apilados.",
+    desc: "Editorial fashion: 1 producto estrella grande + 2 complementarios apilados. Farfetch style.",
     planLevel: 2, badge: "Pro", imgShape: "rounded",
-    bg: "#faf9f7", cardBg: "#f5efe8", primaryColor: "#9333ea", textColor: "#2d1b69", accentColor: "#ede9fe", borderRadius: "16px",
+    bg: "#faf9f7", cardBg: "#f5efe8", primaryColor: "#9333ea",
+    textColor: "#2d1b69", accentColor: "#ede9fe", borderRadius: "16px",
   },
   {
-    id: "moderno", name: "Moderno Bold", layout: "overlay",
-    desc: "Cards portrait en blanco y negro. Inspirado en ZARA editorial.",
-    planLevel: 2, badge: "Tendencia", imgShape: "square",
-    bg: "#fafafa", cardBg: "#18181b", primaryColor: "#27272a", textColor: "#fafafa", accentColor: "#27272a", borderRadius: "2px",
-  },
-  {
-    id: "tropical", name: "Tropical", layout: "grid",
-    desc: "Luminoso y veraniego con imágenes circulares. Para turismo y comida.",
-    planLevel: 2, badge: "Pro", imgShape: "circle",
-    bg: "#ecfdf5", cardBg: "#ffffff", primaryColor: "#d97706", textColor: "#064e3b", accentColor: "#d1fae5", borderRadius: "999px",
-  },
-  {
-    id: "corporativo", name: "Corporativo", layout: "editorial",
-    desc: "Lista profesional con descripción visible. Para servicios y consultoras.",
+    id: "corporativo", name: "Corporativo Azul", layout: "editorial",
+    desc: "Lista horizontal profesional con descripción visible. Servicios y consultoras.",
     planLevel: 2, badge: "Pro", imgShape: "rounded",
-    bg: "#eff6ff", cardBg: "#ffffff", primaryColor: "#1d4ed8", textColor: "#1e3a5f", accentColor: "#dbeafe", borderRadius: "8px",
+    bg: "#eff6ff", cardBg: "#ffffff", primaryColor: "#1d4ed8",
+    textColor: "#1e3a5f", accentColor: "#dbeafe", borderRadius: "8px",
   },
   {
-    id: "sakura", name: "Sakura Edit", layout: "editorial",
-    desc: "Minimalismo japonés: lista horizontal, tipografía ligera y rosa sutil.",
-    planLevel: 2, badge: "Wabi-Sabi", imgShape: "square",
-    bg: "#fff5f7", cardBg: "#fdf2f8", primaryColor: "#be185d", textColor: "#4a1942", accentColor: "#fce7f3", borderRadius: "0px",
-  },
-  {
-    id: "retro_pop", name: "Retro Pop", layout: "tiles",
-    desc: "Banners anchos alternados con cuadros dinámicos. Audaz y memorable.",
-    planLevel: 2, badge: "Retro", imgShape: "rounded",
-    bg: "#fffbeb", cardBg: "#fef3c7", primaryColor: "#dc2626", textColor: "#1c1917", accentColor: "#fcd34d", borderRadius: "8px",
+    id: "aurora", name: "Aurora Glass", layout: "tiles",
+    desc: "Tiles glassmorphism oscuros con acentos púrpura. 1 banner ancho + 2 cuadros.",
+    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true,
+    bg: "#0d0d1a", cardBg: "#1a1040", primaryColor: "#a855f7",
+    textColor: "#e2d9f3", accentColor: "#2d1b6e", borderRadius: "24px",
   },
 
-  /* ════════════════════════════════════════════
-     PLAN ILIMITADO — Elite (9 modelos)
-     Layouts únicos: magazine, spotlight, diagonal,
-     arch, tiles glass, neon, moda oscura
-  ════════════════════════════════════════════ */
+  /* ══ PLAN ILIMITADO — 3 modelos elite ══════════════════ */
   {
     id: "luxury", name: "Luxury Gold", layout: "editorial",
-    desc: "Lista horizontal tipo Net-a-Porter. Imagen + info detallada.",
+    desc: "Lista tipo Net-a-Porter: imagen cuadrada + info detallada. Oscuro, dorado, intemporal.",
     planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
-    bg: "#09090b", cardBg: "#18181b", primaryColor: "#ca8a04", textColor: "#fafafa", accentColor: "#292524", borderRadius: "4px",
-  },
-  {
-    id: "neon", name: "Neon City", layout: "overlay",
-    desc: "Cards portrait cyberpunk con texto neón sobre imagen oscura.",
-    planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
-    bg: "#030712", cardBg: "#0c1120", primaryColor: "#06b6d4", textColor: "#e0f2fe", accentColor: "#083344", borderRadius: "0px",
+    bg: "#09090b", cardBg: "#18181b", primaryColor: "#ca8a04",
+    textColor: "#fafafa", accentColor: "#292524", borderRadius: "4px",
   },
   {
     id: "dark_fashion", name: "Dark Fashion", layout: "magazine",
-    desc: "Revista editorial: banners full-width alternados con pares verticales.",
+    desc: "Revista editorial oscura: banners full-width alternados con pares verticales 3:4.",
     planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
-    bg: "#111111", cardBg: "#1c1c1c", primaryColor: "#f5f5f5", textColor: "#f5f5f5", accentColor: "#2a2a2a", borderRadius: "0px",
-  },
-  {
-    id: "miami", name: "Miami Nights", layout: "overlay",
-    desc: "Neon púrpura/fucsia sobre dark profundo. Layout nocturno.",
-    planLevel: 3, badge: "Elite", imgShape: "rounded", isDark: true,
-    bg: "#0f0520", cardBg: "#1a0a35", primaryColor: "#f0abfc", textColor: "#fdf4ff", accentColor: "#4c1d95", borderRadius: "16px",
-  },
-  {
-    id: "monochrome", name: "Monochrome", layout: "magazine",
-    desc: "Blanco y negro puro estilo fotografía editorial.",
-    planLevel: 3, badge: "Elite", imgShape: "square",
-    bg: "#ffffff", cardBg: "#f5f5f5", primaryColor: "#0a0a0a", textColor: "#0a0a0a", accentColor: "#e5e5e5", borderRadius: "0px",
-  },
-  {
-    id: "aurora", name: "Aurora Dark", layout: "tiles",
-    desc: "Glassmorphism oscuro con acentos púrpura. Estilo moderno.",
-    planLevel: 3, badge: "Elite", imgShape: "rounded", isDark: true,
-    bg: "#0d0d1a", cardBg: "#1a1040", primaryColor: "#a855f7", textColor: "#e2d9f3", accentColor: "#2d1b6e", borderRadius: "24px",
-  },
-  {
-    id: "obsidian", name: "Obsidian Spot", layout: "spotlight",
-    desc: "Layout Spotlight: 1 producto grande + 2 pequeños apilados.",
-    planLevel: 3, badge: "Elite", imgShape: "rounded", isDark: true,
-    bg: "#0a0a14", cardBg: "#12122a", primaryColor: "#4f8ef7", textColor: "#e0e0e0", accentColor: "#1e2050", borderRadius: "12px",
+    bg: "#111111", cardBg: "#1c1c1c", primaryColor: "#f5f5f5",
+    textColor: "#f5f5f5", accentColor: "#2a2a2a", borderRadius: "0px",
   },
   {
     id: "slash", name: "Slash Diagonal", layout: "diagonal",
-    desc: "Cortes diagonales de alto impacto. Estilo deportivo.",
+    desc: "Cortes diagonales de alto impacto. Imagen slanted + texto. Estilo Nike / streetwear.",
     planLevel: 3, badge: "Elite", imgShape: "square", isDark: true,
-    bg: "#0d1117", cardBg: "#1c2128", primaryColor: "#faec45", textColor: "#f0f0f0", accentColor: "#21262d", borderRadius: "0px",
+    bg: "#0d1117", cardBg: "#1c2128", primaryColor: "#faec45",
+    textColor: "#f0f0f0", accentColor: "#21262d", borderRadius: "0px",
   },
   {
     id: "arch_studio", name: "Arch Studio", layout: "arch",
-    desc: "Marcos en arco tipo ventana. Estilo perfumería de lujo.",
+    desc: "Marcos en arco tipo ventana. Tipografía ligera y elegante. Perfumería y lujo.",
     planLevel: 3, badge: "Elite", imgShape: "rounded",
-    bg: "#faf9f6", cardBg: "#f4f2ed", primaryColor: "#9c6b4e", textColor: "#2c1a0e", accentColor: "#e8e0d5", borderRadius: "999px",
+    bg: "#faf9f6", cardBg: "#f4f2ed", primaryColor: "#9c6b4e",
+    textColor: "#2c1a0e", accentColor: "#e8e0d5", borderRadius: "999px",
   },
 ];
 
 
 /* ─────────────────────────────────────────────────────────
-   MINI PREVIEW COMPONENT
+   MINI PREVIEW COMPONENT — cada layout tiene su preview única
 ───────────────────────────────────────────────────────── */
 function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string }) {
   const imgR = model.borderRadius;
-  const mini = { backgroundColor: model.primaryColor, opacity: 0.75 };
-  const muted = { backgroundColor: model.textColor, opacity: 0.18 };
+  const mini = { backgroundColor: model.primaryColor, opacity: 0.85 };
+  const muted = { backgroundColor: model.textColor, opacity: 0.2 };
+  const accent = { backgroundColor: model.accentColor };
 
-  // Shared header
   const Header = () => (
-    <div className="flex items-center gap-1.5 px-2.5 py-1.5 shrink-0" style={{ backgroundColor: model.bg, borderBottom: `1px solid ${model.accentColor}` }}>
-      <div className="h-4 w-4 flex items-center justify-center text-[7px] font-black text-white shrink-0" style={{ borderRadius: model.imgShape === "circle" ? "999px" : "4px", backgroundColor: model.primaryColor }}>
+    <div className="flex items-center gap-1.5 px-2.5 py-1.5 shrink-0"
+      style={{ backgroundColor: model.bg, borderBottom: `1px solid ${model.accentColor}` }}>
+      <div className="h-4 w-4 flex items-center justify-center text-[7px] font-black text-white shrink-0"
+        style={{ borderRadius: model.imgShape === "circle" ? "999px" : "4px", backgroundColor: model.primaryColor }}>
         {storeName.charAt(0).toUpperCase()}
       </div>
-      <div className="h-1.5 rounded-full w-10" style={{ backgroundColor: model.textColor, opacity: 0.5 }} />
+      <div className="h-1.5 rounded-full w-10" style={{ backgroundColor: model.textColor, opacity: 0.45 }} />
       <div className="flex-1" />
-      <div className="h-3 rounded-full px-1.5 text-[5px] font-bold flex items-center" style={{ backgroundColor: model.primaryColor, color: "#fff" }}>Contacto</div>
+      <div className="h-3 rounded-full px-1.5 text-[5px] font-bold flex items-center"
+        style={{ backgroundColor: model.primaryColor, color: "#fff" }}>Contacto</div>
     </div>
   );
 
-  // Search bar
-  const Search = () => (
+  const SearchBar = () => (
     <div className="px-2.5 py-1 shrink-0">
-      <div className="h-3 rounded-full w-full" style={{ backgroundColor: model.accentColor }} />
+      <div className="h-3 rounded-full w-full flex items-center px-1.5 gap-1"
+        style={{ backgroundColor: model.accentColor }}>
+        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: model.primaryColor, opacity: 0.6 }} />
+        <div className="h-1 rounded-full flex-1" style={{ backgroundColor: model.textColor, opacity: 0.25 }} />
+      </div>
     </div>
   );
 
-  // ── OVERLAY preview: portrait 3:4 cards, text over gradient
+  /* ── OVERLAY: portrait 3:4 con texto sobre gradiente ── */
   if (model.layout === "overlay") {
+    const cols = model.isDark ? 3 : 3;
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="flex gap-1 px-2 py-1.5 flex-1 overflow-hidden">
-          {[model.primaryColor, model.accentColor, model.primaryColor].map((col, i) => (
-            <div key={i} className="flex-1 relative overflow-hidden" style={{ borderRadius: imgR, aspectRatio: "3/4" }}>
-              {/* Image simulation */}
-              <div className="absolute inset-0" style={{ backgroundColor: i % 2 === 0 ? model.primaryColor : model.accentColor, opacity: i % 2 === 0 ? 0.8 : 0.6 }} />
-              {/* Gradient overlay */}
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 40%, transparent 80%)" }} />
-              {/* Text on image */}
-              <div className="absolute bottom-0 left-0 right-0 p-1">
-                <div className="h-1 rounded-full mb-0.5 w-4/5" style={{ backgroundColor: "#fff", opacity: 0.8 }} />
-                <div className="h-1.5 rounded-full w-1/2" style={{ backgroundColor: model.primaryColor }} />
+        <div className={`flex gap-1 px-2 py-1.5 flex-1 overflow-hidden`}>
+          {Array.from({ length: cols }).map((_, i) => (
+            <div key={i} className="flex-1 relative overflow-hidden flex flex-col"
+              style={{ borderRadius: imgR }}>
+              {/* Simulated photo */}
+              <div className="flex-1" style={{
+                background: i % 2 === 0
+                  ? `linear-gradient(135deg, ${model.primaryColor}cc, ${model.accentColor}aa)`
+                  : `linear-gradient(135deg, ${model.accentColor}cc, ${model.primaryColor}88)`,
+              }} />
+              {/* Dark gradient overlay */}
+              <div className="absolute inset-0"
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82) 38%, transparent 72%)" }} />
+              {/* Sale tag on first */}
+              {i === 0 && (
+                <div className="absolute top-1.5 left-1.5">
+                  <div className="text-[4.5px] font-black px-1 py-0.5 rounded-full"
+                    style={{ backgroundColor: "#ef4444", color: "#fff" }}>OFERTA</div>
+                </div>
+              )}
+              {/* Text on bottom */}
+              <div className="absolute bottom-0 left-0 right-0 p-1.5 space-y-0.5">
+                <div className="h-1 rounded-full w-4/5" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                <div className="flex items-center justify-between">
+                  <div className="h-1.5 rounded-full w-2/5" style={mini} />
+                  <div className="h-3.5 w-3.5 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: model.primaryColor }}>
+                    <div className="h-0.5 w-0.5 bg-white rounded-full" />
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -270,23 +270,31 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── EDITORIAL preview: horizontal list rows
+  /* ── EDITORIAL: lista horizontal estilo Net-a-Porter ── */
   if (model.layout === "editorial") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="flex-1 overflow-hidden px-2 py-1.5 space-y-1.5">
+        <div className="flex-1 overflow-hidden px-2 py-1.5 space-y-1">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="flex gap-2 items-center py-1" style={{ borderBottom: `1px solid ${model.accentColor}` }}>
-              {/* Square image */}
-              <div className="shrink-0" style={{ width: "30px", height: "30px", borderRadius: imgR, backgroundColor: i === 0 ? model.primaryColor : model.accentColor, opacity: i === 0 ? 0.9 : 0.7 }} />
-              {/* Text stack */}
-              <div className="flex-1 space-y-1">
-                <div className="h-1.5 rounded-full w-3/4" style={{ backgroundColor: model.textColor, opacity: 0.5 }} />
-                <div className="h-1 rounded-full w-full" style={{ backgroundColor: model.textColor, opacity: 0.25 }} />
+            <div key={i} className="flex gap-2 items-center py-1.5"
+              style={{ borderBottom: `1px solid ${model.accentColor}` }}>
+              {/* Imagen cuadrada */}
+              <div className="shrink-0 relative overflow-hidden"
+                style={{ width: "32px", height: "32px", borderRadius: model.isDark ? "2px" : imgR }}>
+                <div className="absolute inset-0" style={{
+                  background: i === 0
+                    ? `linear-gradient(135deg, ${model.primaryColor}, ${model.accentColor}88)`
+                    : `linear-gradient(135deg, ${model.accentColor}, ${model.primaryColor}55)`,
+                }} />
               </div>
-              {/* Price */}
-              <div className="shrink-0 h-2 rounded-full w-6" style={{ backgroundColor: model.primaryColor, opacity: 0.9 }} />
+              {/* Texto */}
+              <div className="flex-1 space-y-1">
+                <div className="h-1.5 rounded-full" style={{ width: i === 0 ? "80%" : i === 1 ? "65%" : "70%", backgroundColor: model.textColor, opacity: 0.6 }} />
+                <div className="h-1 rounded-full w-full" style={{ backgroundColor: model.textColor, opacity: 0.2 }} />
+              </div>
+              {/* Precio */}
+              <div className="shrink-0 h-2 rounded-full w-7" style={{ ...mini }} />
             </div>
           ))}
         </div>
@@ -294,29 +302,42 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── HERO preview: wide banner + small 4-col grid
+  /* ── HERO: banner panorámico + mini grid con imágenes circulares ── */
   if (model.layout === "hero") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="px-2 pt-1.5 shrink-0">
+        <div className="px-2 pt-1 shrink-0">
           {/* Hero banner */}
-          <div className="relative w-full overflow-hidden mb-1.5" style={{ height: "56px", borderRadius: imgR }}>
-            <div className="absolute inset-0" style={{ backgroundColor: model.primaryColor, opacity: 0.8 }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.6) 40%, transparent)" }} />
-            <div className="absolute bottom-0 left-0 p-1.5">
-              <div className="h-1 rounded-full w-12 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.5 }} />
-              <div className="h-2 rounded-full w-8" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+          <div className="relative w-full overflow-hidden mb-1.5" style={{ height: "58px", borderRadius: imgR === "999px" ? "16px" : imgR }}>
+            <div className="absolute inset-0"
+              style={{ background: `linear-gradient(135deg, ${model.primaryColor}dd, ${model.accentColor}99)` }} />
+            <div className="absolute inset-0"
+              style={{ background: "linear-gradient(to right, rgba(0,0,0,0.55) 35%, transparent)" }} />
+            <div className="absolute top-1.5 left-2 text-[5px] font-bold tracking-widest uppercase"
+              style={{ color: model.primaryColor, backgroundColor: "#fff", padding: "1px 4px", borderRadius: "3px" }}>Destacado</div>
+            <div className="absolute bottom-0 left-0 p-2 space-y-0.5">
+              <div className="h-1.5 rounded-full w-14" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-2 rounded-full w-10" style={{ backgroundColor: "#fff", opacity: 0.6 }} />
             </div>
+            <div className="absolute bottom-2 right-2 h-3.5 px-2 rounded-full flex items-center text-[5px] font-bold"
+              style={{ backgroundColor: model.primaryColor, color: "#fff" }}>Añadir</div>
           </div>
         </div>
-        {/* Small grid */}
+        {/* Grid círculos */}
         <div className="flex gap-1 px-2 pb-1.5 flex-1">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex-1 flex flex-col gap-0.5 overflow-hidden" style={{ backgroundColor: model.cardBg, borderRadius: imgR, padding: "4px" }}>
-              <div style={{ ...muted, height: "22px", borderRadius: imgR, backgroundColor: i === 0 ? model.primaryColor : model.accentColor, opacity: 0.65 }} />
+            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className="w-full" style={{
+                aspectRatio: "1/1",
+                borderRadius: "999px",
+                background: i % 2 === 0
+                  ? `${model.primaryColor}cc`
+                  : `${model.accentColor}dd`,
+                border: `1.5px solid ${model.accentColor}`,
+              }} />
               <div className="h-1 rounded-full w-4/5" style={{ ...muted }} />
-              <div className="h-1.5 rounded-full w-1/2" style={{ ...mini }} />
+              <div className="h-1.5 rounded-full w-3/5" style={{ ...mini }} />
             </div>
           ))}
         </div>
@@ -324,30 +345,41 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── MAGAZINE preview: wide panoramic banner + 2 portrait cards
+  /* ── MAGAZINE: full-width banner + pares 3:4 ── */
   if (model.layout === "magazine") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="px-2 pt-1.5 space-y-1 flex-1 overflow-hidden">
-          {/* Wide banner */}
-          <div className="relative overflow-hidden" style={{ height: "40px" }}>
-            <div className="absolute inset-0" style={{ backgroundColor: model.primaryColor, opacity: 0.7 }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }} />
+        <div className="flex-1 overflow-hidden space-y-0.5 px-0 pt-1">
+          {/* Full-width editorial banner */}
+          <div className="relative overflow-hidden mx-0" style={{ height: "44px" }}>
+            <div className="absolute inset-0"
+              style={{ background: `linear-gradient(90deg, ${model.primaryColor}cc, ${model.accentColor}88)` }} />
+            <div className="absolute inset-0"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }} />
+            <div className="absolute top-1 left-2 text-[4.5px] font-bold tracking-[0.3em] uppercase"
+              style={{ color: model.isDark ? model.primaryColor : "#fff", opacity: 0.7 }}>Editorial</div>
             <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
-              <div className="h-1.5 rounded-full w-16" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
-              <div className="h-3 rounded px-1 text-[5px] flex items-center font-bold" style={{ backgroundColor: "#fff", color: model.bg }}>VER</div>
+              <div className="h-1.5 rounded-sm w-20" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-3 px-1.5 flex items-center text-[4px] font-bold"
+                style={{ border: "0.5px solid rgba(255,255,255,0.5)", color: "#fff" }}>VER</div>
             </div>
           </div>
-          {/* 2 portrait cards side-by-side */}
-          <div className="flex gap-1 flex-1 pb-1">
+          {/* 2 columnas 3:4 */}
+          <div className="flex gap-0.5 flex-1 pb-1 px-0">
             {[0, 1].map((i) => (
-              <div key={i} className="flex-1 relative overflow-hidden" style={{ borderRadius: "2px" }}>
-                <div className="absolute inset-0" style={{ backgroundColor: i === 0 ? model.accentColor : model.primaryColor, opacity: 0.65 }} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent 60%)" }} />
-                <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div className="h-1 rounded-full w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.8 }} />
-                  <div className="h-1.5 rounded-full w-1/2" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div key={i} className="flex-1 relative overflow-hidden" style={{ minHeight: "70px" }}>
+                <div className="absolute inset-0"
+                  style={{
+                    background: i === 0
+                      ? `linear-gradient(160deg, ${model.accentColor}cc, ${model.primaryColor}88)`
+                      : `linear-gradient(160deg, ${model.primaryColor}aa, ${model.accentColor}cc)`,
+                  }} />
+                <div className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 40%, transparent)" }} />
+                <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                  <div className="h-1 rounded-sm w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                  <div className="h-1.5 rounded-sm w-1/2" style={{ backgroundColor: "#fff", opacity: 0.5 }} />
                 </div>
               </div>
             ))}
@@ -357,30 +389,46 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── TILES preview: 1 wide banner + 2 squares below
+  /* ── TILES: 1 banner ancho + 2 cuadros ── */
   if (model.layout === "tiles") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="px-2 pt-1.5 space-y-1 flex-1 overflow-hidden">
-          {/* Wide tile */}
-          <div className="relative overflow-hidden w-full" style={{ height: "52px", borderRadius: imgR }}>
-            <div className="absolute inset-0" style={{ backgroundColor: model.primaryColor, opacity: 0.85 }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.6) 40%, transparent)" }} />
-            <div className="absolute bottom-0 left-0 p-2">
-              <div className="h-2 rounded-full w-20 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
-              <div className="h-1.5 rounded-full w-12" style={{ backgroundColor: model.primaryColor }} />
+        <div className="px-2 pt-1 space-y-1 flex-1 overflow-hidden">
+          {/* Banner ancho */}
+          <div className="relative overflow-hidden w-full" style={{ height: "54px", borderRadius: imgR }}>
+            <div className="absolute inset-0"
+              style={{ background: `linear-gradient(120deg, ${model.primaryColor}ee, ${model.accentColor}99)` }} />
+            <div className="absolute inset-0"
+              style={{ background: "linear-gradient(to right, rgba(0,0,0,0.55) 30%, transparent)" }} />
+            {/* Glass tag */}
+            <div className="absolute top-2 right-2 h-4 px-2 flex items-center rounded text-[4.5px] font-bold"
+              style={{ backgroundColor: model.primaryColor, color: "#000", opacity: 0.9 }}>NUEVO</div>
+            <div className="absolute bottom-0 left-0 p-2 space-y-0.5">
+              <div className="h-1.5 rounded-full w-20" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="flex items-center gap-1">
+                <div className="h-2 rounded-full w-10" style={{ backgroundColor: "#fff", opacity: 0.5 }} />
+              </div>
             </div>
           </div>
-          {/* 2 squares */}
+          {/* 2 cuadros */}
           <div className="flex gap-1 flex-1 pb-1">
             {[0, 1].map((i) => (
-              <div key={i} className="flex-1 relative overflow-hidden" style={{ borderRadius: imgR, minHeight: "50px" }}>
-                <div className="absolute inset-0" style={{ backgroundColor: i === 0 ? model.accentColor : model.primaryColor, opacity: 0.75 }} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 40%, transparent)" }} />
-                <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div className="h-1 rounded-full w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.8 }} />
-                  <div className="h-1.5 rounded-full w-1/2" style={{ backgroundColor: model.primaryColor }} />
+              <div key={i} className="flex-1 relative overflow-hidden" style={{ borderRadius: imgR, minHeight: "52px" }}>
+                <div className="absolute inset-0"
+                  style={{
+                    background: i === 0
+                      ? `linear-gradient(145deg, ${model.accentColor}dd, ${model.primaryColor}88)`
+                      : `linear-gradient(145deg, ${model.primaryColor}99, ${model.accentColor}cc)`,
+                  }} />
+                <div className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 35%, transparent)" }} />
+                <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                  <div className="h-1 rounded-full w-3/4" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                  <div className="flex items-center justify-between mt-0.5">
+                    <div className="h-1.5 rounded-full w-2/5" style={{ ...mini }} />
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: model.primaryColor, opacity: 0.9 }} />
+                  </div>
                 </div>
               </div>
             ))}
@@ -390,31 +438,44 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── SPOTLIGHT preview: 1 tall left + 2 stacked right
+  /* ── SPOTLIGHT: 1 grande izquierda + 2 apilados derecha ── */
   if (model.layout === "spotlight") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="flex gap-1 px-2 pb-2 pt-1.5 flex-1 overflow-hidden">
-          {/* Large left card */}
+        <div className="flex gap-1 px-2 pb-2 pt-1 flex-1 overflow-hidden">
+          {/* Grande izquierda */}
           <div className="flex-1 relative overflow-hidden" style={{ borderRadius: imgR }}>
-            <div className="absolute inset-0" style={{ backgroundColor: model.primaryColor, opacity: 0.85 }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 30%, rgba(0,0,0,0.1) 70%)" }} />
-            <div className="absolute bottom-0 left-0 right-0 p-1.5">
-              <div className="h-1 rounded-full w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.5 }} />
-              <div className="h-2 rounded-full w-1/2 mb-1" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
-              <div className="h-1.5 rounded-full w-8" style={{ backgroundColor: model.primaryColor }} />
+            <div className="absolute inset-0"
+              style={{ background: `linear-gradient(150deg, ${model.primaryColor}dd, ${model.accentColor}99)` }} />
+            <div className="absolute inset-0"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.78) 28%, rgba(0,0,0,0.08) 70%)" }} />
+            <div className="absolute top-2 left-2 text-[4.5px] font-bold tracking-widest uppercase"
+              style={{ color: model.primaryColor }}>Destacado</div>
+            <div className="absolute bottom-0 left-0 right-0 p-2 space-y-0.5">
+              <div className="h-1 rounded-full w-4/5" style={{ backgroundColor: "#fff", opacity: 0.55 }} />
+              <div className="h-1.5 rounded-full w-3/5" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-2.5 rounded-full w-8 mt-0.5" style={{ ...mini }} />
             </div>
           </div>
-          {/* 2 stacked right */}
+          {/* 2 apilados derecha */}
           <div className="flex-1 flex flex-col gap-1">
             {[0, 1].map((i) => (
               <div key={i} className="flex-1 relative overflow-hidden" style={{ borderRadius: imgR }}>
-                <div className="absolute inset-0" style={{ backgroundColor: i === 0 ? model.accentColor : model.primaryColor, opacity: 0.7 }} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 40%, transparent)" }} />
-                <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div className="h-1 rounded-full w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.8 }} />
-                  <div className="h-1.5 rounded-full w-1/2" style={{ backgroundColor: model.primaryColor }} />
+                <div className="absolute inset-0"
+                  style={{
+                    background: i === 0
+                      ? `linear-gradient(120deg, ${model.accentColor}cc, ${model.primaryColor}88)`
+                      : `linear-gradient(120deg, ${model.primaryColor}aa, ${model.accentColor}bb)`,
+                  }} />
+                <div className="absolute inset-0"
+                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 38%, transparent)" }} />
+                <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                  <div className="h-1 rounded-full w-3/4" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                  <div className="flex justify-between items-center mt-0.5">
+                    <div className="h-1.5 rounded-full w-2/5" style={{ ...mini }} />
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: model.primaryColor }} />
+                  </div>
                 </div>
               </div>
             ))}
@@ -424,28 +485,36 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── DIAGONAL preview: slanted image + text row
+  /* ── DIAGONAL: cortes diagonales estilo Nike ── */
   if (model.layout === "diagonal") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
-        <div className="flex-1 overflow-hidden space-y-0">
+        <div className="flex-1 overflow-hidden">
           {[0, 1].map((i) => (
-            <div key={i} className="flex" style={{ height: "45%" }}>
-              {/* Slanted image block */}
+            <div key={i} className="flex" style={{ height: "46%" }}>
+              {/* Bloque con clip diagonal */}
               <div className="flex-1 relative overflow-hidden" style={{
-                clipPath: i % 2 === 0 ? "polygon(0 0, 100% 0, 100% 80%, 0 100%)" : "polygon(0 0, 100% 0, 100% 100%, 0 80%)",
-                backgroundColor: i === 0 ? model.primaryColor : model.accentColor,
-                opacity: 0.85,
+                clipPath: i % 2 === 0
+                  ? "polygon(0 0, 100% 0, 100% 80%, 0 100%)"
+                  : "polygon(0 0, 100% 0, 100% 100%, 0 80%)",
+                background: i === 0
+                  ? `linear-gradient(120deg, ${model.primaryColor}dd, ${model.accentColor}99)`
+                  : `linear-gradient(120deg, ${model.accentColor}bb, ${model.primaryColor}cc)`,
               }}>
-                {/* Sale tag sim */}
-                <div className="absolute top-1 left-2 text-[5px] font-black px-1" style={{ backgroundColor: model.primaryColor, color: "#000" }}>SALE</div>
+                {/* Tag diagonal */}
+                <div className="absolute top-1.5 left-2 text-[4.5px] font-black px-1.5 py-0.5 tracking-widest"
+                  style={{ backgroundColor: model.primaryColor, color: "#000" }}>
+                  {i === 0 ? "NEW" : "SALE"}
+                </div>
               </div>
-              {/* Text col */}
-              <div className="w-2/5 px-2 py-1 flex flex-col justify-center gap-0.5" style={{ backgroundColor: model.cardBg }}>
+              {/* Columna de texto */}
+              <div className="w-2/5 px-2 py-1.5 flex flex-col justify-center gap-1"
+                style={{ backgroundColor: model.cardBg }}>
                 <div className="h-1 rounded-full w-full" style={{ ...muted }} />
-                <div className="h-2 rounded-full w-3/4" style={{ backgroundColor: model.primaryColor, opacity: 0.9 }} />
-                <div className="h-3 rounded w-10 mt-0.5" style={{ backgroundColor: model.primaryColor }} />
+                <div className="h-2 rounded-full w-3/4" style={{ ...mini }} />
+                <div className="h-3 rounded w-12 mt-0.5 flex items-center justify-center text-[4px] font-black"
+                  style={{ backgroundColor: model.primaryColor, color: "#000" }}>AÑADIR</div>
               </div>
             </div>
           ))}
@@ -454,23 +523,31 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── ARCH preview: arched portrait frames in a row
+  /* ── ARCH: marcos en arco, lujo y perfumería ── */
   if (model.layout === "arch") {
     return (
-      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
         <Header />
         <div className="flex gap-2 px-2 py-2 flex-1 overflow-hidden items-start">
           {[0, 1, 2].map((i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              {/* Arch shape */}
+              {/* Marco arco */}
               <div className="relative overflow-hidden w-full" style={{
                 aspectRatio: "3/4",
-                borderRadius: "999px 999px 4px 4px",
-                backgroundColor: i === 0 ? model.primaryColor : model.accentColor,
-                opacity: i === 0 ? 0.85 : 0.65,
+                borderRadius: "999px 999px 6px 6px",
+                background: i === 0
+                  ? `linear-gradient(160deg, ${model.primaryColor}cc, ${model.accentColor}88)`
+                  : i === 1
+                    ? `linear-gradient(160deg, ${model.accentColor}aa, ${model.primaryColor}77)`
+                    : `linear-gradient(160deg, ${model.primaryColor}88, ${model.accentColor}cc)`,
                 border: `1px solid ${model.accentColor}`,
-              }} />
-              {/* Caption lines */}
+                opacity: i === 0 ? 1 : 0.75,
+              }}>
+                {/* Highlight superior */}
+                <div className="absolute top-0 left-0 right-0 h-1/3"
+                  style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.15), transparent)" }} />
+              </div>
+              {/* Leyenda */}
               <div className="h-1 rounded-full w-4/5" style={{ ...muted }} />
               <div className="h-1.5 rounded-full w-1/2" style={{ ...mini }} />
             </div>
@@ -480,20 +557,109 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
     );
   }
 
-  // ── GRID preview (default): 2×2 cards
+  /* ── GRID (default): rejilla 2×3 con tarjetas ── */
   return (
-    <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg, fontFamily: "Inter, sans-serif" }}>
+    <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
       <Header />
-      <Search />
+      <SearchBar />
       <div className="grid grid-cols-3 gap-1 px-2 pb-2 flex-1 overflow-hidden">
         {[0, 1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex flex-col gap-0.5 overflow-hidden" style={{ backgroundColor: model.cardBg, borderRadius: imgR, padding: "4px", border: model.id === "clasico" || model.id === "corporativo" ? `1px solid ${model.accentColor}` : "none" }}>
-            <div style={{ height: "28px", borderRadius: imgR, backgroundColor: i % 3 === 0 ? model.primaryColor : model.accentColor, opacity: i % 3 === 0 ? 0.85 : 0.65 }} />
+          <div key={i} className="flex flex-col gap-0.5 overflow-hidden"
+            style={{
+              backgroundColor: model.cardBg,
+              borderRadius: imgR,
+              padding: "4px",
+              border: `1px solid ${model.accentColor}`,
+            }}>
+            {/* Imagen simulada */}
+            <div style={{
+              height: "28px",
+              borderRadius: imgR === "999px" ? "999px" : "calc(" + imgR + " - 2px)",
+              background: i % 3 === 0
+                ? `${model.primaryColor}cc`
+                : `${model.accentColor}dd`,
+            }} />
             <div className="h-1 rounded-full w-4/5" style={{ ...muted }} />
             <div className="h-1.5 rounded-full w-1/2" style={{ ...mini }} />
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+
+/* ─────────────────────────────────────────────────────────
+   COLOR SWATCH — reutilizable para marca y fondo
+───────────────────────────────────────────────────────── */
+function ColorSwatch({
+  colors, selected, onSelect, allowCustom = false, customLabel = "Personalizado",
+}: {
+  colors: { id: string; name: string; hex: string; display: string }[];
+  selected: string;
+  onSelect: (hex: string) => void;
+  allowCustom?: boolean;
+  customLabel?: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2.5 items-center">
+      {colors.map((c) => {
+        const active = selected === c.hex;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            title={c.name}
+            onClick={() => onSelect(c.hex)}
+            className={cn(
+              "relative h-9 w-9 rounded-full border-2 transition-all hover:scale-110",
+              active
+                ? "border-foreground ring-2 ring-foreground/20 scale-110 shadow-lg"
+                : "border-transparent shadow-sm"
+            )}
+            style={{ backgroundColor: c.display }}
+          >
+            {active && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Check className="h-3.5 w-3.5 drop-shadow"
+                  style={{ color: c.hex === "" ? "#64748b" : c.hex === "#ffffff" || c.hex === "#fdfaf5" || c.hex === "#fef9ef" || c.hex === "#fff5f7" || c.hex === "#f0fefb" || c.hex === "#eff6ff" || c.hex === "#f5f3ff" || c.hex === "#faf5eb" || c.hex === "#f5f5f4" || c.hex === "#f8fafc" ? "#334155" : "#ffffff" }} />
+              </div>
+            )}
+          </button>
+        );
+      })}
+
+      {allowCustom && (
+        <div className="flex items-center gap-2 border-l pl-2.5 ml-0.5" style={{ borderColor: "var(--border)" }}>
+          <div
+            className={cn(
+              "relative h-9 w-9 rounded-full overflow-hidden transition-all hover:scale-110 shrink-0 shadow-sm border-2",
+              selected && !colors.find(c => c.hex === selected)
+                ? "border-foreground ring-2 ring-foreground/20 scale-110 shadow-lg"
+                : "border-dashed border-border"
+            )}
+            title={customLabel}
+          >
+            <input
+              type="color"
+              value={selected || "#000000"}
+              onChange={(e) => onSelect(e.target.value)}
+              className="absolute -inset-4 h-20 w-20 cursor-pointer"
+            />
+            {selected && !colors.find(c => c.hex === selected) && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <Check className="h-3.5 w-3.5 drop-shadow text-white mix-blend-difference" />
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold">{customLabel}</span>
+            {selected && !colors.find(c => c.hex === selected) && (
+              <span className="text-[10px] font-mono text-muted-foreground uppercase">{selected}</span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -510,29 +676,33 @@ function DisenoPage() {
   const [activeTab, setActiveTab] = useState(String(PLAN_LEVELS[store.plan]));
   const [selectedModel, setSelectedModel] = useState(store.model || "minimalista");
   const [brandColor, setBrandColor] = useState(store.brandColor || "");
+  const [bgColor, setBgColor] = useState((store as any).bgColor || "");
   const userLevel = PLAN_LEVELS[store.plan];
 
   const isDirty =
     selectedModel !== (store.model || "minimalista") ||
-    brandColor !== (store.brandColor || "");
+    brandColor !== (store.brandColor || "") ||
+    bgColor !== ((store as any).bgColor || "");
 
   const save = () => {
     update(store.id, {
       model: selectedModel as any,
       brandColor: brandColor || undefined,
-    });
+      bgColor: bgColor || undefined,
+    } as any);
     toast.success("🎨 Diseño aplicado a tu catálogo");
   };
 
   const planGroups = [
-    { label: "Gratis — Plan Semilla", level: 0, color: "text-gray-600 bg-gray-100" },
-    { label: "Plan Emprendedor", level: 1, color: "text-blue-700 bg-blue-50 border border-blue-200" },
-    { label: "Plan Pro", level: 2, color: "text-purple-700 bg-purple-50 border border-purple-200" },
-    { label: "Plan Ilimitado", level: 3, color: "text-amber-700 bg-amber-50 border border-amber-200" },
+    { label: "Gratis — Plan Semilla",  level: 0, color: "text-gray-600 bg-gray-100" },
+    { label: "Plan Emprendedor",        level: 1, color: "text-blue-700 bg-blue-50 border border-blue-200" },
+    { label: "Plan Pro",                level: 2, color: "text-purple-700 bg-purple-50 border border-purple-200" },
+    { label: "Plan Ilimitado",          level: 3, color: "text-amber-700 bg-amber-50 border border-amber-200" },
   ];
 
   return (
     <div className="max-w-5xl pb-24 space-y-10">
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -540,87 +710,88 @@ function DisenoPage() {
           Diseño del Catálogo
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Escoge el modelo visual y el color de marca. Los cambios se aplican en tu catálogo público al instante.
+          Escoge el modelo visual, el color de marca y el fondo. Los cambios se aplican al instante en tu catálogo público.
         </p>
       </div>
 
-      {/* ── Color de Marca ───────────────────────────── */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <h2 className="font-bold text-base">Color de Marca</h2>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-            Opcional — sobreescribe el color principal del modelo
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {BRAND_COLORS.map((c) => {
-            const active = brandColor === c.hex;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                title={c.name}
-                onClick={() => setBrandColor(c.hex)}
-                className={cn(
-                  "relative h-10 w-10 rounded-full border-2 transition-all hover:scale-110",
-                  active
-                    ? "border-foreground ring-2 ring-foreground/20 scale-110 shadow-lg"
-                    : "border-transparent shadow-sm"
-                )}
-                style={{ backgroundColor: c.display }}
-              >
-                {active && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Check
-                      className="h-4 w-4 drop-shadow"
-                      style={{ color: c.hex === "" ? "#64748b" : "#ffffff" }}
-                    />
-                  </div>
-                )}
-              </button>
-            );
-          })}
-          
-          {/* ── Custom Color Picker ── */}
-          <div className="flex items-center gap-2 border-l pl-3 ml-1" style={{ borderColor: "var(--border)" }}>
-            <div 
-              className={cn(
-                "relative h-10 w-10 rounded-full overflow-hidden transition-all hover:scale-110 flex-shrink-0 shadow-sm border-2",
-                brandColor && !BRAND_COLORS.find(c => c.hex === brandColor) 
-                  ? "border-foreground ring-2 ring-foreground/20 scale-110 shadow-lg" 
-                  : "border-transparent"
-              )}
-              title="Color personalizado"
-            >
-              <input
-                type="color"
-                value={brandColor || "#000000"}
-                onChange={(e) => setBrandColor(e.target.value)}
-                className="absolute -inset-4 h-20 w-20 cursor-pointer"
-              />
-              {brandColor && !BRAND_COLORS.find(c => c.hex === brandColor) && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <Check className="h-4 w-4 drop-shadow text-white mix-blend-difference" />
-                </div>
-              )}
+      {/* ── Personalización de colores ─────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* Color de Marca */}
+        <div className="rounded-2xl border bg-card p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Palette className="h-4 w-4 text-primary" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold">Personalizado</span>
-              {brandColor && !BRAND_COLORS.find(c => c.hex === brandColor) && (
-                <span className="text-[10px] font-mono text-muted-foreground uppercase">{brandColor}</span>
-              )}
+            <div>
+              <h2 className="font-bold text-sm">Color de Acento</h2>
+              <p className="text-[11px] text-muted-foreground">Botones, precios y elementos clave</p>
             </div>
+            {brandColor && (
+              <button onClick={() => setBrandColor("")}
+                className="ml-auto text-[10px] text-destructive hover:underline font-medium">Quitar</button>
+            )}
           </div>
+          <ColorSwatch
+            colors={BRAND_COLORS}
+            selected={brandColor}
+            onSelect={setBrandColor}
+            allowCustom
+            customLabel="Hex personalizado"
+          />
         </div>
-        {brandColor && (
-          <p className="text-xs text-muted-foreground">
-            Color personalizado activo: <span className="font-mono font-bold">{brandColor}</span>{" "}
-            <button onClick={() => setBrandColor("")} className="text-destructive hover:underline ml-1">Quitar</button>
-          </p>
-        )}
+
+        {/* Color de Fondo */}
+        <div className="rounded-2xl border bg-card p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Image className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-bold text-sm">Color de Fondo</h2>
+              <p className="text-[11px] text-muted-foreground">Cambia el fondo de cualquier modelo</p>
+            </div>
+            {bgColor && (
+              <button onClick={() => setBgColor("")}
+                className="ml-auto text-[10px] text-destructive hover:underline font-medium">Quitar</button>
+            )}
+          </div>
+          <ColorSwatch
+            colors={BG_COLORS}
+            selected={bgColor}
+            onSelect={setBgColor}
+            allowCustom
+            customLabel="Fondo personalizado"
+          />
+        </div>
       </div>
 
-      {/* ── Tabs Navigation ─────────────────────────── */}
+      {/* Vista previa del combo seleccionado */}
+      {(brandColor || bgColor) && (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-4">
+          <div className="flex gap-2 shrink-0">
+            {bgColor && (
+              <div className="h-8 w-8 rounded-full border-2 border-primary/30 shadow"
+                style={{ backgroundColor: bgColor }} />
+            )}
+            {brandColor && (
+              <div className="h-8 w-8 rounded-full border-2 border-primary/30 shadow"
+                style={{ backgroundColor: brandColor }} />
+            )}
+          </div>
+          <div className="text-sm">
+            <span className="font-semibold">Personalización activa</span>
+            <span className="text-muted-foreground ml-2">
+              {bgColor && `Fondo: ${bgColor}`}
+              {bgColor && brandColor && " · "}
+              {brandColor && `Acento: ${brandColor}`}
+            </span>
+          </div>
+          <Sparkles className="h-4 w-4 text-primary ml-auto shrink-0" />
+        </div>
+      )}
+
+      {/* ── Tabs por plan ─────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible">
           <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-muted p-1 text-muted-foreground w-auto min-w-full sm:min-w-0">
@@ -641,9 +812,9 @@ function DisenoPage() {
           const locked = group.level > userLevel;
 
           return (
-            <TabsContent key={group.level} value={String(group.level)} className="mt-8 animate-in fade-in-50 duration-300">
+            <TabsContent key={group.level} value={String(group.level)}
+              className="mt-8 animate-in fade-in-50 duration-300">
               <div className="space-y-6">
-                {/* Header info */}
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="font-bold text-lg">{group.label}</h2>
@@ -654,11 +825,13 @@ function DisenoPage() {
                     )}
                   </div>
                   {locked && (
-                    <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest bg-muted border-none">Bloqueado</Badge>
+                    <Badge variant="outline"
+                      className="text-[10px] font-bold uppercase tracking-widest bg-muted border-none">
+                      Bloqueado
+                    </Badge>
                   )}
                 </div>
 
-                {/* Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {groupModels.map((model) => {
                     const isLocked = model.planLevel > userLevel;
@@ -672,32 +845,36 @@ function DisenoPage() {
                         className={cn(
                           "group relative rounded-2xl overflow-hidden border-2 transition-all duration-300",
                           isLocked
-                            ? "opacity-60 cursor-not-allowed grayscale-[30%]"
+                            ? "opacity-55 cursor-not-allowed grayscale-[25%]"
                             : "cursor-pointer hover:shadow-2xl hover:-translate-y-1",
                           isSelected
                             ? "border-primary shadow-2xl shadow-primary/20 -translate-y-1"
                             : "border-border hover:border-primary/40 bg-card"
                         )}
                       >
-                        {/* Status overlays */}
+                        {/* Check seleccionado */}
                         {isSelected && !isLocked && (
-                          <div className="absolute top-4 right-4 z-20 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
-                            <Check className="h-5 w-5" />
-                          </div>
-                        )}
-                        {isLocked && (
-                          <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
-                             <div className="h-10 w-10 rounded-full bg-white/90 shadow-xl flex items-center justify-center">
-                               <Lock className="h-5 w-5 text-muted-foreground" />
-                             </div>
-                             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Premium</span>
+                          <div className="absolute top-3 right-3 z-20 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
+                            <Check className="h-4 w-4" />
                           </div>
                         )}
 
-                        {/* Preview */}
+                        {/* Candado */}
+                        {isLocked && (
+                          <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
+                            <div className="h-10 w-10 rounded-full bg-white/90 shadow-xl flex items-center justify-center">
+                              <Lock className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                              Premium
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Preview visual */}
                         <div className="relative">
                           {model.badge && !isLocked && (
-                            <div className="absolute top-4 left-4 z-20">
+                            <div className="absolute top-3 left-3 z-20">
                               <Badge className="bg-black/40 backdrop-blur-md text-white border-none text-[8px] font-bold tracking-widest uppercase py-1 px-2">
                                 {model.badge}
                               </Badge>
@@ -706,12 +883,14 @@ function DisenoPage() {
                           <ModelPreview model={model} storeName={store.name} />
                         </div>
 
-                        {/* Info Footer */}
+                        {/* Footer info */}
                         <div className="p-4 border-t bg-card/50 flex flex-col gap-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-sm">{model.name}</span>
                             {isActive && (
-                              <Badge className="h-5 px-1.5 text-[9px] font-bold bg-primary/10 text-primary border-none">ACTIVO</Badge>
+                              <Badge className="h-5 px-1.5 text-[9px] font-bold bg-primary/10 text-primary border-none">
+                                ACTIVO
+                              </Badge>
                             )}
                           </div>
                           <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
@@ -749,7 +928,7 @@ function DisenoPage() {
         </div>
       )}
 
-      {/* ── Sticky save button ──────────────────────── */}
+      {/* ── Sticky save ──────────────────────────────── */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3 items-center">
         <div className="bg-card rounded-full shadow-2xl border px-4 py-2 flex items-center gap-4">
           {isDirty ? (
@@ -766,7 +945,10 @@ function DisenoPage() {
           ) : (
             <span className="text-sm text-muted-foreground flex items-center gap-2 px-2">
               <Sparkles className="h-4 w-4 text-primary" />
-              Diseño guardado — <span className="font-bold text-foreground">{MODELS.find(m => m.id === selectedModel)?.name}</span>
+              Diseño guardado —{" "}
+              <span className="font-bold text-foreground">
+                {MODELS.find(m => m.id === selectedModel)?.name}
+              </span>
             </span>
           )}
         </div>
