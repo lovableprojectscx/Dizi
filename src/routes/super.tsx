@@ -16,7 +16,10 @@ import { LayoutDashboard, Store as StoreIcon, ShieldCheck, LogOut } from "lucide
 import { getActiveSession, getUserRole, signOut } from "@/lib/auth";
 
 export const Route = createFileRoute("/super")({
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
+    // Permitir acceso a la página de login sin estar autenticado
+    if (location.pathname === "/super/login") return;
+
     const session = await getActiveSession();
     const role = getUserRole(session?.user ?? null);
     if (!session || role !== "super_admin") {
