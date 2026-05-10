@@ -175,7 +175,7 @@ function RegisterPage() {
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
           name: storeName || "Mi Nueva Tienda",
-          phone: storePhone || "51999999999",
+          phone: storePhone.startsWith('51') ? storePhone : `51${storePhone}`,
           countryCode: "51",
           plan: plan as PlanId,
           active: true,
@@ -318,7 +318,7 @@ function RegisterPage() {
                     <input 
                       type="text" 
                       value={storeLink}
-                      onChange={(e) => setStoreLink(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                      onChange={(e) => setStoreLink(e.target.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))}
                       className="flex h-12 w-full bg-transparent px-3 py-1 text-sm focus-visible:outline-none"
                       placeholder="novedades-maria"
                       required
@@ -327,14 +327,22 @@ function RegisterPage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">WhatsApp de Ventas</label>
-                  <input 
-                    type="tel" 
-                    value={storePhone}
-                    onChange={(e) => setStorePhone(e.target.value)}
-                    className="flex h-12 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                    placeholder="+51 999 888 777"
-                    required
-                  />
+                  <div className="flex rounded-xl border border-input shadow-sm focus-within:ring-1 focus-within:ring-primary overflow-hidden">
+                    <span className="flex items-center px-3 bg-muted/50 text-muted-foreground text-sm border-r">
+                      +51
+                    </span>
+                    <input 
+                      type="tel" 
+                      value={storePhone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "");
+                        if (val.length <= 9) setStorePhone(val);
+                      }}
+                      className="flex h-12 w-full bg-transparent px-3 py-1 text-sm focus-visible:outline-none"
+                      placeholder="999 888 777"
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button type="button" variant="outline" className="h-12 w-12 shrink-0" onClick={() => setStep(1)}>

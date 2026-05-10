@@ -203,27 +203,29 @@ function ProductsPage() {
                       <div>
                         <Label className="text-[10px] uppercase font-bold text-muted-foreground">Precio Original (Tachado)</Label>
                         <Input
-                          type="number"
-                          min={0}
-                          step="0.10"
+                          type="text"
+                          inputMode="decimal"
                           placeholder="Ej: 50.00"
                           value={editing.originalPrice || ""}
-                          onChange={(e) =>
-                            setEditing({ ...editing, originalPrice: parseFloat(e.target.value) || 0 })
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9.]/g, "");
+                            if (val.split(".").length > 2) return;
+                            setEditing({ ...editing, originalPrice: val === "" ? 0 : parseFloat(val) });
+                          }}
                         />
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase font-bold text-primary">Precio de Oferta</Label>
                         <Input
-                          type="number"
-                          min={0}
-                          step="0.10"
+                          type="text"
+                          inputMode="decimal"
                           placeholder="Ej: 35.00"
                           value={editing.price}
-                          onChange={(e) =>
-                            setEditing({ ...editing, price: parseFloat(e.target.value) || 0 })
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9.]/g, "");
+                            if (val.split(".").length > 2) return;
+                            setEditing({ ...editing, price: val === "" ? 0 : parseFloat(val) });
+                          }}
                           className="border-primary/50 bg-primary/5"
                         />
                       </div>
@@ -233,13 +235,14 @@ function ProductsPage() {
                       <div>
                         <Label>Precio (S/)</Label>
                         <Input
-                          type="number"
-                          min={0}
-                          step="0.10"
+                          type="text"
+                          inputMode="decimal"
                           value={editing.price}
-                          onChange={(e) =>
-                            setEditing({ ...editing, price: parseFloat(e.target.value) || 0 })
-                          }
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9.]/g, "");
+                            if (val.split(".").length > 2) return;
+                            setEditing({ ...editing, price: val === "" ? 0 : parseFloat(val) });
+                          }}
                         />
                       </div>
                       <div>
