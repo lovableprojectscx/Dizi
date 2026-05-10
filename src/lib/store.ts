@@ -108,6 +108,8 @@ export const useApp = create<AppState>()(
       },
       addStore: async (store) => {
         set((s) => ({ stores: [...s.stores, store] }));
+        
+        // 1. Insert store
         await supabase.from("stores").insert({
           id: store.id,
           slug: store.slug,
@@ -122,6 +124,36 @@ export const useApp = create<AppState>()(
           active: store.active,
           is_published: store.isPublished,
         });
+
+        // 2. Insert initial categories
+        if (store.categories.length > 0) {
+          await supabase.from("categories").insert(
+            store.categories.map(c => ({
+              id: c.id,
+              store_id: store.id,
+              name: c.name
+            }))
+          );
+        }
+
+        // 3. Insert initial products
+        if (store.products.length > 0) {
+          await supabase.from("products").insert(
+            store.products.map(p => ({
+              id: p.id,
+              store_id: store.id,
+              category_id: p.categoryId,
+              name: p.name,
+              price: p.price,
+              original_price: p.originalPrice,
+              image: p.image,
+              description: p.description,
+              is_on_sale: p.isOnSale,
+              visible: p.visible,
+              is_sample: p.isSample,
+            }))
+          );
+        }
       },
       addInvite: (invite) =>
         set((s) => ({ invites: [...s.invites, invite] })),
