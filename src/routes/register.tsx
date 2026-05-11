@@ -135,7 +135,19 @@ function RegisterPage() {
     } else {
       setLoading(true);
       try {
-        // 1. Crear usuario en Supabase Auth
+        // 1. Validar que el link de la tienda no esté en uso ANTES de crear el usuario
+        const { data: existingStore } = await import("@/lib/supabase").then(m => 
+          m.supabase.from("stores").select("id").eq("slug", storeLink).single()
+        );
+        
+        if (existingStore) {
+          const { toast } = await import("sonner");
+          toast.error("El link de la tienda ya está en uso. Por favor, elige otro.");
+          setLoading(false);
+          return;
+        }
+
+        // 2. Crear usuario en Supabase Auth
         const { data: authData, error: authError } = await import("@/lib/supabase").then(m => 
           m.supabase.auth.signUp({
             email: email.trim(),
@@ -149,8 +161,29 @@ function RegisterPage() {
           })
         );
 
-        if (authError) throw authError;
-        if (!authData.user) throw new Error("No se pudo crear el usuario.");
+        let userId = authData.user?.id;
+
+        if (authError) {
+          // Si el usuario ya existe, intentamos loguear para ver si le falta la tienda
+          if (authError.message?.includes("already registered") || authError.status === 422) {
+            const { data: signInData, error: signInError } = await import("@/lib/supabase").then(m => 
+              m.supabase.auth.signInWithPassword({
+                email: email.trim(),
+                password: password,
+              })
+            );
+            
+            if (signInError) {
+              // Si falla el login, es que el correo existe pero la contraseña es otra
+              throw new Error("Este correo ya está registrado. Por favor, inicia sesión con tu contraseña.");
+            }
+            userId = signInData.user?.id;
+          } else {
+            throw authError;
+          }
+        }
+
+        if (!userId) throw new Error("No se pudo obtener el ID del usuario.");
 
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
         const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
@@ -169,7 +202,7 @@ function RegisterPage() {
           whatsappClicks: 0,
           model: selectedModel as any,
           brandColor: brandColor || undefined,
-          ownerId: authData.user.id,
+          ownerId: userId,
           niche: selectedNiche,
           categories: [{ id: newCategoryId, name: "Principal" }],
           products: [], // Se crea vacía como pidió el usuario

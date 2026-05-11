@@ -132,36 +132,33 @@ export const useApp = create<AppState>()(
       },
 
       addStore: async (store) => {
-        // Insert into Supabase first
-        const { error: storeError } = await supabase.from("stores").insert({
-          id: store.id,
-          slug: store.slug,
-          name: store.name,
-          phone: store.phone,
-          country_code: store.countryCode,
-          logo: store.logo,
-          plan: store.plan,
-          model: store.model,
-          brand_color: store.brandColor,
-          owner_id: store.ownerId,
-          active: store.active,
-          is_published: store.isPublished,
-          niche: store.niche,
+        // Usar RPC para creación atómica (Tienda + Categoría Inicial)
+        // Esto evita que se cree la tienda pero falle la categoría
+        const { error: rpcError } = await supabase.rpc('initialize_store', {
+          p_id: store.id,
+          p_slug: store.slug,
+          p_name: store.name,
+          p_phone: store.phone,
+          p_country_code: store.countryCode,
+          p_plan: store.plan,
+          p_owner_id: store.ownerId,
+          p_model: store.model,
+          p_niche: store.niche,
+          p_category_id: store.categories[0]?.id || uid()
         });
 
-        if (storeError) {
-          console.error("[addStore] Store insert error:", storeError);
-          throw storeError;
+        if (rpcError) {
+          console.error("[addStore] RPC error:", rpcError);
+          throw rpcError;
         }
 
-        if (store.categories.length > 0) {
+        // Si hay más categorías (poco común en registro inicial, pero por si acaso)
+        if (store.categories.length > 1) {
+          const extraCats = store.categories.slice(1);
           const { error: catError } = await supabase.from("categories").insert(
-            store.categories.map((c) => ({ id: c.id, store_id: store.id, name: c.name }))
+            extraCats.map((c) => ({ id: c.id, store_id: store.id, name: c.name }))
           );
-          if (catError) {
-            console.error("[addStore] Category insert error:", catError);
-            throw catError;
-          }
+          if (catError) console.error("[addStore] Extra categories error:", catError);
         }
 
         if (store.products.length > 0) {
