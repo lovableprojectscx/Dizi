@@ -109,6 +109,11 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     cardShadow: "hover:shadow-md", cardBorder: false, headerStyle: "clean", layout: "banner_grid",
   },
   /* ── Nuevos modelos Elite ──────────────────────────── */
+  elite: {
+    vars: { "--background": "#ffffff", "--card": "#ffffff", "--primary": "#1e1e1e", "--border": "#e5e7eb" } as any,
+    isDark: false, imgRounded: "0px", cardRounded: "0px",
+    cardShadow: "hover:shadow-xl", cardBorder: true, headerStyle: "minimal", layout: "grid",
+  },
   sunset_glow: {
     vars: { "--background": "#1a0a2e", "--card": "#2d1040", "--primary": "#fb923c", "--border": "#7c2d8e" } as any,
     isDark: true, imgRounded: "1.25rem", cardRounded: "1.5rem",
@@ -340,6 +345,29 @@ export function PublicCatalog({ store }: { store: Store }) {
           </div>
         </div>
       </header>
+
+      {/* ── Hero Banner (Only for Elite/Banner models) ── */}
+      {modelId === "elite" && store.bannerImage && (
+        <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+          <img 
+            src={store.bannerImage} 
+            alt={store.bannerTitle || store.name}
+            className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-1000"
+          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="relative z-10 text-center px-4 max-w-3xl animate-in zoom-in slide-in-from-bottom-8 duration-700">
+            {store.bannerTitle && (
+              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase mb-4 drop-shadow-2xl">
+                {store.bannerTitle}
+              </h1>
+            )}
+            <div className="h-1 w-20 bg-white mx-auto mb-6" />
+            <p className="text-white/90 text-sm md:text-lg font-medium tracking-widest uppercase drop-shadow-md">
+              Explora nuestra colección exclusiva
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* ── Product Area ──────────────────────────────── */}
       <main className="mx-auto max-w-5xl px-4 pt-6 pb-32">
