@@ -106,9 +106,6 @@ export const useApp = create<AppState>()(
       setCurrentStore: (id) => set({ currentStoreId: id }),
 
       updateStore: async (id, patch) => {
-        set((s) => ({
-          stores: s.stores.map((st) => (st.id === id ? { ...st, ...patch } : st)),
-        }));
         const dbPatch: any = {};
         if (patch.name !== undefined) dbPatch.name = patch.name;
         if (patch.phone !== undefined) dbPatch.phone = patch.phone;
@@ -117,14 +114,20 @@ export const useApp = create<AppState>()(
         if (patch.brandColor !== undefined) dbPatch.brand_color = patch.brandColor;
         if ((patch as any).bgColor !== undefined) dbPatch.bg_color = (patch as any).bgColor;
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
-        if (Object.keys(dbPatch).length > 0) {
-          const { error: updateError } = await supabase.from("stores").update(dbPatch).eq("id", id);
-          if (updateError) {
-            console.error("[updateStore] Supabase error:", updateError);
-            throw updateError;
-          } else {
-            console.log("[updateStore] OK:", dbPatch);
+        
+        try {
+          if (Object.keys(dbPatch).length > 0) {
+            const { error: updateError } = await supabase.from("stores").update(dbPatch).eq("id", id);
+            if (updateError) throw updateError;
           }
+
+          set((s) => ({
+            stores: s.stores.map((st) => (st.id === id ? { ...st, ...patch } : st)),
+          }));
+        } catch (error) {
+          console.error("[updateStore] Error:", error);
+          toast.error("No se pudo actualizar la configuración");
+          throw error;
         }
       },
 
@@ -197,132 +200,167 @@ export const useApp = create<AppState>()(
       upsertProduct: async (storeId, product) => {
         const prodId = product.id || uid();
         const p = { ...product, id: prodId };
-        set((s) => ({
-          stores: s.stores.map((st) => {
-            if (st.id !== storeId) return st;
-            const exists = st.products.some((pr) => pr.id === p.id);
-            const isNewRealProduct = !exists && !p.isSample;
-            const hasOnlySamples = st.products.length > 0 && st.products.every((pr) => pr.isSample);
-            let currentProducts = st.products;
-            if (isNewRealProduct && hasOnlySamples) currentProducts = [];
-            return {
-              ...st,
-              products: exists
-                ? currentProducts.map((pr) => (pr.id === p.id ? p : pr))
-                : [...currentProducts, p],
-            };
-          }),
-        }));
-        await supabase.from("products").upsert({
-          id: p.id, store_id: storeId, category_id: p.categoryId,
-          name: p.name, price: p.price, original_price: p.originalPrice,
-          image: p.image, description: p.description, is_on_sale: p.isOnSale,
-          visible: p.visible, is_sample: p.isSample,
-        });
+        
+        try {
+          const { error } = await supabase.from("products").upsert({
+            id: p.id, store_id: storeId, category_id: p.categoryId,
+            name: p.name, price: p.price, original_price: p.originalPrice,
+            image: p.image, description: p.description, is_on_sale: p.isOnSale,
+            visible: p.visible, is_sample: p.isSample,
+          });
+          
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) => {
+              if (st.id !== storeId) return st;
+              const exists = st.products.some((pr) => pr.id === p.id);
+              const isNewRealProduct = !exists && !p.isSample;
+              const hasOnlySamples = st.products.length > 0 && st.products.every((pr) => pr.isSample);
+              let currentProducts = st.products;
+              if (isNewRealProduct && hasOnlySamples) currentProducts = [];
+              return {
+                ...st,
+                products: exists
+                  ? currentProducts.map((pr) => (pr.id === p.id ? p : pr))
+                  : [...currentProducts, p],
+              };
+            }),
+          }));
+        } catch (error) {
+          console.error("[upsertProduct] Error:", error);
+          toast.error("Error al guardar producto");
+        }
       },
 
       deleteProduct: async (storeId, productId) => {
-        set((s) => ({
-          stores: s.stores.map((st) =>
-            st.id === storeId
-              ? { ...st, products: st.products.filter((p) => p.id !== productId) }
-              : st
-          ),
-        }));
-        await supabase.from("products").delete().eq("id", productId);
+        try {
+          const { error } = await supabase.from("products").delete().eq("id", productId);
+          if (error) throw error;
+          
+          set((s) => ({
+            stores: s.stores.map((st) =>
+              st.id === storeId
+                ? { ...st, products: st.products.filter((p) => p.id !== productId) }
+                : st
+            ),
+          }));
+        } catch (error) {
+          console.error("[deleteProduct] Error:", error);
+          toast.error("Error al eliminar producto");
+        }
       },
 
       toggleProductVisible: async (storeId, productId) => {
-        let newVisible = true;
-        set((s) => ({
-          stores: s.stores.map((st) =>
-            st.id === storeId
-              ? {
-                  ...st,
-                  products: st.products.map((p) => {
-                    if (p.id === productId) {
-                      newVisible = !p.visible;
-                      return { ...p, visible: newVisible };
-                    }
-                    return p;
-                  }),
-                }
-              : st
-          ),
-        }));
-        await supabase.from("products").update({ visible: newVisible }).eq("id", productId);
+        const s = get();
+        const store = s.stores.find(st => st.id === storeId);
+        const product = store?.products.find(p => p.id === productId);
+        if (!product) return;
+        
+        const newVisible = !product.visible;
+        try {
+          const { error } = await supabase.from("products").update({ visible: newVisible }).eq("id", productId);
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) =>
+              st.id === storeId
+                ? {
+                    ...st,
+                    products: st.products.map((p) =>
+                      p.id === productId ? { ...p, visible: newVisible } : p
+                    ),
+                  }
+                : st
+            ),
+          }));
+        } catch (error) {
+          console.error("[toggleProductVisible] Error:", error);
+          toast.error("Error al cambiar visibilidad");
+        }
       },
 
       upsertCategory: async (storeId, cat) => {
-        const isNew = !cat.id;
-        const tempId = cat.id || "temp-" + uid();
-        const c = { ...cat, id: tempId };
-        set((s) => ({
-          stores: s.stores.map((st) => {
-            if (st.id !== storeId) return st;
-            const exists = st.categories.some((ca) => ca.id === c.id);
-            return {
-              ...st,
-              categories: exists
-                ? st.categories.map((ca) => (ca.id === c.id ? c : ca))
-                : [...st.categories, c],
-            };
-          }),
-        }));
         try {
-          const payload: any = { store_id: storeId, name: c.name };
-          if (!isNew) payload.id = c.id;
+          const payload: any = { store_id: storeId, name: cat.name };
+          if (cat.id) payload.id = cat.id;
+          
           const { data, error } = await supabase.from("categories").upsert(payload).select().single();
-          if (error) {
-            console.error("Error upserting category:", error);
-            toast.error("No se pudo guardar la categoría");
-            return;
-          }
-          if (data && isNew) {
-            set((s) => ({
-              stores: s.stores.map((st) => {
-                if (st.id !== storeId) return st;
-                return {
-                  ...st,
-                  categories: st.categories.map((ca) =>
-                    ca.id === tempId ? { id: data.id, name: data.name } : ca
-                  ),
-                };
-              }),
-            }));
-          }
-        } catch (e) {
-          console.error(e);
+          if (error) throw error;
+          
+          const savedCat = { id: data.id, name: data.name };
+
+          set((s) => ({
+            stores: s.stores.map((st) => {
+              if (st.id !== storeId) return st;
+              const exists = cat.id && st.categories.some((ca) => ca.id === cat.id);
+              return {
+                ...st,
+                categories: exists
+                  ? st.categories.map((ca) => (ca.id === cat.id ? savedCat : ca))
+                  : [...st.categories, savedCat],
+              };
+            }),
+          }));
+          toast.success("Categoría guardada");
+        } catch (error) {
+          console.error("[upsertCategory] Error:", error);
+          toast.error("Error al guardar categoría");
         }
       },
 
       deleteCategory: async (storeId, catId) => {
-        set((s) => ({
-          stores: s.stores.map((st) =>
-            st.id === storeId
-              ? { ...st, categories: st.categories.filter((c) => c.id !== catId) }
-              : st
-          ),
-        }));
-        await supabase.from("categories").delete().eq("id", catId);
+        try {
+          const { error } = await supabase.from("categories").delete().eq("id", catId);
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) =>
+              st.id === storeId
+                ? { ...st, categories: st.categories.filter((c) => c.id !== catId) }
+                : st
+            ),
+          }));
+          toast.success("Categoría eliminada");
+        } catch (error) {
+          console.error("[deleteCategory] Error:", error);
+          toast.error("No se pudo eliminar la categoría");
+        }
       },
 
       setPlan: async (storeId, plan) => {
-        set((s) => ({
-          stores: s.stores.map((st) => (st.id === storeId ? { ...st, plan } : st)),
-        }));
-        await supabase.from("stores").update({ plan }).eq("id", storeId);
+        try {
+          const { error } = await supabase.from("stores").update({ plan }).eq("id", storeId);
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) => (st.id === storeId ? { ...st, plan } : st)),
+          }));
+          toast.success("Plan actualizado");
+        } catch (error) {
+          console.error("[setPlan] Error:", error);
+          toast.error("Error al actualizar plan");
+        }
       },
 
       toggleStoreActive: async (storeId) => {
-        let newActive = true;
-        set((s) => ({
-          stores: s.stores.map((st) => {
-            if (st.id === storeId) { newActive = !st.active; return { ...st, active: newActive }; }
-            return st;
-          }),
-        }));
-        await supabase.from("stores").update({ active: newActive }).eq("id", storeId);
+        const s = get();
+        const store = s.stores.find(st => st.id === storeId);
+        if (!store) return;
+        
+        const newActive = !store.active;
+        try {
+          const { error } = await supabase.from("stores").update({ active: newActive }).eq("id", storeId);
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) => (st.id === storeId ? { ...st, active: newActive } : st)),
+          }));
+          toast.success(newActive ? "Tienda activada" : "Tienda desactivada");
+        } catch (error) {
+          console.error("[toggleStoreActive] Error:", error);
+          toast.error("Error al cambiar estado");
+        }
       },
 
       startImpersonation: (storeId) =>
@@ -330,12 +368,21 @@ export const useApp = create<AppState>()(
 
       stopImpersonation: () => set({ impersonatedBy: null }),
 
-      incWhatsappClicks: (storeId) =>
+      incWhatsappClicks: async (storeId) => {
+        // Actualización optimista
         set((s) => ({
           stores: s.stores.map((st) =>
             st.id === storeId ? { ...st, whatsappClicks: st.whatsappClicks + 1 } : st
           ),
-        })),
+        }));
+        
+        try {
+          const { error } = await supabase.rpc('increment_whatsapp_clicks', { store_id_param: storeId });
+          if (error) throw error;
+        } catch (error) {
+          console.error("[incWhatsappClicks] Error:", error);
+        }
+      },
     }),
     { name: "dizi-catalogos-v1" }
   )

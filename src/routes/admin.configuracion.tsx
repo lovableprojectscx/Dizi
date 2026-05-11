@@ -29,7 +29,11 @@ function ConfigPage() {
 
   const [name, setName] = useState(store?.name || "");
   const [country, setCountry] = useState(store?.countryCode || "51");
-  const [number, setNumber] = useState(store?.phone.replace(store?.countryCode || "", "") || "");
+  const [number, setNumber] = useState(
+    store?.phone.startsWith(store?.countryCode || "")
+      ? store?.phone.slice((store?.countryCode || "").length)
+      : store?.phone || ""
+  );
   const [logo, setLogo] = useState(store?.logo ?? "");
 
   if (!store) return null;
