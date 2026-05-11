@@ -84,8 +84,8 @@ function TenantsPage() {
             id="invite-plan-tiendas"
           >
             <option value="emprendedor">Plan Emprendedor (S/ 14.90)</option>
-            <option value="pro">Plan Pro (S/ 24.90)</option>
-            <option value="ilimitado">Plan Ilimitado (S/ 49.90)</option>
+            <option value="pro">Plan Pro (S/ 19.90)</option>
+            <option value="ilimitado">Plan Ilimitado (S/ 34.90)</option>
             <option value="semilla">Plan Semilla (Gratis)</option>
           </select>
         </div>

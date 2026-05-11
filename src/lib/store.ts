@@ -79,25 +79,9 @@ export const useApp = create<AppState>()(
             return mapped;
           });
 
-          set((s) => {
-            // Combinar: mantener tiendas locales que aún no están en la DB (recién creadas)
-            // y actualizar las que sí están.
-            const newStores = [...s.stores];
-            dbStores.forEach((dbS) => {
-              const idx = newStores.findIndex((st) => st.id === dbS.id);
-              if (idx > -1) {
-                newStores[idx] = {
-                  ...dbS,
-                  model: dbS.model ?? newStores[idx].model ?? "minimalista",
-                  brandColor: dbS.brandColor ?? newStores[idx].brandColor,
-                  bgColor: (dbS as any).bgColor ?? (newStores[idx] as any)?.bgColor,
-                };
-              } else {
-                newStores.push(dbS);
-              }
-            });
-            return { stores: newStores };
-          });
+          set(() => ({ 
+            stores: dbStores 
+          }));
         } else {
           console.error("[fetchData] Supabase error:", error);
         }
