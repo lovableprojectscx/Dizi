@@ -123,6 +123,7 @@ export const useApp = create<AppState>()(
           country_code: store.countryCode, logo: store.logo, plan: store.plan,
           model: store.model, brand_color: store.brandColor, owner_id: store.ownerId,
           active: store.active, is_published: store.isPublished,
+          niche: store.niche,
         });
         if (store.categories.length > 0) {
           await supabase.from("categories").insert(
