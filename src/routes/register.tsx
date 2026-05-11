@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import type { PlanId } from "@/lib/types";
@@ -136,10 +136,11 @@ function RegisterPage() {
       setLoading(true);
       try {
         // 1. Validar que el link de la tienda no esté en uso ANTES de crear el usuario
-        const { data: existingStore } = await import("@/lib/supabase").then(m => 
-          m.supabase.from("stores").select("id").eq("slug", storeLink).single()
-        );
-        
+        const { supabase } = await import("@/lib/supabase");
+
+        const { data: existingStore } = await supabase
+          .from("stores").select("id").eq("slug", storeLink).single();
+
         if (existingStore) {
           const { toast } = await import("sonner");
           toast.error("El link de la tienda ya está en uso. Por favor, elige otro.");
@@ -148,33 +149,29 @@ function RegisterPage() {
         }
 
         // 2. Crear usuario en Supabase Auth
-        const { data: authData, error: authError } = await import("@/lib/supabase").then(m => 
-          m.supabase.auth.signUp({
-            email: email.trim(),
-            password: password,
-            options: {
-              data: {
-                full_name: fullName,
-                role: "store_owner"
-              }
+
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password: password,
+          options: {
+            data: {
+              full_name: fullName,
+              role: "store_owner"
             }
-          })
-        );
+          }
+        });
 
         let userId = authData.user?.id;
 
         if (authError) {
           // Si el usuario ya existe, intentamos loguear para ver si le falta la tienda
           if (authError.message?.includes("already registered") || authError.status === 422) {
-            const { data: signInData, error: signInError } = await import("@/lib/supabase").then(m => 
-              m.supabase.auth.signInWithPassword({
-                email: email.trim(),
-                password: password,
-              })
-            );
-            
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: email.trim(),
+              password: password,
+            });
+
             if (signInError) {
-              // Si falla el login, es que el correo existe pero la contraseña es otra
               throw new Error("Este correo ya está registrado. Por favor, inicia sesión con tu contraseña.");
             }
             userId = signInData.user?.id;
@@ -184,6 +181,17 @@ function RegisterPage() {
         }
 
         if (!userId) throw new Error("No se pudo obtener el ID del usuario.");
+
+        // 2b. Si signUp no dejó sesión activa (email confirmation requerida),
+        // forzamos login inmediato para que /admin pueda cargar sin redirect.
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (!currentSession) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password: password,
+          });
+          if (signInError) throw new Error("Cuenta creada pero no se pudo iniciar sesión automáticamente. Por favor, inicia sesión manualmente.");
+        }
 
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
         const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
