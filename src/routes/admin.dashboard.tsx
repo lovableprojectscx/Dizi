@@ -4,7 +4,7 @@ import { useApp } from "@/lib/store";
 import { PLANS } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, QrCode, Package, MessageCircle, ExternalLink, Check } from "lucide-react";
+import { Copy, QrCode, Package, MessageCircle, ExternalLink, Check, Plus } from "lucide-react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
