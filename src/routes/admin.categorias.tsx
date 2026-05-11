@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/admin/categorias")({
   component: CategoriesPage,
@@ -23,13 +22,13 @@ export const Route = createFileRoute("/admin/categorias")({
 function CategoriesPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id));
-  
+
   if (!store) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-muted-foreground animate-pulse">Cargando categorías...</p>
+          <p className="text-muted-foreground animate-pulse">Cargando categorias...</p>
         </div>
       </div>
     );
@@ -40,7 +39,6 @@ function CategoriesPage() {
   const [newName, setNewName] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [open, setOpen] = useState(false);
-  
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -52,9 +50,9 @@ function CategoriesPage() {
       await upsert(store.id, { id: "", name: newName.trim() });
       setNewName("");
       setOpen(false);
-      toast.success("Categoría creada con éxito");
+      toast.success("Categoria creada con exito");
     } catch (e) {
-      toast.error("Hubo un error al crear la categoría");
+      toast.error("Hubo un error al crear la categoria");
     } finally {
       setIsAdding(false);
     }
@@ -66,7 +64,7 @@ function CategoriesPage() {
     try {
       await upsert(store.id, { id: cId, name: editName.trim() });
       setEditId(null);
-      toast.success("Categoría actualizada");
+      toast.success("Categoria actualizada");
     } catch (e) {
       toast.error("Error al actualizar");
     } finally {
@@ -77,43 +75,44 @@ function CategoriesPage() {
   return (
     <div className="space-y-4 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Categorías</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Categorias</h1>
         <p className="text-sm text-muted-foreground">
-          Organiza tus productos por categorías para que tus clientes encuentren más rápido.
+          Organiza tus productos por categorias para que tus clientes encuentren mas rapido.
         </p>
       </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/30 p-4 rounded-2xl border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <LayoutGrid className="h-5 w-5" />
           </div>
           <div>
-            <p className="font-bold text-sm">Gestionar Categorías</p>
-            <p className="text-[11px] text-muted-foreground">{store.categories.length} categorías registradas</p>
+            <p className="font-bold text-sm">Gestionar Categorias</p>
+            <p className="text-[11px] text-muted-foreground">{store.categories.length} categorias registradas</p>
           </div>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button className="font-bold gap-2 shadow-lg shadow-primary/20">
-              <Plus className="h-4 w-4" /> Nueva Categoría
+            <Button className="font-bold gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto">
+              <Plus className="h-4 w-4" /> Nueva Categoria
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] max-h-[90dvh] flex flex-col">
             <DialogHeader>
-              <DialogTitle>Crear Categoría</DialogTitle>
+              <DialogTitle>Crear Categoria</DialogTitle>
               <DialogDescription>
-                Asigna un nombre a tu categoría para organizar tus productos.
+                Asigna un nombre a tu categoria para organizar tus productos.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Nombre de la categoría
+                  Nombre de la categoria
                 </label>
                 <Input
                   id="name"
-                  placeholder="Ej: Menú del día, Bebidas, Postres..."
+                  placeholder="Ej: Menu del dia, Bebidas, Postres..."
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && add()}
@@ -121,24 +120,25 @@ function CategoriesPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={add} disabled={isAdding || !newName.trim()}>
+            <DialogFooter className="flex-row gap-2 sm:justify-end">
+              <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button className="flex-1 sm:flex-none" onClick={add} disabled={isAdding || !newName.trim()}>
                 {isAdding ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
                   <Check className="h-4 w-4 mr-2" />
                 )}
-                {isAdding ? "Guardando..." : "Crear Categoría"}
+                {isAdding ? "Guardando..." : "Crear Categoria"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
+
       <div className="border rounded-xl divide-y bg-card">
         {store.categories.length === 0 && (
           <p className="p-6 text-sm text-muted-foreground text-center">
-            Aún no tienes categorías.
+            Aun no tienes categorias.
           </p>
         )}
         {store.categories.map((c) => {
@@ -161,12 +161,7 @@ function CategoriesPage() {
               )}
               {isEdit ? (
                 <>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    disabled={isEditing}
-                    onClick={() => saveEdit(c.id)}
-                  >
+                  <Button size="icon" variant="ghost" disabled={isEditing} onClick={() => saveEdit(c.id)}>
                     {isEditing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   </Button>
                   <Button size="icon" variant="ghost" onClick={() => setEditId(null)}>
@@ -193,7 +188,7 @@ function CategoriesPage() {
                         toast.error("Mueve los productos antes de eliminar");
                         return;
                       }
-                      if (confirm(`¿Eliminar "${c.name}"?`)) del(store.id, c.id);
+                      if (confirm("Eliminar " + c.name + "?")) del(store.id, c.id);
                     }}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />

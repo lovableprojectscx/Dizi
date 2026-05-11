@@ -16,7 +16,7 @@ export const Route = createFileRoute("/admin/dashboard")({
 function Dashboard() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id));
-  
+
   if (!store) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -70,9 +70,9 @@ function Dashboard() {
               <Package className="h-10 w-10" />
             </div>
             <div className="space-y-2 max-w-md">
-              <h3 className="text-2xl font-bold tracking-tight">¡Catálogo listo para despegar! 🚀</h3>
+              <h3 className="text-2xl font-bold tracking-tight">Catalogo listo para despegar!</h3>
               <p className="text-muted-foreground">
-                Tu tienda ya está en línea, pero aún no tiene productos. Comienza agregando tu primer producto para que tus clientes puedan verlo y comprarte.
+                Tu tienda ya esta en linea, pero aun no tiene productos. Comienza agregando tu primer producto.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -87,28 +87,28 @@ function Dashboard() {
       )}
 
       <Card className="border-primary/30 bg-primary/5">
-        <CardContent className="p-5 flex flex-col md:flex-row md:items-center gap-4">
+        <CardContent className="p-4 sm:p-5 flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-muted-foreground">
-              Tu catálogo está en línea:
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Tu catalogo esta en linea:</p>
             <a
               href={url}
               target="_blank"
               rel="noreferrer"
-              className="text-primary font-semibold break-all hover:underline inline-flex items-center gap-1"
+              className="text-primary font-semibold break-all hover:underline inline-flex items-center gap-1 text-sm"
             >
               {url}
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
             </a>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={copy} variant="outline" className="rounded-full">
-              {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-              {copied ? "Copiado" : "Copiar enlace"}
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
+            <Button onClick={copy} variant="outline" className="rounded-full text-xs sm:text-sm h-9 px-3 sm:px-4">
+              {copied ? <Check className="h-4 w-4 sm:mr-1" /> : <Copy className="h-4 w-4 sm:mr-1" />}
+              <span className="hidden sm:inline">{copied ? "Copiado" : "Copiar enlace"}</span>
+              <span className="sm:hidden">{copied ? "Copiado" : "Copiar"}</span>
             </Button>
-            <Button onClick={downloadQr} variant="outline" className="rounded-full">
-              <QrCode className="h-4 w-4 mr-1" /> QR
+            <Button onClick={downloadQr} variant="outline" className="rounded-full text-xs sm:text-sm h-9 px-3 sm:px-4">
+              <QrCode className="h-4 w-4 sm:mr-1" />
+              <span>QR</span>
             </Button>
             <CatalogPdfExportButton store={store} />
           </div>
@@ -119,7 +119,7 @@ function Dashboard() {
         <MetricCard
           icon={<Package className="h-5 w-5" />}
           label="Productos activos"
-          value={`${activeProducts}/${plan.productLimit === Infinity ? "∞" : plan.productLimit}`}
+          value={`${activeProducts}/${plan.productLimit === Infinity ? "ilimitados" : plan.productLimit}`}
         />
         <MetricCard
           icon={<MessageCircle className="h-5 w-5" />}
@@ -138,17 +138,16 @@ function Dashboard() {
           <CardHeader>
             <CardTitle className="text-sm font-bold flex items-center gap-2">
               <QrCode className="h-4 w-4 text-primary" />
-              Tu código QR
+              Tu codigo QR
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col sm:flex-row items-center gap-6">
             <div className="relative group">
               <img src={qr} alt="QR" className="h-40 w-40 rounded-xl border shadow-inner transition-transform group-hover:scale-105" />
-              <div className="absolute inset-0 bg-black/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
             <div className="space-y-3 text-center sm:text-left">
               <p className="text-sm text-muted-foreground max-w-xs">
-                Imprime este código y colócalo en tu local físico o compártelo en tus historias de Instagram para que tus clientes accedan directo a tu catálogo.
+                Imprime este codigo y colócalo en tu local fisico o compartelo en tus historias de Instagram.
               </p>
               <Button onClick={downloadQr} variant="outline" size="sm" className="rounded-full gap-2">
                 <Download className="h-4 w-4" /> Descargar imagen QR
@@ -161,16 +160,7 @@ function Dashboard() {
   );
 }
 
-
-function MetricCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function MetricCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <Card>
       <CardContent className="p-5">

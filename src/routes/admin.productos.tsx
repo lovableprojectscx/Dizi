@@ -19,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,7 +53,7 @@ const empty = (): Product => ({
 function ProductsPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id));
-  
+
   if (!store) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -77,7 +76,7 @@ function ProductsPage() {
 
   const openNew = () => {
     if (reachedLimit) {
-      toast.error("Has alcanzado el límite de tu plan");
+      toast.error("Has alcanzado el limite de tu plan");
       return;
     }
     setEditing({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
@@ -114,14 +113,15 @@ function ProductsPage() {
         </Button>
       </div>
 
-      <div className="border rounded-xl bg-card overflow-x-auto">
+      {/* Tabla solo desktop */}
+      <div className="hidden md:block border rounded-xl bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-16">Foto</TableHead>
               <TableHead>Nombre</TableHead>
               <TableHead>Precio</TableHead>
-              <TableHead>Categoría</TableHead>
+              <TableHead>Categoria</TableHead>
               <TableHead>Visible</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
@@ -150,7 +150,7 @@ function ProductsPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {store.categories.find((c) => c.id === p.categoryId)?.name ?? "—"}
+                  {store.categories.find((c) => c.id === p.categoryId)?.name ?? "sin categoria"}
                 </TableCell>
                 <TableCell>
                   <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
@@ -163,7 +163,7 @@ function ProductsPage() {
                     variant="ghost"
                     size="icon"
                     onClick={() => {
-                      if (confirm(`¿Eliminar "${p.name}"?`)) del(store.id, p.id);
+                      if (confirm("Eliminar " + p.name + "?")) del(store.id, p.id);
                     }}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -174,7 +174,7 @@ function ProductsPage() {
             {store.products.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
-                  Aún no tienes productos. Crea el primero.
+                  Aun no tienes productos. Crea el primero.
                 </TableCell>
               </TableRow>
             )}
@@ -182,12 +182,65 @@ function ProductsPage() {
         </Table>
       </div>
 
+      {/* Cards solo movil */}
+      <div className="flex flex-col gap-3 md:hidden">
+        {store.products.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-8">
+            Aun no tienes productos. Crea el primero.
+          </p>
+        )}
+        {store.products.map((p) => (
+          <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
+            {p.image ? (
+              <img src={p.image} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <ImageIcon className="h-5 w-5 text-muted-foreground" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{p.name}</p>
+              <p className="text-xs text-muted-foreground">
+                {store.categories.find((c) => c.id === p.categoryId)?.name ?? "Sin categoria"}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
+                {p.isOnSale && p.originalPrice && (
+                  <span className="text-[11px] text-muted-foreground line-through">
+                    {formatPrice(p.originalPrice)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
+              <div className="flex gap-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => {
+                    if (confirm("Eliminar " + p.name + "?")) del(store.id, p.id);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Dialog formulario */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-w-lg max-h-[90dvh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b shrink-0">
             <DialogTitle>{editing.id ? "Editar producto" : "Nuevo producto"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
             <ImageDrop
               value={editing.image}
               onChange={(image) => setEditing({ ...editing, image })}
@@ -207,18 +260,18 @@ function ProductsPage() {
                     checked={!!editing.isOnSale}
                     onCheckedChange={(v) => setEditing({ ...editing, isOnSale: v })}
                   />
-                  ¿Este producto está en oferta?
+                  Este producto esta en oferta?
                 </label>
 
                 <div className="grid grid-cols-2 gap-3">
                   {editing.isOnSale ? (
                     <>
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Precio Original (Tachado)</Label>
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Precio Original</Label>
                         <Input
                           type="text"
                           inputMode="decimal"
-                          placeholder="Ej: 50.00"
+                          placeholder="50.00"
                           value={editing.originalPrice || ""}
                           onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -228,11 +281,11 @@ function ProductsPage() {
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] uppercase font-bold text-primary">Precio de Oferta</Label>
+                        <Label className="text-[10px] uppercase font-bold text-primary">Precio Oferta</Label>
                         <Input
                           type="text"
                           inputMode="decimal"
-                          placeholder="Ej: 35.00"
+                          placeholder="35.00"
                           value={editing.price}
                           onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -259,7 +312,7 @@ function ProductsPage() {
                         />
                       </div>
                       <div>
-                        <Label>Categoría</Label>
+                        <Label>Categoria</Label>
                         <Select
                           value={editing.categoryId}
                           onValueChange={(v) => setEditing({ ...editing, categoryId: v })}
@@ -269,9 +322,7 @@ function ProductsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             {store.categories.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                              </SelectItem>
+                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -283,7 +334,7 @@ function ProductsPage() {
 
               {editing.isOnSale && (
                 <div className="col-span-2">
-                  <Label>Categoría</Label>
+                  <Label>Categoria</Label>
                   <Select
                     value={editing.categoryId}
                     onValueChange={(v) => setEditing({ ...editing, categoryId: v })}
@@ -293,9 +344,7 @@ function ProductsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {store.categories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name}
-                        </SelectItem>
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -303,7 +352,7 @@ function ProductsPage() {
               )}
 
               <div className="col-span-2">
-                <Label>Descripción (opcional)</Label>
+                <Label>Descripcion (opcional)</Label>
                 <Textarea
                   rows={3}
                   value={editing.description ?? ""}
@@ -312,11 +361,11 @@ function ProductsPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+          <DialogFooter className="px-5 py-4 border-t shrink-0 flex-row gap-2 sm:justify-end">
+            <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={save}>Guardar producto</Button>
+            <Button className="flex-1 sm:flex-none" onClick={save}>Guardar producto</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -324,20 +373,13 @@ function ProductsPage() {
   );
 }
 
-function ImageDrop({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function ImageDrop({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [drag, setDrag] = useState(false);
   const [converting, setConverting] = useState(false);
 
   const handleFile = async (file: File) => {
-    // Límite aumentado a 10 MB
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagen muy grande (máx 10 MB)");
+      toast.error("Imagen muy grande (max 10 MB)");
       return;
     }
     setConverting(true);
@@ -345,7 +387,7 @@ function ImageDrop({
       const webpDataUrl = await convertImageToWebP(file);
       onChange(webpDataUrl);
     } catch {
-      toast.error("No se pudo procesar la imagen. Intenta con otro archivo.");
+      toast.error("No se pudo procesar la imagen.");
     } finally {
       setConverting(false);
     }
@@ -355,10 +397,7 @@ function ImageDrop({
     <div>
       <Label>Imagen del producto</Label>
       <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDrag(true);
-        }}
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => {
           e.preventDefault();
@@ -366,9 +405,7 @@ function ImageDrop({
           const f = e.dataTransfer.files[0];
           if (f) handleFile(f);
         }}
-        className={`relative mt-1 border-2 border-dashed rounded-xl p-4 flex items-center gap-4 transition ${
-          drag ? "border-primary bg-primary/5" : "border-border"
-        }`}
+        className={"relative mt-1 border-2 border-dashed rounded-xl p-4 flex items-center gap-4 transition " + (drag ? "border-primary bg-primary/5" : "border-border")}
       >
         {converting ? (
           <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -382,13 +419,9 @@ function ImageDrop({
           </div>
         )}
         <div className="flex-1 text-sm">
-          <p className="font-medium">
-            {converting ? "Optimizando imagen..." : "Arrastra una imagen aquí"}
-          </p>
+          <p className="font-medium">{converting ? "Optimizando imagen..." : "Arrastra una imagen aqui"}</p>
           <p className="text-muted-foreground text-xs">
-            {converting
-              ? "Convirtiendo a WebP de alta calidad"
-              : "JPG, PNG, WEBP, HEIC — hasta 10 MB · se optimiza automáticamente"}
+            {converting ? "Convirtiendo a WebP" : "JPG, PNG, WEBP, HEIC hasta 10 MB"}
           </p>
         </div>
         {!converting && (

@@ -14,13 +14,13 @@ export const Route = createFileRoute("/admin/configuracion")({
 });
 
 const COUNTRIES = [
-  { code: "51", name: "Perú" },
-  { code: "52", name: "México" },
+  { code: "51", name: "Peru" },
+  { code: "52", name: "Mexico" },
   { code: "54", name: "Argentina" },
   { code: "56", name: "Chile" },
   { code: "57", name: "Colombia" },
-  { code: "1", name: "EE. UU. / Canadá" },
-  { code: "34", name: "España" },
+  { code: "1", name: "EE. UU. / Canada" },
+  { code: "34", name: "Espana" },
 ];
 
 function ConfigPage() {
@@ -51,21 +51,21 @@ function ConfigPage() {
       phone: country + cleanNumber,
       logo,
     });
-    toast.success("✅ Configuración guardada correctamente");
+    toast.success("Configuracion guardada correctamente");
   };
 
   const onLogo = async (file?: File) => {
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("El logo es muy pesado (máximo 10 MB)");
+      toast.error("El logo es muy pesado (maximo 10 MB)");
       return;
     }
     try {
       const webpDataUrl = await convertImageToWebP(file);
       setLogo(webpDataUrl);
-      toast.info("Logo cargado y optimizado. Haz clic en 'Guardar' para confirmar.");
+      toast.info("Logo cargado. Haz clic en Guardar para confirmar.");
     } catch {
-      toast.error("No se pudo procesar la imagen. Intenta con otro archivo.");
+      toast.error("No se pudo procesar la imagen.");
     }
   };
 
@@ -74,24 +74,24 @@ function ConfigPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <Store className="h-6 w-6 text-primary" />
-          Configuración
+          Configuracion
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Datos básicos de tu negocio. Para cambiar el diseño visual ve a{" "}
-          <a href="/admin/diseno" className="text-primary underline">Diseño</a>.
+          Datos basicos de tu negocio. Para cambiar el diseno visual ve a{" "}
+          <a href="/admin/diseno" className="text-primary underline">Diseno</a>.
         </p>
       </div>
 
       <Card className="border-primary/10 shadow-sm">
-        <CardContent className="p-6 space-y-6">
-          {/* Name + Phone */}
+        <CardContent className="p-5 sm:p-6 space-y-6">
+          {/* Nombre + Telefono */}
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label className="font-semibold">Nombre comercial</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ej: Mi Tienda Dizi"
+                placeholder="Mi Tienda"
               />
             </div>
             <div className="space-y-1.5">
@@ -100,7 +100,7 @@ function ConfigPage() {
               </Label>
               <div className="flex gap-2">
                 <select
-                  className="border rounded-md px-2 py-2 bg-background text-sm focus:ring-2 focus:ring-primary outline-none"
+                  className="border rounded-md px-2 py-2 bg-background text-sm focus:ring-2 focus:ring-primary outline-none w-28 shrink-0"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                 >
@@ -115,6 +115,7 @@ function ConfigPage() {
                   placeholder="987654321"
                   value={number}
                   onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))}
+                  className="min-w-0"
                 />
               </div>
             </div>
@@ -124,7 +125,6 @@ function ConfigPage() {
           <div className="space-y-3 pt-4 border-t">
             <Label className="font-semibold">Logo del Negocio</Label>
             <div className="flex flex-col sm:flex-row items-center gap-5">
-              {/* Preview */}
               <div className="relative group shrink-0">
                 {logo ? (
                   <img
@@ -142,12 +142,11 @@ function ConfigPage() {
                     onClick={() => setLogo("")}
                     className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold"
                   >
-                    ✕
+                    x
                   </button>
                 )}
               </div>
 
-              {/* Drop zone */}
               <div className="flex-1 w-full relative">
                 <div className="border-2 border-dashed border-primary/20 rounded-xl p-5 text-center hover:bg-primary/5 transition-colors cursor-pointer group">
                   <div className="flex flex-col items-center gap-1.5">
@@ -156,7 +155,7 @@ function ConfigPage() {
                       {logo ? "Cambiar logo" : "Subir logo"}
                     </span>
                     <span className="text-xs text-muted-foreground/60">
-                      JPG, PNG o WEBP · Máx. 2 MB
+                      JPG, PNG o WEBP - Max. 10 MB
                     </span>
                   </div>
                   <input
