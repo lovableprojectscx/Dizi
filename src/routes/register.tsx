@@ -154,22 +154,7 @@ function RegisterPage() {
 
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
         
-        // 2. Productos señuelo enriquecidos
-        const sampleProducts = selectedNiche === "comida" ? [
-          { id: "p1", name: "Hamburguesa Clásica Artesanal", price: 18.50, categoryId: "c1", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Deliciosa hamburguesa con carne de res 100% y vegetales frescos." },
-          { id: "p2", name: "Papas Fritas Rústicas", price: 8.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Porción grande de papas crujientes con especias.", isOnSale: true, originalPrice: 12.00 },
-          { id: "p3", name: "Pizza Margarita Familiar", price: 35.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Masa madre, salsa casera y extra queso mozzarella fundido." },
-        ] : selectedNiche === "bisuteria" ? [
-          { id: "p1", name: "Collar de Plata 925", price: 45.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Elegante diseño minimalista en plata fina." },
-          { id: "p2", name: "Anillo de Oro Rosa", price: 120.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Acabado brillante con detalles únicos de lujo." },
-          { id: "p3", name: "Reloj Minimalista", price: 85.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Para cualquier ocasión, elegante y resistente al agua." },
-        ] : [
-          { id: "p1", name: "Ejemplo: Lentes de Sol", price: 45.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Diseño clásico y protección UV400 completa." },
-          { id: "p2", name: "Ejemplo: Bolso de Cuero", price: 120.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Hecho a mano con materiales de alta calidad." },
-          { id: "p3", name: "Ejemplo: Taza de Cerámica", price: 15.00, categoryId: "c1", image: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=600&q=80", visible: true, isSample: true, description: "Diseño minimalista premium, ideal para el hogar." },
-        ];
-
-        // 3. Crear tienda vinculada al owner_id
+        // 3. Crear tienda vinculada al owner_id (Tienda vacía para que el usuario llene sus productos)
         await addStore({
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
@@ -186,7 +171,7 @@ function RegisterPage() {
           ownerId: authData.user.id,
           niche: selectedNiche,
           categories: [{ id: "c1", name: "Principal" }],
-          products: sampleProducts,
+          products: [], // Se crea vacía como pidió el usuario
         });
 
         if (validInvite) {

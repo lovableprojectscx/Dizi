@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
 import { PLANS } from "@/lib/types";
@@ -108,6 +108,27 @@ function Dashboard() {
             <p className="mt-2 text-sm text-muted-foreground">
               Imprime este QR y compártelo en tu local o redes.
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {store.products.length === 0 && (
+        <Card className="border-dashed border-2 bg-muted/20">
+          <CardContent className="p-10 flex flex-col items-center text-center space-y-4">
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Package className="h-8 w-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold">¡Bienvenido a tu tienda!</h3>
+              <p className="text-muted-foreground max-w-sm">
+                Tu catálogo está listo, pero aún no tienes productos. Comienza agregando tu primer producto para que tus clientes puedan verlo.
+              </p>
+            </div>
+            <Button asChild size="lg" className="font-bold gap-2">
+              <Link to="/admin/productos">
+                <Plus className="h-5 w-5" /> Agregar mi primer producto
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       )}
