@@ -900,8 +900,8 @@ function DisenoPage() {
         </div>
       </div>
 
-      {/* Panel de imagen de portada — solo visible cuando modelo = "portada" */}
-      {selectedModel === "portada" && (
+      {/* Panel de imagen de portada — solo visible cuando modelo = "elite" */}
+      {selectedModel === "elite" && (
         <div className="rounded-2xl border bg-card p-5 space-y-4">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">

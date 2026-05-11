@@ -150,7 +150,8 @@ export function PublicCatalog({ store }: { store: Store }) {
   const incClicks = useApp((s) => s.incWhatsappClicks);
 
   /* ── Theme setup ─────────────────────────────────── */
-  const modelId = store.model || "minimalista";
+  const rawModelId = store.model || "minimalista";
+  const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
   // Calculate luminance of a hex color (0 = black, 1 = white)
