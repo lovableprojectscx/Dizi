@@ -3,9 +3,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { LogOut, Eye } from "lucide-react";
+import { LogOut, Eye, Home, Package, Tag, Settings } from "lucide-react";
 import { getActiveSession, signOut } from "@/lib/auth";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
@@ -77,14 +78,43 @@ function AdminLayout() {
             <div className="flex-1" />
             {/* Selector de tienda eliminado por petición del usuario */}
           </header>
-          <main className="flex-1 p-4 md:p-6 bg-background">
+          <main className="flex-1 p-4 md:p-6 bg-background pb-20 md:pb-6">
             <Outlet />
           </main>
+
+          {/* Bottom Nav for Mobile */}
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t flex items-center justify-around px-2 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <MobileNavItem to="/admin/dashboard" icon={Home} label="Inicio" />
+            <MobileNavItem to="/admin/productos" icon={Package} label="Productos" />
+            <MobileNavItem to="/admin/categorias" icon={Tag} label="Categorías" />
+            <MobileNavItem to="/admin/configuracion" icon={Settings} label="Ajustes" />
+          </nav>
         </div>
       </div>
     </SidebarProvider>
   );
 }
+
+function MobileNavItem({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+  const path = useApp((s) => window.location.pathname); // Fallback simple
+  // Usar router state para detectar activo
+  const active = path === to;
+
+  return (
+    <Link
+      to={to}
+      className={cn(
+        "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
+        active ? "text-primary" : "text-muted-foreground"
+      )}
+    >
+      <Icon className={cn("h-5 w-5", active && "animate-in zoom-in duration-300")} />
+      <span className="text-[10px] font-medium">{label}</span>
+      {active && <div className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />}
+    </Link>
+  );
+}
+
 
 // Index redirect for /admin -> /admin/dashboard
 export const _redirectFromAdmin = redirect; // unused, just to avoid tree-shake issues
