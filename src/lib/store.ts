@@ -16,6 +16,8 @@ const mapStoreFromDB = (row: any): Store => ({
   model: row.model,
   brandColor: row.brand_color,
   bgColor: row.bg_color,
+  bannerImage: row.banner_image,
+  bannerTitle: row.banner_title,
   ownerId: row.owner_id,
   active: row.active,
   isPublished: row.is_published,
@@ -116,6 +118,8 @@ export const useApp = create<AppState>()(
         if (patch.model !== undefined) dbPatch.model = patch.model;
         if (patch.brandColor !== undefined) dbPatch.brand_color = patch.brandColor;
         if ((patch as any).bgColor !== undefined) dbPatch.bg_color = (patch as any).bgColor;
+        if ((patch as any).bannerImage !== undefined) dbPatch.banner_image = (patch as any).bannerImage;
+        if ((patch as any).bannerTitle !== undefined) dbPatch.banner_title = (patch as any).bannerTitle;
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
         
         try {
