@@ -462,7 +462,7 @@ function ThemeCard({ theme, selected, onClick }: { theme: PdfTheme; selected: bo
 /* ─────────────────────────────────────────────────────────
    MAIN EXPORT BUTTON COMPONENT
 ───────────────────────────────────────────────────────── */
-export function CatalogPdfExportButton({ store }: { store: Store }) {
+export function CatalogPdfExportButton({ store, variant = "admin" }: { store: Store; variant?: "admin" | "catalog" }) {
   const [open, setOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<string>("moderno");
   const [generating, setGenerating] = useState(false);
@@ -491,19 +491,26 @@ export function CatalogPdfExportButton({ store }: { store: Store }) {
 
   return (
     <>
-      {/* Trigger button — se integra en el header del catálogo */}
-      <button
-        onClick={() => setOpen(true)}
-        title="Descargar catálogo PDF"
-        className={cn(
-          "shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary",
-          "text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition",
-          "flex items-center gap-1.5"
-        )}
-      >
-        <Download className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">PDF</span>
-      </button>
+      {/* Trigger button — estilo según contexto */}
+      {variant === "admin" ? (
+        <Button onClick={() => setOpen(true)} className="gap-2">
+          <Download className="h-4 w-4" />
+          Descargar PDF
+        </Button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          title="Descargar catálogo PDF"
+          className={cn(
+            "shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary",
+            "text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition",
+            "flex items-center gap-1.5"
+          )}
+        >
+          <Download className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">PDF</span>
+        </button>
+      )}
 
       {/* Modal overlay */}
       {open && (

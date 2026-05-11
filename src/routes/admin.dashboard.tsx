@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, QrCode, Package, MessageCircle, ExternalLink, Check } from "lucide-react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
+import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -66,14 +67,15 @@ function Dashboard() {
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button onClick={copy} variant="outline">
               {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
               {copied ? "Copiado" : "Copiar enlace"}
             </Button>
-            <Button onClick={downloadQr}>
+            <Button onClick={downloadQr} variant="outline">
               <QrCode className="h-4 w-4 mr-1" /> Descargar QR
             </Button>
+            <CatalogPdfExportButton store={store} />
           </div>
         </CardContent>
       </Card>
