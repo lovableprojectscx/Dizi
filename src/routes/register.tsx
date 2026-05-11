@@ -66,6 +66,7 @@ function RegisterPage() {
   ];
 
   const ALL_MODELS = [
+    { id: "elite",        name: "Elite ✦",          desc: "Portada con Banner cinematográfico", niches: ["general","ropa","tech"],         p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false } },
     { id: "minimalista",  name: "Minimalista",      desc: "Limpio y editorial",         niches: ["general","ropa","bisuteria"],   p: { bg: "#ffffff", card: "#f1f5f9", accent: "#FF823A", dark: false } },
     { id: "nocturno",     name: "Modo Tech Dark",   desc: "Interfaz nocturna inmersiva", niches: ["tech"],                         p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true  } },
     { id: "vibrante",     name: "Vibrante Food",    desc: "Despierta el apetito",       niches: ["comida"],                       p: { bg: "#fff7ed", card: "#ffffff", accent: "#FF823A", dark: false } },

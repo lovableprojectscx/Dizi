@@ -29,7 +29,7 @@ type ModelConfig = {
   cardShadow: string;
   cardBorder: boolean;
   headerStyle: "clean" | "bold" | "minimal";
-  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch";
+  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid";
 };
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
@@ -101,6 +101,12 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     vars: { "--background": "#faf9f6", "--card": "#f4f2ed", "--primary": "#9c6b4e", "--border": "#e8e0d5" } as any,
     isDark: false, imgRounded: "999px", cardRounded: "1rem",
     cardShadow: "hover:shadow-lg hover:shadow-stone-200/80", cardBorder: true, headerStyle: "minimal", layout: "arch",
+  },
+  /* ── Plan Ilimitado: Portada ───────────────────────── */
+  portada: {
+    vars: { "--background": "#ffffff", "--card": "#f8fafc", "--primary": "#FF823A", "--border": "#ffe4d5" } as any,
+    isDark: false, imgRounded: "0.875rem", cardRounded: "1rem",
+    cardShadow: "hover:shadow-md", cardBorder: false, headerStyle: "clean", layout: "banner_grid",
   },
   /* ── Nuevos modelos Elite ──────────────────────────── */
   sunset_glow: {
@@ -837,6 +843,83 @@ export function PublicCatalog({ store }: { store: Store }) {
                 </article>
               );
             })}
+          </div>
+        ) : cfg.layout === "banner_grid" ? (
+          /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
+          <div className="space-y-4">
+            {/* Banner de portada */}
+            {(store as any).bannerImage ? (
+              <div className="relative w-full overflow-hidden" style={{ borderRadius: cfg.cardRounded, aspectRatio: "16/7" }}>
+                <img
+                  src={(store as any).bannerImage}
+                  alt={store.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
+                    {(store as any).bannerTitle || `Catálogo ${store.name}`}
+                  </p>
+                  <p className="text-white/70 text-xs mt-0.5">Toca un producto para más info</p>
+                </div>
+              </div>
+            ) : (
+              /* Placeholder banner si no hay imagen */
+              <div
+                className="w-full flex flex-col items-center justify-center gap-2 py-8 px-4 text-center"
+                style={{ borderRadius: cfg.cardRounded, background: `linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, #fff) 100%)` }}
+              >
+                <p className="text-white font-black text-2xl leading-tight">{(store as any).bannerTitle || `Catálogo ${store.name}`}</p>
+                <p className="text-white/80 text-sm">Bienvenido · Toca cualquier producto</p>
+              </div>
+            )}
+
+            {/* Grid de productos 2 columnas estilo app */}
+            <div className="grid grid-cols-2 gap-3">
+              {filtered.map((p) => (
+                <article
+                  key={p.id}
+                  className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group", cfg.cardShadow)}
+                  style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)" }}
+                  onClick={() => setViewingProduct(p)}
+                >
+                  {/* Imagen cuadrada */}
+                  <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
+                    <img
+                      src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
+                      alt={p.name}
+                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                      }}
+                    />
+                    {p.isOnSale && (
+                      <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">OFERTA</span>
+                    )}
+                  </div>
+                  {/* Info */}
+                  <div className="p-2.5 flex flex-col gap-1 flex-1">
+                    <h3 className="text-xs font-semibold line-clamp-2 leading-snug flex-1">{p.name}</h3>
+                    <div className="flex items-center justify-between mt-1">
+                      <div>
+                        <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
+                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                          <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
+                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         ) : (
           /* ── GRID layout: standard responsive grid */

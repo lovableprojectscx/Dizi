@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { PLANS, type Product } from "@/lib/types";
+import { convertImageToWebP } from "@/lib/image-utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -331,15 +332,25 @@ function ImageDrop({
   onChange: (v: string) => void;
 }) {
   const [drag, setDrag] = useState(false);
-  const handleFile = (file: File) => {
-    if (file.size > 1.5 * 1024 * 1024) {
-      toast.error("Imagen muy grande (máx 1.5 MB)");
+  const [converting, setConverting] = useState(false);
+
+  const handleFile = async (file: File) => {
+    // Límite aumentado a 10 MB
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Imagen muy grande (máx 10 MB)");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => onChange(reader.result as string);
-    reader.readAsDataURL(file);
+    setConverting(true);
+    try {
+      const webpDataUrl = await convertImageToWebP(file);
+      onChange(webpDataUrl);
+    } catch {
+      toast.error("No se pudo procesar la imagen. Intenta con otro archivo.");
+    } finally {
+      setConverting(false);
+    }
   };
+
   return (
     <div>
       <Label>Imagen del producto</Label>
@@ -359,23 +370,35 @@ function ImageDrop({
           drag ? "border-primary bg-primary/5" : "border-border"
         }`}
       >
-        {value ? (
-          <img src={value} alt="" className="h-20 w-20 rounded-lg object-cover" />
+        {converting ? (
+          <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
+            <span className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : value ? (
+          <img src={value} alt="" className="h-20 w-20 rounded-lg object-cover shrink-0" />
         ) : (
-          <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center">
+          <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
             <ImageIcon className="h-6 w-6 text-muted-foreground" />
           </div>
         )}
         <div className="flex-1 text-sm">
-          <p className="font-medium">Arrastra una imagen aquí</p>
-          <p className="text-muted-foreground text-xs">o pega una URL pública abajo</p>
+          <p className="font-medium">
+            {converting ? "Optimizando imagen..." : "Arrastra una imagen aquí"}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            {converting
+              ? "Convirtiendo a WebP de alta calidad"
+              : "JPG, PNG, WEBP, HEIC — hasta 10 MB · se optimiza automáticamente"}
+          </p>
         </div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-        />
+        {!converting && (
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+          />
+        )}
       </div>
       <Input
         className="mt-2"

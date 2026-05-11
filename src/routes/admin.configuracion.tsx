@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ImageIcon, Phone, Store } from "lucide-react";
+import { convertImageToWebP } from "@/lib/image-utils";
 
 export const Route = createFileRoute("/admin/configuracion")({
   component: ConfigPage,
@@ -53,18 +54,19 @@ function ConfigPage() {
     toast.success("✅ Configuración guardada correctamente");
   };
 
-  const onLogo = (file?: File) => {
+  const onLogo = async (file?: File) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("El logo es muy pesado (máximo 2 MB)");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("El logo es muy pesado (máximo 10 MB)");
       return;
     }
-    const r = new FileReader();
-    r.onload = () => {
-      setLogo(r.result as string);
-      toast.info("Logo cargado. Haz clic en 'Guardar' para confirmar.");
-    };
-    r.readAsDataURL(file);
+    try {
+      const webpDataUrl = await convertImageToWebP(file);
+      setLogo(webpDataUrl);
+      toast.info("Logo cargado y optimizado. Haz clic en 'Guardar' para confirmar.");
+    } catch {
+      toast.error("No se pudo procesar la imagen. Intenta con otro archivo.");
+    }
   };
 
   return (

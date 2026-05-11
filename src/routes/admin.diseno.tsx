@@ -142,6 +142,13 @@ const MODELS: ModelDef[] = [
     textColor: "#f1f5f9", accentColor: "#312e81", borderRadius: "16px",
   },
   {
+    id: "elite", name: "Elite ✦", layout: "hero",
+    desc: "Portada con Banner cinematográfico: Ideal para marcas con identidad visual fuerte.",
+    planLevel: 2, badge: "Elite", imgShape: "square",
+    bg: "#ffffff", cardBg: "#ffffff", primaryColor: "#1e1e1e",
+    textColor: "#111111", accentColor: "#f3f4f6", borderRadius: "0px",
+  },
+  {
     id: "boutique", name: "Boutique", layout: "spotlight",
     desc: "Editorial fashion: 1 producto estrella grande + 2 complementarios apilados. Farfetch style.",
     planLevel: 2, badge: "Pro", imgShape: "rounded",
@@ -193,6 +200,13 @@ const MODELS: ModelDef[] = [
     textColor: "#2c1a0e", accentColor: "#e8e0d5", borderRadius: "999px",
   },
   {
+    id: "portada", name: "Portada con Banner", layout: "banner_grid",
+    desc: "Banner de imagen personalizable en la parte superior + catálogo en grid 2 columnas. Limpio, visual y fácil de usar.",
+    planLevel: 3, badge: "Elite ✦", imgShape: "rounded",
+    bg: "#ffffff", cardBg: "#f8fafc", primaryColor: "#FF823A",
+    textColor: "#1a1a1a", accentColor: "#ffe4d5", borderRadius: "14px",
+  },
+  {
     id: "sunset_glow", name: "Sunset Glow", layout: "overlay",
     desc: "Degradado atardecer en el fondo — naranja, rosa y morado — con cards portrait flotantes.",
     planLevel: 3, badge: "Elite ✦", imgShape: "rounded", isDark: true, bgLocked: true,
@@ -242,6 +256,60 @@ function ModelPreview({ model, storeName }: { model: ModelDef; storeName: string
       </div>
     </div>
   );
+
+  /* ── BANNER GRID: portada con imagen + grid 2 col ── */
+  if (model.layout === "banner_grid") {
+    return (
+      <div className="h-48 w-full overflow-hidden flex flex-col" style={{ backgroundColor: model.bg }}>
+        <Header />
+        <div className="px-2 pt-1 pb-0.5 shrink-0">
+          {/* Banner simulado */}
+          <div className="relative w-full overflow-hidden mb-1.5" style={{ height: "52px", borderRadius: "8px" }}>
+            <div className="absolute inset-0" style={{
+              background: `linear-gradient(135deg, ${model.primaryColor}cc, ${model.accentColor}dd)`,
+            }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 40%, transparent)" }} />
+            {/* Icono de imagen en esquina */}
+            <div className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded flex items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+              <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: "#fff", opacity: 0.8 }} />
+            </div>
+            {/* Texto de portada */}
+            <div className="absolute bottom-1.5 left-2 space-y-0.5">
+              <div className="h-1.5 rounded-full w-16" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-1 rounded-full w-10" style={{ backgroundColor: "#fff", opacity: 0.55 }} />
+            </div>
+          </div>
+        </div>
+        {/* Grid 2 columnas */}
+        <div className="grid grid-cols-2 gap-1 px-2 pb-1.5 flex-1">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="overflow-hidden flex flex-col"
+              style={{ borderRadius: "6px", backgroundColor: model.cardBg }}>
+              {/* Imagen cuadrada */}
+              <div style={{
+                aspectRatio: "1/1",
+                background: i % 2 === 0
+                  ? `linear-gradient(135deg, ${model.primaryColor}bb, ${model.accentColor}aa)`
+                  : `linear-gradient(135deg, ${model.accentColor}cc, ${model.primaryColor}66)`,
+              }} />
+              {/* Info */}
+              <div className="p-1 space-y-0.5">
+                <div className="h-1 rounded-full w-4/5" style={{ backgroundColor: model.textColor, opacity: 0.5 }} />
+                <div className="flex items-center justify-between">
+                  <div className="h-1.5 rounded-full w-2/5" style={{ backgroundColor: model.primaryColor, opacity: 0.9 }} />
+                  <div className="h-3 w-3 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: model.primaryColor }}>
+                    <div className="h-0.5 w-0.5 bg-white rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   /* ── OVERLAY: portrait 3:4 con texto sobre gradiente ── */
   if (model.layout === "overlay") {
@@ -696,6 +764,8 @@ function DisenoPage() {
   const [selectedModel, setSelectedModel] = useState(store.model || "minimalista");
   const [brandColor, setBrandColor] = useState(store.brandColor || "");
   const [bgColor, setBgColor] = useState((store as any).bgColor || "");
+  const [bannerImage, setBannerImage] = useState((store as any).bannerImage || "");
+  const [bannerTitle, setBannerTitle] = useState((store as any).bannerTitle || "");
   const userLevel = PLAN_LEVELS[store.plan];
 
   // Determinar si el modelo actualmente seleccionado tiene fondo bloqueado
@@ -708,7 +778,9 @@ function DisenoPage() {
   const isDirty =
     selectedModel !== (store.model || "minimalista") ||
     brandColor !== (store.brandColor || "") ||
-    effectiveBgColor !== ((store as any).bgColor || "");
+    effectiveBgColor !== ((store as any).bgColor || "") ||
+    bannerImage !== ((store as any).bannerImage || "") ||
+    bannerTitle !== ((store as any).bannerTitle || "");
 
   const handleModelSelect = (modelId: string) => {
     const def = MODELS.find(m => m.id === modelId);
@@ -726,6 +798,8 @@ function DisenoPage() {
         model: selectedModel as any,
         brandColor: brandColor || undefined,
         bgColor: effectiveBgColor || undefined,
+        bannerImage: bannerImage || undefined,
+        bannerTitle: bannerTitle || undefined,
       } as any);
       toast.success("🎨 Diseño aplicado a tu catálogo", { id: toastId });
     } catch (err) {
@@ -825,6 +899,70 @@ function DisenoPage() {
           )}
         </div>
       </div>
+
+      {/* Panel de imagen de portada — solo visible cuando modelo = "portada" */}
+      {selectedModel === "portada" && (
+        <div className="rounded-2xl border bg-card p-5 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Image className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-bold text-sm">Imagen de Portada</h2>
+              <p className="text-[11px] text-muted-foreground">Aparece como banner en la parte superior de tu catálogo</p>
+            </div>
+          </div>
+
+          {/* Preview del banner */}
+          {bannerImage && (
+            <div className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: "16/7" }}>
+              <img src={bannerImage} alt="Banner" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              <button
+                onClick={() => setBannerImage("")}
+                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition text-xs font-bold"
+              >✕</button>
+              <p className="absolute bottom-2 left-3 text-white text-xs font-bold drop-shadow">{bannerTitle || store.name}</p>
+            </div>
+          )}
+
+          {/* Dropzone */}
+          <div className="relative">
+            <label className={`flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed rounded-xl cursor-pointer transition hover:border-primary hover:bg-primary/5 ${bannerImage ? "border-primary/30 bg-primary/5" : "border-border"}`}>
+              <Image className="h-6 w-6 text-muted-foreground" />
+              <span className="text-sm font-medium">{bannerImage ? "Cambiar imagen" : "Subir imagen de portada"}</span>
+              <span className="text-xs text-muted-foreground">JPG, PNG, WEBP — hasta 10 MB · se optimiza automáticamente</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 10 * 1024 * 1024) { toast.error("Imagen muy grande (máx 10 MB)"); return; }
+                  try {
+                    const { convertImageToWebP } = await import("@/lib/image-utils");
+                    const webp = await convertImageToWebP(file);
+                    setBannerImage(webp);
+                  } catch { toast.error("No se pudo procesar la imagen"); }
+                }}
+              />
+            </label>
+          </div>
+
+          {/* Título del banner */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Título del banner (opcional)</label>
+            <input
+              type="text"
+              value={bannerTitle}
+              onChange={(e) => setBannerTitle(e.target.value)}
+              placeholder={`Catálogo ${store.name}`}
+              className="flex h-10 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Vista previa del combo seleccionado */}
       {(brandColor || effectiveBgColor) && (

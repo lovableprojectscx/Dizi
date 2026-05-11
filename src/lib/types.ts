@@ -41,6 +41,8 @@ export interface Store {
   logo?: string;
   brandColor?: string;
   bgColor?: string;
+  bannerImage?: string;  // Imagen de portada para el modelo "portada"
+  bannerTitle?: string;  // Título personalizado del banner
   plan: PlanId;
   active: boolean;
   createdAt: string;
