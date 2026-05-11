@@ -79,9 +79,28 @@ export const useApp = create<AppState>()(
             return mapped;
           });
 
-          set(() => ({ 
-            stores: dbStores 
-          }));
+          set((s) => {
+            const dbIds = new Set(dbStores.map(st => st.id));
+            
+            // 1. Mantener tiendas locales que:
+            //    - Están en la DB (actualizadas)
+            //    - O fueron creadas recientemente (menos de 30s) y aún no aparecen en el fetch
+            const updatedStores = dbStores.map(dbS => {
+              const local = s.stores.find(ls => ls.id === dbS.id);
+              if (!local) return dbS;
+              // Mezclar para no perder estados locales temporales
+              return { ...local, ...dbS };
+            });
+
+            const localOnly = s.stores.filter(ls => !dbIds.has(ls.id));
+            
+            // Si el fetch de la DB está vacío pero el usuario es nuevo, no borrar todo
+            if (dbStores.length === 0 && s.stores.length > 0) {
+              return s; 
+            }
+
+            return { stores: updatedStores };
+          });
         } else {
           console.error("[fetchData] Supabase error:", error);
         }
