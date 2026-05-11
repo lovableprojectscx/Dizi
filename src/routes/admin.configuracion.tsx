@@ -23,14 +23,16 @@ const COUNTRIES = [
 ];
 
 function ConfigPage() {
-  const id = useApp((s) => s.currentStoreId)!;
-  const store = useApp((s) => s.stores.find((st) => st.id === id))!;
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
   const update = useApp((s) => s.updateStore);
 
-  const [name, setName] = useState(store.name);
-  const [country, setCountry] = useState(store.countryCode);
-  const [number, setNumber] = useState(store.phone.replace(store.countryCode, ""));
-  const [logo, setLogo] = useState(store.logo ?? "");
+  const [name, setName] = useState(store?.name || "");
+  const [country, setCountry] = useState(store?.countryCode || "51");
+  const [number, setNumber] = useState(store?.phone.replace(store?.countryCode || "", "") || "");
+  const [logo, setLogo] = useState(store?.logo ?? "");
+
+  if (!store) return null;
 
   const save = () => {
     const cleanNumber = number.replace(/\D/g, "");

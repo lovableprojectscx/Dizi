@@ -14,8 +14,20 @@ export const Route = createFileRoute("/admin/dashboard")({
 });
 
 function Dashboard() {
-  const id = useApp((s) => s.currentStoreId)!;
-  const store = useApp((s) => s.stores.find((st) => st.id === id))!;
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  
+  if (!store) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground animate-pulse">Cargando tu tienda...</p>
+        </div>
+      </div>
+    );
+  }
+
   const plan = PLANS[store.plan];
   const url = `${typeof window !== "undefined" ? window.location.origin : "https://tudominio.com"}/t/${store.slug}`;
   const [qr, setQr] = useState<string>("");

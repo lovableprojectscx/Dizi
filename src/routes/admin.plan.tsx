@@ -32,8 +32,11 @@ const features: Record<PlanId, string[]> = {
 };
 
 function PlanPage() {
-  const id = useApp((s) => s.currentStoreId)!;
-  const store = useApp((s) => s.stores.find((st) => st.id === id))!;
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  
+  if (!store) return null;
+  
   const used = store.products.length;
 
   return (

@@ -686,9 +686,11 @@ function ColorSwatch({
    PAGE COMPONENT
 ───────────────────────────────────────────────────────── */
 function DisenoPage() {
-  const id = useApp((s) => s.currentStoreId)!;
-  const store = useApp((s) => s.stores.find((st) => st.id === id))!;
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
   const update = useApp((s) => s.updateStore);
+
+  if (!store) return null;
 
   const [activeTab, setActiveTab] = useState(String(PLAN_LEVELS[store.plan]));
   const [selectedModel, setSelectedModel] = useState(store.model || "minimalista");

@@ -23,7 +23,28 @@ function AdminLayout() {
   const impersonating = useApp((s) => s.impersonatedBy);
   const stop = useApp((s) => s.stopImpersonation);
   const setStore = useApp((s) => s.setCurrentStore);
+  
+  // Si no hay tiendas aún, mostrar cargando (evita crashes en hijos)
+  if (stores.length === 0) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-1 text-center">
+            <h2 className="text-xl font-bold">Cargando panel...</h2>
+            <p className="text-sm text-muted-foreground">Estamos preparando tu catálogo</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const store = stores.find((s) => s.id === storeId) ?? stores[0];
+
+  // Si tenemos tiendas pero no storeId seleccionado, fijar el primero
+  if (stores.length > 0 && !storeId) {
+    setStore(stores[0].id);
+  }
 
   return (
     <SidebarProvider>

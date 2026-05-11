@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Plus, ImageIcon, Lock } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 
@@ -51,8 +51,20 @@ const empty = (): Product => ({
 });
 
 function ProductsPage() {
-  const id = useApp((s) => s.currentStoreId)!;
-  const store = useApp((s) => s.stores.find((st) => st.id === id))!;
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  
+  if (!store) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-muted-foreground animate-pulse">Cargando productos...</p>
+        </div>
+      </div>
+    );
+  }
+
   const upsert = useApp((s) => s.upsertProduct);
   const del = useApp((s) => s.deleteProduct);
   const toggle = useApp((s) => s.toggleProductVisible);

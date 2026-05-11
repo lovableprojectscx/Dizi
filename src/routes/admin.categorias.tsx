@@ -21,8 +21,20 @@ export const Route = createFileRoute("/admin/categorias")({
 });
 
 function CategoriesPage() {
-  const id = useApp((s) => s.currentStoreId)!;
-  const store = useApp((s) => s.stores.find((st) => st.id === id))!;
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  
+  if (!store) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-muted-foreground animate-pulse">Cargando categorías...</p>
+        </div>
+      </div>
+    );
+  }
+
   const upsert = useApp((s) => s.upsertCategory);
   const del = useApp((s) => s.deleteCategory);
   const [newName, setNewName] = useState("");
