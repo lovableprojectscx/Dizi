@@ -117,29 +117,62 @@ export const useApp = create<AppState>()(
       },
 
       addStore: async (store) => {
-        set((s) => ({ stores: [...s.stores, store] }));
-        await supabase.from("stores").insert({
-          id: store.id, slug: store.slug, name: store.name, phone: store.phone,
-          country_code: store.countryCode, logo: store.logo, plan: store.plan,
-          model: store.model, brand_color: store.brandColor, owner_id: store.ownerId,
-          active: store.active, is_published: store.isPublished,
+        // Insert into Supabase first
+        const { error: storeError } = await supabase.from("stores").insert({
+          id: store.id,
+          slug: store.slug,
+          name: store.name,
+          phone: store.phone,
+          country_code: store.countryCode,
+          logo: store.logo,
+          plan: store.plan,
+          model: store.model,
+          brand_color: store.brandColor,
+          owner_id: store.ownerId,
+          active: store.active,
+          is_published: store.isPublished,
           niche: store.niche,
         });
+
+        if (storeError) {
+          console.error("[addStore] Store insert error:", storeError);
+          throw storeError;
+        }
+
         if (store.categories.length > 0) {
-          await supabase.from("categories").insert(
+          const { error: catError } = await supabase.from("categories").insert(
             store.categories.map((c) => ({ id: c.id, store_id: store.id, name: c.name }))
           );
+          if (catError) {
+            console.error("[addStore] Category insert error:", catError);
+            throw catError;
+          }
         }
+
         if (store.products.length > 0) {
-          await supabase.from("products").insert(
+          const { error: prodError } = await supabase.from("products").insert(
             store.products.map((p) => ({
-              id: p.id, store_id: store.id, category_id: p.categoryId,
-              name: p.name, price: p.price, original_price: p.originalPrice,
-              image: p.image, description: p.description, is_on_sale: p.isOnSale,
-              visible: p.visible, is_sample: p.isSample,
+              id: p.id,
+              store_id: store.id,
+              category_id: p.categoryId,
+              name: p.name,
+              price: p.price,
+              original_price: p.originalPrice,
+              image: p.image,
+              description: p.description,
+              is_on_sale: p.isOnSale,
+              visible: p.visible,
+              is_sample: p.isSample,
             }))
           );
+          if (prodError) {
+            console.error("[addStore] Product insert error:", prodError);
+            throw prodError;
+          }
         }
+
+        // Only update local state if everything succeeded
+        set((s) => ({ stores: [...s.stores, store] }));
       },
 
       addInvite: (invite) => set((s) => ({ invites: [...s.invites, invite] })),

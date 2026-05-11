@@ -153,6 +153,7 @@ function RegisterPage() {
         if (!authData.user) throw new Error("No se pudo crear el usuario.");
 
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
+        const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
         
         // 3. Crear tienda vinculada al owner_id (Tienda vacía para que el usuario llene sus productos)
         await addStore({
@@ -170,7 +171,7 @@ function RegisterPage() {
           brandColor: brandColor || undefined,
           ownerId: authData.user.id,
           niche: selectedNiche,
-          categories: [{ id: "c1", name: "Principal" }],
+          categories: [{ id: newCategoryId, name: "Principal" }],
           products: [], // Se crea vacía como pidió el usuario
         });
 
@@ -184,8 +185,24 @@ function RegisterPage() {
         setCurrentStore(newStoreId);
         navigate({ to: "/admin" });
       } catch (err: any) {
+        console.error("Registration error:", err);
         const { toast } = await import("sonner");
-        toast.error(err.message || "Error al registrarte.");
+        
+        let errorMessage = "Error al registrarte.";
+        
+        if (err.message?.includes("stores_slug_key")) {
+          errorMessage = "El link de la tienda ya está en uso. Por favor, elige otro.";
+        } else if (err.message?.includes("categories_pkey")) {
+          errorMessage = "Error de sistema al crear la categoría. Por favor, intenta de nuevo.";
+        } else if (err.status === 429 || err.message?.includes("rate limit")) {
+          errorMessage = "Demasiados intentos. Por favor, inténtalo más tarde.";
+        } else if (err.message?.includes("User already registered")) {
+          errorMessage = "Este correo ya tiene una cuenta. Intenta iniciar sesión.";
+        } else {
+          errorMessage = err.message || errorMessage;
+        }
+        
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
