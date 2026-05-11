@@ -206,11 +206,17 @@ export function PublicCatalog({ store }: { store: Store }) {
 
   /* ── Derived data ────────────────────────────────── */
   const filtered = useMemo(() => {
-    return (store.products || [])
+    const products = store.products || [];
+    // If we have only sample products, we show them regardless of category mismatch (common in new stores)
+    const hasOnlySamples = products.length > 0 && products.every(p => p.isSample);
+    
+    return products
       .filter((p) => p.visible)
       .filter((p) => {
         if (activeCat === "all") return true;
         if (activeCat === "sale") return p.isOnSale;
+        // Relax category filter for samples to avoid "empty store" on new accounts
+        if (hasOnlySamples && activeCat === "all") return true;
         return p.categoryId === activeCat;
       })
       .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
