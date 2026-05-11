@@ -329,7 +329,7 @@ function LandingPage() {
               {/* Plan Pro */}
               <PricingCard 
                 title="Catálogo Pro" 
-                price="S/ 24.90" 
+                price="S/ 19.90" 
                 desc="Minimarkets y tiendas con stock variado."
                 features={[
                   "Hasta 200 productos",
@@ -344,7 +344,7 @@ function LandingPage() {
               {/* Plan Ilimitado */}
               <PricingCard 
                 title="Ilimitado" 
-                price="S/ 49.90" 
+                price="S/ 34.90" 
                 desc="Negocios con alta rotación y carga masiva."
                 features={[
                   "Productos ilimitados",

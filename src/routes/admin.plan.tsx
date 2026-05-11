@@ -91,13 +91,19 @@ function PlanPage() {
                 </span>
               )}
               <CardContent className="p-5 space-y-3">
-                <h3 className="text-lg font-semibold">{PLANS[p].name}</h3>
-                <p className="text-2xl font-bold">
+                <div className="flex flex-col">
+                  <h3 className="text-lg font-bold">{PLANS[p].name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black">S/ {PLANS[p].price.toFixed(2)}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">/mes</span>
+                  </div>
+                </div>
+                <p className="text-xs font-medium text-muted-foreground">
                   {PLANS[p].productLimit === Infinity
-                    ? "Ilimitado"
-                    : `${PLANS[p].productLimit} productos`}
+                    ? "Productos ilimitados"
+                    : `Hasta ${PLANS[p].productLimit} productos`}
                 </p>
-                <ul className="space-y-1 text-sm">
+                <ul className="space-y-1 text-sm pt-2">
                   {features[p].map((f) => (
                     <li key={f} className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-primary" /> {f}
