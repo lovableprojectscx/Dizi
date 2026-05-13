@@ -1451,19 +1451,14 @@ function PriceRangeSlider({
 }) {
   const [lo, hi] = value;
   const range = max - min || 1;
-  const loPercent = ((lo - min) / range) * 100;
   const hiPercent = ((hi - min) / range) * 100;
-  const isFiltered = lo > min || hi < max;
+  const isFiltered = hi < max;
 
   const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
 
-  const handleLo = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Number(e.target.value);
-    onChange([clamp(v, min, hi - 1), hi]);
-  };
   const handleHi = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = Number(e.target.value);
-    onChange([lo, clamp(v, lo + 1, max)]);
+    onChange([min, clamp(v, min, max)]);
   };
 
   const mutedText = isDark ? "text-white/50" : "text-black/40";
@@ -1472,10 +1467,10 @@ function PriceRangeSlider({
   return (
     <div className="space-y-1.5">
       <div className={`flex items-center justify-between text-xs font-medium ${fgText}`}>
-        <span>Precio</span>
+        <span>Precio Máximo</span>
         <div className="flex items-center gap-2">
           <span className="font-bold tabular-nums">
-            S/ {lo.toLocaleString()} – S/ {hi.toLocaleString()}
+            S/ {hi.toLocaleString()}
           </span>
           {isFiltered && (
             <button
@@ -1495,14 +1490,7 @@ function PriceRangeSlider({
         {/* Active range */}
         <div
           className="absolute h-1.5 rounded-full bg-primary"
-          style={{ left: `${loPercent}%`, width: `${hiPercent - loPercent}%` }}
-        />
-        {/* Thumb Lo */}
-        <input
-          type="range" min={min} max={max} step={1} value={lo}
-          onChange={handleLo}
-          className="absolute w-full appearance-none bg-transparent cursor-pointer"
-          style={{ zIndex: lo > max - (range * 0.1) ? 5 : 3 }}
+          style={{ left: `0%`, width: `${hiPercent}%` }}
         />
         {/* Thumb Hi */}
         <input
