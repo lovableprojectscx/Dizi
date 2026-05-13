@@ -928,20 +928,13 @@ export function PublicCatalog({ store }: { store: Store }) {
                     <p className="text-xs font-black" style={{ color: "var(--primary)" }}>
                       {formatPrice(p.price)}
                     </p>
-                    <div className="flex gap-1 justify-center pt-1">
+                    <div className="flex justify-center pt-1">
                       <button
                         onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }}
                         className="flex-1 py-1.5 text-[10px] uppercase tracking-widest border transition hover:opacity-70 font-medium"
                         style={{ borderColor: "var(--border)", color: "var(--foreground)", borderRadius: "999px" }}
                       >
                         Consultar
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
-                        className="h-7 w-7 flex items-center justify-center transition hover:opacity-80"
-                        style={{ backgroundColor: "var(--primary)", color: effectiveIsDark ? "#000" : "#fff", borderRadius: "999px" }}
-                      >
-                        <Plus className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
