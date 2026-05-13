@@ -809,10 +809,10 @@ function DisenoPage() {
   };
 
   const planGroups = [
-    { label: "Gratis — Plan Semilla",  level: 0, color: "text-gray-600 bg-gray-100" },
-    { label: "Plan Emprendedor",        level: 1, color: "text-blue-700 bg-blue-50 border border-blue-200" },
-    { label: "Plan Pro",                level: 2, color: "text-purple-700 bg-purple-50 border border-purple-200" },
-    { label: "Plan Ilimitado",          level: 3, color: "text-amber-700 bg-amber-50 border border-amber-200" },
+    { label: "Semilla", level: 0, color: "text-gray-600 bg-gray-100" },
+    { label: "Emprendedor", level: 1, color: "text-blue-700 bg-blue-50 border border-blue-200" },
+    { label: "Pro", level: 2, color: "text-purple-700 bg-purple-50 border border-purple-200" },
+    { label: "Ilimitado", level: 3, color: "text-amber-700 bg-amber-50 border border-amber-200" },
   ];
 
   return (
@@ -991,15 +991,15 @@ function DisenoPage() {
 
       {/* ── Tabs por plan ─────────────────────────────── */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex overflow-x-auto pb-2 -mx-4 px-4 scrollbar-none sm:mx-0 sm:px-0 sm:overflow-visible">
-          <TabsList className="inline-flex h-11 items-center justify-start rounded-xl bg-muted p-1 text-muted-foreground w-auto min-w-full sm:min-w-0">
+        <div className="w-full overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
+          <TabsList className="flex h-11 items-center justify-start rounded-xl bg-muted p-1 text-muted-foreground min-w-[360px] w-full">
             {planGroups.map((group) => (
               <TabsTrigger
                 key={group.level}
                 value={String(group.level)}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
-                {group.label.split(" — ")[0]}
+                {group.label}
               </TabsTrigger>
             ))}
           </TabsList>
