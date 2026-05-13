@@ -51,6 +51,7 @@ export interface Store {
   model?: string;
   ownerId?: string;
   niche?: string;
+  priceFilterEnabled?: boolean;
   categories: Category[];
   products: Product[];
 }

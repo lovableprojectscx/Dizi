@@ -134,8 +134,12 @@ const BG_LOCKED_MODELS = new Set(["nocturno", "aurora", "luxury", "dark_fashion"
 
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 
+// Modelos que tienen hero banner — en estos el buscador/filtros van DEBAJO del banner
+const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
+
 export function PublicCatalog({ store }: { store: Store }) {
   const [query, setQuery] = useState("");
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>(
     store.categories?.length === 1 ? store.categories[0].id : "all"
   );
@@ -216,6 +220,15 @@ export function PublicCatalog({ store }: { store: Store }) {
     ...(modelGradient ? { backgroundImage: modelGradient } : {}),
   } as React.CSSProperties;
 
+  /* ── Price range bounds (calculado de productos visibles) ───── */
+  const [priceMin, priceMax] = useMemo(() => {
+    const prices = (store.products || []).filter(p => p.visible).map(p => p.price);
+    if (prices.length === 0) return [0, 0];
+    return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
+  }, [store.products]);
+
+  const hasPriceFilter = store.priceFilterEnabled && priceMin < priceMax;
+
   /* ── Derived data ────────────────────────────────── */
   const filtered = useMemo(() => {
     const products = store.products || [];
@@ -231,8 +244,12 @@ export function PublicCatalog({ store }: { store: Store }) {
         if (hasOnlySamples && activeCat === "all") return true;
         return p.categoryId === activeCat;
       })
-      .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
-  }, [store.products, activeCat, query]);
+      .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
+      .filter((p) => {
+        if (!priceRange) return true;
+        return p.price >= priceRange[0] && p.price <= priceRange[1];
+      });
+  }, [store.products, activeCat, query, priceRange]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -368,6 +385,68 @@ export function PublicCatalog({ store }: { store: Store }) {
             </p>
           </div>
         </section>
+      )}
+
+       {/* ── Barra de filtros post-banner (solo modelos con hero) ─── */}
+      {BANNER_MODELS.has(modelId) && (
+        <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur-md border-b shadow-sm">
+          <div className="mx-auto max-w-5xl px-4 py-3 space-y-3">
+            {/* Buscador */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="¿Qué estás buscando hoy?"
+                className="w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition"
+              />
+            </div>
+            {/* Chips de categoria */}
+            <div className="overflow-x-auto scrollbar-none">
+              <div className="flex gap-2 w-max">
+                {store.categories.length > 1 && (
+                  <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")} cfg={cfg}>
+                    Todos
+                  </Chip>
+                )}
+                {(store.categories || []).map((c) => (
+                  <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)} cfg={cfg}>
+                    {c.name}
+                  </Chip>
+                ))}
+                <Chip active={activeCat === "sale"} onClick={() => setActiveCat("sale")} cfg={cfg}>
+                  <Flame className="h-3 w-3 mr-1 inline" />
+                  Ofertas
+                </Chip>
+              </div>
+            </div>
+            {/* Slider de precio */}
+            {hasPriceFilter && (
+              <PriceRangeSlider
+                min={priceMin}
+                max={priceMax}
+                value={priceRange ?? [priceMin, priceMax]}
+                onChange={setPriceRange}
+                onReset={() => setPriceRange(null)}
+                isDark={effectiveIsDark}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Slider de precio para modelos SIN banner */}
+      {!BANNER_MODELS.has(modelId) && hasPriceFilter && (
+        <div className="mx-auto max-w-5xl px-4 pt-4">
+          <PriceRangeSlider
+            min={priceMin}
+            max={priceMax}
+            value={priceRange ?? [priceMin, priceMax]}
+            onChange={setPriceRange}
+            onReset={() => setPriceRange(null)}
+            isDark={effectiveIsDark}
+          />
+        </div>
       )}
 
       {/* ── Product Area ──────────────────────────────── */}
@@ -1176,193 +1255,4 @@ export function PublicCatalog({ store }: { store: Store }) {
                 {/* Close button (aspita) */}
                 <button 
                   onClick={() => setViewingProduct(null)}
-                  className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all"
-                  style={{ borderRadius: cfg.cardRounded }}
-                >
-                  <X className="h-6 w-6" />
-                </button>
-
-                <img
-                  src={viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
-                  alt={viewingProduct.name}
-                  className="h-full w-full object-cover"
-                  style={{
-                    filter: effectiveIsDark && (cfg.layout === "overlay" || cfg.layout === "magazine") ? "brightness(0.85)" : "none",
-                  }}
-                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"; }}
-                />
-
-                {/* Dark overlay for dark themes */}
-                {effectiveIsDark && <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />}
-
-                {/* Sale badge — style adapts to model */}
-                {viewingProduct.isOnSale && (
-                  cfg.layout === "magazine" ? (
-                    <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1 backdrop-blur">OFERTA</span>
-                  ) : cfg.layout === "overlay" ? (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">OFERTA</span>
-                  ) : (
-                    <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
-                      <Flame className="h-3 w-3" /> Oferta
-                    </span>
-                  )
-                )}
-
-                {/* For dark/magazine: show price on image */}
-                {(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
-                  <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-                    <p className={cn("text-white font-black text-2xl", cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase" : "")}>
-                      {formatPrice(viewingProduct.price)}
-                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price && (
-                        <span className="text-white/40 text-sm line-through ml-3 font-normal">{formatPrice(viewingProduct.originalPrice)}</span>
-                      )}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Content */}
-              <div
-                className="flex-1 overflow-y-auto px-5 py-5 space-y-4"
-                style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
-              >
-                {/* Title — adapts typography to model */}
-                <h2
-                  className={cn(
-                    "leading-tight",
-                    cfg.headerStyle === "bold" ? "text-2xl font-black" :
-                    cfg.headerStyle === "minimal" ? "text-lg font-light tracking-[0.2em] uppercase" :
-                    "text-xl font-bold"
-                  )}
-                  style={{ color: "var(--foreground)" }}
-                >
-                  {viewingProduct.name}
-                </h2>
-
-                {/* Price — only show below image for non-dark overlay models */}
-                {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
-                      {formatPrice(viewingProduct.price)}
-                    </span>
-                    {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price && (
-                      <span className="text-sm line-through" style={{ color: "var(--muted-foreground)" }}>
-                        {formatPrice(viewingProduct.originalPrice)}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Description */}
-                {viewingProduct.description && (
-                  <div>
-                    <p
-                      className={cn(
-                        "text-xs font-bold mb-1",
-                        cfg.headerStyle === "minimal" ? "tracking-[0.3em] uppercase" : "tracking-widest uppercase"
-                      )}
-                      style={{ color: "var(--primary)" }}
-                    >
-                      Descripción
-                    </p>
-                    <p
-                      className="text-sm leading-relaxed whitespace-pre-line"
-                      style={{ color: "var(--foreground)", opacity: effectiveIsDark ? 0.85 : 0.75 }}
-                    >
-                      {viewingProduct.description}
-                    </p>
-                  </div>
-                )}
-
-                {/* Category */}
-                <div>
-                  <p
-                    className="text-xs font-bold uppercase tracking-widest mb-1"
-                    style={{ color: "var(--primary)" }}
-                  >
-                    Categoría
-                  </p>
-                  <span
-                    className="inline-block px-3 py-1 text-xs font-semibold"
-                    style={{
-                      backgroundColor: "var(--primary)" + "25",
-                      color: "var(--primary)",
-                      borderRadius: cfg.cardRounded,
-                      border: `1px solid var(--primary)`,
-                      borderColor: "var(--primary)" + "50",
-                    }}
-                  >
-                    {store.categories.find((c) => c.id === viewingProduct.categoryId)?.name}
-                  </span>
-                </div>
-              </div>
-
-              {/* Action footer — also themed */}
-              <div
-                className="border-t px-5 py-4 flex gap-3 shrink-0"
-                style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-              >
-                <button
-                  className="flex-1 h-12 gap-2 font-semibold text-sm flex items-center justify-center border transition hover:opacity-80"
-                  style={{
-                    borderRadius: cfg.cardRounded,
-                    borderColor: "var(--primary)",
-                    color: "var(--primary)",
-                    backgroundColor: "transparent",
-                    ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase", fontSize: "11px" } : {}),
-                  }}
-                  onClick={() => { consultProduct(viewingProduct.name); setViewingProduct(null); }}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Consultar
-                </button>
-                <button
-                  className="flex-1 h-12 gap-2 font-bold text-sm flex items-center justify-center transition hover:opacity-90 shadow-lg"
-                  style={{
-                    borderRadius: cfg.cardRounded,
-                    backgroundColor: "var(--primary)",
-                    color: effectiveIsDark ? "#000" : "#fff",
-                                        ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
-                  }}
-                  onClick={() => { cartAdd(store.id, viewingProduct.id); setViewingProduct(null); setCartOpen(true); }}
-                >
-                  <Plus className="h-4 w-4" />
-                  Añadir al carrito
-                </button>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-
-    </div>
-  );
-}
-
-/* ── Chip component ─────────────────────────────────────── */
-function Chip({
-  active,
-  onClick,
-  children,
-  cfg,
-}: {
-  active?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-  cfg: ModelConfig;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "px-4 py-1.5 text-xs font-semibold border whitespace-nowrap transition",
-        active
-          ? "bg-primary text-primary-foreground border-primary"
-          : "bg-background text-foreground border-border hover:bg-accent"
-      )}
-      style={{ borderRadius: cfg.cardRounded }}
-    >
-      {children}
-    </button>
-  );
-}
+              

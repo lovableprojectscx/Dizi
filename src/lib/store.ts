@@ -23,6 +23,7 @@ const mapStoreFromDB = (row: any): Store => ({
   isPublished: row.is_published,
   createdAt: row.created_at,
   whatsappClicks: row.whatsapp_clicks || 0,
+  priceFilterEnabled: row.price_filter_enabled ?? false,
   categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
   products: (row.products || []).map((p: any) => ({
     id: p.id,
@@ -65,8 +66,8 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export const useApp = create<AppState>()(
   persist(
     (set) => ({
-      stores: initialStores,
-      currentStoreId: "s1",
+      stores: [],
+      currentStoreId: null,
       impersonatedBy: null,
 
       fetchData: async () => {
@@ -75,21 +76,7 @@ export const useApp = create<AppState>()(
           .select("*, categories(*), products(*)");
         if (data && !error) {
           const dbStores = data.map((row) => mapStoreFromDB(row));
-
-          set((s) => {
-            // Si la DB viene vacia pero hay tiendas locales, no borrar (usuario recien creado)
-            if (dbStores.length === 0 && s.stores.length > 0) return s;
-
-            const dbIds = new Set(dbStores.map(st => st.id));
-            const updatedStores = dbStores.map(dbS => {
-              const local = s.stores.find(ls => ls.id === dbS.id);
-              return local ? { ...local, ...dbS } : dbS;
-            });
-            // Conservar tiendas creadas localmente que aun no aparecen en el fetch
-            const pendingLocal = s.stores.filter(ls => !dbIds.has(ls.id));
-
-            return { stores: [...updatedStores, ...pendingLocal] };
-          });
+          set({ stores: dbStores });
         } else {
           console.error("[fetchData] Supabase error:", error);
         }
@@ -109,6 +96,7 @@ export const useApp = create<AppState>()(
         if ((patch as any).bannerImage !== undefined) dbPatch.banner_image = (patch as any).bannerImage;
         if ((patch as any).bannerTitle !== undefined) dbPatch.banner_title = (patch as any).bannerTitle;
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
+        if (patch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = patch.priceFilterEnabled;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
@@ -432,8 +420,4 @@ export const useCart = create<CartState>()(
           },
         })),
       clear: (storeId) =>
-        set((s) => ({ carts: { ...s.carts, [storeId]: [] } })),
-    }),
-    { name: "dizi-carts-v1" }
-  )
-);
+        set((s) => ({ carts: { ...s.carts, [

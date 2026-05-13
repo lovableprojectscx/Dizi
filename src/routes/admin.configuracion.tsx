@@ -42,6 +42,7 @@ function ConfigPage() {
   const [slug, setSlug] = useState(store?.slug || "");
   const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
   const [saving, setSaving] = useState(false);
+  const [priceFilter, setPriceFilter] = useState(store?.priceFilterEnabled ?? false);
 
   if (!store) return null;
 
@@ -100,6 +101,7 @@ function ConfigPage() {
         phone: country + cleanNumber,
         logo,
         slug,
+        priceFilterEnabled: priceFilter,
       });
       toast.success("Configuracion guardada correctamente");
     } catch {
@@ -229,6 +231,27 @@ function ConfigPage() {
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </div>
+          </div>
+
+          {/* Filtro de precios */}
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div>
+              <p className="text-sm font-semibold">Filtro de precios</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Muestra un slider para que tus clientes filtren por precio en tu catalogo
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={priceFilter}
+              onClick={() => setPriceFilter(!priceFilter)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${priceFilter ? "bg-primary" : "bg-input"}`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${priceFilter ? "translate-x-5" : "translate-x-0"}`}
+              />
+            </button>
           </div>
 
           {/* Logo */}
