@@ -419,4 +419,8 @@ export const useCart = create<CartState>()(
           },
         })),
       clear: (storeId) =>
-        set((s) => ({ carts: { ...s.carts, [
+        set((s) => ({ carts: { ...s.carts, [storeId]: [] } })),
+    }),
+    { name: "dizi-carts-v1" }
+  )
+);
