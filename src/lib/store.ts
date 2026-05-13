@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Category, PlanId, Product, Store, Invite } from "./types";
-import { initialStores } from "./mock-data";
 import { supabase } from "./supabase";
 import { toast } from "sonner";
 
