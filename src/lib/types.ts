@@ -3,15 +3,15 @@ export type PlanId = "semilla" | "emprendedor" | "pro" | "ilimitado";
 export interface Plan {
   id: PlanId;
   name: string;
-  productLimit: number; // Infinity for pro/ilimitado
+  productLimit: number;
   price: number;
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  semilla: { id: "semilla", name: "Semilla", productLimit: 7, price: 0 },
-  emprendedor: { id: "emprendedor", name: "Emprendedor", productLimit: 50, price: 14.9 },
-  pro: { id: "pro", name: "Pro", productLimit: 200, price: 19.9 },
-  ilimitado: { id: "ilimitado", name: "Ilimitado", productLimit: Infinity, price: 34.9 },
+  semilla:      { id: "semilla",      name: "Semilla",      productLimit: 7,        price: 0    },
+  emprendedor:  { id: "emprendedor",  name: "Emprendedor",  productLimit: 50,       price: 14.9 },
+  pro:          { id: "pro",          name: "Pro",          productLimit: 200,      price: 19.9 },
+  ilimitado:    { id: "ilimitado",    name: "Ilimitado",    productLimit: Infinity, price: 34.9 },
 };
 
 export interface Category {
@@ -22,7 +22,7 @@ export interface Category {
 export interface Product {
   id: string;
   name: string;
-  price: number; // S/.
+  price: number;
   categoryId: string;
   image: string;
   description?: string;
@@ -36,13 +36,13 @@ export interface Store {
   id: string;
   slug: string;
   name: string;
-  phone: string; // E.164 e.g. 51999999999
-  countryCode: string; // e.g. 51
+  phone: string;
+  countryCode: string;
   logo?: string;
   brandColor?: string;
   bgColor?: string;
-  bannerImage?: string;  // Imagen de portada para el modelo "portada"
-  bannerTitle?: string;  // Título personalizado del banner
+  bannerImage?: string;
+  bannerTitle?: string;
   plan: PlanId;
   active: boolean;
   createdAt: string;

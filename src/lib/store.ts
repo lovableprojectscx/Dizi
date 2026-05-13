@@ -40,15 +40,14 @@ const mapStoreFromDB = (row: any): Store => ({
 
 interface AppState {
   stores: Store[];
-  invites: Invite[];
   currentStoreId: string | null;
   impersonatedBy: string | null;
   fetchData: () => Promise<void>;
   setCurrentStore: (id: string | null) => void;
   updateStore: (id: string, patch: Partial<Store>) => Promise<void>;
   addStore: (store: Store) => void;
-  addInvite: (invite: Invite) => void;
-  markInviteUsed: (token: string) => void;
+  addInvite: (invite: Omit<Invite, "createdAt">) => Promise<void>;
+  markInviteUsed: (token: string) => Promise<void>;
   upsertProduct: (storeId: string, product: Product) => void;
   deleteProduct: (storeId: string, productId: string) => void;
   toggleProductVisible: (storeId: string, productId: string) => void;
@@ -67,7 +66,6 @@ export const useApp = create<AppState>()(
   persist(
     (set) => ({
       stores: initialStores,
-      invites: [],
       currentStoreId: "s1",
       impersonatedBy: null,
 
@@ -76,32 +74,21 @@ export const useApp = create<AppState>()(
           .from("stores")
           .select("*, categories(*), products(*)");
         if (data && !error) {
-          const dbStores = data.map((row) => {
-            const mapped = mapStoreFromDB(row);
-            return mapped;
-          });
+          const dbStores = data.map((row) => mapStoreFromDB(row));
 
           set((s) => {
+            // Si la DB viene vacia pero hay tiendas locales, no borrar (usuario recien creado)
+            if (dbStores.length === 0 && s.stores.length > 0) return s;
+
             const dbIds = new Set(dbStores.map(st => st.id));
-            
-            // 1. Mantener tiendas locales que:
-            //    - Están en la DB (actualizadas)
-            //    - O fueron creadas recientemente (menos de 30s) y aún no aparecen en el fetch
             const updatedStores = dbStores.map(dbS => {
               const local = s.stores.find(ls => ls.id === dbS.id);
-              if (!local) return dbS;
-              // Mezclar para no perder estados locales temporales
-              return { ...local, ...dbS };
+              return local ? { ...local, ...dbS } : dbS;
             });
+            // Conservar tiendas creadas localmente que aun no aparecen en el fetch
+            const pendingLocal = s.stores.filter(ls => !dbIds.has(ls.id));
 
-            const localOnly = s.stores.filter(ls => !dbIds.has(ls.id));
-            
-            // Si el fetch de la DB está vacío pero el usuario es nuevo, no borrar todo
-            if (dbStores.length === 0 && s.stores.length > 0) {
-              return s; 
-            }
-
-            return { stores: updatedStores };
+            return { stores: [...updatedStores, ...pendingLocal] };
           });
         } else {
           console.error("[fetchData] Supabase error:", error);
@@ -121,7 +108,7 @@ export const useApp = create<AppState>()(
         if ((patch as any).bannerImage !== undefined) dbPatch.banner_image = (patch as any).bannerImage;
         if ((patch as any).bannerTitle !== undefined) dbPatch.banner_title = (patch as any).bannerTitle;
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
-        
+
         try {
           if (Object.keys(dbPatch).length > 0) {
             const { error: updateError } = await supabase.from("stores").update(dbPatch).eq("id", id);
@@ -133,15 +120,13 @@ export const useApp = create<AppState>()(
           }));
         } catch (error) {
           console.error("[updateStore] Error:", error);
-          toast.error("No se pudo actualizar la configuración");
+          toast.error("No se pudo actualizar la configuracion");
           throw error;
         }
       },
 
       addStore: async (store) => {
-        // Usar RPC para creación atómica (Tienda + Categoría Inicial)
-        // Esto evita que se cree la tienda pero falle la categoría
-        const { error: rpcError } = await supabase.rpc('initialize_store', {
+        const { error: rpcError } = await supabase.rpc("initialize_store", {
           p_id: store.id,
           p_slug: store.slug,
           p_name: store.name,
@@ -151,7 +136,7 @@ export const useApp = create<AppState>()(
           p_owner_id: store.ownerId,
           p_model: store.model,
           p_niche: store.niche,
-          p_category_id: store.categories[0]?.id || uid()
+          p_category_id: store.categories[0]?.id || uid(),
         });
 
         if (rpcError) {
@@ -159,7 +144,6 @@ export const useApp = create<AppState>()(
           throw rpcError;
         }
 
-        // Si hay más categorías (poco común en registro inicial, pero por si acaso)
         if (store.categories.length > 1) {
           const extraCats = store.categories.slice(1);
           const { error: catError } = await supabase.from("categories").insert(
@@ -190,21 +174,30 @@ export const useApp = create<AppState>()(
           }
         }
 
-        // Only update local state if everything succeeded
         set((s) => ({ stores: [...s.stores, store] }));
       },
 
-      addInvite: (invite) => set((s) => ({ invites: [...s.invites, invite] })),
+      addInvite: async ({ token, plan }) => {
+        const { error } = await supabase.from("invites").insert({ token, plan });
+        if (error) {
+          console.error("[addInvite] Error:", error);
+          toast.error("No se pudo guardar la invitacion");
+          throw error;
+        }
+      },
 
-      markInviteUsed: (token) =>
-        set((s) => ({
-          invites: s.invites.map((i) => (i.token === token ? { ...i, used: true } : i)),
-        })),
+      markInviteUsed: async (token) => {
+        const { error } = await supabase
+          .from("invites")
+          .update({ used: true })
+          .eq("token", token);
+        if (error) console.error("[markInviteUsed] Error:", error);
+      },
 
       upsertProduct: async (storeId, product) => {
         const prodId = product.id || uid();
         const p = { ...product, id: prodId };
-        
+
         try {
           const { error } = await supabase.from("products").upsert({
             id: p.id, store_id: storeId, category_id: p.categoryId,
@@ -212,7 +205,7 @@ export const useApp = create<AppState>()(
             image: p.image, description: p.description, is_on_sale: p.isOnSale,
             visible: p.visible, is_sample: p.isSample,
           });
-          
+
           if (error) throw error;
 
           set((s) => ({
@@ -241,7 +234,7 @@ export const useApp = create<AppState>()(
         try {
           const { error } = await supabase.from("products").delete().eq("id", productId);
           if (error) throw error;
-          
+
           set((s) => ({
             stores: s.stores.map((st) =>
               st.id === storeId
@@ -256,11 +249,11 @@ export const useApp = create<AppState>()(
       },
 
       toggleProductVisible: async (storeId, productId) => {
-        const s = get();
+        const s = useApp.getState();
         const store = s.stores.find(st => st.id === storeId);
         const product = store?.products.find(p => p.id === productId);
         if (!product) return;
-        
+
         const newVisible = !product.visible;
         try {
           const { error } = await supabase.from("products").update({ visible: newVisible }).eq("id", productId);
@@ -288,10 +281,10 @@ export const useApp = create<AppState>()(
         try {
           const payload: any = { store_id: storeId, name: cat.name };
           if (cat.id) payload.id = cat.id;
-          
+
           const { data, error } = await supabase.from("categories").upsert(payload).select().single();
           if (error) throw error;
-          
+
           const savedCat = { id: data.id, name: data.name };
 
           set((s) => ({
@@ -306,10 +299,10 @@ export const useApp = create<AppState>()(
               };
             }),
           }));
-          toast.success("Categoría guardada");
+          toast.success("Categoria guardada");
         } catch (error) {
           console.error("[upsertCategory] Error:", error);
-          toast.error("Error al guardar categoría");
+          toast.error("Error al guardar categoria");
         }
       },
 
@@ -325,10 +318,10 @@ export const useApp = create<AppState>()(
                 : st
             ),
           }));
-          toast.success("Categoría eliminada");
+          toast.success("Categoria eliminada");
         } catch (error) {
           console.error("[deleteCategory] Error:", error);
-          toast.error("No se pudo eliminar la categoría");
+          toast.error("No se pudo eliminar la categoria");
         }
       },
 
@@ -348,10 +341,10 @@ export const useApp = create<AppState>()(
       },
 
       toggleStoreActive: async (storeId) => {
-        const s = get();
+        const s = useApp.getState();
         const store = s.stores.find(st => st.id === storeId);
         if (!store) return;
-        
+
         const newActive = !store.active;
         try {
           const { error } = await supabase.from("stores").update({ active: newActive }).eq("id", storeId);
@@ -373,22 +366,29 @@ export const useApp = create<AppState>()(
       stopImpersonation: () => set({ impersonatedBy: null }),
 
       incWhatsappClicks: async (storeId) => {
-        // Actualización optimista
         set((s) => ({
           stores: s.stores.map((st) =>
             st.id === storeId ? { ...st, whatsappClicks: st.whatsappClicks + 1 } : st
           ),
         }));
-        
+
         try {
-          const { error } = await supabase.rpc('increment_whatsapp_clicks', { store_id_param: storeId });
+          const { error } = await supabase.rpc("increment_whatsapp_clicks", { store_id_param: storeId });
           if (error) throw error;
         } catch (error) {
           console.error("[incWhatsappClicks] Error:", error);
         }
       },
     }),
-    { name: "dizi-catalogos-v1" }
+    {
+      name: "dizi-catalogos-v1",
+      // Solo persistir lo necesario — invites viven en Supabase, no en localStorage
+      partialize: (state) => ({
+        stores: state.stores,
+        currentStoreId: state.currentStoreId,
+        impersonatedBy: state.impersonatedBy,
+      }),
+    }
   )
 );
 

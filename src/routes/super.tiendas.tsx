@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { PLANS, type PlanId } from "@/lib/types";
+import { InviteGenerator } from "@/components/InviteGenerator";
 import {
   Table,
   TableBody,
@@ -76,39 +77,7 @@ function TenantsPage() {
         </div>
       </div>
 
-      <div className="bg-primary/5 border border-primary/20 rounded-xl p-6 flex flex-col md:flex-row gap-4 items-end animate-in fade-in slide-in-from-top-4 duration-300">
-        <div className="flex-1 space-y-2">
-          <label className="text-sm font-medium">Generar Enlace de Registro (Pagar Servicio)</label>
-          <select 
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-            id="invite-plan-tiendas"
-          >
-            <option value="emprendedor">Plan Emprendedor (S/ 14.90)</option>
-            <option value="pro">Plan Pro (S/ 19.90)</option>
-            <option value="ilimitado">Plan Ilimitado (S/ 34.90)</option>
-            <option value="semilla">Plan Semilla (Gratis)</option>
-          </select>
-        </div>
-        <Button
-          onClick={() => {
-            const select = document.getElementById("invite-plan-tiendas") as HTMLSelectElement;
-            const plan = select.value as any;
-            const token = Math.random().toString(36).substring(2, 10);
-            useApp.getState().addInvite({
-              token,
-              plan,
-              used: false,
-              createdAt: new Date().toISOString()
-            });
-            const link = `${window.location.origin}/register?invite=${token}`;
-            navigator.clipboard.writeText(link);
-            toast.success("¡Enlace de un solo uso copiado!");
-          }}
-          className="whitespace-nowrap h-10 px-6 shadow-lg shadow-primary/20"
-        >
-          Generar y Copiar Link
-        </Button>
-      </div>
+      <InviteGenerator />
 
       <div className="border rounded-xl bg-card overflow-x-auto">
         <Table>
