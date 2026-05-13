@@ -99,6 +99,7 @@ export const useApp = create<AppState>()(
 
       updateStore: async (id, patch) => {
         const dbPatch: any = {};
+        if (patch.slug !== undefined) dbPatch.slug = patch.slug;
         if (patch.name !== undefined) dbPatch.name = patch.name;
         if (patch.phone !== undefined) dbPatch.phone = patch.phone;
         if (patch.logo !== undefined) dbPatch.logo = patch.logo;

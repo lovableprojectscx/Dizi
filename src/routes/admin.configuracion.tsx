@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
+import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ImageIcon, Phone, Store } from "lucide-react";
+import { ImageIcon, Phone, Store, Link2, ExternalLink, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { convertImageToWebP } from "@/lib/image-utils";
 
 export const Route = createFileRoute("/admin/configuracion")({
@@ -19,9 +20,11 @@ const COUNTRIES = [
   { code: "54", name: "Argentina" },
   { code: "56", name: "Chile" },
   { code: "57", name: "Colombia" },
-  { code: "1", name: "EE. UU. / Canada" },
+  { code: "1",  name: "EE. UU. / Canada" },
   { code: "34", name: "Espana" },
 ];
+
+let slugCheckTimer: ReturnType<typeof setTimeout> | null = null;
 
 function ConfigPage() {
   const id = useApp((s) => s.currentStoreId);
@@ -36,22 +39,74 @@ function ConfigPage() {
       : store?.phone || ""
   );
   const [logo, setLogo] = useState(store?.logo ?? "");
+  const [slug, setSlug] = useState(store?.slug || "");
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const [saving, setSaving] = useState(false);
 
   if (!store) return null;
 
-  const save = () => {
+  const catalogUrl = `${window.location.origin}/t/${store.slug}`;
+
+  const handleSlugChange = (value: string) => {
+    const clean = value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    setSlug(clean);
+
+    if (slugCheckTimer) clearTimeout(slugCheckTimer);
+
+    if (!clean || clean.length < 3) {
+      setSlugStatus(clean.length > 0 ? "invalid" : "idle");
+      return;
+    }
+    if (clean === store.slug) {
+      setSlugStatus("available");
+      return;
+    }
+
+    setSlugStatus("checking");
+    slugCheckTimer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("stores")
+        .select("id")
+        .eq("slug", clean)
+        .single();
+      setSlugStatus(data ? "taken" : "available");
+    }, 500);
+  };
+
+  const save = async () => {
     const cleanNumber = number.replace(/\D/g, "");
     if (!name.trim() || !cleanNumber) {
       toast.error("Completa los campos requeridos");
       return;
     }
-    update(store.id, {
-      name: name.trim(),
-      countryCode: country,
-      phone: country + cleanNumber,
-      logo,
-    });
-    toast.success("Configuracion guardada correctamente");
+    if (slug.length < 3) {
+      toast.error("El link debe tener al menos 3 caracteres");
+      return;
+    }
+    if (slugStatus === "taken") {
+      toast.error("Ese link ya esta en uso, elige otro");
+      return;
+    }
+    if (slugStatus === "checking") {
+      toast.error("Espera un momento, verificando disponibilidad...");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await update(store.id, {
+        name: name.trim(),
+        countryCode: country,
+        phone: country + cleanNumber,
+        logo,
+        slug,
+      });
+      toast.success("Configuracion guardada correctamente");
+    } catch {
+      toast.error("Error al guardar. Intenta de nuevo.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const onLogo = async (file?: File) => {
@@ -84,6 +139,7 @@ function ConfigPage() {
 
       <Card className="border-primary/10 shadow-sm">
         <CardContent className="p-5 sm:p-6 space-y-6">
+
           {/* Nombre + Telefono */}
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -118,6 +174,60 @@ function ConfigPage() {
                   className="min-w-0"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Link del catalogo */}
+          <div className="space-y-3 pt-4 border-t">
+            <Label className="font-semibold flex items-center gap-1.5">
+              <Link2 className="h-3.5 w-3.5" /> Link de tu Catalogo
+            </Label>
+            <div className="flex rounded-xl border border-input shadow-sm focus-within:ring-1 focus-within:ring-primary overflow-hidden">
+              <span className="flex items-center px-3 bg-muted/50 text-muted-foreground text-sm border-r shrink-0">
+                dizi.pe/t/
+              </span>
+              <Input
+                value={slug}
+                onChange={(e) => handleSlugChange(e.target.value)}
+                className="rounded-none border-0 shadow-none focus-visible:ring-0 min-w-0"
+                placeholder="mi-tienda"
+              />
+              {slugStatus === "checking" && (
+                <span className="flex items-center px-3 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </span>
+              )}
+              {slugStatus === "available" && (
+                <span className="flex items-center px-3 text-emerald-500">
+                  <CheckCircle2 className="h-4 w-4" />
+                </span>
+              )}
+              {(slugStatus === "taken" || slugStatus === "invalid") && (
+                <span className="flex items-center px-3 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                </span>
+              )}
+            </div>
+            {slugStatus === "taken" && (
+              <p className="text-xs text-destructive">Ese link ya esta en uso, elige otro.</p>
+            )}
+            {slugStatus === "invalid" && (
+              <p className="text-xs text-destructive">Minimo 3 caracteres (letras, numeros y guiones).</p>
+            )}
+            {slugStatus === "available" && slug !== store.slug && (
+              <p className="text-xs text-emerald-600">Disponible.</p>
+            )}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2">
+              <span className="truncate">{catalogUrl}</span>
+              <a
+                href={catalogUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 hover:text-primary transition-colors"
+                title="Ver catalogo"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
 
@@ -170,10 +280,22 @@ function ConfigPage() {
           </div>
 
           <div className="pt-2">
-            <Button onClick={save} className="w-full sm:w-auto px-8 h-11 font-bold shadow-lg shadow-primary/20">
-              Guardar cambios
+            <Button
+              onClick={save}
+              disabled={saving || slugStatus === "taken" || slugStatus === "checking" || slugStatus === "invalid"}
+              className="w-full sm:w-auto px-8 h-11 font-bold shadow-lg shadow-primary/20"
+            >
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Guardando...
+                </span>
+              ) : (
+                "Guardar cambios"
+              )}
             </Button>
           </div>
+
         </CardContent>
       </Card>
     </div>
