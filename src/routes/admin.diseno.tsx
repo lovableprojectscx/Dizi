@@ -796,10 +796,10 @@ function DisenoPage() {
     try {
       await update(store.id, {
         model: selectedModel as any,
-        brandColor: brandColor || undefined,
-        bgColor: effectiveBgColor || undefined,
-        bannerImage: bannerImage || undefined,
-        bannerTitle: bannerTitle || undefined,
+        brandColor: brandColor || null,
+        bgColor: effectiveBgColor || null,
+        bannerImage: bannerImage || null,
+        bannerTitle: bannerTitle || null,
       } as any);
       toast.success("🎨 Diseño aplicado a tu catálogo", { id: toastId });
     } catch (err) {
