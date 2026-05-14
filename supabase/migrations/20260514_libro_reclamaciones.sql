@@ -12,7 +12,7 @@ ALTER TABLE stores
 -- 2. Tabla de reclamaciones con número correlativo por tenant
 CREATE TABLE IF NOT EXISTS reclamaciones (
   id                  UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id           UUID        NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  tenant_id           TEXT        NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   numero_correlativo  INTEGER     NOT NULL,
   nombre              TEXT        NOT NULL,
   dni                 TEXT        NOT NULL,
@@ -33,9 +33,8 @@ CREATE INDEX IF NOT EXISTS reclamaciones_tenant_id_idx ON reclamaciones(tenant_i
 CREATE INDEX IF NOT EXISTS reclamaciones_fecha_idx     ON reclamaciones(fecha DESC);
  
 -- 4. RPC para insertar con número correlativo automático por tenant
---    Usa advisory lock por tenant para evitar race conditions
 CREATE OR REPLACE FUNCTION insert_reclamacion(
-  p_tenant_id   UUID,
+  p_tenant_id   TEXT,
   p_nombre      TEXT,
   p_dni         TEXT,
   p_tipo        TEXT,
@@ -62,7 +61,7 @@ DECLARE
   v_lock_key    BIGINT;
 BEGIN
   -- Lock por tenant para garantizar correlativos únicos sin colisiones
-  v_lock_key := hashtext(p_tenant_id::text);
+  v_lock_key := hashtext(p_tenant_id);
   PERFORM pg_advisory_xact_lock(v_lock_key);
  
   -- Siguiente número correlativo para este tenant
