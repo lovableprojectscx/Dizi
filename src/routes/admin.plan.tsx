@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
-import { PLANS, type PlanId } from "@/lib/types";
+import { PLANS, type PlanId, daysUntilExpiry, formatDate } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Star } from "lucide-react";
+import { Check, Star, AlertTriangle, Calendar, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/plan")({
@@ -36,8 +36,12 @@ function PlanPage() {
   const store = useApp((s) => s.stores.find((st) => st.id === id));
   
   if (!store) return null;
-  
+
   const used = store.products.length;
+  const days = daysUntilExpiry(store);
+  const isPaid = store.plan !== "semilla";
+  const isExpiringSoon = days !== null && days >= 0 && days <= 7;
+  const isExpired = days !== null && days < 0;
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -47,6 +51,63 @@ function PlanPage() {
           Plan actual: <strong>{PLANS[store.plan].name}</strong>
         </p>
       </div>
+
+      {/* ── Banner de vencimiento ── */}
+      {isPaid && isExpired && (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-destructive text-sm">Tu suscripcion ha vencido</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Tu plan vencio el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Ahora tienes las funciones del plan Semilla.
+              Para renovar, contacta con soporte.
+            </p>
+            <a
+              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-destructive px-4 text-xs font-medium text-white shadow hover:bg-destructive/90 transition-colors"
+            >
+              Renovar ahora por WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
+      {isPaid && isExpiringSoon && !isExpired && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-amber-800 text-sm">
+              Tu suscripcion vence en {days === 0 ? "hoy" : `${days} dia${days !== 1 ? "s" : ""}`}
+            </p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Vence el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Contacta con soporte para renovar.
+            </p>
+            <a
+              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-medium text-white shadow hover:bg-amber-700 transition-colors"
+            >
+              Renovar ahora por WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
+      {isPaid && !isExpired && !isExpiringSoon && store.planExpiresAt && (
+        <div className="rounded-xl border bg-emerald-50/60 border-emerald-200 p-3.5 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm font-medium text-emerald-800">
+              Plan activo hasta <strong>{formatDate(store.planExpiresAt)}</strong>
+              <span className="text-emerald-600 font-normal"> ({days} dias restantes)</span>
+            </span>
+          </div>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-5 space-y-3">

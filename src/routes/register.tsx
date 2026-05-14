@@ -32,6 +32,7 @@ function RegisterPage() {
 
   // Invite state — se valida contra Supabase al montar el componente
   const [invitePlan, setInvitePlan] = useState<PlanId | null>(null);
+  const [inviteDurationMonths, setInviteDurationMonths] = useState<number>(1);
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const BRAND_COLORS = [
@@ -59,7 +60,7 @@ function RegisterPage() {
     setInviteLoading(true);
     supabase
       .from("invites")
-      .select("plan, used, expires_at")
+      .select("plan, used, expires_at, duration_months")
       .eq("token", inviteToken)
       .single()
       .then(({ data, error }) => {
@@ -71,6 +72,7 @@ function RegisterPage() {
           console.warn("[register] Invite expirado");
         } else {
           setInvitePlan(data.plan as PlanId);
+          setInviteDurationMonths(data.duration_months ?? 1);
         }
         setInviteLoading(false);
       });
@@ -196,6 +198,15 @@ function RegisterPage() {
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
         const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
 
+        // Calcular fecha de vencimiento del plan si es de pago
+        const planExpiresAt = plan !== "semilla" && inviteDurationMonths
+          ? (() => {
+              const d = new Date();
+              d.setMonth(d.getMonth() + inviteDurationMonths);
+              return d.toISOString();
+            })()
+          : undefined;
+
         await addStore({
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
@@ -211,12 +222,16 @@ function RegisterPage() {
           brandColor: brandColor || undefined,
           ownerId: userId,
           niche: selectedNiche,
+          planExpiresAt,
+          subscriptionStatus: plan === "semilla" ? "trial" : "active",
+          planDurationMonths: plan !== "semilla" ? inviteDurationMonths : undefined,
           categories: [{ id: newCategoryId, name: "Principal" }],
           products: [],
         });
 
         if (inviteToken && invitePlan) {
-          await markInviteUsed(inviteToken);
+          // Pasar el storeId para que active_subscription se llame correctamente
+          await markInviteUsed(inviteToken, newStoreId);
         }
 
         const { toast } = await import("sonner");

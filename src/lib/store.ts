@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Category, PlanId, Product, Store, Invite } from "./types";
+import type { Category, PlanId, Product, Store, Invite, SubscriptionStatus } from "./types";
 import { supabase } from "./supabase";
 import { toast } from "sonner";
 
@@ -23,6 +23,12 @@ const mapStoreFromDB = (row: any): Store => ({
   createdAt: row.created_at,
   whatsappClicks: row.whatsapp_clicks || 0,
   priceFilterEnabled: row.price_filter_enabled ?? false,
+  libroReclamacionesActivo: row.libro_reclamaciones_activo ?? false,
+  planExpiresAt: row.plan_expires_at ?? undefined,
+  subscriptionStatus: (row.subscription_status ?? "trial") as SubscriptionStatus,
+  cancelledAt: row.cancelled_at ?? undefined,
+  cancelReason: row.cancel_reason ?? undefined,
+  planDurationMonths: row.plan_duration_months ?? undefined,
   categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
   products: (row.products || []).map((p: any) => ({
     id: p.id,
@@ -47,13 +53,15 @@ interface AppState {
   updateStore: (id: string, patch: Partial<Store>) => Promise<void>;
   addStore: (store: Store) => void;
   addInvite: (invite: Omit<Invite, "createdAt">) => Promise<void>;
-  markInviteUsed: (token: string) => Promise<void>;
+  markInviteUsed: (token: string, storeId?: string) => Promise<void>;
+  cancelSubscription: (storeId: string, reason?: string) => Promise<void>;
+  extendSubscription: (storeId: string, monthsToAdd: number) => Promise<void>;
   upsertProduct: (storeId: string, product: Product) => void;
   deleteProduct: (storeId: string, productId: string) => void;
   toggleProductVisible: (storeId: string, productId: string) => void;
   upsertCategory: (storeId: string, cat: Category) => void;
   deleteCategory: (storeId: string, catId: string) => void;
-  setPlan: (storeId: string, plan: PlanId) => void;
+  setPlan: (storeId: string, plan: PlanId, durationMonths?: number) => void;
   toggleStoreActive: (storeId: string) => void;
   startImpersonation: (storeId: string) => void;
   stopImpersonation: () => void;
@@ -96,6 +104,12 @@ export const useApp = create<AppState>()(
         if ((patch as any).bannerTitle !== undefined) dbPatch.banner_title = (patch as any).bannerTitle;
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
         if (patch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = patch.priceFilterEnabled;
+        if (patch.libroReclamacionesActivo !== undefined) dbPatch.libro_reclamaciones_activo = patch.libroReclamacionesActivo;
+        if (patch.planExpiresAt !== undefined) dbPatch.plan_expires_at = patch.planExpiresAt;
+        if (patch.subscriptionStatus !== undefined) dbPatch.subscription_status = patch.subscriptionStatus;
+        if (patch.cancelledAt !== undefined) dbPatch.cancelled_at = patch.cancelledAt;
+        if (patch.cancelReason !== undefined) dbPatch.cancel_reason = patch.cancelReason;
+        if (patch.planDurationMonths !== undefined) dbPatch.plan_duration_months = patch.planDurationMonths;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
@@ -165,8 +179,14 @@ export const useApp = create<AppState>()(
         set((s) => ({ stores: [...s.stores, store] }));
       },
 
-      addInvite: async ({ token, plan }) => {
-        const { error } = await supabase.from("invites").insert({ token, plan });
+      addInvite: async ({ token, plan, durationMonths, notes }) => {
+        const { error } = await supabase.from("invites").insert({
+          token,
+          plan,
+          duration_months: durationMonths ?? 1,
+          notes: notes ?? null,
+          // expires_at se calcula en el trigger de BD (30 días para el link)
+        });
         if (error) {
           console.error("[addInvite] Error:", error);
           toast.error("No se pudo guardar la invitacion");
@@ -174,12 +194,109 @@ export const useApp = create<AppState>()(
         }
       },
 
-      markInviteUsed: async (token) => {
-        const { error } = await supabase
+      markInviteUsed: async (token, storeId) => {
+        // 1. Marcar el invite como usado
+        const { error: updateError } = await supabase
           .from("invites")
           .update({ used: true })
           .eq("token", token);
-        if (error) console.error("[markInviteUsed] Error:", error);
+        if (updateError) console.error("[markInviteUsed] Error:", updateError);
+
+        // 2. Si tenemos storeId, activar la suscripción en la tienda usando los datos del invite
+        if (storeId) {
+          const { data: invite, error: fetchError } = await supabase
+            .from("invites")
+            .select("plan, duration_months")
+            .eq("token", token)
+            .single();
+
+          if (!fetchError && invite) {
+            const { error: rpcError } = await supabase.rpc("activate_subscription", {
+              p_store_id: storeId,
+              p_plan: invite.plan,
+              p_duration_months: invite.duration_months ?? 1,
+            });
+            if (rpcError) console.error("[markInviteUsed] activate_subscription error:", rpcError);
+
+            // Actualizar estado local
+            const expiresAt = new Date();
+            expiresAt.setMonth(expiresAt.getMonth() + (invite.duration_months ?? 1));
+            set((s) => ({
+              stores: s.stores.map((st) =>
+                st.id === storeId
+                  ? {
+                      ...st,
+                      plan: invite.plan as PlanId,
+                      planExpiresAt: expiresAt.toISOString(),
+                      subscriptionStatus: "active" as SubscriptionStatus,
+                      planDurationMonths: invite.duration_months ?? 1,
+                    }
+                  : st
+              ),
+            }));
+          }
+        }
+      },
+
+      cancelSubscription: async (storeId, reason) => {
+        try {
+          const { error } = await supabase.rpc("cancel_subscription", {
+            p_store_id: storeId,
+            p_reason: reason ?? null,
+          });
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) =>
+              st.id === storeId
+                ? {
+                    ...st,
+                    plan: "semilla" as PlanId,
+                    subscriptionStatus: "cancelled" as SubscriptionStatus,
+                    cancelledAt: new Date().toISOString(),
+                    cancelReason: reason,
+                    planExpiresAt: new Date().toISOString(),
+                  }
+                : st
+            ),
+          }));
+          toast.success("Suscripcion cancelada");
+        } catch (error) {
+          console.error("[cancelSubscription] Error:", error);
+          toast.error("Error al cancelar la suscripcion");
+        }
+      },
+
+      extendSubscription: async (storeId, monthsToAdd) => {
+        try {
+          const { error } = await supabase.rpc("extend_subscription", {
+            p_store_id: storeId,
+            p_months_to_add: monthsToAdd,
+          });
+          if (error) throw error;
+
+          // Calcular nueva fecha localmente
+          set((s) => ({
+            stores: s.stores.map((st) => {
+              if (st.id !== storeId) return st;
+              const base = st.planExpiresAt && new Date(st.planExpiresAt) > new Date()
+                ? new Date(st.planExpiresAt)
+                : new Date();
+              base.setMonth(base.getMonth() + monthsToAdd);
+              return {
+                ...st,
+                planExpiresAt: base.toISOString(),
+                subscriptionStatus: "active" as SubscriptionStatus,
+                cancelledAt: undefined,
+                cancelReason: undefined,
+              };
+            }),
+          }));
+          toast.success(`Plan extendido ${monthsToAdd} mes${monthsToAdd > 1 ? "es" : ""}`);
+        } catch (error) {
+          console.error("[extendSubscription] Error:", error);
+          toast.error("Error al extender la suscripcion");
+        }
       },
 
       upsertProduct: async (storeId, product) => {
@@ -313,14 +430,52 @@ export const useApp = create<AppState>()(
         }
       },
 
-      setPlan: async (storeId, plan) => {
+      setPlan: async (storeId, plan, durationMonths) => {
         try {
-          const { error } = await supabase.from("stores").update({ plan }).eq("id", storeId);
-          if (error) throw error;
+          if (plan === "semilla") {
+            const { error } = await supabase.from("stores").update({
+              plan,
+              plan_expires_at: null,
+              subscription_status: "trial",
+              plan_duration_months: null,
+            }).eq("id", storeId);
+            if (error) throw error;
 
-          set((s) => ({
-            stores: s.stores.map((st) => (st.id === storeId ? { ...st, plan } : st)),
-          }));
+            set((s) => ({
+              stores: s.stores.map((st) =>
+                st.id === storeId
+                  ? { ...st, plan, planExpiresAt: undefined, subscriptionStatus: "trial", planDurationMonths: undefined }
+                  : st
+              ),
+            }));
+          } else {
+            const months = durationMonths ?? 1;
+            const { error } = await supabase.rpc("activate_subscription", {
+              p_store_id: storeId,
+              p_plan: plan,
+              p_duration_months: months,
+            });
+            if (error) throw error;
+
+            const expiresAt = new Date();
+            expiresAt.setMonth(expiresAt.getMonth() + months);
+
+            set((s) => ({
+              stores: s.stores.map((st) =>
+                st.id === storeId
+                  ? {
+                      ...st,
+                      plan,
+                      planExpiresAt: expiresAt.toISOString(),
+                      subscriptionStatus: "active" as SubscriptionStatus,
+                      planDurationMonths: months,
+                      cancelledAt: undefined,
+                      cancelReason: undefined,
+                    }
+                  : st
+              ),
+            }));
+          }
           toast.success("Plan actualizado");
         } catch (error) {
           console.error("[setPlan] Error:", error);
@@ -370,7 +525,6 @@ export const useApp = create<AppState>()(
     }),
     {
       name: "dizi-catalogos-v1",
-      // Solo persistir lo necesario — invites viven en Supabase, no en localStorage
       partialize: (state) => ({
         stores: state.stores,
         currentStoreId: state.currentStoreId,

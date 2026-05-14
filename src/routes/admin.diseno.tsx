@@ -3,7 +3,7 @@ import { useApp } from "@/lib/store";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Lock, Check, Sparkles, Crown, Palette, Image } from "lucide-react";
-import { type PlanId } from "@/lib/types";
+import { type PlanId, LAYOUT_IMAGE_SPECS } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -81,7 +81,7 @@ interface ModelDef {
   planLevel: number;
   badge?: string;
   imgShape: "square" | "rounded" | "circle";
-  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch";
+  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid";
   bg: string;
   cardBg: string;
   primaryColor: string;
@@ -901,7 +901,7 @@ function DisenoPage() {
       </div>
 
       {/* Panel de imagen de portada — solo visible cuando modelo = "elite" */}
-      {selectedModel === "elite" && (
+      {(selectedModel === "elite" || selectedModel === "portada") && (
         <div className="rounded-2xl border bg-card p-5 space-y-4">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -925,6 +925,24 @@ function DisenoPage() {
               <p className="absolute bottom-2 left-3 text-white text-xs font-bold drop-shadow">{bannerTitle || store.name}</p>
             </div>
           )}
+
+          {/* Guía de dimensiones del banner */}
+          <div className="flex items-start gap-3 rounded-xl bg-muted/40 border border-border px-3 py-2.5">
+            <svg className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                <span className="text-xs font-semibold text-foreground">Panorámica 16:7</span>
+                <span className="text-[10px] bg-primary/10 text-primary font-bold rounded-full px-2 py-0.5">1920 × 700 px mínimo</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                El banner ocupa todo el ancho superior del catálogo. Usa una imagen muy ancha (paisaje) para evitar recortes laterales.
+                Herramienta recomendada:{" "}
+                <a href="https://squoosh.app" target="_blank" rel="noreferrer" className="text-primary underline">squoosh.app</a>
+              </p>
+            </div>
+          </div>
 
           {/* Dropzone */}
           <div className="relative">
@@ -1102,6 +1120,25 @@ function DisenoPage() {
                           <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
                             {model.desc}
                           </p>
+                          {/* Badge de proporcion recomendada */}
+                          {(() => {
+                            const layoutKey = model.layout === "banner_grid" ? "banner_grid" : model.layout;
+                            const spec = LAYOUT_IMAGE_SPECS[layoutKey];
+                            if (!spec) return null;
+                            return (
+                              <div className="flex items-center gap-1.5 pt-0.5">
+                                <div className="flex items-center gap-1 bg-muted rounded-full px-2 py-0.5">
+                                  <svg className="w-2.5 h-2.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide">
+                                    {spec.label}
+                                  </span>
+                                </div>
+                                <span className="text-[9px] text-muted-foreground">para productos</span>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );

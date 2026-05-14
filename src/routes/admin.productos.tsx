@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
-import { PLANS, type Product } from "@/lib/types";
-import { convertImageToWebP } from "@/lib/image-utils";
+import { PLANS, type Product, getEffectivePlan, getEffectiveProductLimit, isSubscriptionExpired, getImageSpec } from "@/lib/types";
+import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -30,9 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
+import type { Category } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/productos")({
   component: ProductsPage,
@@ -49,6 +50,97 @@ const empty = (): Product => ({
   originalPrice: 0,
   description: "",
 });
+
+/* ── Selector de categoría con creación inline ── */
+function CategorySelect({
+  value,
+  categories,
+  onChange,
+  onCreateCategory,
+}: {
+  value: string;
+  categories: Category[];
+  onChange: (id: string) => void;
+  onCreateCategory: (name: string) => Promise<string | null>;
+}) {
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleCreate = async () => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    setSaving(true);
+    const newId = await onCreateCategory(trimmed);
+    if (newId) {
+      onChange(newId);
+      setNewName("");
+      setCreating(false);
+    }
+    setSaving(false);
+  };
+
+  if (creating) {
+    return (
+      <div className="flex gap-1.5">
+        <Input
+          autoFocus
+          placeholder="Nombre de categoría..."
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); handleCreate(); }
+            if (e.key === "Escape") { setCreating(false); setNewName(""); }
+          }}
+          className="h-9 text-sm"
+        />
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={saving || !newName.trim()}
+          className="h-9 w-9 shrink-0 rounded-md bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition"
+        >
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setCreating(false); setNewName(""); }}
+          className="h-9 px-2 shrink-0 rounded-md border text-xs text-muted-foreground hover:bg-muted transition"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-1.5">
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger className="flex-1 min-w-0">
+          <SelectValue placeholder="Selecciona una..." />
+        </SelectTrigger>
+        <SelectContent>
+          {categories.length === 0 && (
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              Sin categorías aún
+            </div>
+          )}
+          {categories.map((c) => (
+            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <button
+        type="button"
+        onClick={() => setCreating(true)}
+        title="Nueva categoría"
+        className="h-9 w-9 shrink-0 rounded-md border border-dashed border-primary/40 text-primary flex items-center justify-center hover:bg-primary/5 transition"
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
 
 function ProductsPage() {
   const id = useApp((s) => s.currentStoreId);
@@ -68,8 +160,20 @@ function ProductsPage() {
   const upsert = useApp((s) => s.upsertProduct);
   const del = useApp((s) => s.deleteProduct);
   const toggle = useApp((s) => s.toggleProductVisible);
+  const upsertCategory = useApp((s) => s.upsertCategory);
+
   const plan = PLANS[store.plan];
-  const reachedLimit = store.products.length >= plan.productLimit;
+  const effectivePlan = PLANS[getEffectivePlan(store)];
+  const effectiveLimit = getEffectiveProductLimit(store);
+  const subscriptionExpired = isSubscriptionExpired(store);
+  const imageSpec = getImageSpec(store);
+
+  const visibleProducts = store.products.filter(p => p.visible);
+  const hiddenByExpiry = subscriptionExpired
+    ? Math.max(0, visibleProducts.length - effectiveLimit)
+    : 0;
+
+  const reachedLimit = store.products.filter(p => !p.isSample).length >= effectiveLimit;
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product>(empty());
@@ -96,15 +200,32 @@ function ProductsPage() {
     toast.success("Producto guardado");
   };
 
+  /* Crea categoría inline y devuelve el nuevo id */
+  const handleCreateCategory = async (name: string): Promise<string | null> => {
+    const newCat: Category = { id: crypto.randomUUID(), name };
+    try {
+      await upsertCategory(store.id, newCat);
+      toast.success(`Categoría "${name}" creada`);
+      return newCat.id;
+    } catch {
+      toast.error("No se pudo crear la categoría");
+      return null;
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Mis Productos</h1>
           <p className="text-sm text-muted-foreground">
-            {store.products.length} de{" "}
-            {plan.productLimit === Infinity ? "ilimitados" : plan.productLimit} (plan{" "}
-            {plan.name})
+            {store.products.filter(p => !p.isSample).length} de{" "}
+            {effectiveLimit === Infinity ? "ilimitados" : effectiveLimit} (plan {effectivePlan.name})
+            {subscriptionExpired && effectivePlan.id !== plan.id && (
+              <span className="ml-1 text-amber-600 font-semibold">
+                — suscripcion vencida, limite reducido
+              </span>
+            )}
           </p>
         </div>
         <Button onClick={openNew} disabled={reachedLimit}>
@@ -113,7 +234,35 @@ function ProductsPage() {
         </Button>
       </div>
 
-      {/* Tabla solo desktop */}
+      {/* Banner: productos ocultos por vencimiento */}
+      {hiddenByExpiry > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <div className="text-amber-500 mt-0.5 shrink-0">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-amber-800 text-sm">
+              {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto{hiddenByExpiry > 1 ? "s" : ""} en tu catalogo publico
+            </p>
+            <p className="text-sm text-amber-700 mt-0.5">
+              Tu suscripcion vencio. El plan Semilla permite hasta {effectiveLimit} productos visibles.
+              Tus productos estan guardados — renueva para mostrarlos todos de nuevo.
+            </p>
+            <a
+              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+            >
+              Renovar plan por WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* Tabla desktop */}
       <div className="hidden md:block border rounded-xl bg-card overflow-x-auto">
         <Table>
           <TableHeader>
@@ -182,7 +331,7 @@ function ProductsPage() {
         </Table>
       </div>
 
-      {/* Cards solo movil */}
+      {/* Cards móvil */}
       <div className="flex flex-col gap-3 md:hidden">
         {store.products.length === 0 && (
           <p className="text-center text-sm text-muted-foreground py-8">
@@ -241,9 +390,10 @@ function ProductsPage() {
             <DialogTitle>{editing.id ? "Editar producto" : "Nuevo producto"}</DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
-            <ImageDrop
+            <ImageUploadGuided
               value={editing.image}
               onChange={(image) => setEditing({ ...editing, image })}
+              spec={imageSpec}
             />
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
@@ -312,20 +462,15 @@ function ProductsPage() {
                         />
                       </div>
                       <div>
-                        <Label>Categoria</Label>
-                        <Select
+                        <Label className="flex items-center gap-1">
+                          <Tag className="h-3 w-3" /> Categoria
+                        </Label>
+                        <CategorySelect
                           value={editing.categoryId}
-                          onValueChange={(v) => setEditing({ ...editing, categoryId: v })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {store.categories.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          categories={store.categories}
+                          onChange={(v) => setEditing({ ...editing, categoryId: v })}
+                          onCreateCategory={handleCreateCategory}
+                        />
                       </div>
                     </>
                   )}
@@ -334,20 +479,15 @@ function ProductsPage() {
 
               {editing.isOnSale && (
                 <div className="col-span-2">
-                  <Label>Categoria</Label>
-                  <Select
+                  <Label className="flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> Categoria
+                  </Label>
+                  <CategorySelect
                     value={editing.categoryId}
-                    onValueChange={(v) => setEditing({ ...editing, categoryId: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {store.categories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    categories={store.categories}
+                    onChange={(v) => setEditing({ ...editing, categoryId: v })}
+                    onCreateCategory={handleCreateCategory}
+                  />
                 </div>
               )}
 
@@ -369,76 +509,6 @@ function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function ImageDrop({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const [drag, setDrag] = useState(false);
-  const [converting, setConverting] = useState(false);
-
-  const handleFile = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagen muy grande (max 10 MB)");
-      return;
-    }
-    setConverting(true);
-    try {
-      const webpDataUrl = await convertImageToWebP(file);
-      onChange(webpDataUrl);
-    } catch {
-      toast.error("No se pudo procesar la imagen.");
-    } finally {
-      setConverting(false);
-    }
-  };
-
-  return (
-    <div>
-      <Label>Imagen del producto</Label>
-      <div
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-        onDragLeave={() => setDrag(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDrag(false);
-          const f = e.dataTransfer.files[0];
-          if (f) handleFile(f);
-        }}
-        className={"relative mt-1 border-2 border-dashed rounded-xl p-4 flex items-center gap-4 transition " + (drag ? "border-primary bg-primary/5" : "border-border")}
-      >
-        {converting ? (
-          <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <span className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : value ? (
-          <img src={value} alt="" className="h-20 w-20 rounded-lg object-cover shrink-0" />
-        ) : (
-          <div className="h-20 w-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <ImageIcon className="h-6 w-6 text-muted-foreground" />
-          </div>
-        )}
-        <div className="flex-1 text-sm">
-          <p className="font-medium">{converting ? "Optimizando imagen..." : "Arrastra una imagen aqui"}</p>
-          <p className="text-muted-foreground text-xs">
-            {converting ? "Convirtiendo a WebP" : "JPG, PNG, WEBP, HEIC hasta 10 MB"}
-          </p>
-        </div>
-        {!converting && (
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-          />
-        )}
-      </div>
-      <Input
-        className="mt-2"
-        placeholder="https://..."
-        value={value.startsWith("data:") ? "" : value}
-        onChange={(e) => onChange(e.target.value)}
-      />
     </div>
   );
 }

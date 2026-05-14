@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ImageIcon, Phone, Store, Link2, ExternalLink, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ImageIcon, Phone, Store, Link2, ExternalLink, CheckCircle2, AlertCircle, Loader2, ClipboardList } from "lucide-react";
 import { convertImageToWebP } from "@/lib/image-utils";
 
 export const Route = createFileRoute("/admin/configuracion")({
@@ -43,6 +43,7 @@ function ConfigPage() {
   const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
   const [saving, setSaving] = useState(false);
   const [priceFilter, setPriceFilter] = useState(store?.priceFilterEnabled ?? false);
+  const [libroActivo, setLibroActivo] = useState(store?.libroReclamacionesActivo ?? false);
 
   if (!store) return null;
 
@@ -102,6 +103,7 @@ function ConfigPage() {
         logo,
         slug,
         priceFilterEnabled: priceFilter,
+        libroReclamacionesActivo: libroActivo,
       });
       toast.success("Configuracion guardada correctamente");
     } catch {
@@ -254,19 +256,52 @@ function ConfigPage() {
             </button>
           </div>
 
+          {/* Libro de reclamaciones */}
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-start gap-2.5">
+              <ClipboardList className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">Libro de Reclamaciones</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Muestra un botón en tu catálogo para que los clientes puedan presentar quejas o reclamos.
+                  Recibirás una notificación por cada envío.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={libroActivo}
+              onClick={() => setLibroActivo(!libroActivo)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ml-4 ${libroActivo ? "bg-primary" : "bg-input"}`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${libroActivo ? "translate-x-5" : "translate-x-0"}`}
+              />
+            </button>
+          </div>
+
           {/* Logo */}
           <div className="space-y-3 pt-4 border-t">
-            <Label className="font-semibold">Logo del Negocio</Label>
+            <div className="flex items-center justify-between">
+              <Label className="font-semibold">Logo del Negocio</Label>
+              <span className="text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-1 flex items-center gap-1.5">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Cuadrado · 500 × 500 px · Se muestra circular
+              </span>
+            </div>
             <div className="flex flex-col sm:flex-row items-center gap-5">
               <div className="relative group shrink-0">
                 {logo ? (
                   <img
                     src={logo}
                     alt="Logo"
-                    className="h-20 w-20 rounded-2xl object-cover ring-2 ring-primary/20 shadow-lg"
+                    className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20 shadow-lg"
                   />
                 ) : (
-                  <div className="h-20 w-20 rounded-2xl bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/20">
+                  <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/20">
                     <ImageIcon className="h-7 w-7 text-muted-foreground/30" />
                   </div>
                 )}
@@ -280,15 +315,15 @@ function ConfigPage() {
                 )}
               </div>
 
-              <div className="flex-1 w-full relative">
-                <div className="border-2 border-dashed border-primary/20 rounded-xl p-5 text-center hover:bg-primary/5 transition-colors cursor-pointer group">
+              <div className="flex-1 w-full space-y-2">
+                <div className="relative border-2 border-dashed border-primary/20 rounded-xl p-5 text-center hover:bg-primary/5 transition-colors cursor-pointer group">
                   <div className="flex flex-col items-center gap-1.5">
                     <ImageIcon className="h-7 w-7 text-primary/30 group-hover:text-primary/60 transition-colors" />
                     <span className="text-sm font-medium text-foreground/70">
                       {logo ? "Cambiar logo" : "Subir logo"}
                     </span>
                     <span className="text-xs text-muted-foreground/60">
-                      JPG, PNG o WEBP - Max. 10 MB
+                      JPG, PNG o WEBP — Max. 10 MB
                     </span>
                   </div>
                   <input
@@ -298,6 +333,12 @@ function ConfigPage() {
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground px-1">
+                  El logo se muestra en forma circular en el header del catálogo.
+                  Usa una imagen cuadrada (1:1) para evitar distorsión.
+                  Herramienta recomendada:{" "}
+                  <a href="https://squoosh.app" target="_blank" rel="noreferrer" className="text-primary underline">squoosh.app</a>
+                </p>
               </div>
             </div>
           </div>

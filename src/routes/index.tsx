@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Zap, 
-  Search, 
-  MessageCircle, 
-  Smartphone, 
+import {
+  Zap,
+  Search,
+  MessageCircle,
+  Smartphone,
   ArrowRight,
   CheckCircle2,
   XCircle,
@@ -12,7 +13,9 @@ import {
   TrendingUp,
   Store,
   FileDown,
-  Palette
+  Palette,
+  Menu,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -29,34 +32,94 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground overflow-hidden">
+    <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary selection:text-primary-foreground">
       {/* Navbar */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
           <div className="flex items-center">
             <img src="/images/Logo.png" alt="Dizi" className="h-10 w-auto object-contain" />
           </div>
-          
+
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
             <a href="#beneficios" className="hover:text-foreground transition-colors">Beneficios</a>
             <a href="#solucion" className="hover:text-foreground transition-colors">Solución</a>
             <a href="#modelos" className="hover:text-foreground transition-colors">Modelos</a>
             <a href="#precios" className="hover:text-foreground transition-colors">Precios</a>
+            <Link to="/novedades" className="hover:text-foreground transition-colors">Novedades</Link>
           </nav>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" asChild className="hidden sm:flex">
+            <Button variant="outline" asChild className="hidden md:flex">
               <Link to="/login">Iniciar Sesión</Link>
             </Button>
-            <Button asChild className="shadow-lg shadow-primary/20 transition-all hover:scale-105">
+            <Button asChild className="hidden md:flex shadow-lg shadow-primary/20 transition-all hover:scale-105">
               <Link to="/register">Crear Tienda</Link>
             </Button>
+            {/* Hamburguesa mobile */}
+            <button
+              className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Menú"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Menú mobile desplegable */}
+        {menuOpen && (
+          <div className="md:hidden border-t bg-background/95 backdrop-blur-md px-4 py-4 space-y-1">
+            <a
+              href="#beneficios"
+              className="block px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Beneficios
+            </a>
+            <a
+              href="#solucion"
+              className="block px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Solución
+            </a>
+            <a
+              href="#modelos"
+              className="block px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Modelos
+            </a>
+            <a
+              href="#precios"
+              className="block px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Precios
+            </a>
+            <Link
+              to="/novedades"
+              className="block px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              onClick={() => setMenuOpen(false)}
+            >
+              Novedades
+            </Link>
+            <div className="pt-2 border-t space-y-2">
+              <Button variant="outline" asChild className="w-full">
+                <Link to="/login" onClick={() => setMenuOpen(false)}>Iniciar Sesión</Link>
+              </Button>
+              <Button asChild className="w-full shadow-lg shadow-primary/20">
+                <Link to="/register" onClick={() => setMenuOpen(false)}>Crear Tienda</Link>
+              </Button>
+            </div>
+          </div>
+        )}
       </header>
 
-      <main>
+      <main className="overflow-hidden">
         {/* Hero Section */}
         <section className="relative pt-24 pb-32 lg:pt-40 lg:pb-48 overflow-hidden">
           {/* Boutique Background */}
@@ -377,11 +440,13 @@ function LandingPage() {
       {/* Footer */}
       <footer className="bg-card border-t py-12 text-center text-muted-foreground">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="h-6 w-6 rounded-full -rotate-12 bg-primary text-primary-foreground flex items-center justify-center font-black text-xs shadow-sm">
-              D
-            </div>
-            <span className="font-bold text-foreground">Dizi</span>
+          <div className="flex items-center justify-center mb-4">
+            <img src="/images/Logo.png" alt="Dizi" className="h-9 w-auto object-contain" />
+          </div>
+          <div className="flex items-center justify-center gap-6 text-sm mb-3">
+            <Link to="/novedades" className="hover:text-foreground transition-colors">Novedades &amp; FAQ</Link>
+            <Link to="/login" className="hover:text-foreground transition-colors">Iniciar Sesión</Link>
+            <Link to="/register" className="hover:text-foreground transition-colors">Registrarse</Link>
           </div>
           <p className="text-sm">
             © {new Date().getFullYear()} Dizi Development. Digitalizando el Perú.

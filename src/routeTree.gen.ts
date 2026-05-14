@@ -26,6 +26,7 @@ import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as NovedadesRouteImport } from './routes/novedades'
 
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
@@ -112,6 +113,11 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AdminRoute,
 } as any)
+const NovedadesRoute = NovedadesRouteImport.update({
+  id: '/novedades',
+  path: '/novedades',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
+  '/novedades': typeof NovedadesRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/novedades': typeof NovedadesRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
+  '/novedades': typeof NovedadesRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/super'
+    | '/novedades'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/novedades'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/super'
+    | '/novedades'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   SuperRoute: typeof SuperRouteWithChildren
   TSlugRoute: typeof TSlugRoute
+  NovedadesRoute: typeof NovedadesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -357,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/novedades': {
+      id: '/novedades'
+      path: '/novedades'
+      fullPath: '/novedades'
+      preLoaderRoute: typeof NovedadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -405,6 +425,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   SuperRoute: SuperRouteWithChildren,
   TSlugRoute: TSlugRoute,
+  NovedadesRoute: NovedadesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

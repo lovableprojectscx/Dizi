@@ -8,12 +8,22 @@ import {
   Flame,
   Trash2,
   X,
+  ClipboardList,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useApp, useCart } from "@/lib/store";
 import { buildWaUrl, formatPrice } from "@/lib/whatsapp";
 import type { Store, Product } from "@/lib/types";
+import {
+  getEffectiveProductLimit,
+  getEffectiveModel,
+  isSubscriptionExpired,
+  modelGraceDaysLeft,
+  PLANS,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const EMPTY_CART: any[] = [];
@@ -145,6 +155,7 @@ export function PublicCatalog({ store }: { store: Store }) {
   );
   const [cartOpen, setCartOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [libroOpen, setLibroOpen] = useState(false);
 
   const cart = useCart((s) => s.carts[store.id] ?? EMPTY_CART);
   const cartAdd = useCart((s) => s.add);
@@ -153,8 +164,13 @@ export function PublicCatalog({ store }: { store: Store }) {
   const cartClear = useCart((s) => s.clear);
   const incClicks = useApp((s) => s.incWhatsappClicks);
 
+  /* ── Subscription state ─────────────────────────── */
+  const effectiveProductLimit = getEffectiveProductLimit(store);
+  const isExpired = isSubscriptionExpired(store);
+  const modelDaysLeft = modelGraceDaysLeft(store);
+
   /* ── Theme setup ─────────────────────────────────── */
-  const rawModelId = store.model || "minimalista";
+  const rawModelId = getEffectiveModel(store);
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
@@ -232,15 +248,17 @@ export function PublicCatalog({ store }: { store: Store }) {
   /* ── Derived data ────────────────────────────────── */
   const filtered = useMemo(() => {
     const products = store.products || [];
-    // If we have only sample products, we show them regardless of category mismatch (common in new stores)
     const hasOnlySamples = products.length > 0 && products.every(p => p.isSample);
-    
-    return products
+
+    // Productos visibles, limitados al plan efectivo (respeta dias de gracia)
+    const visibleProducts = products
       .filter((p) => p.visible)
+      .slice(0, effectiveProductLimit === Infinity ? undefined : effectiveProductLimit);
+
+    return visibleProducts
       .filter((p) => {
         if (activeCat === "all") return true;
         if (activeCat === "sale") return p.isOnSale;
-        // Relax category filter for samples to avoid "empty store" on new accounts
         if (hasOnlySamples && activeCat === "all") return true;
         return p.categoryId === activeCat;
       })
@@ -249,7 +267,7 @@ export function PublicCatalog({ store }: { store: Store }) {
         if (!priceRange) return true;
         return p.price >= priceRange[0] && p.price <= priceRange[1];
       });
-  }, [store.products, activeCat, query, priceRange]);
+  }, [store.products, activeCat, query, priceRange, effectiveProductLimit]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -290,7 +308,31 @@ export function PublicCatalog({ store }: { store: Store }) {
       {/* Preview banner */}
       {!store.isPublished && (
         <div className="bg-primary/20 border-b border-primary/30 text-primary px-4 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">
-          Modo Previsualización — Solo tú puedes ver esto
+          Modo Previzualizacion — Solo tu puedes ver esto
+        </div>
+      )}
+
+      {/* Banner: modelo premium en periodo de gracia (solo visible al owner via previewMode) */}
+      {modelDaysLeft !== null && modelDaysLeft > 0 && !store.isPublished && (
+        <div className="bg-amber-500 text-white px-4 py-2 text-center text-xs font-semibold">
+          Estas usando el modelo <strong>{store.model}</strong> de tu plan anterior.
+          En <strong>{modelDaysLeft} dia{modelDaysLeft !== 1 ? "s" : ""}</strong> cambiara automaticamente al modelo Semilla.
+          {" "}<a href="/admin/plan" className="underline hover:no-underline">Renueva para conservarlo</a>.
+        </div>
+      )}
+
+      {/* Banner: modelo ya cambiado a semilla (solo visible al owner) */}
+      {modelDaysLeft === 0 && !store.isPublished && (
+        <div className="bg-destructive text-white px-4 py-2 text-center text-xs font-semibold">
+          Tu suscripcion vencio. El catalogo ahora usa el modelo Semilla.
+          {" "}<a href="/admin/plan" className="underline hover:no-underline">Renueva tu plan</a> para recuperar tu diseno original.
+        </div>
+      )}
+
+      {/* Banner publico: plan vencido, productos limitados */}
+      {isExpired && (
+        <div className="bg-muted border-b px-4 py-1.5 text-center text-[10px] text-muted-foreground uppercase tracking-widest">
+          Catalogo en modo limitado — mostrando {PLANS["semilla"].productLimit} productos
         </div>
       )}
 
@@ -1065,6 +1107,30 @@ export function PublicCatalog({ store }: { store: Store }) {
         )}
       </main>
 
+      {/* ── Footer libro de reclamaciones ────────────── */}
+      {store.libroReclamacionesActivo && (
+        <div className="py-6 text-center border-t" style={{ borderColor: "var(--border)" }}>
+          <button
+            onClick={() => setLibroOpen(true)}
+            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors underline underline-offset-4"
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            Libro de Reclamaciones
+          </button>
+        </div>
+      )}
+
+      {/* ── Modal Libro de Reclamaciones ─────────────── */}
+      {libroOpen && (
+        <LibroReclamacionesModal
+          store={store}
+          onClose={() => setLibroOpen(false)}
+          themeVars={themeVars}
+          cfg={cfg}
+        />
+      )}
+
       {/* ── FAB ──────────────────────────────────────── */}
       <button
         onClick={() => (cartCount > 0 ? setCartOpen(true) : supportClick())}
@@ -1404,6 +1470,165 @@ export function PublicCatalog({ store }: { store: Store }) {
         </SheetContent>
       </Sheet>
 
+    </div>
+  );
+}
+
+/* ── LibroReclamacionesModal ─────────────────────────────── */
+function LibroReclamacionesModal({
+  store,
+  onClose,
+  themeVars,
+  cfg,
+}: {
+  store: Store;
+  onClose: () => void;
+  themeVars: React.CSSProperties;
+  cfg: ModelConfig;
+}) {
+  const [nombre, setNombre] = useState("");
+  const [dni, setDni] = useState("");
+  const [tipo, setTipo] = useState<"queja" | "reclamo">("reclamo");
+  const [descripcion, setDescripcion] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim() || !dni.trim() || !descripcion.trim()) return;
+    setSending(true);
+    try {
+      const { supabase } = await import("@/lib/supabase");
+      const { error } = await supabase.from("reclamaciones").insert({
+        tenant_id: store.id,
+        nombre: nombre.trim(),
+        dni: dni.trim(),
+        tipo,
+        descripcion: descripcion.trim(),
+        estado: "pendiente",
+      });
+      if (error) throw error;
+      setSent(true);
+    } catch (err) {
+      console.error("[LibroReclamaciones] Error:", err);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
+      <div
+        className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        style={{ ...themeVars, backgroundColor: "var(--background)", color: "var(--foreground)" } as React.CSSProperties}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5" style={{ color: "var(--primary)" }} />
+            <span className="font-bold text-base">Libro de Reclamaciones</span>
+          </div>
+          <button onClick={onClose} className="h-8 w-8 rounded-full hover:bg-muted/60 flex items-center justify-center transition" style={{ color: "var(--muted-foreground)" }}>
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-5 py-5">
+          {sent ? (
+            <div className="text-center py-8 space-y-3">
+              <CheckCircle2 className="h-12 w-12 mx-auto" style={{ color: "var(--primary)" }} />
+              <p className="font-bold text-lg">¡Recibido!</p>
+              <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                Tu {tipo} ha sido registrado. El negocio se pondrá en contacto contigo a la brevedad.
+              </p>
+              <button
+                onClick={onClose}
+                className="mt-4 px-6 py-2.5 rounded-xl font-bold text-sm"
+                style={{ backgroundColor: "var(--primary)", color: "white" }}
+              >
+                Cerrar
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                Conforme al Código de Protección y Defensa del Consumidor, puedes registrar aquí tu queja o reclamo.
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">Nombre completo *</label>
+                <input
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  required
+                  placeholder="Tu nombre y apellido"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 border"
+                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)", focusRingColor: "var(--primary)" } as any}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">DNI / Documento *</label>
+                <input
+                  value={dni}
+                  onChange={(e) => setDni(e.target.value)}
+                  required
+                  placeholder="12345678"
+                  inputMode="numeric"
+                  maxLength={12}
+                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 border"
+                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" } as any}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">Tipo *</label>
+                <div className="flex gap-3">
+                  {(["reclamo", "queja"] as const).map((t) => (
+                    <label key={t} className="flex items-center gap-2 cursor-pointer text-sm">
+                      <input
+                        type="radio"
+                        name="tipo"
+                        value={t}
+                        checked={tipo === t}
+                        onChange={() => setTipo(t)}
+                        className="accent-primary"
+                      />
+                      <span className="capitalize">{t}</span>
+                      <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                        {t === "reclamo" ? "(disconformidad con producto/servicio)" : "(malestar sin disconformidad)"}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold">Descripción *</label>
+                <textarea
+                  value={descripcion}
+                  onChange={(e) => setDescripcion(e.target.value)}
+                  required
+                  rows={4}
+                  placeholder="Describe detalladamente tu queja o reclamo..."
+                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 border resize-none"
+                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" } as any}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={sending || !nombre.trim() || !dni.trim() || !descripcion.trim()}
+                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50"
+                style={{ backgroundColor: "var(--primary)", color: "white" }}
+              >
+                {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : "Enviar"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
