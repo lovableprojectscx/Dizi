@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Lock, Check, Sparkles, Crown, Palette, Image } from "lucide-react";
 import { type PlanId, LAYOUT_IMAGE_SPECS } from "@/lib/types";
@@ -766,7 +766,20 @@ function DisenoPage() {
   const [bgColor, setBgColor] = useState((store as any).bgColor || "");
   const [bannerImage, setBannerImage] = useState((store as any).bannerImage || "");
   const [bannerTitle, setBannerTitle] = useState((store as any).bannerTitle || "");
+  const [isLoaded, setIsLoaded] = useState(false);
   const userLevel = PLAN_LEVELS[store.plan];
+
+  useEffect(() => {
+    // Cuando bannerImage cambia a estar definido (es decir, fetchData termina)
+    if (store && (store as any).bannerImage !== undefined && !isLoaded) {
+      setSelectedModel(store.model || "minimalista");
+      setBrandColor(store.brandColor || "");
+      setBgColor((store as any).bgColor || "");
+      setBannerImage((store as any).bannerImage || "");
+      setBannerTitle((store as any).bannerTitle || "");
+      setIsLoaded(true);
+    }
+  }, [store, isLoaded]);
 
   // Determinar si el modelo actualmente seleccionado tiene fondo bloqueado
   const selectedModelDef = MODELS.find(m => m.id === selectedModel);

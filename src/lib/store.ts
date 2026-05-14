@@ -24,6 +24,9 @@ const mapStoreFromDB = (row: any): Store => ({
   whatsappClicks: row.whatsapp_clicks || 0,
   priceFilterEnabled: row.price_filter_enabled ?? false,
   libroReclamacionesActivo: row.libro_reclamaciones_activo ?? false,
+  empresaRuc: row.empresa_ruc ?? undefined,
+  empresaRazonSocial: row.empresa_razon_social ?? undefined,
+  empresaDireccion: row.empresa_direccion ?? undefined,
   planExpiresAt: row.plan_expires_at ?? undefined,
   subscriptionStatus: (row.subscription_status ?? "trial") as SubscriptionStatus,
   cancelledAt: row.cancelled_at ?? undefined,
@@ -70,6 +73,13 @@ interface AppState {
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// Limpia claves de versiones anteriores del store para liberar localStorage
+if (typeof window !== "undefined") {
+  ["dizi-catalogos-v1"].forEach((key) => {
+    try { localStorage.removeItem(key); } catch {}
+  });
+}
+
 export const useApp = create<AppState>()(
   persist(
     (set) => ({
@@ -105,6 +115,9 @@ export const useApp = create<AppState>()(
         if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
         if (patch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = patch.priceFilterEnabled;
         if (patch.libroReclamacionesActivo !== undefined) dbPatch.libro_reclamaciones_activo = patch.libroReclamacionesActivo;
+        if (patch.empresaRuc !== undefined) dbPatch.empresa_ruc = patch.empresaRuc;
+        if (patch.empresaRazonSocial !== undefined) dbPatch.empresa_razon_social = patch.empresaRazonSocial;
+        if (patch.empresaDireccion !== undefined) dbPatch.empresa_direccion = patch.empresaDireccion;
         if (patch.planExpiresAt !== undefined) dbPatch.plan_expires_at = patch.planExpiresAt;
         if (patch.subscriptionStatus !== undefined) dbPatch.subscription_status = patch.subscriptionStatus;
         if (patch.cancelledAt !== undefined) dbPatch.cancelled_at = patch.cancelledAt;
@@ -524,9 +537,18 @@ export const useApp = create<AppState>()(
       },
     }),
     {
-      name: "dizi-catalogos-v1",
+      name: "dizi-catalogos-v2",
       partialize: (state) => ({
-        stores: state.stores,
+        // Solo persistimos IDs y metadatos ligeros.
+        // Las imágenes (logo, bannerImage, products[].image) se recargan
+        // desde Supabase en fetchData — no las guardamos en localStorage
+        // para no exceder el límite de ~5 MB.
+        stores: state.stores.map((st) => ({
+          ...st,
+          logo: undefined,
+          bannerImage: undefined,
+          products: st.products.map((p) => ({ ...p, image: undefined })),
+        })),
         currentStoreId: state.currentStoreId,
         impersonatedBy: state.impersonatedBy,
       }),

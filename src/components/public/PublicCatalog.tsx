@@ -248,18 +248,17 @@ export function PublicCatalog({ store }: { store: Store }) {
   /* ── Derived data ────────────────────────────────── */
   const filtered = useMemo(() => {
     const products = store.products || [];
-    const hasOnlySamples = products.length > 0 && products.every(p => p.isSample);
 
-    // Productos visibles, limitados al plan efectivo (respeta dias de gracia)
+    // Los productos sample son solo para previsualización interna del admin.
+    // Nunca se muestran en el catálogo público.
     const visibleProducts = products
-      .filter((p) => p.visible)
+      .filter((p) => p.visible && !p.isSample)
       .slice(0, effectiveProductLimit === Infinity ? undefined : effectiveProductLimit);
 
     return visibleProducts
       .filter((p) => {
         if (activeCat === "all") return true;
         if (activeCat === "sale") return p.isOnSale;
-        if (hasOnlySamples && activeCat === "all") return true;
         return p.categoryId === activeCat;
       })
       .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
@@ -1474,7 +1473,77 @@ export function PublicCatalog({ store }: { store: Store }) {
   );
 }
 
-/* ── LibroReclamacionesModal ─────────────────────────────── */
+/* ── LibroReclamacionesModal ─────────────────────────────────────────────
+   Conforme a:
+   · Ley N° 29571 — Código de Protección y Defensa del Consumidor
+   · DS N° 011-2011-PCM y DS N° 006-2014-PCM (Reglamento LR)
+   · DS N° 101-2022-PCM (Anexo I actualizado, plazo 15 días hábiles)
+   · Ley N° 31435 y Ley N° 32495 (plataformas digitales, nov. 2025)
+   · Resolución SPC-INDECOPI N° 0272-2024
+──────────────────────────────────────────────────────────────────────── */
+interface TicketData {
+  id: string;
+  numeroCorrelativo: number;
+  fecha: string;
+  // Sección A
+  empresaNombre: string;
+  empresaRuc: string;
+  empresaDireccion: string;
+  empresaUrl: string;
+  // Sección B
+  consumidorNombre: string;
+  consumidorTipoDoc: string;
+  consumidorNumDoc: string;
+  consumidorDomicilio: string;
+  consumidorTelefono: string;
+  consumidorEmail: string;
+  esMenorEdad: boolean;
+  tutorNombre: string;
+  tutorNumDoc: string;
+  // Sección C
+  bienDescripcion: string;
+  bienMonto: string;
+  // Sección D
+  tipo: "queja" | "reclamo";
+  descripcion: string;
+  pedidoConsumidor: string;
+}
+
+/* Helper: campo de input con label */
+function LRField({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+      {error && (
+        <p className="text-[11px] text-red-500 flex items-center gap-1">
+          <span>⚠</span> {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const INPUT_STYLE: React.CSSProperties = {
+  width: "100%",
+  borderRadius: "0.625rem",
+  padding: "0.6rem 0.75rem",
+  fontSize: "0.875rem",
+  outline: "none",
+  border: "1px solid var(--border)",
+  backgroundColor: "var(--card)",
+  color: "var(--foreground)",
+};
+
+function LRInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} style={INPUT_STYLE} />;
+}
+function LRTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} style={{ ...INPUT_STYLE, resize: "vertical", minHeight: "80px" }} />;
+}
+
 function LibroReclamacionesModal({
   store,
   onClose,
@@ -1486,150 +1555,771 @@ function LibroReclamacionesModal({
   themeVars: React.CSSProperties;
   cfg: ModelConfig;
 }) {
-  const [nombre, setNombre] = useState("");
-  const [dni, setDni] = useState("");
-  const [tipo, setTipo] = useState<"queja" | "reclamo">("reclamo");
-  const [descripcion, setDescripcion] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  // Sección B
+  const [nombre,       setNombre]       = useState("");
+  const [tipoDoc,      setTipoDoc]      = useState<"DNI"|"CE"|"Pasaporte"|"RUC">("DNI");
+  const [numDoc,       setNumDoc]       = useState("");
+  const [domicilio,    setDomicilio]    = useState("");
+  const [telefono,     setTelefono]     = useState("");
+  const [email,        setEmail]        = useState("");
+  const [esMenor,      setEsMenor]      = useState(false);
+  const [tutorNombre,  setTutorNombre]  = useState("");
+  const [tutorDoc,     setTutorDoc]     = useState("");
+  // Sección C
+  const [bienDesc,     setBienDesc]     = useState("");
+  const [bienMonto,    setBienMonto]    = useState("");
+  // Sección D
+  const [tipo,         setTipo]         = useState<"queja"|"reclamo">("reclamo");
+  const [descripcion,  setDescripcion]  = useState("");
+  const [pedido,       setPedido]       = useState("");
+  // Control
+  const [step,         setStep]         = useState<1|2|3>(1);
+  const [sending,      setSending]      = useState(false);
+  const [ticket,       setTicket]       = useState<TicketData | null>(null);
+  const [errorMsg,     setErrorMsg]     = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nombre.trim() || !dni.trim() || !descripcion.trim()) return;
+  const año = new Date().getFullYear();
+  const numFormatted = ticket
+    ? `N° ${String(ticket.numeroCorrelativo).padStart(4,"0")}-${año}`
+    : "";
+
+  // ── Validaciones de seguridad ────────────────────────────────
+  const val = {
+    // Nombre: mínimo 2 palabras, solo letras/espacios/tildes, sin repetición absurda
+    nombre: (v: string) => {
+      const t = v.trim();
+      if (t.length < 5) return "Ingresa tu nombre completo";
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(t)) return "Solo letras, sin números ni símbolos";
+      if (t.split(/\s+/).filter(Boolean).length < 2) return "Escribe nombre y apellido";
+      if (/(.)\1{3,}/.test(t.replace(/\s/g,""))) return "Nombre no válido";
+      return "";
+    },
+    // Documento según tipo
+    numDoc: (v: string, tipo: string) => {
+      const t = v.trim();
+      if (!t) return "Campo requerido";
+      if (tipo === "DNI") {
+        if (!/^\d{8}$/.test(t)) return "El DNI debe tener exactamente 8 dígitos";
+        if (/^(\d)\1{7}$/.test(t)) return "DNI no válido";
+      }
+      if (tipo === "CE") {
+        if (!/^\d{9,12}$/.test(t)) return "El CE debe tener 9 a 12 dígitos";
+      }
+      if (tipo === "RUC") {
+        if (!/^\d{11}$/.test(t)) return "El RUC debe tener exactamente 11 dígitos";
+        if (!/^(10|15|16|17|20)/.test(t)) return "RUC no válido (debe iniciar con 10, 15, 16, 17 o 20)";
+      }
+      if (tipo === "Pasaporte") {
+        if (!/^[a-zA-Z0-9]{6,12}$/.test(t)) return "Pasaporte: 6 a 12 caracteres alfanuméricos";
+      }
+      return "";
+    },
+    // Teléfono peruano opcional (9 dígitos si se llena)
+    telefono: (v: string) => {
+      const t = v.trim();
+      if (!t) return "";
+      if (!/^\d{7,12}$/.test(t)) return "Teléfono: 7 a 12 dígitos";
+      if (/^(\d)\1{6,}$/.test(t)) return "Teléfono no válido";
+      return "";
+    },
+    // Email básico si se llena
+    email: (v: string) => {
+      const t = v.trim();
+      if (!t) return "";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(t)) return "Correo electrónico no válido";
+      return "";
+    },
+    // Texto libre: mínimo chars, sin spam de caracteres
+    texto: (v: string, min = 20, label = "campo") => {
+      const t = v.trim();
+      if (t.length < min) return `Mínimo ${min} caracteres para ${label}`;
+      if (/(.)\1{4,}/.test(t)) return "Texto no válido (caracteres repetidos)";
+      // Detectar palabras repetidas más de 3 veces seguidas
+      if (/(\b\w+\b)(\s+\1){3,}/i.test(t)) return "Por favor describe con más detalle";
+      return "";
+    },
+  };
+
+  const errNombre   = val.nombre(nombre);
+  const errNumDoc   = val.numDoc(numDoc, tipoDoc);
+  const errTelefono = val.telefono(telefono);
+  const errEmail    = val.email(email);
+  const errTutorNombre = esMenor ? val.nombre(tutorNombre) : "";
+  const errTutorDoc    = esMenor ? val.numDoc(tutorDoc, "DNI") : "";
+  const errDescripcion = val.texto(descripcion, 20, "la descripción");
+  const errPedido      = val.texto(pedido, 10, "el pedido");
+
+  const canStep1 = !errNombre && !errNumDoc && !errTelefono && !errEmail &&
+    nombre.trim() && numDoc.trim() &&
+    (!esMenor || (!errTutorNombre && !errTutorDoc && tutorNombre.trim() && tutorDoc.trim()));
+  const canStep2 = !errDescripcion && !errPedido && descripcion.trim() && pedido.trim();
+
+  const handleSubmit = async () => {
+    if (!canStep2) return;
+    setErrorMsg("");
     setSending(true);
     try {
       const { supabase } = await import("@/lib/supabase");
-      const { error } = await supabase.from("reclamaciones").insert({
-        tenant_id: store.id,
-        nombre: nombre.trim(),
-        dni: dni.trim(),
-        tipo,
-        descripcion: descripcion.trim(),
-        estado: "pendiente",
+      const { data, error: rpcError } = await supabase.rpc("insert_reclamacion", {
+        p_tenant_id:            store.id,
+        p_consumidor_nombre:    nombre.trim(),
+        p_consumidor_tipo_doc:  tipoDoc,
+        p_consumidor_num_doc:   numDoc.trim(),
+        p_consumidor_domicilio: domicilio.trim() || null,
+        p_consumidor_telefono:  telefono.trim() || null,
+        p_consumidor_email:     email.trim() || null,
+        p_es_menor_edad:        esMenor,
+        p_tutor_nombre:         tutorNombre.trim() || null,
+        p_tutor_num_doc:        tutorDoc.trim() || null,
+        p_bien_descripcion:     bienDesc.trim() || null,
+        p_bien_monto:           bienMonto ? parseFloat(bienMonto) : null,
+        p_tipo:                 tipo,
+        p_descripcion:          descripcion.trim(),
+        p_pedido_consumidor:    pedido.trim(),
       });
-      if (error) throw error;
-      setSent(true);
+      if (rpcError) throw rpcError;
+      const row = Array.isArray(data) ? data[0] : data;
+      setTicket({
+        id:                   row.id,
+        numeroCorrelativo:    row.numero_correlativo,
+        fecha:                row.fecha,
+        empresaNombre:        row.empresa_nombre ?? store.name,
+        empresaRuc:           row.empresa_ruc ?? "",
+        empresaDireccion:     row.empresa_direccion ?? "",
+        empresaUrl:           row.empresa_url ?? "",
+        consumidorNombre:     nombre.trim(),
+        consumidorTipoDoc:    tipoDoc,
+        consumidorNumDoc:     numDoc.trim(),
+        consumidorDomicilio:  domicilio.trim(),
+        consumidorTelefono:   telefono.trim(),
+        consumidorEmail:      email.trim(),
+        esMenorEdad:          esMenor,
+        tutorNombre:          tutorNombre.trim(),
+        tutorNumDoc:          tutorDoc.trim(),
+        bienDescripcion:      bienDesc.trim(),
+        bienMonto:            bienMonto,
+        tipo,
+        descripcion:          descripcion.trim(),
+        pedidoConsumidor:     pedido.trim(),
+      });
     } catch (err) {
-      console.error("[LibroReclamaciones] Error:", err);
+      console.error("[LibroReclamaciones]", err);
+      setErrorMsg("Error al registrar. Por favor intenta nuevamente o recarga la página.");
     } finally {
       setSending(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
-      <div
-        className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col max-h-[92vh]"
-        style={{ ...themeVars, backgroundColor: "var(--background)", color: "var(--foreground)" } as React.CSSProperties}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b shrink-0" style={{ borderColor: "var(--border)" }}>
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5" style={{ color: "var(--primary)" }} />
-            <span className="font-bold text-base">Libro de Reclamaciones</span>
-          </div>
-          <button onClick={onClose} className="h-8 w-8 rounded-full hover:bg-muted/60 flex items-center justify-center transition" style={{ color: "var(--muted-foreground)" }}>
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+  const handlePrint = async () => {
+    if (!ticket) return;
+    const num = `N° ${String(ticket.numeroCorrelativo).padStart(4,"0")}-${new Date().getFullYear()}`;
+    const fecha = new Date(ticket.fecha).toLocaleString("es-PE", { dateStyle:"long", timeStyle:"short" });
 
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-5 py-5">
-          {sent ? (
-            <div className="text-center py-8 space-y-3">
-              <CheckCircle2 className="h-12 w-12 mx-auto" style={{ color: "var(--primary)" }} />
-              <p className="font-bold text-lg">¡Recibido!</p>
-              <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
-                Tu {tipo} ha sido registrado. El negocio se pondrá en contacto contigo a la brevedad.
-              </p>
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    const W = 210;
+    const margin = 14;
+    const contentW = W - margin * 2;
+    let y = 0;
+
+    // ── Cabecera azul ──────────────────────────────────────────
+    doc.setFillColor(30, 58, 95);
+    doc.rect(0, 0, W, 42, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.text(`HOJA DE RECLAMACIÓN · ${ticket.tipo === "reclamo" ? "RECLAMO" : "QUEJA"}`, W / 2, 10, { align: "center" });
+
+    doc.setFontSize(26);
+    doc.setFont("helvetica", "bold");
+    doc.text(num, W / 2, 24, { align: "center" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(fecha, W / 2, 34, { align: "center" });
+
+    y = 52;
+
+    // Helper: sección con título gris y línea
+    const section = (title: string) => {
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(100, 116, 139);
+      doc.text(title, margin, y);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y + 1.5, margin + contentW, y + 1.5);
+      y += 6;
+    };
+
+    // Helper: línea de texto normal
+    const line = (text: string, bold = false, indent = 0) => {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setTextColor(30, 41, 59);
+      const lines = doc.splitTextToSize(text, contentW - indent);
+      doc.text(lines, margin + indent, y);
+      y += lines.length * 5;
+    };
+
+    // Helper: separador fino
+    const hr = () => {
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, y, margin + contentW, y);
+      y += 5;
+    };
+
+    // ── Sección A ──────────────────────────────────────────────
+    section("A. DATOS DEL PROVEEDOR");
+    line(ticket.empresaNombre, true);
+    if (ticket.empresaRuc)      line(`RUC: ${ticket.empresaRuc}`);
+    if (ticket.empresaDireccion) line(ticket.empresaDireccion);
+    if (ticket.empresaUrl)      line(ticket.empresaUrl);
+    y += 3;
+    hr();
+
+    // ── Sección B ──────────────────────────────────────────────
+    section("B. DATOS DEL CONSUMIDOR");
+    line(ticket.consumidorNombre, true);
+    line(`${ticket.consumidorTipoDoc}: ${ticket.consumidorNumDoc}`);
+    if (ticket.consumidorDomicilio) line(ticket.consumidorDomicilio);
+    if (ticket.consumidorTelefono)  line(`Tel: ${ticket.consumidorTelefono}`);
+    if (ticket.consumidorEmail)     line(`Email: ${ticket.consumidorEmail}`);
+    if (ticket.esMenorEdad) {
+      line(`Tutor: ${ticket.tutorNombre}  —  Doc: ${ticket.tutorNumDoc}`);
+    }
+    y += 3;
+    hr();
+
+    // ── Sección C ──────────────────────────────────────────────
+    if (ticket.bienDescripcion || ticket.bienMonto) {
+      section("C. BIEN O SERVICIO");
+      if (ticket.bienDescripcion) line(ticket.bienDescripcion);
+      if (ticket.bienMonto)       line(`Monto: S/ ${parseFloat(ticket.bienMonto).toFixed(2)}`, true);
+      y += 3;
+      hr();
+    }
+
+    // ── Sección D ──────────────────────────────────────────────
+    section(`D. DETALLE — ${ticket.tipo.toUpperCase()}`);
+    line(ticket.descripcion);
+    if (ticket.pedidoConsumidor) {
+      y += 2;
+      line("Pedido del consumidor:", true);
+      line(ticket.pedidoConsumidor, false, 3);
+    }
+    y += 5;
+
+    // ── Caja legal ─────────────────────────────────────────────
+    const legalLines = [
+      `Plazo de respuesta: El proveedor tiene un plazo máximo de 15 días hábiles improrrogables para dar respuesta a su ${ticket.tipo}, conforme a la Ley N° 31435 y el DS N° 101-2022-PCM.`,
+      `Código único: ${num}. Este documento es constancia oficial al amparo de la Ley N° 29571 — Código de Protección y Defensa del Consumidor.`,
+      `Si el proveedor no responde en el plazo legal, puede presentar denuncia ante INDECOPI (consumidor.gob.pe) citando el número de hoja.`,
+      `Conserve este documento. El proveedor debe conservarlo por un mínimo de 2 años (Art. 9° DS N° 011-2011-PCM).`,
+    ];
+
+    // Calcular altura del bloque legal
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    let legalH = 8;
+    legalLines.forEach(l => {
+      legalH += doc.splitTextToSize(l, contentW - 8).length * 4.5;
+    });
+
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(margin, y, contentW, legalH, 3, 3, "FD");
+    y += 5;
+
+    legalLines.forEach(l => {
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      const wrapped = doc.splitTextToSize(l, contentW - 8);
+      doc.text(wrapped, margin + 4, y);
+      y += wrapped.length * 4.5 + 2;
+    });
+
+    // ── Guardar ────────────────────────────────────────────────
+    doc.save(`Reclamacion_${num.replace(/[°\s\/]/g, "_")}.pdf`);
+  };
+
+  const sBase: React.CSSProperties = {
+    ...themeVars,
+    backgroundColor: "var(--background)",
+    color: "var(--foreground)",
+  } as React.CSSProperties;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+        style={{ backgroundColor:"rgba(0,0,0,0.65)", backdropFilter:"blur(4px)" }}
+      >
+        <div
+          className="w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
+          style={{ ...sBase, maxHeight:"95vh" }}
+        >
+          {/* ── HEADER ── */}
+          <div
+            className="flex items-center justify-between px-5 py-4 shrink-0"
+            style={{ borderBottom:"1px solid var(--border)" }}
+          >
+            <div className="flex items-center gap-2.5">
+              <ClipboardList className="h-5 w-5" style={{ color:"var(--primary)" }} />
+              <div>
+                <p className="font-black text-sm leading-none">Libro de Reclamaciones</p>
+                <p className="text-[10px] mt-0.5" style={{ color:"var(--muted-foreground)" }}>
+                  Ley N° 29571 · DS N° 101-2022-PCM
+                </p>
+              </div>
+            </div>
+            {!ticket && (
               <button
                 onClick={onClose}
-                className="mt-4 px-6 py-2.5 rounded-xl font-bold text-sm"
-                style={{ backgroundColor: "var(--primary)", color: "white" }}
+                className="h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-60"
+                style={{ color:"var(--muted-foreground)" }}
               >
-                Cerrar
+                <X className="h-4 w-4" />
               </button>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                Conforme al Código de Protección y Defensa del Consumidor, puedes registrar aquí tu queja o reclamo.
-              </p>
+            )}
+          </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Nombre completo *</label>
-                <input
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  required
-                  placeholder="Tu nombre y apellido"
-                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 border"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)", focusRingColor: "var(--primary)" } as any}
-                />
-              </div>
+          {/* ── BODY ── */}
+          <div className="overflow-y-auto flex-1 px-5 py-5 space-y-5">
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">DNI / Documento *</label>
-                <input
-                  value={dni}
-                  onChange={(e) => setDni(e.target.value)}
-                  required
-                  placeholder="12345678"
-                  inputMode="numeric"
-                  maxLength={12}
-                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 border"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" } as any}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Tipo *</label>
-                <div className="flex gap-3">
-                  {(["reclamo", "queja"] as const).map((t) => (
-                    <label key={t} className="flex items-center gap-2 cursor-pointer text-sm">
-                      <input
-                        type="radio"
-                        name="tipo"
-                        value={t}
-                        checked={tipo === t}
-                        onChange={() => setTipo(t)}
-                        className="accent-primary"
-                      />
-                      <span className="capitalize">{t}</span>
-                      <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
-                        {t === "reclamo" ? "(disconformidad con producto/servicio)" : "(malestar sin disconformidad)"}
-                      </span>
-                    </label>
-                  ))}
+            {/* ════════ TICKET FINAL ════════ */}
+            {ticket && (
+              <div className="space-y-4">
+                <div className="text-center space-y-1">
+                  <CheckCircle2 className="h-10 w-10 mx-auto text-emerald-500" />
+                  <p className="font-black text-lg">Registrado correctamente</p>
+                  <p className="text-xs" style={{ color:"var(--muted-foreground)" }}>
+                    Guarda o imprime esta constancia — es tu comprobante legal.
+                  </p>
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold">Descripción *</label>
-                <textarea
-                  value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
-                  required
-                  rows={4}
-                  placeholder="Describe detalladamente tu queja o reclamo..."
-                  className="w-full rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 border resize-none"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" } as any}
+                {/* Ticket imprimible */}
+                <div
+                  id="lr-ticket"
+                  className="rounded-2xl border-2 overflow-hidden"
+                  style={{ borderColor:"var(--border)" }}
+                >
+                  {/* Cabecera del ticket */}
+                  <div className="p-4 text-center text-white" style={{ backgroundColor:"var(--primary)" }}>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+                      Hoja de Reclamación · {ticket.tipo === "reclamo" ? "RECLAMO" : "QUEJA"}
+                    </p>
+                    <p className="lr-num text-3xl font-black tracking-tight mt-1">{numFormatted}</p>
+                    <p className="text-[11px] opacity-75 mt-1">
+                      {new Date(ticket.fecha).toLocaleString("es-PE", { dateStyle:"long", timeStyle:"short" })}
+                    </p>
+                  </div>
+
+                  <div className="p-4 space-y-3 text-sm" style={{ backgroundColor:"var(--card)" }}>
+                    {/* Sección A: Proveedor */}
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                        A. Datos del Proveedor
+                      </p>
+                      <p className="font-bold">{ticket.empresaNombre}</p>
+                      {ticket.empresaRuc && <p className="text-xs">RUC: {ticket.empresaRuc}</p>}
+                      {ticket.empresaDireccion && <p className="text-xs">{ticket.empresaDireccion}</p>}
+                      {ticket.empresaUrl && <p className="text-xs">{ticket.empresaUrl}</p>}
+                    </div>
+
+                    <div className="border-t" style={{ borderColor:"var(--border)" }} />
+
+                    {/* Sección B: Consumidor */}
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                        B. Datos del Consumidor
+                      </p>
+                      <p className="font-bold">{ticket.consumidorNombre}</p>
+                      <p className="text-xs">{ticket.consumidorTipoDoc}: {ticket.consumidorNumDoc}</p>
+                      {ticket.consumidorDomicilio && <p className="text-xs">{ticket.consumidorDomicilio}</p>}
+                      {ticket.consumidorTelefono && <p className="text-xs">Tel: {ticket.consumidorTelefono}</p>}
+                      {ticket.consumidorEmail    && <p className="text-xs">Email: {ticket.consumidorEmail}</p>}
+                      {ticket.esMenorEdad && (
+                        <p className="text-xs">Tutor: {ticket.tutorNombre} — Doc: {ticket.tutorNumDoc}</p>
+                      )}
+                    </div>
+
+                    {/* Sección C: Bien/Servicio */}
+                    {(ticket.bienDescripcion || ticket.bienMonto) && (
+                      <>
+                        <div className="border-t" style={{ borderColor:"var(--border)" }} />
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                            C. Bien o Servicio
+                          </p>
+                          {ticket.bienDescripcion && <p className="text-xs">{ticket.bienDescripcion}</p>}
+                          {ticket.bienMonto && (
+                            <p className="text-xs font-semibold">
+                              Monto: S/ {parseFloat(ticket.bienMonto).toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    <div className="border-t" style={{ borderColor:"var(--border)" }} />
+
+                    {/* Sección D: Reclamo */}
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                        D. Detalle — <span className="capitalize">{ticket.tipo}</span>
+                      </p>
+                      <p className="text-xs leading-relaxed">{ticket.descripcion}</p>
+                      {ticket.pedidoConsumidor && (
+                        <>
+                          <p className="text-[10px] font-bold mt-2" style={{ color:"var(--muted-foreground)" }}>
+                            Pedido del consumidor:
+                          </p>
+                          <p className="text-xs leading-relaxed">{ticket.pedidoConsumidor}</p>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="border-t" style={{ borderColor:"var(--border)" }} />
+
+                    {/* Texto legal obligatorio */}
+                    <div
+                      className="rounded-xl p-3 text-[10px] leading-relaxed space-y-1"
+                      style={{ backgroundColor:"var(--muted)", color:"var(--muted-foreground)" }}
+                    >
+                      <p>
+                        <strong>Plazo de respuesta:</strong> El proveedor tiene un plazo máximo de{" "}
+                        <strong>15 días hábiles improrrogables</strong> para dar respuesta a su {ticket.tipo},
+                        conforme a la Ley N° 31435 y el DS N° 101-2022-PCM.
+                      </p>
+                      <p>
+                        <strong>Código único:</strong> {numFormatted}. Este documento es constancia oficial
+                        de la presentación de su {ticket.tipo} al amparo de la Ley N° 29571 — Código de
+                        Protección y Defensa del Consumidor.
+                      </p>
+                      <p>
+                        Si el proveedor no responde dentro del plazo legal, puede presentar una denuncia
+                        ante <strong>INDECOPI</strong> (consumidor.gob.pe) citando el número de hoja indicado.
+                      </p>
+                      <p>
+                        <strong>Conserve este documento.</strong> El proveedor está obligado a conservar
+                        esta hoja por un mínimo de 2 años (Art. 9° DS N° 011-2011-PCM).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acciones post-ticket */}
+                <button
+                  onClick={handlePrint}
+                  className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition hover:opacity-90 active:scale-95"
+                  style={{ backgroundColor:"var(--primary)", color:"#fff" }}
+                >
+                  ⬇️ Descargar PDF
+                </button>
+                <p className="text-[10px] text-center" style={{ color:"var(--muted-foreground)" }}>
+                  El PDF se descarga directamente — sin diálogos de impresión.
+                </p>
+                <button
+                  onClick={onClose}
+                  className="w-full py-2.5 rounded-xl text-sm font-medium transition hover:opacity-60"
+                  style={{ color:"var(--muted-foreground)" }}
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
+
+            {/* ════════ FORMULARIO — PASO 1 de 2 ════════ */}
+            {!ticket && step === 1 && (
+              <div className="space-y-4">
+                {/* Datos empresa */}
+                <div
+                  className="rounded-xl p-3 text-xs"
+                  style={{ backgroundColor:"var(--muted)" }}
+                >
+                  <p className="font-black text-sm" style={{ color:"var(--foreground)" }}>
+                    {(store as any).empresaRazonSocial || store.name}
+                  </p>
+                  {(store as any).empresaRuc && (
+                    <p style={{ color:"var(--muted-foreground)" }}>RUC: {(store as any).empresaRuc}</p>
+                  )}
+                  {(store as any).empresaDireccion && (
+                    <p style={{ color:"var(--muted-foreground)" }}>{(store as any).empresaDireccion}</p>
+                  )}
+                </div>
+
+                {/* Marco legal */}
+                <div
+                  className="rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed"
+                  style={{ borderColor:"var(--border)", color:"var(--muted-foreground)" }}
+                >
+                  Conforme a la <strong>Ley N° 29571</strong> (Código de Protección y Defensa del Consumidor)
+                  y el <strong>DS N° 101-2022-PCM</strong>, tienes derecho a presentar una queja o reclamo.
+                  Recibirás un número correlativo único como constancia legal.
+                  {" "}El proveedor tiene <strong>15 días hábiles</strong> para responderte.
+                </div>
+
+                <p className="text-xs font-black uppercase tracking-wider" style={{ color:"var(--muted-foreground)" }}>
+                  Sección B — Datos del Consumidor
+                </p>
+
+                <LRField label="Nombre completo" required error={nombre.trim().length > 2 ? errNombre : ""}>
+                  <LRInput
+                    value={nombre} onChange={e => setNombre(e.target.value)}
+                    placeholder="Nombre y apellido completos"
+                    style={{ ...INPUT_STYLE, borderColor: nombre.trim().length > 2 && errNombre ? "#ef4444" : undefined }}
+                  />
+                </LRField>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <LRField label="Tipo de documento" required>
+                    <select
+                      value={tipoDoc}
+                      onChange={e => { setTipoDoc(e.target.value as any); setNumDoc(""); }}
+                      style={INPUT_STYLE}
+                    >
+                      <option value="DNI">DNI</option>
+                      <option value="CE">Carné de Extranjería</option>
+                      <option value="Pasaporte">Pasaporte</option>
+                      <option value="RUC">RUC</option>
+                    </select>
+                  </LRField>
+                  <LRField label="Número de documento" required error={numDoc.trim().length > 2 ? errNumDoc : ""}>
+                    <LRInput
+                      value={numDoc}
+                      onChange={e => {
+                        const v = tipoDoc === "Pasaporte"
+                          ? e.target.value.replace(/[^a-zA-Z0-9]/g,"").slice(0,12)
+                          : e.target.value.replace(/\D/g,"").slice(0, tipoDoc === "RUC" ? 11 : tipoDoc === "DNI" ? 8 : 12);
+                        setNumDoc(v);
+                      }}
+                      placeholder={tipoDoc === "DNI" ? "12345678" : tipoDoc === "RUC" ? "20123456789" : tipoDoc === "CE" ? "123456789" : "AB123456"}
+                      inputMode={tipoDoc === "Pasaporte" ? "text" : "numeric"}
+                      maxLength={tipoDoc === "DNI" ? 8 : tipoDoc === "RUC" ? 11 : 12}
+                      style={{ ...INPUT_STYLE, borderColor: numDoc.trim().length > 2 && errNumDoc ? "#ef4444" : undefined }}
+                    />
+                  </LRField>
+                </div>
+
+                <LRField label="Domicilio / Dirección">
+                  <LRInput
+                    value={domicilio} onChange={e => setDomicilio(e.target.value)}
+                    placeholder="Av. o calle, ciudad (opcional)"
+                  />
+                </LRField>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <LRField label="Teléfono de contacto" error={telefono.trim().length > 2 ? errTelefono : ""}>
+                    <LRInput
+                      value={telefono} onChange={e => setTelefono(e.target.value.replace(/\D/g,"").slice(0,12))}
+                      placeholder="987654321" inputMode="numeric"
+                      style={{ ...INPUT_STYLE, borderColor: telefono.trim().length > 2 && errTelefono ? "#ef4444" : undefined }}
+                    />
+                  </LRField>
+                  <LRField label="Correo electrónico" error={email.trim().length > 4 ? errEmail : ""}>
+                    <LRInput
+                      value={email} onChange={e => setEmail(e.target.value)}
+                      placeholder="tu@correo.com" type="email"
+                      style={{ ...INPUT_STYLE, borderColor: email.trim().length > 4 && errEmail ? "#ef4444" : undefined }}
+                    />
+                  </LRField>
+                </div>
+
+                {/* Menor de edad */}
+                <label className="flex items-center gap-2.5 cursor-pointer text-sm select-none">
+                  <input
+                    type="checkbox"
+                    checked={esMenor}
+                    onChange={e => setEsMenor(e.target.checked)}
+                    className="h-4 w-4 rounded accent-primary"
+                  />
+                  Soy menor de edad (se requieren datos del tutor)
+                </label>
+
+                {esMenor && (
+                  <div className="grid grid-cols-2 gap-3 pl-1 border-l-2" style={{ borderColor:"var(--primary)" }}>
+                    <LRField label="Nombre del tutor" required error={tutorNombre.trim().length > 2 ? errTutorNombre : ""}>
+                      <LRInput
+                        value={tutorNombre} onChange={e => setTutorNombre(e.target.value)}
+                        placeholder="Nombre del padre/madre/tutor"
+                        style={{ ...INPUT_STYLE, borderColor: tutorNombre.trim().length > 2 && errTutorNombre ? "#ef4444" : undefined }}
+                      />
+                    </LRField>
+                    <LRField label="N° doc. tutor" required error={tutorDoc.trim().length > 2 ? errTutorDoc : ""}>
+                      <LRInput
+                        value={tutorDoc} onChange={e => setTutorDoc(e.target.value.replace(/\D/g,"").slice(0,8))}
+                        placeholder="DNI del tutor"
+                        inputMode="numeric"
+                        maxLength={8}
+                        style={{ ...INPUT_STYLE, borderColor: tutorDoc.trim().length > 2 && errTutorDoc ? "#ef4444" : undefined }}
+                      />
+                    </LRField>
+                  </div>
+                )}
+
+                <div
+                  className="rounded-xl p-3 text-[10px]"
+                  style={{ backgroundColor:"var(--muted)", color:"var(--muted-foreground)" }}
+                >
+                  Los campos con <span className="text-red-500 font-bold">*</span> son obligatorios
+                  conforme al Anexo I del DS N° 101-2022-PCM. Los datos opcionales facilitan la respuesta
+                  del proveedor.
+                </div>
+
+                <button
+                  onClick={() => setStep(2)}
+                  disabled={!canStep1}
+                  className="w-full py-3 rounded-xl font-bold text-sm transition disabled:opacity-40"
+                  style={{ backgroundColor:"var(--primary)", color:"white" }}
+                >
+                  Continuar →
+                </button>
+              </div>
+            )}
+
+            {/* ════════ FORMULARIO — PASO 2 de 2 ════════ */}
+            {!ticket && step === 2 && (
+              <div className="space-y-4">
+                <button
+                  onClick={() => setStep(1)}
+                  className="flex items-center gap-1.5 text-xs font-semibold transition hover:opacity-60"
+                  style={{ color:"var(--muted-foreground)" }}
+                >
+                  ← Volver
+                </button>
+
+                <p className="text-xs font-black uppercase tracking-wider" style={{ color:"var(--muted-foreground)" }}>
+                  Sección C — Bien o Servicio
+                </p>
+
+                <LRField label="Descripción del producto o servicio">
+                  <LRInput
+                    value={bienDesc} onChange={e => setBienDesc(e.target.value)}
+                    placeholder="Ej: Zapatillas talla 42, color negro"
+                  />
+                </LRField>
+
+                <LRField label="Monto pagado (S/)">
+                  <LRInput
+                    value={bienMonto} onChange={e => setBienMonto(e.target.value.replace(/[^0-9.]/g,""))}
+                    placeholder="0.00" inputMode="decimal"
+                  />
+                </LRField>
+
+                <div className="border-t" style={{ borderColor:"var(--border)" }} />
+
+                <p className="text-xs font-black uppercase tracking-wider" style={{ color:"var(--muted-foreground)" }}>
+                  Sección D — Detalle del {tipo === "reclamo" ? "Reclamo" : "Queja"}
+                </p>
+
+                {/* Tipo */}
+                <LRField label="Tipo de registro" required>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(["reclamo","queja"] as const).map(t => (
+                      <button
+                        key={t} type="button" onClick={() => setTipo(t)}
+                        className="rounded-xl px-3 py-3 text-left text-sm transition border"
+                        style={{
+                          borderColor: tipo===t ? "var(--primary)" : "var(--border)",
+                          backgroundColor: tipo===t ? "var(--primary)" : "var(--card)",
+                          color: tipo===t ? "white" : "var(--foreground)",
+                        }}
+                      >
+                        <p className="font-black capitalize">{t}</p>
+                        <p className="text-[10px] opacity-80 mt-0.5 leading-tight">
+                          {t === "reclamo"
+                            ? "Disconformidad con producto o servicio recibido"
+                            : "Malestar en la atención o trato recibido"}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color:"var(--muted-foreground)" }}>
+                    Art. 3° DS N° 011-2011-PCM: el <em>reclamo</em> es disconformidad con el bien/servicio;
+                    la <em>queja</em> es malestar en la atención, sin disconformidad con el bien/servicio.
+                    Ninguno constituye denuncia administrativa.
+                  </p>
+                </LRField>
+
+                <LRField label="Descripción detallada" required error={descripcion.trim().length > 5 ? errDescripcion : ""}>
+                  <LRTextarea
+                    value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                    placeholder="Describe con el mayor detalle posible lo ocurrido: qué pasó, cuándo, cómo..."
+                    rows={4}
+                    style={{ ...INPUT_STYLE, resize:"vertical", minHeight:"80px", borderColor: descripcion.trim().length > 5 && errDescripcion ? "#ef4444" : undefined }}
+                  />
+                  <p className="text-[10px]" style={{ color:"var(--muted-foreground)" }}>
+                    {descripcion.trim().length}/20 caracteres mínimo
+                  </p>
+                </LRField>
+
+                <LRField label="¿Qué solicitas al proveedor?" required error={pedido.trim().length > 5 ? errPedido : ""}>
+                  <LRTextarea
+                    value={pedido} onChange={e => setPedido(e.target.value)}
+                    placeholder="Ej: Cambio del producto, devolución del dinero, disculpas formales..."
+                    rows={3}
+                    style={{ ...INPUT_STYLE, resize:"vertical", minHeight:"80px", borderColor: pedido.trim().length > 5 && errPedido ? "#ef4444" : undefined }}
+                  />
+                  <p className="text-[10px]" style={{ color:"var(--muted-foreground)" }}>
+                    {pedido.trim().length}/10 caracteres mínimo
+                  </p>
+                </LRField>
+
+                {errorMsg && (
+                  <p className="text-xs text-red-500 font-medium">{errorMsg}</p>
+                )}
+
+                <div
+                  className="rounded-xl p-3 text-[10px] leading-relaxed"
+                  style={{ backgroundColor:"var(--muted)", color:"var(--muted-foreground)" }}
+                >
+                  Al enviar, declaras que la información es verídica. Tus datos serán usados
+                  exclusivamente para gestionar tu {tipo}. El proveedor tiene{" "}
+                  <strong>15 días hábiles</strong> para responderte (Ley N° 31435). Si no
+                  recibes respuesta, puedes acudir a <strong>INDECOPI</strong> (consumidor.gob.pe).
+                </div>
+
+                <button
+                  onClick={handleSubmit}
+                  disabled={sending || !canStep2}
+                  className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-40"
+                  style={{ backgroundColor:"var(--primary)", color:"white" }}
+                >
+                  {sending
+                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Registrando...</>
+                    : `Registrar ${tipo}`}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ── STEPS INDICATOR ── */}
+          {!ticket && (
+            <div
+              className="px-5 py-3 flex items-center justify-center gap-2 shrink-0"
+              style={{ borderTop:"1px solid var(--border)" }}
+            >
+              {[1,2].map(s => (
+                <div
+                  key={s}
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: step===s ? "2rem" : "0.75rem",
+                    backgroundColor: step>=s ? "var(--primary)" : "var(--border)",
+                  }}
                 />
-              </div>
-
-              <button
-                type="submit"
-                disabled={sending || !nombre.trim() || !dni.trim() || !descripcion.trim()}
-                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50"
-                style={{ backgroundColor: "var(--primary)", color: "white" }}
-              >
-                {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Enviando...</> : "Enviar"}
-              </button>
-            </form>
+              ))}
+              <span className="text-[10px] ml-2" style={{ color:"var(--muted-foreground)" }}>
+                Paso {step} de 2
+              </span>
+            </div>
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

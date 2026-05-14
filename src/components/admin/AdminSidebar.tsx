@@ -11,7 +11,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Home, Package, Tag, Settings, Star, Palette, LogOut } from "lucide-react";
+import { Home, Package, Tag, Settings, Star, Palette, LogOut, ClipboardList } from "lucide-react";
 
 const items = [
   { title: "Inicio", url: "/admin/dashboard", icon: Home },
@@ -19,6 +19,7 @@ const items = [
   { title: "Categorías", url: "/admin/categorias", icon: Tag },
   { title: "Diseño", url: "/admin/diseno", icon: Palette },
   { title: "Configuración", url: "/admin/configuracion", icon: Settings },
+  { title: "Reclamaciones", url: "/admin/reclamaciones", icon: ClipboardList },
   { title: "Mi Plan", url: "/admin/plan", icon: Star },
 ];
 

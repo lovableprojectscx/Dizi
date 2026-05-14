@@ -32,6 +32,56 @@ export const Route = createFileRoute("/novedades")({
 ───────────────────────────────────────────────────────── */
 const NOTICIAS = [
   {
+    id: 10,
+    type: "nuevo" as const,
+    date: "14 mayo 2026",
+    title: "Libro de Reclamaciones en tu catálogo",
+    summary:
+      "Tus clientes ahora pueden dejar una reclamación directamente desde tu catálogo público. El botón aparece visible para todos y el proceso es guiado paso a paso.",
+    detail:
+      "El cliente completa sus datos, describe lo que pasó y recibe un número de reclamo único. Tú puedes ver todos los reclamos desde tu panel en la sección Reclamaciones.",
+  },
+  {
+    id: 11,
+    type: "mejora" as const,
+    date: "14 mayo 2026",
+    title: "Descarga directa del comprobante de reclamo en PDF",
+    summary:
+      "Al terminar de registrar un reclamo, el cliente puede descargar su comprobante en PDF al instante — sin impresoras ni ventanas extra.",
+    detail:
+      "El PDF incluye el número de reclamo, los datos del cliente y el detalle de lo ocurrido. Todo listo para guardar o compartir desde el celular.",
+  },
+  {
+    id: 12,
+    type: "mejora" as const,
+    date: "14 mayo 2026",
+    title: "Validación inteligente en el formulario de reclamos",
+    summary:
+      "El formulario ahora verifica que los datos ingresados sean reales antes de continuar. DNI, RUC, correo, teléfono — si algo está mal, te avisa de inmediato.",
+    detail:
+      "Esto evita que se registren reclamos con información falsa o incompleta, protegiendo tanto al cliente como al negocio.",
+  },
+  {
+    id: 13,
+    type: "fix" as const,
+    date: "14 mayo 2026",
+    title: "Catálogo carga correctamente al entrar por enlace directo",
+    summary:
+      "Se corrigió un problema donde al abrir el enlace del catálogo directamente (sin haber entrado antes al panel), aparecía 'Tienda no encontrada' por un momento.",
+    detail:
+      "Ahora el catálogo muestra un indicador de carga mientras obtiene la información y luego se muestra correctamente en todos los casos.",
+  },
+  {
+    id: 14,
+    type: "fix" as const,
+    date: "14 mayo 2026",
+    title: "Ya no aparecen productos de ejemplo en el catálogo público",
+    summary:
+      "Se corrigió un error donde algunos catálogos mostraban productos de ejemplo (zapatillas, etc.) que no pertenecían a la tienda.",
+    detail:
+      "Los productos de ejemplo son solo para mostrar cómo se ve el catálogo durante la configuración inicial. Ahora nunca se muestran a los clientes.",
+  },
+  {
     id: 1,
     type: "nuevo" as const,
     date: "13 mayo 2026",
@@ -99,7 +149,7 @@ const NOTICIAS = [
 const FAQ = [
   {
     q: "¿Cómo consigo mi catálogo digital?",
-    a: "Entra a dizi.pe y toca 'Crear Tienda'. En menos de 2 minutos registras tu negocio y tu catálogo queda activo al instante con tu link personalizado (dizi.pe/t/tu-tienda).",
+    a: "Entra a dizi.idenza.site y toca 'Crear Tienda'. En menos de 2 minutos registras tu negocio y tu catálogo queda activo al instante con tu link personalizado (dizi.idenza.site/t/tu-tienda).",
   },
   {
     q: "¿Necesito saber de tecnología o diseño?",

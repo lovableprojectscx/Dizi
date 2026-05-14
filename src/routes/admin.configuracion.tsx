@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ImageIcon, Phone, Store, Link2, ExternalLink, CheckCircle2, AlertCircle, Loader2, ClipboardList } from "lucide-react";
 import { convertImageToWebP } from "@/lib/image-utils";
@@ -44,6 +44,30 @@ function ConfigPage() {
   const [saving, setSaving] = useState(false);
   const [priceFilter, setPriceFilter] = useState(store?.priceFilterEnabled ?? false);
   const [libroActivo, setLibroActivo] = useState(store?.libroReclamacionesActivo ?? false);
+  const [empresaRuc, setEmpresaRuc] = useState(store?.empresaRuc ?? "");
+  const [empresaRazonSocial, setEmpresaRazonSocial] = useState(store?.empresaRazonSocial ?? "");
+  const [empresaDireccion, setEmpresaDireccion] = useState(store?.empresaDireccion ?? "");
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (store && store.logo !== undefined && !isLoaded) {
+      setName(store.name || "");
+      setCountry(store.countryCode || "51");
+      setNumber(
+        store.phone.startsWith(store.countryCode || "")
+          ? store.phone.slice((store.countryCode || "").length)
+          : store.phone || ""
+      );
+      setLogo(store.logo ?? "");
+      setSlug(store.slug || "");
+      setPriceFilter(store.priceFilterEnabled ?? false);
+      setLibroActivo(store.libroReclamacionesActivo ?? false);
+      setEmpresaRuc(store.empresaRuc ?? "");
+      setEmpresaRazonSocial(store.empresaRazonSocial ?? "");
+      setEmpresaDireccion(store.empresaDireccion ?? "");
+      setIsLoaded(true);
+    }
+  }, [store, isLoaded]);
 
   if (!store) return null;
 
@@ -104,6 +128,9 @@ function ConfigPage() {
         slug,
         priceFilterEnabled: priceFilter,
         libroReclamacionesActivo: libroActivo,
+        empresaRuc: empresaRuc.trim() || undefined,
+        empresaRazonSocial: empresaRazonSocial.trim() || undefined,
+        empresaDireccion: empresaDireccion.trim() || undefined,
       });
       toast.success("Configuracion guardada correctamente");
     } catch {
@@ -257,28 +284,70 @@ function ConfigPage() {
           </div>
 
           {/* Libro de reclamaciones */}
-          <div className="flex items-center justify-between pt-4 border-t">
-            <div className="flex items-start gap-2.5">
-              <ClipboardList className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold">Libro de Reclamaciones</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Muestra un botón en tu catálogo para que los clientes puedan presentar quejas o reclamos.
-                  Recibirás una notificación por cada envío.
+          <div className="pt-4 border-t space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-2.5">
+                <ClipboardList className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold">Libro de Reclamaciones</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Exigido por el Código de Protección al Consumidor. Al activarlo aparece
+                    un botón en tu catálogo público y cada cliente recibe su número correlativo.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={libroActivo}
+                onClick={() => setLibroActivo(!libroActivo)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ml-4 ${libroActivo ? "bg-primary" : "bg-input"}`}
+              >
+                <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${libroActivo ? "translate-x-5" : "translate-x-0"}`} />
+              </button>
+            </div>
+
+            {/* Datos de empresa — solo visible si libro activo */}
+            {libroActivo && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                  <ClipboardList className="h-3.5 w-3.5" />
+                  Datos de tu empresa para el formulario legal
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">RUC *</label>
+                    <Input
+                      value={empresaRuc}
+                      onChange={(e) => setEmpresaRuc(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                      placeholder="20123456789"
+                      inputMode="numeric"
+                      maxLength={11}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-foreground">Razón Social / Nombre Legal *</label>
+                    <Input
+                      value={empresaRazonSocial}
+                      onChange={(e) => setEmpresaRazonSocial(e.target.value)}
+                      placeholder="Mi Empresa S.A.C."
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-foreground">Dirección del establecimiento *</label>
+                  <Input
+                    value={empresaDireccion}
+                    onChange={(e) => setEmpresaDireccion(e.target.value)}
+                    placeholder="Av. Principal 123, Lima"
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  Estos datos aparecerán en el ticket de reclamo del cliente como constancia legal.
+                  Son obligatorios para cumplir la normativa del INDECOPI.
                 </p>
               </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={libroActivo}
-              onClick={() => setLibroActivo(!libroActivo)}
-              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ml-4 ${libroActivo ? "bg-primary" : "bg-input"}`}
-            >
-              <span
-                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${libroActivo ? "translate-x-5" : "translate-x-0"}`}
-              />
-            </button>
+            )}
           </div>
 
           {/* Logo */}

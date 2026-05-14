@@ -69,6 +69,9 @@ export interface Store {
   niche?: string;
   priceFilterEnabled?: boolean;
   libroReclamacionesActivo?: boolean;
+  empresaRuc?: string;
+  empresaRazonSocial?: string;
+  empresaDireccion?: string;
   planExpiresAt?: string;
   subscriptionStatus?: SubscriptionStatus;
   cancelledAt?: string;
