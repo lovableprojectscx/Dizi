@@ -177,6 +177,8 @@ function ProductsPage() {
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product>(empty());
+  const [priceInput, setPriceInput] = useState("");
+  const [originalPriceInput, setOriginalPriceInput] = useState("");
 
   const openNew = () => {
     if (reachedLimit) {
@@ -184,18 +186,40 @@ function ProductsPage() {
       return;
     }
     setEditing({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
+    setPriceInput("");
+    setOriginalPriceInput("");
     setOpen(true);
   };
   const openEdit = (p: Product) => {
     setEditing(p);
+    setPriceInput(p.price === 0 ? "" : p.price.toString());
+    setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
     setOpen(true);
   };
   const save = () => {
-    if (!editing.name || editing.price <= 0 || !editing.categoryId) {
+    const cleanPrice = priceInput.replace(",", ".");
+    const cleanOriginalPrice = originalPriceInput.replace(",", ".");
+
+    const parsedPrice = cleanPrice === "" ? 0 : parseFloat(cleanPrice);
+    const parsedOriginalPrice = cleanOriginalPrice === "" ? 0 : parseFloat(cleanOriginalPrice);
+
+    if (isNaN(parsedPrice) || (editing.isOnSale && isNaN(parsedOriginalPrice))) {
+      toast.error("Por favor ingresa un precio válido");
+      return;
+    }
+
+    if (!editing.name || parsedPrice <= 0 || !editing.categoryId) {
       toast.error("Completa los campos requeridos");
       return;
     }
-    upsert(store.id, editing);
+
+    const updatedProduct: Product = {
+      ...editing,
+      price: parsedPrice,
+      originalPrice: editing.isOnSale ? parsedOriginalPrice : undefined,
+    };
+
+    upsert(store.id, updatedProduct);
     setOpen(false);
     toast.success("Producto guardado");
   };
@@ -291,7 +315,7 @@ function ProductsPage() {
                 <TableCell>
                   <div className="flex flex-col">
                     <span className="font-bold">{formatPrice(p.price)}</span>
-                    {p.isOnSale && p.originalPrice && (
+                    {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
                       <span className="text-[10px] text-muted-foreground line-through">
                         {formatPrice(p.originalPrice)}
                       </span>
@@ -354,7 +378,7 @@ function ProductsPage() {
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
-                {p.isOnSale && p.originalPrice && (
+                {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
                   <span className="text-[11px] text-muted-foreground line-through">
                     {formatPrice(p.originalPrice)}
                   </span>
@@ -422,11 +446,13 @@ function ProductsPage() {
                           type="text"
                           inputMode="decimal"
                           placeholder="50.00"
-                          value={editing.originalPrice || ""}
+                          value={originalPriceInput}
                           onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9.]/g, "");
-                            if (val.split(".").length > 2) return;
-                            setEditing({ ...editing, originalPrice: val === "" ? 0 : parseFloat(val) });
+                            let val = e.target.value.replace(",", ".");
+                            val = val.replace(/[^0-9.]/g, "");
+                            const parts = val.split(".");
+                            if (parts.length > 2) return;
+                            setOriginalPriceInput(val);
                           }}
                         />
                       </div>
@@ -436,11 +462,13 @@ function ProductsPage() {
                           type="text"
                           inputMode="decimal"
                           placeholder="35.00"
-                          value={editing.price}
+                          value={priceInput}
                           onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9.]/g, "");
-                            if (val.split(".").length > 2) return;
-                            setEditing({ ...editing, price: val === "" ? 0 : parseFloat(val) });
+                            let val = e.target.value.replace(",", ".");
+                            val = val.replace(/[^0-9.]/g, "");
+                            const parts = val.split(".");
+                            if (parts.length > 2) return;
+                            setPriceInput(val);
                           }}
                           className="border-primary/50 bg-primary/5"
                         />
@@ -453,11 +481,14 @@ function ProductsPage() {
                         <Input
                           type="text"
                           inputMode="decimal"
-                          value={editing.price}
+                          placeholder="0.00"
+                          value={priceInput}
                           onChange={(e) => {
-                            const val = e.target.value.replace(/[^0-9.]/g, "");
-                            if (val.split(".").length > 2) return;
-                            setEditing({ ...editing, price: val === "" ? 0 : parseFloat(val) });
+                            let val = e.target.value.replace(",", ".");
+                            val = val.replace(/[^0-9.]/g, "");
+                            const parts = val.split(".");
+                            if (parts.length > 2) return;
+                            setPriceInput(val);
                           }}
                         />
                       </div>
@@ -490,6 +521,7 @@ function ProductsPage() {
                   />
                 </div>
               )}
+
 
               <div className="col-span-2">
                 <Label>Descripcion (opcional)</Label>
