@@ -5,8 +5,8 @@
  * usando el canvas del browser — sin dependencias externas.
  */
 
-const MAX_DIMENSION = 1800; // px máximo en cualquier lado
-const WEBP_QUALITY  = 0.88; // 0-1: 0.88 = excelente calidad visual, ~60-70% menos peso
+const MAX_DIMENSION = 2048; // px máximo en cualquier lado (incrementado para mayor nitidez)
+const WEBP_QUALITY  = 0.92; // 0-1: 0.92 = calidad visual premium, evita artefactos y mantiene textos nítidos
 
 /**
  * Convierte un File de imagen a WebP y lo devuelve como data URL.
@@ -41,6 +41,10 @@ export function convertImageToWebP(file: File): Promise<string> {
         reject(new Error("Canvas no disponible"));
         return;
       }
+
+      // Habilitar suavizado de imagen en alta calidad para evitar pérdida de nitidez al redimensionar
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       ctx.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(objectUrl);
