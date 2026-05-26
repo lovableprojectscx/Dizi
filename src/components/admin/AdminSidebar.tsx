@@ -1,5 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { signOut } from "@/lib/auth";
+import { useApp } from "@/lib/store";
 import {
   Sidebar,
   SidebarContent,
@@ -13,18 +14,23 @@ import {
 } from "@/components/ui/sidebar";
 import { Home, Package, Tag, Settings, Star, Palette, LogOut, ClipboardList } from "lucide-react";
 
-const items = [
-  { title: "Inicio", url: "/admin/dashboard", icon: Home },
-  { title: "Productos", url: "/admin/productos", icon: Package },
-  { title: "Categorías", url: "/admin/categorias", icon: Tag },
-  { title: "Diseño", url: "/admin/diseno", icon: Palette },
-  { title: "Configuración", url: "/admin/configuracion", icon: Settings },
-  { title: "Reclamaciones", url: "/admin/reclamaciones", icon: ClipboardList },
-  { title: "Mi Plan", url: "/admin/plan", icon: Star },
-];
-
 export function AdminSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const storeId = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === storeId));
+
+  const items = [
+    { title: "Inicio", url: "/admin/dashboard", icon: Home },
+    { title: "Productos", url: "/admin/productos", icon: Package },
+    { title: "Categorías", url: "/admin/categorias", icon: Tag },
+    { title: "Diseño", url: "/admin/diseno", icon: Palette },
+    { title: "Configuración", url: "/admin/configuracion", icon: Settings },
+    ...(store?.libroReclamacionesActivo
+      ? [{ title: "Reclamaciones", url: "/admin/reclamaciones", icon: ClipboardList }]
+      : []),
+    { title: "Mi Plan", url: "/admin/plan", icon: Star },
+  ];
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, Eye, EyeOff, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { signInWithEmail, getUserRole } from "@/lib/auth";
+import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/super/login")({
   head: () => ({
@@ -34,6 +35,9 @@ function SuperLoginPage() {
         setLoading(false);
         return;
       }
+
+      // Fetch fresh data for the super admin
+      await useApp.getState().fetchData();
 
       navigate({ to: "/super/dashboard" });
     } catch (err: any) {

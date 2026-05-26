@@ -51,15 +51,18 @@ function AdminLayout() {
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {impersonating && (
-            <div className="bg-amber-100 text-amber-900 text-sm px-4 py-2 flex items-center justify-between">
-              <span className="inline-flex items-center gap-2">
-                <Eye className="h-4 w-4" />
-                Viendo como <strong>{store?.name}</strong> (modo soporte)
+            <div className="bg-amber-100 text-amber-900 text-xs sm:text-sm px-3 sm:px-4 py-2 flex items-center justify-between gap-2 shadow-sm relative z-30">
+              <span className="flex items-center gap-1.5 sm:gap-2 leading-tight flex-1 min-w-0">
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="line-clamp-2 sm:truncate">
+                  Viendo como <strong className="font-bold">{store?.name}</strong> <span className="opacity-75 whitespace-nowrap">(modo soporte)</span>
+                </span>
               </span>
-              <Button size="sm" variant="outline" onClick={() => { stop(); }} asChild>
+              <Button size="sm" variant="outline" onClick={() => { stop(); }} asChild className="h-7 sm:h-8 px-2 sm:px-3 text-xs shrink-0 border-amber-300 hover:bg-amber-200 hover:text-amber-900 bg-amber-50">
                 <Link to="/super/tiendas">
-                  <LogOut className="h-3 w-3 mr-1" />
-                  Salir
+                  <LogOut className="h-3 w-3 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Salir</span>
+                  <span className="sm:hidden ml-1">Salir</span>
                 </Link>
               </Button>
             </div>
@@ -77,7 +80,9 @@ function AdminLayout() {
             <MobileNavItem to="/admin/dashboard" icon={Home} label="Inicio" />
             <MobileNavItem to="/admin/productos" icon={Package} label="Productos" />
             <MobileNavItem to="/admin/categorias" icon={Tag} label="Categorias" />
-            <MobileNavItem to="/admin/reclamaciones" icon={ClipboardList} label="Reclamos" />
+            {store?.libroReclamacionesActivo && (
+              <MobileNavItem to="/admin/reclamaciones" icon={ClipboardList} label="Reclamos" />
+            )}
             <MobileNavItem to="/admin/configuracion" icon={Settings} label="Ajustes" />
           </nav>
         </div>
