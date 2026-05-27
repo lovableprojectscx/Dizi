@@ -85,7 +85,7 @@ BEGIN
       CASE 
         WHEN store_plan = 'semilla' THEN 
           -- Para plan Semilla, forzar máximo 5 enlaces personalizados en el servidor
-          COALESCE((SELECT jsonb_agg(elem) FROM (SELECT * FROM jsonb_array_elements(COALESCE(store_row.quick_links, '[]'::jsonb)) LIMIT 5) t), '[]'::jsonb)
+          COALESCE((SELECT jsonb_agg(value) FROM (SELECT value FROM jsonb_array_elements(COALESCE(store_row.quick_links, '[]'::jsonb)) LIMIT 5) t), '[]'::jsonb)
         ELSE 
           COALESCE(store_row.quick_links, '[]'::jsonb)
       END
