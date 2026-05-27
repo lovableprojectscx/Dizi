@@ -11,8 +11,23 @@ import {
   ClipboardList,
   Loader2,
   CheckCircle2,
+  MapPin,
+  Star,
+  Instagram,
+  Facebook,
+  Linkedin,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useApp, useCart } from "@/lib/store";
 import { buildWaUrl, formatPrice } from "@/lib/whatsapp";
@@ -25,6 +40,7 @@ import {
   PLANS,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Link } from "@tanstack/react-router";
 
 const EMPTY_CART: any[] = [];
 
@@ -142,12 +158,107 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
  */
 const BG_LOCKED_MODELS = new Set(["nocturno", "aurora", "luxury", "dark_fashion", "slash", "sunset_glow"]);
 
+const getQuickLinkBranding = (label: string, url: string) => {
+  const labelLower = label.toLowerCase();
+  const urlLower = url.toLowerCase();
+
+  // Instagram
+  if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
+    return {
+      bg: "linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)",
+      borderColor: "transparent",
+      glowColor: "rgba(220, 39, 67, 0.45)",
+      baseColor: "#dc2743",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <defs>
+            <linearGradient id="instaGradBtn" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#f09433" />
+              <stop offset="25%" stopColor="#e6683c" />
+              <stop offset="50%" stopColor="#dc2743" />
+              <stop offset="75%" stopColor="#cc2366" />
+              <stop offset="100%" stopColor="#bc1888" />
+            </linearGradient>
+          </defs>
+          <rect width="24" height="24" rx="5.5" fill="url(#instaGradBtn)" />
+          <path fill="#FFF" d="M12 5.5c-1.782 0-2.004.007-2.705.039a3.7 3.7 0 0 0-1.226.235A2.215 2.215 0 0 0 6.83 7.073a3.7 3.7 0 0 0-.235 1.226C6.563 8.996 6.556 9.218 6.556 11s.007 2.004.039 2.705a3.7 3.7 0 0 0 .235 1.226 2.215 2.215 0 0 0 1.299 1.299c.358.14.786.22 1.226.235.701.032.923.039 2.705.039s2.004-.007 2.705-.039a3.7 3.7 0 0 0 1.226-.235 2.215 2.215 0 0 0 1.299-1.299c.14-.358.22-.786.235-1.226.032-.701.039-.923.039-2.705s-.007-2.004-.039-2.705a3.7 3.7 0 0 0-.235-1.226 2.215 2.215 0 0 0-1.299-1.299c-.358-.14-.786-.22-1.226-.235C14.004 5.507 13.782 5.5 12 5.5zm0 1.17c1.752 0 1.96.007 2.652.039.64.029.988.136 1.22.226a1.045 1.045 0 0 1 .618.618c.09.232.197.58.226 1.22.032.692.039.9.039 2.652s-.007 1.96-.039 2.652c-.029.64-.136.988-.226 1.22a1.045 1.045 0 0 1-.618.618c-.232.09-.58.197-1.22.226-.692.032-.9.039-2.652.039s-1.96-.007-2.652-.039c-.64-.029-.988-.136-1.22-.226a1.045 1.045 0 0 1-.618-.618c-.09-.232-.197-.58-.226-1.22-.032-.692-.039-.9-.039-2.652s.007-1.96.039-2.652c.029-.64.136-.988.226-1.22a1.045 1.045 0 0 1 .618-.618c.232-.09.58-.197 1.22-.226.692-.032.9-.039 2.652-.039zM12 8.16a2.84 2.84 0 1 0 2.84 2.84A2.84 2.84 0 0 0 12 8.16zm0 4.51a1.67 1.67 0 1 1 1.67-1.67A1.67 1.67 0 0 1 12 12.67zm3.125-4.22a.664.664 0 1 0 .664-.664.664.664 0 0 0-.664.664z" />
+        </svg>
+      ),
+    };
+  }
+  // Facebook
+  if (urlLower.includes("facebook.com") || labelLower.includes("facebook")) {
+    return {
+      bg: "#1877f2",
+      borderColor: "#1062cc",
+      glowColor: "rgba(24, 119, 242, 0.45)",
+      baseColor: "#1877f2",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#1877f2" />
+          <path fill="#FFF" d="M14 12h-2.5v8h-3v-8h-2v-2.5h2v-1.8c0-2.2 1.4-3.4 3.3-3.4.9 0 1.7.1 1.9.1v2.2h-1.3c-1.1 0-1.3.5-1.3 1.3v1.6h2.5L14 12z" />
+        </svg>
+      ),
+    };
+  }
+  // TikTok
+  if (urlLower.includes("tiktok.com") || labelLower.includes("tiktok")) {
+    return {
+      bg: "#000000",
+      borderColor: "#111111",
+      glowColor: "rgba(0, 0, 0, 0.5)",
+      baseColor: "#010101",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#000000" />
+          <path fill="#FFF" d="M16.6 9c-.9 0-1.7-.3-2.4-.8V14c0 2.8-2.2 5-5 5s-5-2.2-5-5 2.2-5 5-5c.3 0 .6 0 .8.1V6.2c-.3 0-.5-.1-.8-.1-4 0-7.2 3.2-7.2 7.2s3.2 7.2 7.2 7.2 7.2-3.2 7.2-7.2V9.8c1.1.8 2.5 1.2 4 1.2V9z" />
+        </svg>
+      ),
+    };
+  }
+  // LinkedIn
+  if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
+    return {
+      bg: "#0077b5",
+      borderColor: "#005a8a",
+      glowColor: "rgba(0, 119, 181, 0.45)",
+      baseColor: "#0077b5",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <rect width="24" height="24" rx="5" fill="#0077b5" />
+          <path fill="#FFF" d="M5.3 9h2.8v9H5.3zM6.7 5c1 0 1.8.8 1.8 1.8s-.8 1.8-1.8 1.8-1.8-.8-1.8-1.8.8-1.8 1.8-1.8zm5.2 4h2.7v1.2h.1c.4-.7 1.3-1.4 2.6-1.4 2.8 0 3.3 1.8 3.3 4.2v5h-2.8v-4.4c0-1.1 0-2.4-1.5-2.4s-1.7 1.2-1.7 2.3v4.5h-2.8V9z" />
+        </svg>
+      ),
+    };
+  }
+
+  // Fallback (Custom Link)
+  const isStar = labelLower.includes("reseña") || labelLower.includes("opinion") || labelLower.includes("calific") || labelLower.includes("opinión");
+  return {
+    bg: "#1f2937",
+    borderColor: "#374151",
+    glowColor: "rgba(31, 41, 55, 0.45)",
+    baseColor: "#1f2937",
+    coloredIcon: isStar ? (
+      <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill="#f59e0b" />
+        <path fill="#FFF" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" transform="scale(0.7) translate(5, 5)" />
+      </svg>
+    ) : (
+      <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill="#4b5563" />
+        <path fill="#FFF" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" transform="scale(0.7) translate(5, 5)" />
+      </svg>
+    ),
+  };
+};
+
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 
 // Modelos con hero banner — buscador/filtros van DEBAJO del banner, no en el header
 const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
 
-export function PublicCatalog({ store }: { store: Store }) {
+export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" | "bio" }) {
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>(
@@ -156,6 +267,7 @@ export function PublicCatalog({ store }: { store: Store }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const cart = useCart((s) => s.carts[store.id] ?? EMPTY_CART);
   const cartAdd = useCart((s) => s.add);
@@ -236,6 +348,193 @@ export function PublicCatalog({ store }: { store: Store }) {
     ...(modelGradient ? { backgroundImage: modelGradient } : {}),
   } as React.CSSProperties;
 
+  /* ── Bio-Link Customizations (Theme & Buttons) ── */
+  const isBioMode = mode === "bio";
+  const bioTheme = store.bioTheme || "default";
+  
+  let bioThemeVars: React.CSSProperties = { ...themeVars };
+  let finalIsDark = effectiveIsDark;
+
+  if (isBioMode && bioTheme !== "default") {
+    let background = "#09090b";
+    let isDark = true;
+    let cardBg = "rgba(255,255,255,0.06)";
+    let borderCol = "rgba(255,255,255,0.1)";
+
+    if (bioTheme === "dark") {
+      background = "#09090b";
+      isDark = true;
+      cardBg = "#18181b";
+      borderCol = "#27272a";
+    } else if (bioTheme === "sunset") {
+      background = "linear-gradient(135deg, #1e1b4b 0%, #311042 50%, #4c1d95 100%)";
+      isDark = true;
+      cardBg = "rgba(255, 255, 255, 0.05)";
+      borderCol = "rgba(255, 255, 255, 0.1)";
+    } else if (bioTheme === "forest") {
+      background = "linear-gradient(135deg, #022c22 0%, #064e3b 50%, #022c22 100%)";
+      isDark = true;
+      cardBg = "rgba(255, 255, 255, 0.05)";
+      borderCol = "rgba(255, 255, 255, 0.1)";
+    } else if (bioTheme === "neon") {
+      background = "radial-gradient(circle at center, #0c001c 0%, #020005 100%)";
+      isDark = true;
+      cardBg = "rgba(255, 0, 128, 0.05)";
+      borderCol = "rgba(0, 255, 240, 0.2)";
+    } else if (bioTheme === "glass") {
+      background = "linear-gradient(135deg, #0f172a 0%, #1e1b4b 30%, #311042 70%, #0f172a 100%)";
+      isDark = true;
+      cardBg = "rgba(255, 255, 255, 0.08)";
+      borderCol = "rgba(255, 255, 255, 0.15)";
+    } else if (bioTheme === "pastel") {
+      background = "linear-gradient(135deg, #fef08a 0%, #fbcfe8 50%, #c084fc 100%)";
+      isDark = false;
+      cardBg = "rgba(255, 255, 255, 0.4)";
+      borderCol = "rgba(255, 255, 255, 0.6)";
+    } else if (bioTheme === "ocean") {
+      background = "linear-gradient(135deg, #083344 0%, #0f172a 50%, #0c4a6e 100%)";
+      isDark = true;
+      cardBg = "rgba(255, 255, 255, 0.05)";
+      borderCol = "rgba(255, 255, 255, 0.1)";
+    } else if (bioTheme === "custom") {
+      const isCustomImage = !!store.bioBgImage;
+      if (isCustomImage) {
+        background = `url(${store.bioBgImage})`;
+        isDark = true;
+        cardBg = "rgba(255, 255, 255, 0.08)";
+        borderCol = "rgba(255, 255, 255, 0.15)";
+      } else {
+        const customColor = store.bioBgColor || "#0f172a";
+        background = customColor;
+        // Check color brightness
+        const hex = customColor.replace("#", "");
+        const rgb = parseInt(hex, 16);
+        const r = (rgb >> 16) & 0xff;
+        const g = (rgb >> 8) & 0xff;
+        const b = (rgb >> 0) & 0xff;
+        const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        isDark = luma < 128;
+        cardBg = isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(15, 23, 42, 0.05)";
+        borderCol = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.1)";
+      }
+    }
+
+    finalIsDark = isDark;
+    bioThemeVars = {
+      ...cfg.vars,
+      "--background": (background.includes("gradient") || background.startsWith("url(")) ? "#0f172a" : background,
+      "--foreground": isDark ? "#f8fafc" : "#0f172a",
+      "--foreground-muted": isDark ? "#cbd5e1" : "#475569",
+      "--muted-foreground": isDark ? "#94a3b8" : "#64748b",
+      "--muted": isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+      "--secondary": isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
+      "--border": borderCol,
+      "--card": cardBg,
+      ...(store.brandColor ? { "--primary": store.brandColor } : {}),
+      ...((background.includes("gradient") || background.startsWith("url(")) 
+        ? { backgroundImage: background, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" } 
+        : { backgroundImage: "none" }),
+    } as React.CSSProperties;
+  }
+
+  const getButtonStyle = (styleId: string) => {
+    const parts = (styleId || "pill-solid").split("-");
+    const shape = parts[0] || "pill";
+    const type = parts[1] || "solid";
+
+    let radiusClass = "rounded-full";
+    if (shape === "rounded") radiusClass = "rounded-lg";
+    if (shape === "sharp") radiusClass = "rounded-none";
+
+    return { shape, type, radiusClass };
+  };
+
+  const renderBioButton = (
+    href: string,
+    label: string,
+    defaultBg: string,
+    defaultBorder: string,
+    defaultText: string,
+    platform: "whatsapp" | "location" | "instagram" | "facebook" | "tiktok" | "linkedin" | "custom",
+    customIcon?: React.ReactNode,
+    onClick?: (e: React.MouseEvent) => void,
+    overrideBg?: string,
+    overrideText?: string
+  ) => {
+    const buttonStyleId = store.bioButtonStyle || "pill-solid";
+    const { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
+
+    const customBg = overrideBg || store.bioButtonColor;
+    const customText = overrideText || store.bioButtonTextColor;
+
+    const baseBg = customBg || defaultBg;
+    const baseText = customText || (customBg ? "#ffffff" : defaultText);
+
+    let bg = baseBg;
+    let borderColor = customBg ? baseBg : defaultBorder;
+    let color = baseText;
+    let extraClasses = "";
+
+    if (type === "solid") {
+      bg = baseBg;
+      borderColor = customBg ? baseBg : defaultBorder;
+      color = baseText;
+    } else if (type === "outline") {
+      bg = "transparent";
+      borderColor = baseBg;
+      color = customText || baseBg;
+    } else if (type === "glass") {
+      bg = finalIsDark ? "rgba(255, 255, 255, 0.08)" : "rgba(15, 23, 42, 0.06)";
+      borderColor = finalIsDark ? "rgba(255, 255, 255, 0.15)" : "rgba(15, 23, 42, 0.12)";
+      color = customText || (finalIsDark ? "#ffffff" : "#0f172a");
+      extraClasses = "backdrop-blur-md";
+    }
+
+    const hoverGlow = baseBg.startsWith("linear") ? "#dc2743" : baseBg;
+    const isCustomColor = !!(customBg || customText);
+    const isMonochrome = type === "outline" || type === "glass" || isCustomColor;
+
+    const getMonochromeIcon = () => {
+      const iconClass = "h-5 w-5";
+      if (platform === "whatsapp") return <MessageCircle className={iconClass} />;
+      if (platform === "location") return <MapPin className={iconClass} />;
+      if (platform === "instagram") return <Instagram className={iconClass} />;
+      if (platform === "facebook") return <Facebook className={iconClass} />;
+      if (platform === "linkedin") return <Linkedin className={iconClass} />;
+      return <Star className={iconClass} />;
+    };
+
+    return (
+      <a
+        href={href}
+        onClick={onClick}
+        target={onClick ? undefined : "_blank"}
+        rel={onClick ? undefined : "noopener noreferrer"}
+        className={cn(
+          "relative w-full p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)]",
+          radiusClass,
+          extraClasses
+        )}
+        style={{
+          background: bg,
+          borderColor: borderColor,
+          color: color,
+          "--hover-glow": hoverGlow,
+        } as React.CSSProperties}
+      >
+        <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
+        
+        <div className={cn(
+          "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300",
+          isMonochrome ? "bg-transparent" : "bg-white rounded-full shadow-inner"
+        )}>
+          {isMonochrome ? getMonochromeIcon() : customIcon}
+        </div>
+        <span className="flex-1 text-center pr-3">{label}</span>
+      </a>
+    );
+  };
+
   /* ── Price range bounds ─────────────────────────────────────── */
   const [priceMin, priceMax] = useMemo(() => {
     const prices = (store.products || []).filter(p => p.visible).map(p => p.price);
@@ -246,7 +545,7 @@ export function PublicCatalog({ store }: { store: Store }) {
   const hasPriceFilter = store.priceFilterEnabled && priceMin < priceMax;
 
   /* ── Derived data ────────────────────────────────── */
-  const filtered = useMemo(() => {
+  const rawFiltered = useMemo(() => {
     const products = store.products || [];
 
     // Los productos sample son solo para previsualización interna del admin.
@@ -267,6 +566,14 @@ export function PublicCatalog({ store }: { store: Store }) {
         return p.price >= priceRange[0] && p.price <= priceRange[1];
       });
   }, [store.products, activeCat, query, priceRange, effectiveProductLimit]);
+
+  const filtered = useMemo(() => {
+    const isBioLink = store.bioLinksEnabled && mode === "bio";
+    if (isBioLink) {
+      return rawFiltered.slice(0, 4);
+    }
+    return rawFiltered;
+  }, [rawFiltered, store.bioLinksEnabled, mode]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -292,6 +599,13 @@ export function PublicCatalog({ store }: { store: Store }) {
     window.open(buildWaUrl(store.phone, `Hola, me interesa el producto: ${name}`), "_blank");
   };
 
+  const scrollToLocation = () => {
+    const el = document.getElementById("location-section");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   const supportClick = () => {
     incClicks(store.id);
     window.open(buildWaUrl(store.phone, `Hola ${store.name}, tengo una consulta.`), "_blank");
@@ -300,10 +614,20 @@ export function PublicCatalog({ store }: { store: Store }) {
   /* ── Render ──────────────────────────────────────── */
   return (
     <div
-      className={cn("min-h-screen bg-background text-foreground transition-colors duration-300", effectiveIsDark ? "dark" : "")}
-      style={themeVars}
+      className={cn("min-h-screen bg-background text-foreground transition-colors duration-300", finalIsDark ? "dark" : "")}
+      style={isBioMode && bioTheme !== "default" ? bioThemeVars : themeVars}
       translate="no"
     >
+      <style>{`
+        @keyframes premiumShimmer {
+          0% { transform: translateX(-150%) skewX(-15deg); }
+          35% { transform: translateX(150%) skewX(-15deg); }
+          100% { transform: translateX(150%) skewX(-15deg); }
+        }
+        .animate-premium-shimmer {
+          animation: premiumShimmer 4s infinite ease-in-out;
+        }
+      `}</style>
       {/* Preview banner */}
       {!store.isPublished && (
         <div className="bg-primary/20 border-b border-primary/30 text-primary px-4 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">
@@ -336,79 +660,238 @@ export function PublicCatalog({ store }: { store: Store }) {
       )}
 
       {/* ── Header ───────────────────────────────────── */}
-      <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b">
-        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {store.logo ? (
-              <img
-                src={store.logo}
-                alt={store.name}
-                className="h-8 w-8 object-cover shrink-0"
-                style={{ borderRadius: cfg.imgRounded }}
-              />
-            ) : (
-              <div
-                className="h-8 w-8 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0"
-                style={{ borderRadius: cfg.imgRounded }}
+      {mode === "catalog" && (
+        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b">
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {store.logo ? (
+                <img
+                  src={store.logo}
+                  alt={store.name}
+                  className="h-8 w-8 object-cover shrink-0"
+                  style={{ borderRadius: cfg.imgRounded }}
+                />
+              ) : (
+                <div
+                  className="h-8 w-8 bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0"
+                  style={{ borderRadius: cfg.imgRounded }}
+                >
+                  <span className="text-primary font-black text-xs uppercase">
+                    {store.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <span
+                className={cn("text-sm truncate", cfg.headerStyle === "bold" ? "font-black tracking-tight" : cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase text-xs" : "font-bold")}
               >
-                <span className="text-primary font-black text-xs uppercase">
-                  {store.name.charAt(0)}
-                </span>
-              </div>
-            )}
-            <span
-              className={cn("text-sm truncate", cfg.headerStyle === "bold" ? "font-black tracking-tight" : cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase text-xs" : "font-bold")}
+                {store.name}
+              </span>
+            </div>
+
+            <button
+              onClick={supportClick}
+              className="shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition"
             >
-              {store.name}
-            </span>
+              Contacto
+            </button>
           </div>
 
-          <button
-            onClick={supportClick}
-            className="shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition"
-          >
-            Contacto
-          </button>
-        </div>
+          {/* Search + Filtros button: modelos SIN hero banner */}
+          {!BANNER_MODELS.has(modelId) && mode === "catalog" && (
+            <div className="mx-auto max-w-5xl px-4 pb-3 space-y-2">
+              {/* Search row + Filtros button */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="¿Qué estás buscando hoy?"
+                    className="w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition"
+                  />
+                </div>
+                <button
+                  onClick={() => setIsFilterOpen(true)}
+                  className="relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span>Filtros</span>
+                  {(() => {
+                    const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                    return cnt > 0 ? (
+                      <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+                        {cnt}
+                      </span>
+                    ) : null;
+                  })()}
+                </button>
+              </div>
+              {/* Active filter tags */}
+              {(activeCat !== "all" || priceRange) && (
+                <div className="flex flex-wrap gap-1.5">
+                  {activeCat !== "all" && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                      {activeCat === "sale" ? (
+                        <><Flame className="h-3 w-3 text-red-500" /> Ofertas</>
+                      ) : (
+                        store.categories.find(c => c.id === activeCat)?.name ?? activeCat
+                      )}
+                      <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                  {priceRange && (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                      Hasta S/ {priceRange[1]}
+                      <button onClick={() => setPriceRange(null)} className="ml-1 hover:opacity-60 transition">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </header>
+      )}
 
-        {/* Search + chips: solo para modelos SIN hero banner */}
-        {!BANNER_MODELS.has(modelId) && (
-          <>
-            <div className="mx-auto max-w-5xl px-4 pb-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="¿Qué estás buscando hoy?"
-                  className="w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition"
+      {/* ── Bio-Link Header View ── */}
+      {mode === "bio" && (
+        <section className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
+          {/* Banner Panorámico */}
+          <div className="relative w-full h-[35vw] max-h-[220px] bg-muted overflow-hidden">
+            {(store.bioBanner || store.bannerImage) ? (
+              <img
+                src={store.bioBanner || store.bannerImage}
+                alt={store.name}
+                className="w-full h-full object-cover animate-in fade-in duration-550"
+              />
+            ) : (
+              <div 
+                className="w-full h-full flex items-center justify-center"
+                style={{
+                  background: `linear-gradient(135deg, var(--primary) 0%, var(--background) 100%)`,
+                  opacity: 0.15,
+                }}
+              />
+            )}
+            <div className="absolute inset-0 bg-black/10" />
+          </div>
+
+          {/* Perfil & Links */}
+          <div className="relative max-w-xl mx-auto px-4 -mt-10 text-center space-y-4 pb-4">
+            {/* Logo Solapado */}
+            <div className="inline-block relative">
+              {(store.bioLogo || store.logo) ? (
+                <img
+                  src={store.bioLogo || store.logo}
+                  alt={store.name}
+                  className="h-20 w-20 rounded-full object-cover border-4 shadow-lg animate-in fade-in duration-300"
+                  style={{ borderColor: "var(--background)" }}
                 />
+              ) : (
+                <div
+                  className="h-20 w-20 rounded-full flex items-center justify-center shadow-lg border-4 text-xl font-black uppercase text-primary"
+                  style={{
+                    borderColor: "var(--background)",
+                    backgroundColor: "var(--secondary)",
+                  }}
+                >
+                  {store.name.charAt(0)}
+                </div>
+              )}
+            </div>
+
+            {/* Nombre y Descripción */}
+            <div className="space-y-2">
+              <h1 className="text-2xl font-black tracking-tight uppercase">{store.name}</h1>
+              {store.bioDescription && (
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                  {store.bioDescription}
+                </p>
+              )}
+              {/* Verified Badge */}
+              <div className="flex items-center justify-center gap-1 mt-1 text-[10px] font-bold text-muted-foreground/80 bg-muted/40 rounded-full w-max mx-auto px-2 py-0.5 border border-muted/50">
+                <CheckCircle2 className="h-3 w-3 text-emerald-500 fill-emerald-500/20" />
+                <span>Verified</span>
               </div>
             </div>
-            <div className="mx-auto max-w-5xl px-4 pb-3 overflow-x-auto scrollbar-none">
-              <div className="flex gap-2 w-max">
-                {store.categories.length > 1 && (
-                  <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")} cfg={cfg}>
-                    Todos
-                  </Chip>
-                )}
-                {(store.categories || []).map((c) => (
-                  <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)} cfg={cfg}>
-                    {c.name}
-                  </Chip>
-                ))}
-                <Chip active={activeCat === "sale"} onClick={() => setActiveCat("sale")} cfg={cfg}>
-                  <Flame className="h-3 w-3 mr-1 inline" />
-                  Ofertas
-                </Chip>
-              </div>
+
+            {/* Enlaces Rápidos (Quick Links - Estilo Branded Oficial / Charcoal) */}
+            <div className="flex flex-col gap-2.5 pt-4 max-w-md mx-auto w-full px-2">
+              {/* 1. PEDIR POR WHATSAPP */}
+              {store.phone && renderBioButton(
+                `https://wa.me/${store.phone}`,
+                "Pedir por WhatsApp",
+                "#25D366",
+                "#128C7E",
+                "#ffffff",
+                "whatsapp",
+                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                  <path fill="#25D366" d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2z" />
+                  <path fill="#FFF" d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z" />
+                </svg>
+              )}
+
+              {/* 2. NUESTRA UBICACIÓN (Si tiene coordenadas) */}
+              {store.locationLat && store.locationLng && renderBioButton(
+                "#",
+                "Nuestra Ubicación",
+                "#ea4335",
+                "#d93025",
+                "#ffffff",
+                "location",
+                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="12" fill="#ea4335" />
+                  <path fill="#FFF" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" transform="scale(0.7) translate(5, 4)" />
+                </svg>,
+                scrollToLocation
+              )}
+
+              {/* 3. Enlaces rápidos del usuario (Redes sociales oficiales + personalizados) */}
+              {store.quickLinks && store.quickLinks.map((link, idx) => {
+                const branding = getQuickLinkBranding(link.label, link.url);
+                const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+                
+                let platform: "instagram" | "facebook" | "linkedin" | "custom" = "custom";
+                const urlLower = link.url.toLowerCase();
+                const labelLower = link.label.toLowerCase();
+                if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
+                  platform = "instagram";
+                } else if (urlLower.includes("facebook.com") || labelLower.includes("facebook")) {
+                  platform = "facebook";
+                } else if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
+                  platform = "linkedin";
+                }
+
+                const defaultBg = platform === "custom" ? "#1f2937" : (branding.baseColor || "#1f2937");
+                const defaultBorder = branding.borderColor === "transparent" ? defaultBg : branding.borderColor;
+
+                return (
+                  <div key={idx} className="w-full">
+                    {renderBioButton(
+                      href,
+                      link.label,
+                      branding.bg,
+                      defaultBorder,
+                      "#ffffff",
+                      platform,
+                      branding.coloredIcon,
+                      undefined,
+                      link.bgColor,
+                      link.textColor
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </>
-        )}
-      </header>
+          </div>
+        </section>
+      )}
 
       {/* ── Hero Banner (Only for Elite/Banner models) ── */}
-      {modelId === "elite" && store.bannerImage && (
+      {modelId === "elite" && store.bannerImage && mode === "catalog" && (
         <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
           <img 
             src={store.bannerImage} 
@@ -431,66 +914,123 @@ export function PublicCatalog({ store }: { store: Store }) {
       )}
 
       {/* ── Filtros post-banner: solo modelos con hero ──────────── */}
-      {BANNER_MODELS.has(modelId) && (
+      {BANNER_MODELS.has(modelId) && mode === "catalog" && (
         <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur-md border-b shadow-sm">
-          <div className="mx-auto max-w-5xl px-4 py-3 space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="¿Qué estás buscando hoy?"
-                className="w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition"
-              />
-            </div>
-            <div className="overflow-x-auto scrollbar-none">
-              <div className="flex gap-2 w-max">
-                {store.categories.length > 1 && (
-                  <Chip active={activeCat === "all"} onClick={() => setActiveCat("all")} cfg={cfg}>
-                    Todos
-                  </Chip>
-                )}
-                {(store.categories || []).map((c) => (
-                  <Chip key={c.id} active={activeCat === c.id} onClick={() => setActiveCat(c.id)} cfg={cfg}>
-                    {c.name}
-                  </Chip>
-                ))}
-                <Chip active={activeCat === "sale"} onClick={() => setActiveCat("sale")} cfg={cfg}>
-                  <Flame className="h-3 w-3 mr-1 inline" />
-                  Ofertas
-                </Chip>
+          <div className="mx-auto max-w-5xl px-4 py-3 space-y-2">
+            {/* Search row + Filtros button */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="¿Qué estás buscando hoy?"
+                  className="w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition"
+                />
               </div>
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className="relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filtros</span>
+                {(() => {
+                  const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                  return cnt > 0 ? (
+                    <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+                      {cnt}
+                    </span>
+                  ) : null;
+                })()}
+              </button>
             </div>
-            {hasPriceFilter && (
-              <PriceRangeSlider
-                min={priceMin} max={priceMax}
-                value={priceRange ?? [priceMin, priceMax]}
-                onChange={setPriceRange}
-                onReset={() => setPriceRange(null)}
-                isDark={effectiveIsDark}
-              />
+            {/* Active filter tags */}
+            {(activeCat !== "all" || priceRange) && (
+              <div className="flex flex-wrap gap-1.5">
+                {activeCat !== "all" && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    {activeCat === "sale" ? (
+                      <><Flame className="h-3 w-3 text-red-500" /> Ofertas</>
+                    ) : (
+                      store.categories.find(c => c.id === activeCat)?.name ?? activeCat
+                    )}
+                    <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+                {priceRange && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                    Hasta S/ {priceRange[1]}
+                    <button onClick={() => setPriceRange(null)} className="ml-1 hover:opacity-60 transition">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Slider de precio para modelos SIN banner */}
-      {!BANNER_MODELS.has(modelId) && hasPriceFilter && (
-        <div className="mx-auto max-w-5xl px-4 pt-4">
-          <PriceRangeSlider
-            min={priceMin} max={priceMax}
-            value={priceRange ?? [priceMin, priceMax]}
-            onChange={setPriceRange}
-            onReset={() => setPriceRange(null)}
-            isDark={effectiveIsDark}
-          />
-        </div>
-      )}
-
       {/* ── Product Area ──────────────────────────────── */}
       <main className="mx-auto max-w-5xl px-4 pt-6 pb-32">
+        {mode === "bio" && (
+          <h2 className="text-xs font-black uppercase tracking-wider text-center mb-6 text-muted-foreground flex items-center justify-center gap-2">
+            <span className="h-px w-8 bg-muted-foreground/30"></span>
+            <ShoppingBag className="h-3.5 w-3.5 opacity-60" />
+            NUESTRA CARTA ONLINE
+            <span className="h-px w-8 bg-muted-foreground/30"></span>
+          </h2>
+        )}
         {filtered.length === 0 ? (
           <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
+        ) : mode === "bio" ? (
+          /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) for better mobile presentation on desktop as well! */
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
+            {filtered.map((p) => (
+              <article
+                key={p.id}
+                className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md", cfg.cardShadow)}
+                style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
+                onClick={() => setViewingProduct(p)}
+              >
+                {/* Imagen cuadrada */}
+                <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
+                  <img
+                    src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
+                    alt={p.name}
+                    className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                    }}
+                  />
+                  {p.isOnSale && (
+                    <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">OFERTA</span>
+                  )}
+                </div>
+                {/* Info */}
+                <div className="p-2.5 flex flex-col gap-1 flex-1">
+                  <h3 className="text-xs font-semibold line-clamp-2 leading-snug flex-1">{p.name}</h3>
+                  <div className="flex items-center justify-between mt-1">
+                    <div>
+                      <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
+                      {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                        <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
+                      className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         ) : cfg.layout === "overlay" ? (
           /* ── OVERLAY layout: portrait 3:4 cards with gradient text (ZARA / Instagram Shopping style) */
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -1104,6 +1644,60 @@ export function PublicCatalog({ store }: { store: Store }) {
             ))}
           </div>
         )}
+
+        {mode === "bio" && (
+          <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <Link
+              to="/t/$slug"
+              params={{ slug: store.slug }}
+              className="w-full max-w-md mx-auto py-4 rounded-xl font-black uppercase text-xs tracking-wider bg-primary text-primary-foreground hover:opacity-95 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+            >
+              Ver Catálogo Completo
+            </Link>
+
+            {/* Módulo de Ubicación Geográfica */}
+            {store.locationLat && store.locationLng && (
+              <div id="location-section" className="pt-8 border-t space-y-4 scroll-mt-6" style={{ borderColor: "var(--border)" }}>
+                <h3 className="text-xs font-black uppercase tracking-widest text-center text-muted-foreground flex items-center justify-center gap-2">
+                  <span className="h-px w-8 bg-muted-foreground/30"></span>
+                  <MapPin className="h-3.5 w-3.5 opacity-60" />
+                  Nuestra Ubicación
+                  <span className="h-px w-8 bg-muted-foreground/30"></span>
+                </h3>
+                
+                <div className="max-w-md mx-auto space-y-4">
+                  <div 
+                    className="rounded-2xl overflow-hidden border shadow-sm h-[200px] w-full relative group transition-all duration-300 hover:shadow-lg"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <iframe
+                      title="Ubicación"
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${store.locationLng-0.003}%2C${store.locationLat-0.0015}%2C${store.locationLng+0.003}%2C${store.locationLat+0.0015}&layer=mapnik&marker=${store.locationLat}%2C${store.locationLng}`}
+                      className="w-full h-full border-none filter grayscale-[25%] contrast-[105%] brightness-[97%] transition-all"
+                    />
+                  </div>
+                  
+                  {store.locationAddress && (
+                    <div className="space-y-2 text-center">
+                      <a
+                        href={`https://maps.google.com/?q=${store.locationLat},${store.locationLng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex py-2.5 px-4 rounded-xl border items-center justify-center gap-2 text-xs font-black uppercase tracking-wider transition-all hover:scale-[1.01] hover:bg-muted/40 shadow-sm bg-card text-foreground"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        📍 Ver en Google Maps
+                      </a>
+                      <p className="text-[11px] text-muted-foreground font-semibold px-4 leading-relaxed">
+                        {store.locationAddress}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* ── Footer libro de reclamaciones ────────────── */}
@@ -1290,6 +1884,137 @@ export function PublicCatalog({ store }: { store: Store }) {
         </SheetContent>
       </Sheet>
 
+
+      {/* ── Filter Drawer ─────────────────────────────── */}
+      <Drawer open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <DrawerContent
+          className="max-h-[90vh] focus:outline-none"
+          style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
+        >
+          <DrawerHeader className="text-left border-b pb-4" style={{ borderColor: "var(--border)" }}>
+            <div className="flex items-center justify-between">
+              <DrawerTitle className="text-base font-black uppercase tracking-wide" style={{ color: "var(--foreground)" }}>
+                Filtros
+              </DrawerTitle>
+              <DrawerClose asChild>
+                <button
+                  className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </DrawerClose>
+            </div>
+            <DrawerDescription className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
+              Filtra los productos por categoría{hasPriceFilter ? " y precio" : ""}
+            </DrawerDescription>
+          </DrawerHeader>
+
+          <div className="overflow-y-auto flex-1 px-4 py-5 space-y-6">
+            {/* ── Categorías ── */}
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>
+                Categorías
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {/* Todos */}
+                <button
+                  onClick={() => setActiveCat("all")}
+                  className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold border transition"
+                  style={{
+                    borderRadius: cfg.cardRounded,
+                    backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--secondary)",
+                    color: activeCat === "all" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                    borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
+                  }}
+                >
+                  Todos
+                </button>
+
+                {/* Ofertas */}
+                <button
+                  onClick={() => setActiveCat("sale")}
+                  className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold border transition"
+                  style={{
+                    borderRadius: cfg.cardRounded,
+                    backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--secondary)",
+                    color: activeCat === "sale" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                    borderColor: activeCat === "sale" ? "var(--primary)" : "var(--border)",
+                  }}
+                >
+                  <Flame className="h-3.5 w-3.5 text-red-500" />
+                  Ofertas
+                </button>
+
+                {/* Cada categoría */}
+                {(store.categories || []).map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setActiveCat(c.id)}
+                    className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold border transition"
+                    style={{
+                      borderRadius: cfg.cardRounded,
+                      backgroundColor: activeCat === c.id ? "var(--primary)" : "var(--secondary)",
+                      color: activeCat === c.id ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                      borderColor: activeCat === c.id ? "var(--primary)" : "var(--border)",
+                    }}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Precio ── */}
+            {hasPriceFilter && (
+              <div className="space-y-3">
+                <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>
+                  Precio
+                </p>
+                <PriceRangeSlider
+                  min={priceMin}
+                  max={priceMax}
+                  value={priceRange ?? [priceMin, priceMax]}
+                  onChange={setPriceRange}
+                  onReset={() => setPriceRange(null)}
+                  isDark={effectiveIsDark}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ── Footer actions ── */}
+          <div
+            className="px-4 pt-3 pb-6 space-y-2 border-t shrink-0"
+            style={{ borderColor: "var(--border)" }}
+          >
+            {/* Restablecer */}
+            {(activeCat !== "all" || priceRange) && (
+              <button
+                onClick={() => { setActiveCat("all"); setPriceRange(null); }}
+                className="w-full h-10 text-sm font-semibold border rounded-full transition hover:bg-muted"
+                style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+              >
+                Restablecer filtros
+              </button>
+            )}
+            {/* Aplicar */}
+            <DrawerClose asChild>
+              <button
+                className="w-full h-12 font-bold text-sm transition hover:opacity-90 flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: "var(--primary)",
+                  color: effectiveIsDark ? "#000" : "#fff",
+                  borderRadius: cfg.cardRounded,
+                  ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
+                }}
+              >
+                Ver {rawFiltered.length} {rawFiltered.length === 1 ? "producto" : "productos"}
+              </button>
+            </DrawerClose>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
       {/* ── Product Detail Sheet ─────────────────────── */}
       <Sheet open={!!viewingProduct} onOpenChange={(v) => { if (!v) setViewingProduct(null); }}>

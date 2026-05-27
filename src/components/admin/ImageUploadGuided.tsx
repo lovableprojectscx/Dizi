@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
-import { ImageIcon, CheckCircle2, AlertTriangle, Info, UploadCloud } from "lucide-react";
+import { ImageIcon, CheckCircle2, AlertTriangle, Info, UploadCloud, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { convertImageToWebP } from "@/lib/image-utils";
+import { convertImageToWebP, convertImageUrlToWebP } from "@/lib/image-utils";
 import type { ImageSpec } from "@/lib/types";
 import { checkImageRatio } from "@/lib/types";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,74 @@ export function ImageUploadGuided({
 }: ImageUploadGuidedProps) {
   const [drag, setDrag] = useState(false);
   const [converting, setConverting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importWarning, setImportWarning] = useState<string | null>(null);
   const [ratioStatus, setRatioStatus] = useState<RatioStatus>(null);
   const [ratioMessage, setRatioMessage] = useState("");
   const [showHint, setShowHint] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const handleUrlChange = async (url: string) => {
+    onChange(url);
+    setRatioStatus(null);
+    setImportWarning(null);
+
+    const trimmed = url.trim();
+    if (!trimmed) return;
+
+    const isHttpUrl = trimmed.startsWith("http://") || trimmed.startsWith("https://");
+    if (!isHttpUrl) return;
+
+    // Detectar si han pegado un enlace de página de Facebook/Instagram en lugar de la imagen directa
+    const isSocialPageUrl =
+      (trimmed.includes("facebook.com") || trimmed.includes("instagram.com")) &&
+      !trimmed.includes("fbcdn.net") &&
+      !trimmed.includes("cdninstagram.com");
+
+    if (isSocialPageUrl) {
+      setImportWarning(
+        "⚠️ Has pegado el enlace de la página de la publicación/foto de Facebook/Instagram y no la imagen directamente.\n\n" +
+        "Para solucionarlo:\n" +
+        "• En Computadora: Haz clic derecho sobre la foto en Facebook/Instagram, selecciona 'Copiar dirección de imagen' y pega ese enlace aquí.\n" +
+        "• En Celular: Mantén presionada la foto, selecciona 'Descargar imagen' y súbela como archivo en la zona de arriba."
+      );
+      return;
+    }
+
+    // Si es un enlace de redes sociales conocidos por expirar, avisar inmediatamente
+    const isVolatileUrl =
+      trimmed.includes("fbcdn.net") ||
+      trimmed.includes("instagram.com") ||
+      trimmed.includes("cdninstagram.com") ||
+      trimmed.includes("whatsapp.com") ||
+      trimmed.includes("wa.me") ||
+      trimmed.includes("facebook.com");
+
+    setImporting(true);
+    try {
+      const webpDataUrl = await convertImageUrlToWebP(trimmed);
+      onChange(webpDataUrl);
+      toast.success("¡Imagen importada y optimizada con éxito!");
+      setImportWarning(null);
+      // Check ratio after setting — use an Image object
+      const img = new Image();
+      img.onload = () => checkRatioAfterLoad(img);
+      img.src = webpDataUrl;
+    } catch (err) {
+      console.warn("[convertImageUrlToWebP] Failed to convert URL:", err);
+      if (isVolatileUrl) {
+        setImportWarning(
+          "⚠️ Este enlace pertenece a una red social (Facebook/Instagram/WhatsApp). Los enlaces de estas plataformas expiran automáticamente y la imagen dejará de verse pronto. Te recomendamos descargar la imagen a tu dispositivo y subirla directamente aquí."
+        );
+      } else {
+        setImportWarning(
+          "⚠️ No pudimos optimizar esta imagen para guardarla de forma permanente debido a restricciones de seguridad del sitio de origen (CORS). El enlace se guardará, pero si la web original elimina la imagen, dejará de verse."
+        );
+      }
+    } finally {
+      setImporting(false);
+    }
+  };
 
   // Parse ratio for the preview box
   const [rW, rH] = spec.ratio.split("/").map(Number);
@@ -63,9 +127,9 @@ export function ImageUploadGuided({
     }
   };
 
-  const isDataUrl = value.startsWith("data:");
-  const isUrl = value.startsWith("http");
-  const hasImage = isDataUrl || isUrl;
+  const isDataUrl = typeof value === "string" && value.startsWith("data:");
+  const isUrl = typeof value === "string" && value.startsWith("http");
+  const hasImage = !!(isDataUrl || isUrl);
 
   return (
     <div className="space-y-2">
@@ -123,16 +187,20 @@ export function ImageUploadGuided({
         className={[
           "relative border-2 border-dashed rounded-xl overflow-hidden transition-all",
           drag ? "border-primary bg-primary/5 scale-[1.01]" : "border-border",
-          converting ? "opacity-70" : "",
+          converting || importing ? "opacity-70" : "",
         ].join(" ")}
         style={{ paddingBottom: `${Math.min(previewHeightPercent, 85)}%` }}
       >
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {converting ? (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+          {converting || importing ? (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground text-center px-4">
               <span className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs font-medium">Optimizando imagen...</span>
-              <span className="text-[10px] text-muted-foreground">Convirtiendo a WebP</span>
+              <span className="text-xs font-medium">
+                {converting ? "Optimizando imagen..." : "Importando imagen externa..."}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {converting ? "Convirtiendo a WebP" : "Intentando descargar y optimizar"}
+              </span>
             </div>
           ) : hasImage ? (
             <img
@@ -157,7 +225,7 @@ export function ImageUploadGuided({
         </div>
 
         {/* Input invisible */}
-        {!converting && (
+        {!converting && !importing && (
           <input
             type="file"
             accept="image/*"
@@ -167,7 +235,7 @@ export function ImageUploadGuided({
         )}
 
         {/* Badge de proporcion recomendada (siempre visible) */}
-        {!hasImage && !converting && (
+        {!hasImage && !converting && !importing && (
           <div className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm border rounded-full px-2 py-0.5 flex items-center gap-1">
             <span className="text-[9px] font-bold text-muted-foreground">{spec.label}</span>
           </div>
@@ -194,15 +262,26 @@ export function ImageUploadGuided({
       )}
 
       {/* ── URL manual ── */}
-      <Input
-        placeholder="O pega una URL de imagen..."
-        value={isDataUrl ? "" : value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setRatioStatus(null);
-        }}
-        className="text-xs"
-      />
+      <div className="space-y-1.5">
+        <div className="relative flex items-center">
+          <Input
+            placeholder="O pega una URL de imagen..."
+            value={isDataUrl ? "" : (value || "")}
+            onChange={(e) => handleUrlChange(e.target.value)}
+            className="text-xs pr-8"
+            disabled={importing || converting}
+          />
+          {importing && (
+            <Loader2 className="absolute right-2.5 h-3.5 w-3.5 animate-spin text-muted-foreground" />
+          )}
+        </div>
+
+        {importWarning && (
+          <p className="text-[11px] leading-relaxed text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 whitespace-pre-line">
+            {importWarning}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

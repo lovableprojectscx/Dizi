@@ -32,6 +32,106 @@ export const Route = createFileRoute("/novedades")({
 ───────────────────────────────────────────────────────── */
 const NOTICIAS = [
   {
+    id: 21,
+    type: "nuevo" as const,
+    date: "27 mayo 2026",
+    title: "Filtra productos desde un cajón elegante sin perder espacio en pantalla",
+    summary:
+      "El catálogo ahora tiene un botón de 'Filtros' que abre un menú deslizante desde abajo. Dentro encuentras todas las categorías en cuadrícula y el control de precio — todo organizado y fácil de tocar desde el celular.",
+    detail:
+      "Si tienes un filtro activo, aparece una etiqueta pequeña debajo del buscador para que puedas quitarlo con un toque, sin necesidad de abrir el menú de nuevo. El botón también muestra un contador cuando hay filtros aplicados.",
+  },
+  {
+    id: 22,
+    type: "mejora" as const,
+    date: "27 mayo 2026",
+    title: "Las categorías ya no ocupan espacio horizontal en el catálogo",
+    summary:
+      "Se eliminó la barra de desplazamiento horizontal de categorías que aparecía en el catálogo. Ahora todo está limpio: solo el buscador y el botón de filtros en una sola línea.",
+    detail:
+      "El espacio antes ocupado por las píldoras de categorías ahora lo usan los productos, dando una vista más despejada y profesional.",
+  },
+  {
+    id: 23,
+    type: "nuevo" as const,
+    date: "27 mayo 2026",
+    title: "Personaliza el color de fondo de cada botón de red social",
+    summary:
+      "En tu Link en Bio, ahora puedes cambiar el color del botón de Instagram, Facebook, TikTok y LinkedIn de forma individual — no solo los personalizados, sino también los oficiales.",
+    detail:
+      "El selector de color aparece automáticamente debajo del campo de URL cuando ingresas una red social. Si no tocas nada, el botón usa el color oficial de la plataforma. Tienes un botón 'Reset' para volver al color original en cualquier momento.",
+  },
+  {
+    id: 24,
+    type: "mejora" as const,
+    date: "27 mayo 2026",
+    title: "Íconos profesionales en toda la vista pública del catálogo",
+    summary:
+      "Se reemplazaron todos los emojis que aparecían en el catálogo (carro de compras, mapa, fuego) por íconos del mismo sistema de diseño de la app — más limpios, consistentes y profesionales.",
+    detail:
+      "Los íconos se adaptan automáticamente al tema de colores de cada tienda y se ven perfectos tanto en fondos claros como oscuros.",
+  },
+  {
+    id: 15,
+    type: "nuevo" as const,
+    date: "26 mayo 2026",
+    title: "Fondo 100% personalizado en tu Link en Bio",
+    summary:
+      "Ahora puedes elegir el color exacto de fondo para tu página de Link en Bio, o subir una imagen propia que lo ocupe por completo. Ideal para marcas con identidad visual definida.",
+    detail:
+      "Al seleccionar el tema 'Personalizado', elige entre color sólido (con selector de color) o imagen de fondo. El texto se ajusta automáticamente a blanco o negro según el fondo que elijas, para que siempre sea legible.",
+  },
+  {
+    id: 16,
+    type: "nuevo" as const,
+    date: "26 mayo 2026",
+    title: "Panel de Link en Bio rediseñado con secciones colapsables",
+    summary:
+      "El panel de configuración del Link en Bio se organizó en 4 bloques que se abren y cierran: Información, Apariencia, Redes y Ubicación. Ya no es una pantalla larga y difícil de navegar.",
+    detail:
+      "Cada sección tiene un ícono de color propio para encontrarla de un vistazo. Puedes abrir solo lo que necesitas editar y mantener el resto cerrado.",
+  },
+  {
+    id: 17,
+    type: "mejora" as const,
+    date: "26 mayo 2026",
+    title: "Los iconos de redes sociales muestran su color oficial en el panel admin",
+    summary:
+      "En el panel de Link en Bio, el ícono de Instagram ahora aparece en rosa, Facebook en azul, LinkedIn en azul corporativo y TikTok en negro — igual que sus logos reales.",
+    detail:
+      "Esto hace más fácil identificar cada red social de un vistazo mientras configuras tu página, sin necesidad de leer el nombre.",
+  },
+  {
+    id: 18,
+    type: "nuevo" as const,
+    date: "26 mayo 2026",
+    title: "Personaliza el color de cada botón adicional en tu Link en Bio",
+    summary:
+      "Al agregar un botón personalizado (PDF de catálogo, web, WhatsApp, etc.), ahora puedes elegir el color de fondo y el color del texto de forma independiente para ese botón.",
+    detail:
+      "Cada botón puede tener su propio color, distinto al resto. Esto te permite mantener los colores de cada marca o tipo de contenido de forma visual y ordenada.",
+  },
+  {
+    id: 19,
+    type: "fix" as const,
+    date: "26 mayo 2026",
+    title: "La foto de perfil del Link en Bio ahora se guarda correctamente",
+    summary:
+      "Se corrigió un problema donde al cambiar la imagen de perfil o portada del Link en Bio, la imagen no se actualizaba de forma permanente al guardar.",
+    detail:
+      "Ahora al guardar, las fotos se suben correctamente y permanecen al recargar la página o entrar nuevamente al panel.",
+  },
+  {
+    id: 20,
+    type: "mejora" as const,
+    date: "26 mayo 2026",
+    title: "Los botones de Link en Bio tienen más variedad visual real",
+    summary:
+      "Se corrigió un problema donde los estilos 'Píldora' y 'Redondeado' se veían casi idénticos. Ahora la diferencia entre bordes curvos y cuadrados es claramente visible.",
+    detail:
+      "Los 6 estilos disponibles (Píldora Relleno, Píldora Contorno, Píldora Vidrio, Redondeado Relleno, Redondeado Contorno y Redondeado Vidrio) ahora se distinguen a simple vista en la vista previa.",
+  },
+  {
     id: 10,
     type: "nuevo" as const,
     date: "14 mayo 2026",

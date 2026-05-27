@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as NovedadesRouteImport } from './routes/novedades'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,14 +21,15 @@ import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as SuperTiendasRouteImport } from './routes/super.tiendas'
 import { Route as SuperLoginRouteImport } from './routes/super.login'
 import { Route as SuperDashboardRouteImport } from './routes/super.dashboard'
+import { Route as BioSlugRouteImport } from './routes/bio.$slug'
+import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaciones'
 import { Route as AdminProductosRouteImport } from './routes/admin.productos'
 import { Route as AdminPlanRouteImport } from './routes/admin.plan'
+import { Route as AdminLinkBioRouteImport } from './routes/admin.link-bio'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
-import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaciones'
-import { Route as NovedadesRouteImport } from './routes/novedades'
 
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
@@ -37,6 +39,11 @@ const SuperRoute = SuperRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovedadesRoute = NovedadesRouteImport.update({
+  id: '/novedades',
+  path: '/novedades',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -84,6 +91,16 @@ const SuperDashboardRoute = SuperDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => SuperRoute,
 } as any)
+const BioSlugRoute = BioSlugRouteImport.update({
+  id: '/bio/$slug',
+  path: '/bio/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReclamacionesRoute = AdminReclamacionesRouteImport.update({
+  id: '/reclamaciones',
+  path: '/reclamaciones',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProductosRoute = AdminProductosRouteImport.update({
   id: '/productos',
   path: '/productos',
@@ -92,6 +109,11 @@ const AdminProductosRoute = AdminProductosRouteImport.update({
 const AdminPlanRoute = AdminPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLinkBioRoute = AdminLinkBioRouteImport.update({
+  id: '/link-bio',
+  path: '/link-bio',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDisenoRoute = AdminDisenoRouteImport.update({
@@ -114,31 +136,23 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminReclamacionesRoute = AdminReclamacionesRouteImport.update({
-  id: '/reclamaciones',
-  path: '/reclamaciones',
-  getParentRoute: () => AdminRoute,
-} as any)
-const NovedadesRoute = NovedadesRouteImport.update({
-  id: '/novedades',
-  path: '/novedades',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/novedades': typeof NovedadesRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
-  '/novedades': typeof NovedadesRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
+  '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
   '/super/tiendas': typeof SuperTiendasRoute
@@ -149,15 +163,17 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
   '/novedades': typeof NovedadesRoute
+  '/register': typeof RegisterRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
+  '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
   '/super/tiendas': typeof SuperTiendasRoute
@@ -170,16 +186,18 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
+  '/novedades': typeof NovedadesRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
-  '/novedades': typeof NovedadesRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
+  '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
   '/super/tiendas': typeof SuperTiendasRoute
@@ -193,16 +211,18 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/novedades'
     | '/register'
     | '/super'
-    | '/novedades'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
     | '/admin/diseno'
+    | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
+    | '/bio/$slug'
     | '/super/dashboard'
     | '/super/login'
     | '/super/tiendas'
@@ -213,15 +233,17 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
-    | '/register'
     | '/novedades'
+    | '/register'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
     | '/admin/diseno'
+    | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
+    | '/bio/$slug'
     | '/super/dashboard'
     | '/super/login'
     | '/super/tiendas'
@@ -233,16 +255,18 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/login'
+    | '/novedades'
     | '/register'
     | '/super'
-    | '/novedades'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
     | '/admin/diseno'
+    | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
+    | '/bio/$slug'
     | '/super/dashboard'
     | '/super/login'
     | '/super/tiendas'
@@ -255,10 +279,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
+  NovedadesRoute: typeof NovedadesRoute
   RegisterRoute: typeof RegisterRoute
   SuperRoute: typeof SuperRouteWithChildren
+  BioSlugRoute: typeof BioSlugRoute
   TSlugRoute: typeof TSlugRoute
-  NovedadesRoute: typeof NovedadesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -275,6 +300,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/novedades': {
+      id: '/novedades'
+      path: '/novedades'
+      fullPath: '/novedades'
+      preLoaderRoute: typeof NovedadesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -340,6 +372,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperDashboardRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/bio/$slug': {
+      id: '/bio/$slug'
+      path: '/bio/$slug'
+      fullPath: '/bio/$slug'
+      preLoaderRoute: typeof BioSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reclamaciones': {
+      id: '/admin/reclamaciones'
+      path: '/reclamaciones'
+      fullPath: '/admin/reclamaciones'
+      preLoaderRoute: typeof AdminReclamacionesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/productos': {
       id: '/admin/productos'
       path: '/productos'
@@ -352,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/plan'
       fullPath: '/admin/plan'
       preLoaderRoute: typeof AdminPlanRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/link-bio': {
+      id: '/admin/link-bio'
+      path: '/link-bio'
+      fullPath: '/admin/link-bio'
+      preLoaderRoute: typeof AdminLinkBioRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/diseno': {
@@ -382,20 +435,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/reclamaciones': {
-      id: '/admin/reclamaciones'
-      path: '/reclamaciones'
-      fullPath: '/admin/reclamaciones'
-      preLoaderRoute: typeof AdminReclamacionesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/novedades': {
-      id: '/novedades'
-      path: '/novedades'
-      fullPath: '/novedades'
-      preLoaderRoute: typeof NovedadesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -404,6 +443,7 @@ interface AdminRouteChildren {
   AdminConfiguracionRoute: typeof AdminConfiguracionRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
+  AdminLinkBioRoute: typeof AdminLinkBioRoute
   AdminPlanRoute: typeof AdminPlanRoute
   AdminProductosRoute: typeof AdminProductosRoute
   AdminReclamacionesRoute: typeof AdminReclamacionesRoute
@@ -415,6 +455,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminConfiguracionRoute: AdminConfiguracionRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDisenoRoute: AdminDisenoRoute,
+  AdminLinkBioRoute: AdminLinkBioRoute,
   AdminPlanRoute: AdminPlanRoute,
   AdminProductosRoute: AdminProductosRoute,
   AdminReclamacionesRoute: AdminReclamacionesRoute,
@@ -443,21 +484,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
+  NovedadesRoute: NovedadesRoute,
   RegisterRoute: RegisterRoute,
   SuperRoute: SuperRouteWithChildren,
+  BioSlugRoute: BioSlugRoute,
   TSlugRoute: TSlugRoute,
-  NovedadesRoute: NovedadesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

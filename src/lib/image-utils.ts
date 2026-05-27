@@ -61,3 +61,64 @@ export function convertImageToWebP(file: File): Promise<string> {
     img.src = objectUrl;
   });
 }
+
+/**
+ * Intenta cargar una URL de imagen externa, la redimensiona y la convierte a WebP (base64 Data URL).
+ * Usa crossOrigin = "anonymous" para intentar saltar restricciones CORS si el origen lo permite.
+ */
+export function convertImageUrlToWebP(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // Si ya es un base64 Data URL, resolver inmediatamente
+    if (url.startsWith("data:")) {
+      resolve(url);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Redimensionar si es muy grande
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIMENSION) / width);
+          width = MAX_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_DIMENSION) / height);
+          height = MAX_DIMENSION;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas no disponible"));
+        return;
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      try {
+        const webpDataUrl = canvas.toDataURL("image/webp", WEBP_QUALITY);
+        resolve(webpDataUrl);
+      } catch (err) {
+        reject(new Error("No se pudo convertir a base64 debido a restricciones de CORS"));
+      }
+    };
+
+    img.onerror = () => {
+      reject(new Error("No se pudo cargar la imagen desde la URL"));
+    };
+
+    img.src = url;
+  });
+}
+

@@ -48,6 +48,13 @@ export interface Product {
   isSample?: boolean;
 }
 
+export interface QuickLink {
+  label: string;
+  url: string;
+  bgColor?: string;
+  textColor?: string;
+}
+
 export interface Store {
   id: string;
   slug: string;
@@ -77,6 +84,20 @@ export interface Store {
   cancelledAt?: string;
   cancelReason?: string;
   planDurationMonths?: number;
+  bioDescription?: string;
+  locationLat?: number;
+  locationLng?: number;
+  locationAddress?: string;
+  quickLinks?: QuickLink[];
+  bioLinksEnabled?: boolean;
+  bioLogo?: string;
+  bioBanner?: string;
+  bioTheme?: string;
+  bioButtonStyle?: string;
+  bioButtonColor?: string;
+  bioButtonTextColor?: string;
+  bioBgImage?: string;
+  bioBgColor?: string;
   categories: Category[];
   products: Product[];
 }

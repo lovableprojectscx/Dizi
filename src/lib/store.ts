@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Category, PlanId, Product, Store, Invite, SubscriptionStatus } from "./types";
-import { supabase } from "./supabase";
+import { supabase, uploadBase64ToStorage } from "./supabase";
 import { toast } from "sonner";
 
 const mapStoreFromDB = (row: any): Store => ({
@@ -32,6 +32,20 @@ const mapStoreFromDB = (row: any): Store => ({
   cancelledAt: row.cancelled_at ?? undefined,
   cancelReason: row.cancel_reason ?? undefined,
   planDurationMonths: row.plan_duration_months ?? undefined,
+  bioDescription: row.bio_description ?? undefined,
+  locationLat: row.location_lat ? Number(row.location_lat) : undefined,
+  locationLng: row.location_lng ? Number(row.location_lng) : undefined,
+  locationAddress: row.location_address ?? undefined,
+  quickLinks: row.quick_links ?? [],
+  bioLinksEnabled: row.bio_links_enabled ?? false,
+  bioLogo: row.bio_logo ?? undefined,
+  bioBanner: row.bio_banner ?? undefined,
+  bioTheme: row.bio_theme ?? "default",
+  bioButtonStyle: row.bio_button_style === "rounded-full" ? "pill-solid" : (row.bio_button_style ?? "pill-solid"),
+  bioButtonColor: row.bio_button_color ?? undefined,
+  bioButtonTextColor: row.bio_button_text_color ?? undefined,
+  bioBgImage: row.bio_bg_image ?? undefined,
+  bioBgColor: row.bio_bg_color ?? undefined,
   categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
   products: (row.products || []).map((p: any) => ({
     id: p.id,
@@ -102,27 +116,89 @@ export const useApp = create<AppState>()(
       setCurrentStore: (id) => set({ currentStoreId: id }),
 
       updateStore: async (id, patch) => {
+        const updatedPatch = { ...patch };
+
+        // Subir logo si es base64
+        if (patch.logo && patch.logo.startsWith("data:")) {
+          try {
+            updatedPatch.logo = await uploadBase64ToStorage(patch.logo, `${id}/logo.webp`);
+          } catch (uploadErr) {
+            console.error("[updateStore] Logo upload failed, falling back to base64", uploadErr);
+          }
+        }
+
+        // Subir bannerImage si es base64
+        const patchAny = patch as any;
+        if (patchAny.bannerImage && patchAny.bannerImage.startsWith("data:")) {
+          try {
+            (updatedPatch as any).bannerImage = await uploadBase64ToStorage(patchAny.bannerImage, `${id}/banner.webp`);
+          } catch (uploadErr) {
+            console.error("[updateStore] Banner upload failed, falling back to base64", uploadErr);
+          }
+        }
+
+        // Subir bioLogo si es base64
+        if (patch.bioLogo && patch.bioLogo.startsWith("data:")) {
+          try {
+            updatedPatch.bioLogo = await uploadBase64ToStorage(patch.bioLogo, `${id}/bio_logo.webp`);
+          } catch (uploadErr) {
+            console.error("[updateStore] Bio Logo upload failed, falling back to base64", uploadErr);
+          }
+        }
+
+        // Subir bioBanner si es base64
+        if (patch.bioBanner && patch.bioBanner.startsWith("data:")) {
+          try {
+            updatedPatch.bioBanner = await uploadBase64ToStorage(patch.bioBanner, `${id}/bio_banner.webp`);
+          } catch (uploadErr) {
+            console.error("[updateStore] Bio Banner upload failed, falling back to base64", uploadErr);
+          }
+        }
+
+        // Subir bioBgImage si es base64
+        if (patch.bioBgImage && patch.bioBgImage.startsWith("data:")) {
+          try {
+            updatedPatch.bioBgImage = await uploadBase64ToStorage(patch.bioBgImage, `${id}/bio_bg.webp`);
+          } catch (uploadErr) {
+            console.error("[updateStore] Bio Background Image upload failed, falling back to base64", uploadErr);
+          }
+        }
+
         const dbPatch: any = {};
-        if (patch.slug !== undefined) dbPatch.slug = patch.slug;
-        if (patch.name !== undefined) dbPatch.name = patch.name;
-        if (patch.phone !== undefined) dbPatch.phone = patch.phone;
-        if (patch.logo !== undefined) dbPatch.logo = patch.logo;
-        if (patch.model !== undefined) dbPatch.model = patch.model;
-        if (patch.brandColor !== undefined) dbPatch.brand_color = patch.brandColor;
-        if ((patch as any).bgColor !== undefined) dbPatch.bg_color = (patch as any).bgColor;
-        if ((patch as any).bannerImage !== undefined) dbPatch.banner_image = (patch as any).bannerImage;
-        if ((patch as any).bannerTitle !== undefined) dbPatch.banner_title = (patch as any).bannerTitle;
-        if (patch.isPublished !== undefined) dbPatch.is_published = patch.isPublished;
-        if (patch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = patch.priceFilterEnabled;
-        if (patch.libroReclamacionesActivo !== undefined) dbPatch.libro_reclamaciones_activo = patch.libroReclamacionesActivo;
-        if (patch.empresaRuc !== undefined) dbPatch.empresa_ruc = patch.empresaRuc;
-        if (patch.empresaRazonSocial !== undefined) dbPatch.empresa_razon_social = patch.empresaRazonSocial;
-        if (patch.empresaDireccion !== undefined) dbPatch.empresa_direccion = patch.empresaDireccion;
-        if (patch.planExpiresAt !== undefined) dbPatch.plan_expires_at = patch.planExpiresAt;
-        if (patch.subscriptionStatus !== undefined) dbPatch.subscription_status = patch.subscriptionStatus;
-        if (patch.cancelledAt !== undefined) dbPatch.cancelled_at = patch.cancelledAt;
-        if (patch.cancelReason !== undefined) dbPatch.cancel_reason = patch.cancelReason;
-        if (patch.planDurationMonths !== undefined) dbPatch.plan_duration_months = patch.planDurationMonths;
+        if (updatedPatch.slug !== undefined) dbPatch.slug = updatedPatch.slug;
+        if (updatedPatch.name !== undefined) dbPatch.name = updatedPatch.name;
+        if (updatedPatch.phone !== undefined) dbPatch.phone = updatedPatch.phone;
+        if (updatedPatch.logo !== undefined) dbPatch.logo = updatedPatch.logo;
+        if (updatedPatch.model !== undefined) dbPatch.model = updatedPatch.model;
+        if (updatedPatch.brandColor !== undefined) dbPatch.brand_color = updatedPatch.brandColor;
+        if ((updatedPatch as any).bgColor !== undefined) dbPatch.bg_color = (updatedPatch as any).bgColor;
+        if ((updatedPatch as any).bannerImage !== undefined) dbPatch.banner_image = (updatedPatch as any).bannerImage;
+        if ((updatedPatch as any).bannerTitle !== undefined) dbPatch.banner_title = (updatedPatch as any).bannerTitle;
+        if (updatedPatch.isPublished !== undefined) dbPatch.is_published = updatedPatch.isPublished;
+        if (updatedPatch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = updatedPatch.priceFilterEnabled;
+        if (updatedPatch.libroReclamacionesActivo !== undefined) dbPatch.libro_reclamaciones_activo = updatedPatch.libroReclamacionesActivo;
+        if (updatedPatch.empresaRuc !== undefined) dbPatch.empresa_ruc = updatedPatch.empresaRuc;
+        if (updatedPatch.empresaRazonSocial !== undefined) dbPatch.empresa_razon_social = updatedPatch.empresaRazonSocial;
+        if (updatedPatch.empresaDireccion !== undefined) dbPatch.empresa_direccion = updatedPatch.empresaDireccion;
+        if (updatedPatch.planExpiresAt !== undefined) dbPatch.plan_expires_at = updatedPatch.planExpiresAt;
+        if (updatedPatch.subscriptionStatus !== undefined) dbPatch.subscription_status = updatedPatch.subscriptionStatus;
+        if (updatedPatch.cancelledAt !== undefined) dbPatch.cancelled_at = updatedPatch.cancelledAt;
+        if (updatedPatch.cancelReason !== undefined) dbPatch.cancel_reason = updatedPatch.cancelReason;
+        if (updatedPatch.planDurationMonths !== undefined) dbPatch.plan_duration_months = updatedPatch.planDurationMonths;
+        if (updatedPatch.bioDescription !== undefined) dbPatch.bio_description = updatedPatch.bioDescription;
+        if (updatedPatch.locationLat !== undefined) dbPatch.location_lat = updatedPatch.locationLat;
+        if (updatedPatch.locationLng !== undefined) dbPatch.location_lng = updatedPatch.locationLng;
+        if (updatedPatch.locationAddress !== undefined) dbPatch.location_address = updatedPatch.locationAddress;
+        if (updatedPatch.quickLinks !== undefined) dbPatch.quick_links = updatedPatch.quickLinks;
+        if (updatedPatch.bioLinksEnabled !== undefined) dbPatch.bio_links_enabled = updatedPatch.bioLinksEnabled;
+        if (updatedPatch.bioLogo !== undefined) dbPatch.bio_logo = updatedPatch.bioLogo;
+        if (updatedPatch.bioBanner !== undefined) dbPatch.bio_banner = updatedPatch.bioBanner;
+        if (updatedPatch.bioTheme !== undefined) dbPatch.bio_theme = updatedPatch.bioTheme;
+        if (updatedPatch.bioButtonStyle !== undefined) dbPatch.bio_button_style = updatedPatch.bioButtonStyle;
+        if (updatedPatch.bioButtonColor !== undefined) dbPatch.bio_button_color = updatedPatch.bioButtonColor;
+        if (updatedPatch.bioButtonTextColor !== undefined) dbPatch.bio_button_text_color = updatedPatch.bioButtonTextColor;
+        if (updatedPatch.bioBgImage !== undefined) dbPatch.bio_bg_image = updatedPatch.bioBgImage;
+        if (updatedPatch.bioBgColor !== undefined) dbPatch.bio_bg_color = updatedPatch.bioBgColor;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
@@ -131,7 +207,7 @@ export const useApp = create<AppState>()(
           }
 
           set((s) => ({
-            stores: s.stores.map((st) => (st.id === id ? { ...st, ...patch } : st)),
+            stores: s.stores.map((st) => (st.id === id ? { ...st, ...updatedPatch } : st)),
           }));
         } catch (error) {
           console.error("[updateStore] Error:", error);
@@ -314,7 +390,18 @@ export const useApp = create<AppState>()(
 
       upsertProduct: async (storeId, product) => {
         const prodId = product.id || uid();
-        const p = { ...product, id: prodId };
+        let imageUrl = product.image;
+
+        // Si la imagen es un base64, subirla a Supabase Storage
+        if (imageUrl && imageUrl.startsWith("data:")) {
+          try {
+            imageUrl = await uploadBase64ToStorage(imageUrl, `${storeId}/products/${prodId}.webp`);
+          } catch (uploadErr) {
+            console.error("[upsertProduct] Image upload failed, falling back to base64", uploadErr);
+          }
+        }
+
+        const p = { ...product, id: prodId, image: imageUrl };
 
         try {
           const { error } = await supabase.from("products").upsert({
@@ -539,15 +626,19 @@ export const useApp = create<AppState>()(
     {
       name: "dizi-catalogos-v2",
       partialize: (state) => ({
-        // Solo persistimos IDs y metadatos ligeros.
-        // Las imágenes (logo, bannerImage, products[].image) se recargan
-        // desde Supabase en fetchData — no las guardamos en localStorage
-        // para no exceder el límite de ~5 MB.
+        // Guardamos las URLs reales (http) en local storage para carga instantánea, 
+        // pero omitimos los base64 temporales si quedara alguno para no desbordar los 5MB
         stores: state.stores.map((st) => ({
           ...st,
-          logo: undefined,
-          bannerImage: undefined,
-          products: st.products.map((p) => ({ ...p, image: undefined })),
+          logo: st.logo?.startsWith("data:") ? undefined : st.logo,
+          bannerImage: st.bannerImage?.startsWith("data:") ? undefined : st.bannerImage,
+          bioLogo: st.bioLogo?.startsWith("data:") ? undefined : st.bioLogo,
+          bioBanner: st.bioBanner?.startsWith("data:") ? undefined : st.bioBanner,
+          bioBgImage: st.bioBgImage?.startsWith("data:") ? undefined : st.bioBgImage,
+          products: st.products.map((p) => ({
+            ...p,
+            image: p.image?.startsWith("data:") ? undefined : p.image,
+          })),
         })),
         currentStoreId: state.currentStoreId,
         impersonatedBy: state.impersonatedBy,

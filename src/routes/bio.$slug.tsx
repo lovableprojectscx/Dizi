@@ -4,18 +4,16 @@ import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
 
-export const Route = createFileRoute("/t/$slug")({
+export const Route = createFileRoute("/bio/$slug")({
   head: ({ params }) => ({
     meta: [
-      { title: `Catálogo · ${params.slug}` },
-      { name: "description", content: `Catálogo digital de ${params.slug}` },
+      { title: `Bio-Link · ${params.slug}` },
+      { name: "description", content: `Enlaces y ubicación de ${params.slug}` },
     ],
   }),
-  component: StorePublic,
+  component: BioPublic,
 });
 
-// Carga la tienda directamente desde Supabase por slug (para visitantes públicos
-// que no tienen el store de Zustand cargado todavía).
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   const { data, error } = await supabase
     .from("stores")
@@ -83,12 +81,8 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   };
 }
 
-function StorePublic() {
+function BioPublic() {
   const { slug } = Route.useParams();
-
-  // La ruta pública siempre carga directamente desde Supabase.
-  // NO usamos el store de Zustand como fuente para el catálogo público porque
-  // contiene datos sin imágenes (partialize) o productos sample del cache viejo.
   const [store, setStore] = useState<Store | null | "loading">("loading");
 
   useEffect(() => {
@@ -101,7 +95,7 @@ function StorePublic() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Cargando catálogo...</p>
+          <p className="text-sm text-muted-foreground">Cargando enlaces...</p>
         </div>
       </div>
     );
@@ -113,7 +107,7 @@ function StorePublic() {
         <div>
           <h1 className="text-2xl font-semibold">Tienda no encontrada</h1>
           <p className="text-muted-foreground mt-2">
-            No existe una tienda con el enlace <code>/t/{slug}</code>.
+            No existe una tienda con el enlace <code>/bio/{slug}</code>.
           </p>
           <Link to="/" className="mt-4 inline-block text-primary hover:underline">
             Ir al inicio
@@ -129,12 +123,12 @@ function StorePublic() {
         <div>
           <h1 className="text-2xl font-semibold">Tienda suspendida</h1>
           <p className="text-muted-foreground mt-2">
-            Este catálogo no está disponible temporalmente.
+            Este enlace no está disponible temporalmente.
           </p>
         </div>
       </div>
     );
   }
 
-  return <PublicCatalog store={store} mode="catalog" />;
+  return <PublicCatalog store={store} mode="bio" />;
 }

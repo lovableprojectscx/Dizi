@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList } from "lucide-react";
+import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList, Link2 } from "lucide-react";
 import { getActiveSession, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -80,6 +80,7 @@ function AdminLayout() {
             <MobileNavItem to="/admin/dashboard" icon={Home} label="Inicio" />
             <MobileNavItem to="/admin/productos" icon={Package} label="Productos" />
             <MobileNavItem to="/admin/categorias" icon={Tag} label="Categorias" />
+            <MobileNavItem to="/admin/link-bio" icon={Link2} label="Bio-Link" />
             {store?.libroReclamacionesActivo && (
               <MobileNavItem to="/admin/reclamaciones" icon={ClipboardList} label="Reclamos" />
             )}

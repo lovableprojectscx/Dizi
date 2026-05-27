@@ -814,6 +814,13 @@ function DisenoPage() {
         bannerImage: bannerImage || null,
         bannerTitle: bannerTitle || null,
       } as any);
+
+      // Update local state to the saved URL with cache-busting timestamp
+      const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
+      if (updatedStore) {
+        setBannerImage((updatedStore as any).bannerImage ?? "");
+      }
+
       toast.success("🎨 Diseño aplicado a tu catálogo", { id: toastId });
     } catch (err) {
       console.error("[save diseño]", err);
