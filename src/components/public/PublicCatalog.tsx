@@ -272,14 +272,15 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   const [productImages, setProductImages] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!store?.id) return;
+    if (!store?.id || !store.products || store.products.length === 0) return;
     const fetchImages = async () => {
       try {
+        const productIds = store.products.map((p) => p.id);
         const { supabase } = await import("@/lib/supabase");
         const { data, error } = await supabase
           .from("products")
           .select("id, image")
-          .eq("store_id", store.id);
+          .in("id", productIds);
         if (data && !error) {
           const imageMap: Record<string, string> = {};
           data.forEach((p: any) => {
@@ -294,7 +295,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
       }
     };
     fetchImages();
-  }, [store?.id]);
+  }, [store?.id, store.products]);
 
   const productsWithImages = useMemo(() => {
     return (store.products || []).map((p) => ({

@@ -18,10 +18,7 @@ export const Route = createFileRoute("/t/$slug")({
 // que no tienen el store de Zustand cargado todavía).
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   const { data, error } = await supabase
-    .from("stores")
-    .select("*, categories(*), products(id, name, price, category_id, description, is_on_sale, original_price, visible, is_sample)")
-    .eq("slug", slug)
-    .single();
+    .rpc("get_public_store", { store_slug: slug });
 
   if (error || !data) return null;
 

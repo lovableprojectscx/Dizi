@@ -217,6 +217,7 @@ function ProductsPage() {
       ...editing,
       price: parsedPrice,
       originalPrice: editing.isOnSale ? parsedOriginalPrice : undefined,
+      isSample: false, // Deja de ser muestra al editarse o crearse
     };
 
     upsert(store.id, updatedProduct);
