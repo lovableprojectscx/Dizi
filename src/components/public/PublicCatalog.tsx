@@ -397,7 +397,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
       cardBg = "rgba(255, 255, 255, 0.05)";
       borderCol = "rgba(255, 255, 255, 0.1)";
     } else if (bioTheme === "custom") {
-      const isCustomImage = !!store.bioBgImage;
+      const isCustomImage = !!store.bioBgImage && store.plan !== "semilla";
       if (isCustomImage) {
         background = `url(${store.bioBgImage})`;
         isDark = true;
@@ -438,7 +438,8 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   }
 
   const getButtonStyle = (styleId: string) => {
-    const parts = (styleId || "pill-solid").split("-");
+    const activeStyle = store.plan === "semilla" ? "pill-solid" : (styleId || "pill-solid");
+    const parts = activeStyle.split("-");
     const shape = parts[0] || "pill";
     const type = parts[1] || "solid";
 
@@ -850,41 +851,59 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
               )}
 
               {/* 3. Enlaces rápidos del usuario (Redes sociales oficiales + personalizados) */}
-              {store.quickLinks && store.quickLinks.map((link, idx) => {
-                const branding = getQuickLinkBranding(link.label, link.url);
-                const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
-                
-                let platform: "instagram" | "facebook" | "linkedin" | "custom" = "custom";
-                const urlLower = link.url.toLowerCase();
-                const labelLower = link.label.toLowerCase();
-                if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
-                  platform = "instagram";
-                } else if (urlLower.includes("facebook.com") || labelLower.includes("facebook")) {
-                  platform = "facebook";
-                } else if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
-                  platform = "linkedin";
-                }
+              {(() => {
+                let customLinkCount = 0;
+                const isSemilla = store.plan === "semilla";
 
-                const defaultBg = platform === "custom" ? "#1f2937" : (branding.baseColor || "#1f2937");
-                const defaultBorder = branding.borderColor === "transparent" ? defaultBg : branding.borderColor;
+                return store.quickLinks && store.quickLinks.map((link, idx) => {
+                  const labelLower = link.label.toLowerCase();
+                  const isOfficialSocial = ["instagram", "facebook", "tiktok", "linkedin"].includes(labelLower);
 
-                return (
-                  <div key={idx} className="w-full">
-                    {renderBioButton(
-                      href,
-                      link.label,
-                      branding.bg,
-                      defaultBorder,
-                      "#ffffff",
-                      platform,
-                      branding.coloredIcon,
-                      undefined,
-                      link.bgColor,
-                      link.textColor
-                    )}
-                  </div>
-                );
-              })}
+                  if (!isOfficialSocial) {
+                    customLinkCount++;
+                    if (isSemilla && customLinkCount > 5) {
+                      return null;
+                    }
+                  }
+
+                  const branding = getQuickLinkBranding(link.label, link.url);
+                  const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+                  
+                  let platform: "instagram" | "facebook" | "linkedin" | "custom" = "custom";
+                  const urlLower = link.url.toLowerCase();
+                  if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
+                    platform = "instagram";
+                  } else if (urlLower.includes("facebook.com") || labelLower.includes("facebook")) {
+                    platform = "facebook";
+                  } else if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
+                    platform = "linkedin";
+                  }
+
+                  const defaultBg = platform === "custom" ? "#1f2937" : (branding.baseColor || "#1f2937");
+                  const defaultBorder = branding.borderColor === "transparent" ? defaultBg : branding.borderColor;
+
+                  // Force default/brand colors for Semilla stores
+                  const finalBgColor = isSemilla ? undefined : link.bgColor;
+                  const finalTextColor = isSemilla ? undefined : link.textColor;
+
+                  return (
+                    <div key={idx} className="w-full">
+                      {renderBioButton(
+                        href,
+                        link.label,
+                        branding.bg,
+                        defaultBorder,
+                        "#ffffff",
+                        platform,
+                        branding.coloredIcon,
+                        undefined,
+                        finalBgColor,
+                        finalTextColor
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </section>
@@ -2193,6 +2212,21 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Floating Badge for Plan Semilla stores on BioLink */}
+      {mode === "bio" && store.plan === "semilla" && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+          <a
+            href="https://dizi.la"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 shadow-md text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+          >
+            <span>Crea tu catálogo gratis con</span>
+            <span className="text-primary font-black tracking-tight">Dizi</span>
+          </a>
+        </div>
+      )}
 
     </div>
   );

@@ -23,9 +23,11 @@ import {
   ChevronDown,
   FileText,
   Palette,
+  Crown,
+  Lock,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import type { QuickLink } from "@/lib/types";
+import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures } from "@/lib/types";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
@@ -896,12 +898,19 @@ function LinkBioPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => setActiveBgTab("image")}
+                                  onClick={() => {
+                                    if (store && !canUsePremiumBioFeatures(store)) {
+                                      toast.error("Subir una imagen de fondo personalizada requiere el Plan Emprendedor o superior.");
+                                      return;
+                                    }
+                                    setActiveBgTab("image");
+                                  }}
                                   className={cn(
-                                    "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center",
+                                    "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center flex items-center justify-center gap-1",
                                     activeBgTab === "image" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                                   )}
                                 >
+                                  {store && !canUsePremiumBioFeatures(store) && <Lock className="h-3 w-3 text-amber-500 shrink-0" />}
                                   Imagen de Fondo
                                 </button>
                               </div>
@@ -959,14 +968,23 @@ function LinkBioPage() {
                                 <button
                                   key={style.id}
                                   type="button"
-                                  onClick={() => setBioButtonStyle(style.id)}
+                                  onClick={() => {
+                                    if (store && !canUsePremiumBioFeatures(store) && style.id !== "pill-solid") {
+                                      toast.error("Los estilos de botón premium requieren el Plan Emprendedor o superior.");
+                                      return;
+                                    }
+                                    setBioButtonStyle(style.id);
+                                  }}
                                   className={cn(
-                                    "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all hover:scale-[1.02] gap-1.5",
+                                    "relative flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all hover:scale-[1.02] gap-1.5",
                                     isSelected 
                                       ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm" 
                                       : "border-border bg-card/40"
                                   )}
                                 >
+                                  {store && !canUsePremiumBioFeatures(store) && style.id !== "pill-solid" && (
+                                    <Lock className="absolute top-1 right-1 h-3 w-3 text-amber-500 bg-background/80 rounded-full p-0.5" />
+                                  )}
                                   <div className={cn("h-5 w-full border text-[5px] font-black flex items-center justify-center tracking-widest", style.pClass)}>
                                     LINK
                                   </div>
@@ -979,57 +997,69 @@ function LinkBioPage() {
 
                         {/* Colores Personalizados */}
                         <div className="space-y-3 border-t border-border/40 pt-4">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70">Colores de Botón Personalizados</Label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-xs font-semibold">Fondo del Botón</Label>
-                                {bioButtonColor && (
-                                  <button type="button" onClick={() => setBioButtonColor("")} className="text-[10px] text-destructive hover:underline font-semibold">
-                                    Restablecer
-                                  </button>
-                                )}
+                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70 flex items-center gap-1.5">
+                            Colores de Botón Personalizados
+                            {store && !canUsePremiumBioFeatures(store) && <Lock className="h-3 w-3 text-amber-500" />}
+                          </Label>
+                          {store && !canUsePremiumBioFeatures(store) ? (
+                            <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                              <p className="font-bold flex items-center gap-1">
+                                <Crown className="h-3.5 w-3.5 text-amber-500" /> Característica Premium
+                              </p>
+                              <p>Personalizar libremente el color del botón o del texto requiere el Plan Emprendedor o superior. En el Plan Semilla se utiliza el color de tu marca por defecto.</p>
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-semibold">Fondo del Botón</Label>
+                                  {bioButtonColor && (
+                                    <button type="button" onClick={() => setBioButtonColor("")} className="text-[10px] text-destructive hover:underline font-semibold">
+                                      Restablecer
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                                  <input
+                                    type="color"
+                                    value={bioButtonColor || "#000000"}
+                                    onChange={(e) => setBioButtonColor(e.target.value)}
+                                    className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-[10px] text-muted-foreground leading-none">Fondo</span>
+                                    <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
+                                      {bioButtonColor || "Color por defecto"}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
-                                <input
-                                  type="color"
-                                  value={bioButtonColor || "#000000"}
-                                  onChange={(e) => setBioButtonColor(e.target.value)}
-                                  className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-[10px] text-muted-foreground leading-none">Fondo</span>
-                                  <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
-                                    {bioButtonColor || "Color por defecto"}
-                                  </span>
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs font-semibold">Texto del Botón</Label>
+                                  {bioButtonTextColor && (
+                                    <button type="button" onClick={() => setBioButtonTextColor("")} className="text-[10px] text-destructive hover:underline font-semibold">
+                                      Restablecer
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                                  <input
+                                    type="color"
+                                    value={bioButtonTextColor || "#ffffff"}
+                                    onChange={(e) => setBioButtonTextColor(e.target.value)}
+                                    className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-[10px] text-muted-foreground leading-none">Texto</span>
+                                    <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
+                                      {bioButtonTextColor || "Color por defecto"}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                            <div className="space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-xs font-semibold">Texto del Botón</Label>
-                                {bioButtonTextColor && (
-                                  <button type="button" onClick={() => setBioButtonTextColor("")} className="text-[10px] text-destructive hover:underline font-semibold">
-                                    Restablecer
-                                  </button>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
-                                <input
-                                  type="color"
-                                  value={bioButtonTextColor || "#ffffff"}
-                                  onChange={(e) => setBioButtonTextColor(e.target.value)}
-                                  className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
-                                />
-                                <div className="flex flex-col min-w-0">
-                                  <span className="text-[10px] text-muted-foreground leading-none">Texto</span>
-                                  <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
-                                    {bioButtonTextColor || "Color por defecto"}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          )}
                         </div>
 
                       </div>
@@ -1086,18 +1116,27 @@ function LinkBioPage() {
                                 className="bg-transparent text-sm h-10 w-full rounded-lg"
                               />
                               {instagramUrl.trim() && (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={instagramBgColor || "#E1306C"}
-                                    onChange={(e) => setInstagramBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{instagramBgColor || "Color de botón"}</span>
-                                  {instagramBgColor && (
-                                    <button type="button" onClick={() => setInstagramBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
+                                store && !canUsePremiumBioFeatures(store) ? (
+                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                    <span className="flex items-center gap-1">
+                                      <Lock className="h-3 w-3" /> Color personalizado
+                                    </span>
+                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
+                                    <input
+                                      type="color"
+                                      value={instagramBgColor || "#E1306C"}
+                                      onChange={(e) => setInstagramBgColor(e.target.value)}
+                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                    />
+                                    <span className="text-[10px] font-mono truncate flex-1">{instagramBgColor || "Color de botón"}</span>
+                                    {instagramBgColor && (
+                                      <button type="button" onClick={() => setInstagramBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                    )}
+                                  </div>
+                                )
                               )}
                             </div>
 
@@ -1114,18 +1153,27 @@ function LinkBioPage() {
                                 className="bg-transparent text-sm h-10 w-full rounded-lg"
                               />
                               {facebookUrl.trim() && (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={facebookBgColor || "#1877f2"}
-                                    onChange={(e) => setFacebookBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{facebookBgColor || "Color de botón"}</span>
-                                  {facebookBgColor && (
-                                    <button type="button" onClick={() => setFacebookBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
+                                store && !canUsePremiumBioFeatures(store) ? (
+                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                    <span className="flex items-center gap-1">
+                                      <Lock className="h-3 w-3" /> Color personalizado
+                                    </span>
+                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
+                                    <input
+                                      type="color"
+                                      value={facebookBgColor || "#1877f2"}
+                                      onChange={(e) => setFacebookBgColor(e.target.value)}
+                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                    />
+                                    <span className="text-[10px] font-mono truncate flex-1">{facebookBgColor || "Color de botón"}</span>
+                                    {facebookBgColor && (
+                                      <button type="button" onClick={() => setFacebookBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                    )}
+                                  </div>
+                                )
                               )}
                             </div>
 
@@ -1145,18 +1193,27 @@ function LinkBioPage() {
                                 className="bg-transparent text-sm h-10 w-full rounded-lg"
                               />
                               {tiktokUrl.trim() && (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={tiktokBgColor || "#010101"}
-                                    onChange={(e) => setTiktokBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{tiktokBgColor || "Color de botón"}</span>
-                                  {tiktokBgColor && (
-                                    <button type="button" onClick={() => setTiktokBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
+                                store && !canUsePremiumBioFeatures(store) ? (
+                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                    <span className="flex items-center gap-1">
+                                      <Lock className="h-3 w-3" /> Color personalizado
+                                    </span>
+                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
+                                    <input
+                                      type="color"
+                                      value={tiktokBgColor || "#010101"}
+                                      onChange={(e) => setTiktokBgColor(e.target.value)}
+                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                    />
+                                    <span className="text-[10px] font-mono truncate flex-1">{tiktokBgColor || "Color de botón"}</span>
+                                    {tiktokBgColor && (
+                                      <button type="button" onClick={() => setTiktokBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                    )}
+                                  </div>
+                                )
                               )}
                             </div>
 
@@ -1173,18 +1230,27 @@ function LinkBioPage() {
                                 className="bg-transparent text-sm h-10 w-full rounded-lg"
                               />
                               {linkedinUrl.trim() && (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={linkedinBgColor || "#0077b5"}
-                                    onChange={(e) => setLinkedinBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{linkedinBgColor || "Color de botón"}</span>
-                                  {linkedinBgColor && (
-                                    <button type="button" onClick={() => setLinkedinBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
+                                store && !canUsePremiumBioFeatures(store) ? (
+                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                    <span className="flex items-center gap-1">
+                                      <Lock className="h-3 w-3" /> Color personalizado
+                                    </span>
+                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
+                                    <input
+                                      type="color"
+                                      value={linkedinBgColor || "#0077b5"}
+                                      onChange={(e) => setLinkedinBgColor(e.target.value)}
+                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                    />
+                                    <span className="text-[10px] font-mono truncate flex-1">{linkedinBgColor || "Color de botón"}</span>
+                                    {linkedinBgColor && (
+                                      <button type="button" onClick={() => setLinkedinBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                    )}
+                                  </div>
+                                )
                               )}
                             </div>
                           </div>
@@ -1268,6 +1334,10 @@ function LinkBioPage() {
 
                               <Button
                                 onClick={() => {
+                                  if (store && customLinks.length >= getBioLinksLimit(store)) {
+                                    toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces personalizados. Sube de plan para agregar más.`);
+                                    return;
+                                  }
                                   if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
                                     toast.error("Ingresa el título y el enlace");
                                     return;
@@ -1294,6 +1364,16 @@ function LinkBioPage() {
                               </Button>
                             </div>
                           </div>
+
+                          {store && store.plan === "semilla" && (
+                            <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                              <Crown className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                              <div className="space-y-0.5">
+                                <p className="font-bold">Límite del Plan Semilla</p>
+                                <p>Puedes agregar un máximo de 5 enlaces personalizados en el plan gratuito. Actualmente tienes {customLinks.length}/5 creados.</p>
+                              </div>
+                            </div>
+                          )}
                           
                           <div className="space-y-2 pt-1">
                             {customLinks.length === 0 ? (
@@ -1316,7 +1396,15 @@ function LinkBioPage() {
                                   </div>
                                   
                                   {/* Custom color picker panel on the link item itself */}
-                                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/40">
+                                  {store && !canUsePremiumBioFeatures(store) ? (
+                                    <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400">
+                                      <span className="flex items-center gap-1">
+                                        <Lock className="h-3.5 w-3.5" /> Colores personalizados por botón
+                                      </span>
+                                      <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                    </div>
+                                  ) : (
+                                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/40">
                                     <div className="space-y-1">
                                       <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Fondo de este Botón</span>
                                       <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
@@ -1381,6 +1469,7 @@ function LinkBioPage() {
                                       </div>
                                     </div>
                                   </div>
+                                  )}
                                 </div>
                               ))
                             )}

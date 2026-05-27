@@ -205,6 +205,18 @@ export function isPlanActive(store: Store): boolean {
   return new Date(store.planExpiresAt) > new Date();
 }
 
+/** Retorna el limite de enlaces personalizados en el BioLink */
+export function getBioLinksLimit(store: Store): number {
+  if (store.plan === "semilla") return 5;
+  return Infinity;
+}
+
+/** Retorna true si la tienda puede usar fondos personalizados e imagenes en el BioLink */
+export function canUsePremiumBioFeatures(store: Store): boolean {
+  return store.plan !== "semilla";
+}
+
+
 // ─── Especificaciones de imagen por layout ───────────────────────────────────
 
 export interface ImageSpec {
