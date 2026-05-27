@@ -193,7 +193,7 @@ function ConfigPage() {
             </Label>
             <div className="flex max-w-md rounded-xl border border-input shadow-sm focus-within:ring-1 focus-within:ring-primary bg-background overflow-hidden">
               <span className="flex items-center px-3 bg-muted/50 text-muted-foreground text-sm border-r shrink-0">
-                dizi.pe/
+                dizi.idenza.site/t/
               </span>
               <Input
                 value={slug}

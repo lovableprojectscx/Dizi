@@ -376,7 +376,7 @@ function RegisterPage() {
                   <label className="text-sm font-medium">Link de tu Catalogo</label>
                   <div className="flex rounded-xl border border-input shadow-sm focus-within:ring-1 focus-within:ring-primary overflow-hidden">
                     <span className="flex items-center px-3 bg-muted/50 text-muted-foreground text-sm border-r">
-                      dizi.pe/t/
+                      dizi.idenza.site/t/
                     </span>
                     <input
                       type="text"

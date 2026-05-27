@@ -2251,7 +2251,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
       {mode === "bio" && store.plan === "semilla" && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <a
-            href="https://dizi.la"
+            href="https://dizi.idenza.site"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 shadow-md text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
