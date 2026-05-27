@@ -69,6 +69,20 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const url = new URL(request.url);
+      const host = url.hostname;
+      if (
+        host !== "dizi.idenza.site" &&
+        host !== "localhost" &&
+        host !== "127.0.0.1" &&
+        !host.endsWith(".local") &&
+        !host.endsWith(".localhost")
+      ) {
+        url.hostname = "dizi.idenza.site";
+        url.protocol = "https:";
+        return Response.redirect(url.toString(), 301);
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);

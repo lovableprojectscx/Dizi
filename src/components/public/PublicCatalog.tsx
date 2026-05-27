@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Search,
   ShoppingBag,
@@ -269,6 +269,40 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   const [libroOpen, setLibroOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  const [productImages, setProductImages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!store?.id) return;
+    const fetchImages = async () => {
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, image")
+          .eq("store_id", store.id);
+        if (data && !error) {
+          const imageMap: Record<string, string> = {};
+          data.forEach((p: any) => {
+            if (p.image) {
+              imageMap[p.id] = p.image;
+            }
+          });
+          setProductImages(imageMap);
+        }
+      } catch (err) {
+        console.error("Error cargando imágenes de productos asíncronamente:", err);
+      }
+    };
+    fetchImages();
+  }, [store?.id]);
+
+  const productsWithImages = useMemo(() => {
+    return (store.products || []).map((p) => ({
+      ...p,
+      image: productImages[p.id] || p.image,
+    }));
+  }, [store.products, productImages]);
+
   const cart = useCart((s) => s.carts[store.id] ?? EMPTY_CART);
   const cartAdd = useCart((s) => s.add);
   const cartSet = useCart((s) => s.setQty);
@@ -538,16 +572,16 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
 
   /* ── Price range bounds ─────────────────────────────────────── */
   const [priceMin, priceMax] = useMemo(() => {
-    const prices = (store.products || []).filter(p => p.visible).map(p => p.price);
+    const prices = productsWithImages.filter(p => p.visible).map(p => p.price);
     if (prices.length === 0) return [0, 0];
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
-  }, [store.products]);
+  }, [productsWithImages]);
 
   const hasPriceFilter = store.priceFilterEnabled && priceMin < priceMax;
 
   /* ── Derived data ────────────────────────────────── */
   const rawFiltered = useMemo(() => {
-    const products = store.products || [];
+    const products = productsWithImages;
 
     // Los productos sample son solo para previsualización interna del admin.
     // Nunca se muestran en el catálogo público.
@@ -566,7 +600,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
         if (!priceRange) return true;
         return p.price >= priceRange[0] && p.price <= priceRange[1];
       });
-  }, [store.products, activeCat, query, priceRange, effectiveProductLimit]);
+  }, [productsWithImages, activeCat, query, priceRange, effectiveProductLimit]);
 
   const filtered = useMemo(() => {
     const isBioLink = store.bioLinksEnabled && mode === "bio";
@@ -579,7 +613,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
     .map((c) => {
-      const product = (store.products || []).find((p) => p.id === c.productId);
+      const product = productsWithImages.find((p) => p.id === c.productId);
       return product ? { ...c, product } : null;
     })
     .filter((l): l is NonNullable<typeof l> => l !== null);
@@ -2061,7 +2095,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
                 </button>
 
                 <img
-                  src={viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
+                  src={productImages[viewingProduct.id] || viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
                   alt={viewingProduct.name}
                   className="h-full w-full object-cover"
                   style={{

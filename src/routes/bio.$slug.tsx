@@ -17,7 +17,7 @@ export const Route = createFileRoute("/bio/$slug")({
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   const { data, error } = await supabase
     .from("stores")
-    .select("*, categories(*), products(*)")
+    .select("*, categories(*), products(id, name, price, category_id, description, is_on_sale, original_price, visible, is_sample)")
     .eq("slug", slug)
     .single();
 
@@ -71,7 +71,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       name: p.name,
       price: Number(p.price),
       categoryId: p.category_id,
-      image: p.image,
+      image: p.image || "",
       description: p.description,
       isOnSale: p.is_on_sale,
       originalPrice: p.original_price ? Number(p.original_price) : undefined,

@@ -32,8 +32,8 @@ function Dashboard() {
   }
 
   const plan = PLANS[store.plan];
-  const catalogUrl = `${typeof window !== "undefined" ? window.location.origin : "https://tudominio.com"}/t/${store.slug}`;
-  const bioUrl = `${typeof window !== "undefined" ? window.location.origin : "https://tudominio.com"}/bio/${store.slug}`;
+  const catalogUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/t/${store.slug}`;
+  const bioUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/bio/${store.slug}`;
 
   const [catalogQr, setCatalogQr] = useState<string>("");
   const [bioQr, setBioQr] = useState<string>("");
