@@ -270,9 +270,13 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const [productImages, setProductImages] = useState<Record<string, string>>({});
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   useEffect(() => {
-    if (!store?.id || !store.products || store.products.length === 0) return;
+    if (!store?.id || !store.products || store.products.length === 0) {
+      setImagesLoaded(true);
+      return;
+    }
     const fetchImages = async () => {
       try {
         const productIds = store.products.map((p) => p.id);
@@ -292,17 +296,25 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
         }
       } catch (err) {
         console.error("Error cargando imágenes de productos asíncronamente:", err);
+      } finally {
+        setImagesLoaded(true);
       }
     };
     fetchImages();
   }, [store?.id, store.products]);
 
   const productsWithImages = useMemo(() => {
-    return (store.products || []).map((p) => ({
-      ...p,
-      image: productImages[p.id] || p.image,
-    }));
-  }, [store.products, productImages]);
+    return (store.products || []).map((p) => {
+      const hasRealImage = !!productImages[p.id];
+      const placeholder = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgNjAwIDYwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjwvc3ZnPg==";
+      return {
+        ...p,
+        image: hasRealImage 
+          ? productImages[p.id] 
+          : (imagesLoaded ? (p.image || "") : placeholder),
+      };
+    });
+  }, [store.products, productImages, imagesLoaded]);
 
   const cart = useCart((s) => s.carts[store.id] ?? EMPTY_CART);
   const cartAdd = useCart((s) => s.add);
