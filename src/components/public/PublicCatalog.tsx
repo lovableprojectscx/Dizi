@@ -742,8 +742,8 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
                 to="/bio/$slug"
                 params={{ slug: store.slug }}
                 className={cn(
-                  "shrink-0 h-8 px-3.5 rounded-full border border-primary/25 bg-primary/8 text-primary",
-                  "text-[11px] font-bold uppercase tracking-wider hover:bg-primary/15 hover:scale-[1.02] transition-all duration-200",
+                  "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
+                  "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
                   "flex items-center gap-1.5 shadow-sm"
                 )}
               >
@@ -754,8 +754,8 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
               <button
                 onClick={supportClick}
                 className={cn(
-                  "shrink-0 h-8 px-3.5 rounded-full border border-primary/25 bg-primary/8 text-primary",
-                  "text-[11px] font-bold uppercase tracking-wider hover:bg-primary/15 hover:scale-[1.02] transition-all duration-200",
+                  "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
+                  "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
                   "flex items-center gap-1.5 shadow-sm"
                 )}
               >
