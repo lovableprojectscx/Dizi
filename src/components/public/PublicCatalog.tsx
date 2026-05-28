@@ -17,6 +17,7 @@ import {
   Facebook,
   Linkedin,
   SlidersHorizontal,
+  Info,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -736,12 +737,32 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
               </span>
             </div>
 
-            <button
-              onClick={supportClick}
-              className="shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition"
-            >
-              Contacto
-            </button>
+            {store.bioLinksEnabled ? (
+              <Link
+                to="/bio/$slug"
+                params={{ slug: store.slug }}
+                className={cn(
+                  "shrink-0 h-8 px-3.5 rounded-full border border-primary/25 bg-primary/8 text-primary",
+                  "text-[11px] font-bold uppercase tracking-wider hover:bg-primary/15 hover:scale-[1.02] transition-all duration-200",
+                  "flex items-center gap-1.5 shadow-sm"
+                )}
+              >
+                <Info className="h-3.5 w-3.5" />
+                <span>Info</span>
+              </Link>
+            ) : (
+              <button
+                onClick={supportClick}
+                className={cn(
+                  "shrink-0 h-8 px-3.5 rounded-full border border-primary/25 bg-primary/8 text-primary",
+                  "text-[11px] font-bold uppercase tracking-wider hover:bg-primary/15 hover:scale-[1.02] transition-all duration-200",
+                  "flex items-center gap-1.5 shadow-sm"
+                )}
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span>Contacto</span>
+              </button>
+            )}
           </div>
 
           {/* Search + Filtros button: modelos SIN hero banner */}
