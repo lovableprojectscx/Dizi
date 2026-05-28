@@ -2133,14 +2133,17 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
                   src={productImages[viewingProduct.id] || viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
                   alt={viewingProduct.name}
                   className="h-full w-full object-cover"
-                  style={{
-                    filter: effectiveIsDark && (cfg.layout === "overlay" || cfg.layout === "magazine") ? "brightness(0.85)" : "none",
-                  }}
+                  decoding="async"
                   onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"; }}
                 />
 
                 {/* Dark overlay for dark themes */}
                 {effectiveIsDark && <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />}
+
+                {/* Hardware-accelerated brightness reduction overlay instead of expensive CSS filter */}
+                {effectiveIsDark && (cfg.layout === "overlay" || cfg.layout === "magazine") && (
+                  <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+                )}
 
                 {/* Sale badge — style adapts to model */}
                 {viewingProduct.isOnSale && (
