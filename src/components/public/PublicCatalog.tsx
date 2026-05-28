@@ -2107,22 +2107,22 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
       <Sheet open={!!viewingProduct} onOpenChange={(v) => { if (!v) setViewingProduct(null); }}>
         <SheetContent
           side="bottom"
-          className="h-[92vh] rounded-t-3xl p-0 overflow-hidden flex flex-col border-0"
+          className="h-[92vh] rounded-t-3xl p-0 overflow-hidden flex flex-col border-0 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:bottom-auto md:right-auto md:h-[70vh] md:max-w-3xl md:w-full md:rounded-3xl md:border md:shadow-2xl"
           style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
         >
           {viewingProduct && (
-            <>
+            <div className="flex flex-col h-full md:flex-row md:overflow-hidden">
               {/* Image — taller for overlay/magazine, shorter for editorial */}
               <div
-                className="relative shrink-0 bg-muted overflow-hidden"
+                className="relative shrink-0 bg-muted overflow-hidden md:w-1/2 md:!h-full"
                 style={{
                   height: cfg.layout === "editorial" ? "200px" : cfg.layout === "overlay" || cfg.layout === "magazine" ? "320px" : "260px",
                 }}
               >
-                {/* Close button (aspita) */}
+                {/* Close button (aspita) - Hidden on desktop since sheet renders one in top-right */}
                 <button 
                   onClick={() => setViewingProduct(null)}
-                  className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all"
+                  className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all md:hidden"
                   style={{ borderRadius: cfg.cardRounded }}
                 >
                   <X className="h-6 w-6" />
@@ -2167,116 +2167,119 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
                 )}
               </div>
 
-              {/* Content */}
-              <div
-                className="flex-1 overflow-y-auto px-5 py-5 space-y-4"
-                style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
-              >
-                {/* Title — adapts typography to model */}
-                <h2
-                  className={cn(
-                    "leading-tight",
-                    cfg.headerStyle === "bold" ? "text-2xl font-black" :
-                    cfg.headerStyle === "minimal" ? "text-lg font-light tracking-[0.2em] uppercase" :
-                    "text-xl font-bold"
-                  )}
-                  style={{ color: "var(--foreground)" }}
+              {/* Right Column: Content + Actions */}
+              <div className="flex-1 flex flex-col overflow-hidden md:h-full md:w-1/2 md:relative pr-2">
+                {/* Content */}
+                <div
+                  className="flex-1 overflow-y-auto px-5 py-5 space-y-4 pt-10 md:pt-14"
+                  style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
                 >
-                  {viewingProduct.name}
-                </h2>
-
-                {/* Price — only show below image for non-dark overlay models */}
-                {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
-                      {formatPrice(viewingProduct.price)}
-                    </span>
-                    {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price && (
-                      <span className="text-sm line-through" style={{ color: "var(--muted-foreground)" }}>
-                        {formatPrice(viewingProduct.originalPrice)}
-                      </span>
+                  {/* Title — adapts typography to model */}
+                  <h2
+                    className={cn(
+                      "leading-tight",
+                      cfg.headerStyle === "bold" ? "text-2xl font-black" :
+                      cfg.headerStyle === "minimal" ? "text-lg font-light tracking-[0.2em] uppercase" :
+                      "text-xl font-bold"
                     )}
-                  </div>
-                )}
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    {viewingProduct.name}
+                  </h2>
 
-                {/* Description */}
-                {viewingProduct.description && (
+                  {/* Price — only show below image for non-dark overlay models */}
+                  {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
+                        {formatPrice(viewingProduct.price)}
+                      </span>
+                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price && (
+                        <span className="text-sm line-through" style={{ color: "var(--muted-foreground)" }}>
+                          {formatPrice(viewingProduct.originalPrice)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  {viewingProduct.description && (
+                    <div>
+                      <p
+                        className={cn(
+                          "text-xs font-bold mb-1",
+                          cfg.headerStyle === "minimal" ? "tracking-[0.3em] uppercase" : "tracking-widest uppercase"
+                        )}
+                        style={{ color: "var(--primary)" }}
+                      >
+                        Descripción
+                      </p>
+                      <p
+                        className="text-sm leading-relaxed whitespace-pre-line"
+                        style={{ color: "var(--foreground)", opacity: effectiveIsDark ? 0.85 : 0.75 }}
+                      >
+                        {viewingProduct.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Category */}
                   <div>
                     <p
-                      className={cn(
-                        "text-xs font-bold mb-1",
-                        cfg.headerStyle === "minimal" ? "tracking-[0.3em] uppercase" : "tracking-widest uppercase"
-                      )}
+                      className="text-xs font-bold uppercase tracking-widest mb-1"
                       style={{ color: "var(--primary)" }}
                     >
-                      Descripción
+                      Categoría
                     </p>
-                    <p
-                      className="text-sm leading-relaxed whitespace-pre-line"
-                      style={{ color: "var(--foreground)", opacity: effectiveIsDark ? 0.85 : 0.75 }}
+                    <span
+                      className="inline-block px-3 py-1 text-xs font-semibold"
+                      style={{
+                        backgroundColor: "var(--primary)" + "25",
+                        color: "var(--primary)",
+                        borderRadius: cfg.cardRounded,
+                        border: `1px solid var(--primary)`,
+                        borderColor: "var(--primary)" + "50",
+                      }}
                     >
-                      {viewingProduct.description}
-                    </p>
+                      {store.categories.find((c) => c.id === viewingProduct.categoryId)?.name}
+                    </span>
                   </div>
-                )}
+                </div>
 
-                {/* Category */}
-                <div>
-                  <p
-                    className="text-xs font-bold uppercase tracking-widest mb-1"
-                    style={{ color: "var(--primary)" }}
-                  >
-                    Categoría
-                  </p>
-                  <span
-                    className="inline-block px-3 py-1 text-xs font-semibold"
+                {/* Action footer — also themed */}
+                <div
+                  className="border-t px-5 py-4 flex gap-3 shrink-0"
+                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                >
+                  <button
+                    className="flex-1 h-12 gap-2 font-semibold text-sm flex items-center justify-center border transition hover:opacity-80"
                     style={{
-                      backgroundColor: "var(--primary)" + "25",
-                      color: "var(--primary)",
                       borderRadius: cfg.cardRounded,
-                      border: `1px solid var(--primary)`,
-                      borderColor: "var(--primary)" + "50",
+                      borderColor: "var(--primary)",
+                      color: "var(--primary)",
+                      backgroundColor: "transparent",
+                      ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase", fontSize: "11px" } : {}),
                     }}
+                    onClick={() => { consultProduct(viewingProduct.name); setViewingProduct(null); }}
                   >
-                    {store.categories.find((c) => c.id === viewingProduct.categoryId)?.name}
-                  </span>
+                    <MessageCircle className="h-4 w-4" />
+                    Consultar
+                  </button>
+                  <button
+                    className="flex-1 h-12 gap-2 font-bold text-sm flex items-center justify-center transition hover:opacity-90 shadow-lg"
+                    style={{
+                      borderRadius: cfg.cardRounded,
+                      backgroundColor: "var(--primary)",
+                      color: effectiveIsDark ? "#000" : "#fff",
+                                          ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
+                    }}
+                    onClick={() => { cartAdd(store.id, viewingProduct.id); setViewingProduct(null); setCartOpen(true); }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Añadir al carrito
+                  </button>
                 </div>
               </div>
-
-              {/* Action footer — also themed */}
-              <div
-                className="border-t px-5 py-4 flex gap-3 shrink-0"
-                style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-              >
-                <button
-                  className="flex-1 h-12 gap-2 font-semibold text-sm flex items-center justify-center border transition hover:opacity-80"
-                  style={{
-                    borderRadius: cfg.cardRounded,
-                    borderColor: "var(--primary)",
-                    color: "var(--primary)",
-                    backgroundColor: "transparent",
-                    ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase", fontSize: "11px" } : {}),
-                  }}
-                  onClick={() => { consultProduct(viewingProduct.name); setViewingProduct(null); }}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  Consultar
-                </button>
-                <button
-                  className="flex-1 h-12 gap-2 font-bold text-sm flex items-center justify-center transition hover:opacity-90 shadow-lg"
-                  style={{
-                    borderRadius: cfg.cardRounded,
-                    backgroundColor: "var(--primary)",
-                    color: effectiveIsDark ? "#000" : "#fff",
-                                        ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
-                  }}
-                  onClick={() => { cartAdd(store.id, viewingProduct.id); setViewingProduct(null); setCartOpen(true); }}
-                >
-                  <Plus className="h-4 w-4" />
-                  Añadir al carrito
-                </button>
-              </div>
-            </>
+            </div>
           )}
         </SheetContent>
       </Sheet>
