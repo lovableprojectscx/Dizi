@@ -2114,9 +2114,10 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
             <div className="flex flex-col h-full md:flex-row md:overflow-hidden">
               {/* Image — taller for overlay/magazine, shorter for editorial */}
               <div
-                className="relative shrink-0 bg-white dark:bg-zinc-900 overflow-hidden md:w-1/2 md:!h-full flex items-center justify-center"
+                className="relative shrink-0 bg-background overflow-hidden md:w-1/2 md:!h-full"
                 style={{
                   height: cfg.layout === "editorial" ? "200px" : cfg.layout === "overlay" || cfg.layout === "magazine" ? "320px" : "260px",
+                  backgroundColor: "var(--background)",
                 }}
               >
                 {/* Close button (aspita) - Hidden on desktop since sheet renders one in top-right */}
@@ -2131,7 +2132,7 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
                 <img
                   src={productImages[viewingProduct.id] || viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
                   alt={viewingProduct.name}
-                  className="h-full w-full object-contain p-4 md:p-8"
+                  className="h-full w-full object-cover"
                   style={{
                     filter: effectiveIsDark && (cfg.layout === "overlay" || cfg.layout === "magazine") ? "brightness(0.85)" : "none",
                   }}
