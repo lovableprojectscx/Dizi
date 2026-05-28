@@ -491,9 +491,8 @@ export function CatalogPdfExportButton({ store, variant = "admin" }: { store: St
 
   return (
     <>
-      {/* Trigger button — estilo según contexto */}
       {variant === "admin" ? (
-        <Button onClick={() => setOpen(true)} className="gap-2">
+        <Button variant="outline" onClick={() => setOpen(true)} className="gap-2">
           <Download className="h-4 w-4" />
           Descargar PDF
         </Button>
