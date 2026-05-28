@@ -16,11 +16,18 @@ import {
 export const Route = createFileRoute("/novedades")({
   head: () => ({
     meta: [
-      { title: "Novedades y FAQ — Dizi" },
+      { title: "Novedades y FAQ — Dizi | Catálogos Digitales Perú" },
       {
         name: "description",
-        content: "Últimas actualizaciones de Dizi y respuestas a las preguntas más frecuentes.",
+        content: "Últimas actualizaciones de Dizi y preguntas frecuentes. Conoce las nuevas funciones de la plataforma de catálogos digitales para MYPEs peruanas.",
       },
+      { name: "keywords", content: "novedades Dizi, FAQ catálogo digital, actualizaciones plataforma, preguntas frecuentes Dizi" },
+      { property: "og:title", content: "Novedades y FAQ — Dizi | Catálogos Digitales Perú" },
+      { property: "og:description", content: "Últimas actualizaciones y preguntas frecuentes sobre la plataforma Dizi." },
+      { property: "og:url", content: "https://dizi.idenza.site/novedades" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://dizi.idenza.site/novedades" },
     ],
   }),
   component: NovedadesPage,

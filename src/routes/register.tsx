@@ -8,7 +8,14 @@ import type { PlanId } from "@/lib/types";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
-    meta: [{ title: "Crear tu Tienda" }],
+    meta: [
+      { title: "Crear tu Catálogo Digital Gratis — Dizi" },
+      { name: "description", content: "Registra tu negocio en Dizi y crea tu catálogo digital gratis en 2 minutos. Empieza a vender por WhatsApp hoy mismo." },
+      { name: "robots", content: "noindex, follow" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://dizi.idenza.site/register" },
+    ],
   }),
   component: RegisterPage,
 });

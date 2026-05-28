@@ -69,19 +69,32 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const SITE_URL = "https://dizi.idenza.site";
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Dizi — Catálogos digitales" },
-      { name: "description", content: "Crea tu catálogo digital y vende por WhatsApp." },
+      { title: "Dizi — Catálogos Digitales para MYPEs Peruanas" },
+      { name: "description", content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp. La plataforma de catálogos web para MYPEs del Perú. Sin descargas, 100% móvil." },
+      { name: "keywords", content: "catálogo digital, catálogo online, vender por WhatsApp, MYPE Perú, tienda virtual, catálogo web, digitalizar negocio" },
       { name: "author", content: "Dizi" },
-      { property: "og:title", content: "Dizi — Catálogos digitales" },
-      { property: "og:description", content: "Crea tu catálogo digital y vende por WhatsApp." },
+      { name: "robots", content: "index, follow" },
+      // Open Graph
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Dizi" },
+      { property: "og:url", content: SITE_URL },
+      { property: "og:title", content: "Dizi — Catálogos Digitales para MYPEs Peruanas" },
+      { property: "og:description", content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp. Sin descargas, 100% móvil." },
+      { property: "og:image", content: `${SITE_URL}/images/og-image.png` },
+      { property: "og:locale", content: "es_PE" },
+      { property: "og:site_name", content: "Dizi" },
+      // Twitter Card
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@DiziPeru" },
+      { name: "twitter:title", content: "Dizi — Catálogos Digitales para MYPEs Peruanas" },
+      { name: "twitter:description", content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp." },
+      { name: "twitter:image", content: `${SITE_URL}/images/og-image.png` },
     ],
     links: [
       {
@@ -90,7 +103,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "icon",
+        type: "image/png",
         href: "/images/Icono.png",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/images/Icono.png",
+      },
+      {
+        rel: "canonical",
+        href: SITE_URL,
       },
     ],
   }),

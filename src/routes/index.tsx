@@ -21,11 +21,25 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dizi — La Revolución del Catálogo Web" },
+      { title: "Dizi — Catálogos Digitales para MYPEs | Vende por WhatsApp" },
       {
         name: "description",
-        content: "Crea tu tienda en 2 minutos. Digitalizando el comercio local con velocidad y simplicidad.",
+        content: "Crea tu catálogo digital gratis en 2 minutos. Vende por WhatsApp sin descargas. Plataforma 100% móvil para MYPEs peruanas. Planes desde S/ 0.00.",
       },
+      {
+        name: "keywords",
+        content: "catálogo digital gratis, tienda virtual WhatsApp, MYPE Perú, catálogo online Perú, vender por WhatsApp, catálogo web interactivo, digitalizar tienda Perú",
+      },
+      { property: "og:url", content: "https://dizi.idenza.site/" },
+      { property: "og:title", content: "Dizi — Catálogos Digitales para MYPEs | Vende por WhatsApp" },
+      {
+        property: "og:description",
+        content: "Crea tu catálogo digital gratis en 2 minutos. Vende por WhatsApp sin descargas. Plataforma 100% móvil para MYPEs peruanas.",
+      },
+      { property: "og:image", content: "https://dizi.idenza.site/images/og-image.png" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://dizi.idenza.site/" },
     ],
   }),
   component: LandingPage,

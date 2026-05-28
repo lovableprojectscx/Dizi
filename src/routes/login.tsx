@@ -9,7 +9,11 @@ import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
-    meta: [{ title: "Iniciar Sesion — Dizi" }],
+    meta: [
+      { title: "Iniciar Sesión — Dizi" },
+      { name: "description", content: "Accede a tu panel de Dizi y gestiona tu catálogo digital." },
+      { name: "robots", content: "noindex, follow" },
+    ],
   }),
   component: LoginPage,
 });

@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas privadas
+Disallow: /admin/
+Disallow: /super/
+Disallow: /admin
+Disallow: /super
+
+# Sitemap
+Sitemap: https://dizi.idenza.site/sitemap.xml

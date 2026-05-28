@@ -41,6 +41,7 @@ import {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
+import { CatalogPdfExportButton } from "./CatalogPdfExport";
 
 const EMPTY_CART: any[] = [];
 
@@ -736,12 +737,15 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
               </span>
             </div>
 
-            <button
-              onClick={supportClick}
-              className="shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition"
-            >
-              Contacto
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <CatalogPdfExportButton store={store} variant="catalog" />
+              <button
+                onClick={supportClick}
+                className="shrink-0 h-8 px-3 rounded-full border border-primary/20 bg-primary/5 text-primary text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 transition"
+              >
+                Contacto
+              </button>
+            </div>
           </div>
 
           {/* Search + Filtros button: modelos SIN hero banner */}
