@@ -2,14 +2,32 @@
  * image-utils.ts
  * Utilidades de procesamiento de imágenes en el cliente.
  * Convierte cualquier formato (JPG, PNG, HEIC, etc.) a WebP
+ * (o JPEG como fallback en navegadores antiguos/iOS antiguos)
  * usando el canvas del browser — sin dependencias externas.
  */
 
 const MAX_DIMENSION = 2048; // px máximo en cualquier lado (incrementado para mayor nitidez)
 const WEBP_QUALITY  = 0.92; // 0-1: 0.92 = calidad visual premium, evita artefactos y mantiene textos nítidos
 
+let _isWebpSupported: boolean | null = null;
+
 /**
- * Convierte un File de imagen a WebP y lo devuelve como data URL.
+ * Detecta si el navegador actual soporta exportación a WebP desde el Canvas.
+ * iOS/Safari añadió soporte recién en la versión 17.2.
+ */
+function isWebpSupported(): boolean {
+  if (_isWebpSupported !== null) return _isWebpSupported;
+  try {
+    const canvas = document.createElement("canvas");
+    _isWebpSupported = canvas.toDataURL("image/webp").startsWith("data:image/webp");
+  } catch (e) {
+    _isWebpSupported = false;
+  }
+  return _isWebpSupported;
+}
+
+/**
+ * Convierte un File de imagen a WebP (o JPEG fallback) y lo devuelve como data URL.
  * Redimensiona si algún lado supera MAX_DIMENSION, manteniendo proporción.
  */
 export function convertImageToWebP(file: File): Promise<string> {
@@ -49,7 +67,9 @@ export function convertImageToWebP(file: File): Promise<string> {
       ctx.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(objectUrl);
 
-      const webpDataUrl = canvas.toDataURL("image/webp", WEBP_QUALITY);
+      const format = isWebpSupported() ? "image/webp" : "image/jpeg";
+      const quality = format === "image/webp" ? WEBP_QUALITY : 0.88;
+      const webpDataUrl = canvas.toDataURL(format, quality);
       resolve(webpDataUrl);
     };
 
@@ -63,7 +83,7 @@ export function convertImageToWebP(file: File): Promise<string> {
 }
 
 /**
- * Intenta cargar una URL de imagen externa, la redimensiona y la convierte a WebP (base64 Data URL).
+ * Intenta cargar una URL de imagen externa, la redimensiona y la convierte a WebP (o JPEG fallback) como base64 Data URL.
  * Usa crossOrigin = "anonymous" para intentar saltar restricciones CORS si el origen lo permite.
  */
 export function convertImageUrlToWebP(url: string): Promise<string> {
@@ -107,7 +127,9 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
       ctx.drawImage(img, 0, 0, width, height);
 
       try {
-        const webpDataUrl = canvas.toDataURL("image/webp", WEBP_QUALITY);
+        const format = isWebpSupported() ? "image/webp" : "image/jpeg";
+        const quality = format === "image/webp" ? WEBP_QUALITY : 0.88;
+        const webpDataUrl = canvas.toDataURL(format, quality);
         resolve(webpDataUrl);
       } catch (err) {
         reject(new Error("No se pudo convertir a base64 debido a restricciones de CORS"));
@@ -121,4 +143,5 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
     img.src = url;
   });
 }
+
 

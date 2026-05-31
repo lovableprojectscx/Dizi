@@ -32,9 +32,18 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     }
     const blob = new Blob([u8arr], { type: mime });
 
+    // Determinar la extensión correcta según el tipo MIME de la imagen
+    let ext = "webp";
+    if (mime === "image/jpeg") ext = "jpg";
+    else if (mime === "image/png") ext = "png";
+    else if (mime === "image/gif") ext = "gif";
+
+    // Reemplazar la extensión en la ruta por la correspondiente al formato real
+    const cleanPath = path.replace(/\.[a-zA-Z0-9]+$/, `.${ext}`);
+
     const { data, error } = await supabase.storage
       .from("images")
-      .upload(path, blob, {
+      .upload(cleanPath, blob, {
         contentType: mime,
         upsert: true,
       });
