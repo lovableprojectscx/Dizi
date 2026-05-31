@@ -5,12 +5,28 @@ import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
 
 export const Route = createFileRoute("/bio/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `Bio-Link · ${params.slug}` },
-      { name: "description", content: `Enlaces y ubicación de ${params.slug}` },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const store = await fetchStoreBySlug(params.slug);
+    return { store };
+  },
+  head: ({ params, loaderData }) => {
+    const store = loaderData?.store;
+    const title = store ? `${store.name} · Enlaces & Contacto` : `Bio-Link · ${params.slug}`;
+    const description = store ? `Enlaces y ubicación de ${store.name}. Síguenos y contáctanos.` : `Enlaces y ubicación de ${params.slug}`;
+    const image = store?.bioBanner || store?.bannerImage || store?.bioLogo || store?.logo || "https://dizi.idenza.site/images/og-image.png";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:image", content: image },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
+      ],
+    };
+  },
   component: BioPublic,
 });
 
@@ -98,23 +114,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
 
 function BioPublic() {
   const { slug } = Route.useParams();
-  const [store, setStore] = useState<Store | null | "loading">("loading");
-
-  useEffect(() => {
-    setStore("loading");
-    fetchStoreBySlug(slug).then((s) => setStore(s));
-  }, [slug]);
-
-  if (store === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Cargando enlaces...</p>
-        </div>
-      </div>
-    );
-  }
+  const { store } = Route.useLoaderData();
 
   if (!store) {
     return (

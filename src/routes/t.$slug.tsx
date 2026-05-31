@@ -5,12 +5,28 @@ import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
 
 export const Route = createFileRoute("/t/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `Catálogo · ${params.slug}` },
-      { name: "description", content: `Catálogo digital de ${params.slug}` },
-    ],
-  }),
+  loader: async ({ params }) => {
+    const store = await fetchStoreBySlug(params.slug);
+    return { store };
+  },
+  head: ({ params, loaderData }) => {
+    const store = loaderData?.store;
+    const title = store ? `${store.name} · Catálogo Digital` : `Catálogo · ${params.slug}`;
+    const description = store ? `Mira nuestro catálogo: ${store.name}. Vende por WhatsApp.` : `Catálogo digital de ${params.slug}`;
+    const image = store?.bannerImage || store?.logo || "https://dizi.idenza.site/images/og-image.png";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:image", content: image },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
+      ],
+    };
+  },
   component: StorePublic,
 });
 
@@ -100,27 +116,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
 
 function StorePublic() {
   const { slug } = Route.useParams();
-
-  // La ruta pública siempre carga directamente desde Supabase.
-  // NO usamos el store de Zustand como fuente para el catálogo público porque
-  // contiene datos sin imágenes (partialize) o productos sample del cache viejo.
-  const [store, setStore] = useState<Store | null | "loading">("loading");
-
-  useEffect(() => {
-    setStore("loading");
-    fetchStoreBySlug(slug).then((s) => setStore(s));
-  }, [slug]);
-
-  if (store === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Cargando catálogo...</p>
-        </div>
-      </div>
-    );
-  }
+  const { store } = Route.useLoaderData();
 
   if (!store) {
     return (
