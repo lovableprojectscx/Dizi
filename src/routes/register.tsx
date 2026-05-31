@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star } from "lucide-react";
+import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
@@ -32,6 +32,7 @@ function RegisterPage() {
   const [selectedModel, setSelectedModel] = useState("minimalista");
   const [brandColor, setBrandColor] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -260,6 +261,33 @@ function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-[#fffaf7] via-background to-background" translate="no">
+      {/* Banner de Oferta de Lanzamiento - Top Ribbon */}
+      {!invitePlan && showBanner && (
+        <div className="w-full bg-slate-950 text-white text-xs py-2 px-8 flex items-center justify-center gap-2 relative z-50 text-center animate-in slide-in-from-top duration-300">
+          <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
+            <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">Regalo</span>
+            <strong className="text-white font-extrabold">30 días gratis del Plan Emprendedor:</strong>
+            <span className="text-slate-300">crea tu tienda completa sin costo.</span>
+          </span>
+          <a
+            href="https://wa.me/51925176472?text=Hola%2C%20me%20interesa%20probar%20Dizi%20para%20mi%20negocio"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:text-primary-foreground underline font-black transition-colors ml-1"
+          >
+            Solicitar por WhatsApp
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowBanner(false)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 transition-colors cursor-pointer"
+            aria-label="Cerrar"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Animated Background Mesh Gradients */}
       <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[50%] rounded-full bg-primary/10 blur-[120px] animate-morph pointer-events-none" />
       <div className="absolute bottom-[10%] right-[-15%] w-[55%] h-[50%] rounded-full bg-lavender/10 blur-[120px] animate-morph pointer-events-none" style={{ animationDelay: '-4s' }} />
@@ -325,47 +353,6 @@ function RegisterPage() {
           <div className="absolute top-[18px] left-[15%] right-[15%] h-0.5 bg-slate-200 -z-10" />
         </div>
 
-        {/* Banner prueba gratis */}
-        {!invitePlan && (
-          <div className="w-full max-w-sm rounded-3xl overflow-hidden border border-white/10 shadow-xl relative z-10" style={{ background: "rgba(15, 23, 42, 0.92)" }}>
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-white/5 bg-white/2">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">Oferta de lanzamiento</span>
-              </div>
-              <span className="text-white/30 text-[9px] font-medium">Solo nuevos usuarios</span>
-            </div>
-            <div className="px-5 py-4 flex items-center gap-4">
-              <div className="shrink-0 text-center">
-                <div className="text-3xl font-black text-white leading-none">30</div>
-                <div className="text-primary text-[10px] font-black uppercase tracking-wider mt-1">días</div>
-                <div className="text-white/40 text-[8px] font-bold uppercase">gratis</div>
-              </div>
-              <div className="w-px h-10 bg-white/10 shrink-0" />
-              <div className="flex-1">
-                <p className="text-white font-black text-sm leading-tight">Plan Emprendedor completo</p>
-                <p className="text-white/50 text-[10px] mt-1">Escríbenos y te damos acceso de inmediato.</p>
-              </div>
-              <a
-                href="https://wa.me/51925176472?text=Hola%2C%20me%20interesa%20probar%20Dizi%20para%20mi%20negocio"
-                target="_blank"
-                rel="noreferrer"
-                className="shrink-0 flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1ebe5d] active:scale-95 text-white text-xs font-black px-4 py-2.5 rounded-2xl transition-all shadow-lg shadow-green-950/40 whitespace-nowrap"
-              >
-                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z"/>
-                </svg>
-                Solicitar
-              </a>
-            </div>
-            <div className="px-5 pb-4 flex items-center gap-1.5 flex-wrap">
-              {["50 productos", "Bio-Link", "Soporte directo", "QR descargable"].map((f) => (
-                <span key={f} className="text-[9px] font-black border border-white/10 bg-white/5 text-white/70 px-2.5 py-1 rounded-full">{f}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Card del formulario */}
         <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10">
 
@@ -406,9 +393,9 @@ function RegisterPage() {
                   Siguiente paso
                 </button>
                 <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
-                  <p className="text-xs font-semibold text-slate-400">¿Necesitas ayuda con el registro?</p>
+                  <p className="text-[11px] font-semibold text-slate-400 text-center">¿Necesitas ayuda o quieres activar la oferta?</p>
                   <a
-                    href="https://wa.me/51925176472?text=Hola%2C%20necesito%20ayuda%20para%20registrarme%20en%20Dizi"
+                    href="https://wa.me/51925176472?text=Hola%2C%20me%20gustaria%20activar%20los%2030%20dias%20gratis%20o%20necesito%20ayuda%20para%20crear%20mi%20tienda"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
