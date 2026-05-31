@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/bio/:slug",
+      "destination": "/api/seo?slug=:slug&type=bio"
+    },
+    {
+      "source": "/t/:slug",
+      "destination": "/api/seo?slug=:slug&type=catalog"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
