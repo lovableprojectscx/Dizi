@@ -1,4 +1,9 @@
--- Create get_public_store RPC function to securely return store metadata and truncated products list
+-- =========================================================================================
+-- MIGRACIÓN: Corregir RPC get_public_store para incluir imágenes de productos
+-- Fecha: 2026-05-30
+-- Descripción: Agrega el campo 'image' a la respuesta JSON de los productos en la tienda pública.
+-- =========================================================================================
+
 CREATE OR REPLACE FUNCTION get_public_store(store_slug text)
 RETURNS jsonb
 SECURITY DEFINER

@@ -10,24 +10,32 @@ export const Route = createFileRoute("/admin/plan")({
 });
 
 const features: Record<PlanId, string[]> = {
-  semilla: ["Hasta 7 productos", "Catálogo público", "Pedidos por WhatsApp"],
+  semilla: [
+    "Hasta 7 productos",
+    "Catálogo público",
+    "Pedidos por WhatsApp",
+    "Link en Bio básico",
+    "Código QR descargable",
+  ],
   emprendedor: [
     "Hasta 50 productos",
     "Categorías ilimitadas",
-    "Soporte por correo",
-    "QR personalizable",
+    "Bio-Link personalizado",
+    "Modelos de diseño nivel 1",
+    "Soporte por WhatsApp",
   ],
   pro: [
     "Hasta 200 productos",
-    "Soporte prioritario",
-    "Métricas avanzadas",
-    "Modelos premium",
+    "Modelos premium desbloqueados",
+    "Personalización de colores y fondos",
+    "Export PDF del catálogo",
+    "Soporte prioritario por WhatsApp",
   ],
   ilimitado: [
     "Productos ilimitados",
-    "Carga masiva (Excel)",
-    "Soporte 24/7",
+    "Todos los modelos Elite",
     "Personalización total",
+    "Atención personalizada directa",
   ],
 };
 

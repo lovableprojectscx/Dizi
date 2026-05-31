@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as NovedadesRouteImport } from './routes/novedades'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -39,6 +40,11 @@ const SuperRoute = SuperRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NovedadesRoute = NovedadesRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/novedades': typeof NovedadesRoute
+  '/privacidad': typeof PrivacidadRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/novedades': typeof NovedadesRoute
+  '/privacidad': typeof PrivacidadRoute
   '/register': typeof RegisterRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/novedades': typeof NovedadesRoute
+  '/privacidad': typeof PrivacidadRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
   '/admin/categorias': typeof AdminCategoriasRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/novedades'
+    | '/privacidad'
     | '/register'
     | '/super'
     | '/admin/categorias'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/novedades'
+    | '/privacidad'
     | '/register'
     | '/admin/categorias'
     | '/admin/configuracion'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/login'
     | '/novedades'
+    | '/privacidad'
     | '/register'
     | '/super'
     | '/admin/categorias'
@@ -280,6 +292,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   LoginRoute: typeof LoginRoute
   NovedadesRoute: typeof NovedadesRoute
+  PrivacidadRoute: typeof PrivacidadRoute
   RegisterRoute: typeof RegisterRoute
   SuperRoute: typeof SuperRouteWithChildren
   BioSlugRoute: typeof BioSlugRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/novedades': {
@@ -485,6 +505,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   LoginRoute: LoginRoute,
   NovedadesRoute: NovedadesRoute,
+  PrivacidadRoute: PrivacidadRoute,
   RegisterRoute: RegisterRoute,
   SuperRoute: SuperRouteWithChildren,
   BioSlugRoute: BioSlugRoute,

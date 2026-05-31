@@ -459,6 +459,7 @@ function LandingPage() {
           </div>
           <div className="flex items-center justify-center gap-6 text-sm mb-3">
             <Link to="/novedades" className="hover:text-foreground transition-colors">Novedades &amp; FAQ</Link>
+            <Link to="/privacidad" className="hover:text-foreground transition-colors">Privacidad</Link>
             <Link to="/login" className="hover:text-foreground transition-colors">Iniciar Sesión</Link>
             <Link to="/register" className="hover:text-foreground transition-colors">Registrarse</Link>
           </div>

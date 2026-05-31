@@ -20,6 +20,24 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
 
   if (error || !data) return null;
 
+  // Fallback: If product images are missing due to RPC bug, fetch them directly
+  let productsWithImages = data.products || [];
+  if (productsWithImages.length > 0 && productsWithImages.every((p: any) => p.image === undefined || p.image === "")) {
+    const productIds = productsWithImages.map((p: any) => p.id);
+    const { data: realProducts, error: pError } = await supabase
+      .from("products")
+      .select("id, image")
+      .in("id", productIds);
+      
+    if (!pError && realProducts) {
+      const imageMap = new Map(realProducts.map((p: any) => [p.id, p.image]));
+      productsWithImages = productsWithImages.map((p: any) => ({
+        ...p,
+        image: imageMap.get(p.id) || ""
+      }));
+    }
+  }
+
   return {
     id: data.id,
     slug: data.slug,
@@ -63,7 +81,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
     bioBgImage: data.bio_bg_image ?? undefined,
     bioBgColor: data.bio_bg_color ?? undefined,
     categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
-    products: (data.products || []).map((p: any) => ({
+    products: (productsWithImages || []).map((p: any) => ({
       id: p.id,
       name: p.name,
       price: Number(p.price),
