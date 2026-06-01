@@ -15,6 +15,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { LogIn, Search, Power, ExternalLink, AlertTriangle, CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -75,12 +82,49 @@ function TenantsPage() {
   const [q, setQ] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const filtered = stores.filter(
-    (s) =>
+  // Advanced filter states
+  const [selectedPlan, setSelectedPlan] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedNiche, setSelectedNiche] = useState<string>("all");
+  const [selectedLibro, setSelectedLibro] = useState<string>("all");
+
+  const filtered = stores.filter((s) => {
+    // 1. Search Query
+    const matchesSearch =
       s.name.toLowerCase().includes(q.toLowerCase()) ||
       s.phone.includes(q) ||
-      s.id.includes(q)
-  );
+      s.id.includes(q) ||
+      s.slug.toLowerCase().includes(q.toLowerCase());
+
+    // 2. Plan filter
+    const matchesPlan = selectedPlan === "all" || s.plan === selectedPlan;
+
+    // 3. Status filter
+    let matchesStatus = true;
+    if (selectedStatus !== "all") {
+      const days = daysUntilExpiry(s);
+      const isExpired = s.plan !== "semilla" && days !== null && days < 0;
+      
+      if (selectedStatus === "active") {
+        matchesStatus = s.active && !isExpired;
+      } else if (selectedStatus === "suspended") {
+        matchesStatus = !s.active;
+      } else if (selectedStatus === "expired") {
+        matchesStatus = s.active && isExpired;
+      }
+    }
+
+    // 4. Niche filter
+    const matchesNiche = selectedNiche === "all" || (s.niche || "general") === selectedNiche;
+
+    // 5. Claim Book filter
+    let matchesLibro = true;
+    if (selectedLibro !== "all") {
+      matchesLibro = selectedLibro === "con_libro" ? s.libroReclamacionesActivo : !s.libroReclamacionesActivo;
+    }
+
+    return matchesSearch && matchesPlan && matchesStatus && matchesNiche && matchesLibro;
+  });
 
   // Ordenar: primero las que vencen pronto o ya vencieron
   const sorted = [...filtered].sort((a, b) => {
@@ -109,9 +153,14 @@ function TenantsPage() {
     <div className="space-y-4 max-w-6xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tiendas</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Tiendas</h1>
           <p className="text-sm text-muted-foreground">
-            {stores.length} tiendas registradas
+            {stores.length} tiendas registradas en total
+            {filtered.length !== stores.length && (
+              <span className="ml-1 text-primary font-semibold">
+                ({filtered.length} filtradas)
+              </span>
+            )}
             {stores.filter(s => s.libroReclamacionesActivo).length > 0 && (
               <span className="ml-2 inline-flex items-center gap-1 text-blue-600 font-medium">
                 · <ClipboardList className="h-3.5 w-3.5" />
@@ -120,15 +169,105 @@ function TenantsPage() {
             )}
           </p>
         </div>
-        <div className="relative w-72 max-w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nombre, telefono, ID..."
-            className="pl-9"
-          />
+      </div>
+
+      {/* ── Barra de Filtros Avanzada ── */}
+      <div className="bg-card border border-border/50 rounded-xl p-4 flex flex-wrap items-center gap-3 shadow-sm">
+        <div className="flex-1 min-w-[200px]">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Buscar tienda</span>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nombre, slug, ID, teléfono..."
+              className="pl-9 h-9 text-xs"
+            />
+          </div>
         </div>
+
+        <div className="w-full sm:w-auto min-w-[125px]">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Plan</span>
+          <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue placeholder="Planes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los planes</SelectItem>
+              <SelectItem value="semilla">Semilla (Gratis)</SelectItem>
+              <SelectItem value="emprendedor">Emprendedor</SelectItem>
+              <SelectItem value="pro">Pro</SelectItem>
+              <SelectItem value="ilimitado">Ilimitado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full sm:w-auto min-w-[125px]">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Estado</span>
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue placeholder="Estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="active">Activa</SelectItem>
+              <SelectItem value="suspended">Suspendida</SelectItem>
+              <SelectItem value="expired">Vencida</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full sm:w-auto min-w-[125px]">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Giro / Nicho</span>
+          <Select value={selectedNiche} onValueChange={setSelectedNiche}>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue placeholder="Nichos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los giros</SelectItem>
+              <SelectItem value="general">General</SelectItem>
+              <SelectItem value="comida">Comida / Gastronomía</SelectItem>
+              <SelectItem value="bisuteria">Bisutería & Acc.</SelectItem>
+              <SelectItem value="ropa">Moda & Ropa</SelectItem>
+              <SelectItem value="tech">Tecnología</SelectItem>
+              <SelectItem value="servicios">Servicios</SelectItem>
+              <SelectItem value="floreria">Florería</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="w-full sm:w-auto min-w-[125px]">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">Reclamaciones</span>
+          <Select value={selectedLibro} onValueChange={setSelectedLibro}>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue placeholder="Libro" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="con_libro">Con Libro Activo</SelectItem>
+              <SelectItem value="sin_libro">Sin Libro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {(selectedPlan !== "all" || selectedStatus !== "all" || selectedNiche !== "all" || selectedLibro !== "all" || q) && (
+          <div className="pt-5 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setQ("");
+                setSelectedPlan("all");
+                setSelectedStatus("all");
+                setSelectedNiche("all");
+                setSelectedLibro("all");
+              }}
+              className="h-8 text-xs font-semibold text-destructive hover:bg-destructive/10"
+            >
+              Limpiar Filtros
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* ── Alertas de vencimiento proximo ── */}
