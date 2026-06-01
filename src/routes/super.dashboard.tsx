@@ -12,7 +12,8 @@ function SuperDashboard() {
   const stores = useApp((s) => s.stores);
   const active = stores.filter((s) => s.active).length;
   const products = stores.reduce((a, s) => a + s.products.length, 0);
-  const thisMonth = new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const newSignups = stores.filter((s) => s.createdAt.startsWith(thisMonth)).length;
 
   return (
