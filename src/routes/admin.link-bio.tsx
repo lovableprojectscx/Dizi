@@ -590,7 +590,7 @@ function LinkBioPage() {
         markerInstance.current = null;
       }
     };
-  }, [bioLinksEnabled, isLoaded]);
+  }, [bioLinksEnabled, isLoaded, activeEditTab]);
 
   /* Invalidate Leaflet map size when location section opens */
   useEffect(() => {
