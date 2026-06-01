@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Globe,
@@ -436,7 +436,10 @@ function LinkBioPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const lastSelectedAddress = useRef<string>("");
 
-  const mapRef = useRef<HTMLDivElement>(null);
+  const [mapElement, setMapElement] = useState<HTMLDivElement | null>(null);
+  const mapRef = useCallback((node: HTMLDivElement | null) => {
+    setMapElement(node);
+  }, []);
   const mapInstance = useRef<any>(null);
   const markerInstance = useRef<any>(null);
 
@@ -544,7 +547,7 @@ function LinkBioPage() {
 
   /* Leaflet map */
   useEffect(() => {
-    if (!bioLinksEnabled || activeEditTab !== "ubicacion" || !mapRef.current) {
+    if (!bioLinksEnabled || activeEditTab !== "ubicacion" || !mapElement) {
       if (mapInstance.current) {
         try {
           mapInstance.current.remove();
@@ -558,12 +561,12 @@ function LinkBioPage() {
     }
     const timer = setTimeout(() => {
       try {
-        if (!mapRef.current) return;
+        if (!mapElement) return;
         
         // Clear previous stale Leaflet DOM indicators if ref got out of sync
-        if (mapRef.current.classList.contains("leaflet-container")) {
-          mapRef.current.innerHTML = "";
-          mapRef.current.className = "h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden";
+        if (mapElement.classList.contains("leaflet-container")) {
+          mapElement.innerHTML = "";
+          mapElement.className = "h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden";
         }
 
         delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -576,8 +579,8 @@ function LinkBioPage() {
         const defaultLat = locationLat || -12.046374;
         const defaultLng = locationLng || -77.042793;
         
-        if (!mapInstance.current && mapRef.current) {
-          const map = L.map(mapRef.current).setView([defaultLat, defaultLng], 14);
+        if (!mapInstance.current && mapElement) {
+          const map = L.map(mapElement).setView([defaultLat, defaultLng], 14);
           L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: '&copy; <a href="https://openstreetmap.org">OSM</a>',
           }).addTo(map);
@@ -623,7 +626,7 @@ function LinkBioPage() {
         markerInstance.current = null;
       }
     };
-  }, [bioLinksEnabled, isLoaded, activeEditTab]);
+  }, [bioLinksEnabled, isLoaded, activeEditTab, mapElement]);
 
   /* Invalidate Leaflet map size when location section opens */
   useEffect(() => {
@@ -1546,7 +1549,7 @@ function LinkBioPage() {
                           <p className="font-bold border-b border-destructive/20 pb-1 mb-1">Diagnóstico del Mapa (Temporal)</p>
                           <p>Pestaña Activa: <span className="font-bold">"{activeEditTab}"</span></p>
                           <p>Bio-Links Habilitado: <span className="font-bold">{bioLinksEnabled ? "SÍ" : "NO"}</span></p>
-                          <p>Contenedor DOM (mapRef): <span className="font-bold">{mapRef.current ? "Encontrado en DOM" : "NULO / No montado"}</span></p>
+                          <p>Contenedor DOM (mapElement): <span className="font-bold">{mapElement ? "Encontrado en DOM" : "NULO / No montado"}</span></p>
                           <p>Instancia Leaflet: <span className="font-bold">{mapInstance.current ? "Inicializada" : "NULA / No creada"}</span></p>
                           <p>Coordenadas: Lat={locationLat || "N/A"}, Lng={locationLng || "N/A"}</p>
                         </div>
