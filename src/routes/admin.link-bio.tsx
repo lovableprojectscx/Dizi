@@ -20,20 +20,20 @@ import {
   Loader2,
   Smartphone,
   HelpCircle,
-  ChevronDown,
   FileText,
   Palette,
   Crown,
   Lock,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures } from "@/lib/types";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import "leaflet/dist/leaflet.css";
 import { cn } from "@/lib/utils";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
-
-
 
 const bioLogoSpec = {
   ratio: "1/1",
@@ -190,7 +190,7 @@ function PhonePreview({
 
   if (bioTheme === "default") {
     mockupBgStyle = { background: "hsl(var(--background))" };
-    isMockupDark = false; // standard catalog mode
+    isMockupDark = false;
   } else if (bioTheme === "dark") {
     mockupBgStyle = { background: "#09090b" };
     isMockupDark = true;
@@ -224,7 +224,6 @@ function PhonePreview({
     } else {
       const color = bioBgColor || "#0f172a";
       mockupBgStyle = { background: color };
-      // Check brightness
       const hex = color.replace("#", "");
       const rgb = parseInt(hex, 16);
       const r = (rgb >> 16) & 0xff;
@@ -252,7 +251,7 @@ function PhonePreview({
     return { shape, type, radiusClass };
   };
 
-  const { shape, type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
+  const { type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
 
   const getPlatformColors = (platform: string) => {
     if (platform === "whatsapp") return { bg: "#25D366", border: "#128C7E" };
@@ -369,8 +368,8 @@ function PhonePreview({
                     <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
                     
                     <div className={cn(
-                      "h-5 w-5 flex items-center justify-center shrink-0 mr-1.5 transition-transform duration-300 group-hover:scale-110",
-                      isMonochrome ? "bg-transparent text-current" : "bg-white rounded-full shadow-inner"
+                       "h-5 w-5 flex items-center justify-center shrink-0 mr-1.5 transition-transform duration-300 group-hover:scale-110",
+                       isMonochrome ? "bg-transparent text-current" : "bg-white rounded-full shadow-inner"
                     )}>
                       <span className={cn("text-[5px] font-black", !isMonochrome ? "text-gray-800" : "")}>{link.label.charAt(0)}</span>
                     </div>
@@ -402,7 +401,8 @@ function LinkBioPage() {
   const [bioButtonTextColor, setBioButtonTextColor] = useState(store?.bioButtonTextColor || "");
   const [bioBgImage, setBioBgImage] = useState(store?.bioBgImage || "");
   const [bioBgColor, setBioBgColor] = useState(store?.bioBgColor || "#0f172a");
-  const [activeAccordion, setActiveAccordion] = useState<string>("info");
+  
+  const [activeEditTab, setActiveEditTab] = useState("contenido");
   const [activeBgTab, setActiveBgTab] = useState<"color" | "image">("color");
   const [country] = useState(store?.countryCode || "51");
   const [number] = useState(
@@ -428,6 +428,8 @@ function LinkBioPage() {
   const [newLinkTextColor, setNewLinkTextColor] = useState("");
   const [saving, setSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const [copiedBio, setCopiedBio] = useState(false);
 
   const [suggestions, setSuggestions] = useState<{ display_name: string; lat: string; lon: string }[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
@@ -478,7 +480,6 @@ function LinkBioPage() {
       markerInstance.current.setLatLng([lat, lng]);
     }
   };
-
 
   /* Load store data once */
   useEffect(() => {
@@ -593,7 +594,7 @@ function LinkBioPage() {
 
   /* Invalidate Leaflet map size when location section opens */
   useEffect(() => {
-    if (activeAccordion === "location" && mapInstance.current) {
+    if (activeEditTab === "ubicacion" && mapInstance.current) {
       const timer = setTimeout(() => {
         if (mapInstance.current) {
           mapInstance.current.invalidateSize();
@@ -601,7 +602,7 @@ function LinkBioPage() {
       }, 350);
       return () => clearTimeout(timer);
     }
-  }, [activeAccordion]);
+  }, [activeEditTab]);
 
   if (!store) return null;
 
@@ -616,6 +617,13 @@ function LinkBioPage() {
     else if (platform === "facebook") setFacebookUrl(formatted);
     else if (platform === "tiktok") setTikTokUrl(formatted);
     else if (platform === "linkedin") setLinkedinUrl(formatted);
+  };
+
+  const copyText = async (text: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedBio(true);
+    setTimeout(() => setCopiedBio(false), 2000);
+    toast.success("Enlace copiado");
   };
 
   const save = async () => {
@@ -645,7 +653,6 @@ function LinkBioPage() {
         bioBgColor: bioBgColor || null,
       });
 
-      // Update local image states to the saved URLs with cache-busting timestamp
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
       if (updatedStore) {
         setBioLogo(updatedStore.bioLogo ?? "");
@@ -662,11 +669,12 @@ function LinkBioPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto px-2">
+    <div className="space-y-6 max-w-6xl mx-auto px-2 pb-10">
+      
       {/* Page Header */}
-      <div className="flex items-center gap-2 border-b border-border/40 pb-5">
-        <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-          <Link2 className="h-6 w-6 text-primary" />
+      <div className="flex items-center gap-2 border-b border-border/40 pb-4">
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent flex items-center gap-2">
+          <Link2 className="h-7 w-7 text-primary shrink-0" />
           Link en Bio
         </h1>
         <Tooltip>
@@ -681,45 +689,50 @@ function LinkBioPage() {
         </Tooltip>
       </div>
 
-      {/* Bio-Link URL Card */}
-      <Card className="border border-border/50 rounded-xl bg-card shadow-sm overflow-hidden">
+      {/* Bio-Link URL Card (Shareable widget style) */}
+      <Card className="border border-border/50 rounded-xl bg-card shadow-sm overflow-hidden bg-gradient-to-br from-card via-card to-primary/[0.01]">
         <CardContent className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1.5 flex-1 w-full">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Enlace del Bio-Link</span>
-              <span className={cn(
-                "text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border",
-                bioLinksEnabled 
-                  ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50" 
-                  : "text-muted-foreground bg-muted border-border/40"
-              )}>
-                {bioLinksEnabled ? "Activo" : "Inactivo"}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Enlace de tu Bio-Link</span>
+                {bioLinksEnabled ? (
+                  <span className="text-[9px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-full border border-emerald-200/50 font-bold uppercase tracking-wider">
+                    Activo
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border/50 font-bold uppercase tracking-wider">
+                    Inactivo
+                  </span>
+                )}
+              </div>
             </div>
+            
             <div className={cn(
-              "flex items-center gap-1 bg-muted/30 rounded-lg p-1 border border-border/10 max-w-xl",
-              !bioLinksEnabled && "opacity-40 pointer-events-none"
+              "flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 max-w-xl",
+              !bioLinksEnabled && "opacity-50 select-none pointer-events-none"
             )}>
-              <span className="text-xs text-muted-foreground truncate select-all px-2 flex-1 font-mono font-medium">
-                {bioUrl}
-              </span>
-              <Button 
-                onClick={() => { navigator.clipboard.writeText(bioUrl); toast.success("Enlace copiado"); }} 
-                disabled={!bioLinksEnabled}
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
-              >
-                <Plus className="h-3.5 w-3.5 rotate-45 scale-75" /> {/* Simple copiado en fallback */}
-              </Button>
-              <Link 
-                to="/bio/$slug"
-                params={{ slug: store.slug }}
-                target="_blank"
-                className="h-8 w-8 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
+              <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">{bioUrl}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  type="button"
+                  disabled={!bioLinksEnabled}
+                  onClick={() => copyText(bioUrl)}
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
+                >
+                  {copiedBio ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                </Button>
+                <a
+                  href={bioUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`h-7 w-7 rounded-md hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0 ${!bioLinksEnabled ? "pointer-events-none" : ""}`}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -727,11 +740,13 @@ function LinkBioPage() {
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Form */}
+        
+        {/* Left: Interactive Tabbed Form */}
         <div className="lg:col-span-7 space-y-6">
           <Card className="border-border/50 shadow-sm overflow-visible rounded-xl">
             <CardContent className="p-5 sm:p-6 space-y-6">
-              {/* Toggle */}
+              
+              {/* Toggle Habilitación */}
               <div className="flex items-center justify-between pb-4 border-b border-border/40">
                 <div className="flex items-center gap-1.5">
                   <Label className="text-sm font-semibold text-foreground">Habilitar Bio-Link Profesional</Label>
@@ -758,655 +773,360 @@ function LinkBioPage() {
               </div>
 
               {bioLinksEnabled ? (
-                <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="space-y-4">
                   
-                  {/* ──────────────── 1. INFORMACIÓN DE PRESENTACIÓN ──────────────── */}
-                  <div className="border border-border/40 rounded-xl overflow-hidden bg-card/25 shadow-sm transition-all duration-300">
-                    <button
-                      type="button"
-                      onClick={() => setActiveAccordion(activeAccordion === "info" ? "" : "info")}
-                      className={cn(
-                        "w-full flex items-center justify-between p-4 font-bold text-sm text-foreground hover:bg-muted/10 transition-colors text-left",
-                        activeAccordion === "info" && "bg-muted/5 border-b border-border/20"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-blue-500" />
-                        <span>1. Información de Presentación</span>
-                      </div>
-                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", activeAccordion === "info" ? "rotate-180" : "")} />
-                    </button>
-                    <div className={cn("grid transition-all duration-300 ease-in-out", activeAccordion === "info" ? "grid-rows-[1fr] opacity-100 p-4 bg-card/10" : "grid-rows-[0fr] opacity-0 overflow-hidden")}>
-                      <div className="overflow-hidden space-y-4">
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-1.5">
-                            <Label className="font-semibold text-xs text-foreground">Biografía / Presentación Corta</Label>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
-                                  <HelpCircle className="h-3 w-3" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs">
-                                Escribe una breve presentación de tu negocio para tus visitantes.
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                          <textarea
-                            value={bioDescription}
-                            onChange={(e) => setBioDescription(e.target.value)}
-                            placeholder="Ej: Bienvenidos a Bocafest. Horarios de atención: Lunes a Sábados de 9 AM a 8 PM. Delivery disponible..."
-                            className="w-full min-h-[90px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  {/* TABS DE EDICIÓN COMPACTOS */}
+                  <Tabs value={activeEditTab} onValueChange={setActiveEditTab} className="w-full">
+                    <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full grid grid-cols-3 mb-5">
+                      <TabsTrigger value="contenido" className="flex items-center justify-center gap-1.5 text-xs font-bold">
+                        <FileText className="h-3.5 w-3.5" />
+                        <span>Contenido</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="apariencia" className="flex items-center justify-center gap-1.5 text-xs font-bold">
+                        <Palette className="h-3.5 w-3.5" />
+                        <span>Apariencia</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="ubicacion" className="flex items-center justify-center gap-1.5 text-xs font-bold">
+                        <MapPin className="h-3.5 w-3.5" />
+                        <span>Ubicación</span>
+                      </TabsTrigger>
+                    </TabsList>
 
-                  {/* ──────────────── 2. APARIENCIA Y DISEÑO VISUAL ──────────────── */}
-                  <div className="border border-border/40 rounded-xl overflow-hidden bg-card/25 shadow-sm transition-all duration-300">
-                    <button
-                      type="button"
-                      onClick={() => setActiveAccordion(activeAccordion === "design" ? "" : "design")}
-                      className={cn(
-                        "w-full flex items-center justify-between p-4 font-bold text-sm text-foreground hover:bg-muted/10 transition-colors text-left",
-                        activeAccordion === "design" && "bg-muted/5 border-b border-border/20"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Palette className="h-4 w-4 text-violet-500" />
-                        <span>2. Apariencia y Diseño Visual</span>
+                    {/* ──────────────── TAB 1: CONTENIDO ──────────────── */}
+                    <TabsContent value="contenido" className="space-y-5 mt-2 animate-in fade-in duration-300">
+                      
+                      {/* Biografía */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Biografía / Presentación Corta</Label>
+                        <textarea
+                          value={bioDescription}
+                          onChange={(e) => setBioDescription(e.target.value)}
+                          placeholder="Ej: Bienvenidos a Bocafest. Horarios de atención: Lunes a Sábados de 9 AM a 8 PM. Delivery disponible..."
+                          className="w-full min-h-[95px] rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        />
                       </div>
-                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", activeAccordion === "design" ? "rotate-180" : "")} />
-                    </button>
-                    <div className={cn("grid transition-all duration-300 ease-in-out", activeAccordion === "design" ? "grid-rows-[1fr] opacity-100 p-4 bg-card/10" : "grid-rows-[0fr] opacity-0 overflow-hidden")}>
-                      <div className="overflow-hidden space-y-5">
+
+                      {/* Redes Sociales */}
+                      <div className="space-y-3 pt-4 border-t border-border/30">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Redes Oficiales</Label>
                         
-                        {/* Perfil y Portada */}
-                        <div className="space-y-3">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70">Fotos del Bio-Link</Label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                              <Label className="text-xs text-muted-foreground font-semibold">Foto de Perfil Especial</Label>
-                              <ImageUploadGuided
-                                value={bioLogo}
-                                onChange={setBioLogo}
-                                spec={bioLogoSpec}
-                                label="Subir foto de perfil"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <Label className="text-xs text-muted-foreground font-semibold">Foto de Portada Especial</Label>
-                              <ImageUploadGuided
-                                value={bioBanner}
-                                onChange={setBioBanner}
-                                spec={bioBannerSpec}
-                                label="Subir foto de portada"
-                              />
-                            </div>
+                        {/* WhatsApp Auto-Vínculo */}
+                        <div className="bg-emerald-500/[0.02] border border-emerald-500/10 p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs mb-3">
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            <p className="text-muted-foreground text-[11px]">
+                              WhatsApp vinculado automáticamente: <span className="font-bold text-foreground">+{country + number}</span>
+                            </p>
                           </div>
+                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
+                            Activo
+                          </span>
                         </div>
 
-                        {/* Tema de fondo */}
-                        <div className="space-y-3 border-t border-border/40 pt-4">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70">Tema de Fondo</Label>
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                            {[
-                              { id: "default", name: "Plantilla", bg: "bg-slate-200 dark:bg-slate-800" },
-                              { id: "dark", name: "Oscuro", bg: "bg-zinc-950" },
-                              { id: "sunset", name: "Atardecer", bg: "bg-gradient-to-r from-indigo-950 via-purple-950 to-pink-900" },
-                              { id: "forest", name: "Bosque", bg: "bg-gradient-to-r from-emerald-950 via-teal-950 to-emerald-950" },
-                              { id: "neon", name: "Neón", bg: "bg-black border border-pink-500/25" },
-                              { id: "glass", name: "Efecto Vidrio", bg: "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-white/5" },
-                              { id: "pastel", name: "Pastel", bg: "bg-gradient-to-r from-yellow-50 via-pink-100 to-purple-100 text-slate-800" },
-                              { id: "ocean", name: "Océano", bg: "bg-gradient-to-r from-cyan-950 via-blue-950 to-slate-900" },
-                              { id: "custom", name: "Personalizado", bg: "bg-gradient-to-r from-primary/20 via-card to-secondary/20 border border-primary/25" },
-                            ].map((t) => {
-                              const isSelected = bioTheme === t.id;
-                              return (
-                                <button
-                                  key={t.id}
-                                  type="button"
-                                  onClick={() => setBioTheme(t.id)}
-                                  className={cn(
-                                    "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all hover:scale-[1.02] gap-1",
-                                    isSelected 
-                                      ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm" 
-                                      : "border-border bg-card/40"
-                                  )}
-                                >
-                                  <div className={cn("h-4 w-full rounded-md shadow-inner", t.bg)} />
-                                  <span className="text-[10px] font-bold text-foreground truncate w-full mt-1">{t.name}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Controles de fondo personalizado si bioTheme === 'custom' */}
-                          {bioTheme === "custom" && (
-                            <div className="mt-3 bg-muted/[0.04] border border-border/40 p-4 rounded-xl space-y-4 animate-in slide-in-from-top-2 duration-300">
-                              <div className="flex rounded-lg bg-muted/20 p-1 max-w-xs">
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveBgTab("color")}
-                                  className={cn(
-                                    "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center",
-                                    activeBgTab === "color" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                                  )}
-                                >
-                                  Color Sólido
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (store && !canUsePremiumBioFeatures(store)) {
-                                      toast.error("Subir una imagen de fondo personalizada requiere el Plan Emprendedor o superior.");
-                                      return;
-                                    }
-                                    setActiveBgTab("image");
-                                  }}
-                                  className={cn(
-                                    "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center flex items-center justify-center gap-1",
-                                    activeBgTab === "image" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                                  )}
-                                >
-                                  {store && !canUsePremiumBioFeatures(store) && <Lock className="h-3 w-3 text-amber-500 shrink-0" />}
-                                  Imagen de Fondo
-                                </button>
-                              </div>
-
-                              {activeBgTab === "color" ? (
-                                <div className="space-y-1.5 max-w-xs">
-                                  <Label className="text-xs font-semibold">Elige el color de fondo</Label>
-                                  <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
-                                    <input
-                                      type="color"
-                                      value={bioBgColor || "#0f172a"}
-                                      onChange={(e) => setBioBgColor(e.target.value)}
-                                      className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
-                                    />
-                                    <div className="flex flex-col min-w-0">
-                                      <span className="text-[10px] text-muted-foreground leading-none">Fondo</span>
-                                      <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
-                                        {bioBgColor || "#0f172a"}
-                                      </span>
-                                    </div>
-                                  </div>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                          {/* Instagram */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold flex items-center gap-1.5">
+                              <Instagram className="h-3.5 w-3.5 text-pink-600" /> Instagram
+                            </Label>
+                            <Input
+                              value={instagramUrl}
+                              onChange={(e) => setInstagramUrl(e.target.value)}
+                              onBlur={() => handleBlurSocial(instagramUrl, "instagram")}
+                              placeholder="Usuario o enlace completo"
+                              className="bg-transparent text-sm h-10 w-full rounded-lg"
+                            />
+                            {instagramUrl.trim() && (
+                              store && !canUsePremiumBioFeatures(store) ? (
+                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                  <span className="flex items-center gap-1">
+                                    <Lock className="h-3 w-3" /> Color personalizado
+                                  </span>
+                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
                                 </div>
                               ) : (
-                                <div className="space-y-1.5">
-                                  <Label className="text-xs font-semibold">Sube una imagen de fondo vertical</Label>
-                                  <ImageUploadGuided
-                                    value={bioBgImage}
-                                    onChange={setBioBgImage}
-                                    spec={bioBgImageSpec}
-                                    label="Subir imagen de fondo"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Diseño de Botones */}
-                        <div className="space-y-3 border-t border-border/40 pt-4">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70">Diseño de Botones</Label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                            {[
-                              { id: "pill-solid", name: "Píldora Relleno", pClass: "rounded-full bg-primary border-primary text-white" },
-                              { id: "pill-outline", name: "Píldora Contorno", pClass: "rounded-full bg-transparent border-primary text-primary" },
-                              { id: "pill-glass", name: "Píldora Vidrio", pClass: "rounded-full bg-white/10 border-white/20 text-foreground" },
-                              { id: "rounded-solid", name: "Redondeado Relleno", pClass: "rounded-md bg-primary border-primary text-white" },
-                              { id: "rounded-outline", name: "Redondeado Contorno", pClass: "rounded-md bg-transparent border-primary text-primary" },
-                              { id: "rounded-glass", name: "Redondeado Vidrio", pClass: "rounded-md bg-white/10 border-white/20 text-foreground" },
-                              { id: "sharp-solid", name: "Recto Relleno", pClass: "rounded-none bg-primary border-primary text-white" },
-                              { id: "sharp-outline", name: "Recto Contorno", pClass: "rounded-none bg-transparent border-primary text-primary" },
-                              { id: "sharp-glass", name: "Recto Vidrio", pClass: "rounded-none bg-white/10 border-white/20 text-foreground" },
-                            ].map((style) => {
-                              const isSelected = bioButtonStyle === style.id;
-                              return (
-                                <button
-                                  key={style.id}
-                                  type="button"
-                                  onClick={() => {
-                                    if (store && !canUsePremiumBioFeatures(store) && style.id !== "pill-solid") {
-                                      toast.error("Los estilos de botón premium requieren el Plan Emprendedor o superior.");
-                                      return;
-                                    }
-                                    setBioButtonStyle(style.id);
-                                  }}
-                                  className={cn(
-                                    "relative flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all hover:scale-[1.02] gap-1.5",
-                                    isSelected 
-                                      ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm" 
-                                      : "border-border bg-card/40"
-                                  )}
-                                >
-                                  {store && !canUsePremiumBioFeatures(store) && style.id !== "pill-solid" && (
-                                    <Lock className="absolute top-1 right-1 h-3 w-3 text-amber-500 bg-background/80 rounded-full p-0.5" />
-                                  )}
-                                  <div className={cn("h-5 w-full border text-[5px] font-black flex items-center justify-center tracking-widest", style.pClass)}>
-                                    LINK
-                                  </div>
-                                  <span className="text-[9px] font-bold text-foreground truncate w-full">{style.name}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Colores Personalizados */}
-                        <div className="space-y-3 border-t border-border/40 pt-4">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70 flex items-center gap-1.5">
-                            Colores de Botón Personalizados
-                            {store && !canUsePremiumBioFeatures(store) && <Lock className="h-3 w-3 text-amber-500" />}
-                          </Label>
-                          {store && !canUsePremiumBioFeatures(store) ? (
-                            <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
-                              <p className="font-bold flex items-center gap-1">
-                                <Crown className="h-3.5 w-3.5 text-amber-500" /> Característica Premium
-                              </p>
-                              <p>Personalizar libremente el color del botón o del texto requiere el Plan Emprendedor o superior. En el Plan Semilla se utiliza el color de tu marca por defecto.</p>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                  <Label className="text-xs font-semibold">Fondo del Botón</Label>
-                                  {bioButtonColor && (
-                                    <button type="button" onClick={() => setBioButtonColor("")} className="text-[10px] text-destructive hover:underline font-semibold">
-                                      Restablecer
-                                    </button>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
                                   <input
                                     type="color"
-                                    value={bioButtonColor || "#000000"}
-                                    onChange={(e) => setBioButtonColor(e.target.value)}
-                                    className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                    value={instagramBgColor || "#E1306C"}
+                                    onChange={(e) => setInstagramBgColor(e.target.value)}
+                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
                                   />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="text-[10px] text-muted-foreground leading-none">Fondo</span>
-                                    <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
-                                      {bioButtonColor || "Color por defecto"}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="space-y-1.5">
-                                <div className="flex items-center justify-between">
-                                  <Label className="text-xs font-semibold">Texto del Botón</Label>
-                                  {bioButtonTextColor && (
-                                    <button type="button" onClick={() => setBioButtonTextColor("")} className="text-[10px] text-destructive hover:underline font-semibold">
-                                      Restablecer
-                                    </button>
+                                  <span className="text-[10px] font-mono truncate flex-1">{instagramBgColor || "Color de botón"}</span>
+                                  {instagramBgColor && (
+                                    <button type="button" onClick={() => setInstagramBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                              )
+                            )}
+                          </div>
+
+                          {/* Facebook */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold flex items-center gap-1.5">
+                              <Facebook className="h-3.5 w-3.5 text-blue-600" /> Facebook
+                            </Label>
+                            <Input
+                              value={facebookUrl}
+                              onChange={(e) => setFacebookUrl(e.target.value)}
+                              onBlur={() => handleBlurSocial(facebookUrl, "facebook")}
+                              placeholder="Usuario o enlace completo"
+                              className="bg-transparent text-sm h-10 w-full rounded-lg"
+                            />
+                            {facebookUrl.trim() && (
+                              store && !canUsePremiumBioFeatures(store) ? (
+                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                  <span className="flex items-center gap-1">
+                                    <Lock className="h-3 w-3" /> Color personalizado
+                                  </span>
+                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
                                   <input
                                     type="color"
-                                    value={bioButtonTextColor || "#ffffff"}
-                                    onChange={(e) => setBioButtonTextColor(e.target.value)}
-                                    className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                    value={facebookBgColor || "#1877f2"}
+                                    onChange={(e) => setFacebookBgColor(e.target.value)}
+                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
                                   />
-                                  <div className="flex flex-col min-w-0">
-                                    <span className="text-[10px] text-muted-foreground leading-none">Texto</span>
-                                    <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
-                                      {bioButtonTextColor || "Color por defecto"}
-                                    </span>
-                                  </div>
+                                  <span className="text-[10px] font-mono truncate flex-1">{facebookBgColor || "Color de botón"}</span>
+                                  {facebookBgColor && (
+                                    <button type="button" onClick={() => setFacebookBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                  )}
                                 </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ──────────────── 3. ENLACES Y REDES SOCIALES ──────────────── */}
-                  <div className="border border-border/40 rounded-xl overflow-hidden bg-card/25 shadow-sm transition-all duration-300">
-                    <button
-                      type="button"
-                      onClick={() => setActiveAccordion(activeAccordion === "links" ? "" : "links")}
-                      className={cn(
-                        "w-full flex items-center justify-between p-4 font-bold text-sm text-foreground hover:bg-muted/10 transition-colors text-left",
-                        activeAccordion === "links" && "bg-muted/5 border-b border-border/20"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Link2 className="h-4 w-4 text-emerald-500" />
-                        <span>3. Enlaces y Redes Sociales</span>
-                      </div>
-                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", activeAccordion === "links" ? "rotate-180" : "")} />
-                    </button>
-                    <div className={cn("grid transition-all duration-300 ease-in-out", activeAccordion === "links" ? "grid-rows-[1fr] opacity-100 p-4 bg-card/10" : "grid-rows-[0fr] opacity-0 overflow-hidden")}>
-                      <div className="overflow-hidden space-y-5">
-                        
-                        {/* Redes Sociales */}
-                        <div className="space-y-3">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70">Redes Oficiales</Label>
-                          
-                          {/* WhatsApp Auto-Vínculo */}
-                          <div className="bg-emerald-500/[0.02] border border-emerald-500/10 p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs">
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                              <p className="text-muted-foreground text-[11px]">
-                                WhatsApp vinculado automáticamente: <span className="font-bold text-foreground">+{country + number}</span>
-                              </p>
-                            </div>
-                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
-                              Activo
-                            </span>
+                              )
+                            )}
                           </div>
 
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            {/* Instagram */}
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                <Instagram className="h-3.5 w-3.5 text-pink-600" /> Instagram
-                              </Label>
-                              <Input
-                                value={instagramUrl}
-                                onChange={(e) => setInstagramUrl(e.target.value)}
-                                onBlur={() => handleBlurSocial(instagramUrl, "instagram")}
-                                placeholder="Usuario o enlace completo"
-                                className="bg-transparent text-sm h-10 w-full rounded-lg"
-                              />
-                              {instagramUrl.trim() && (
-                                store && !canUsePremiumBioFeatures(store) ? (
-                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                    <span className="flex items-center gap-1">
-                                      <Lock className="h-3 w-3" /> Color personalizado
-                                    </span>
-                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                    <input
-                                      type="color"
-                                      value={instagramBgColor || "#E1306C"}
-                                      onChange={(e) => setInstagramBgColor(e.target.value)}
-                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                    />
-                                    <span className="text-[10px] font-mono truncate flex-1">{instagramBgColor || "Color de botón"}</span>
-                                    {instagramBgColor && (
-                                      <button type="button" onClick={() => setInstagramBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                    )}
-                                  </div>
-                                )
-                              )}
-                            </div>
+                          {/* TikTok */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold flex items-center gap-1.5">
+                              <svg className="h-3.5 w-3.5 fill-current text-foreground dark:text-white" viewBox="0 0 24 24">
+                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .8.11V9.4a6.27 6.27 0 0 0-3.11 0A6.33 6.33 0 0 0 2 15.68a6.32 6.32 0 0 0 10.4 4.84 6.26 6.26 0 0 0 1.95-4.52V8.82a8.27 8.27 0 0 0 5.24 1.86V7.28a4.89 4.89 0 0 1-3.11-.59z" />
+                              </svg>
+                              TikTok
+                            </Label>
+                            <Input
+                              value={tiktokUrl}
+                              onChange={(e) => setTikTokUrl(e.target.value)}
+                              onBlur={() => handleBlurSocial(tiktokUrl, "tiktok")}
+                              placeholder="Usuario o enlace completo"
+                              className="bg-transparent text-sm h-10 w-full rounded-lg"
+                            />
+                            {tiktokUrl.trim() && (
+                              store && !canUsePremiumBioFeatures(store) ? (
+                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                  <span className="flex items-center gap-1">
+                                    <Lock className="h-3 w-3" /> Color personalizado
+                                  </span>
+                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
+                                  <input
+                                    type="color"
+                                    value={tiktokBgColor || "#010101"}
+                                    onChange={(e) => setTiktokBgColor(e.target.value)}
+                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                  />
+                                  <span className="text-[10px] font-mono truncate flex-1">{tiktokBgColor || "Color de botón"}</span>
+                                  {tiktokBgColor && (
+                                    <button type="button" onClick={() => setTiktokBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                  )}
+                                </div>
+                              )
+                            )}
+                          </div>
 
-                            {/* Facebook */}
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                <Facebook className="h-3.5 w-3.5 text-blue-600" /> Facebook
-                              </Label>
-                              <Input
-                                value={facebookUrl}
-                                onChange={(e) => setFacebookUrl(e.target.value)}
-                                onBlur={() => handleBlurSocial(facebookUrl, "facebook")}
-                                placeholder="Usuario o enlace completo"
-                                className="bg-transparent text-sm h-10 w-full rounded-lg"
-                              />
-                              {facebookUrl.trim() && (
-                                store && !canUsePremiumBioFeatures(store) ? (
-                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                    <span className="flex items-center gap-1">
-                                      <Lock className="h-3 w-3" /> Color personalizado
-                                    </span>
-                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                    <input
-                                      type="color"
-                                      value={facebookBgColor || "#1877f2"}
-                                      onChange={(e) => setFacebookBgColor(e.target.value)}
-                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                    />
-                                    <span className="text-[10px] font-mono truncate flex-1">{facebookBgColor || "Color de botón"}</span>
-                                    {facebookBgColor && (
-                                      <button type="button" onClick={() => setFacebookBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                    )}
-                                  </div>
-                                )
-                              )}
-                            </div>
-
-                            {/* TikTok */}
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                <svg className="h-3.5 w-3.5 fill-current text-foreground dark:text-white" viewBox="0 0 24 24">
-                                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .8.11V9.4a6.27 6.27 0 0 0-3.11 0A6.33 6.33 0 0 0 2 15.68a6.32 6.32 0 0 0 10.4 4.84 6.26 6.26 0 0 0 1.95-4.52V8.82a8.27 8.27 0 0 0 5.24 1.86V7.28a4.89 4.89 0 0 1-3.11-.59z" />
-                                </svg>
-                                TikTok
-                              </Label>
-                              <Input
-                                value={tiktokUrl}
-                                onChange={(e) => setTikTokUrl(e.target.value)}
-                                onBlur={() => handleBlurSocial(tiktokUrl, "tiktok")}
-                                placeholder="Usuario o enlace completo"
-                                className="bg-transparent text-sm h-10 w-full rounded-lg"
-                              />
-                              {tiktokUrl.trim() && (
-                                store && !canUsePremiumBioFeatures(store) ? (
-                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                    <span className="flex items-center gap-1">
-                                      <Lock className="h-3 w-3" /> Color personalizado
-                                    </span>
-                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                    <input
-                                      type="color"
-                                      value={tiktokBgColor || "#010101"}
-                                      onChange={(e) => setTiktokBgColor(e.target.value)}
-                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                    />
-                                    <span className="text-[10px] font-mono truncate flex-1">{tiktokBgColor || "Color de botón"}</span>
-                                    {tiktokBgColor && (
-                                      <button type="button" onClick={() => setTiktokBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                    )}
-                                  </div>
-                                )
-                              )}
-                            </div>
-
-                            {/* LinkedIn */}
-                            <div className="space-y-1.5">
-                              <Label className="text-xs font-semibold flex items-center gap-1.5">
-                                <Linkedin className="h-3.5 w-3.5 text-[#0077b5]" /> LinkedIn
-                              </Label>
-                              <Input
-                                value={linkedinUrl}
-                                onChange={(e) => setLinkedinUrl(e.target.value)}
-                                onBlur={() => handleBlurSocial(linkedinUrl, "linkedin")}
-                                placeholder="Usuario o enlace completo"
-                                className="bg-transparent text-sm h-10 w-full rounded-lg"
-                              />
-                              {linkedinUrl.trim() && (
-                                store && !canUsePremiumBioFeatures(store) ? (
-                                  <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                    <span className="flex items-center gap-1">
-                                      <Lock className="h-3 w-3" /> Color personalizado
-                                    </span>
-                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                    <input
-                                      type="color"
-                                      value={linkedinBgColor || "#0077b5"}
-                                      onChange={(e) => setLinkedinBgColor(e.target.value)}
-                                      className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                    />
-                                    <span className="text-[10px] font-mono truncate flex-1">{linkedinBgColor || "Color de botón"}</span>
-                                    {linkedinBgColor && (
-                                      <button type="button" onClick={() => setLinkedinBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                    )}
-                                  </div>
-                                )
-                              )}
-                            </div>
+                          {/* LinkedIn */}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold flex items-center gap-1.5">
+                              <Linkedin className="h-3.5 w-3.5 text-[#0077b5]" /> LinkedIn
+                            </Label>
+                            <Input
+                              value={linkedinUrl}
+                              onChange={(e) => setLinkedinUrl(e.target.value)}
+                              onBlur={() => handleBlurSocial(linkedinUrl, "linkedin")}
+                              placeholder="Usuario o enlace completo"
+                              className="bg-transparent text-sm h-10 w-full rounded-lg"
+                            />
+                            {linkedinUrl.trim() && (
+                              store && !canUsePremiumBioFeatures(store) ? (
+                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
+                                  <span className="flex items-center gap-1">
+                                    <Lock className="h-3 w-3" /> Color personalizado
+                                  </span>
+                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
+                                  <input
+                                    type="color"
+                                    value={linkedinBgColor || "#0077b5"}
+                                    onChange={(e) => setLinkedinBgColor(e.target.value)}
+                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                  />
+                                  <span className="text-[10px] font-mono truncate flex-1">{linkedinBgColor || "Color de botón"}</span>
+                                  {linkedinBgColor && (
+                                    <button type="button" onClick={() => setLinkedinBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
+                                  )}
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
+                      </div>
 
-                        {/* Enlaces personalizados */}
-                        <div className="space-y-3 border-t border-border/40 pt-4">
-                          <Label className="font-semibold text-xs text-foreground uppercase tracking-wider block opacity-70">Enlaces Adicionales</Label>
-                          <div className="flex flex-col gap-4 bg-muted/[0.04] p-4 rounded-xl border border-border/40">
-                            <div className="flex flex-col sm:flex-row gap-3 items-end">
-                              <div className="flex-1 w-full space-y-1">
-                                <Label className="text-xs text-muted-foreground font-medium">Texto del Botón</Label>
-                                <Input
-                                  value={newLinkLabel}
-                                  onChange={(e) => setNewLinkLabel(e.target.value)}
-                                  placeholder="Ej: Catálogo Mayorista PDF 📄"
-                                  className="h-9 bg-transparent rounded-lg"
-                                />
-                              </div>
-                              <div className="flex-[2] w-full space-y-1">
-                                <Label className="text-xs text-muted-foreground font-medium">Enlace (URL)</Label>
-                                <Input
-                                  value={newLinkUrl}
-                                  onChange={(e) => setNewLinkUrl(e.target.value)}
-                                  placeholder="Ej: miweb.com/catalogo.pdf"
-                                  className="h-9 bg-transparent rounded-lg"
-                                />
-                              </div>
+                      {/* Enlaces personalizados */}
+                      <div className="space-y-3 border-t border-border/40 pt-4">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Enlaces Adicionales</Label>
+                        <div className="flex flex-col gap-4 bg-muted/[0.03] p-4 rounded-xl border border-border/40">
+                          <div className="flex flex-col sm:flex-row gap-3 items-end">
+                            <div className="flex-1 w-full space-y-1">
+                              <Label className="text-xs text-muted-foreground font-medium">Texto del Botón</Label>
+                              <Input
+                                value={newLinkLabel}
+                                onChange={(e) => setNewLinkLabel(e.target.value)}
+                                placeholder="Ej: Catálogo Mayorista PDF 📄"
+                                className="h-9 bg-transparent rounded-lg text-sm"
+                              />
                             </div>
-                            
-                            <div className="flex flex-col sm:flex-row gap-4 items-end justify-between border-t border-border/20 pt-3">
-                              <div className="grid grid-cols-2 gap-3 w-full sm:max-w-md">
-                                <div className="space-y-1">
-                                  <Label className="text-[10px] text-muted-foreground font-semibold">Color de Fondo (Opcional)</Label>
-                                  <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-9">
-                                    <input
-                                      type="color"
-                                      value={newLinkBgColor || "#000000"}
-                                      onChange={(e) => setNewLinkBgColor(e.target.value)}
-                                      className="h-6 w-6 rounded-md cursor-pointer border shrink-0"
-                                    />
-                                    <span className="text-[10px] font-mono truncate">
-                                      {newLinkBgColor || "Por defecto"}
-                                    </span>
-                                    {newLinkBgColor && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setNewLinkBgColor("")}
-                                        className="text-[9px] text-destructive hover:underline ml-auto font-bold pr-1"
-                                      >
-                                        x
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1">
-                                  <Label className="text-[10px] text-muted-foreground font-semibold">Color de Texto (Opcional)</Label>
-                                  <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-9">
-                                    <input
-                                      type="color"
-                                      value={newLinkTextColor || "#ffffff"}
-                                      onChange={(e) => setNewLinkTextColor(e.target.value)}
-                                      className="h-6 w-6 rounded-md cursor-pointer border shrink-0"
-                                    />
-                                    <span className="text-[10px] font-mono truncate">
-                                      {newLinkTextColor || "Por defecto"}
-                                    </span>
-                                    {newLinkTextColor && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setNewLinkTextColor("")}
-                                        className="text-[9px] text-destructive hover:underline ml-auto font-bold pr-1"
-                                      >
-                                        x
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <Button
-                                onClick={() => {
-                                  if (store && customLinks.length >= getBioLinksLimit(store)) {
-                                    toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces personalizados. Sube de plan para agregar más.`);
-                                    return;
-                                  }
-                                  if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
-                                    toast.error("Ingresa el título y el enlace");
-                                    return;
-                                  }
-                                  setCustomLinks([
-                                    ...customLinks,
-                                    {
-                                      label: newLinkLabel.trim(),
-                                      url: newLinkUrl.trim(),
-                                      bgColor: newLinkBgColor || undefined,
-                                      textColor: newLinkTextColor || undefined,
-                                    },
-                                  ]);
-                                  setNewLinkLabel("");
-                                  setNewLinkUrl("");
-                                  setNewLinkBgColor("");
-                                  setNewLinkTextColor("");
-                                  toast.success("Enlace personalizado agregado");
-                                }}
-                                type="button"
-                                className="h-9 font-bold px-5 w-full sm:w-auto cursor-pointer rounded-lg text-xs"
-                              >
-                                <Plus className="h-3.5 w-3.5 mr-1" /> Añadir botón
-                              </Button>
+                            <div className="flex-[2] w-full space-y-1">
+                              <Label className="text-xs text-muted-foreground font-medium">Enlace (URL)</Label>
+                              <Input
+                                value={newLinkUrl}
+                                onChange={(e) => setNewLinkUrl(e.target.value)}
+                                placeholder="Ej: miweb.com/catalogo.pdf"
+                                className="h-9 bg-transparent rounded-lg text-sm"
+                              />
                             </div>
                           </div>
-
-                          {store && store.plan === "semilla" && (
-                            <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                              <Crown className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                              <div className="space-y-0.5">
-                                <p className="font-bold">Límite del Plan Semilla</p>
-                                <p>Puedes agregar un máximo de 5 enlaces personalizados en el plan gratuito. Actualmente tienes {customLinks.length}/5 creados.</p>
-                              </div>
-                            </div>
-                          )}
                           
-                          <div className="space-y-2 pt-1">
-                            {customLinks.length === 0 ? (
-                              <p className="text-xs text-muted-foreground italic py-1 pl-1">No has agregado enlaces personalizados aún.</p>
-                            ) : (
-                              customLinks.map((link, idx) => (
-                                <div key={idx} className="flex flex-col gap-2.5 p-3 rounded-xl border bg-card text-xs shadow-sm">
-                                  <div className="flex items-start justify-between gap-3">
-                                    <div className="min-w-0 flex-1">
-                                      <p className="font-bold text-foreground truncate">{link.label}</p>
-                                      <p className="font-mono text-[10px] text-muted-foreground truncate">{link.url}</p>
-                                    </div>
-                                    <Button
-                                      onClick={() => { setCustomLinks(customLinks.filter((_, i) => i !== idx)); toast.success("Enlace eliminado"); }}
-                                      variant="ghost"
-                                      className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-lg"
+                          <div className="flex flex-col sm:flex-row gap-4 items-end justify-between border-t border-border/20 pt-3">
+                            <div className="grid grid-cols-2 gap-3 w-full sm:max-w-md">
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground font-semibold">Color de Fondo (Opcional)</Label>
+                                <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-9">
+                                  <input
+                                    type="color"
+                                    value={newLinkBgColor || "#000000"}
+                                    onChange={(e) => setNewLinkBgColor(e.target.value)}
+                                    className="h-6 w-6 rounded-md cursor-pointer border shrink-0"
+                                  />
+                                  <span className="text-[10px] font-mono truncate text-muted-foreground">
+                                    {newLinkBgColor || "Por defecto"}
+                                  </span>
+                                  {newLinkBgColor && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setNewLinkBgColor("")}
+                                      className="text-[9px] text-destructive hover:underline ml-auto font-bold pr-1 font-sans"
                                     >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground font-semibold">Color de Texto (Opcional)</Label>
+                                <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-9">
+                                  <input
+                                    type="color"
+                                    value={newLinkTextColor || "#ffffff"}
+                                    onChange={(e) => setNewLinkTextColor(e.target.value)}
+                                    className="h-6 w-6 rounded-md cursor-pointer border shrink-0"
+                                  />
+                                  <span className="text-[10px] font-mono truncate text-muted-foreground">
+                                    {newLinkTextColor || "Por defecto"}
+                                  </span>
+                                  {newLinkTextColor && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setNewLinkTextColor("")}
+                                      className="text-[9px] text-destructive hover:underline ml-auto font-bold pr-1 font-sans"
+                                    >
+                                      ✕
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => {
+                                if (store && customLinks.length >= getBioLinksLimit(store)) {
+                                  toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces personalizados. Sube de plan para agregar más.`);
+                                  return;
+                                }
+                                if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
+                                  toast.error("Ingresa el título y el enlace");
+                                  return;
+                                }
+                                setCustomLinks([
+                                  ...customLinks,
+                                  {
+                                    label: newLinkLabel.trim(),
+                                    url: newLinkUrl.trim(),
+                                    bgColor: newLinkBgColor || undefined,
+                                    textColor: newLinkTextColor || undefined,
+                                  },
+                                ]);
+                                setNewLinkLabel("");
+                                setNewLinkUrl("");
+                                setNewLinkBgColor("");
+                                setNewLinkTextColor("");
+                                toast.success("Enlace personalizado agregado");
+                              }}
+                              type="button"
+                              className="h-9 font-bold px-5 w-full sm:w-auto cursor-pointer rounded-lg text-xs"
+                            >
+                              <Plus className="h-3.5 w-3.5 mr-1" /> Añadir botón
+                            </Button>
+                          </div>
+                        </div>
+
+                        {store && store.plan === "semilla" && (
+                          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+                            <Crown className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                            <div className="space-y-0.5">
+                              <p className="font-bold">Límite del Plan Semilla</p>
+                              <p>Puedes agregar un máximo de 5 enlaces personalizados en el plan gratuito. Actualmente tienes {customLinks.length}/5 creados.</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="space-y-2 pt-1">
+                          {customLinks.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic py-1 pl-1">No has agregado enlaces personalizados aún.</p>
+                          ) : (
+                            customLinks.map((link, idx) => (
+                              <div key={idx} className="flex flex-col gap-2.5 p-3 rounded-xl border bg-card text-xs shadow-sm">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-foreground truncate">{link.label}</p>
+                                    <p className="font-mono text-[10px] text-muted-foreground truncate">{link.url}</p>
                                   </div>
-                                  
-                                  {/* Custom color picker panel on the link item itself */}
-                                  {store && !canUsePremiumBioFeatures(store) ? (
-                                    <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400">
-                                      <span className="flex items-center gap-1">
-                                        <Lock className="h-3.5 w-3.5" /> Colores personalizados por botón
-                                      </span>
-                                      <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                    </div>
-                                  ) : (
-                                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/40">
+                                  <Button
+                                    onClick={() => { setCustomLinks(customLinks.filter((_, i) => i !== idx)); toast.success("Enlace eliminado"); }}
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-lg"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                
+                                {store && !canUsePremiumBioFeatures(store) ? (
+                                  <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400">
+                                    <span className="flex items-center gap-1">
+                                      <Lock className="h-3.5 w-3.5" /> Colores personalizados por botón
+                                    </span>
+                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
+                                  </div>
+                                ) : (
+                                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/40">
                                     <div className="space-y-1">
-                                      <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Fondo de este Botón</span>
+                                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Fondo de este Botón</span>
                                       <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
                                         <input
                                           type="color"
@@ -1429,7 +1149,7 @@ function LinkBioPage() {
                                               updated[idx] = item;
                                               setCustomLinks(updated);
                                             }}
-                                            className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1"
+                                            className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1 font-sans"
                                           >
                                             Reset
                                           </button>
@@ -1438,7 +1158,7 @@ function LinkBioPage() {
                                     </div>
 
                                     <div className="space-y-1">
-                                      <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">Texto de este Botón</span>
+                                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Texto de este Botón</span>
                                       <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
                                         <input
                                           type="color"
@@ -1461,7 +1181,7 @@ function LinkBioPage() {
                                               updated[idx] = item;
                                               setCustomLinks(updated);
                                             }}
-                                            className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1"
+                                            className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1 font-sans"
                                           >
                                             Reset
                                           </button>
@@ -1469,104 +1189,328 @@ function LinkBioPage() {
                                       </div>
                                     </div>
                                   </div>
-                                  )}
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        </div>
-
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ──────────────── 4. DIRECCIÓN Y UBICACIÓN GEOGRÁFICA ──────────────── */}
-                  <div className="border border-border/40 rounded-xl overflow-hidden bg-card/25 shadow-sm transition-all duration-300">
-                    <button
-                      type="button"
-                      onClick={() => setActiveAccordion(activeAccordion === "location" ? "" : "location")}
-                      className={cn(
-                        "w-full flex items-center justify-between p-4 font-bold text-sm text-foreground hover:bg-muted/10 transition-colors text-left",
-                        activeAccordion === "location" && "bg-muted/5 border-b border-border/20"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-rose-500" />
-                        <span>4. Dirección y Ubicación Física</span>
-                      </div>
-                      <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", activeAccordion === "location" ? "rotate-180" : "")} />
-                    </button>
-                    <div className={cn("grid transition-all duration-300 ease-in-out", activeAccordion === "location" ? "grid-rows-[1fr] opacity-100 p-4 bg-card/10" : "grid-rows-[0fr] opacity-0 overflow-hidden")}>
-                      <div className="overflow-hidden space-y-4">
-                        
-                        <div className="space-y-1.5 relative">
-                          <Label className="text-xs text-muted-foreground font-semibold">Dirección Comercial del Local</Label>
-                          <div className="relative">
-                            <Input
-                              value={locationAddress}
-                              onChange={(e) => setLocationAddress(e.target.value)}
-                              placeholder="Escribe la dirección física comercial..."
-                              className="bg-transparent rounded-lg pr-9 text-xs"
-                            />
-                            {loadingSuggestions && (
-                              <div className="absolute right-3 top-3 h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                            )}
-                          </div>
-                          
-                          {suggestions.length > 0 && (
-                            <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border/80 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-border/40">
-                              {suggestions.map((sug, idx) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => handleSelectSuggestion(sug)}
-                                  className="w-full text-left px-3 py-2 text-[11px] hover:bg-muted transition-colors text-foreground truncate block font-medium"
-                                  title={sug.display_name}
-                                >
-                                  {sug.display_name}
-                                </button>
-                              ))}
-                            </div>
+                                )}
+                              </div>
+                            ))
                           )}
                         </div>
+                      </div>
+                    </TabsContent>
 
-                        <details className="text-xs text-muted-foreground border border-border/40 rounded-lg p-2 bg-muted/[0.04] cursor-pointer group animate-in fade-in">
-                          <summary className="font-semibold select-none list-none flex items-center justify-between">
-                            <span>Coordenadas de Ubicación (Avanzado)</span>
-                            <span className="text-[10px] group-open:rotate-180 transition-transform">▼</span>
-                          </summary>
-                          <div className="grid grid-cols-2 gap-3 mt-3">
-                            <div className="space-y-1">
-                              <Label className="text-[10px]">Latitud</Label>
-                              <Input value={locationLat || ""} readOnly placeholder="No asignada" className="h-8 bg-muted/40 text-muted-foreground text-xs" />
-                            </div>
-                            <div className="space-y-1">
-                              <Label className="text-[10px]">Longitud</Label>
-                              <Input value={locationLng || ""} readOnly placeholder="No asignada" className="h-8 bg-muted/40 text-muted-foreground text-xs" />
-                            </div>
+                    {/* ──────────────── TAB 2: APARIENCIA ──────────────── */}
+                    <TabsContent value="apariencia" className="space-y-5 mt-2 animate-in fade-in duration-300">
+                      
+                      {/* Perfil y Portada */}
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Fotos del Bio-Link</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground font-bold">Foto de Perfil Especial</Label>
+                            <ImageUploadGuided
+                              value={bioLogo}
+                              onChange={setBioLogo}
+                              spec={bioLogoSpec}
+                              label="Subir foto de perfil"
+                            />
                           </div>
-                        </details>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground font-bold">Foto de Portada Especial</Label>
+                            <ImageUploadGuided
+                              value={bioBanner}
+                              onChange={setBioBanner}
+                              spec={bioBannerSpec}
+                              label="Subir foto de portada"
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs text-muted-foreground">Posiciona tu negocio en el mapa:</Label>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
-                                  <HelpCircle className="h-3 w-3" />
-                                </button>
-                              </TooltipTrigger>
-                              <TooltipContent className="max-w-xs font-normal text-left">
-                                Haz clic en el mapa para colocar el pin o arrastra el marcador rojo para afinar las coordenadas de tu local.
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                          <div ref={mapRef} className="h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden" />
+                      {/* Tema de fondo */}
+                      <div className="space-y-3 border-t border-border/40 pt-4">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Tema de Fondo</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                          {[
+                            { id: "default", name: "Plantilla", bg: "bg-slate-200 dark:bg-slate-800" },
+                            { id: "dark", name: "Oscuro", bg: "bg-zinc-950" },
+                            { id: "sunset", name: "Atardecer", bg: "bg-gradient-to-r from-indigo-950 via-purple-950 to-pink-900" },
+                            { id: "forest", name: "Bosque", bg: "bg-gradient-to-r from-emerald-950 via-teal-950 to-emerald-950" },
+                            { id: "neon", name: "Neón", bg: "bg-black border border-pink-500/25" },
+                            { id: "glass", name: "Efecto Vidrio", bg: "bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-white/5" },
+                            { id: "pastel", name: "Pastel", bg: "bg-gradient-to-r from-yellow-50 via-pink-100 to-purple-100 text-slate-800" },
+                            { id: "ocean", name: "Océano", bg: "bg-gradient-to-r from-cyan-950 via-blue-950 to-slate-900" },
+                            { id: "custom", name: "Personalizado", bg: "bg-gradient-to-r from-primary/20 via-card to-secondary/20 border border-primary/25" },
+                          ].map((t) => {
+                            const isSelected = bioTheme === t.id;
+                            return (
+                              <button
+                                key={t.id}
+                                type="button"
+                                onClick={() => setBioTheme(t.id)}
+                                className={cn(
+                                  "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all hover:scale-[1.02] gap-1",
+                                  isSelected 
+                                    ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm" 
+                                    : "border-border bg-card/40"
+                                )}
+                              >
+                                <div className={cn("h-4 w-full rounded-md shadow-inner", t.bg)} />
+                                <span className="text-[10px] font-bold text-foreground truncate w-full mt-1">{t.name}</span>
+                              </button>
+                            );
+                          })}
                         </div>
 
+                        {/* Controles de fondo personalizado si bioTheme === 'custom' */}
+                        {bioTheme === "custom" && (
+                          <div className="mt-3 bg-muted/[0.04] border border-border/40 p-4 rounded-xl space-y-4 animate-in slide-in-from-top-2 duration-300">
+                            <div className="flex rounded-lg bg-muted/20 p-1 max-w-xs">
+                              <button
+                                type="button"
+                                onClick={() => setActiveBgTab("color")}
+                                className={cn(
+                                  "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center",
+                                  activeBgTab === "color" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                Color Sólido
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (store && !canUsePremiumBioFeatures(store)) {
+                                    toast.error("Subir una imagen de fondo personalizada requiere el Plan Emprendedor o superior.");
+                                    return;
+                                  }
+                                  setActiveBgTab("image");
+                                }}
+                                className={cn(
+                                  "flex-1 px-3 py-1.5 rounded-md text-xs font-bold transition-all text-center flex items-center justify-center gap-1",
+                                  activeBgTab === "image" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                                )}
+                              >
+                                {store && !canUsePremiumBioFeatures(store) && <Lock className="h-3 w-3 text-amber-500 shrink-0" />}
+                                Imagen de Fondo
+                              </button>
+                            </div>
+
+                            {activeBgTab === "color" ? (
+                              <div className="space-y-1.5 max-w-xs">
+                                <Label className="text-xs font-semibold">Elige el color de fondo</Label>
+                                <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                                  <input
+                                    type="color"
+                                    value={bioBgColor || "#0f172a"}
+                                    onChange={(e) => setBioBgColor(e.target.value)}
+                                    className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                  />
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-[10px] text-muted-foreground leading-none">Fondo</span>
+                                    <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
+                                      {bioBgColor || "#0f172a"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold">Sube una imagen de fondo vertical</Label>
+                                <ImageUploadGuided
+                                  value={bioBgImage}
+                                  onChange={setBioBgImage}
+                                  spec={bioBgImageSpec}
+                                  label="Subir imagen de fondo"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
+
+                      {/* Diseño de Botones */}
+                      <div className="space-y-3 border-t border-border/40 pt-4">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Diseño de Botones</Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                          {[
+                            { id: "pill-solid", name: "Píldora Relleno", pClass: "rounded-full bg-primary border-primary text-white" },
+                            { id: "pill-outline", name: "Píldora Contorno", pClass: "rounded-full bg-transparent border-primary text-primary" },
+                            { id: "pill-glass", name: "Píldora Vidrio", pClass: "rounded-full bg-white/10 border-white/20 text-foreground" },
+                            { id: "rounded-solid", name: "Redondeado Relleno", pClass: "rounded-md bg-primary border-primary text-white" },
+                            { id: "rounded-outline", name: "Redondeado Contorno", pClass: "rounded-md bg-transparent border-primary text-primary" },
+                            { id: "rounded-glass", name: "Redondeado Vidrio", pClass: "rounded-md bg-white/10 border-white/20 text-foreground" },
+                            { id: "sharp-solid", name: "Recto Relleno", pClass: "rounded-none bg-primary border-primary text-white" },
+                            { id: "sharp-outline", name: "Recto Contorno", pClass: "rounded-none bg-transparent border-primary text-primary" },
+                            { id: "sharp-glass", name: "Recto Vidrio", pClass: "rounded-none bg-white/10 border-white/20 text-foreground" },
+                          ].map((style) => {
+                            const isSelected = bioButtonStyle === style.id;
+                            return (
+                              <button
+                                key={style.id}
+                                type="button"
+                                onClick={() => {
+                                  if (store && !canUsePremiumBioFeatures(store) && style.id !== "pill-solid") {
+                                    toast.error("Los estilos de botón premium requieren el Plan Emprendedor o superior.");
+                                    return;
+                                  }
+                                  setBioButtonStyle(style.id);
+                                }}
+                                className={cn(
+                                  "relative flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all hover:scale-[1.02] gap-1.5",
+                                  isSelected 
+                                    ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm" 
+                                    : "border-border bg-card/40"
+                                )}
+                              >
+                                {store && !canUsePremiumBioFeatures(store) && style.id !== "pill-solid" && (
+                                  <Lock className="absolute top-1 right-1 h-3 w-3 text-amber-500 bg-background/80 rounded-full p-0.5" />
+                                )}
+                                <div className={cn("h-5 w-full border text-[5px] font-black flex items-center justify-center tracking-widest", style.pClass)}>
+                                  LINK
+                                </div>
+                                <span className="text-[9px] font-bold text-foreground truncate w-full">{style.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Colores Personalizados */}
+                      <div className="space-y-3 border-t border-border/40 pt-4">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70 flex items-center gap-1.5">
+                          Colores de Botón Personalizados
+                          {store && !canUsePremiumBioFeatures(store) && <Lock className="h-3 w-3 text-amber-500" />}
+                        </Label>
+                        {store && !canUsePremiumBioFeatures(store) ? (
+                          <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                            <p className="font-bold flex items-center gap-1">
+                              <Crown className="h-3.5 w-3.5 text-amber-500" /> Característica Premium
+                            </p>
+                            <p>Personalizar libremente el color del botón o del texto requiere el Plan Emprendedor o superior. En el Plan Semilla se utiliza el color de tu marca por defecto.</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs font-semibold">Fondo del Botón</Label>
+                                {bioButtonColor && (
+                                  <button type="button" onClick={() => setBioButtonColor("")} className="text-[10px] text-destructive hover:underline font-semibold font-sans">
+                                    Restablecer
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                                <input
+                                  type="color"
+                                  value={bioButtonColor || "#000000"}
+                                  onChange={(e) => setBioButtonColor(e.target.value)}
+                                  className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-[10px] text-muted-foreground leading-none">Fondo</span>
+                                  <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
+                                    {bioButtonColor || "Color por defecto"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs font-semibold">Texto del Botón</Label>
+                                {bioButtonTextColor && (
+                                  <button type="button" onClick={() => setBioButtonTextColor("")} className="text-[10px] text-destructive hover:underline font-semibold font-sans">
+                                    Restablecer
+                                  </button>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 border rounded-lg p-1.5 bg-muted/10">
+                                <input
+                                  type="color"
+                                  value={bioButtonTextColor || "#ffffff"}
+                                  onChange={(e) => setBioButtonTextColor(e.target.value)}
+                                  className="h-8 w-8 rounded-md cursor-pointer border shrink-0"
+                                />
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-[10px] text-muted-foreground leading-none">Texto</span>
+                                  <span className="text-xs font-mono font-medium truncate uppercase mt-0.5">
+                                    {bioButtonTextColor || "Color por defecto"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                    </TabsContent>
+
+                    {/* ──────────────── TAB 3: UBICACIÓN ──────────────── */}
+                    <TabsContent value="ubicacion" className="space-y-5 mt-2 animate-in fade-in duration-300">
+                      
+                      <div className="space-y-1.5 relative">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Dirección Comercial del Local</Label>
+                        <div className="relative">
+                          <Input
+                            value={locationAddress}
+                            onChange={(e) => setLocationAddress(e.target.value)}
+                            placeholder="Escribe la dirección física comercial..."
+                            className="bg-transparent rounded-lg pr-9 text-sm h-10 w-full"
+                          />
+                          {loadingSuggestions && (
+                            <div className="absolute right-3 top-3 h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                          )}
+                        </div>
+                        
+                        {suggestions.length > 0 && (
+                          <div className="absolute z-50 left-0 right-0 mt-1 bg-card border border-border/85 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-border/40">
+                            {suggestions.map((sug, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleSelectSuggestion(sug)}
+                                className="w-full text-left px-3 py-2 text-[11px] hover:bg-muted transition-colors text-foreground truncate block font-medium"
+                                title={sug.display_name}
+                              >
+                                {sug.display_name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <details className="text-xs text-muted-foreground border border-border/40 rounded-lg p-2 bg-muted/[0.04] cursor-pointer group animate-in fade-in">
+                        <summary className="font-semibold select-none list-none flex items-center justify-between">
+                          <span>Coordenadas de Ubicación (Avanzado)</span>
+                          <span className="text-[10px] group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Latitud</Label>
+                            <Input value={locationLat || ""} readOnly placeholder="No asignada" className="h-8 bg-muted/40 text-muted-foreground text-xs" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Longitud</Label>
+                            <Input value={locationLng || ""} readOnly placeholder="No asignada" className="h-8 bg-muted/40 text-muted-foreground text-xs" />
+                          </div>
+                        </div>
+                      </details>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs text-muted-foreground font-semibold">Posiciona tu negocio en el mapa:</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
+                                <HelpCircle className="h-3 w-3" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs font-normal text-left">
+                              Haz clic en el mapa para colocar el pin o arrastra el marcador rojo para afinar las coordenadas de tu local.
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <div ref={mapRef} className="h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden" />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
 
                 </div>
               ) : (
@@ -1580,15 +1524,15 @@ function LinkBioPage() {
               )}
 
               {/* Save */}
-              <div className="pt-3 border-t border-border/40">
+              <div className="pt-3 border-t border-border/40 flex justify-end">
                 <Button
                   onClick={save}
                   disabled={saving}
-                  className="w-full sm:w-auto px-8 h-10 font-bold shadow-sm rounded-lg text-xs"
+                  className="w-full sm:w-auto px-10 h-11 font-bold shadow-lg shadow-primary/20 text-sm rounded-lg"
                 >
                   {saving ? (
                     <span className="flex items-center gap-2">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Guardando...
                     </span>
                   ) : (
