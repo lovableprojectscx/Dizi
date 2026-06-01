@@ -4,13 +4,27 @@ import { useApp } from "@/lib/store";
 import { PLANS } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, QrCode, Package, MessageCircle, ExternalLink, Check, Plus, Download, Sparkles, Link2, Settings, Store, HelpCircle } from "lucide-react";
+import {
+  Copy,
+  QrCode,
+  Package,
+  MessageCircle,
+  ExternalLink,
+  Check,
+  Plus,
+  Download,
+  Sparkles,
+  Link2,
+  Settings,
+  Store,
+  HelpCircle,
+  Share2,
+} from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
 import { cn } from "@/lib/utils";
-
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -37,24 +51,18 @@ function Dashboard() {
 
   const [catalogQr, setCatalogQr] = useState<string>("");
   const [bioQr, setBioQr] = useState<string>("");
-  const [copiedCatalog, setCopiedCatalog] = useState(false);
-  const [copiedBio, setCopiedBio] = useState(false);
-  const [qrType, setQrType] = useState<"catalog" | "bio">("catalog");
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [shareTab, setShareTab] = useState<"catalog" | "bio">("catalog");
 
   useEffect(() => {
     QRCode.toDataURL(catalogUrl, { width: 400, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } }).then(setCatalogQr).catch(() => {});
     QRCode.toDataURL(bioUrl, { width: 400, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } }).then(setBioQr).catch(() => {});
   }, [catalogUrl, bioUrl]);
 
-  const copyText = async (text: string, type: "catalog" | "bio") => {
+  const copyText = async (text: string) => {
     await navigator.clipboard.writeText(text);
-    if (type === "catalog") {
-      setCopiedCatalog(true);
-      setTimeout(() => setCopiedCatalog(false), 2000);
-    } else {
-      setCopiedBio(true);
-      setTimeout(() => setCopiedBio(false), 2000);
-    }
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
     toast.success("Enlace copiado");
   };
 
@@ -68,11 +76,14 @@ function Dashboard() {
   };
 
   const activeProducts = store.products.filter((p) => p.visible).length;
+  const activeQr = shareTab === "catalog" ? catalogQr : bioQr;
+  const activeUrl = shareTab === "catalog" ? catalogUrl : bioUrl;
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-10">
+    <div className="space-y-6 max-w-5xl mx-auto pb-10">
+      
       {/* Header Minimalista */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{store.name}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Panel de administración de tu catálogo</p>
@@ -118,144 +129,7 @@ function Dashboard() {
         </Card>
       )}
 
-      {/* Grid de Enlaces e Información Principal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Tarjeta de Catálogo */}
-        <Card className="border border-border/50 rounded-xl bg-card shadow-sm hover:shadow-md/5 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-          <div className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Store className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground">Catálogo de Productos</h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    Esta es la dirección pública de tu tienda en línea. Los clientes ingresan aquí para explorar tu catálogo y hacer sus pedidos.
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
-
-            {/* Fila del enlace compacta */}
-            <div className="flex items-center gap-1 bg-muted/30 rounded-lg p-1 border border-border/10">
-              <span className="text-xs text-muted-foreground truncate select-all px-2 flex-1 font-medium">
-                {catalogUrl}
-              </span>
-              <Button 
-                onClick={() => copyText(catalogUrl, "catalog")} 
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
-              >
-                {copiedCatalog ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
-              </Button>
-              <Link 
-                to="/t/$slug"
-                params={{ slug: store.slug }}
-                target="_blank"
-                className="h-8 w-8 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="px-5 py-3.5 bg-muted/[0.08] border-t border-border/30 flex items-center gap-3 justify-end">
-            <Button onClick={() => downloadQrCode("catalog")} variant="outline" size="sm" className="h-8 rounded-lg gap-1.5 font-bold text-xs border-border/50 hover:bg-muted shadow-none">
-              <QrCode className="h-3.5 w-3.5" />
-              QR
-            </Button>
-            <div className="[&>button]:h-8 [&>button]:rounded-lg [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/50 [&>button]:bg-transparent [&>button]:hover:bg-muted">
-              <CatalogPdfExportButton store={store} variant="admin" />
-            </div>
-          </div>
-        </Card>
-
-        {/* Tarjeta de Bio-Link */}
-        <Card className="border border-border/50 rounded-xl bg-card shadow-sm hover:shadow-md/5 transition-all duration-300 flex flex-col justify-between overflow-hidden">
-          <div className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Link2 className="h-4 w-4 text-purple-600" />
-                <h3 className="text-sm font-bold text-foreground">Link en Bio / Redes</h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    Página unificada y adaptada para móvil ideal para poner en la bio de Instagram/TikTok, que reúne tu catálogo, redes y ubicación comercial.
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-              <span className={cn(
-                "text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase border",
-                store.bioLinksEnabled 
-                  ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200/50" 
-                  : "text-muted-foreground bg-muted border-border/40"
-              )}>
-                {store.bioLinksEnabled ? "Activo" : "Inactivo"}
-              </span>
-            </div>
-
-            {/* Fila del enlace compacta */}
-            <div className={cn(
-              "flex items-center gap-1 bg-muted/30 rounded-lg p-1 border border-border/10",
-              !store.bioLinksEnabled && "opacity-40 pointer-events-none"
-            )}>
-              <span className="text-xs text-muted-foreground truncate select-all px-2 flex-1 font-medium">
-                {bioUrl}
-              </span>
-              <Button 
-                onClick={() => copyText(bioUrl, "bio")} 
-                disabled={!store.bioLinksEnabled}
-                variant="ghost" 
-                size="icon"
-                className="h-8 w-8 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
-              >
-                {copiedBio ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
-              </Button>
-              <Link 
-                to="/bio/$slug"
-                params={{ slug: store.slug }}
-                target="_blank"
-                className={cn(
-                  "h-8 w-8 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0",
-                  !store.bioLinksEnabled && "pointer-events-none opacity-40"
-                )}
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="px-5 py-3.5 bg-muted/[0.08] border-t border-border/30 flex items-center gap-3 justify-end">
-            <Button 
-              onClick={() => downloadQrCode("bio")} 
-              disabled={!store.bioLinksEnabled}
-              variant="outline" 
-              size="sm" 
-              className="h-8 rounded-lg gap-1.5 font-bold text-xs border-border/50 hover:bg-muted shadow-none disabled:opacity-40"
-            >
-              <QrCode className="h-3.5 w-3.5" />
-              QR
-            </Button>
-            <Button asChild size="sm" variant="default" className="h-8 rounded-lg gap-1.5 font-bold text-xs shadow-none cursor-pointer">
-              <Link to="/admin/link-bio">
-                <Settings className="h-3.5 w-3.5" />
-                Configurar
-              </Link>
-            </Button>
-          </div>
-        </Card>
-      </div>
-
-      {/* Grid de Métricas Ultra-Minimalista */}
+      {/* ── SECCIÓN 1: GRID DE MÉTRICAS (Ahora al inicio) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           icon={<Package className="h-4 w-4 text-blue-500" />}
@@ -290,65 +164,151 @@ function Dashboard() {
         />
       </div>
 
-      {/* Sección del Código QR Oficial */}
-      {(catalogQr || (bioQr && store.bioLinksEnabled)) && (
-        <Card className="overflow-hidden border border-border/50 shadow-sm bg-gradient-to-br from-card to-muted/[0.04] rounded-xl max-w-lg mx-auto w-full">
-          <CardContent className="p-6 flex flex-col items-center text-center gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center justify-center gap-1.5">
-                <h3 className="text-base font-bold text-foreground">Código QR del Negocio</h3>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    Código QR descargable para imprimir. Colócalo en tu local físico o empaques para que tus clientes lo escaneen y accedan directamente.
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </div>
+      {/* ── SECCIÓN 2: COMPARTE TU TIENDA (Widget Integrado con QR) ── */}
+      <Card className="border border-border/50 rounded-xl bg-card shadow-sm overflow-hidden">
+        <div className="p-5 sm:p-6">
+          
+          <div className="flex items-center gap-2 border-b pb-3 border-border/30 mb-5">
+            <Share2 className="h-4 w-4 text-primary" />
+            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">Comparte tu Negocio</h2>
+          </div>
 
-            {/* Selector de tipo de QR minimalista si el Bio-Link está habilitado */}
-            {store.bioLinksEnabled && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            
+            {/* LADO IZQUIERDO: Selector de Pestaña y Enlace */}
+            <div className="md:col-span-2 space-y-4">
+              
+              {/* Selector tipo Pestaña */}
               <div className="inline-flex p-0.5 bg-muted rounded-lg border border-border/10">
-                <button 
-                  onClick={() => setQrType("catalog")}
+                <button
+                  onClick={() => setShareTab("catalog")}
                   className={cn(
-                    "px-3 py-1 text-xs font-bold rounded-md transition-colors",
-                    qrType === "catalog" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    "px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5",
+                    shareTab === "catalog"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Catálogo
+                  <Store className="h-3.5 w-3.5" />
+                  Catálogo de Productos
                 </button>
-                <button 
-                  onClick={() => setQrType("bio")}
+                <button
+                  onClick={() => setShareTab("bio")}
                   className={cn(
-                    "px-3 py-1 text-xs font-bold rounded-md transition-colors",
-                    qrType === "bio" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    "px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5",
+                    shareTab === "bio"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Bio-Link
+                  <Link2 className="h-3.5 w-3.5" />
+                  Link en Bio (Redes)
                 </button>
               </div>
-            )}
 
-            {/* Imagen del QR con marco minimalista */}
-            <div className="p-2 bg-white rounded-lg border border-border/10 shadow-sm">
-              <img 
-                src={qrType === "catalog" ? catalogQr : bioQr} 
-                alt={`Código QR del ${qrType === "catalog" ? "catálogo" : "Bio-Link"}`} 
-                className="h-36 w-36 sm:h-40 sm:w-40 rounded-md" 
-              />
+              {/* Contenido Dinámico según pestaña */}
+              <div className="space-y-3">
+                {shareTab === "catalog" ? (
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">Dirección de tu Tienda Online</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Esta es la dirección pública de tu catálogo en línea. Compártela con tus clientes para que puedan explorar productos y enviarte pedidos directamente a tu WhatsApp.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground">Tu Página Unificada de Redes</p>
+                      <span className={cn(
+                        "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase border tracking-wider",
+                        store.bioLinksEnabled 
+                          ? "text-emerald-600 bg-emerald-50 border-emerald-200/50" 
+                          : "text-muted-foreground bg-muted border-border/40"
+                      )}>
+                        {store.bioLinksEnabled ? "Activo" : "Inactivo"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Una página optimizada para móvil ideal para colocar en la bio de tu Instagram, TikTok o Facebook, que reúne tu catálogo, tus redes sociales y ubicación física.
+                    </p>
+                  </div>
+                )}
+
+                {/* Caja de Enlace Integrada */}
+                <div className={cn(
+                  "flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 max-w-lg",
+                  shareTab === "bio" && !store.bioLinksEnabled && "opacity-50 select-none pointer-events-none"
+                )}>
+                  <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">{activeUrl}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      type="button"
+                      onClick={() => copyText(activeUrl)}
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
+                    >
+                      {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    </Button>
+                    <a href={activeUrl} target="_blank" rel="noopener noreferrer" className="h-7 w-7 rounded-md hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0">
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botones de acción dinámicos de pie */}
+              <div className="pt-2 flex items-center gap-2 flex-wrap">
+                {shareTab === "catalog" ? (
+                  <div className="[&>button]:h-9 [&>button]:rounded-lg [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/60 [&>button]:bg-transparent [&>button]:hover:bg-muted">
+                    <CatalogPdfExportButton store={store} variant="admin" />
+                  </div>
+                ) : (
+                  <Button asChild size="sm" variant="outline" className="h-9 rounded-lg gap-1.5 font-bold text-xs shadow-none border-border/60">
+                    <Link to="/admin/link-bio">
+                      <Settings className="h-3.5 w-3.5 text-primary" />
+                      Configurar Bio-Link
+                    </Link>
+                  </Button>
+                )}
+              </div>
+
             </div>
 
-            <Button onClick={() => downloadQrCode(qrType)} size="sm" className="rounded-lg gap-1.5 font-bold h-9 px-5 shadow-sm cursor-pointer">
-              <Download className="h-3.5 w-3.5" /> Guardar imagen QR
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+            {/* LADO DERECHO: Código QR Integrado */}
+            <div className="flex flex-col items-center justify-center p-4 bg-muted/10 border border-border/30 rounded-xl space-y-3.5">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Código QR del Negocio</span>
+              
+              {activeQr ? (
+                <div className="p-2 bg-white rounded-lg border border-border/10 shadow-sm relative group overflow-hidden">
+                  <img
+                    src={activeQr}
+                    alt={`Código QR ${shareTab === "catalog" ? "catálogo" : "Bio-Link"}`}
+                    className="h-28 w-28 sm:h-32 sm:w-32 rounded-md object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-md bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/10 text-xs text-muted-foreground text-center p-2">
+                  QR no disponible
+                </div>
+              )}
+
+              <Button
+                onClick={() => downloadQrCode(shareTab)}
+                disabled={shareTab === "bio" && !store.bioLinksEnabled}
+                size="sm"
+                variant="default"
+                className="rounded-lg gap-1.5 font-bold h-8 px-4 text-xs shadow-none disabled:opacity-40"
+              >
+                <Download className="h-3 w-3" /> Descargar QR
+              </Button>
+            </div>
+
+          </div>
+
+        </div>
+      </Card>
+
     </div>
   );
 }
@@ -403,4 +363,3 @@ function MetricCard({
     </Card>
   );
 }
-
