@@ -1540,6 +1540,17 @@ function LinkBioPage() {
                             </TooltipContent>
                           </Tooltip>
                         </div>
+                        
+                        {/* Visual Debug Panel */}
+                        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-xs font-mono text-destructive space-y-1">
+                          <p className="font-bold border-b border-destructive/20 pb-1 mb-1">Diagnóstico del Mapa (Temporal)</p>
+                          <p>Pestaña Activa: <span className="font-bold">"{activeEditTab}"</span></p>
+                          <p>Bio-Links Habilitado: <span className="font-bold">{bioLinksEnabled ? "SÍ" : "NO"}</span></p>
+                          <p>Contenedor DOM (mapRef): <span className="font-bold">{mapRef.current ? "Encontrado en DOM" : "NULO / No montado"}</span></p>
+                          <p>Instancia Leaflet: <span className="font-bold">{mapInstance.current ? "Inicializada" : "NULA / No creada"}</span></p>
+                          <p>Coordenadas: Lat={locationLat || "N/A"}, Lng={locationLng || "N/A"}</p>
+                        </div>
+
                         <div ref={mapRef} className="h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden" />
                       </div>
                     </TabsContent>
