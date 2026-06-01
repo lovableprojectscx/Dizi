@@ -79,7 +79,6 @@ function AdminLayout() {
           <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t flex items-center justify-around px-2 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
             <MobileNavItem to="/admin/dashboard" icon={Home} label="Inicio" />
             <MobileNavItem to="/admin/productos" icon={Package} label="Productos" />
-            <MobileNavItem to="/admin/categorias" icon={Tag} label="Categorias" />
             <MobileNavItem to="/admin/link-bio" icon={Link2} label="Bio-Link" />
             {store?.libroReclamacionesActivo && (
               <MobileNavItem to="/admin/reclamaciones" icon={ClipboardList} label="Reclamos" />

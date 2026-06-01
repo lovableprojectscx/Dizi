@@ -16,9 +16,11 @@ import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
@@ -161,6 +164,7 @@ function ProductsPage() {
   const del = useApp((s) => s.deleteProduct);
   const toggle = useApp((s) => s.toggleProductVisible);
   const upsertCategory = useApp((s) => s.upsertCategory);
+  const deleteCategory = useApp((s) => s.deleteCategory);
 
   const plan = PLANS[store.plan];
   const effectivePlan = PLANS[getEffectivePlan(store)];
@@ -175,14 +179,41 @@ function ProductsPage() {
 
   const reachedLimit = store.products.filter(p => !p.isSample).length >= effectiveLimit;
 
+  // Tabs routing logic
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("tab") === "categorias" ? "categorias" : "productos";
+    }
+    return "productos";
+  });
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", val);
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+  };
+
+  // Products UI state
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product>(empty());
   const [priceInput, setPriceInput] = useState("");
   const [originalPriceInput, setOriginalPriceInput] = useState("");
 
+  // Categories UI state
+  const [newCatName, setNewCatName] = useState("");
+  const [isAddingCat, setIsAddingCat] = useState(false);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [editCatId, setEditCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [isEditingCat, setIsEditingCat] = useState(false);
+
   const openNew = () => {
     if (reachedLimit) {
-      toast.error("Has alcanzado el limite de tu plan");
+      toast.error("Has alcanzado el límite de tu plan");
       return;
     }
     setEditing({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
@@ -190,12 +221,14 @@ function ProductsPage() {
     setOriginalPriceInput("");
     setOpen(true);
   };
+
   const openEdit = (p: Product) => {
     setEditing(p);
     setPriceInput(p.price === 0 ? "" : p.price.toString());
     setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
     setOpen(true);
   };
+
   const save = () => {
     const cleanPrice = priceInput.replace(",", ".");
     const cleanOriginalPrice = originalPriceInput.replace(",", ".");
@@ -217,7 +250,7 @@ function ProductsPage() {
       ...editing,
       price: parsedPrice,
       originalPrice: editing.isOnSale ? parsedOriginalPrice : undefined,
-      isSample: false, // Deja de ser muestra al editarse o crearse
+      isSample: false,
     };
 
     upsert(store.id, updatedProduct);
@@ -230,7 +263,6 @@ function ProductsPage() {
     const newCat: Category = { id: crypto.randomUUID(), name };
     try {
       await upsertCategory(store.id, newCat);
-      toast.success(`Categoría "${name}" creada`);
       return newCat.id;
     } catch {
       toast.error("No se pudo crear la categoría");
@@ -238,177 +270,356 @@ function ProductsPage() {
     }
   };
 
+  const handleAddCategoryTab = async () => {
+    const trimmed = newCatName.trim();
+    if (!trimmed) return;
+    setIsAddingCat(true);
+    try {
+      await upsertCategory(store.id, { id: "", name: trimmed });
+      setNewCatName("");
+      setCatDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAddingCat(false);
+    }
+  };
+
+  const handleSaveEditCategoryTab = async (catId: string) => {
+    const trimmed = editCatName.trim();
+    if (!trimmed) return;
+    setIsEditingCat(true);
+    try {
+      await upsertCategory(store.id, { id: catId, name: trimmed });
+      setEditCatId(null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsEditingCat(false);
+    }
+  };
+
   return (
-    <div className="space-y-4 max-w-6xl">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Mis Productos</h1>
-          <p className="text-sm text-muted-foreground">
-            {store.products.filter(p => !p.isSample).length} de{" "}
-            {effectiveLimit === Infinity ? "ilimitados" : effectiveLimit} (plan {effectivePlan.name})
-            {subscriptionExpired && effectivePlan.id !== plan.id && (
-              <span className="ml-1 text-amber-600 font-semibold">
-                — suscripcion vencida, limite reducido
-              </span>
-            )}
-          </p>
-        </div>
-        <Button onClick={openNew} disabled={reachedLimit}>
-          {reachedLimit ? <Lock className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-          Nuevo Producto
-        </Button>
+    <div className="space-y-6 max-w-6xl">
+      <div>
+        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
+          Gestión de Catálogo
+        </h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
+          Organiza, crea y edita los productos y categorías de tu catálogo digital.
+        </p>
       </div>
 
-      {/* Banner: productos ocultos por vencimiento */}
-      {hiddenByExpiry > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-          <div className="text-amber-500 mt-0.5 shrink-0">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="font-semibold text-amber-800 text-sm">
-              {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto{hiddenByExpiry > 1 ? "s" : ""} en tu catalogo publico
-            </p>
-            <p className="text-sm text-amber-700 mt-0.5">
-              Tu suscripcion vencio. El plan Semilla permite hasta {effectiveLimit} productos visibles.
-              Tus productos estan guardados — renueva para mostrarlos todos de nuevo.
-            </p>
-            <a
-              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
-            >
-              Renovar plan por WhatsApp
-            </a>
-          </div>
-        </div>
-      )}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+        <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground max-w-md w-full grid grid-cols-2">
+          <TabsTrigger value="productos" className="flex items-center justify-center gap-2">
+            <Package className="h-4 w-4" />
+            <span>Productos</span>
+          </TabsTrigger>
+          <TabsTrigger value="categorias" className="flex items-center justify-center gap-2">
+            <Tag className="h-4 w-4" />
+            <span>Categorías</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tabla desktop */}
-      <div className="hidden md:block border rounded-xl bg-card overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">Foto</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Visible</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        {/* ── PRODUCTS TAB CONTENT ── */}
+        <TabsContent value="productos" className="space-y-4 mt-6">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Mis Productos</h2>
+              <p className="text-sm text-muted-foreground">
+                {store.products.filter(p => !p.isSample).length} de{" "}
+                {effectiveLimit === Infinity ? "ilimitados" : effectiveLimit} (plan {effectivePlan.name})
+                {subscriptionExpired && effectivePlan.id !== plan.id && (
+                  <span className="ml-1 text-amber-600 font-semibold">
+                    — suscripción vencida, límite reducido
+                  </span>
+                )}
+              </p>
+            </div>
+            <Button onClick={openNew} disabled={reachedLimit}>
+              {reachedLimit ? <Lock className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
+              Nuevo Producto
+            </Button>
+          </div>
+
+          {/* Banner: productos ocultos por vencimiento */}
+          {hiddenByExpiry > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+              <div className="text-amber-500 mt-0.5 shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-amber-800 text-sm">
+                  {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto{hiddenByExpiry > 1 ? "s" : ""} en tu catálogo público
+                </p>
+                <p className="text-sm text-amber-700 mt-0.5">
+                  Tu suscripción venció. El plan Semilla permite hasta {effectiveLimit} productos visibles.
+                  Tus productos están guardados — renueva para mostrarlos todos de nuevo.
+                </p>
+                <a
+                  href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+                >
+                  Renovar plan por WhatsApp
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Tabla desktop */}
+          <div className="hidden md:block border rounded-xl bg-card overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Foto</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Precio</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Visible</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {store.products.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell>
+                      {p.image ? (
+                        <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold">{formatPrice(p.price)}</span>
+                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                          <span className="text-[10px] text-muted-foreground line-through">
+                            {formatPrice(p.originalPrice)}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {store.categories.find((c) => c.id === p.categoryId)?.name ?? "sin categoría"}
+                    </TableCell>
+                    <TableCell>
+                      <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm("¿Eliminar " + p.name + "?")) del(store.id, p.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {store.products.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                      Aún no tienes productos. Crea el primero.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Cards móvil */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {store.products.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-8">
+                Aún no tienes productos. Crea el primero.
+              </p>
+            )}
             {store.products.map((p) => (
-              <TableRow key={p.id}>
-                <TableCell>
-                  {p.image ? (
-                    <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="font-medium">{p.name}</TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-bold">{formatPrice(p.price)}</span>
+              <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
+                {p.image ? (
+                  <img src={p.image} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
+                ) : (
+                  <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{p.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {store.categories.find((c) => c.id === p.categoryId)?.name ?? "Sin categoría"}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
                     {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
-                      <span className="text-[10px] text-muted-foreground line-through">
+                      <span className="text-[11px] text-muted-foreground line-through">
                         {formatPrice(p.originalPrice)}
                       </span>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {store.categories.find((c) => c.id === p.categoryId)?.name ?? "sin categoria"}
-                </TableCell>
-                <TableCell>
+                </div>
+                <div className="flex flex-col items-center gap-2 shrink-0">
                   <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      if (confirm("Eliminar " + p.name + "?")) del(store.id, p.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </TableCell>
-              </TableRow>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        if (confirm("¿Eliminar " + p.name + "?")) del(store.id, p.id);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ))}
-            {store.products.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
-                  Aun no tienes productos. Crea el primero.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Cards móvil */}
-      <div className="flex flex-col gap-3 md:hidden">
-        {store.products.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-8">
-            Aun no tienes productos. Crea el primero.
-          </p>
-        )}
-        {store.products.map((p) => (
-          <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
-            {p.image ? (
-              <img src={p.image} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
-            ) : (
-              <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <ImageIcon className="h-5 w-5 text-muted-foreground" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm truncate">{p.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {store.categories.find((c) => c.id === p.categoryId)?.name ?? "Sin categoria"}
-              </p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
-                {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
-                  <span className="text-[11px] text-muted-foreground line-through">
-                    {formatPrice(p.originalPrice)}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-center gap-2 shrink-0">
-              <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
-              <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => {
-                    if (confirm("Eliminar " + p.name + "?")) del(store.id, p.id);
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </Button>
-              </div>
-            </div>
           </div>
-        ))}
-      </div>
+        </TabsContent>
 
-      {/* Dialog formulario */}
+        {/* ── CATEGORIES TAB CONTENT ── */}
+        <TabsContent value="categorias" className="space-y-4 mt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/30 p-4 rounded-2xl border">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <LayoutGrid className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-bold text-sm">Gestionar Categorías</h2>
+                <p className="text-[11px] text-muted-foreground">{store.categories.length} categorías registradas</p>
+              </div>
+            </div>
+
+            <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="font-bold gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto">
+                  <Plus className="h-4 w-4" /> Nueva Categoría
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px] max-h-[90dvh] flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Crear Categoría</DialogTitle>
+                  <DialogDescription>
+                    Asigna un nombre a tu categoría para organizar tus productos.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="cat-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      Nombre de la categoría
+                    </label>
+                    <Input
+                      id="cat-name"
+                      placeholder="Ej: Menú del día, Bebidas, Postres..."
+                      value={newCatName}
+                      onChange={(e) => setNewCatName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleAddCategoryTab()}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="flex-row gap-2 sm:justify-end">
+                  <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
+                  <Button className="flex-1 sm:flex-none" onClick={handleAddCategoryTab} disabled={isAddingCat || !newCatName.trim()}>
+                    {isAddingCat ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Check className="h-4 w-4 mr-2" />
+                    )}
+                    {isAddingCat ? "Guardando..." : "Crear Categoría"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="border rounded-xl divide-y bg-card max-w-2xl">
+            {store.categories.length === 0 && (
+              <p className="p-6 text-sm text-muted-foreground text-center">
+                Aún no tienes categorías creadas.
+              </p>
+            )}
+            {store.categories.map((c) => {
+              const count = store.products.filter((p) => p.categoryId === c.id).length;
+              const isEdit = editCatId === c.id;
+              return (
+                <div key={c.id} className="flex items-center gap-3 p-3">
+                  {isEdit ? (
+                    <Input
+                      className="flex-1"
+                      value={editCatName}
+                      onChange={(e) => setEditCatName(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleSaveEditCategoryTab(c.id)}
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="flex-1">
+                      <p className="font-medium text-sm sm:text-base">{c.name}</p>
+                      <p className="text-xs text-muted-foreground">{count} producto{count !== 1 ? "s" : ""}</p>
+                    </div>
+                  )}
+                  {isEdit ? (
+                    <>
+                      <Button size="icon" variant="ghost" disabled={isEditingCat} onClick={() => handleSaveEditCategoryTab(c.id)}>
+                        {isEditingCat ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => setEditCatId(null)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditCatId(c.id);
+                          setEditCatName(c.name);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          if (count > 0) {
+                            toast.error("Mueve o elimina los productos antes de eliminar esta categoría");
+                            return;
+                          }
+                          if (confirm(`¿Eliminar la categoría "${c.name}"?`)) {
+                            deleteCategory(store.id, c.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Dialog formulario de producto */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg max-h-[90dvh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-5 pt-5 pb-3 border-b shrink-0">
@@ -435,7 +646,7 @@ function ProductsPage() {
                     checked={!!editing.isOnSale}
                     onCheckedChange={(v) => setEditing({ ...editing, isOnSale: v })}
                   />
-                  Este producto esta en oferta?
+                  Este producto está en oferta?
                 </label>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -495,7 +706,7 @@ function ProductsPage() {
                       </div>
                       <div>
                         <Label className="flex items-center gap-1">
-                          <Tag className="h-3 w-3" /> Categoria
+                          <Tag className="h-3 w-3" /> Categoría
                         </Label>
                         <CategorySelect
                           value={editing.categoryId}
@@ -512,7 +723,7 @@ function ProductsPage() {
               {editing.isOnSale && (
                 <div className="col-span-2">
                   <Label className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" /> Categoria
+                    <Tag className="h-3 w-3" /> Categoría
                   </Label>
                   <CategorySelect
                     value={editing.categoryId}
@@ -523,9 +734,8 @@ function ProductsPage() {
                 </div>
               )}
 
-
               <div className="col-span-2">
-                <Label>Descripcion (opcional)</Label>
+                <Label>Descripción (opcional)</Label>
                 <Textarea
                   rows={3}
                   value={editing.description ?? ""}
