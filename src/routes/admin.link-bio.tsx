@@ -32,6 +32,7 @@ import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures } from "@/li
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import { cn } from "@/lib/utils";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 
@@ -555,7 +556,7 @@ function LinkBioPage() {
       }
       return;
     }
-    const timer = setTimeout(async () => {
+    const timer = setTimeout(() => {
       try {
         if (!mapRef.current) return;
         
@@ -565,7 +566,6 @@ function LinkBioPage() {
           mapRef.current.className = "h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden";
         }
 
-        const L = await import("leaflet");
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
