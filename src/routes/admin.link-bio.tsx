@@ -543,49 +543,82 @@ function LinkBioPage() {
 
   /* Leaflet map */
   useEffect(() => {
-    if (!bioLinksEnabled || !mapRef.current) {
+    if (!bioLinksEnabled || activeEditTab !== "ubicacion" || !mapRef.current) {
       if (mapInstance.current) {
-        mapInstance.current.remove();
+        try {
+          mapInstance.current.remove();
+        } catch (e) {
+          console.error("Error removing map instance:", e);
+        }
         mapInstance.current = null;
         markerInstance.current = null;
       }
       return;
     }
     const timer = setTimeout(async () => {
-      if (!mapRef.current) return;
-      const L = await import("leaflet");
-      delete (L.Icon.Default.prototype as any)._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      });
-      const defaultLat = locationLat || -12.046374;
-      const defaultLng = locationLng || -77.042793;
-      if (!mapInstance.current && mapRef.current) {
-        const map = L.map(mapRef.current).setView([defaultLat, defaultLng], 14);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: '&copy; <a href="https://openstreetmap.org">OSM</a>',
-        }).addTo(map);
-        const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
-        marker.on("dragend", () => {
-          const latLng = marker.getLatLng();
-          setLocationLat(Number(latLng.lat.toFixed(6)));
-          setLocationLng(Number(latLng.lng.toFixed(6)));
+      try {
+        if (!mapRef.current) return;
+        
+        // Clear previous stale Leaflet DOM indicators if ref got out of sync
+        if (mapRef.current.classList.contains("leaflet-container")) {
+          mapRef.current.innerHTML = "";
+          mapRef.current.className = "h-[230px] w-full rounded-xl border border-border/40 shadow-inner relative z-10 bg-muted/30 overflow-hidden";
+        }
+
+        const L = await import("leaflet");
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
         });
-        map.on("click", (e) => {
-          marker.setLatLng(e.latlng);
-          setLocationLat(Number(e.latlng.lat.toFixed(6)));
-          setLocationLng(Number(e.latlng.lng.toFixed(6)));
-        });
-        mapInstance.current = map;
-        markerInstance.current = marker;
+        
+        const defaultLat = locationLat || -12.046374;
+        const defaultLng = locationLng || -77.042793;
+        
+        if (!mapInstance.current && mapRef.current) {
+          const map = L.map(mapRef.current).setView([defaultLat, defaultLng], 14);
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; <a href="https://openstreetmap.org">OSM</a>',
+          }).addTo(map);
+          const marker = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(map);
+          
+          marker.on("dragend", () => {
+            const latLng = marker.getLatLng();
+            setLocationLat(Number(latLng.lat.toFixed(6)));
+            setLocationLng(Number(latLng.lng.toFixed(6)));
+          });
+          
+          map.on("click", (e) => {
+            marker.setLatLng(e.latlng);
+            setLocationLat(Number(e.latlng.lat.toFixed(6)));
+            setLocationLng(Number(e.latlng.lng.toFixed(6)));
+          });
+          
+          mapInstance.current = map;
+          markerInstance.current = marker;
+          
+          // Force Leaflet to recalculate container size now that it's visible
+          map.invalidateSize();
+          setTimeout(() => {
+            if (mapInstance.current) {
+              mapInstance.current.invalidateSize();
+            }
+          }, 200);
+        }
+      } catch (error: any) {
+        console.error("Error loading Leaflet map:", error);
+        toast.error("Error al cargar el mapa interactivo: " + error.message);
       }
     }, 150);
     return () => {
       clearTimeout(timer);
       if (mapInstance.current) {
-        mapInstance.current.remove();
+        try {
+          mapInstance.current.remove();
+        } catch (e) {
+          console.error("Error removing map instance in cleanup:", e);
+        }
         mapInstance.current = null;
         markerInstance.current = null;
       }
