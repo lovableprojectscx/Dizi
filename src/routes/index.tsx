@@ -594,7 +594,7 @@ function LandingPage() {
                 desc="Para micro-emprendedores probando el mercado."
                 features={[
                   "Hasta 7 productos",
-                  "1 modelo de diseño estándar",
+                  "2 modelos de diseño clásicos",
                   "Múltiples categorías",
                   "Link personalizado",
                   "Carrito a WhatsApp",
@@ -609,11 +609,10 @@ function LandingPage() {
                 desc="Tiendas de ropa, accesorios o repuestos."
                 features={[
                   "Hasta 50 productos",
-                  "Modelos estándar (Clásico, Nocturno, Vibrante)",
-                  "Múltiples categorías",
-                  "Buscador inteligente",
-                  "Soporte básico",
+                  "5 modelos de diseño en total",
+                  "Buscador inteligente de productos",
                   "Descarga de Catálogo en PDF",
+                  "Soporte básico por WhatsApp",
                   "Sin marca de agua (Marca propia)"
                 ]}
                 highlighted
@@ -627,9 +626,10 @@ function LandingPage() {
                 desc="Minimarkets y tiendas con stock variado."
                 features={[
                   "Hasta 200 productos",
-                  "Modelos estándar + Diseños Premium por Nichos",
-                  "Múltiples categorías",
-                  "Estadísticas básicas",
+                  "10 modelos de diseño en total",
+                  "Carrusel de Banners (hasta 3 portadas)",
+                  "Botonera Dual (WhatsApp + Carrito)",
+                  "Estadísticas básicas de visitas",
                   "Descarga de Catálogo en PDF",
                   "Sin marca de agua (Marca propia)"
                 ]}
@@ -643,11 +643,11 @@ function LandingPage() {
                 desc="Negocios con alta rotación y carga masiva."
                 features={[
                   "Productos ilimitados",
-                  "Modelos estándar + Diseños Premium por Nichos",
-                  "Múltiples categorías",
+                  "Todos los modelos + 7 Diseños Elite",
+                  "Diseños Premium por Nichos (Bloom / Bite)",
+                  "Carrusel de Banners (hasta 5 portadas)",
                   "Carga masiva (Excel)",
                   "Soporte prioritario 24/7",
-                  "Descarga de Catálogo en PDF",
                   "Sin marca de agua (Marca propia)"
                 ]}
                 planId="ilimitado"
