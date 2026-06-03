@@ -474,10 +474,20 @@ export function PublicCatalog({
   const [selectedDiet, setSelectedDiet] = useState<string>("all");
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
-  const bannersCount = useMemo(() => {
+  const activeBanners = useMemo(() => {
     const raw = store.bannerImage || "";
-    return raw ? (raw.includes("|||") ? raw.split("|||").length : 1) : 0;
-  }, [store.bannerImage]);
+    if (!raw) return [];
+    const all = raw.includes("|||") ? raw.split("|||") : [raw];
+    
+    // Enforce limits: Semilla = 0, Emprendedor = 1, Pro = 3, Ilimitado = 5
+    const planId = store.plan;
+    if (planId === "semilla") return [];
+    if (planId === "emprendedor") return all.slice(0, 1);
+    if (planId === "pro") return all.slice(0, 3);
+    return all.slice(0, 5);
+  }, [store.bannerImage, store.plan]);
+
+  const bannersCount = activeBanners.length;
 
   useEffect(() => {
     if (bannersCount <= 1) return;
@@ -1305,9 +1315,9 @@ export function PublicCatalog({
         <section className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
           {/* Banner Panorámico */}
           <div className="relative w-full h-[35vw] max-h-[220px] bg-muted overflow-hidden">
-            {(store.bioBanner || store.bannerImage) ? (
+            {(store.bioBanner || activeBanners[0]) ? (
               <img
-                src={store.bioBanner || store.bannerImage}
+                src={store.bioBanner || activeBanners[0]}
                 alt={store.name}
                 className="w-full h-full object-cover animate-in fade-in duration-550"
               />
@@ -1453,10 +1463,10 @@ export function PublicCatalog({
       )}
 
       {/* ── Hero Banner (Only for Elite/Banner models) ── */}
-      {modelId === "elite" && store.bannerImage && mode === "catalog" && (
+      {modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
         <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
           <img 
-            src={store.bannerImage} 
+            src={activeBanners[0]} 
             alt={store.bannerTitle || store.name}
             className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-1000"
           />
@@ -2090,7 +2100,7 @@ export function PublicCatalog({
           <div className="space-y-8 select-none">
             {/* 1. Cover Banner Carousel */}
             {(() => {
-              const banners = store.bannerImage ? (store.bannerImage.includes("|||") ? store.bannerImage.split("|||") : [store.bannerImage]) : [];
+              const banners = activeBanners;
               return (
                 <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl group/banner z-10">
                   {banners.length > 0 ? (
@@ -2480,7 +2490,7 @@ export function PublicCatalog({
 
             {/* 1. Cover Banner Carousel */}
             {(() => {
-              const banners = store.bannerImage ? (store.bannerImage.includes("|||") ? store.bannerImage.split("|||") : [store.bannerImage]) : [];
+              const banners = activeBanners;
               return (
                 <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-[3.5rem_1.5rem_3.5rem_1.5rem] p-1 bg-gradient-to-tr from-rose-200/50 via-[#fffaf8] to-rose-200/50 shadow-[0_12px_35px_rgba(251,207,214,0.4)] overflow-hidden group/banner border border-rose-100/50 z-10">
                   <div className="w-full h-full rounded-[inherit] overflow-hidden relative bg-[#fdfaf8]">
@@ -2900,10 +2910,10 @@ export function PublicCatalog({
           /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
           <div className="space-y-4">
             {/* Banner de portada */}
-            {(store as any).bannerImage ? (
+            {activeBanners[0] ? (
               <div className="relative w-full overflow-hidden" style={{ borderRadius: cfg.cardRounded, aspectRatio: "16/7" }}>
                 <img
-                  src={(store as any).bannerImage}
+                  src={activeBanners[0]}
                   alt={store.name}
                   className="absolute inset-0 w-full h-full object-cover"
                 />

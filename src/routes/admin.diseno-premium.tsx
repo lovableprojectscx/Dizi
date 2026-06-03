@@ -118,6 +118,41 @@ function DisenoPremiumPage() {
 
   if (!store) return null;
 
+  // ── PLAN VERIFICATION ──
+  const isPremiumPlan = store.plan === "pro" || store.plan === "ilimitado";
+  if (!isPremiumPlan) {
+    return (
+      <div className="w-full max-w-4xl mx-auto px-4 py-16 text-center space-y-8 animate-in fade-in duration-300">
+        <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20">
+          <Sparkles className="h-10 w-10 animate-pulse" />
+        </div>
+        <div className="max-w-xl mx-auto space-y-3">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Diseños Premium Exclusivos</h1>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Los diseños premium de alta costura optimizados para rubros específicos (como <strong>Florerías - Bloom</strong> y <strong>Hamburgueserías - Bite</strong>), carruseles multi-banner y botoneras duales son exclusivos para el <strong>Plan Catálogo Pro</strong> e <strong>Ilimitado</strong>.
+          </p>
+        </div>
+        <div className="p-6 border rounded-2xl bg-zinc-50 dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 max-w-md mx-auto shadow-sm">
+          <p className="text-xs text-muted-foreground leading-normal">
+            Tu tienda actual se encuentra en el plan <strong>{store.plan.toUpperCase()}</strong>. Actualiza ahora para desbloquear toda la potencia visual del sistema.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-3">
+          <a
+            href="https://wa.me/51925176472?text=Hola%20Dizi%2C%20quiero%20actualizar%20mi%20tienda%20al%20Plan%20Pro%20para%20desbloquear%20los%20dise%C3%B1os%20premium"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 px-6 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition-all active:scale-95 cursor-pointer"
+          >
+            Actualizar mi Plan por WhatsApp
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  const maxBanners = store.plan === "ilimitado" ? 5 : 3;
+
   const [selectedTemplate, setSelectedTemplate] = useState(() => {
     if (store.model && store.model !== "default") return store.model;
     return store.niche === "floreria" ? "bloom" : "bite";
@@ -702,7 +737,7 @@ function DisenoPremiumPage() {
             {/* Banner list in uploader */}
             {bannerImages.length > 0 && (
               <div className="space-y-2">
-                <label className="text-xs font-extrabold text-zinc-700 uppercase tracking-wider">Imágenes de Portada Activas ({bannerImages.length}/5)</label>
+                <label className="text-xs font-extrabold text-zinc-700 uppercase tracking-wider">Imágenes de Portada Activas ({bannerImages.length}/{maxBanners})</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {bannerImages.map((imgUrl, index) => (
                     <div key={index} className="relative aspect-[21/9] rounded-xl overflow-hidden border border-zinc-200 bg-zinc-100 group">
@@ -732,7 +767,7 @@ function DisenoPremiumPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-zinc-700">Dimensión sugerida: 21:9 panorámico (Soporta carrusel de hasta 5 portadas)</p>
+                <p className="text-xs font-bold text-zinc-700">Dimensión sugerida: 21:9 panorámico (Soporta carrusel de hasta {maxBanners} portadas)</p>
                 <p className="text-[11px] text-zinc-500 leading-normal">
                   Puedes subir múltiples imágenes. En el catálogo público, se mostrarán como un carrusel premium con deslizamiento automático.
                 </p>
@@ -740,13 +775,13 @@ function DisenoPremiumPage() {
             </div>
 
             {/* Drag and Drop Zone */}
-            {bannerImages.length < 5 ? (
+            {bannerImages.length < maxBanners ? (
               <label className={cn(
                 "flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed rounded-2xl cursor-pointer transition-all hover:bg-orange-50/20 hover:border-orange-500/50 border-zinc-200"
               )}>
                 <Plus className="h-8 w-8 text-zinc-400" />
                 <span className="text-sm font-bold text-zinc-700">Agregar Imagen de Portada</span>
-                <span className="text-xs text-zinc-400">Formatos JPG, PNG, WEBP de hasta 10 MB ({bannerImages.length}/5)</span>
+                <span className="text-xs text-zinc-400">Formatos JPG, PNG, WEBP de hasta 10 MB ({bannerImages.length}/{maxBanners})</span>
                 <input
                   type="file"
                   accept="image/*"
