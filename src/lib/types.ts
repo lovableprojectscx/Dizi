@@ -70,6 +70,7 @@ export interface Store {
   active: boolean;
   createdAt: string;
   whatsappClicks: number;
+  views: number;
   isPublished?: boolean;
   model?: string;
   ownerId?: string;

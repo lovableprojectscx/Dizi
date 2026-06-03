@@ -19,6 +19,7 @@ import {
   Store,
   HelpCircle,
   Share2,
+  Eye,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import QRCode from "qrcode";
@@ -145,16 +146,13 @@ function Dashboard() {
           trend="Interacciones"
           tooltipText="Número total de veces que tus clientes han hecho clic para iniciar un chat o enviar un pedido por WhatsApp."
         />
-        <Link to="/admin/link-bio" className="block transition-all hover:scale-[1.01] active:scale-[0.99] h-full">
-          <MetricCard
-            icon={<Link2 className="h-4 w-4 text-purple-500" />}
-            label="Link en Bio"
-            value={store.bioLinksEnabled ? "Activo" : "Inactivo"}
-            trend={store.bioLinksEnabled ? "Ver configuración" : "Activar ahora"}
-            tooltipText="Indica si tienes habilitada la página web para tus redes sociales (Instagram, TikTok). Haz clic para configurarla."
-            className="h-full border-purple-100 hover:border-purple-200 dark:border-purple-950 dark:hover:border-purple-900 bg-purple-500/[0.02]"
-          />
-        </Link>
+        <MetricCard
+          icon={<Eye className="h-4 w-4 text-purple-500" />}
+          label="Visitas al catálogo"
+          value={String(store.views || 0)}
+          trend="Visualizaciones"
+          tooltipText="Número total de veces que tus clientes han ingresado a ver tu catálogo."
+        />
         <MetricCard
           icon={<Sparkles className="h-4 w-4 text-amber-500" />}
           label="Plan Actual"

@@ -640,13 +640,12 @@ function LandingPage() {
               <PricingCard 
                 title="Ilimitado" 
                 price="S/ 34.90" 
-                desc="Negocios con alta rotación y carga masiva."
+                desc="Negocios con alta rotación y ventas constantes."
                 features={[
                   "Productos ilimitados",
                   "Todos los modelos + 7 Diseños Elite",
                   "Diseños Premium por Nichos (Bloom / Bite)",
                   "Carrusel de Banners (hasta 5 portadas)",
-                  "Carga masiva (Excel)",
                   "Soporte prioritario 24/7",
                   "Sin marca de agua (Marca propia)"
                 ]}

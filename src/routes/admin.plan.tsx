@@ -37,7 +37,6 @@ const features: Record<PlanId, string[]> = {
     "Todos los modelos + 7 Diseños Elite",
     "Diseños Premium por Nichos (Bloom / Bite)",
     "Carrusel de Banners (hasta 5 portadas)",
-    "Carga masiva (Excel)",
     "Sin marca de agua (Marca propia)",
   ],
 };

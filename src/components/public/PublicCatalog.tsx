@@ -533,6 +533,14 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   const cartRemove = useCart((s) => s.remove);
   const cartClear = useCart((s) => s.clear);
   const incClicks = useApp((s) => s.incWhatsappClicks);
+  const incViews = useApp((s) => s.incViews);
+
+  // Incrementar vistas al cargar el catálogo
+  useEffect(() => {
+    if (store?.id) {
+      incViews(store.id);
+    }
+  }, [store?.id]);
 
   /* ── Subscription state ─────────────────────────── */
   const effectiveProductLimit = getEffectiveProductLimit(store);

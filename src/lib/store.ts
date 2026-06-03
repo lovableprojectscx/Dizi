@@ -22,6 +22,7 @@ const mapStoreFromDB = (row: any): Store => ({
   isPublished: row.is_published,
   createdAt: row.created_at,
   whatsappClicks: row.whatsapp_clicks || 0,
+  views: row.views || 0,
   priceFilterEnabled: row.price_filter_enabled ?? false,
   libroReclamacionesActivo: row.libro_reclamaciones_activo ?? false,
   empresaRuc: row.empresa_ruc ?? undefined,
@@ -83,6 +84,7 @@ interface AppState {
   startImpersonation: (storeId: string) => void;
   stopImpersonation: () => void;
   incWhatsappClicks: (storeId: string) => void;
+  incViews: (storeId: string) => void;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -631,6 +633,21 @@ export const useApp = create<AppState>()(
           if (error) throw error;
         } catch (error) {
           console.error("[incWhatsappClicks] Error:", error);
+        }
+      },
+
+      incViews: async (storeId) => {
+        set((s) => ({
+          stores: s.stores.map((st) =>
+            st.id === storeId ? { ...st, views: (st.views || 0) + 1 } : st
+          ),
+        }));
+
+        try {
+          const { error } = await supabase.rpc("increment_views", { store_id_param: storeId });
+          if (error) throw error;
+        } catch (error) {
+          console.error("[incViews] Error:", error);
         }
       },
     }),
