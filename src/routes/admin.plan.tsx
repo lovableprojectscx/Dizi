@@ -16,6 +16,7 @@ const features: Record<PlanId, string[]> = {
     "Pedidos por WhatsApp",
     "Link en Bio básico",
     "Código QR descargable",
+    "Marca de agua Dizi visible",
   ],
   emprendedor: [
     "Hasta 50 productos",
@@ -23,6 +24,7 @@ const features: Record<PlanId, string[]> = {
     "Bio-Link personalizado",
     "Modelos de diseño nivel 1",
     "Soporte por WhatsApp",
+    "Sin marca de agua (Marca propia)",
   ],
   pro: [
     "Hasta 200 productos",
@@ -30,12 +32,14 @@ const features: Record<PlanId, string[]> = {
     "Personalización de colores y fondos",
     "Export PDF del catálogo",
     "Soporte prioritario por WhatsApp",
+    "Sin marca de agua (Marca propia)",
   ],
   ilimitado: [
     "Productos ilimitados",
     "Todos los modelos Elite",
     "Personalización total",
     "Atención personalizada directa",
+    "Sin marca de agua (Marca propia)",
   ],
 };
 

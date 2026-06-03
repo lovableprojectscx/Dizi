@@ -597,7 +597,8 @@ function LandingPage() {
                   "1 modelo de diseño",
                   "3 nichos (Comida, Bisutería, General)",
                   "Link personalizado",
-                  "Carrito a WhatsApp"
+                  "Carrito a WhatsApp",
+                  "Marca de agua Dizi visible"
                 ]}
               />
               
@@ -611,7 +612,8 @@ function LandingPage() {
                   "Modelos y nichos ilimitados",
                   "Buscador inteligente",
                   "Soporte básico",
-                  "Descarga de Catálogo en PDF"
+                  "Descarga de Catálogo en PDF",
+                  "Sin marca de agua (Marca propia)"
                 ]}
                 highlighted
                 planId="emprendedor"
@@ -627,7 +629,8 @@ function LandingPage() {
                   "Modelos y nichos ilimitados",
                   "Estadísticas básicas",
                   "Múltiples categorías",
-                  "Descarga de Catálogo en PDF"
+                  "Descarga de Catálogo en PDF",
+                  "Sin marca de agua (Marca propia)"
                 ]}
                 planId="pro"
               />
@@ -642,7 +645,8 @@ function LandingPage() {
                   "Modelos y nichos ilimitados",
                   "Carga masiva (Excel)",
                   "Soporte prioritario 24/7",
-                  "Descarga de Catálogo en PDF"
+                  "Descarga de Catálogo en PDF",
+                  "Sin marca de agua (Marca propia)"
                 ]}
                 planId="ilimitado"
               />
