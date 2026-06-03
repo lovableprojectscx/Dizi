@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
+import { cn } from "@/lib/utils";
 import { PLANS, type Product, getEffectivePlan, getEffectiveProductLimit, isSubscriptionExpired, getImageSpec } from "@/lib/types";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -33,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
@@ -46,13 +48,151 @@ const empty = (): Product => ({
   id: "",
   name: "",
   price: 0,
+  isOnSale: false,
+  visible: true,
+  isSample: false,
   categoryId: "",
   image: "",
-  visible: true,
-  isOnSale: false,
-  originalPrice: 0,
-  description: "",
 });
+
+const parseCategoryName = (name: string) => {
+  if (!name) return { label: "", iconKey: "" };
+  const [label, iconKey] = name.split("|");
+  return {
+    label: label ? label.trim() : "",
+    iconKey: iconKey ? iconKey.trim() : ""
+  };
+};
+
+function CategoryIcon({ iconKey, className }: { iconKey: string; className?: string }) {
+  const sizeClass = className || "h-4 w-4";
+  switch (iconKey) {
+    case "burger":
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={sizeClass}
+        >
+          <path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6" />
+          <path d="M2 13h20" />
+          <path d="M4 17h16" />
+          <path d="M3 17c0 2.2 1.8 4 4 4h10c2.2 0 4-1.8 4-4" />
+        </svg>
+      );
+    case "fries":
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={sizeClass}
+        >
+          <path d="M5 11l1.5 9h11l1.5-9" />
+          <path d="M8 11V4M12 11V3M16 11V5M10 11V6M14 11V6" />
+        </svg>
+      );
+    case "combo":
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={sizeClass}
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M3 12h18" />
+          <path d="M12 12v9" />
+        </svg>
+      );
+    case "drink":
+      return <CupSoda className={sizeClass} />;
+    case "pizza":
+      return <Pizza className={sizeClass} />;
+    case "icecream":
+      return <IceCream className={sizeClass} />;
+    case "dessert":
+      return <Cake className={sizeClass} />;
+    case "flower":
+      return <Flower className={sizeClass} />;
+    case "gift":
+      return <Gift className={sizeClass} />;
+    case "heart":
+      return <Heart className={sizeClass} />;
+    case "sprout":
+      return <Sprout className={sizeClass} />;
+    case "leaf":
+      return <Leaf className={sizeClass} />;
+    case "bouquet":
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={sizeClass}
+        >
+          <path d="M12 2a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
+          <path d="M8 6a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
+          <path d="M16 6a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
+          <path d="M12 10v12M9 14l6 6M15 14l-6 6" />
+        </svg>
+      );
+    default:
+      return <Utensils className={sizeClass} />;
+  }
+}
+
+const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
+  bite: [
+    { key: "", label: "Ninguno" },
+    { key: "burger", label: "Burgers" },
+    { key: "fries", label: "Papas" },
+    { key: "drink", label: "Bebidas" },
+    { key: "combo", label: "Combos" },
+    { key: "dessert", label: "Postres" },
+    { key: "pizza", label: "Pizza" },
+    { key: "icecream", label: "Helado" },
+  ],
+  bloom: [
+    { key: "", label: "Ninguno" },
+    { key: "flower", label: "Flores" },
+    { key: "bouquet", label: "Arreglos" },
+    { key: "gift", label: "Regalos" },
+    { key: "heart", label: "Amor" },
+    { key: "sprout", label: "Plantas" },
+    { key: "leaf", label: "Follaje" },
+  ],
+};
+
+const isPremiumModel = (model?: string) => model === "bite" || model === "bloom";
+
+const getNicheLabel = (model?: string) => {
+  if (isPremiumModel(model)) return "Ícono para Categoría (Premium)";
+  return "Ícono del Nicho";
+};
+
+const getCleanCategoryName = (rawName: string) => {
+  if (!rawName) return "";
+  const { label } = parseCategoryName(rawName);
+  return label;
+};
 
 /* ── Selector de categoría con creación inline ── */
 function CategorySelect({
@@ -60,11 +200,13 @@ function CategorySelect({
   categories,
   onChange,
   onCreateCategory,
+  storeModel,
 }: {
   value: string;
   categories: Category[];
   onChange: (id: string) => void;
   onCreateCategory: (name: string) => Promise<string | null>;
+  storeModel?: string;
 }) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -128,9 +270,19 @@ function CategorySelect({
               Sin categorías aún
             </div>
           )}
-          {categories.map((c) => (
-            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-          ))}
+          {categories.map((c) => {
+            const { label, iconKey } = parseCategoryName(c.name);
+            return (
+              <SelectItem key={c.id} value={c.id}>
+                <div className="flex items-center gap-2">
+                  {isPremiumModel(storeModel) && iconKey && (
+                    <CategoryIcon iconKey={iconKey} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  )}
+                  <span>{label}</span>
+                </div>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
       <button
@@ -202,6 +354,7 @@ function ProductsPage() {
   const [editing, setEditing] = useState<Product>(empty());
   const [priceInput, setPriceInput] = useState("");
   const [originalPriceInput, setOriginalPriceInput] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
 
   // Categories UI state
   const [newCatName, setNewCatName] = useState("");
@@ -210,6 +363,17 @@ function ProductsPage() {
   const [editCatId, setEditCatId] = useState<string | null>(null);
   const [editCatName, setEditCatName] = useState("");
   const [isEditingCat, setIsEditingCat] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedIconKey, setSelectedIconKey] = useState("");
+  const [editIconKey, setEditIconKey] = useState("");
+
+  const startEditCategory = (c: Category) => {
+    setEditCatId(c.id);
+    const { label, iconKey } = parseCategoryName(c.name);
+    setEditCatName(label);
+    setEditIconKey(iconKey);
+    setEditDialogOpen(true);
+  };
 
   const openNew = () => {
     if (reachedLimit) {
@@ -219,6 +383,7 @@ function ProductsPage() {
     setEditing({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
     setPriceInput("");
     setOriginalPriceInput("");
+    setIsFeatured(false);
     setOpen(true);
   };
 
@@ -226,6 +391,7 @@ function ProductsPage() {
     setEditing(p);
     setPriceInput(p.price === 0 ? "" : p.price.toString());
     setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
+    setIsFeatured(p.description?.includes("#destacado") || p.name?.includes("#destacado") || false);
     setOpen(true);
   };
 
@@ -246,10 +412,16 @@ function ProductsPage() {
       return;
     }
 
+    let rawDesc = (editing.description || "").replace(/#destacado/g, "").trim();
+    if (isFeatured) {
+      rawDesc = (rawDesc + " #destacado").trim();
+    }
+
     const updatedProduct: Product = {
       ...editing,
       price: parsedPrice,
       originalPrice: editing.isOnSale ? parsedOriginalPrice : undefined,
+      description: rawDesc,
       isSample: false,
     };
 
@@ -275,25 +447,34 @@ function ProductsPage() {
     if (!trimmed) return;
     setIsAddingCat(true);
     try {
-      await upsertCategory(store.id, { id: "", name: trimmed });
+      const finalName = selectedIconKey ? `${trimmed}|${selectedIconKey}` : trimmed;
+      await upsertCategory(store.id, { id: "", name: finalName });
       setNewCatName("");
+      setSelectedIconKey("");
       setCatDialogOpen(false);
+      toast.success("Categoría creada con éxito");
     } catch (e) {
       console.error(e);
+      toast.error("No se pudo crear la categoría");
     } finally {
       setIsAddingCat(false);
     }
   };
 
-  const handleSaveEditCategoryTab = async (catId: string) => {
+  const handleSaveEditCategoryTab = async () => {
+    if (!editCatId) return;
     const trimmed = editCatName.trim();
     if (!trimmed) return;
     setIsEditingCat(true);
     try {
-      await upsertCategory(store.id, { id: catId, name: trimmed });
+      const finalName = editIconKey ? `${trimmed}|${editIconKey}` : trimmed;
+      await upsertCategory(store.id, { id: editCatId, name: finalName });
       setEditCatId(null);
+      setEditDialogOpen(false);
+      toast.success("Categoría actualizada con éxito");
     } catch (e) {
       console.error(e);
+      toast.error("No se pudo actualizar la categoría");
     } finally {
       setIsEditingCat(false);
     }
@@ -396,7 +577,16 @@ function ProductsPage() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{p.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-1.5">
+                        <span>{p.name}</span>
+                        {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0">
+                            ⭐ Destacado
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-bold">{formatPrice(p.price)}</span>
@@ -408,7 +598,19 @@ function ProductsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {store.categories.find((c) => c.id === p.categoryId)?.name ?? "sin categoría"}
+                      {(() => {
+                        const cat = store.categories.find((c) => c.id === p.categoryId);
+                        if (!cat) return "sin categoría";
+                        const { label, iconKey } = parseCategoryName(cat.name);
+                        return (
+                          <div className="flex items-center gap-2">
+                            {isPremiumModel(store.model) && iconKey && (
+                              <CategoryIcon iconKey={iconKey} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            )}
+                            <span>{label}</span>
+                          </div>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
@@ -457,10 +659,29 @@ function ProductsPage() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {store.categories.find((c) => c.id === p.categoryId)?.name ?? "Sin categoría"}
-                  </p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="font-semibold text-sm truncate">{p.name}</p>
+                    {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
+                      <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
+                        ⭐ Destacado
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {(() => {
+                      const cat = store.categories.find((c) => c.id === p.categoryId);
+                      if (!cat) return "Sin categoría";
+                      const { label, iconKey } = parseCategoryName(cat.name);
+                      return (
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {isPremiumModel(store.model) && iconKey && (
+                            <CategoryIcon iconKey={iconKey} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          )}
+                          <span>{label}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
                     {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
@@ -506,7 +727,7 @@ function ProductsPage() {
               </div>
             </div>
 
-            <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+            <Dialog open={catDialogOpen} onOpenChange={(val) => { setCatDialogOpen(val); if (!val) { setNewCatName(""); setSelectedIconKey(""); } }}>
               <DialogTrigger asChild>
                 <Button className="font-bold gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto">
                   <Plus className="h-4 w-4" /> Nueva Categoría
@@ -516,10 +737,10 @@ function ProductsPage() {
                 <DialogHeader>
                   <DialogTitle>Crear Categoría</DialogTitle>
                   <DialogDescription>
-                    Asigna un nombre a tu categoría para organizar tus productos.
+                    Asigna un nombre e ícono a tu categoría para organizar tus productos.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4 py-4 overflow-y-auto">
                   <div className="grid gap-2">
                     <label htmlFor="cat-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                       Nombre de la categoría
@@ -533,6 +754,40 @@ function ProductsPage() {
                       autoFocus
                     />
                   </div>
+
+                  {isPremiumModel(store.model) && (
+                    <div className="grid gap-2 mt-2">
+                      <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        {getNicheLabel(store.model)}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {((store.model ? NICHE_ICONS[store.model] : []) || []).map((item) => {
+                          const active = selectedIconKey === item.key;
+                          return (
+                            <button
+                              key={item.key}
+                              type="button"
+                              onClick={() => setSelectedIconKey(item.key)}
+                              className={cn(
+                                "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all",
+                                active
+                                  ? "bg-orange-500 border-orange-500 text-white shadow-md scale-105"
+                                  : "bg-secondary hover:bg-accent border-border text-muted-foreground"
+                              )}
+                              title={item.label}
+                            >
+                              {item.key === "" ? (
+                                <X className="h-4 w-4 shrink-0" />
+                              ) : (
+                                <CategoryIcon iconKey={item.key} className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-orange-500")} />
+                              )}
+                              <span className="text-[10px]">{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter className="flex-row gap-2 sm:justify-end">
                   <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
@@ -557,65 +812,121 @@ function ProductsPage() {
             )}
             {store.categories.map((c) => {
               const count = store.products.filter((p) => p.categoryId === c.id).length;
-              const isEdit = editCatId === c.id;
               return (
                 <div key={c.id} className="flex items-center gap-3 p-3">
-                  {isEdit ? (
-                    <Input
-                      className="flex-1"
-                      value={editCatName}
-                      onChange={(e) => setEditCatName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSaveEditCategoryTab(c.id)}
-                      autoFocus
-                    />
-                  ) : (
-                    <div className="flex-1">
-                      <p className="font-medium text-sm sm:text-base">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{count} producto{count !== 1 ? "s" : ""}</p>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm sm:text-base flex items-center gap-2">
+                      {(() => {
+                        const { label, iconKey } = parseCategoryName(c.name);
+                        return (
+                          <>
+                            {isPremiumModel(store.model) && iconKey && (
+                              <CategoryIcon iconKey={iconKey} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            )}
+                            <span>{label}</span>
+                          </>
+                        );
+                      })()}
                     </div>
-                  )}
-                  {isEdit ? (
-                    <>
-                      <Button size="icon" variant="ghost" disabled={isEditingCat} onClick={() => handleSaveEditCategoryTab(c.id)}>
-                        {isEditingCat ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => setEditCatId(null)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          setEditCatId(c.id);
-                          setEditCatName(c.name);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => {
-                          if (count > 0) {
-                            toast.error("Mueve o elimina los productos antes de eliminar esta categoría");
-                            return;
-                          }
-                          if (confirm(`¿Eliminar la categoría "${c.name}"?`)) {
-                            deleteCategory(store.id, c.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </>
-                  )}
+                    <p className="text-xs text-muted-foreground">{count} producto{count !== 1 ? "s" : ""}</p>
+                  </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => startEditCategory(c)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      if (count > 0) {
+                        toast.error("Mueve o elimina los productos antes de eliminar esta categoría");
+                        return;
+                      }
+                      if (confirm(`¿Eliminar la categoría "${getCleanCategoryName(c.name)}"?`)) {
+                        deleteCategory(store.id, c.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
               );
             })}
           </div>
+
+          {/* Dialog Editar Categoría */}
+          <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <DialogContent className="sm:max-w-[425px] max-h-[90dvh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Editar Categoría</DialogTitle>
+                <DialogDescription>
+                  Modifica el nombre y el ícono de la categoría seleccionada.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4 overflow-y-auto">
+                <div className="grid gap-2">
+                  <label htmlFor="edit-cat-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Nombre de la categoría
+                  </label>
+                  <Input
+                    id="edit-cat-name"
+                    value={editCatName}
+                    onChange={(e) => setEditCatName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSaveEditCategoryTab()}
+                    autoFocus
+                  />
+                </div>
+
+                {isPremiumModel(store.model) && (
+                  <div className="grid gap-2 mt-2">
+                    <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      {getNicheLabel(store.model)}
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {((store.model ? NICHE_ICONS[store.model] : []) || []).map((item) => {
+                        const active = editIconKey === item.key;
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => setEditIconKey(item.key)}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all",
+                              active
+                                ? "bg-orange-500 border-orange-500 text-white shadow-md scale-105"
+                                : "bg-secondary hover:bg-accent border-border text-muted-foreground"
+                            )}
+                            title={item.label}
+                          >
+                            {item.key === "" ? (
+                              <X className="h-4 w-4 shrink-0" />
+                            ) : (
+                              <CategoryIcon iconKey={item.key} className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-orange-500")} />
+                            )}
+                            <span className="text-[10px]">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="flex-row gap-2 sm:justify-end">
+                <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
+                <Button className="flex-1 sm:flex-none" onClick={handleSaveEditCategoryTab} disabled={isEditingCat || !editCatName.trim()}>
+                  {isEditingCat ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Check className="h-4 w-4 mr-2" />
+                  )}
+                  {isEditingCat ? "Guardando..." : "Guardar Cambios"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
       </Tabs>
 
@@ -641,13 +952,25 @@ function ProductsPage() {
               </div>
 
               <div className="col-span-2 bg-muted/30 p-3 rounded-xl space-y-3">
-                <label className="flex items-center gap-2 text-sm cursor-pointer font-medium text-primary">
-                  <Switch
-                    checked={!!editing.isOnSale}
-                    onCheckedChange={(v) => setEditing({ ...editing, isOnSale: v })}
-                  />
-                  Este producto está en oferta?
-                </label>
+                <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer font-medium text-primary">
+                    <Switch
+                      checked={!!editing.isOnSale}
+                      onCheckedChange={(v) => setEditing({ ...editing, isOnSale: v })}
+                    />
+                    Este producto está en oferta?
+                  </label>
+
+                  {isPremiumModel(store.model) && (
+                    <label className="flex items-center gap-2 text-sm cursor-pointer font-medium text-orange-600">
+                      <Switch
+                        checked={isFeatured}
+                        onCheckedChange={setIsFeatured}
+                      />
+                      Destacar producto (Premium)?
+                    </label>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   {editing.isOnSale ? (
@@ -713,6 +1036,7 @@ function ProductsPage() {
                           categories={store.categories}
                           onChange={(v) => setEditing({ ...editing, categoryId: v })}
                           onCreateCategory={handleCreateCategory}
+                          storeModel={store.model}
                         />
                       </div>
                     </>
@@ -730,6 +1054,7 @@ function ProductsPage() {
                     categories={store.categories}
                     onChange={(v) => setEditing({ ...editing, categoryId: v })}
                     onCreateCategory={handleCreateCategory}
+                    storeModel={store.model}
                   />
                 </div>
               )}
@@ -738,7 +1063,7 @@ function ProductsPage() {
                 <Label>Descripción (opcional)</Label>
                 <Textarea
                   rows={3}
-                  value={editing.description ?? ""}
+                  value={(editing.description ?? "").replace(/#destacado/g, "").trim()}
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </div>

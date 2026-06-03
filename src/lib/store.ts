@@ -127,13 +127,23 @@ export const useApp = create<AppState>()(
           }
         }
 
-        // Subir bannerImage si es base64
+        // Subir bannerImage si es base64 (soporta múltiples imágenes separadas por |||)
         const patchAny = patch as any;
-        if (patchAny.bannerImage && patchAny.bannerImage.startsWith("data:")) {
+        if (patchAny.bannerImage) {
           try {
-            (updatedPatch as any).bannerImage = await uploadBase64ToStorage(patchAny.bannerImage, `${id}/banner.webp`);
+            const parts = patchAny.bannerImage.split("|||");
+            const uploadedParts = await Promise.all(
+              parts.map(async (part: string, index: number) => {
+                if (part.startsWith("data:")) {
+                  const uniqueId = Math.random().toString(36).slice(2, 6);
+                  return await uploadBase64ToStorage(part, `${id}/banners/banner_${index}_${uniqueId}.webp`);
+                }
+                return part;
+              })
+            );
+            (updatedPatch as any).bannerImage = uploadedParts.filter(Boolean).join("|||");
           } catch (uploadErr) {
-            console.error("[updateStore] Banner upload failed, falling back to base64", uploadErr);
+            console.error("[updateStore] Banner upload failed, falling back to original", uploadErr);
           }
         }
 
@@ -170,6 +180,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.phone !== undefined) dbPatch.phone = updatedPatch.phone;
         if (updatedPatch.logo !== undefined) dbPatch.logo = updatedPatch.logo;
         if (updatedPatch.model !== undefined) dbPatch.model = updatedPatch.model;
+        if (updatedPatch.niche !== undefined) dbPatch.niche = updatedPatch.niche;
         if (updatedPatch.brandColor !== undefined) dbPatch.brand_color = updatedPatch.brandColor;
         if ((updatedPatch as any).bgColor !== undefined) dbPatch.bg_color = (updatedPatch as any).bgColor;
         if ((updatedPatch as any).bannerImage !== undefined) dbPatch.banner_image = (updatedPatch as any).bannerImage;
@@ -631,7 +642,9 @@ export const useApp = create<AppState>()(
         stores: state.stores.map((st) => ({
           ...st,
           logo: st.logo?.startsWith("data:") ? undefined : st.logo,
-          bannerImage: st.bannerImage?.startsWith("data:") ? undefined : st.bannerImage,
+          bannerImage: st.bannerImage
+            ? st.bannerImage.split("|||").map((img) => (img.startsWith("data:") ? "" : img)).filter(Boolean).join("|||") || undefined
+            : undefined,
           bioLogo: st.bioLogo?.startsWith("data:") ? undefined : st.bioLogo,
           bioBanner: st.bioBanner?.startsWith("data:") ? undefined : st.bioBanner,
           bioBgImage: st.bioBgImage?.startsWith("data:") ? undefined : st.bioBgImage,

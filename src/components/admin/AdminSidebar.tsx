@@ -12,7 +12,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Home, Package, Settings, Star, Palette, LogOut, ClipboardList, Link2 } from "lucide-react";
+import { Home, Package, Settings, Star, Palette, LogOut, ClipboardList, Link2, Sparkles } from "lucide-react";
 
 export function AdminSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -26,7 +26,8 @@ export function AdminSidebar() {
 
   const section2 = [
     { title: "Link en Bio", url: "/admin/link-bio", icon: Link2 },
-    { title: "Diseño", url: "/admin/diseno", icon: Palette },
+    { title: "Diseño Estándar", url: "/admin/diseno", icon: Palette },
+    { title: "Diseño Premium", url: "/admin/diseno-premium", icon: Sparkles },
   ];
 
   const section3 = [

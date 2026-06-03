@@ -295,6 +295,18 @@ export const LAYOUT_IMAGE_SPECS: Record<string, ImageSpec> = {
     hint: "El primer producto aparece como banner ancho y el resto en grilla. Usa una imagen panoramica para el producto destacado.",
     tolerance: 0.15,
   },
+  bite: {
+    ratio: "1/1", width: 1000, height: 1000,
+    label: "Cuadrada 1:1",
+    hint: "El diseño Bite Burger muestra tarjetas cuadradas de alta calidad en grilla. Las imágenes cuadradas se ven perfectas.",
+    tolerance: 0.15,
+  },
+  bloom: {
+    ratio: "1/1", width: 1000, height: 1000,
+    label: "Cuadrada 1:1",
+    hint: "El diseño Bloom Floral muestra tarjetas cuadradas de alta calidad en grilla. Las imágenes cuadradas se ven perfectas.",
+    tolerance: 0.15,
+  },
 };
 
 /** Obtiene la especificacion de imagen para el modelo activo de una tienda */
@@ -313,6 +325,7 @@ export function getImageSpec(store: Store): ImageSpec {
     elite: "grid", portada: "banner_grid", banner_grid: "banner_grid",
     magazine: "magazine", tiles: "tiles", spotlight: "spotlight",
     diagonal: "diagonal", arch: "arch", editorial: "editorial",
+    bite: "bite", bloom: "bloom",
   };
   const layout = LAYOUT_MAP[model] || "grid";
   return LAYOUT_IMAGE_SPECS[layout] || LAYOUT_IMAGE_SPECS["grid"];

@@ -27,6 +27,7 @@ import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaci
 import { Route as AdminProductosRouteImport } from './routes/admin.productos'
 import { Route as AdminPlanRouteImport } from './routes/admin.plan'
 import { Route as AdminLinkBioRouteImport } from './routes/admin.link-bio'
+import { Route as AdminDisenoPremiumRouteImport } from './routes/admin.diseno-premium'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
@@ -122,6 +123,11 @@ const AdminLinkBioRoute = AdminLinkBioRouteImport.update({
   path: '/link-bio',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDisenoPremiumRoute = AdminDisenoPremiumRouteImport.update({
+  id: '/diseno-premium',
+  path: '/diseno-premium',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDisenoRoute = AdminDisenoRouteImport.update({
   id: '/diseno',
   path: '/diseno',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
+  '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/admin/configuracion'
     | '/admin/dashboard'
     | '/admin/diseno'
+    | '/admin/diseno-premium'
     | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
@@ -250,6 +260,7 @@ export interface FileRouteTypes {
     | '/admin/configuracion'
     | '/admin/dashboard'
     | '/admin/diseno'
+    | '/admin/diseno-premium'
     | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/admin/configuracion'
     | '/admin/dashboard'
     | '/admin/diseno'
+    | '/admin/diseno-premium'
     | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
@@ -427,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLinkBioRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/diseno-premium': {
+      id: '/admin/diseno-premium'
+      path: '/diseno-premium'
+      fullPath: '/admin/diseno-premium'
+      preLoaderRoute: typeof AdminDisenoPremiumRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/diseno': {
       id: '/admin/diseno'
       path: '/diseno'
@@ -463,6 +482,7 @@ interface AdminRouteChildren {
   AdminConfiguracionRoute: typeof AdminConfiguracionRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
+  AdminDisenoPremiumRoute: typeof AdminDisenoPremiumRoute
   AdminLinkBioRoute: typeof AdminLinkBioRoute
   AdminPlanRoute: typeof AdminPlanRoute
   AdminProductosRoute: typeof AdminProductosRoute
@@ -475,6 +495,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminConfiguracionRoute: AdminConfiguracionRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDisenoRoute: AdminDisenoRoute,
+  AdminDisenoPremiumRoute: AdminDisenoPremiumRoute,
   AdminLinkBioRoute: AdminLinkBioRoute,
   AdminPlanRoute: AdminPlanRoute,
   AdminProductosRoute: AdminProductosRoute,
