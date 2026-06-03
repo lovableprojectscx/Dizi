@@ -451,7 +451,15 @@ const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 // Modelos con hero banner — buscador/filtros van DEBAJO del banner, no en el header
 const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
 
-export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" | "bio" }) {
+export function PublicCatalog({
+  store,
+  mode,
+  isMockup = false,
+}: {
+  store: Store;
+  mode: "catalog" | "bio";
+  isMockup?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>(
@@ -535,12 +543,35 @@ export function PublicCatalog({ store, mode }: { store: Store; mode: "catalog" |
   const incClicks = useApp((s) => s.incWhatsappClicks);
   const incViews = useApp((s) => s.incViews);
 
-  // Incrementar vistas al cargar el catálogo
+  // Incrementar vistas al cargar el catálogo de forma profesional y auditada
   useEffect(() => {
-    if (store?.id) {
-      incViews(store.id);
+    if (!store?.id || isMockup) return;
+
+    // 1. Evitar contar visitas si el usuario es el dueño de la tienda
+    const loggedInStores = useApp.getState().stores;
+    const isOwner = loggedInStores.some((st) => st.id === store.id);
+    if (isOwner) {
+      return;
     }
-  }, [store?.id]);
+
+    // 2. Evitar contar visitas de bots/crawlers automáticos
+    const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
+    const isBot = /bot|google|baidu|bing|msn|duckduckbot|teoma|slurp|yandex|lighthouse/i.test(userAgent);
+    if (isBot) {
+      return;
+    }
+
+    // 3. Evitar duplicar vistas en la misma sesión de navegación (F5 / recarga)
+    const visitedKey = `dizi_visited_${store.id}`;
+    const alreadyVisited = sessionStorage.getItem(visitedKey);
+    if (alreadyVisited) {
+      return;
+    }
+
+    // Registrar la visita real única
+    incViews(store.id);
+    sessionStorage.setItem(visitedKey, "true");
+  }, [store?.id, isMockup]);
 
   /* ── Subscription state ─────────────────────────── */
   const effectiveProductLimit = getEffectiveProductLimit(store);
