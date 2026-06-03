@@ -16,7 +16,7 @@ export const Route = createFileRoute("/admin/diseno")({
 const PLAN_LEVELS: Record<PlanId, number> = {
   semilla: 0,
   emprendedor: 1,
-  pro: 2,
+  pro: 3,
   ilimitado: 3,
 };
 
@@ -1171,7 +1171,7 @@ function DisenoPage() {
       </Tabs>
 
       {/* ── Upgrade CTA ─────────────────────────────── */}
-      {store.plan !== "ilimitado" && (
+      {(store.plan === "semilla" || store.plan === "emprendedor") && (
         <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 flex items-center gap-4">
           <Crown className="h-9 w-9 text-blue-500 shrink-0" />
           <div className="flex-1 min-w-0">

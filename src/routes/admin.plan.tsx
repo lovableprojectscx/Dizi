@@ -26,9 +26,11 @@ const features: Record<PlanId, string[]> = {
   ],
   pro: [
     "Hasta 200 productos",
-    "10 modelos de diseño en total",
+    "Todos los modelos + 7 Diseños Elite",
+    "Diseños Premium por Nichos (Bloom / Bite)",
     "Carrusel de Banners (hasta 3 portadas)",
     "Botonera Dual (WhatsApp + Carrito)",
+    "Estadísticas básicas de visitas",
     "Descarga de Catálogo en PDF",
     "Sin marca de agua (Marca propia)",
   ],
@@ -36,7 +38,9 @@ const features: Record<PlanId, string[]> = {
     "Productos ilimitados",
     "Todos los modelos + 7 Diseños Elite",
     "Diseños Premium por Nichos (Bloom / Bite)",
+    "Carga rápida por fotos (Borradores masivos)",
     "Carrusel de Banners (hasta 5 portadas)",
+    "Soporte prioritario 24/7",
     "Sin marca de agua (Marca propia)",
   ],
 };

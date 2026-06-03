@@ -626,7 +626,8 @@ function LandingPage() {
                 desc="Minimarkets y tiendas con stock variado."
                 features={[
                   "Hasta 200 productos",
-                  "10 modelos de diseño en total",
+                  "Todos los modelos + 7 Diseños Elite",
+                  "Diseños Premium por Nichos (Bloom / Bite)",
                   "Carrusel de Banners (hasta 3 portadas)",
                   "Botonera Dual (WhatsApp + Carrito)",
                   "Estadísticas básicas de visitas",
@@ -645,6 +646,7 @@ function LandingPage() {
                   "Productos ilimitados",
                   "Todos los modelos + 7 Diseños Elite",
                   "Diseños Premium por Nichos (Bloom / Bite)",
+                  "Carga rápida por fotos (Borradores masivos)",
                   "Carrusel de Banners (hasta 5 portadas)",
                   "Soporte prioritario 24/7",
                   "Sin marca de agua (Marca propia)"

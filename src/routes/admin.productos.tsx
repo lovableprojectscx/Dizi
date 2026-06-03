@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { PLANS, type Product, getEffectivePlan, getEffectiveProductLimit, isSubscriptionExpired, getImageSpec } from "@/lib/types";
@@ -35,10 +35,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
+import { convertImageToWebP } from "@/lib/image-utils";
 
 export const Route = createFileRoute("/admin/productos")({
   component: ProductsPage,
@@ -356,6 +357,73 @@ function ProductsPage() {
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
 
+  // Bulk Draft Upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [uploadingDrafts, setUploadingDrafts] = useState(false);
+  const [draftsTotal, setDraftsTotal] = useState(0);
+  const [draftsProcessed, setDraftsProcessed] = useState(0);
+
+  const handleBulkButtonClick = () => {
+    if (store.plan !== "ilimitado") {
+      setBulkOpen(true); // Open upgrade dialog
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleBulkFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Check plan limits
+    const currentCount = store.products.filter(p => !p.isSample).length;
+    if (currentCount + files.length > effectiveLimit) {
+      toast.error(`La subida masiva excede el límite de tu plan (${effectiveLimit} productos).`);
+      return;
+    }
+
+    setBulkOpen(true);
+    setUploadingDrafts(true);
+    setDraftsTotal(files.length);
+    setDraftsProcessed(0);
+
+    // Make sure we have at least one category
+    let catId = store.categories[0]?.id;
+    if (!catId) {
+      const newCatId = await handleCreateCategory("General");
+      catId = newCatId || "";
+    }
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const webpDataUrl = await convertImageToWebP(file);
+        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        const cleanName = `Borrador - ${baseName.substring(0, 30)}`;
+
+        await upsert(store.id, {
+          id: "",
+          name: cleanName,
+          price: 0,
+          categoryId: catId,
+          image: webpDataUrl,
+          description: "",
+          visible: false, // draft
+          isSample: false
+        });
+      } catch (err) {
+        console.error("[bulk upload]", err);
+      }
+      setDraftsProcessed((prev) => prev + 1);
+    }
+
+    setUploadingDrafts(false);
+    setBulkOpen(false);
+    toast.success(`Se crearon ${files.length} borradores de productos.`);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   // Categories UI state
   const [newCatName, setNewCatName] = useState("");
   const [isAddingCat, setIsAddingCat] = useState(false);
@@ -518,10 +586,20 @@ function ProductsPage() {
                 )}
               </p>
             </div>
-            <Button onClick={openNew} disabled={reachedLimit}>
-              {reachedLimit ? <Lock className="h-4 w-4 mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
-              Nuevo Producto
-            </Button>
+            <div className="flex gap-2 items-center flex-wrap">
+              <Button 
+                variant="outline" 
+                onClick={handleBulkButtonClick} 
+                className="gap-1.5 font-bold text-xs h-9 sm:h-10 px-4 border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:border-primary"
+              >
+                <Images className="h-4 w-4 text-primary shrink-0" />
+                Carga Rápida por Fotos
+              </Button>
+              <Button onClick={openNew} disabled={reachedLimit} className="font-bold text-xs h-9 sm:h-10 px-4 gap-1.5">
+                {reachedLimit ? <Lock className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
+                Nuevo Producto
+              </Button>
+            </div>
           </div>
 
           {/* Banner: productos ocultos por vencimiento */}
@@ -578,11 +656,16 @@ function ProductsPage() {
                       )}
                     </TableCell>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{p.name}</span>
                         {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
                           <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0">
                             ⭐ Destacado
+                          </Badge>
+                        )}
+                        {!p.visible && (
+                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:bg-amber-950/20 shrink-0">
+                            Borrador
                           </Badge>
                         )}
                       </div>
@@ -659,11 +742,16 @@ function ProductsPage() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                     <p className="font-semibold text-sm truncate">{p.name}</p>
                     {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
                       <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
                         ⭐ Destacado
+                      </span>
+                    )}
+                    {!p.visible && (
+                      <span className="shrink-0 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1 rounded dark:text-amber-400 dark:bg-amber-950/20 dark:border-amber-900/50">
+                        Borrador
                       </span>
                     )}
                   </div>
@@ -1075,6 +1163,82 @@ function ProductsPage() {
             </Button>
             <Button className="flex-1 sm:flex-none" onClick={save}>Guardar producto</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Input oculto para carga masiva por fotos */}
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleBulkFileChange}
+        className="hidden"
+      />
+
+      {/* Dialog Carga Rápida / Upgrade */}
+      <Dialog open={bulkOpen} onOpenChange={(val) => { if (!uploadingDrafts) setBulkOpen(val); }}>
+        <DialogContent className="max-w-md max-h-[90dvh] flex flex-col p-6 text-center space-y-6">
+          {uploadingDrafts ? (
+            <div className="space-y-4 py-6">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+              <div className="space-y-2">
+                <DialogTitle className="text-xl font-extrabold text-foreground">Creando borradores masivos</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground leading-normal">
+                  Procesando e ingresando imagen <strong>{draftsProcessed + 1}</strong> de <strong>{draftsTotal}</strong>...
+                </DialogDescription>
+              </div>
+              {/* Progress bar */}
+              <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden mt-4">
+                <div 
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(draftsProcessed / draftsTotal) * 100}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-2">
+                Optimizando imágenes a WebP e insertando en catálogo
+              </p>
+            </div>
+          ) : (
+            // Upgrade screen
+            <div className="space-y-4">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20">
+                <Sparkles className="h-8 w-8 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <DialogTitle className="text-xl font-extrabold text-foreground">Carga Rápida por Fotos ⚡</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                  ¿Tienes muchos productos por registrar? Toma fotos de todo tu stock con tu celular, súbelas juntas en un solo paso y crearemos borradores automáticamente.
+                </DialogDescription>
+              </div>
+              <div className="p-4 border rounded-xl bg-zinc-50 dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 text-left space-y-2 text-xs">
+                <p className="font-bold text-foreground">Beneficios del Plan Ilimitado:</p>
+                <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                  <li><strong>Ahorro de tiempo</strong>: Crea hasta 30 borradores a la vez.</li>
+                  <li><strong>Edición posterior</strong>: Rellena precios y nombres con calma.</li>
+                  <li><strong>Productos Ilimitados</strong> en el catálogo.</li>
+                </ul>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tu tienda actual se encuentra en el plan <strong>{store.plan.toUpperCase()}</strong>.
+              </p>
+              <div className="flex flex-col gap-2 pt-2">
+                <a
+                  href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero actualizar mi plan a Ilimitado para desbloquear la Carga Rápida por Fotos.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 px-6 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition-all active:scale-95 cursor-pointer"
+                >
+                  Actualizar a Plan Ilimitado por WhatsApp
+                </a>
+                <Button variant="ghost" onClick={() => setBulkOpen(false)} className="rounded-xl">
+                  Tal vez más tarde
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
