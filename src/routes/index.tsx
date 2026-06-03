@@ -594,8 +594,8 @@ function LandingPage() {
                 desc="Para micro-emprendedores probando el mercado."
                 features={[
                   "Hasta 7 productos",
-                  "1 modelo de diseño",
-                  "3 nichos (Comida, Bisutería, General)",
+                  "1 modelo de diseño estándar",
+                  "Múltiples categorías",
                   "Link personalizado",
                   "Carrito a WhatsApp",
                   "Marca de agua Dizi visible"
@@ -609,7 +609,8 @@ function LandingPage() {
                 desc="Tiendas de ropa, accesorios o repuestos."
                 features={[
                   "Hasta 50 productos",
-                  "Modelos y nichos ilimitados",
+                  "Modelos estándar (Clásico, Nocturno, Vibrante)",
+                  "Múltiples categorías",
                   "Buscador inteligente",
                   "Soporte básico",
                   "Descarga de Catálogo en PDF",
@@ -626,9 +627,9 @@ function LandingPage() {
                 desc="Minimarkets y tiendas con stock variado."
                 features={[
                   "Hasta 200 productos",
-                  "Modelos y nichos ilimitados",
-                  "Estadísticas básicas",
+                  "Modelos estándar + Diseños Premium por Nichos",
                   "Múltiples categorías",
+                  "Estadísticas básicas",
                   "Descarga de Catálogo en PDF",
                   "Sin marca de agua (Marca propia)"
                 ]}
@@ -642,7 +643,8 @@ function LandingPage() {
                 desc="Negocios con alta rotación y carga masiva."
                 features={[
                   "Productos ilimitados",
-                  "Modelos y nichos ilimitados",
+                  "Modelos estándar + Diseños Premium por Nichos",
+                  "Múltiples categorías",
                   "Carga masiva (Excel)",
                   "Soporte prioritario 24/7",
                   "Descarga de Catálogo en PDF",
