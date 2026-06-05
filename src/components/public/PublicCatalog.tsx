@@ -1636,31 +1636,7 @@ export function PublicCatalog({
           <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
         ) : mode === "bio" ? (
           <div className="w-full">
-            <div className="max-w-md mx-auto mb-6 px-1 space-y-4">
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar producto..."
-                  className={cn(
-                    "w-full bg-secondary text-foreground text-xs placeholder-gray-400 pl-9 pr-4 py-3 outline-none transition",
-                    bioTypography === "serif" 
-                      ? "border border-gray-200 focus:border-black rounded-none font-sans" 
-                      : "rounded-full bg-secondary focus:ring-2 focus:ring-ring"
-                  )}
-                />
-                {query && (
-                  <button 
-                    onClick={() => setQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
+            <div className="max-w-md mx-auto mb-6 px-1">
               {/* Horizontal Category Scroll */}
               <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
                 <button
