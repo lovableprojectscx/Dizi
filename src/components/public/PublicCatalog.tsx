@@ -1555,7 +1555,7 @@ export function PublicCatalog({
             <span className="h-px w-8 bg-muted-foreground/30"></span>
           </h2>
         )}
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && cfg.layout !== "bite" && cfg.layout !== "bloom" ? (
           <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
         ) : mode === "bio" ? (
           /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) for better mobile presentation on desktop as well! */

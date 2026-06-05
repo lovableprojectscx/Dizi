@@ -417,6 +417,22 @@ export const useApp = create<AppState>()(
         const p = { ...product, id: prodId, image: imageUrl };
 
         try {
+          const st = useApp.getState().stores.find((s) => s.id === storeId);
+          const exists = st ? st.products.some((pr) => pr.id === p.id) : false;
+          const isNewRealProduct = !exists && !p.isSample;
+          const hasOnlySamples = st ? (st.products.length > 0 && st.products.every((pr) => pr.isSample)) : false;
+
+          if (isNewRealProduct && hasOnlySamples) {
+            const { error: delErr } = await supabase
+              .from("products")
+              .delete()
+              .eq("store_id", storeId)
+              .eq("is_sample", true);
+            if (delErr) {
+              console.error("[upsertProduct] Error deleting sample products:", delErr);
+            }
+          }
+
           const { error } = await supabase.from("products").upsert({
             id: p.id, store_id: storeId, category_id: p.categoryId,
             name: p.name, price: p.price, original_price: p.originalPrice,
