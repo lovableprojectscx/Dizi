@@ -2831,19 +2831,24 @@ export function PublicCatalog({
               {/* Search Bar at full width */}
               {mode === "catalog" && (
                 <div className="relative w-full">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-rose-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--primary)]" />
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="¿Buscas algún arreglo floral en especial?"
-                    className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition bg-white border border-rose-100 text-stone-700 placeholder-stone-400 focus:ring-1 focus:ring-rose-300 focus:border-rose-300 shadow-sm"
+                    style={{
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--border)",
+                      color: "var(--foreground)",
+                    }}
+                    className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition placeholder-muted-foreground focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] shadow-sm"
                   />
                 </div>
               )}
 
               {/* Inline Horizontal Category Selector */}
               <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left">
                   Categorías
                 </h3>
                 
@@ -2853,16 +2858,18 @@ export function PublicCatalog({
                     <button
                       onClick={() => setActiveCat("all")}
                       style={{
-                        borderColor: activeCat === "all" ? "var(--primary)" : "#f3e8eb",
+                        borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
+                        backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--card)",
+                        color: activeCat === "all" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
                       }}
                       className={cn(
-                        "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider bg-white/80 backdrop-blur-sm",
+                        "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
                         activeCat === "all"
-                          ? "bg-rose-50 text-rose-700 shadow-sm scale-105 font-extrabold"
-                          : "text-stone-500 hover:text-rose-600 hover:bg-rose-50/20"
+                          ? "shadow-sm scale-105 font-extrabold"
+                          : "hover:bg-primary/5"
                       )}
                     >
-                      <LayoutGrid className="h-4 w-4 shrink-0" style={{ color: activeCat === "all" ? "var(--primary)" : "#881337" }} />
+                      <LayoutGrid className="h-4 w-4 shrink-0" style={{ color: activeCat === "all" ? (effectiveIsDark ? "#000" : "#fff") : "var(--primary)" }} />
                       <span>Ver Todo</span>
                     </button>
 
@@ -2871,16 +2878,18 @@ export function PublicCatalog({
                       <button
                         onClick={() => setActiveCat("sale")}
                         style={{
-                          borderColor: activeCat === "sale" ? "var(--primary)" : "#f3e8eb",
+                          borderColor: activeCat === "sale" ? "var(--primary)" : "var(--border)",
+                          backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--card)",
+                          color: activeCat === "sale" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
                         }}
                         className={cn(
-                          "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider bg-white/80 backdrop-blur-sm",
+                          "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
                           activeCat === "sale"
-                            ? "bg-rose-50 text-rose-700 shadow-sm scale-105 font-extrabold"
-                            : "text-stone-500 hover:text-rose-600 hover:bg-rose-50/20"
+                            ? "shadow-sm scale-105 font-extrabold"
+                            : "hover:bg-primary/5"
                         )}
                       >
-                        <Flame className="h-4 w-4 shrink-0 text-red-500" />
+                        <Flame className="h-4 w-4 shrink-0" style={{ color: activeCat === "sale" ? (effectiveIsDark ? "#000" : "#fff") : "#ef4444" }} />
                         <span>Ofertas</span>
                       </button>
                     )}
@@ -2893,25 +2902,27 @@ export function PublicCatalog({
                           key={c.id}
                           onClick={() => setActiveCat(c.id)}
                           style={{
-                            borderColor: active ? "var(--primary)" : "#f3e8eb",
+                            borderColor: active ? "var(--primary)" : "var(--border)",
+                            backgroundColor: active ? "var(--primary)" : "var(--card)",
+                            color: active ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
                           }}
                           className={cn(
-                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider bg-white/80 backdrop-blur-sm",
+                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
                             active
-                              ? "bg-rose-50 text-rose-700 shadow-sm scale-105 font-extrabold"
-                              : "text-stone-500 hover:text-rose-600 hover:bg-rose-50/20"
+                              ? "shadow-sm scale-105 font-extrabold"
+                              : "hover:bg-primary/5"
                           )}
                         >
                           {iconKey ? (
                             <CategoryIcon 
                               iconKey={iconKey} 
                               className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? "var(--primary)" : "var(--primary)" }}
+                              style={{ color: active ? (effectiveIsDark ? "#000" : "#fff") : "var(--primary)" }}
                             />
                           ) : (
                             <Utensils 
                               className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? "var(--primary)" : "var(--primary)" }}
+                              style={{ color: active ? (effectiveIsDark ? "#000" : "#fff") : "var(--primary)" }}
                             />
                           )}
                           <span>{label}</span>
