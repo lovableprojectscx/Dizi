@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
 
@@ -203,5 +203,47 @@
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Bio-Link Typography System ── */
+.typography-sans, 
+.typography-sans * {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.typography-serif, 
+.typography-serif * {
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
+}
+.typography-serif h1, 
+.typography-serif h2, 
+.typography-serif h3, 
+.typography-serif h1 *, 
+.typography-serif h2 *, 
+.typography-serif h3 *, 
+.typography-serif .font-serif-editorial, 
+.typography-serif .font-serif-editorial * {
+  font-family: 'Playfair Display', Georgia, serif !important;
+}
+
+.typography-rounded, 
+.typography-rounded * {
+  font-family: 'Quicksand', ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.typography-modern, 
+.typography-modern * {
+  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+}
+
+/* Helper classes */
+.font-serif-editorial {
+  font-family: 'Playfair Display', Georgia, serif !important;
+}
+.font-sans-bloom {
+  font-family: 'Quicksand', sans-serif !important;
+}
+.font-sans-vibe {
+  font-family: 'Outfit', sans-serif !important;
 }
 

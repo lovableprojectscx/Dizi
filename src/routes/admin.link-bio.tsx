@@ -269,18 +269,6 @@ function PhonePreview({
   return (
     <div className="w-full max-w-[270px] mx-auto select-none">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
-        .font-serif-editorial {
-          font-family: 'Playfair Display', Georgia, serif !important;
-        }
-        .font-sans-bloom {
-          font-family: 'Quicksand', sans-serif !important;
-        }
-        .font-sans-vibe {
-          font-family: 'Outfit', sans-serif !important;
-        }
-
         @keyframes premiumShimmer {
           0% { transform: translateX(-150%) skewX(-15deg); }
           35% { transform: translateX(150%) skewX(-15deg); }
@@ -302,10 +290,10 @@ function PhonePreview({
             className={cn(
               "flex-1 overflow-y-auto scrollbar-none flex flex-col relative text-[9px] p-0 pb-6 transition-colors duration-300", 
               isMockupDark ? "dark" : "",
-              bioTypography === "sans" && "font-sans",
-              bioTypography === "serif" && "font-serif-editorial",
-              bioTypography === "rounded" && "font-sans-bloom",
-              bioTypography === "modern" && "font-sans-vibe"
+              bioTypography === "sans" && "typography-sans",
+              bioTypography === "serif" && "typography-serif",
+              bioTypography === "rounded" && "typography-rounded",
+              bioTypography === "modern" && "typography-modern"
             )}
             style={mockupBgStyle}
           >

@@ -1119,42 +1119,8 @@ export function PublicCatalog({
       translate="no"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
-
-        .typography-sans {
-          font-family: 'Inter', sans-serif !important;
-        }
-
-        .typography-serif {
-          font-family: 'Inter', sans-serif !important;
-        }
-        .typography-serif h1, 
-        .typography-serif h2, 
-        .typography-serif h3,
-        .typography-serif .font-serif-editorial {
-          font-family: 'Playfair Display', Georgia, serif !important;
-        }
-
-        .typography-rounded {
-          font-family: 'Quicksand', sans-serif !important;
-        }
-
-        .typography-modern {
-          font-family: 'Outfit', sans-serif !important;
-        }
-
-        .font-serif-editorial {
-          font-family: 'Playfair Display', Georgia, serif !important;
-        }
-
         .font-serif-glam {
           font-family: 'Playfair Display', Georgia, serif !important;
-        }
-        .font-sans-bloom {
-          font-family: 'Quicksand', sans-serif !important;
-        }
-        .font-sans-vibe {
-          font-family: 'Outfit', sans-serif !important;
         }
 
         .theme-glam {
