@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   MapPin,
   Star,
+  Sparkles,
   Instagram,
   Facebook,
   Linkedin,
@@ -2593,25 +2594,37 @@ export function PublicCatalog({
           </div>
         ) : cfg.layout === "bloom" ? (
           /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
-          <div className="space-y-8 select-none font-serif relative">
-            {/* Elegant floating leafy watermarks in background */}
-            <div className="absolute top-[12%] -left-12 w-28 h-28 text-rose-800 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block">
-              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-45">
-                <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
-              </svg>
-            </div>
-            <div className="absolute top-[52%] -right-16 w-36 h-36 text-rose-800 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block">
-              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-12">
-                <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
-              </svg>
-            </div>
+          <div className={cn("space-y-8 select-none relative", store.niche === "floreria" ? "font-serif" : "font-sans")}>
+            {store.niche === "floreria" && (
+              <>
+                {/* Elegant floating leafy watermarks in background */}
+                <div className="absolute top-[12%] -left-12 w-28 h-28 text-rose-800 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block">
+                  <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-45">
+                    <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+                  </svg>
+                </div>
+                <div className="absolute top-[52%] -right-16 w-36 h-36 text-rose-800 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block">
+                  <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-12">
+                    <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+                  </svg>
+                </div>
+              </>
+            )}
 
             {/* 1. Cover Banner Carousel */}
             {(() => {
               const banners = activeBanners;
               return (
-                <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-[3.5rem_1.5rem_3.5rem_1.5rem] p-1 bg-gradient-to-tr from-rose-200/50 via-[#fffaf8] to-rose-200/50 shadow-[0_12px_35px_rgba(251,207,214,0.4)] overflow-hidden group/banner border border-rose-100/50 z-10">
-                  <div className="w-full h-full rounded-[inherit] overflow-hidden relative bg-[#fdfaf8]">
+                <div className={cn(
+                  "relative w-full aspect-[21/9] sm:aspect-[21/7] p-1 overflow-hidden group/banner z-10",
+                  store.niche === "floreria"
+                    ? "rounded-[3.5rem_1.5rem_3.5rem_1.5rem] bg-gradient-to-tr from-rose-200/50 via-[#fffaf8] to-rose-200/50 shadow-[0_12px_35px_rgba(251,207,214,0.4)] border border-rose-100/50"
+                    : "rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-md"
+                )}>
+                  <div className={cn(
+                    "w-full h-full rounded-[inherit] overflow-hidden relative",
+                    store.niche === "floreria" ? "bg-[#fdfaf8]" : "bg-[var(--card)]"
+                  )}>
                     {banners.length > 0 ? (
                       <>
                         {/* Slides */}
@@ -2686,15 +2699,20 @@ export function PublicCatalog({
                       </>
                     ) : (
                       <div 
-                        className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-rose-50/50 via-rose-100/20 to-stone-50 relative"
+                        className={cn(
+                          "w-full h-full flex flex-col items-center justify-center p-6 text-center relative",
+                          store.niche === "floreria"
+                            ? "bg-gradient-to-br from-rose-50/50 via-rose-100/20 to-stone-50"
+                            : "bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-muted/20"
+                        )}
                       >
-                        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#be185d_1px,transparent_1px)] [background-size:20px_20px]" />
+                        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
                         <div className="relative z-10">
-                          <h2 className="text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide font-serif">
+                          <h2 className={cn("text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide", store.niche === "floreria" ? "font-serif" : "font-sans font-bold")}>
                             {store.name}
                           </h2>
-                          <p className="text-xs text-rose-600/80 font-semibold uppercase tracking-widest mt-2 font-sans">
-                            Arreglos & Detalles Florales
+                          <p className={cn("text-xs font-semibold uppercase tracking-widest mt-2 font-sans", store.niche === "floreria" ? "text-rose-600/80" : "text-[var(--primary)]")}>
+                            {store.niche === "floreria" ? "Arreglos & Detalles Florales" : "Catálogo Oficial"}
                           </p>
                         </div>
                       </div>
@@ -2703,16 +2721,23 @@ export function PublicCatalog({
 
                   {/* Floating Quality Stamp/Badge (Wow Factor!) */}
                   <div className="absolute top-4 right-4 z-30 select-none pointer-events-none scale-[0.65] sm:scale-100 origin-top-right">
-                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-white/90 backdrop-blur-md border border-rose-100 rounded-full flex items-center justify-center shadow-lg animate-[spin_12s_linear_infinite]">
+                    <div className={cn(
+                      "relative w-16 h-16 sm:w-20 sm:h-20 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg animate-[spin_12s_linear_infinite]",
+                      store.niche === "floreria" ? "border border-rose-100" : "border border-[var(--border)]"
+                    )}>
                       <svg className="absolute w-full h-full p-1" viewBox="0 0 100 100">
                         <path id="text-path" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="none" />
-                        <text className="font-serif text-[7.5px] font-semibold fill-rose-900 tracking-widest uppercase">
+                        <text className={cn("text-[7.5px] font-semibold tracking-widest uppercase", store.niche === "floreria" ? "font-serif fill-rose-900" : "font-sans fill-[var(--primary)]")}>
                           <textPath href="#text-path" startOffset="0%">
-                            • FLORES FRESCAS • PREMIUM QUALITY •
+                            {store.niche === "floreria" ? "• FLORES FRESCAS • PREMIUM QUALITY •" : "• PRODUCTOS PREMIUM • CALIDAD GARANTIZADA •"}
                           </textPath>
                         </text>
                       </svg>
-                      <Flower className="h-6 w-6 text-rose-500 animate-pulse" />
+                      {store.niche === "floreria" ? (
+                        <Flower className="h-6 w-6 text-rose-500 animate-pulse" />
+                      ) : (
+                        <Sparkles className="h-6 w-6 text-[var(--primary)] animate-pulse" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2737,10 +2762,25 @@ export function PublicCatalog({
               
               return (
                 <div className="space-y-4 relative z-10">
-                  <div className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300 border-rose-400">
-                    <h3 className="text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 font-serif uppercase">
-                      <Flower className="h-4 w-4 text-rose-500 animate-pulse" />
-                      Arreglos Destacados
+                  <div className={cn(
+                    "flex items-center justify-between border-l-2 pl-3 transition-colors duration-300",
+                    store.niche === "floreria" ? "border-rose-400" : "border-[var(--primary)]"
+                  )}>
+                    <h3 className={cn(
+                      "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
+                      store.niche === "floreria" ? "font-serif" : "font-sans font-bold"
+                    )}>
+                      {store.niche === "floreria" ? (
+                        <>
+                          <Flower className="h-4 w-4 text-rose-500 animate-pulse" />
+                          Arreglos Destacados
+                        </>
+                      ) : (
+                        <>
+                          <Star className="h-4 w-4 text-[var(--primary)] animate-pulse" />
+                          Productos Destacados
+                        </>
+                      )}
                     </h3>
                     <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans">Desliza →</span>
                   </div>
@@ -2752,26 +2792,49 @@ export function PublicCatalog({
                         <div
                           key={p.id}
                           onClick={() => setViewingProduct(p)}
-                          className="w-[280px] sm:w-[320px] shrink-0 snap-start rounded-[2.5rem_1rem_2.5rem_1rem] border border-rose-100/40 bg-white/75 hover:bg-white p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 shadow-[0_8px_30px_rgba(253,244,245,0.7)] hover:shadow-[0_15px_35px_rgba(251,207,214,0.35)] flex flex-col justify-between cursor-pointer group relative"
+                          className={cn(
+                            "w-[280px] sm:w-[320px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative",
+                            store.niche === "floreria"
+                              ? "rounded-[2.5rem_1rem_2.5rem_1rem] border border-rose-100/40 bg-white/75 hover:bg-white shadow-[0_8px_30px_rgba(253,244,245,0.7)] hover:shadow-[0_15px_35px_rgba(251,207,214,0.35)]"
+                              : "rounded-3xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md"
+                          )}
                         >
                           <div className="space-y-3">
-                            {/* Curved image like flower petal */}
-                            <div className="relative aspect-square w-full rounded-t-[7rem] rounded-b-[1.5rem] overflow-hidden bg-rose-50/20 border border-rose-100/30">
+                            {/* Curved image like flower petal / Standard rounded image */}
+                            <div className={cn(
+                              "relative aspect-square w-full overflow-hidden",
+                              store.niche === "floreria"
+                                ? "rounded-t-[7rem] rounded-b-[1.5rem] bg-rose-50/20 border border-rose-100/30"
+                                : "rounded-2xl bg-muted border border-[var(--border)]"
+                            )}>
                               <img
                                 src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
                                 alt={p.name}
                                 className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
                                 loading="lazy"
                               />
-                              {/* Floating Badge inside image container, placed at bottom-left to prevent clipping from top arch curves */}
-                              <div className="absolute bottom-3 left-3 z-10 bg-rose-500 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans">
+                              {/* Floating Badge inside image container */}
+                              <div 
+                                style={{
+                                  backgroundColor: store.niche === "floreria" ? undefined : "var(--primary)",
+                                }}
+                                className={cn(
+                                  "absolute bottom-3 left-3 z-10 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans",
+                                  store.niche === "floreria" ? "bg-rose-500" : ""
+                                )}
+                              >
                                 {p.isOnSale ? "Oferta" : "Destacado"}
                               </div>
                             </div>
                             {/* Info */}
                             <div className="space-y-1 text-left px-1">
-                              <span className="text-[10px] italic text-rose-400 font-serif block mb-0.5">Sugerencia de la Florista</span>
-                              <h4 className="font-semibold text-sm sm:text-base text-stone-800 group-hover:text-rose-600 transition-colors truncate font-serif">
+                              {store.niche === "floreria" && (
+                                <span className="text-[10px] italic text-rose-400 font-serif block mb-0.5">Sugerencia de la Florista</span>
+                              )}
+                              <h4 className={cn(
+                                "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
+                                store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
+                              )}>
                                 {p.name}
                               </h4>
                               <p className="text-xs text-stone-500 line-clamp-2 h-8 leading-relaxed font-sans">
@@ -2780,9 +2843,22 @@ export function PublicCatalog({
                             </div>
                           </div>
                           {/* Buy section */}
-                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-rose-100/30 px-1">
+                          <div className={cn(
+                            "flex items-center justify-between pt-3 mt-3 border-t px-1",
+                            store.niche === "floreria" ? "border-rose-100/30" : "border-[var(--border)]"
+                          )}>
                             <div className="text-left">
-                              <span className="text-base font-semibold text-rose-600 font-sans">{formatPrice(p.price)}</span>
+                              <span 
+                                style={{
+                                  color: store.niche === "floreria" ? undefined : "var(--primary)",
+                                }}
+                                className={cn(
+                                  "text-base font-semibold font-sans",
+                                  store.niche === "floreria" ? "text-rose-600" : ""
+                                )}
+                              >
+                                {formatPrice(p.price)}
+                              </span>
                               {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
                                 <span className="text-xs text-stone-400 line-through block -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
                               )}
@@ -2800,7 +2876,7 @@ export function PublicCatalog({
                               >
                                 <MessageCircle className="h-4 w-4" />
                               </button>
-                              {/* Add to Cart button (Rose) */}
+                              {/* Add to Cart button */}
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -2835,7 +2911,7 @@ export function PublicCatalog({
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="¿Buscas algún arreglo floral en especial?"
+                    placeholder={store.niche === "floreria" ? "¿Buscas algún arreglo floral en especial?" : "¿Qué estás buscando hoy?"}
                     style={{
                       backgroundColor: "var(--card)",
                       borderColor: "var(--border)",
@@ -2946,8 +3022,13 @@ export function PublicCatalog({
                 
                 if (gridProducts.length === 0) {
                   return (
-                    <div className="text-center py-12 border border-rose-100/50 rounded-[2rem] bg-white/50 text-xs text-stone-400 shadow-xs">
-                      No hay arreglos florales en esta categoría.
+                    <div className={cn(
+                      "text-center py-12 text-xs text-stone-400 shadow-xs",
+                      store.niche === "floreria"
+                        ? "border border-rose-100/50 rounded-[2rem] bg-white/50"
+                        : "border border-[var(--border)] rounded-3xl bg-[var(--card)]/50"
+                    )}>
+                      {store.niche === "floreria" ? "No hay arreglos florales en esta categoría." : "No hay productos en esta categoría."}
                     </div>
                   );
                 }
@@ -2957,12 +3038,22 @@ export function PublicCatalog({
                     {gridProducts.map((p) => (
                       <article
                         key={p.id}
-                        className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-rose-100/30 rounded-[2.5rem_0.5rem_2.5rem_0.5rem] bg-white/70 hover:bg-white hover:scale-[1.02] shadow-[0_4px_15px_rgba(253,244,245,0.5)] hover:shadow-[0_8px_25px_rgba(251,207,214,0.25)]"
+                        className={cn(
+                          "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group",
+                          store.niche === "floreria"
+                            ? "border border-rose-100/30 rounded-[2.5rem_0.5rem_2.5rem_0.5rem] bg-white/70 hover:bg-white hover:scale-[1.02] shadow-[0_4px_15px_rgba(253,244,245,0.5)] hover:shadow-[0_8px_25px_rgba(251,207,214,0.25)]"
+                            : "border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md"
+                        )}
                         onClick={() => setViewingProduct(p)}
                       >
                         <div>
-                          {/* Asymmetric image rounded corners */}
-                          <div className="relative overflow-hidden bg-rose-50/20 aspect-square rounded-[2rem_0.5rem_2rem_0.5rem] m-2 border border-rose-100/20">
+                          {/* Asymmetric or standard image wrapper */}
+                          <div className={cn(
+                            "relative overflow-hidden aspect-square m-2",
+                            store.niche === "floreria"
+                              ? "bg-rose-50/20 rounded-[2rem_0.5rem_2rem_0.5rem] border border-rose-100/20"
+                              : "bg-muted rounded-xl border border-[var(--border)]"
+                          )}>
                             <img
                               src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
                               alt={p.name}
@@ -2970,15 +3061,25 @@ export function PublicCatalog({
                               loading="lazy"
                             />
                             {p.isOnSale && (
-                              /* Positioned at top-right to prevent clipping on the asymmetric rounded top-left corner (2rem/32px radius) */
-                              <span className="absolute top-2.5 right-2.5 bg-rose-500 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10">
+                              <span 
+                                style={{
+                                  backgroundColor: store.niche === "floreria" ? undefined : "var(--primary)",
+                                }}
+                                className={cn(
+                                  "absolute top-2.5 right-2.5 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10",
+                                  store.niche === "floreria" ? "bg-rose-500" : ""
+                                )}
+                              >
                                 Oferta
                               </span>
                             )}
                           </div>
                           {/* Info */}
                           <div className="p-3 pt-1 space-y-1 text-left">
-                            <h4 className="font-semibold text-sm text-stone-800 group-hover:text-rose-600 transition-colors line-clamp-1 font-serif">
+                            <h4 className={cn(
+                              "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
+                              store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
+                            )}>
                               {p.name}
                             </h4>
                             {p.description && (

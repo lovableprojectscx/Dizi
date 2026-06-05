@@ -88,6 +88,15 @@ function ColorSwatch({
 }
 
 const PREMIUM_TEMPLATES: Record<string, { id: string; name: string; description: string; image: string; defaultColor: string }[]> = {
+  general: [
+    {
+      id: "bloom",
+      name: "Estándar Premium",
+      description: "Diseño premium multipropósito limpio y moderno para cualquier tipo de negocio. Cuenta con carrusel de banners superiores, sección de productos destacados, grilla de productos simétrica de esquinas suaves y buscador inteligente.",
+      image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=300&q=80",
+      defaultColor: "#FF823A"
+    }
+  ],
   hamburgueseria: [
     {
       id: "bite",
@@ -155,16 +164,21 @@ function DisenoPremiumPage() {
 
   const [selectedTemplate, setSelectedTemplate] = useState(() => {
     if (store.model && store.model !== "default") return store.model;
-    return store.niche === "floreria" ? "bloom" : "bite";
+    if (store.niche === "floreria") return "bloom";
+    if (store.niche === "hamburgueseria") return "bite";
+    return "bloom"; // Default to bloom layout (which will adapt to Estándar Premium)
   });
-  const [premiumModel, setPremiumModel] = useState<"hamburgueseria" | "floreria">(() => {
-    return (store.niche as any) === "floreria" ? "floreria" : "hamburgueseria";
+  const [premiumModel, setPremiumModel] = useState<"general" | "hamburgueseria" | "floreria">(() => {
+    if (store.niche === "general" || store.niche === "floreria" || store.niche === "hamburgueseria") {
+      return store.niche as any;
+    }
+    return "general";
   });
-  const [brandColor, setBrandColor] = useState(store.brandColor || "#ea580c");
+  const [brandColor, setBrandColor] = useState(store.brandColor || "#FF823A");
   const [bgColor, setBgColor] = useState(() => {
     if (store.bgColor) return store.bgColor;
-    const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : "bite");
-    return defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" ? "#fffaf8" : "#fafaf9";
+    const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : store.niche === "hamburgueseria" ? "bite" : "bloom");
+    return defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" && store.niche === "floreria" ? "#fffaf8" : "#ffffff";
   });
   const [bannerImages, setBannerImages] = useState<string[]>(() => {
     const raw = (store as any).bannerImage || "";
@@ -175,14 +189,14 @@ function DisenoPremiumPage() {
 
   useEffect(() => {
     if (store && !isLoaded) {
-      setBrandColor(store.brandColor || (store.niche === "floreria" ? "#be185d" : "#ea580c"));
-      const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : "bite");
-      setBgColor(store.bgColor || (defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" ? "#fffaf8" : "#fafaf9"));
+      setBrandColor(store.brandColor || (store.niche === "floreria" ? "#be185d" : store.niche === "hamburgueseria" ? "#ea580c" : "#FF823A"));
+      const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : store.niche === "hamburgueseria" ? "bite" : "bloom");
+      setBgColor(store.bgColor || (defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" && store.niche === "floreria" ? "#fffaf8" : "#ffffff"));
       const raw = (store as any).bannerImage || "";
       setBannerImages(raw ? (raw.includes("|||") ? raw.split("|||") : [raw]) : []);
       setBannerTitle((store as any).bannerTitle || "");
-      const activeNiche = store.niche === "floreria" ? "floreria" : "hamburgueseria";
-      const activeModel = store.model && store.model !== "default" ? store.model : (activeNiche === "floreria" ? "bloom" : "bite");
+      const activeNiche = store.niche === "floreria" ? "floreria" : store.niche === "hamburgueseria" ? "hamburgueseria" : "general";
+      const activeModel = store.model && store.model !== "default" ? store.model : (activeNiche === "floreria" ? "bloom" : activeNiche === "hamburgueseria" ? "bite" : "bloom");
       setSelectedTemplate(activeModel);
       setPremiumModel(activeNiche);
       setIsLoaded(true);
@@ -226,6 +240,12 @@ function DisenoPremiumPage() {
   };
 
   const PREMIUM_COLORS = {
+    general: [
+      { id: "orange",   name: "Naranja Atardecer", hex: "#FF823A", display: "#FF823A" },
+      { id: "blue",     name: "Azul Eléctrico",   hex: "#2563eb", display: "#2563eb" },
+      { id: "emerald",  name: "Verde Esmeralda",  hex: "#10b981", display: "#10b981" },
+      { id: "violet",   name: "Violeta Profundo", hex: "#7c3aed", display: "#7c3aed" },
+    ],
     hamburgueseria: [
       { id: "orange",  name: "Naranja Fuego",     hex: "#ea580c", display: "#ea580c" },
       { id: "amber",   name: "Ámbar Cálido",      hex: "#d97706", display: "#d97706" },
@@ -241,6 +261,11 @@ function DisenoPremiumPage() {
   };
 
   const PREMIUM_BG_COLORS = {
+    general: [
+      { id: "pure-white",   name: "Blanco Puro (Sugerido)", hex: "#ffffff", display: "#ffffff" },
+      { id: "neutral-gray",  name: "Gris Claro",           hex: "#f8fafc", display: "#f8fafc" },
+      { id: "dark-slate",    name: "Oscuro Premium",       hex: "#0f172a", display: "#0f172a" },
+    ],
     hamburgueseria: [
       { id: "dark-charcoal", name: "Carbón Oscuro (Sugerido)", hex: "#09090b", display: "#09090b" },
       { id: "dark-slate",    name: "Pizarra Oscura",        hex: "#0f172a", display: "#0f172a" },
@@ -254,7 +279,7 @@ function DisenoPremiumPage() {
     ]
   };
 
-  const selectedNicheColors = PREMIUM_COLORS[premiumModel] || PREMIUM_COLORS.hamburgueseria;
+  const selectedNicheColors = PREMIUM_COLORS[premiumModel] || PREMIUM_COLORS.general;
 
   const previewStore = {
     ...store,
@@ -267,6 +292,7 @@ function DisenoPremiumPage() {
   };
 
   const premiumModelNames: Record<string, string> = {
+    general: "Estándar Premium",
     hamburgueseria: "Hamburguesería",
     floreria: "Florería & Regalos",
     restaurante: "Restaurante Gourmet",
@@ -308,7 +334,24 @@ function DisenoPremiumPage() {
             </div>
 
              {/* Nicho Selection Tabs */}
-            <div className="flex gap-2 p-1 bg-zinc-100 rounded-2xl w-full max-w-sm mb-4">
+            <div className="flex gap-2 p-1 bg-zinc-100 rounded-2xl w-full max-w-md mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setPremiumModel("general");
+                  setSelectedTemplate("bloom");
+                  setBrandColor("#FF823A");
+                  setBgColor("#ffffff");
+                }}
+                className={cn(
+                  "flex-grow py-2 rounded-xl text-xs font-bold transition-all",
+                  premiumModel === "general"
+                    ? "bg-white text-zinc-950 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-900"
+                )}
+              >
+                General / Multirubro
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -356,7 +399,7 @@ function DisenoPremiumPage() {
                       setSelectedTemplate(tpl.id);
                       setPremiumModel(premiumModel);
                       setBrandColor(tpl.defaultColor);
-                      setBgColor(tpl.id === "bite" ? "#09090b" : tpl.id === "bloom" ? "#fffaf8" : "#fafaf9");
+                      setBgColor(tpl.id === "bite" ? "#09090b" : tpl.id === "bloom" && premiumModel === "floreria" ? "#fffaf8" : "#ffffff");
                     }}
                     className={cn(
                       "cursor-pointer flex flex-col rounded-2xl border-2 overflow-hidden transition-all hover:scale-[1.01] bg-zinc-50/20",
@@ -445,8 +488,20 @@ function DisenoPremiumPage() {
                 <Image className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base text-zinc-900">Banner de Portada del Restaurante</h3>
-                <p className="text-xs text-zinc-500">Imagen panorámica superior que define la identidad de tu cocina.</p>
+                <h3 className="font-extrabold text-base text-zinc-900">
+                  {premiumModel === "hamburgueseria" 
+                    ? "Banner de Portada del Restaurante" 
+                    : premiumModel === "floreria" 
+                    ? "Banner de Portada de la Florería" 
+                    : "Banner de Portada del Catálogo"}
+                </h3>
+                <p className="text-xs text-zinc-500">
+                  {premiumModel === "hamburgueseria" 
+                    ? "Imagen panorámica superior que define la identidad de tu cocina." 
+                    : premiumModel === "floreria" 
+                    ? "Imagen panorámica superior que define la identidad de tu florería." 
+                    : "Imagen panorámica superior que define la identidad de tu negocio."}
+                </p>
               </div>
             </div>
 
