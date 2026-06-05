@@ -1407,7 +1407,7 @@ export function PublicCatalog({
               {/* 1.5. VER CATÁLOGO COMPLETO (Serif only) */}
               {bioTypography === "serif" && renderBioButton(
                 "#catalogo",
-                "Ver Catálogo Completo",
+                "Ver Catálogo",
                 "#111111",
                 "#111111",
                 "#ffffff",
