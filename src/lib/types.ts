@@ -94,6 +94,7 @@ export interface Store {
   bioLogo?: string;
   bioBanner?: string;
   bioTheme?: string;
+  bioLayout?: "standard" | "editorial";
   bioButtonStyle?: string;
   bioButtonColor?: string;
   bioButtonTextColor?: string;

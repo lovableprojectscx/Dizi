@@ -149,6 +149,7 @@ function PhonePreview({
   bioButtonTextColor,
   bioBgImage,
   bioBgColor,
+  bioLayout = "standard",
 }: {
   name: string;
   logo: string;
@@ -170,6 +171,7 @@ function PhonePreview({
   bioButtonTextColor?: string;
   bioBgImage?: string;
   bioBgColor?: string;
+  bioLayout?: string;
 }) {
   const hasWhatsApp = !!phone;
   const hasLocation = !!(locationAddress.trim() && locationLat && locationLng);
@@ -252,7 +254,10 @@ function PhonePreview({
     return { shape, type, radiusClass };
   };
 
-  const { type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
+  let { type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
+  if (bioLayout === "editorial") {
+    radiusClass = "rounded-none";
+  }
 
   const getPlatformColors = (platform: string) => {
     if (platform === "whatsapp") return { bg: "#25D366", border: "#128C7E" };
@@ -314,9 +319,20 @@ function PhonePreview({
                   </div>
                 )}
               </div>
-              <p className={cn("font-black text-[8.5px] text-center leading-tight uppercase", previewTextColor)}>{name || "Tu Tienda"}</p>
+              <div className="flex items-center gap-0.5 justify-center">
+                <p className={cn("text-center leading-tight font-medium truncate max-w-[140px]", bioLayout === "editorial" ? "font-serif text-[10px]" : "font-black uppercase text-[8.5px]", previewTextColor)}>
+                  {name || "Tu Tienda"}
+                </p>
+                {bioLayout === "editorial" && (
+                  <span className="text-gray-400 shrink-0 mt-0.5">
+                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                  </span>
+                )}
+              </div>
               {bioDescription && (
-                <p className={cn("text-[6.5px] text-center leading-tight line-clamp-2 max-w-[160px]", previewMutedColor)}>
+                <p className={cn("text-center leading-tight line-clamp-2 max-w-[160px]", bioLayout === "editorial" ? "text-[5.5px] uppercase tracking-[0.1em] font-medium" : "text-[6.5px]", previewMutedColor)}>
                   {bioDescription}
                 </p>
               )}
@@ -397,6 +413,7 @@ function LinkBioPage() {
   const [bioLogo, setBioLogo] = useState(store?.bioLogo || "");
   const [bioBanner, setBioBanner] = useState(store?.bioBanner || "");
   const [bioTheme, setBioTheme] = useState(store?.bioTheme || "default");
+  const [bioLayout, setBioLayout] = useState(store?.bioLayout || "standard");
   const [bioButtonStyle, setBioButtonStyle] = useState(store?.bioButtonStyle || "pill-solid");
   const [bioButtonColor, setBioButtonColor] = useState(store?.bioButtonColor || "");
   const [bioButtonTextColor, setBioButtonTextColor] = useState(store?.bioButtonTextColor || "");
@@ -497,6 +514,7 @@ function LinkBioPage() {
       setBioLogo(store.bioLogo || "");
       setBioBanner(store.bioBanner || "");
       setBioTheme(store.bioTheme || "default");
+      setBioLayout(store.bioLayout || "standard");
       setBioButtonStyle(store.bioButtonStyle || "pill-solid");
       setBioButtonColor(store.bioButtonColor || "");
       setBioButtonTextColor(store.bioButtonTextColor || "");
@@ -682,6 +700,7 @@ function LinkBioPage() {
         bioLogo: bioLogo || null,
         bioBanner: bioBanner || null,
         bioTheme,
+        bioLayout,
         bioButtonStyle,
         bioButtonColor: bioButtonColor || null,
         bioButtonTextColor: bioButtonTextColor || null,
@@ -1236,8 +1255,68 @@ function LinkBioPage() {
                     {/* ──────────────── TAB 2: APARIENCIA ──────────────── */}
                     <TabsContent value="apariencia" className="space-y-5 mt-2 animate-in fade-in duration-300">
                       
-                      {/* Perfil y Portada */}
+                      {/* Diseño de Plantilla */}
                       <div className="space-y-3">
+                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Plantilla de Diseño del Bio-Link</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {[
+                            {
+                              id: "standard",
+                              name: "Estándar",
+                              desc: "Diseño clásico y fluido. Permite configurar libremente la apariencia, colores y redondeado de botones.",
+                              badge: "Modo Libre"
+                            },
+                            {
+                              id: "editorial",
+                              name: "Editorial E-commerce",
+                              desc: "Tipografía Serif elegante (Playfair), botones de bordes rectos de alto contraste, buscador integrado, scroll de categorías horizontal, grilla de productos 4:5 y carrito flotante.",
+                              badge: "Premium"
+                            }
+                          ].map((l) => {
+                            const isSelected = bioLayout === l.id;
+                            const isLocked = l.id === "editorial" && store && !canUsePremiumBioFeatures(store);
+                            return (
+                              <button
+                                key={l.id}
+                                type="button"
+                                onClick={() => {
+                                  if (isLocked) {
+                                    toast.error("La plantilla Editorial es exclusiva para el Plan Emprendedor o superior.");
+                                    return;
+                                  }
+                                  setBioLayout(l.id as any);
+                                }}
+                                className={cn(
+                                  "flex flex-col text-left p-4 rounded-2xl border transition-all hover:scale-[1.01] gap-2 relative",
+                                  isSelected 
+                                    ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-sm" 
+                                    : "border-border bg-card/40"
+                                )}
+                              >
+                                <div className="flex items-center justify-between w-full gap-2">
+                                  <span className="text-xs font-extrabold text-foreground">{l.name}</span>
+                                  {isLocked ? (
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full uppercase shrink-0">
+                                      <Crown className="h-3 w-3" /> Plan Pro
+                                    </span>
+                                  ) : (
+                                    <span className={cn(
+                                      "text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0",
+                                      l.id === "editorial" ? "bg-amber-500/10 text-amber-500" : "bg-primary/10 text-primary"
+                                    )}>
+                                      {l.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-muted-foreground leading-relaxed font-normal">{l.desc}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Perfil y Portada */}
+                      <div className="space-y-3 border-t border-border/40 pt-4">
                         <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Fotos del Bio-Link</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
@@ -1606,6 +1685,7 @@ function LinkBioPage() {
             bioButtonTextColor={bioButtonTextColor}
             bioBgImage={bioBgImage}
             bioBgColor={bioBgColor}
+            bioLayout={bioLayout}
           />
         </div>
       </div>
@@ -1641,6 +1721,7 @@ function LinkBioPage() {
                 bioButtonTextColor={bioButtonTextColor}
                 bioBgImage={bioBgImage}
                 bioBgColor={bioBgColor}
+                bioLayout={bioLayout}
               />
             </div>
           </SheetContent>
