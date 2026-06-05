@@ -161,6 +161,11 @@ function DisenoPremiumPage() {
     return (store.niche as any) === "floreria" ? "floreria" : "hamburgueseria";
   });
   const [brandColor, setBrandColor] = useState(store.brandColor || "#ea580c");
+  const [bgColor, setBgColor] = useState(() => {
+    if (store.bgColor) return store.bgColor;
+    const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : "bite");
+    return defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" ? "#fffaf8" : "#fafaf9";
+  });
   const [bannerImages, setBannerImages] = useState<string[]>(() => {
     const raw = (store as any).bannerImage || "";
     return raw ? (raw.includes("|||") ? raw.split("|||") : [raw]) : [];
@@ -171,6 +176,8 @@ function DisenoPremiumPage() {
   useEffect(() => {
     if (store && !isLoaded) {
       setBrandColor(store.brandColor || (store.niche === "floreria" ? "#be185d" : "#ea580c"));
+      const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : "bite");
+      setBgColor(store.bgColor || (defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" ? "#fffaf8" : "#fafaf9"));
       const raw = (store as any).bannerImage || "";
       setBannerImages(raw ? (raw.includes("|||") ? raw.split("|||") : [raw]) : []);
       setBannerTitle((store as any).bannerTitle || "");
@@ -182,11 +189,10 @@ function DisenoPremiumPage() {
     }
   }, [store, isLoaded]);
 
-  const expectedBgColor = selectedTemplate === "bite" ? "#09090b" : selectedTemplate === "bloom" ? "#fffaf8" : "#fafaf9";
   const isDirty =
     store.model !== selectedTemplate ||
     brandColor !== (store.brandColor || "") ||
-    (store as any).bgColor !== expectedBgColor ||
+    (store.bgColor || "") !== (bgColor || "") ||
     bannerImages.filter(Boolean).join("|||") !== ((store as any).bannerImage || "") ||
     bannerTitle !== ((store as any).bannerTitle || "") ||
     store.niche !== premiumModel;
@@ -200,7 +206,7 @@ function DisenoPremiumPage() {
       await update(store.id, {
         model: selectedTemplate,
         brandColor: brandColor || null,
-        bgColor: selectedTemplate === "bite" ? "#09090b" : selectedTemplate === "bloom" ? "#fffaf8" : "#fafaf9",
+        bgColor: bgColor || null,
         bannerImage: serialized,
         bannerTitle: bannerTitle || null,
         niche: premiumModel,
@@ -234,13 +240,27 @@ function DisenoPremiumPage() {
     ]
   };
 
+  const PREMIUM_BG_COLORS = {
+    hamburgueseria: [
+      { id: "dark-charcoal", name: "Carbón Oscuro (Sugerido)", hex: "#09090b", display: "#09090b" },
+      { id: "dark-slate",    name: "Pizarra Oscura",        hex: "#0f172a", display: "#0f172a" },
+      { id: "neutral-gray",  name: "Gris Neutro",          hex: "#fafaf9", display: "#fafaf9" },
+    ],
+    floreria: [
+      { id: "soft-cream",   name: "Crema Suave (Sugerido)", hex: "#fffaf8", display: "#fffaf8" },
+      { id: "pure-white",   name: "Blanco Puro",          hex: "#ffffff", display: "#ffffff" },
+      { id: "soft-lavanda",  name: "Lavanda Suave",        hex: "#faf5ff", display: "#faf5ff" },
+      { id: "soft-menta",    name: "Menta Suave",          hex: "#f4fdf4", display: "#f4fdf4" },
+    ]
+  };
+
   const selectedNicheColors = PREMIUM_COLORS[premiumModel] || PREMIUM_COLORS.hamburgueseria;
 
   const previewStore = {
     ...store,
     model: selectedTemplate,
     brandColor: brandColor,
-    bgColor: selectedTemplate === "bite" ? "#09090b" : selectedTemplate === "bloom" ? "#fffaf8" : "#fafaf9",
+    bgColor: bgColor,
     bannerImage: bannerImages.filter(Boolean).join("|||"),
     bannerTitle: bannerTitle,
     niche: premiumModel,
@@ -287,7 +307,7 @@ function DisenoPremiumPage() {
               </div>
             </div>
 
-            {/* Nicho Selection Tabs */}
+             {/* Nicho Selection Tabs */}
             <div className="flex gap-2 p-1 bg-zinc-100 rounded-2xl w-full max-w-sm mb-4">
               <button
                 type="button"
@@ -295,6 +315,7 @@ function DisenoPremiumPage() {
                   setPremiumModel("hamburgueseria");
                   setSelectedTemplate("bite");
                   setBrandColor("#ea580c");
+                  setBgColor("#09090b");
                 }}
                 className={cn(
                   "flex-grow py-2 rounded-xl text-xs font-bold transition-all",
@@ -311,6 +332,7 @@ function DisenoPremiumPage() {
                   setPremiumModel("floreria");
                   setSelectedTemplate("bloom");
                   setBrandColor("#be185d");
+                  setBgColor("#fffaf8");
                 }}
                 className={cn(
                   "flex-grow py-2 rounded-xl text-xs font-bold transition-all",
@@ -334,6 +356,7 @@ function DisenoPremiumPage() {
                       setSelectedTemplate(tpl.id);
                       setPremiumModel(premiumModel);
                       setBrandColor(tpl.defaultColor);
+                      setBgColor(tpl.id === "bite" ? "#09090b" : tpl.id === "bloom" ? "#fffaf8" : "#fafaf9");
                     }}
                     className={cn(
                       "cursor-pointer flex flex-col rounded-2xl border-2 overflow-hidden transition-all hover:scale-[1.01] bg-zinc-50/20",
@@ -391,6 +414,27 @@ function DisenoPremiumPage() {
               onSelect={setBrandColor}
               allowCustom
               customLabel="Color personalizado"
+            />
+          </div>
+
+          {/* Card 2.5: Background Color Selection */}
+          <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                <Palette className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base text-zinc-900">Color de Fondo</h3>
+                <p className="text-xs text-zinc-500">Personaliza el fondo del catálogo. Para el diseño Bloom se recomiendan tonos claros.</p>
+              </div>
+            </div>
+
+            <ColorSwatch
+              colors={PREMIUM_BG_COLORS[premiumModel] || PREMIUM_BG_COLORS.hamburgueseria}
+              selected={bgColor}
+              onSelect={setBgColor}
+              allowCustom
+              customLabel="Fondo personalizado"
             />
           </div>
 
