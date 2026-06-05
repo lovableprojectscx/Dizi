@@ -1285,6 +1285,12 @@ function LinkBioPage() {
                                     return;
                                   }
                                   setBioLayout(l.id as any);
+                                  if (l.id === "editorial") {
+                                    if (bioButtonStyle.startsWith("pill-") || bioButtonStyle.startsWith("rounded-")) {
+                                      const type = bioButtonStyle.split("-")[1];
+                                      setBioButtonStyle(`sharp-${type}`);
+                                    }
+                                  }
                                 }}
                                 className={cn(
                                   "flex flex-col text-left p-4 rounded-2xl border transition-all hover:scale-[1.01] gap-2 relative",
@@ -1444,6 +1450,11 @@ function LinkBioPage() {
                       {/* Diseño de Botones */}
                       <div className="space-y-3 border-t border-border/40 pt-4">
                         <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Diseño de Botones</Label>
+                        {bioLayout === "editorial" && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 leading-normal font-semibold">
+                            ⚠️ La plantilla Editorial requiere botones con esquinas rectas para mantener su estética premium. Solo puedes alternar el tipo de relleno (Relleno, Contorno o Vidrio).
+                          </p>
+                        )}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                           {[
                             { id: "pill-solid", name: "Píldora Relleno", pClass: "rounded-full bg-primary border-primary text-white" },
@@ -1455,7 +1466,7 @@ function LinkBioPage() {
                             { id: "sharp-solid", name: "Recto Relleno", pClass: "rounded-none bg-primary border-primary text-white" },
                             { id: "sharp-outline", name: "Recto Contorno", pClass: "rounded-none bg-transparent border-primary text-primary" },
                             { id: "sharp-glass", name: "Recto Vidrio", pClass: "rounded-none bg-white/10 border-white/20 text-foreground" },
-                          ].map((style) => {
+                          ].filter((style) => bioLayout !== "editorial" || style.id.startsWith("sharp-")).map((style) => {
                             const isSelected = bioButtonStyle === style.id;
                             return (
                               <button
