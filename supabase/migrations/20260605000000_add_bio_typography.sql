@@ -1,12 +1,13 @@
 -- =========================================================================================
--- MIGRACIÓN: Agregar columna de diseño de Bio-Link y actualizar RPC
+-- MIGRACIÓN: Agregar columna de tipografía de Bio-Link y actualizar RPC
 -- Fecha: 2026-06-05
 -- =========================================================================================
 
--- 1. Agregar columna bio_layout si no existe en la tabla stores
-ALTER TABLE stores ADD COLUMN IF NOT EXISTS bio_layout text DEFAULT 'standard';
+-- 1. Eliminar la columna bio_layout si existía en desarrollo local y agregar bio_typography
+ALTER TABLE stores DROP COLUMN IF EXISTS bio_layout;
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS bio_typography text DEFAULT 'sans';
 
--- 2. Actualizar la función RPC get_public_store para retornar la propiedad bio_layout
+-- 2. Actualizar la función RPC get_public_store para retornar la propiedad bio_typography
 CREATE OR REPLACE FUNCTION get_public_store(store_slug text)
 RETURNS jsonb
 SECURITY DEFINER
@@ -107,8 +108,8 @@ BEGIN
     'bio_button_text_color', CASE WHEN store_plan = 'semilla' THEN NULL ELSE store_row.bio_button_text_color END,
     'bio_bg_image', CASE WHEN store_plan = 'semilla' THEN NULL ELSE store_row.bio_bg_image END,
     'bio_bg_color', CASE WHEN store_plan = 'semilla' THEN NULL ELSE store_row.bio_bg_color END,
-    -- Nueva propiedad bio_layout: restringida en plan semilla a 'standard'
-    'bio_layout', CASE WHEN store_plan = 'semilla' THEN 'standard' ELSE COALESCE(store_row.bio_layout, 'standard') END,
+    -- Propiedad bio_typography (restringida en plan semilla a 'sans')
+    'bio_typography', CASE WHEN store_plan = 'semilla' THEN 'sans' ELSE COALESCE(store_row.bio_typography, 'sans') END,
     'categories', COALESCE((
       SELECT jsonb_agg(jsonb_build_object('id', id, 'name', name))
       FROM categories 
@@ -139,3 +140,6 @@ BEGIN
   RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 3. Recargar schema de PostgREST
+NOTIFY pgrst, 'reload schema';

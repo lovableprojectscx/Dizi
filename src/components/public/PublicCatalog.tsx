@@ -659,7 +659,7 @@ export function PublicCatalog({
   /* ── Bio-Link Customizations (Theme & Buttons) ── */
   const isBioMode = mode === "bio";
   const bioTheme = store.bioTheme || "default";
-  const bioLayout = store.bioLayout || "standard";
+  const bioTypography = store.bioTypography || "sans";
   
   let bioThemeVars: React.CSSProperties = { ...themeVars };
   let finalIsDark = effectiveIsDark;
@@ -773,9 +773,6 @@ export function PublicCatalog({
   ) => {
     const buttonStyleId = store.bioButtonStyle || "pill-solid";
     let { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
-    if (bioLayout === "editorial") {
-      radiusClass = "rounded-none";
-    }
 
     const customBg = overrideBg || store.bioButtonColor;
     const customText = overrideText || store.bioButtonTextColor;
@@ -1065,12 +1062,8 @@ export function PublicCatalog({
   }, [productsWithImages, activeCat, query, priceRange, effectiveProductLimit, sortBy, selectedDiet, modelId]);
 
   const filtered = useMemo(() => {
-    const isBioLink = store.bioLinksEnabled && mode === "bio";
-    if (isBioLink && bioLayout !== "editorial") {
-      return rawFiltered.slice(0, 4);
-    }
     return rawFiltered;
-  }, [rawFiltered, store.bioLinksEnabled, mode, bioLayout]);
+  }, [rawFiltered]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -1117,13 +1110,38 @@ export function PublicCatalog({
         modelId === "glam" && "theme-glam",
         modelId === "bloom" && "theme-bloom",
         modelId === "vibe" && "theme-vibe",
-        (isBioMode && bioLayout === "editorial") && "theme-editorial"
+        isBioMode && bioTypography === "sans" && "typography-sans",
+        isBioMode && bioTypography === "serif" && "typography-serif",
+        isBioMode && bioTypography === "rounded" && "typography-rounded",
+        isBioMode && bioTypography === "modern" && "typography-modern"
       )}
       style={isBioMode && bioTheme !== "default" ? bioThemeVars : themeVars}
       translate="no"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+        .typography-sans {
+          font-family: 'Inter', sans-serif !important;
+        }
+
+        .typography-serif {
+          font-family: 'Inter', sans-serif !important;
+        }
+        .typography-serif h1, 
+        .typography-serif h2, 
+        .typography-serif h3,
+        .typography-serif .font-serif-editorial {
+          font-family: 'Playfair Display', Georgia, serif !important;
+        }
+
+        .typography-rounded {
+          font-family: 'Quicksand', sans-serif !important;
+        }
+
+        .typography-modern {
+          font-family: 'Outfit', sans-serif !important;
+        }
 
         .font-serif-editorial {
           font-family: 'Playfair Display', Georgia, serif !important;
@@ -1346,7 +1364,7 @@ export function PublicCatalog({
           {/* Perfil & Links */}
           <div className={cn(
             "relative max-w-xl mx-auto px-4 text-center pb-4 flex flex-col items-center",
-            bioLayout === "editorial" ? "-mt-16 space-y-5" : "-mt-10 space-y-4"
+            bioTypography === "serif" ? "-mt-16 space-y-5" : "-mt-10 space-y-4"
           )}>
             {/* Logo Solapado */}
             <div className="inline-block relative">
@@ -1356,17 +1374,17 @@ export function PublicCatalog({
                   alt={store.name}
                   className={cn(
                     "rounded-full object-cover border shadow-lg animate-in fade-in duration-300 bg-white",
-                    bioLayout === "editorial" ? "h-32 w-32 p-1 border-gray-100" : "h-20 w-20 border-4"
+                    bioTypography === "serif" ? "h-32 w-32 p-1 border-gray-100" : "h-20 w-20 border-4"
                   )}
-                  style={bioLayout === "editorial" ? {} : { borderColor: "var(--background)" }}
+                  style={bioTypography === "serif" ? {} : { borderColor: "var(--background)" }}
                 />
               ) : (
                 <div
                   className={cn(
                     "rounded-full flex items-center justify-center shadow-lg border text-xl font-black uppercase text-primary bg-white",
-                    bioLayout === "editorial" ? "h-32 w-32 border-gray-100" : "h-20 w-20 border-4"
+                    bioTypography === "serif" ? "h-32 w-32 border-gray-100" : "h-20 w-20 border-4"
                   )}
-                  style={bioLayout === "editorial" ? {} : {
+                  style={bioTypography === "serif" ? {} : {
                     borderColor: "var(--background)",
                     backgroundColor: "var(--secondary)",
                   }}
@@ -1377,7 +1395,7 @@ export function PublicCatalog({
             </div>
 
             {/* Nombre y Descripción */}
-            {bioLayout === "editorial" ? (
+            {bioTypography === "serif" ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center gap-2">
                   <h1 className="font-serif-editorial text-3xl font-semibold tracking-tight text-foreground">{store.name}</h1>
@@ -1420,8 +1438,8 @@ export function PublicCatalog({
                 </svg>
               )}
 
-              {/* 1.5. VER CATÁLOGO COMPLETO (Editorial only) */}
-              {bioLayout === "editorial" && renderBioButton(
+              {/* 1.5. VER CATÁLOGO COMPLETO (Serif only) */}
+              {bioTypography === "serif" && renderBioButton(
                 "#catalogo",
                 "Ver Catálogo Completo",
                 "#111111",
@@ -1598,7 +1616,7 @@ export function PublicCatalog({
       <main className="mx-auto max-w-5xl px-4 pt-6 pb-32">
         {mode === "bio" && (
           <div id="catalogo" className="pt-2 mb-6 scroll-mt-20">
-            {bioLayout === "editorial" ? (
+            {bioTypography === "serif" ? (
               <h2 className="font-serif-editorial text-xl font-normal text-center text-foreground flex items-center justify-center gap-4">
                 <span className="h-[1px] w-12 bg-foreground/10"></span>
                 Nuestra Colección
@@ -1618,135 +1636,97 @@ export function PublicCatalog({
           <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
         ) : mode === "bio" ? (
           <div className="w-full">
-            {bioLayout === "editorial" && (
-              <div className="max-w-md mx-auto mb-6 px-1 space-y-4">
-                {/* Search Bar */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Buscar producto..."
-                    className="w-full bg-white text-black text-xs placeholder-gray-400 pl-9 pr-4 py-3 border border-gray-200 outline-none focus:border-black transition rounded-none font-sans"
-                  />
-                  {query && (
-                    <button 
-                      onClick={() => setQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+            <div className="max-w-md mx-auto mb-6 px-1 space-y-4">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar producto..."
+                  className={cn(
+                    "w-full bg-secondary text-foreground text-xs placeholder-gray-400 pl-9 pr-4 py-3 outline-none transition",
+                    bioTypography === "serif" 
+                      ? "border border-gray-200 focus:border-black rounded-none font-sans" 
+                      : "rounded-full bg-secondary focus:ring-2 focus:ring-ring"
                   )}
-                </div>
+                />
+                {query && (
+                  <button 
+                    onClick={() => setQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
 
-                {/* Horizontal Category Scroll */}
-                <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
+              {/* Horizontal Category Scroll */}
+              <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
+                <button
+                  onClick={() => setActiveCat("all")}
+                  className={cn(
+                    "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium",
+                    bioTypography === "serif" ? "rounded-none" : "rounded-full",
+                    activeCat === "all"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary text-muted-foreground border-border hover:border-primary"
+                  )}
+                >
+                  Todos
+                </button>
+                
+                {productsWithImages.some(p => p.isOnSale) && (
                   <button
-                    onClick={() => setActiveCat("all")}
+                    onClick={() => setActiveCat("sale")}
                     className={cn(
-                      "px-4 py-2 text-xs uppercase tracking-wider transition border rounded-none whitespace-nowrap font-medium",
-                      activeCat === "all"
-                        ? "bg-black text-white border-black"
-                        : "bg-white text-gray-800 border-gray-200 hover:border-black"
+                      "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium flex items-center gap-1",
+                      bioTypography === "serif" ? "rounded-none" : "rounded-full",
+                      activeCat === "sale"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary text-muted-foreground border-border hover:border-primary"
                     )}
                   >
-                    Todos
+                    <Flame className="h-3 w-3 text-red-500" />
+                    Ofertas
                   </button>
-                  
-                  {productsWithImages.some(p => p.isOnSale) && (
+                )}
+
+                {store.categories.map((c) => {
+                  const { label } = parseCategoryName(c.name);
+                  const active = activeCat === c.id;
+                  return (
                     <button
-                      onClick={() => setActiveCat("sale")}
+                      key={c.id}
+                      onClick={() => setActiveCat(c.id)}
                       className={cn(
-                        "px-4 py-2 text-xs uppercase tracking-wider transition border rounded-none whitespace-nowrap font-medium flex items-center gap-1",
-                        activeCat === "sale"
-                          ? "bg-black text-white border-black"
-                          : "bg-white text-gray-800 border-gray-200 hover:border-black"
+                        "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium",
+                        bioTypography === "serif" ? "rounded-none" : "rounded-full",
+                        active
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-secondary text-muted-foreground border-border hover:border-primary"
                       )}
                     >
-                      <Flame className="h-3 w-3 text-red-500" />
-                      Ofertas
+                      {label}
                     </button>
-                  )}
-
-                  {store.categories.map((c) => {
-                    const { label } = parseCategoryName(c.name);
-                    const active = activeCat === c.id;
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => setActiveCat(c.id)}
-                        className={cn(
-                          "px-4 py-2 text-xs uppercase tracking-wider transition border rounded-none whitespace-nowrap font-medium",
-                          active
-                            ? "bg-black text-white border-black"
-                            : "bg-white text-gray-800 border-gray-200 hover:border-black"
-                        )}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
             {filtered.length === 0 ? (
               <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
-            ) : bioLayout === "editorial" ? (
-              /* ── EDITORIAL 2-column Grid with 4:5 vertical proportion ── */
-              <div className="grid grid-cols-2 gap-x-3 gap-y-6 max-w-md mx-auto">
-                {filtered.map((p) => (
-                  <article
-                    key={p.id}
-                    className="flex flex-col group cursor-pointer"
-                    onClick={() => setViewingProduct(p)}
-                  >
-                    {/* 4:5 Aspect Ratio Image Container */}
-                    <div className="relative aspect-[4/5] bg-gray-50 overflow-hidden border border-gray-100">
-                      <img
-                        src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
-                        alt={p.name}
-                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-102 transition-transform duration-500"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                        }}
-                      />
-                      {p.isOnSale && (
-                        <span className="absolute top-2 left-2 bg-black text-white text-[8px] tracking-widest font-semibold px-2 py-0.5 uppercase">
-                          Oferta
-                        </span>
-                      )}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
-                        className="absolute bottom-2 right-2 h-8 w-8 bg-white text-black border border-black/10 flex items-center justify-center shadow-sm hover:bg-black hover:text-white transition-colors duration-300"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    {/* Details */}
-                    <div className="pt-2 flex flex-col flex-1">
-                      <h3 className="font-serif-editorial text-[13px] text-gray-900 leading-snug line-clamp-2 flex-1 mb-1 font-normal">
-                        {p.name}
-                      </h3>
-                      <div className="flex items-baseline gap-1.5 mt-auto">
-                        <span className="text-xs font-semibold text-black">{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
-                          <span className="text-[10px] text-gray-400 line-through">{formatPrice(p.originalPrice)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
             ) : (
-              /* ── STANDARD BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
+              /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
               <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
                 {filtered.map((p) => (
                   <article
                     key={p.id}
-                    className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md", cfg.cardShadow)}
+                    className={cn(
+                      "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
+                      cfg.cardShadow,
+                      bioTypography === "serif" && "border-gray-100 hover:border-black/20"
+                    )}
                     style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
                     onClick={() => setViewingProduct(p)}
                   >
@@ -1767,10 +1747,21 @@ export function PublicCatalog({
                     </div>
                     {/* Info */}
                     <div className="p-2.5 flex flex-col gap-1 flex-1">
-                      <h3 className="text-xs font-semibold line-clamp-2 leading-snug flex-1">{p.name}</h3>
+                      <h3 className={cn(
+                        "line-clamp-2 leading-snug flex-1",
+                        bioTypography === "serif" ? "font-serif-editorial text-[13px] font-normal text-foreground" :
+                        bioTypography === "rounded" ? "font-sans-bloom text-xs font-medium" :
+                        bioTypography === "modern" ? "font-sans-vibe text-xs font-medium" :
+                        "text-xs font-semibold"
+                      )}>
+                        {p.name}
+                      </h3>
                       <div className="flex items-center justify-between mt-1">
                         <div>
-                          <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
+                          <span className={cn(
+                            "text-sm font-black text-primary",
+                            bioTypography === "serif" && "font-serif-editorial font-bold"
+                          )}>{formatPrice(p.price)}</span>
                           {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
                             <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
                           )}
@@ -3293,45 +3284,28 @@ export function PublicCatalog({
       )}
 
       {/* ── FAB ──────────────────────────────────────── */}
-      {isBioMode && bioLayout === "editorial" ? (
-        <button
-          onClick={() => setCartOpen(true)}
-          className="fixed bottom-6 right-4 z-40 h-14 w-14 bg-black text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition shadow-lg"
-          aria-label="Ver carrito"
-        >
-          <div className="relative">
-            <ShoppingBag className="w-6 h-6" />
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-white text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border border-black animate-in zoom-in duration-300">
-                {cartCount}
-              </span>
-            )}
-          </div>
-        </button>
-      ) : (
-        <button
-          onClick={() => (cartCount > 0 ? setCartOpen(true) : supportClick())}
-          className="fixed bottom-8 right-4 z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition"
-          style={{
-            borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
-            backgroundColor: "var(--primary)",
-            color: effectiveIsDark ? "#000" : "#fff",
-            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
-          }}
-          aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
-        >
-          {cartCount > 0 ? (
-            <>
-              <ShoppingBag className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2" style={{ borderColor: "var(--primary)" }}>
-                {cartCount}
-              </span>
-            </>
-          ) : (
-            <ShoppingBag className="h-6 w-6 opacity-70" />
-          )}
-        </button>
-      )}
+      <button
+        onClick={() => (cartCount > 0 ? setCartOpen(true) : supportClick())}
+        className="fixed bottom-8 right-4 z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition"
+        style={{
+          borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
+          backgroundColor: "var(--primary)",
+          color: effectiveIsDark ? "#000" : "#fff",
+          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
+        }}
+        aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
+      >
+        {cartCount > 0 ? (
+          <>
+            <ShoppingBag className="h-6 w-6" />
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2" style={{ borderColor: "var(--primary)" }}>
+              {cartCount}
+            </span>
+          </>
+        ) : (
+          <ShoppingBag className="h-6 w-6 opacity-70" />
+        )}
+      </button>
 
       {/* ── Cart Sheet ───────────────────────────────── */}
       <Sheet open={cartOpen} onOpenChange={setCartOpen}>
