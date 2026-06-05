@@ -321,7 +321,14 @@ function PhonePreview({
                 )}
               </div>
               <div className="flex items-center gap-0.5 justify-center">
-                <p className={cn("text-center leading-tight font-medium truncate max-w-[140px]", bioTypography === "serif" ? "font-serif text-[10px]" : "font-black uppercase text-[8.5px]", previewTextColor)}>
+                <p className={cn(
+                  "text-center leading-tight truncate max-w-[140px]",
+                  bioTypography === "serif" ? "font-serif-editorial text-[10px] font-normal" : 
+                  bioTypography === "rounded" ? "font-sans-bloom text-[9px] font-bold" :
+                  bioTypography === "modern" ? "font-sans-vibe text-[9px] font-bold" :
+                  "font-black uppercase text-[8.5px] font-sans", 
+                  previewTextColor
+                )}>
                   {name || "Tu Tienda"}
                 </p>
                 {bioTypography === "serif" && (
@@ -333,7 +340,14 @@ function PhonePreview({
                 )}
               </div>
               {bioDescription && (
-                <p className={cn("text-center leading-tight line-clamp-2 max-w-[160px]", bioTypography === "serif" ? "text-[5.5px] uppercase tracking-[0.1em] font-medium" : "text-[6.5px]", previewMutedColor)}>
+                <p className={cn(
+                  "text-center leading-tight line-clamp-2 max-w-[160px]", 
+                  bioTypography === "serif" ? "font-serif-editorial text-[5.5px] uppercase tracking-[0.1em] font-medium" : 
+                  bioTypography === "rounded" ? "font-sans-bloom text-[6.5px]" :
+                  bioTypography === "modern" ? "font-sans-vibe text-[6.5px]" :
+                  "text-[6.5px] font-sans",
+                  previewMutedColor
+                )}>
                   {bioDescription}
                 </p>
               )}
@@ -374,7 +388,11 @@ function PhonePreview({
                     className={cn(
                       "relative w-full p-0.5 pr-3 font-extrabold uppercase text-[6px] tracking-wider flex items-center border overflow-hidden transition-all duration-300 hover:shadow-[0_0_10px_var(--hover-glow)] group",
                       radiusClass,
-                      extraClasses
+                      extraClasses,
+                      bioTypography === "serif" ? "font-serif-editorial" :
+                      bioTypography === "rounded" ? "font-sans-bloom" :
+                      bioTypography === "modern" ? "font-sans-vibe" :
+                      "font-sans"
                     )}
                     style={{
                       background: bg,
