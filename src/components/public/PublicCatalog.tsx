@@ -449,6 +449,7 @@ const scanProductBadges = (name: string, description?: string): { emoji: string;
 };
 
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
+const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
 
 const isInAppBrowser = () => {
   if (typeof window === "undefined") return false;
