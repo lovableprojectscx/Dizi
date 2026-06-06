@@ -450,8 +450,14 @@ const scanProductBadges = (name: string, description?: string): { emoji: string;
 
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 
-// Modelos con hero banner — buscador/filtros van DEBAJO del banner, no en el header
-const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
+const isInAppBrowser = () => {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent || navigator.vendor || (window as any).opera || "";
+  const isInstagram = ua.indexOf("Instagram") > -1;
+  const isFB = ua.indexOf("FBAN") > -1 || ua.indexOf("FBAV") > -1;
+  const isTikTok = ua.indexOf("TikTok") > -1 || ua.indexOf("musical_ly") > -1;
+  return isInstagram || isFB || isTikTok;
+};
 
 export function PublicCatalog({
   store,
@@ -471,6 +477,39 @@ export function PublicCatalog({
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [showInAppHelpModal, setShowInAppHelpModal] = useState(false);
+  const [pendingOrderMsg, setPendingOrderMsg] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [showInAppBanner, setShowInAppBanner] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const dismissed = sessionStorage.getItem("dismissed_inapp_banner");
+      return isInAppBrowser() && dismissed !== "true";
+    } catch (e) {
+      return isInAppBrowser();
+    }
+  });
+
+  const fallbackCopy = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error("Fallback copy failed", err);
+    }
+    document.body.removeChild(textArea);
+  };
 
   const [sortBy, setSortBy] = useState<string>("all");
   const [selectedDiet, setSelectedDiet] = useState<string>("all");
@@ -1082,12 +1121,25 @@ export function PublicCatalog({
       .join("\n");
     const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${formatPrice(total)}`;
     incClicks(store.id);
-    window.open(buildWaUrl(store.phone, msg), "_blank");
+
+    if (isInAppBrowser()) {
+      setPendingOrderMsg(msg);
+      setShowInAppHelpModal(true);
+    } else {
+      window.open(buildWaUrl(store.phone, msg), "_blank");
+    }
   };
 
-  const consultProduct = (name: string) => {
+  const consultProduct = (name: string, id?: string) => {
     incClicks(store.id);
-    window.open(buildWaUrl(store.phone, `Hola, me interesa el producto: ${name}`), "_blank");
+    const msg = `Hola, me interesa el producto: ${name}`;
+
+    if (isInAppBrowser()) {
+      setPendingOrderMsg(msg);
+      setShowInAppHelpModal(true);
+    } else {
+      window.open(buildWaUrl(store.phone, msg), "_blank");
+    }
   };
 
   const scrollToLocation = () => {
@@ -1099,7 +1151,14 @@ export function PublicCatalog({
 
   const supportClick = () => {
     incClicks(store.id);
-    window.open(buildWaUrl(store.phone, `Hola ${store.name}, tengo una consulta.`), "_blank");
+    const msg = `Hola ${store.name}, tengo una consulta.`;
+
+    if (isInAppBrowser()) {
+      setPendingOrderMsg(msg);
+      setShowInAppHelpModal(true);
+    } else {
+      window.open(buildWaUrl(store.phone, msg), "_blank");
+    }
   };
 
   /* ── Render ──────────────────────────────────────── */
@@ -1178,6 +1237,30 @@ export function PublicCatalog({
       {isExpired && (
         <div className="bg-muted border-b px-4 py-1.5 text-center text-[10px] text-muted-foreground uppercase tracking-widest">
           Catalogo en modo limitado — mostrando {PLANS["semilla"].productLimit} productos
+        </div>
+      )}
+
+      {/* Banner: In-App Browser Warning (TikTok/Instagram) */}
+      {showInAppBanner && (
+        <div className="bg-amber-600 text-white px-4 py-2.5 text-xs font-semibold flex items-center justify-between gap-3 shadow-md border-b border-amber-700 select-none animate-in slide-in-from-top duration-300 relative z-[99]">
+          <div className="flex items-center gap-2 text-left">
+            <span className="text-sm shrink-0">⚠️</span>
+            <span>
+              <strong>¿Estás en TikTok o Instagram?</strong> Si la redirección a WhatsApp falla, toca los <strong>3 puntos (...)</strong> arriba a la derecha y elige <strong>"Abrir en el navegador"</strong>.
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setShowInAppBanner(false);
+              try {
+                sessionStorage.setItem("dismissed_inapp_banner", "true");
+              } catch (e) {}
+            }}
+            className="text-white hover:text-amber-200 transition font-bold text-sm px-1.5 py-0.5 rounded-md hover:bg-amber-700/50 shrink-0"
+            title="Cerrar aviso"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -3484,6 +3567,19 @@ export function PublicCatalog({
               <MessageCircle className="h-4 w-4" />
               Enviar pedido por WhatsApp
             </button>
+            {isInAppBrowser() && (
+              <div 
+                className="text-[10px] text-amber-700 bg-amber-50/80 border border-amber-200 p-2.5 rounded-xl text-left leading-normal flex items-start gap-1.5 shadow-xs"
+                style={{
+                  borderRadius: cfg.cardRounded,
+                }}
+              >
+                <span className="text-xs shrink-0">⚠️</span>
+                <div>
+                  <strong>¿La redirección falla?</strong> Toca los <strong>3 puntos (...)</strong> arriba a la derecha y elige <strong>"Abrir en el navegador"</strong> para poder enviar tu pedido.
+                </div>
+              </div>
+            )}
             {cartLines.length > 0 && (
               <button
                 onClick={() => cartClear(store.id)}
@@ -3841,6 +3937,115 @@ export function PublicCatalog({
             <span>Crea tu catálogo gratis con</span>
             <span className="text-primary font-black tracking-tight">Dizi</span>
           </a>
+        </div>
+      )}
+
+      {/* ── In-App Browser Help Modal (TikTok/Instagram) ── */}
+      {showInAppHelpModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200">
+            {/* Close button */}
+            <button
+              onClick={() => setShowInAppHelpModal(false)}
+              className="absolute top-4 right-4 h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center justify-center transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Icon & Title */}
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                <Info className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">Envío bloqueado por TikTok/Instagram</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Sigue estos sencillos pasos para completar tu pedido:</p>
+              </div>
+            </div>
+
+            {/* Visual Guide Steps */}
+            <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 space-y-3.5 text-xs text-zinc-700 dark:text-zinc-300">
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">1</span>
+                <div>
+                  Toca los <strong>tres puntos (...)</strong> en la esquina superior derecha de tu pantalla.
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">2</span>
+                <div>
+                  Selecciona la opción <strong>"Abrir en el navegador"</strong> (o <em>"Open in browser"</em>).
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">3</span>
+                <div>
+                  ¡Listo! Tu catálogo se abrirá en Chrome/Safari y podrás presionar <strong>"Enviar pedido por WhatsApp"</strong> sin bloqueos.
+                </div>
+              </div>
+            </div>
+
+            {/* Copiar pedido banner */}
+            <div className="space-y-2">
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-center">O copia el texto del pedido y envíalo manualmente:</p>
+              <button
+                onClick={() => {
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(pendingOrderMsg).then(() => {
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 2000);
+                    }).catch(() => {
+                      fallbackCopy(pendingOrderMsg);
+                    });
+                  } else {
+                    fallbackCopy(pendingOrderMsg);
+                  }
+                }}
+                className={cn(
+                  "w-full h-11 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition",
+                  copied 
+                    ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-900 dark:text-green-400"
+                    : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                )}
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    ¡Mensaje Copiado al Portapapeles!
+                  </>
+                ) : (
+                  <>
+                    <ClipboardList className="h-4 w-4 text-zinc-500" />
+                    Copiar texto del pedido
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex gap-2.5 pt-2">
+              <button
+                onClick={() => setShowInAppHelpModal(false)}
+                className="flex-1 h-12 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold transition text-zinc-700 dark:text-zinc-300"
+              >
+                Cerrar
+              </button>
+              <button
+                onClick={() => {
+                  window.open(buildWaUrl(store.phone, pendingOrderMsg), "_blank");
+                  setShowInAppHelpModal(false);
+                }}
+                style={{
+                  backgroundColor: "var(--primary)",
+                  color: effectiveIsDark ? "#000" : "#fff",
+                }}
+                className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Intentar continuar
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
