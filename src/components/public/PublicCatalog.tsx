@@ -1746,7 +1746,7 @@ export function PublicCatalog({
             ) : (
               /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
               <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
-                {filtered.map((p) => (
+                {filtered.slice(0, 6).map((p) => (
                   <article
                     key={p.id}
                     className={cn(
@@ -3344,13 +3344,72 @@ export function PublicCatalog({
 
         {mode === "bio" && (
           <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <Link
-              to="/t/$slug"
-              params={{ slug: store.slug }}
-              className="w-full max-w-md mx-auto py-4 rounded-xl font-black uppercase text-xs tracking-wider bg-primary text-primary-foreground hover:opacity-95 hover:scale-[1.01] transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
-            >
-              Ver Catálogo Completo
-            </Link>
+            {(() => {
+              const buttonStyleId = store.bioButtonStyle || "pill-solid";
+              const { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
+
+              const customBg = store.bioButtonColor || store.brandColor || "#1f2937";
+              const customText = store.bioButtonTextColor || "#ffffff";
+
+              let bg = customBg;
+              let borderColor = customBg;
+              let color = customText;
+              let extraClasses = "";
+
+              if (type === "solid") {
+                bg = customBg;
+                borderColor = customBg;
+                color = customText;
+              } else if (type === "outline") {
+                bg = "transparent";
+                borderColor = customBg;
+                color = store.bioButtonTextColor || customBg;
+              } else if (type === "glass") {
+                bg = finalIsDark ? "rgba(255, 255, 255, 0.08)" : "rgba(15, 23, 42, 0.06)";
+                borderColor = finalIsDark ? "rgba(255, 255, 255, 0.15)" : "rgba(15, 23, 42, 0.12)";
+                color = store.bioButtonTextColor || (finalIsDark ? "#ffffff" : "#0f172a");
+                extraClasses = "backdrop-blur-md";
+              }
+
+              const hoverGlow = customBg.startsWith("linear") ? "#dc2743" : customBg;
+              const isCustomColor = !!(store.bioButtonColor || store.bioButtonTextColor);
+              const isMonochrome = type === "outline" || type === "glass" || isCustomColor;
+
+              return (
+                <Link
+                  to="/t/$slug"
+                  params={{ slug: store.slug }}
+                  className={cn(
+                    "relative w-full max-w-md mx-auto p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)] cursor-pointer",
+                    radiusClass,
+                    extraClasses,
+                    bioTypography === "serif" ? "font-serif-editorial font-bold" :
+                    bioTypography === "rounded" ? "font-sans-bloom" :
+                    bioTypography === "modern" ? "font-sans-vibe" :
+                    ""
+                  )}
+                  style={{
+                    background: bg,
+                    borderColor: borderColor,
+                    color: color,
+                    "--hover-glow": hoverGlow,
+                  } as React.CSSProperties}
+                >
+                  <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
+                  
+                  <div className={cn(
+                    "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300",
+                    isMonochrome ? "bg-transparent" : "bg-white rounded-full shadow-inner"
+                  )}>
+                    <ShoppingBag className={cn(
+                      "h-5 w-5",
+                      isMonochrome ? "" : "text-primary"
+                    )} />
+                  </div>
+                  <span className="flex-1 text-center pr-3">Ver Catálogo Completo</span>
+                </Link>
+              );
+            })()}
 
             {/* Módulo de Ubicación Geográfica */}
             {store.locationLat && store.locationLng && (
