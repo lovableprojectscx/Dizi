@@ -7,7 +7,8 @@
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS views INTEGER DEFAULT 0;
 
 -- 2. Crear función RPC increment_views para incrementar visitas
-CREATE OR REPLACE FUNCTION increment_views(store_id_param UUID)
+DROP FUNCTION IF EXISTS increment_views(UUID);
+CREATE OR REPLACE FUNCTION increment_views(store_id_param text)
 RETURNS VOID AS $$
 BEGIN
   UPDATE stores
@@ -17,7 +18,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 3. Crear función RPC increment_whatsapp_clicks para asegurar su existencia
-CREATE OR REPLACE FUNCTION increment_whatsapp_clicks(store_id_param UUID)
+DROP FUNCTION IF EXISTS increment_whatsapp_clicks(UUID);
+CREATE OR REPLACE FUNCTION increment_whatsapp_clicks(store_id_param text)
 RETURNS VOID AS $$
 BEGIN
   UPDATE stores
