@@ -1489,22 +1489,7 @@ export function PublicCatalog({
                 </svg>
               )}
 
-              {/* 1.5. VER CATÁLOGO COMPLETO (Serif only) */}
-              {bioTypography === "serif" && renderBioButton(
-                "#catalogo",
-                "Ver Catálogo",
-                "#111111",
-                "#111111",
-                "#ffffff",
-                "custom",
-                <LayoutGrid className="h-5 w-5" />,
-                (e) => {
-                  e.preventDefault();
-                  document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
-                },
-                "transparent",
-                "var(--foreground)"
-              )}
+
 
               {/* 2. NUESTRA UBICACIÓN (Si tiene coordenadas) */}
               {store.locationLat && store.locationLng && renderBioButton(
@@ -1575,6 +1560,23 @@ export function PublicCatalog({
                   );
                 });
               })()}
+
+              {/* 1.5. VER CATÁLOGO COMPLETO (Serif only) */}
+              {bioTypography === "serif" && renderBioButton(
+                "#catalogo",
+                "Ver Catálogo",
+                "#111111",
+                "#111111",
+                "#ffffff",
+                "custom",
+                <LayoutGrid className="h-5 w-5" />,
+                (e) => {
+                  e.preventDefault();
+                  document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
+                },
+                "transparent",
+                "var(--foreground)"
+              )}
             </div>
           </div>
         </section>
