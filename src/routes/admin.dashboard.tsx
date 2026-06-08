@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Share2,
   Eye,
+  Clock,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import QRCode from "qrcode";
@@ -47,6 +48,10 @@ function Dashboard() {
   }
 
   const plan = PLANS[store.plan];
+  const isTrial = store.subscriptionStatus === "trial";
+  const daysLeft = store.planExpiresAt
+    ? Math.max(0, Math.ceil((new Date(store.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 0;
   const catalogUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/t/${store.slug}`;
   const bioUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/bio/${store.slug}`;
 
@@ -154,11 +159,11 @@ function Dashboard() {
           tooltipText="Número total de veces que tus clientes han ingresado a ver tu catálogo."
         />
         <MetricCard
-          icon={<Sparkles className="h-4 w-4 text-amber-500" />}
+          icon={isTrial ? <Clock className="h-4 w-4 text-amber-500 animate-pulse" /> : <Sparkles className="h-4 w-4 text-amber-500" />}
           label="Plan Actual"
-          value={plan.name}
-          trend="Suscripción activa"
-          tooltipText="El tipo de plan que tienes contratado. Si necesitas más capacidad o funciones, puedes cambiar de plan."
+          value={isTrial ? `${plan.name} (Prueba)` : plan.name}
+          trend={isTrial ? `Prueba: quedan ${daysLeft} días` : "Suscripción activa"}
+          tooltipText={isTrial ? "Estás disfrutando de un período de prueba gratuito de 15 días con acceso a todas las funciones premium del Plan Emprendedor." : "El tipo de plan que tienes contratado. Si necesitas más capacidad o funciones, puedes cambiar de plan."}
         />
       </div>
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { PLANS, type PlanId, daysUntilExpiry, formatDate } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Star, AlertTriangle, Calendar, CheckCircle2 } from "lucide-react";
+import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/plan")({
@@ -111,16 +111,29 @@ function PlanPage() {
       )}
 
       {isPaid && !isExpired && !isExpiringSoon && store.planExpiresAt && (
-        <div className="rounded-xl border bg-emerald-50/60 border-emerald-200 p-3.5 flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm font-medium text-emerald-800">
-              Plan activo hasta <strong>{formatDate(store.planExpiresAt)}</strong>
-              <span className="text-emerald-600 font-normal"> ({days} dias restantes)</span>
-            </span>
+        store.subscriptionStatus === "trial" ? (
+          <div className="rounded-xl border bg-amber-50/60 border-amber-200 p-3.5 flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-amber-600" />
+              <span className="text-sm font-medium text-amber-800">
+                Período de prueba activo hasta <strong>{formatDate(store.planExpiresAt)}</strong>
+                <span className="text-amber-600 font-normal"> ({days} días restantes)</span>
+              </span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-xl border bg-emerald-50/60 border-emerald-200 p-3.5 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-800">
+                Plan activo hasta <strong>{formatDate(store.planExpiresAt)}</strong>
+                <span className="text-emerald-600 font-normal"> ({days} dias restantes)</span>
+              </span>
+            </div>
+          </div>
+        )
       )}
 
       <Card>

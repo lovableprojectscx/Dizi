@@ -85,7 +85,8 @@ function RegisterPage() {
       });
   }, [inviteToken]);
 
-  const plan: PlanId = invitePlan ?? "semilla";
+  const plan: PlanId = invitePlan ?? "emprendedor";
+  const isTrial = !invitePlan;
   const isPremium = plan !== "semilla";
 
   const niches = [
@@ -194,14 +195,20 @@ function RegisterPage() {
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
         const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
 
-        // Calcular fecha de vencimiento del plan si es de pago
-        const planExpiresAt = plan !== "semilla" && inviteDurationMonths
+        // Calcular fecha de vencimiento del plan (15 días si es prueba, meses si es invitación)
+        const planExpiresAt = isTrial
           ? (() => {
               const d = new Date();
-              d.setMonth(d.getMonth() + inviteDurationMonths);
+              d.setDate(d.getDate() + 15);
               return d.toISOString();
             })()
-          : undefined;
+          : inviteDurationMonths
+            ? (() => {
+                const d = new Date();
+                d.setMonth(d.getMonth() + inviteDurationMonths);
+                return d.toISOString();
+              })()
+            : undefined;
 
         await addStore({
           id: newStoreId,
@@ -219,8 +226,8 @@ function RegisterPage() {
           ownerId: userId,
           niche: selectedNiche,
           planExpiresAt,
-          subscriptionStatus: plan === "semilla" ? "trial" : "active",
-          planDurationMonths: plan !== "semilla" ? inviteDurationMonths : undefined,
+          subscriptionStatus: isTrial ? "trial" : "active",
+          planDurationMonths: isTrial ? undefined : inviteDurationMonths,
           categories: [{ id: newCategoryId, name: "Principal" }],
           products: [],
         });
@@ -261,22 +268,13 @@ function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-[#fffaf7] via-background to-background" translate="no">
-      {/* Banner de Oferta de Lanzamiento - Top Ribbon */}
       {!invitePlan && showBanner && (
         <div className="w-full bg-slate-950 text-white text-xs py-2 px-8 flex items-center justify-center gap-2 relative z-50 text-center animate-in slide-in-from-top duration-300">
           <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
-            <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">Regalo</span>
-            <strong className="text-white font-extrabold">30 días gratis del Plan Emprendedor:</strong>
-            <span className="text-slate-300">crea tu tienda completa sin costo.</span>
+            <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">Prueba Gratis</span>
+            <strong className="text-white font-extrabold">15 días de Plan Emprendedor Gratis:</strong>
+            <span className="text-slate-300">activado automáticamente al registrarte.</span>
           </span>
-          <a
-            href="https://wa.me/51925176472?text=Hola%2C%20me%20interesa%20probar%20Dizi%20para%20mi%20negocio"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-0.5 text-primary hover:text-primary-foreground underline font-black transition-colors ml-1"
-          >
-            Solicitar por WhatsApp
-          </a>
           <button
             type="button"
             onClick={() => setShowBanner(false)}
@@ -393,9 +391,9 @@ function RegisterPage() {
                   Siguiente paso
                 </button>
                 <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
-                  <p className="text-[11px] font-semibold text-slate-400 text-center">¿Necesitas ayuda o quieres activar la oferta?</p>
+                  <p className="text-[11px] font-semibold text-slate-400 text-center">¿Necesitas ayuda con tu configuración?</p>
                   <a
-                    href="https://wa.me/51925176472?text=Hola%2C%20me%20gustaria%20activar%20los%2030%20dias%20gratis%20o%20necesito%20ayuda%20para%20crear%20mi%20tienda"
+                    href="https://wa.me/51925176472?text=Hola%2C%20necesito%20ayuda%20para%20configurar%20mi%20tienda%20en%20Dizi"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
@@ -527,7 +525,7 @@ function RegisterPage() {
             {step === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-xs text-primary font-bold">
-                  ¡Ya casi listo! Crea tu cuenta para guardar tu catálogo.
+                  ¡Ya casi listo! Se activará tu Plan Emprendedor (Prueba de 15 días) gratis al crear tu cuenta.
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Link de tu Catálogo</label>

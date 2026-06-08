@@ -250,6 +250,22 @@ export const useApp = create<AppState>()(
           throw rpcError;
         }
 
+        // Guardar detalles de suscripción si existen (por ejemplo, el período de prueba de 15 días)
+        const dbPatch: any = {};
+        if (store.planExpiresAt !== undefined) dbPatch.plan_expires_at = store.planExpiresAt;
+        if (store.subscriptionStatus !== undefined) dbPatch.subscription_status = store.subscriptionStatus;
+        if (store.planDurationMonths !== undefined) dbPatch.plan_duration_months = store.planDurationMonths;
+
+        if (Object.keys(dbPatch).length > 0) {
+          const { error: updateError } = await supabase
+            .from("stores")
+            .update(dbPatch)
+            .eq("id", store.id);
+          if (updateError) {
+            console.error("[addStore] Subscription details update error:", updateError);
+          }
+        }
+
         if (store.categories.length > 1) {
           const extraCats = store.categories.slice(1);
           const { error: catError } = await supabase.from("categories").insert(
