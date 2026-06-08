@@ -1,5 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://wxpizbnuuaiculzfuhof.supabase.co";
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4cGl6Ym51dWFpY3VsemZ1aG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjM3MzMsImV4cCI6MjA5Mzg5OTczM30.azLkp485_RtvtgkUAOesk9BOwgqJiO7QLrM1sxI5-5A";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
 // Helper to detect niche based on store name
 function detectNiche(name: string): "floreria" | "comida" | "ropa" | "bisuteria" | "tech" | "belleza" | "general" {
   const n = name.toLowerCase();
@@ -53,30 +58,6 @@ function generateMockProducts(niche: string, categoryId: string) {
         originalPrice: null,
         visible: true,
         isSample: false
-      },
-      {
-        id: uid(),
-        name: "Ramo de Rosas del Amor",
-        price: 59.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1587334206574-35113ab11756?auto=format&fit=crop&w=600&q=80",
-        description: "Clásico y tierno bouquet con 6 rosas rojas importadas envueltas en papel Kraft coreano.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Arreglo de Girasoles Sol Radiante",
-        price: 75.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?auto=format&fit=crop&w=600&q=80",
-        description: "Contiene 3 girasoles grandes, margaritas silvestres y complementos premium en una fina envoltura.",
-        isOnSale: true,
-        originalPrice: 85.00,
-        visible: true,
-        isSample: false
       }
     ];
   }
@@ -104,42 +85,6 @@ function generateMockProducts(niche: string, categoryId: string) {
         description: "Masa madurada por 48 horas, salsa de tomates italianos, queso mozzarella flor di latte, láminas de prosciutto italiano y hojas frescas de rúcula.",
         isOnSale: false,
         originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Sushi Roll Maki Especial (10 cortes)",
-        price: 24.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=600&q=80",
-        description: "Relleno de langostino empanizado y palta, cubierto con láminas de salmón fresco bañado en salsa teriyaki dulce.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Cheesecake de Frutos Rojos de la Casa",
-        price: 14.50,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1524351199679-46cddf530c04?auto=format&fit=crop&w=600&q=80",
-        description: "Deliciosa tarta de queso horneada al estilo neoyorquino, con una crujiente base de galleta y una generosa cobertura de coulis artesanal de frutos del bosque.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Frappé Oreo Deluxe",
-        price: 13.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=600&q=80",
-        description: "Bebida helada frapeada a base de café espresso, galletas Oreo trituradas, leche cremosa, jarabe de chocolate y una densa corona de crema batida.",
-        isOnSale: true,
-        originalPrice: 16.00,
         visible: true,
         isSample: false
       }
@@ -171,237 +116,6 @@ function generateMockProducts(niche: string, categoryId: string) {
         originalPrice: null,
         visible: true,
         isSample: false
-      },
-      {
-        id: uid(),
-        name: "Jeans Mom Fit Clásico",
-        price: 79.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80",
-        description: "Jean de tiro alto de denim 100% algodón rígido en lavado azul medio. Estilo vintage súper cómodo y favorecedor.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Polera Oversize Minimalist",
-        price: 65.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80",
-        description: "Polera oversize unisex hecha de algodón reactivo perchado de tacto ultra suave con capucha y bolsillo canguro.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Camisa Casual Lino Premium",
-        price: 85.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80",
-        description: "Camisa de manga larga holgada tejida en lino premium y algodón. Cuello coreano, ideal para días cálidos y semiformales.",
-        isOnSale: true,
-        originalPrice: 99.00,
-        visible: true,
-        isSample: false
-      }
-    ];
-  }
-
-  if (niche === "bisuteria") {
-    return [
-      {
-        id: uid(),
-        name: "Collar Medalla de Plata 925",
-        price: 49.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80",
-        description: "Delicado collar de cadena de plata esterlina 925 con colgante de medalla geométrica finamente pulida.",
-        isOnSale: true,
-        originalPrice: 65.00,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Aretes Perlas de Río Naturales",
-        price: 35.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=600&q=80",
-        description: "Aretes colgantes hechos a mano con perlas cultivadas de río y ganchos de plata hipoalergénica.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Pulsera de Cuarzo Rosa y Piedras Volcánicas",
-        price: 25.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=600&q=80",
-        description: "Pulsera elastizada regulable hecha de piedras de cuarzo rosa natural de 8mm y esferas de piedra volcánica.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Anillo Regulable Bañado en Oro 18K",
-        price: 39.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80",
-        description: "Anillo minimalista de diseño abierto regulable, bañado en oro de 18 kilates de alto brillo.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Cartera de Mano de Cuero Vegano",
-        price: 110.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=600&q=80",
-        description: "Fina cartera estructurada en cuero vegano premium con detalles de herrajes dorados y correa ajustable desmontable.",
-        isOnSale: true,
-        originalPrice: 139.00,
-        visible: true,
-        isSample: false
-      }
-    ];
-  }
-
-  if (niche === "tech") {
-    return [
-      {
-        id: uid(),
-        name: "Audífonos Over-Ear Noise Cancelling",
-        price: 149.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
-        description: "Audífonos inalámbricos de alta resolución con cancelación activa de ruido (ANC), almohadillas de memoria ergonómicas y hasta 40 horas de batería continua.",
-        isOnSale: true,
-        originalPrice: 199.00,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Smartwatch Sport Watch Series Pro",
-        price: 185.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80",
-        description: "Monitoreo cardíaco las 24 horas, saturación de oxígeno SpO2, GPS integrado para tus rutas, pantalla AMOLED táctil de alta definición y resistencia al agua 5 ATM.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Mouse Gamer Óptico RGB 12000 DPI",
-        price: 79.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80",
-        description: "Sensor óptico de alta precisión con hasta 12,000 DPI configurables, 7 botones programables, switches mecánicos y retroiluminación dinámica RGB Aura.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Cargador Portátil Power Bank 20000mAh",
-        price: 89.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1609592424109-dd87f9d854ef?auto=format&fit=crop&w=600&q=80",
-        description: "Batería externa con carga rápida Power Delivery (PD) de 22.5W, dos puertos USB-A de salida y puerto USB-C bidireccional.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Teclado Mecánico Inalámbrico 60%",
-        price: 199.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80",
-        description: "Formato compacto del 60%, switches mecánicos lineales (Red Switches), conexión Bluetooth 5.0 y cable tipo C, con teclas de doble inyección.",
-        isOnSale: true,
-        originalPrice: 249.00,
-        visible: true,
-        isSample: false
-      }
-    ];
-  }
-
-  if (niche === "belleza") {
-    return [
-      {
-        id: uid(),
-        name: "Sérum Facial Ácido Hialurónico 2%",
-        price: 45.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&w=600&q=80",
-        description: "Sérum concentrado hidratante con ácido hialurónico multimolecular y vitamina B5. Aporta firmeza, rellena líneas finas y da brillo.",
-        isOnSale: true,
-        originalPrice: 59.00,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Labial Líquido Mate Long Lasting",
-        price: 29.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80",
-        description: "Labial líquido con acabado mate aterciopelado de larga duración. No transfiere y mantiene los labios hidratados gracias al aceite de coco.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Crema Hidratante Gel Aloe & Té Verde",
-        price: 39.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=600&q=80",
-        description: "Gel crema hidratante ultra ligero. Calma la irritación y aporta frescura sin sensación grasosa. Ideal para piel mixta a grasa.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Paleta de Sombras Golden Nude",
-        price: 59.90,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80",
-        description: "Contiene 12 tonos altamente pigmentados entre mates suaves y metálicos deslumbrantes en gamas cálidas y doradas.",
-        isOnSale: false,
-        originalPrice: null,
-        visible: true,
-        isSample: false
-      },
-      {
-        id: uid(),
-        name: "Protector Solar Facial Toque Seco FPS 50+",
-        price: 65.00,
-        categoryId,
-        image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=600&q=80",
-        description: "Alta protección solar de amplio espectro contra rayos UVA/UVB con control de brillo y acabado mate, textura de absorción inmediata.",
-        isOnSale: true,
-        originalPrice: 79.00,
-        visible: true,
-        isSample: false
       }
     ];
   }
@@ -431,42 +145,6 @@ function generateMockProducts(niche: string, categoryId: string) {
       originalPrice: null,
       visible: true,
       isSample: false
-    },
-    {
-      id: uid(),
-      name: "Vela Aromática de Soya Vainilla & Canela",
-      price: 24.90,
-      categoryId,
-      image: "https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&w=600&q=80",
-      description: "Hecha con cera de soya 100% ecológica y aceites esenciales naturales en frasco de vidrio reutilizable.",
-      isOnSale: false,
-      originalPrice: null,
-      visible: true,
-      isSample: false
-    },
-    {
-      id: uid(),
-      name: "Termo de Acero Inoxidable Doble Capa 500ml",
-      price: 45.00,
-      categoryId,
-      image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80",
-      description: "Botella térmica aislada al vacío que mantiene tus bebidas frías por 24 horas o calientes hasta por 12 horas.",
-      isOnSale: false,
-      originalPrice: null,
-      visible: true,
-      isSample: false
-    },
-    {
-      id: uid(),
-      name: "Difusor de Aromas Ultrasónico LED",
-      price: 79.00,
-      categoryId,
-      image: "https://images.unsplash.com/photo-1519630565518-a6e25cbf067a?auto=format&fit=crop&w=600&q=80",
-      description: "Humidificador y difusor ultrasónico con capacidad de 400ml, 7 colores de luz LED relajantes y apagado automático de seguridad.",
-      isOnSale: true,
-      originalPrice: 99.00,
-      visible: true,
-      isSample: false
     }
   ];
 }
@@ -485,83 +163,129 @@ export default async function handler(req: any, res: any) {
     return res.status(200).end();
   }
 
-  const input = req.query.input || req.body?.input;
-
-  if (!input) {
-    return res.status(400).json({ error: "Falta el parámetro 'input'." });
-  }
-
-  // Extraer el número de teléfono (dígitos solamente)
-  let cleanPhone = input.replace(/\D/g, "");
-  
-  // Si comienza con un formato de URL y contiene wa.me/c/, limpiar
-  if (input.includes("wa.me/c/")) {
-    const parts = input.split("wa.me/c/");
-    if (parts.length > 1) {
-      cleanPhone = parts[1].replace(/\D/g, "");
+  // POST: Recibir productos reales extraídos por el bookmarklet
+  if (req.method === 'POST') {
+    const { phone, products } = req.body || {};
+    if (!phone || !products || !Array.isArray(products)) {
+      return res.status(400).json({ error: "Faltan parámetros requeridos ('phone' o 'products')" });
     }
-  }
 
-  if (cleanPhone.length < 8) {
-    return res.status(400).json({ error: "El formato de número de teléfono o enlace no es válido." });
-  }
+    const cleanPhone = phone.replace(/\D/g, "");
+    if (cleanPhone.length < 8) {
+      return res.status(400).json({ error: "Número de teléfono no válido." });
+    }
 
-  // Intentar realizar scraping real a través de Whapi si está configurado
-  const whapiToken = process.env.WHAPI_TOKEN;
-  if (whapiToken) {
     try {
-      console.log(`[Import] Intentando importar de Whapi para wid: ${cleanPhone}`);
-      const whapiRes = await fetch(`https://gate.whapi.cloud/business/products?wid=${cleanPhone}`, {
-        headers: {
-          'Authorization': `Bearer ${whapiToken}`,
-          'Accept': 'application/json'
-        }
-      });
-      
-      if (whapiRes.ok) {
-        const whapiData: any = await whapiRes.json();
-        if (whapiData.products && whapiData.products.length > 0) {
-          const categoryId = "c_" + Math.random().toString(36).substring(2, 9);
-          
-          const mappedProducts = whapiData.products.slice(0, 8).map((p: any) => ({
-            id: "p_" + Math.random().toString(36).substring(2, 9),
-            name: p.name || "Producto sin nombre",
-            price: p.price ? Number(p.price) / 1000 : 25.00, // Whapi suele devolver precios multiplicados por 1000
-            categoryId,
-            image: p.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
-            description: p.description || "",
-            isOnSale: false,
-            originalPrice: null,
-            visible: true,
-            isSample: false
-          }));
+      // Guardar productos en la tabla temporal
+      const { error } = await supabase
+        .from("temporary_imports")
+        .upsert({ phone: cleanPhone, products, created_at: new Date().toISOString() });
 
-          return res.status(200).json({
-            phone: cleanPhone,
-            source: "whapi",
-            niche: "general",
-            products: mappedProducts
-          });
-        }
-      }
-    } catch (whapiErr) {
-      console.error("[Import] Error al conectar con Whapi:", whapiErr);
+      if (error) throw error;
+
+      console.log(`[Import-POST] Guardado exitoso para: ${cleanPhone}. ${products.length} productos.`);
+      return res.status(200).json({ success: true, count: products.length });
+    } catch (err: any) {
+      console.error("[Import-POST] Error saving to Supabase:", err.message);
+      return res.status(500).json({ error: err.message });
     }
   }
 
-  // Fallback Generativo Inteligente
-  try {
-    // Si no logramos extraer datos reales, generamos un catálogo espectacular
-    // Primero, tratamos de deducir el nicho del comercio usando nombres populares o palabras clave
-    // Como el input es solo teléfono/enlace, podemos buscar si existe una tienda en nuestra base o inventamos
-    // en base a un nombre dummy o pedimos que lo deduzca en base a un parámetro opcional 'name'
-    const nameParam = req.query.name || req.body?.name || "Mi Negocio";
+  // GET: Consultar si ya hay productos cargados para este número
+  if (req.method === 'GET') {
+    const input = req.query.input;
+    if (!input) {
+      return res.status(400).json({ error: "Falta el parámetro 'input'." });
+    }
+
+    let cleanPhone = input.replace(/\D/g, "");
+    if (input.includes("wa.me/c/")) {
+      const parts = input.split("wa.me/c/");
+      if (parts.length > 1) {
+        cleanPhone = parts[1].replace(/\D/g, "");
+      }
+    }
+
+    if (cleanPhone.length < 8) {
+      return res.status(400).json({ error: "Número o enlace inválido." });
+    }
+
+    // 1. Verificar si existen productos reales importados desde el bookmarklet
+    try {
+      const { data, error } = await supabase
+        .from("temporary_imports")
+        .select("products")
+        .eq("phone", cleanPhone)
+        .single();
+
+      if (data && !error) {
+        // Encontrados productos reales scrapeados por el bookmarklet!
+        // Eliminar fila de uso único para limpiar la base
+        await supabase
+          .from("temporary_imports")
+          .delete()
+          .eq("phone", cleanPhone);
+
+        console.log(`[Import-GET] Productos reales cargados para: ${cleanPhone}`);
+        return res.status(200).json({
+          phone: cleanPhone,
+          source: "bookmarklet",
+          products: data.products
+        });
+      }
+    } catch (err) {
+      // Ignorar error de no encontrado y continuar
+    }
+
+    // 2. Intentar Whapi si está configurado
+    const whapiToken = process.env.WHAPI_TOKEN;
+    if (whapiToken) {
+      try {
+        console.log(`[Import-GET] Intentando importar de Whapi para: ${cleanPhone}`);
+        const whapiRes = await fetch(`https://gate.whapi.cloud/business/products?wid=${cleanPhone}`, {
+          headers: {
+            'Authorization': `Bearer ${whapiToken}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (whapiRes.ok) {
+          const whapiData: any = await whapiRes.json();
+          if (whapiData.products && whapiData.products.length > 0) {
+            const categoryId = "c_" + Math.random().toString(36).substring(2, 9);
+            const mappedProducts = whapiData.products.slice(0, 8).map((p: any) => ({
+              id: "p_" + Math.random().toString(36).substring(2, 9),
+              name: p.name || "Producto sin nombre",
+              price: p.price ? Number(p.price) / 1000 : 25.00,
+              categoryId,
+              image: p.image_url || "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+              description: p.description || "",
+              isOnSale: false,
+              originalPrice: null,
+              visible: true,
+              isSample: false
+            }));
+
+            return res.status(200).json({
+              phone: cleanPhone,
+              source: "whapi",
+              products: mappedProducts
+            });
+          }
+        }
+      } catch (whapiErr) {
+        console.error("[Import-GET] Error Whapi:", whapiErr);
+      }
+    }
+
+    // 3. Fallback inteligente generativo si no hay datos reales ni Whapi
+    const nameParam = req.query.name || "Mi Negocio";
     const detected = detectNiche(nameParam);
     const categoryId = "c_" + Math.random().toString(36).substring(2, 9);
     const mockProducts = generateMockProducts(detected, categoryId);
 
-    // Simulamos un retraso de procesamiento para dar la sensación de que escanea
-    await new Promise((resolve) => setTimeout(resolve, 2500));
+    // Pequeño retardo de experiencia de carga
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     return res.status(200).json({
       phone: cleanPhone,
@@ -569,8 +293,5 @@ export default async function handler(req: any, res: any) {
       niche: detected,
       products: mockProducts
     });
-  } catch (err: any) {
-    console.error("[Import] Fallback error:", err);
-    return res.status(500).json({ error: err.message });
   }
 }
