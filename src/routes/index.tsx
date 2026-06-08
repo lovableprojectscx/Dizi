@@ -269,9 +269,9 @@ function LandingPage() {
         )}
       </header>
 
-      {/* Botón flotante 30 días gratis */}
+      {/* Botón flotante 15 días gratis */}
       <a
-        href="https://wa.me/51925176472?text=Hola%2C%20me%20interesa%20probar%20Dizi%20para%20mi%20negocio"
+        href="https://wa.me/51925176472?text=Hola%2C%20quiero%20probar%20Dizi%20y%20que%20me%20ayuden%20a%20configurar%20mi%20cat%C3%A1logo"
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-6 right-5 z-50 flex flex-col items-center gap-1 group"
@@ -287,7 +287,7 @@ function LandingPage() {
           </svg>
         </div>
         <span className="text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap tracking-wider" style={{ background: "#4ade80", color: "#052e16" }}>
-          30 DIAS GRATIS
+          15 DÍAS GRATIS
         </span>
       </a>
 
@@ -675,7 +675,7 @@ function LandingPage() {
               <div className="px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 {/* Número grande */}
                 <div className="shrink-0 flex items-end gap-1.5">
-                  <span className="text-7xl font-black text-white leading-none">30</span>
+                  <span className="text-7xl font-black text-white leading-none">15</span>
                   <div className="mb-2">
                     <div className="text-primary text-sm font-black uppercase tracking-wider leading-tight">dias</div>
                     <div className="text-white/30 text-xs uppercase tracking-widest">gratis</div>
@@ -688,7 +688,7 @@ function LandingPage() {
                 {/* Text */}
                 <div className="flex-1">
                   <h3 className="text-white text-xl font-black leading-tight mb-1">Plan Emprendedor completo</h3>
-                  <p className="text-white/50 text-sm">Escríbenos y te damos acceso. Sin tarjeta. Sin compromisos.</p>
+                  <p className="text-white/50 text-sm">Escríbenos y te ayudamos a configurar tu catálogo. Sin compromisos.</p>
                   <div className="flex flex-wrap gap-2 mt-3">
                     {["50 productos", "Bio-Link personalizado", "Soporte directo", "Codigo QR"].map((f) => (
                       <span key={f} className="text-[11px] font-semibold border border-white/10 text-white/50 px-2.5 py-1 rounded-full">{f}</span>
@@ -699,7 +699,7 @@ function LandingPage() {
                 {/* Botones */}
                 <div className="flex flex-col gap-2.5 shrink-0 w-full sm:w-auto">
                   <a
-                    href="https://wa.me/51925176472?text=Hola%2C%20me%20interesa%20probar%20Dizi%20para%20mi%20negocio"
+                    href="https://wa.me/51925176472?text=Hola%2C%20quiero%20probar%20Dizi%20y%20que%20me%20ayuden%20a%20configurar%20mi%20cat%C3%A1logo"
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] active:scale-95 text-white text-sm font-bold px-5 py-3 rounded-2xl transition-all shadow-lg shadow-green-900/40 whitespace-nowrap"
