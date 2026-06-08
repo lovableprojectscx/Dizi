@@ -76,6 +76,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
   const setPlan = useApp((s) => s.setPlan);
   const cancelSubscription = useApp((s) => s.cancelSubscription);
   const extendSubscription = useApp((s) => s.extendSubscription);
+  const setTrialPlan = useApp((s) => s.setTrialPlan);
 
   // Modal renovar/cambiar plan
   const [renewOpen, setRenewOpen] = useState(false);
@@ -92,6 +93,21 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
+
+  // Quick Trial States
+  const [trialLoading, setTrialLoading] = useState(false);
+  const [selectedTrialPlan, setSelectedTrialPlan] = useState<PlanId | null>(null);
+
+  const handleQuickTrial = async (plan: PlanId) => {
+    setTrialLoading(true);
+    setSelectedTrialPlan(plan);
+    try {
+      await setTrialPlan(store.id, plan, 15);
+    } finally {
+      setTrialLoading(false);
+      setSelectedTrialPlan(null);
+    }
+  };
 
   const days = daysUntilExpiry(store);
   const isPaid = store.plan !== "semilla";
@@ -190,6 +206,28 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               <XCircle className="w-3 h-3" /> Cancelar
             </Button>
           )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1 border-blue-200/60 bg-blue-50/50 hover:bg-blue-100 hover:text-blue-900 dark:bg-blue-950/20 dark:border-blue-800/40 dark:text-blue-300 dark:hover:bg-blue-950/40 text-blue-700"
+            onClick={() => handleQuickTrial("emprendedor")}
+            disabled={trialLoading}
+          >
+            <Clock className="w-3 h-3 text-blue-500" />
+            {trialLoading && selectedTrialPlan === "emprendedor" ? "Procesando..." : "Prueba Emprendedor (15d)"}
+          </Button>
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs gap-1 border-amber-200/60 bg-amber-50/50 hover:bg-amber-100 hover:text-amber-900 dark:bg-amber-950/20 dark:border-amber-800/40 dark:text-amber-300 dark:hover:bg-amber-950/40 text-amber-700"
+            onClick={() => handleQuickTrial("pro")}
+            disabled={trialLoading}
+          >
+            <Clock className="w-3 h-3 text-amber-500" />
+            {trialLoading && selectedTrialPlan === "pro" ? "Procesando..." : "Prueba Pro (15d)"}
+          </Button>
         </div>
       </div>
 

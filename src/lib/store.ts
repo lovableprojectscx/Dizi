@@ -81,6 +81,7 @@ interface AppState {
   upsertCategory: (storeId: string, cat: Category) => void;
   deleteCategory: (storeId: string, catId: string) => void;
   setPlan: (storeId: string, plan: PlanId, durationMonths?: number) => void;
+  setTrialPlan: (storeId: string, plan: PlanId, durationDays?: number) => Promise<void>;
   toggleStoreActive: (storeId: string) => void;
   startImpersonation: (storeId: string) => void;
   stopImpersonation: () => void;
@@ -442,6 +443,45 @@ export const useApp = create<AppState>()(
         } catch (error) {
           console.error("[extendSubscription] Error:", error);
           toast.error("Error al extender la suscripcion");
+        }
+      },
+
+      setTrialPlan: async (storeId, plan, durationDays = 15) => {
+        try {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+          const { error } = await supabase
+            .from("stores")
+            .update({
+              plan,
+              plan_expires_at: expiresAt.toISOString(),
+              subscription_status: "trial",
+              plan_duration_months: 0,
+            })
+            .eq("id", storeId);
+
+          if (error) throw error;
+
+          set((s) => ({
+            stores: s.stores.map((st) =>
+              st.id === storeId
+                ? {
+                    ...st,
+                    plan,
+                    planExpiresAt: expiresAt.toISOString(),
+                    subscriptionStatus: "trial" as SubscriptionStatus,
+                    planDurationMonths: 0,
+                    cancelledAt: undefined,
+                    cancelReason: undefined,
+                  }
+                : st
+            ),
+          }));
+          toast.success(`Prueba de ${durationDays} días activada`);
+        } catch (error) {
+          console.error("[setTrialPlan] Error:", error);
+          toast.error("Error al activar plan de prueba");
         }
       },
 
