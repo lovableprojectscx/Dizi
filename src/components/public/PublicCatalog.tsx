@@ -471,9 +471,7 @@ export function PublicCatalog({
 }) {
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
-  const [activeCat, setActiveCat] = useState<string>(
-    store.categories?.length === 1 ? store.categories[0].id : "all"
-  );
+  const [activeCat, setActiveCat] = useState<string>("all");
   const [cartOpen, setCartOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
