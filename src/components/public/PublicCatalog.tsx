@@ -2803,27 +2803,7 @@ export function PublicCatalog({
                     )}
                   </div>
 
-                  {/* Floating Quality Stamp/Badge (Wow Factor!) */}
-                  <div className="absolute top-4 right-4 z-30 select-none pointer-events-none scale-[0.65] sm:scale-100 origin-top-right">
-                    <div className={cn(
-                      "relative w-16 h-16 sm:w-20 sm:h-20 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg animate-[spin_12s_linear_infinite]",
-                      store.niche === "floreria" ? "border border-rose-100" : "border border-[var(--border)]"
-                    )}>
-                      <svg className="absolute w-full h-full p-1" viewBox="0 0 100 100">
-                        <path id="text-path" d="M 50,50 m -37,0 a 37,37 0 1,1 74,0 a 37,37 0 1,1 -74,0" fill="none" />
-                        <text className={cn("text-[7.5px] font-semibold tracking-widest uppercase", store.niche === "floreria" ? "font-serif fill-rose-900" : "font-sans fill-[var(--primary)]")}>
-                          <textPath href="#text-path" startOffset="0%">
-                            {store.niche === "floreria" ? "• FLORES FRESCAS • PREMIUM QUALITY •" : "• PRODUCTOS PREMIUM • CALIDAD GARANTIZADA •"}
-                          </textPath>
-                        </text>
-                      </svg>
-                      {store.niche === "floreria" ? (
-                        <Flower className="h-6 w-6 text-rose-500 animate-pulse" />
-                      ) : (
-                        <Sparkles className="h-6 w-6 text-[var(--primary)] animate-pulse" />
-                      )}
-                    </div>
-                  </div>
+
                 </div>
               );
             })()}
