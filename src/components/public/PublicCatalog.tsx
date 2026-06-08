@@ -859,8 +859,8 @@ export function PublicCatalog({
       <a
         href={href}
         onClick={onClick}
-        target={onClick ? undefined : "_blank"}
-        rel={onClick ? undefined : "noopener noreferrer"}
+        target={href.startsWith("#") ? undefined : "_blank"}
+        rel={href.startsWith("#") ? undefined : "noopener noreferrer"}
         className={cn(
           "relative w-full p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)]",
           radiusClass,
@@ -1486,7 +1486,8 @@ export function PublicCatalog({
                 <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
                   <path fill="#25D366" d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2z" />
                   <path fill="#FFF" d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z" />
-                </svg>
+                </svg>,
+                () => incClicks(store.id)
               )}
 
 

@@ -37,6 +37,13 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Magic Importer States
+  const [importing, setImporting] = useState(false);
+  const [importInput, setImportInput] = useState("");
+  const [importedProducts, setImportedProducts] = useState<any[]>([]);
+  const [importStatus, setImportStatus] = useState("");
+  const [showImportBox, setShowImportBox] = useState(false);
+
   // Invite state — se valida contra Supabase al montar el componente
   const [invitePlan, setInvitePlan] = useState<PlanId | null>(null);
   const [inviteDurationMonths, setInviteDurationMonths] = useState<number>(1);
@@ -139,6 +146,57 @@ function RegisterPage() {
     else setSelectedModel(userPlanLevel === 0 ? "minimalista" : ALL_MODELS.find(m => m.planLevel <= userPlanLevel)?.id ?? "minimalista");
   }, [selectedNiche, plan]);
 
+  const handleImport = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!importInput.trim()) {
+      const { toast } = await import("sonner");
+      toast.error("Por favor ingresa un enlace o número de WhatsApp válido.");
+      return;
+    }
+    setImporting(true);
+    setImportStatus("Conectando con servidores de WhatsApp...");
+    
+    // Simular escaneo dinámico y llamativo
+    const t1 = setTimeout(() => setImportStatus("Analizando catálogo y estructura..."), 800);
+    const t2 = setTimeout(() => setImportStatus("Importando productos e imágenes..."), 1600);
+
+    try {
+      const res = await fetch(`/api/import-whatsapp?input=${encodeURIComponent(importInput)}&name=${encodeURIComponent(storeName || "Mi Negocio")}`);
+      const data = await res.json();
+      if (res.ok && data.products) {
+        setImportedProducts(data.products);
+        
+        let displayPhone = data.phone;
+        if (displayPhone.startsWith("51") && displayPhone.length > 9) {
+          displayPhone = displayPhone.substring(2);
+        }
+        setStorePhone(displayPhone);
+
+        if (data.niche) {
+          setSelectedNiche(data.niche);
+        }
+        if (!storeName) {
+          setStoreName(data.niche === "floreria" ? "Florería Sorpresa" : data.niche === "comida" ? "Bocados & Sabores" : data.niche === "ropa" ? "Boutique Express" : data.niche === "bisuteria" ? "Joyas & Brillo" : data.niche === "tech" ? "Tecnología Smart" : data.niche === "belleza" ? "Cosmética Chic" : "Mi Tienda Mágica");
+        }
+        
+        const { toast } = await import("sonner");
+        toast.success(`¡Mágico! Importamos ${data.products.length} productos con éxito.`);
+        setShowImportBox(false);
+      } else {
+        throw new Error(data.error || "No se pudo completar la importación.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      const { toast } = await import("sonner");
+      toast.error("Error al importar. Intentaremos crear la tienda vacía.");
+    } finally {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      setImporting(false);
+      setImportStatus("");
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 3) {
@@ -229,7 +287,9 @@ function RegisterPage() {
           subscriptionStatus: isTrial || plan === "semilla" ? "trial" : "active",
           planDurationMonths: isTrial ? 0 : (plan === "semilla" ? undefined : inviteDurationMonths),
           categories: [{ id: newCategoryId, name: "Principal" }],
-          products: [],
+          products: importedProducts.length > 0 
+            ? importedProducts.map(p => ({ ...p, categoryId: newCategoryId }))
+            : [],
         });
 
         if (inviteToken && invitePlan) {
@@ -355,7 +415,17 @@ function RegisterPage() {
         </div>
 
         {/* Card del formulario */}
-        <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10">
+        <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10 overflow-hidden">
+          {importing && (
+            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-3xl z-50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+              <div className="relative w-16 h-16 mb-4">
+                <div className="absolute inset-0 rounded-full border-4 border-amber-100 animate-pulse" />
+                <div className="absolute inset-0 rounded-full border-4 border-t-amber-500 animate-spin" />
+              </div>
+              <h3 className="font-extrabold text-slate-800 text-sm tracking-wide uppercase">Cargando Magia</h3>
+              <p className="text-xs text-muted-foreground mt-2 animate-pulse font-medium">{importStatus}</p>
+            </div>
+          )}
 
           <form onSubmit={handleRegister} className="space-y-4 relative">
 
@@ -390,6 +460,56 @@ function RegisterPage() {
                     />
                   </div>
                 </div>
+
+                {/* Botón/Caja de Importación Mágica */}
+                <div className="p-3 rounded-2xl bg-amber-50/50 border border-amber-200/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-[11px] font-black text-amber-700 uppercase tracking-wider">
+                      <span>✨ Importador Mágico</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowImportBox(!showImportBox)}
+                      className="text-[10px] font-bold text-amber-600 hover:text-amber-800 transition underline cursor-pointer"
+                    >
+                      {showImportBox ? "Cancelar" : "Importar Catálogo WA"}
+                    </button>
+                  </div>
+                  
+                  {showImportBox ? (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <p className="text-[10px] text-amber-600 leading-normal font-semibold">
+                        Pega tu enlace de catálogo (ej. wa.me/c/51962749501) o tu número de WhatsApp y crearemos tu catálogo con productos precargados.
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={importInput}
+                          onChange={(e) => setImportInput(e.target.value)}
+                          className="flex h-9 flex-1 rounded-xl border border-amber-200 bg-white px-3 text-xs focus:outline-none"
+                          placeholder="wa.me/c/51962749501 o número"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleImport}
+                          disabled={importing}
+                          className="h-9 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
+                        >
+                          Importar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-amber-600/70 leading-normal">
+                      {importedProducts.length > 0 ? (
+                        <span className="text-emerald-600 font-bold">✓ ¡Catálogo de WhatsApp cargado ({importedProducts.length} productos)! Sigue con el registro.</span>
+                      ) : (
+                        "¿Ya vendes en WhatsApp? Podemos precargar tus productos automáticamente para ahorrarte tiempo."
+                      )}
+                    </p>
+                  )}
+                </div>
+
                 <button type="submit" className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer">
                   Siguiente paso
                 </button>
