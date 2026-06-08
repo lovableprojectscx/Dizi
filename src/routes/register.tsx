@@ -85,8 +85,8 @@ function RegisterPage() {
       });
   }, [inviteToken]);
 
-  const plan: PlanId = invitePlan ?? "emprendedor";
-  const isTrial = !invitePlan;
+  const plan: PlanId = invitePlan ?? "semilla";
+  const isTrial = invitePlan !== null && inviteDurationMonths === 0;
   const isPremium = plan !== "semilla";
 
   const niches = [
@@ -226,8 +226,8 @@ function RegisterPage() {
           ownerId: userId,
           niche: selectedNiche,
           planExpiresAt,
-          subscriptionStatus: isTrial ? "trial" : "active",
-          planDurationMonths: isTrial ? undefined : inviteDurationMonths,
+          subscriptionStatus: isTrial || plan === "semilla" ? "trial" : "active",
+          planDurationMonths: isTrial ? 0 : (plan === "semilla" ? undefined : inviteDurationMonths),
           categories: [{ id: newCategoryId, name: "Principal" }],
           products: [],
         });
@@ -268,12 +268,12 @@ function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-[#fffaf7] via-background to-background" translate="no">
-      {!invitePlan && showBanner && (
+      {isTrial && showBanner && (
         <div className="w-full bg-slate-950 text-white text-xs py-2 px-8 flex items-center justify-center gap-2 relative z-50 text-center animate-in slide-in-from-top duration-300">
           <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
             <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">Prueba Gratis</span>
             <strong className="text-white font-extrabold">15 días de Plan Emprendedor Gratis:</strong>
-            <span className="text-slate-300">activado automáticamente al registrarte.</span>
+            <span className="text-slate-300">activado mediante tu enlace de invitación.</span>
           </span>
           <button
             type="button"
@@ -312,7 +312,10 @@ function RegisterPage() {
         )}
         {!inviteLoading && invitePlan && (
           <div className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-primary/20">
-            Invitación activa: Plan {plan.toUpperCase()}
+            {isTrial
+              ? `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}`
+              : `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? 'mes' : 'meses'}`
+            }
           </div>
         )}
         {!inviteLoading && inviteToken && !invitePlan && (
@@ -525,7 +528,10 @@ function RegisterPage() {
             {step === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-xs text-primary font-bold">
-                  ¡Ya casi listo! Se activará tu Plan Emprendedor (Prueba de 15 días) gratis al crear tu cuenta.
+                  {isTrial 
+                    ? `¡Ya casi listo! Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (Prueba de 15 días) gratis al crear tu cuenta.`
+                    : `¡Ya casi listo! Crea tu cuenta para guardar tu catálogo ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla"} (Gratuito).`
+                  }
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Link de tu Catálogo</label>

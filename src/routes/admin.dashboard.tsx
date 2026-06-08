@@ -48,7 +48,7 @@ function Dashboard() {
   }
 
   const plan = PLANS[store.plan];
-  const isTrial = store.subscriptionStatus === "trial";
+  const isTrial = store.subscriptionStatus === "trial" && store.plan !== "semilla";
   const daysLeft = store.planExpiresAt
     ? Math.max(0, Math.ceil((new Date(store.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0;

@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check, Link2, Calendar, FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { PlanId } from "@/lib/types";
-import { PLAN_DURATION_OPTIONS } from "@/lib/types";
+
+export const INVITE_DURATION_OPTIONS = [
+  { value: 0,  label: "15 días (Prueba)" },
+  { value: 1,  label: "1 mes" },
+  { value: 3,  label: "3 meses" },
+  { value: 6,  label: "6 meses" },
+  { value: 12, label: "12 meses (1 ano)" },
+] as const;
 
 const PLAN_OPTIONS: { value: PlanId; label: string }[] = [
   { value: "emprendedor", label: "Emprendedor (S/ 14.90)" },
@@ -35,7 +42,7 @@ function formatShortDate(date: Date): string {
 export function InviteGenerator() {
   const addInvite = useApp((s) => s.addInvite);
   const [selectedPlan, setSelectedPlan] = useState<PlanId>("emprendedor");
-  const [durationMonths, setDurationMonths] = useState<number>(1);
+  const [durationMonths, setDurationMonths] = useState<number>(0);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -117,7 +124,7 @@ export function InviteGenerator() {
             disabled={selectedPlan === "semilla"}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {PLAN_DURATION_OPTIONS.map((o) => (
+            {INVITE_DURATION_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
@@ -165,7 +172,7 @@ export function InviteGenerator() {
       <p className="text-xs text-muted-foreground">
         El link expira en <strong>30 dias</strong> si no se usa.
         {selectedPlan !== "semilla" && (
-          <> El plan <strong>{selectedPlan}</strong> durara <strong>{PLAN_DURATION_OPTIONS.find(o => o.value === durationMonths)?.label}</strong> desde que el cliente se registre.</>
+          <> El plan <strong>{selectedPlan}</strong> durara <strong>{INVITE_DURATION_OPTIONS.find(o => o.value === durationMonths)?.label}</strong> desde que el cliente se registre.</>
         )}
       </p>
 
@@ -191,7 +198,7 @@ export function InviteGenerator() {
               {link.plan !== "semilla" && (
                 <span className="text-[10px] text-muted-foreground shrink-0 flex items-center gap-0.5">
                   <Calendar className="w-2.5 h-2.5" />
-                  {PLAN_DURATION_OPTIONS.find(o => o.value === link.durationMonths)?.label}
+                  {INVITE_DURATION_OPTIONS.find(o => o.value === link.durationMonths)?.label}
                 </span>
               )}
 

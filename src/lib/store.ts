@@ -331,16 +331,42 @@ export const useApp = create<AppState>()(
             .single();
 
           if (!fetchError && invite) {
+            const isTrial = invite.duration_months === 0;
+
             const { error: rpcError } = await supabase.rpc("activate_subscription", {
               p_store_id: storeId,
               p_plan: invite.plan,
-              p_duration_months: invite.duration_months ?? 1,
+              p_duration_months: isTrial ? 1 : (invite.duration_months ?? 1),
             });
             if (rpcError) console.error("[markInviteUsed] activate_subscription error:", rpcError);
 
-            // Actualizar estado local
+            // Calcular fecha y estado correctos
             const expiresAt = new Date();
-            expiresAt.setMonth(expiresAt.getMonth() + (invite.duration_months ?? 1));
+            if (isTrial) {
+              expiresAt.setDate(expiresAt.getDate() + 15);
+            } else {
+              expiresAt.setMonth(expiresAt.getMonth() + (invite.duration_months ?? 1));
+            }
+
+            const subscriptionStatus = isTrial ? "trial" : "active";
+            const planDurationMonths = isTrial ? 0 : (invite.duration_months ?? 1);
+
+            // Si es un trial de 15 días, actualizar BD con los datos del trial (sobreescribiendo lo del RPC)
+            if (isTrial) {
+              const { error: updateStoreError } = await supabase
+                .from("stores")
+                .update({
+                  plan_expires_at: expiresAt.toISOString(),
+                  subscription_status: "trial",
+                  plan_duration_months: 0,
+                })
+                .eq("id", storeId);
+              if (updateStoreError) {
+                console.error("[markInviteUsed] Error setting trial details:", updateStoreError);
+              }
+            }
+
+            // Actualizar estado local
             set((s) => ({
               stores: s.stores.map((st) =>
                 st.id === storeId
@@ -348,8 +374,8 @@ export const useApp = create<AppState>()(
                       ...st,
                       plan: invite.plan as PlanId,
                       planExpiresAt: expiresAt.toISOString(),
-                      subscriptionStatus: "active" as SubscriptionStatus,
-                      planDurationMonths: invite.duration_months ?? 1,
+                      subscriptionStatus: subscriptionStatus as SubscriptionStatus,
+                      planDurationMonths: planDurationMonths,
                     }
                   : st
               ),
