@@ -2812,16 +2812,9 @@ export function PublicCatalog({
             {(() => {
               if (activeCat !== "all" || query.trim() !== "") return null;
               
-              // Fallback selection for featured products
-              let featuredProducts = productsWithImages.filter(
+              const featuredProducts = productsWithImages.filter(
                 (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
               );
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
-              }
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.slice(0, 4);
-              }
               if (featuredProducts.length === 0) return null;
               
               return (
