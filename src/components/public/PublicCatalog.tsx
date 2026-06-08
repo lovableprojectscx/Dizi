@@ -2812,9 +2812,20 @@ export function PublicCatalog({
             {(() => {
               if (activeCat !== "all" || query.trim() !== "") return null;
               
-              const featuredProducts = productsWithImages.filter(
+              let isFallback = false;
+              let isSaleOnly = false;
+              let featuredProducts = productsWithImages.filter(
                 (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
               );
+              if (featuredProducts.length === 0) {
+                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
+                isSaleOnly = featuredProducts.length > 0;
+                isFallback = true;
+              }
+              if (featuredProducts.length === 0) {
+                featuredProducts = productsWithImages.slice(0, 4);
+                isFallback = true;
+              }
               if (featuredProducts.length === 0) return null;
               
               return (
@@ -2830,12 +2841,12 @@ export function PublicCatalog({
                       {store.niche === "floreria" ? (
                         <>
                           <Flower className="h-4 w-4 text-rose-500 animate-pulse" />
-                          Arreglos Destacados
+                          {isSaleOnly ? "Ofertas Especiales" : isFallback ? "Recomendados para ti" : "Arreglos Destacados"}
                         </>
                       ) : (
                         <>
                           <Star className="h-4 w-4 text-[var(--primary)] animate-pulse" />
-                          Productos Destacados
+                          {isSaleOnly ? "Ofertas Especiales" : isFallback ? "Recomendados" : "Productos Destacados"}
                         </>
                       )}
                     </h3>
@@ -2880,13 +2891,19 @@ export function PublicCatalog({
                                   store.niche === "floreria" ? "bg-rose-500" : ""
                                 )}
                               >
-                                {p.isOnSale ? "Oferta" : "Destacado"}
+                                {p.isOnSale 
+                                  ? "Oferta" 
+                                  : isFallback 
+                                    ? "Recomendado" 
+                                    : "Destacado"}
                               </div>
                             </div>
                             {/* Info */}
                             <div className="space-y-1 text-left px-1">
                               {store.niche === "floreria" && (
-                                <span className="text-[10px] italic text-rose-400 font-serif block mb-0.5">Sugerencia de la Florista</span>
+                                <span className="text-[10px] italic text-rose-400 font-serif block mb-0.5">
+                                  {isFallback ? "Arreglo Sugerido" : "Sugerencia de la Florista"}
+                                </span>
                               )}
                               <h4 className={cn(
                                 "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
