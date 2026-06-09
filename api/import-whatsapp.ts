@@ -150,9 +150,23 @@ function generateMockProducts(niche: string, categoryId: string) {
 }
 
 export default async function handler(req: any, res: any) {
-  // CORS
+  // CORS - Restringido a orígenes de confianza (WhatsApp y dominio propio)
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    "https://web.whatsapp.com",
+    "https://dizi.idenza.site",
+    "https://dizi.pe",
+    "http://localhost:5173",
+    "http://localhost:3000"
+  ];
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Origen por defecto seguro
+    res.setHeader('Access-Control-Allow-Origin', 'https://dizi.idenza.site');
+  }
+
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',

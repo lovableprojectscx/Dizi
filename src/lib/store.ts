@@ -67,6 +67,7 @@ interface AppState {
   stores: Store[];
   currentStoreId: string | null;
   impersonatedBy: string | null;
+  fetchError: string | null;
   fetchData: () => Promise<void>;
   setCurrentStore: (id: string | null) => void;
   updateStore: (id: string, patch: Partial<Store>) => Promise<void>;
@@ -104,16 +105,22 @@ export const useApp = create<AppState>()(
       stores: [],
       currentStoreId: null,
       impersonatedBy: null,
+      fetchError: null,
 
       fetchData: async () => {
-        const { data, error } = await supabase
-          .from("stores")
-          .select("*, categories(*), products(*)");
-        if (data && !error) {
-          const dbStores = data.map((row) => mapStoreFromDB(row));
-          set({ stores: dbStores });
-        } else {
-          console.error("[fetchData] Supabase error:", error);
+        set({ fetchError: null });
+        try {
+          const { data, error } = await supabase
+            .from("stores")
+            .select("*, categories(*), products(*)");
+          if (error) throw error;
+          if (data) {
+            const dbStores = data.map((row) => mapStoreFromDB(row));
+            set({ stores: dbStores, fetchError: null });
+          }
+        } catch (err: any) {
+          console.error("[fetchData] Supabase error:", err);
+          set({ fetchError: err?.message || "Error de conexión con la base de datos." });
         }
       },
 
@@ -251,21 +258,8 @@ export const useApp = create<AppState>()(
           throw rpcError;
         }
 
-        // Guardar detalles de suscripción si existen (por ejemplo, el período de prueba de 15 días)
-        const dbPatch: any = {};
-        if (store.planExpiresAt !== undefined) dbPatch.plan_expires_at = store.planExpiresAt;
-        if (store.subscriptionStatus !== undefined) dbPatch.subscription_status = store.subscriptionStatus;
-        if (store.planDurationMonths !== undefined) dbPatch.plan_duration_months = store.planDurationMonths;
-
-        if (Object.keys(dbPatch).length > 0) {
-          const { error: updateError } = await supabase
-            .from("stores")
-            .update(dbPatch)
-            .eq("id", store.id);
-          if (updateError) {
-            console.error("[addStore] Subscription details update error:", updateError);
-          }
-        }
+        // No es necesario actualizar las columnas de facturación directamente desde el cliente
+        // ya que el RPC 'activate_subscription_with_invite' se encarga de configurarlas en el servidor de forma segura.
 
         if (store.categories.length > 1) {
           const extraCats = store.categories.slice(1);
@@ -316,30 +310,22 @@ export const useApp = create<AppState>()(
       },
 
       markInviteUsed: async (token, storeId) => {
-        // 1. Marcar el invite como usado
-        const { error: updateError } = await supabase
-          .from("invites")
-          .update({ used: true })
-          .eq("token", token);
-        if (updateError) console.error("[markInviteUsed] Error:", updateError);
-
-        // 2. Si tenemos storeId, activar la suscripción en la tienda usando los datos del invite
         if (storeId) {
-          const { data: invite, error: fetchError } = await supabase
-            .from("invites")
-            .select("plan, duration_months")
-            .eq("token", token)
-            .single();
+          // Llamar al RPC seguro que valida y aplica el invite atómicamente en el servidor
+          const { data: inviteData, error: rpcError } = await supabase.rpc("activate_subscription_with_invite", {
+            p_store_id: storeId,
+            p_invite_token: token,
+          });
 
-          if (!fetchError && invite) {
+          if (rpcError) {
+            console.error("[markInviteUsed] activate_subscription_with_invite error:", rpcError);
+            throw rpcError;
+          }
+
+          const inviteArray = inviteData as any[];
+          if (inviteArray && inviteArray.length > 0) {
+            const invite = inviteArray[0];
             const isTrial = invite.duration_months === 0;
-
-            const { error: rpcError } = await supabase.rpc("activate_subscription", {
-              p_store_id: storeId,
-              p_plan: invite.plan,
-              p_duration_months: isTrial ? 1 : (invite.duration_months ?? 1),
-            });
-            if (rpcError) console.error("[markInviteUsed] activate_subscription error:", rpcError);
 
             // Calcular fecha y estado correctos
             const expiresAt = new Date();
@@ -351,21 +337,6 @@ export const useApp = create<AppState>()(
 
             const subscriptionStatus = isTrial ? "trial" : "active";
             const planDurationMonths = isTrial ? 0 : (invite.duration_months ?? 1);
-
-            // Si es un trial de 15 días, actualizar BD con los datos del trial (sobreescribiendo lo del RPC)
-            if (isTrial) {
-              const { error: updateStoreError } = await supabase
-                .from("stores")
-                .update({
-                  plan_expires_at: expiresAt.toISOString(),
-                  subscription_status: "trial",
-                  plan_duration_months: 0,
-                })
-                .eq("id", storeId);
-              if (updateStoreError) {
-                console.error("[markInviteUsed] Error setting trial details:", updateStoreError);
-              }
-            }
 
             // Actualizar estado local
             set((s) => ({
