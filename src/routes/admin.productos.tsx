@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
@@ -357,6 +357,18 @@ function ProductsPage() {
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
 
+  interface BulkDraft {
+    id: string;
+    name: string;
+    price: string;
+    categoryId: string;
+    description: string;
+    file: File;
+    previewUrl: string;
+    status: "pending" | "processing" | "success" | "error";
+    errorMessage?: string;
+  }
+
   // Bulk Draft Upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -364,64 +376,148 @@ function ProductsPage() {
   const [draftsTotal, setDraftsTotal] = useState(0);
   const [draftsProcessed, setDraftsProcessed] = useState(0);
 
+  const [bulkDrafts, setBulkDrafts] = useState<BulkDraft[]>([]);
+  const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
+
+  const activeDraft = bulkDrafts.find((d) => d.id === selectedDraftId) || null;
+
   const handleBulkButtonClick = () => {
-    if (store.plan !== "ilimitado") {
-      setBulkOpen(true); // Open upgrade dialog
-    } else {
-      fileInputRef.current?.click();
-    }
+    fileInputRef.current?.click();
+  };
+
+  const updateActiveDraft = (updates: Partial<BulkDraft>) => {
+    if (!selectedDraftId) return;
+    setBulkDrafts((prev) =>
+      prev.map((d) => (d.id === selectedDraftId ? { ...d, ...updates } : d))
+    );
+  };
+
+  const removeDraft = (id: string) => {
+    setBulkDrafts((prev) => {
+      const filtered = prev.filter((d) => {
+        if (d.id === id) {
+          URL.revokeObjectURL(d.previewUrl);
+          return false;
+        }
+        return true;
+      });
+      if (selectedDraftId === id) {
+        setSelectedDraftId(filtered[0]?.id || null);
+      }
+      return filtered;
+    });
   };
 
   const handleBulkFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    // Check plan limits
-    const currentCount = store.products.filter(p => !p.isSample).length;
+    const currentCount = store.products.filter((p) => !p.isSample).length;
     if (currentCount + files.length > effectiveLimit) {
       toast.error(`La subida masiva excede el límite de tu plan (${effectiveLimit} productos).`);
       return;
     }
 
-    setBulkOpen(true);
-    setUploadingDrafts(true);
-    setDraftsTotal(files.length);
-    setDraftsProcessed(0);
-
-    // Make sure we have at least one category
-    let catId = store.categories[0]?.id;
-    if (!catId) {
+    let defaultCatId = store.categories[0]?.id;
+    if (!defaultCatId) {
       const newCatId = await handleCreateCategory("General");
-      catId = newCatId || "";
+      defaultCatId = newCatId || "";
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    const newDrafts: BulkDraft[] = Array.from(files).map((file) => {
+      const baseName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+      const cleanName = baseName.replace(/[-_]/g, " ").trim();
+      const capitalizedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+      return {
+        id: crypto.randomUUID(),
+        name: capitalizedName.substring(0, 50),
+        price: "",
+        categoryId: defaultCatId!,
+        description: "",
+        file,
+        previewUrl: URL.createObjectURL(file),
+        status: "pending",
+      };
+    });
+
+    setBulkDrafts(newDrafts);
+    setSelectedDraftId(newDrafts[0]?.id || null);
+    setBulkOpen(true);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleStartImport = async () => {
+    if (bulkDrafts.length === 0) return;
+    setUploadingDrafts(true);
+    setDraftsTotal(bulkDrafts.length);
+    setDraftsProcessed(0);
+
+    // Reset status to pending for all drafts
+    const updatedDrafts: BulkDraft[] = bulkDrafts.map((d) => ({ ...d, status: "pending", errorMessage: undefined }));
+    setBulkDrafts(updatedDrafts);
+
+    const concurrencyLimit = 4;
+    let index = 0;
+
+    const processNext = async (): Promise<void> => {
+      if (index >= updatedDrafts.length) return;
+      const currentIdx = index++;
+      const draft = updatedDrafts[currentIdx];
+
+      // Mark active processing status
+      draft.status = "processing";
+      setBulkDrafts([...updatedDrafts]);
+
       try {
-        const webpDataUrl = await convertImageToWebP(file);
-        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-        const cleanName = `Borrador - ${baseName.substring(0, 30)}`;
+        const webpDataUrl = await convertImageToWebP(draft.file);
+        const cleanPrice = draft.price.replace(",", ".");
+        const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
 
         await upsert(store.id, {
           id: "",
-          name: cleanName,
-          price: 0,
-          categoryId: catId,
+          name: draft.name,
+          price: parsedPrice,
+          categoryId: draft.categoryId,
           image: webpDataUrl,
-          description: "",
-          visible: false, // draft
-          isSample: false
+          description: draft.description || undefined,
+          visible: true,
+          isSample: false,
         });
-      } catch (err) {
-        console.error("[bulk upload]", err);
+
+        draft.status = "success";
+      } catch (err: any) {
+        console.error(err);
+        draft.status = "error";
+        draft.errorMessage = err?.message || "Error al subir";
       }
+
       setDraftsProcessed((prev) => prev + 1);
+      setBulkDrafts([...updatedDrafts]);
+
+      return processNext();
+    };
+
+    const workers = [];
+    const activeLimit = Math.min(concurrencyLimit, updatedDrafts.length);
+    for (let i = 0; i < activeLimit; i++) {
+      workers.push(processNext());
     }
 
+    await Promise.all(workers);
     setUploadingDrafts(false);
-    setBulkOpen(false);
-    toast.success(`Se crearon ${files.length} borradores de productos.`);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    const failedCount = updatedDrafts.filter((d) => d.status === "error").length;
+    if (failedCount > 0) {
+      toast.warning(`Importación finalizada. ${failedCount} productos fallaron y siguen en la grilla.`);
+    } else {
+      toast.success("¡Todos los productos se importaron con éxito!");
+      bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+      setBulkDrafts([]);
+      setSelectedDraftId(null);
+      setBulkOpen(false);
+    }
   };
 
   // Categories UI state
@@ -457,7 +553,7 @@ function ProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setPriceInput(p.price === 0 ? "" : p.price.toString());
+    setPriceInput(p.price === null || p.price === undefined || p.price === 0 ? "" : p.price.toString());
     setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
     setIsFeatured(p.description?.includes("#destacado") || p.name?.includes("#destacado") || false);
     setOpen(true);
@@ -467,15 +563,15 @@ function ProductsPage() {
     const cleanPrice = priceInput.replace(",", ".");
     const cleanOriginalPrice = originalPriceInput.replace(",", ".");
 
-    const parsedPrice = cleanPrice === "" ? 0 : parseFloat(cleanPrice);
-    const parsedOriginalPrice = cleanOriginalPrice === "" ? 0 : parseFloat(cleanOriginalPrice);
+    const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
+    const parsedOriginalPrice = cleanOriginalPrice === "" ? null : parseFloat(cleanOriginalPrice);
 
-    if (isNaN(parsedPrice) || (editing.isOnSale && isNaN(parsedOriginalPrice))) {
+    if ((parsedPrice !== null && isNaN(parsedPrice)) || (editing.isOnSale && parsedOriginalPrice !== null && isNaN(parsedOriginalPrice))) {
       toast.error("Por favor ingresa un precio válido");
       return;
     }
 
-    if (!editing.name || parsedPrice <= 0 || !editing.categoryId) {
+    if (!editing.name || !editing.categoryId) {
       toast.error("Completa los campos requeridos");
       return;
     }
@@ -488,8 +584,8 @@ function ProductsPage() {
     const updatedProduct: Product = {
       ...editing,
       price: parsedPrice,
-      originalPrice: editing.isOnSale ? parsedOriginalPrice : undefined,
-      description: rawDesc,
+      originalPrice: editing.isOnSale ? parsedOriginalPrice : null,
+      description: rawDesc || undefined,
       isSample: false,
     };
 
@@ -673,7 +769,7 @@ function ProductsPage() {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-bold">{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                        {p.isOnSale && p.originalPrice && p.price !== null && p.price !== undefined && p.originalPrice > p.price && (
                           <span className="text-[10px] text-muted-foreground line-through">
                             {formatPrice(p.originalPrice)}
                           </span>
@@ -772,7 +868,7 @@ function ProductsPage() {
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
-                    {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                    {p.isOnSale && p.originalPrice && p.price !== null && p.price !== undefined && p.originalPrice > p.price && (
                       <span className="text-[11px] text-muted-foreground line-through">
                         {formatPrice(p.originalPrice)}
                       </span>
@@ -1100,7 +1196,10 @@ function ProductsPage() {
                   ) : (
                     <>
                       <div>
-                        <Label>Precio (S/)</Label>
+                        <Label className="flex items-center justify-between">
+                          <span>Precio (S/)</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">Opcional (A consultar)</span>
+                        </Label>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -1178,69 +1277,364 @@ function ProductsPage() {
 
       {/* Dialog Carga Rápida / Upgrade */}
       <Dialog open={bulkOpen} onOpenChange={(val) => { if (!uploadingDrafts) setBulkOpen(val); }}>
-        <DialogContent className="max-w-md max-h-[90dvh] flex flex-col p-6 text-center space-y-6">
+        <DialogContent className="max-w-4xl w-[95vw] md:w-[85vw] max-h-[95dvh] md:max-h-[85dvh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl border-primary/10">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b shrink-0">
+            <div>
+              <DialogTitle className="text-lg md:text-xl font-extrabold text-foreground flex items-center gap-2">
+                <span>Carga Masiva por Fotos</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary">
+                  {bulkDrafts.length} {bulkDrafts.length === 1 ? "foto" : "fotos"}
+                </span>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Revisa y edita los detalles de cada producto antes de guardarlos.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
           {uploadingDrafts ? (
-            <div className="space-y-4 py-6">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6 text-center">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
-              <div className="space-y-2">
-                <DialogTitle className="text-xl font-extrabold text-foreground">Creando borradores masivos</DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground leading-normal">
-                  Procesando e ingresando imagen <strong>{draftsProcessed + 1}</strong> de <strong>{draftsTotal}</strong>...
-                </DialogDescription>
+              <div className="space-y-2 max-w-md">
+                <h3 className="text-lg font-bold text-foreground">Importando tu catálogo...</h3>
+                <p className="text-sm text-muted-foreground leading-normal">
+                  Optimizando fotos a WebP e ingresando el producto <strong>{draftsProcessed + 1}</strong> de <strong>{draftsTotal}</strong>
+                </p>
               </div>
               {/* Progress bar */}
-              <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden mt-4">
+              <div className="w-full max-w-md bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden mt-4 shadow-inner">
                 <div 
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  className="bg-primary h-2 rounded-full transition-all duration-300 shadow"
                   style={{ width: `${(draftsProcessed / draftsTotal) * 100}%` }}
                 />
               </div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-2">
-                Optimizando imágenes a WebP e insertando en catálogo
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">
+                No cierres esta ventana hasta terminar la importación
               </p>
             </div>
           ) : (
-            // Upgrade screen
-            <div className="space-y-4">
-              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/10 text-orange-500 border border-orange-500/20">
-                <Sparkles className="h-8 w-8 animate-pulse" />
+            <div className="flex-1 overflow-y-auto md:overflow-hidden p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 min-h-0">
+              {/* Left Column: Progress Grid (Desktop only) */}
+              <div className="hidden md:flex md:flex-col flex-1 min-h-0">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Fotos Seleccionadas</h4>
+                <div className="flex-1 overflow-y-auto border rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 p-3 max-h-[35vh] md:max-h-full">
+                  {bulkDrafts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-6 text-muted-foreground">
+                      <ImageIcon className="h-8 w-8 stroke-1 mb-2" />
+                      <p className="text-xs">No hay fotos seleccionadas</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {bulkDrafts.map((draft, idx) => {
+                        const isSelected = draft.id === selectedDraftId;
+                        const isPending = !draft.name.trim();
+
+                        return (
+                          <div
+                            key={draft.id}
+                            className={cn(
+                              "group relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all active:scale-95 shadow-sm",
+                              isSelected 
+                                ? "ring-2 ring-primary border-primary ring-offset-2 dark:ring-offset-zinc-950" 
+                                : isPending 
+                                  ? "border-amber-400/80 bg-amber-50/30" 
+                                  : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400"
+                            )}
+                            onClick={() => setSelectedDraftId(draft.id)}
+                          >
+                            <img
+                              src={draft.previewUrl}
+                              alt={draft.name}
+                              className="h-full w-full object-cover select-none"
+                            />
+                            
+                            {/* Number indicator */}
+                            <span className="absolute bottom-1 left-1.5 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-md font-bold backdrop-blur-sm">
+                              #{idx + 1}
+                            </span>
+
+                            {/* Status overlays */}
+                            {draft.status === "processing" && (
+                              <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                                <Loader2 className="h-5 w-5 text-white animate-spin" />
+                              </div>
+                            )}
+
+                            {draft.status === "success" && (
+                              <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-sm flex items-center justify-center">
+                                <span className="bg-emerald-500 text-white rounded-full p-1 shadow-md">
+                                  <Check className="h-3 w-3 stroke-[3]" />
+                                </span>
+                              </div>
+                            )}
+
+                            {draft.status === "error" && (
+                              <div className="absolute inset-0 bg-red-500/20 backdrop-blur-sm flex items-center justify-center">
+                                <span className="bg-red-500 text-white rounded-full p-1 shadow-md" title={draft.errorMessage}>
+                                  <AlertCircle className="h-3 w-3 stroke-[3]" />
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Delete floating button */}
+                            {draft.status === "pending" && (
+                              <button
+                                type="button"
+                                className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/60 hover:bg-red-600 text-white flex items-center justify-center backdrop-blur-sm transition-colors border border-white/10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeDraft(draft.id);
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-2">
-                <DialogTitle className="text-xl font-extrabold text-foreground">Carga Rápida por Fotos ⚡</DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
-                  ¿Tienes muchos productos por registrar? Toma fotos de todo tu stock con tu celular, súbelas juntas en un solo paso y crearemos borradores automáticamente.
-                </DialogDescription>
+
+              {/* Left Column: Progress Slider (Mobile only) */}
+              <div className="block md:hidden shrink-0">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Fotos Seleccionadas</h4>
+                <div className="flex overflow-x-auto gap-3 py-2 px-1 border rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 scrollbar-none">
+                  {bulkDrafts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center w-full py-4 text-muted-foreground text-center">
+                      <p className="text-xs">No hay fotos seleccionadas</p>
+                    </div>
+                  ) : (
+                    bulkDrafts.map((draft, idx) => {
+                      const isSelected = draft.id === selectedDraftId;
+                      const isPending = !draft.name.trim();
+
+                      return (
+                        <div
+                          key={draft.id}
+                          className={cn(
+                            "relative w-16 h-16 shrink-0 aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all active:scale-95 shadow-sm",
+                            isSelected 
+                              ? "ring-2 ring-primary border-primary ring-offset-2 dark:ring-offset-zinc-950" 
+                              : isPending 
+                                ? "border-amber-400/80 bg-amber-50/30" 
+                                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400"
+                          )}
+                          onClick={() => setSelectedDraftId(draft.id)}
+                        >
+                          <img
+                            src={draft.previewUrl}
+                            alt={draft.name}
+                            className="h-full w-full object-cover select-none"
+                          />
+                          
+                          <span className="absolute bottom-0.5 left-1 bg-black/60 text-white text-[8px] px-1 py-0.2 rounded font-bold backdrop-blur-sm">
+                            #{idx + 1}
+                          </span>
+
+                          {draft.status === "processing" && (
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                              <Loader2 className="h-4 w-4 text-white animate-spin" />
+                            </div>
+                          )}
+
+                          {draft.status === "success" && (
+                            <div className="absolute inset-0 bg-emerald-500/20 backdrop-blur-sm flex items-center justify-center">
+                              <span className="bg-emerald-500 text-white rounded-full p-0.5 shadow-md">
+                                <Check className="h-2 w-2 stroke-[3]" />
+                              </span>
+                            </div>
+                          )}
+
+                          {draft.status === "error" && (
+                            <div className="absolute inset-0 bg-red-500/20 backdrop-blur-sm flex items-center justify-center">
+                              <span className="bg-red-500 text-white rounded-full p-0.5 shadow-md" title={draft.errorMessage}>
+                                <AlertCircle className="h-2 w-2 stroke-[3]" />
+                              </span>
+                            </div>
+                          )}
+
+                          {draft.status === "pending" && (
+                            <button
+                              type="button"
+                              className="absolute top-0.5 right-0.5 h-4.5 w-4.5 rounded-full bg-black/65 hover:bg-red-600 text-white flex items-center justify-center backdrop-blur-sm transition-colors border border-white/10"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeDraft(draft.id);
+                              }}
+                            >
+                              <X className="h-2.5 w-2.5" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-              <div className="p-4 border rounded-xl bg-zinc-50 dark:bg-zinc-900 border-zinc-200/60 dark:border-zinc-800 text-left space-y-2 text-xs">
-                <p className="font-bold text-foreground">Beneficios del Plan Ilimitado:</p>
-                <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
-                  <li><strong>Ahorro de tiempo</strong>: Crea hasta 30 borradores a la vez.</li>
-                  <li><strong>Edición posterior</strong>: Rellena precios y nombres con calma.</li>
-                  <li><strong>Productos Ilimitados</strong> en el catálogo.</li>
-                </ul>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Tu tienda actual se encuentra en el plan <strong>{store.plan.toUpperCase()}</strong>.
-              </p>
-              <div className="flex flex-col gap-2 pt-2">
-                <a
-                  href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero actualizar mi plan a Ilimitado para desbloquear la Carga Rápida por Fotos.`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 px-6 text-sm font-bold text-white shadow-lg shadow-orange-500/25 transition-all active:scale-95 cursor-pointer"
-                >
-                  Actualizar a Plan Ilimitado por WhatsApp
-                </a>
-                <Button variant="ghost" onClick={() => setBulkOpen(false)} className="rounded-xl">
-                  Tal vez más tarde
-                </Button>
+
+              {/* Right Column: Bottom Sheet / Detail Editor */}
+              <div className="w-full md:w-[350px] flex flex-col border-t-0 md:border-l border-zinc-100 dark:border-zinc-800 pt-1 md:pt-0 md:pl-5 shrink-0 min-h-0">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 hidden md:block">Detalle de Producto</h4>
+                {activeDraft ? (
+                  <div className="flex-1 flex flex-col justify-between min-h-0 space-y-3 md:space-y-4">
+                    <div className="space-y-2.5 md:space-y-3 flex-1 overflow-y-auto pr-1">
+                      {/* Active Draft Miniature Card (Desktop only) */}
+                      <div className="hidden md:flex items-center gap-3 bg-zinc-100/55 dark:bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-200/50 dark:border-zinc-800/50">
+                        <img
+                          src={activeDraft.previewUrl}
+                          alt="preview"
+                          className="h-12 w-12 rounded-lg object-cover border dark:border-zinc-800"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-foreground truncate">{activeDraft.name || "Sin Nombre"}</p>
+                          <p className="text-[10px] text-muted-foreground font-mono truncate">{activeDraft.file.name}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg cursor-pointer shrink-0"
+                          onClick={() => removeDraft(activeDraft.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Inputs */}
+                      <div className="space-y-2.5 md:space-y-3">
+                        <div>
+                          <Label className="text-xs">Nombre del Producto</Label>
+                          <Input
+                            value={activeDraft.name}
+                            onChange={(e) => updateActiveDraft({ name: e.target.value })}
+                            placeholder="Ej. Casaca Impermeable"
+                            className="h-9 mt-1 text-sm rounded-lg"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs flex items-center justify-between">
+                            <span>Precio (S/)</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">Opcional (A consultar)</span>
+                          </Label>
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            value={activeDraft.price}
+                            onChange={(e) => {
+                              let val = e.target.value.replace(",", ".");
+                              val = val.replace(/[^0-9.]/g, "");
+                              const parts = val.split(".");
+                              if (parts.length > 2) return;
+                              updateActiveDraft({ price: val });
+                            }}
+                            placeholder="Dejar vacío para consultar"
+                            className="h-9 mt-1 text-sm rounded-lg"
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Categoría</Label>
+                          <div className="mt-1">
+                            <CategorySelect
+                              value={activeDraft.categoryId}
+                              categories={store.categories}
+                              onChange={(v) => updateActiveDraft({ categoryId: v })}
+                              onCreateCategory={handleCreateCategory}
+                              storeModel={store.model}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">Descripción (opcional)</Label>
+                          <Textarea
+                            rows={2}
+                            value={activeDraft.description}
+                            onChange={(e) => updateActiveDraft({ description: e.target.value })}
+                            placeholder="Ej. Tallas S, M, L. Material algodón..."
+                            className="mt-1 text-xs rounded-lg resize-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation Buttons */}
+                    <div className="flex gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs gap-1.5 h-8.5 rounded-lg cursor-pointer"
+                        disabled={bulkDrafts.findIndex((d) => d.id === selectedDraftId) === 0}
+                        onClick={() => {
+                          const idx = bulkDrafts.findIndex((d) => d.id === selectedDraftId);
+                          if (idx > 0) setSelectedDraftId(bulkDrafts[idx - 1].id);
+                        }}
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs gap-1.5 h-8.5 rounded-lg cursor-pointer"
+                        disabled={bulkDrafts.findIndex((d) => d.id === selectedDraftId) === bulkDrafts.length - 1}
+                        onClick={() => {
+                          const idx = bulkDrafts.findIndex((d) => d.id === selectedDraftId);
+                          if (idx !== -1 && idx < bulkDrafts.length - 1) setSelectedDraftId(bulkDrafts[idx + 1].id);
+                        }}
+                      >
+                        Siguiente <ChevronRight className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-2xl bg-zinc-50/20">
+                    <ImageIcon className="h-8 w-8 text-muted-foreground stroke-1 mb-2 animate-bounce" />
+                    <p className="text-xs text-muted-foreground">Selecciona una imagen de la grilla para configurar sus detalles.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
+
+          <DialogFooter className="px-5 py-4 border-t shrink-0 flex flex-row gap-2 sm:justify-end bg-zinc-50 dark:bg-zinc-950/20">
+            {!uploadingDrafts && (
+              <Button
+                variant="outline"
+                className="flex-1 sm:flex-none text-xs rounded-xl cursor-pointer"
+                onClick={() => {
+                  bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+                  setBulkDrafts([]);
+                  setSelectedDraftId(null);
+                  setBulkOpen(false);
+                }}
+              >
+                Cancelar
+              </Button>
+            )}
+            <Button
+              className="flex-1 sm:flex-none text-xs font-bold gap-1.5 rounded-xl cursor-pointer bg-primary"
+              disabled={bulkDrafts.length === 0 || uploadingDrafts}
+              onClick={handleStartImport}
+            >
+              {uploadingDrafts ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Subiendo...
+                </>
+              ) : (
+                <>
+                  Confirmar Importación ({bulkDrafts.length})
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

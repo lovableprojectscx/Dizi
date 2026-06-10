@@ -13,17 +13,30 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Store as StoreIcon, ShieldCheck, LogOut } from "lucide-react";
-import { getActiveSession, getUserRole, signOut } from "@/lib/auth";
+import { getActiveSession, getSessionSync, getUserRole, signOut } from "@/lib/auth";
 
 export const Route = createFileRoute("/super")({
   beforeLoad: async ({ location }) => {
     // Permitir acceso a la página de login sin estar autenticado
     if (location.pathname === "/super/login") return;
 
-    const session = await getActiveSession();
-    const role = getUserRole(session?.user ?? null);
-    if (!session || role !== "super_admin") {
-      throw redirect({ to: "/super/login" });
+    try {
+      const session = await getActiveSession();
+      const role = getUserRole(session?.user ?? null);
+      if (!session || role !== "super_admin") {
+        throw redirect({ to: "/super/login" });
+      }
+    } catch (err) {
+      // Si el error es una redirección intencional de TanStack Router, lo relanzamos
+      if (err && typeof err === "object" && "to" in err) {
+        throw err;
+      }
+      console.warn("[super beforeLoad] Falló la verificación de sesión en red, usando almacenamiento local:", err);
+      const session = getSessionSync();
+      const role = getUserRole(session?.user ?? null);
+      if (!session || role !== "super_admin") {
+        throw redirect({ to: "/super/login" });
+      }
     }
   },
   component: SuperLayout,

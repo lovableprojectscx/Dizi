@@ -7,7 +7,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Faltan las credenciales de Supabase en .env");
 }
 
-export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "");
+// Timeout de 10 segundos para todas las peticiones a Supabase (evita bloqueos infinitos por ISP/DNS)
+const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 10000);
+  return fetch(url, { ...options, signal: controller.signal })
+    .then((res) => {
+      clearTimeout(id);
+      return res;
+    })
+    .catch((err) => {
+      clearTimeout(id);
+      throw err;
+    });
+};
+
+export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
+  global: {
+    fetch: customFetch,
+  },
+});
 
 /**
  * Sube una imagen en formato base64 Data URL a un bucket de Supabase Storage.

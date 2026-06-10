@@ -28,6 +28,7 @@ import {
   Gift,
   Heart,
   Sprout,
+  Leaf,
   LayoutGrid,
   Utensils,
   ChevronLeft,
@@ -71,7 +72,7 @@ type ModelConfig = {
   cardShadow: string;
   cardBorder: boolean;
   headerStyle: "clean" | "bold" | "minimal";
-  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid" | "bite";
+  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid" | "bite" | "bloom";
 };
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
@@ -308,99 +309,102 @@ const getCleanCategoryName = (rawName: string) => {
   return emoji ? `${emoji} ${label}` : label;
 };
 
-function CategoryIcon({ iconKey, className }: { iconKey: string; className?: string }) {
+function CategoryIcon({ iconKey, className, style }: { iconKey: string; className?: string; style?: React.CSSProperties }) {
   const sizeClass = className || "h-4 w-4";
-  switch (iconKey) {
-    case "burger":
-      return (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={sizeClass}
-        >
-          <path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6" />
-          <path d="M2 13h20" />
-          <path d="M4 17h16" />
-          <path d="M3 17c0 2.2 1.8 4 4 4h10c2.2 0 4-1.8 4-4" />
-        </svg>
-      );
-    case "fries":
-      return (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={sizeClass}
-        >
-          <path d="M5 11l1.5 9h11l1.5-9" />
-          <path d="M8 11V4M12 11V3M16 11V5M10 11V6M14 11V6" />
-        </svg>
-      );
-    case "combo":
-      return (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={sizeClass}
-        >
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M3 12h18" />
-          <path d="M12 12v9" />
-        </svg>
-      );
-    case "drink":
-      return <CupSoda className={sizeClass} />;
-    case "pizza":
-      return <Pizza className={sizeClass} />;
-    case "icecream":
-      return <IceCream className={sizeClass} />;
-    case "dessert":
-      return <Cake className={sizeClass} />;
-    case "flower":
-      return <Flower className={sizeClass} />;
-    case "gift":
-      return <Gift className={sizeClass} />;
-    case "heart":
-      return <Heart className={sizeClass} />;
-    case "sprout":
-      return <Sprout className={sizeClass} />;
-    case "leaf":
-      return <Leaf className={sizeClass} />;
-    case "bouquet":
-      return (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={sizeClass}
-        >
-          <path d="M12 2a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
-          <path d="M8 6a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
-          <path d="M16 6a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
-          <path d="M12 10v12M9 14l6 6M15 14l-6 6" />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  const getIcon = () => {
+    switch (iconKey) {
+      case "burger":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={sizeClass}
+          >
+            <path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6" />
+            <path d="M2 13h20" />
+            <path d="M4 17h16" />
+            <path d="M3 17c0 2.2 1.8 4 4 4h10c2.2 0 4-1.8 4-4" />
+          </svg>
+        );
+      case "fries":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={sizeClass}
+          >
+            <path d="M5 11l1.5 9h11l1.5-9" />
+            <path d="M8 11V4M12 11V3M16 11V5M10 11V6M14 11V6" />
+          </svg>
+        );
+      case "combo":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={sizeClass}
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 12h18" />
+            <path d="M12 12v9" />
+          </svg>
+        );
+      case "drink":
+        return <CupSoda className={sizeClass} />;
+      case "pizza":
+        return <Pizza className={sizeClass} />;
+      case "icecream":
+        return <IceCream className={sizeClass} />;
+      case "dessert":
+        return <Cake className={sizeClass} />;
+      case "flower":
+        return <Flower className={sizeClass} />;
+      case "gift":
+        return <Gift className={sizeClass} />;
+      case "heart":
+        return <Heart className={sizeClass} />;
+      case "sprout":
+        return <Sprout className={sizeClass} />;
+      case "leaf":
+        return <Leaf className={sizeClass} />;
+      case "bouquet":
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={sizeClass}
+          >
+            <path d="M12 2a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
+            <path d="M8 6a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
+            <path d="M16 6a3 3 0 0 0-3 3c0 2 3 5 3 5s3-3 3-5a3 3 0 0 0-3-3z" />
+            <path d="M12 10v12M9 14l6 6M15 14l-6 6" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+  return <span style={style} className="inline-flex shrink-0">{getIcon()}</span>;
 }
 
 const scanProductBadges = (name: string, description?: string): { emoji: string; label: string }[] => {
@@ -888,7 +892,9 @@ export function PublicCatalog({
 
   /* ── Price range bounds ─────────────────────────────────────── */
   const [priceMin, priceMax] = useMemo(() => {
-    const prices = productsWithImages.filter(p => p.visible).map(p => p.price);
+    const prices = productsWithImages
+      .filter((p) => p.visible && p.price !== null && p.price !== undefined && p.price > 0)
+      .map((p) => p.price as number);
     if (prices.length === 0) return [0, 0];
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
   }, [productsWithImages]);
@@ -1084,18 +1090,18 @@ export function PublicCatalog({
       .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
       .filter((p) => {
         if (!priceRange) return true;
-        return p.price >= priceRange[0] && p.price <= priceRange[1];
+        return p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1];
       });
 
     // Apply sorting
     if (sortBy === "price_asc") {
-      result = [...result].sort((a, b) => a.price - b.price);
+      result = [...result].sort((a, b) => (a.price || 0) - (b.price || 0));
     } else if (sortBy === "price_desc") {
-      result = [...result].sort((a, b) => b.price - a.price);
+      result = [...result].sort((a, b) => (b.price || 0) - (a.price || 0));
     } else if (sortBy === "name_asc") {
       result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === "rating_desc") {
-      const getRating = (prod: Product) => (prod.price > 80 ? 4.9 : prod.price > 15 ? 4.8 : 4.5);
+      const getRating = (prod: Product) => ((prod.price || 0) > 80 ? 4.9 : (prod.price || 0) > 15 ? 4.8 : 4.5);
       result = [...result].sort((a, b) => getRating(b) - getRating(a));
     }
 
@@ -1113,14 +1119,21 @@ export function PublicCatalog({
       return product ? { ...c, product } : null;
     })
     .filter((l): l is NonNullable<typeof l> => l !== null);
-  const total = cartLines.reduce((a, l) => a + l.product.price * l.qty, 0);
+  const total = cartLines.reduce((a, l) => a + (l.product.price || 0) * l.qty, 0);
 
   /* ── Actions ─────────────────────────────────────── */
   const sendOrder = () => {
+    const hasQuoteItems = cartLines.some((l) => !l.product.price);
     const lines = cartLines
-      .map((l) => `• ${l.product.name} x${l.qty} — ${formatPrice(l.product.price * l.qty)}`)
+      .map((l) => {
+        const itemPrice = l.product.price ? l.product.price * l.qty : null;
+        return `• ${l.product.name} x${l.qty} — ${formatPrice(itemPrice)}`;
+      })
       .join("\n");
-    const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${formatPrice(total)}`;
+    const totalMsg = total > 0 
+      ? `${formatPrice(total)}${hasQuoteItems ? " + artículos a cotizar" : ""}`
+      : "A consultar";
+    const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
     incClicks(store.id);
 
     if (isInAppBrowser()) {
@@ -1421,7 +1434,7 @@ export function PublicCatalog({
             <div className="inline-block relative">
               {(store.bioLogo || store.logo) ? (
                 <img
-                  src={store.bioLogo || store.logo}
+                  src={(store.bioLogo || store.logo) || undefined}
                   alt={store.name}
                   className={cn(
                     "rounded-full object-cover border shadow-lg animate-in fade-in duration-300 bg-white",
@@ -1792,7 +1805,7 @@ export function PublicCatalog({
                             "text-sm font-black text-primary",
                             bioTypography === "serif" && "font-serif-editorial font-bold"
                           )}>{formatPrice(p.price)}</span>
-                          {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                          {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                             <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
                           )}
                         </div>
@@ -1838,7 +1851,7 @@ export function PublicCatalog({
                   <div className="flex items-center justify-between gap-1">
                     <div>
                       <span className="text-white font-black text-sm">{formatPrice(p.price)}</span>
-                      {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                      {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                         <span className="text-white/50 text-[10px] line-through ml-1">{formatPrice(p.originalPrice)}</span>
                       )}
                     </div>
@@ -1886,7 +1899,7 @@ export function PublicCatalog({
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-baseline gap-2">
                       <span className="font-black text-primary">{formatPrice(p.price)}</span>
-                      {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                      {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                         <span className="text-xs text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>
                       )}
                     </div>
@@ -2213,7 +2226,7 @@ export function PublicCatalog({
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="font-black text-xl" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                        {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                           <span className="text-xs line-through ml-2 opacity-40">{formatPrice(p.originalPrice)}</span>
                         )}
                       </div>
@@ -2467,7 +2480,7 @@ export function PublicCatalog({
                           <div className="flex items-center justify-between pt-3 mt-3 border-t border-zinc-800/80 px-1">
                             <div>
                               <span className="text-base font-black text-orange-500">{formatPrice(p.price)}</span>
-                              {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                                 <span className="text-xs text-zinc-500 line-through block -mt-1">{formatPrice(p.originalPrice)}</span>
                               )}
                             </div>
@@ -2651,7 +2664,7 @@ export function PublicCatalog({
                         <div className="px-3.5 pb-4 pt-0 flex items-center justify-between mt-auto">
                           <div className="flex flex-col text-left">
                             <span className="text-sm font-black text-orange-500" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                            {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                            {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                               <span className="text-[10px] text-zinc-500 line-through -mt-1">{formatPrice(p.originalPrice)}</span>
                             )}
                           </div>
@@ -2936,7 +2949,7 @@ export function PublicCatalog({
                               >
                                 {formatPrice(p.price)}
                               </span>
-                              {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                                 <span className="text-xs text-stone-400 line-through block -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
                               )}
                             </div>
@@ -3171,7 +3184,7 @@ export function PublicCatalog({
                         <div className="px-3 pb-3.5 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
                           <div className="flex flex-col text-left px-0.5">
                             <span className="text-sm font-semibold text-rose-600 font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                            {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                            {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                               <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
                             )}
                           </div>
@@ -3274,7 +3287,7 @@ export function PublicCatalog({
                     <div className="flex items-center justify-between mt-1">
                       <div>
                         <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                        {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                           <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
                         )}
                       </div>
@@ -3317,7 +3330,7 @@ export function PublicCatalog({
                   <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{p.name}</h3>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-base font-black text-primary">{formatPrice(p.price)}</span>
-                    {p.isOnSale && p.originalPrice && p.originalPrice > p.price && (
+                    {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                       <span className="text-[11px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>
                     )}
                   </div>
@@ -3838,7 +3851,7 @@ export function PublicCatalog({
                   <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
                     <p className={cn("text-white font-black text-2xl", cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase" : "")}>
                       {formatPrice(viewingProduct.price)}
-                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price && (
+                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.price && viewingProduct.originalPrice > viewingProduct.price && (
                         <span className="text-white/40 text-sm line-through ml-3 font-normal">{formatPrice(viewingProduct.originalPrice)}</span>
                       )}
                     </p>
@@ -3872,7 +3885,7 @@ export function PublicCatalog({
                       <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
                         {formatPrice(viewingProduct.price)}
                       </span>
-                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.originalPrice > viewingProduct.price && (
+                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.price && viewingProduct.originalPrice > viewingProduct.price && (
                         <span className="text-sm line-through" style={{ color: "var(--muted-foreground)" }}>
                           {formatPrice(viewingProduct.originalPrice)}
                         </span>

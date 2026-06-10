@@ -3,6 +3,7 @@ import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
+import { StoreErrorComponent } from "./t.$slug";
 
 export const Route = createFileRoute("/bio/$slug")({
   loader: async ({ params }) => {
@@ -28,90 +29,103 @@ export const Route = createFileRoute("/bio/$slug")({
     };
   },
   component: BioPublic,
+  errorComponent: StoreErrorComponent,
 });
 
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
-  const { data, error } = await supabase
-    .rpc("get_public_store", { store_slug: slug });
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")), 6000)
+  );
 
-  if (error || !data) return null;
+  const fetchPromise = (async (): Promise<Store | null> => {
+    const { data, error } = await supabase
+      .rpc("get_public_store", { store_slug: slug });
 
-  // Fallback: If product images are missing due to RPC bug, fetch them directly
-  let productsWithImages = data.products || [];
-  if (productsWithImages.length > 0 && productsWithImages.every((p: any) => p.image === undefined || p.image === "")) {
-    const productIds = productsWithImages.map((p: any) => p.id);
-    const { data: realProducts, error: pError } = await supabase
-      .from("products")
-      .select("id, image")
-      .in("id", productIds);
-      
-    if (!pError && realProducts) {
-      const imageMap = new Map(realProducts.map((p: any) => [p.id, p.image]));
-      productsWithImages = productsWithImages.map((p: any) => ({
-        ...p,
-        image: imageMap.get(p.id) || ""
-      }));
+    if (error) {
+      console.error("[fetchStoreBySlug] RPC error:", error);
+      throw new Error(`DB Error: ${error.message}`);
     }
-  }
+    if (!data) return null;
 
-  return {
-    id: data.id,
-    slug: data.slug,
-    name: data.name,
-    phone: data.phone || "",
-    countryCode: data.country_code || "51",
-    logo: data.logo,
-    plan: data.plan,
-    model: data.model,
-    brandColor: data.brand_color,
-    bgColor: data.bg_color,
-    bannerImage: data.banner_image,
-    bannerTitle: data.banner_title,
-    ownerId: data.owner_id,
-    active: data.active,
-    isPublished: data.is_published,
-    createdAt: data.created_at,
-    whatsappClicks: data.whatsapp_clicks || 0,
-    views: data.views || 0,
-    priceFilterEnabled: data.price_filter_enabled ?? false,
-    libroReclamacionesActivo: data.libro_reclamaciones_activo ?? false,
-    empresaRuc: data.empresa_ruc ?? undefined,
-    empresaRazonSocial: data.empresa_razon_social ?? undefined,
-    empresaDireccion: data.empresa_direccion ?? undefined,
-    planExpiresAt: data.plan_expires_at ?? undefined,
-    subscriptionStatus: data.subscription_status ?? "trial",
-    cancelledAt: data.cancelled_at ?? undefined,
-    cancelReason: data.cancel_reason ?? undefined,
-    planDurationMonths: data.plan_duration_months ?? undefined,
-    bioDescription: data.bio_description ?? undefined,
-    locationLat: data.location_lat ? Number(data.location_lat) : undefined,
-    locationLng: data.location_lng ? Number(data.location_lng) : undefined,
-    locationAddress: data.location_address ?? undefined,
-    quickLinks: data.quick_links ?? [],
-    bioLinksEnabled: data.bio_links_enabled ?? false,
-    bioLogo: data.bio_logo ?? undefined,
-    bioBanner: data.bio_banner ?? undefined,
-    bioTheme: data.bio_theme ?? "default",
-    bioTypography: data.bio_typography ?? "sans",
-    bioButtonStyle: data.bio_button_style === "rounded-full" ? "pill-solid" : (data.bio_button_style ?? "pill-solid"),
-    bioButtonColor: data.bio_button_color ?? undefined,
-    bioButtonTextColor: data.bio_button_text_color ?? undefined,
-    bioBgImage: data.bio_bg_image ?? undefined,
-    bioBgColor: data.bio_bg_color ?? undefined,
-    categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
-    products: (productsWithImages || []).map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      price: Number(p.price),
-      categoryId: p.category_id,
-      image: p.image || "",
-      description: p.description,
-      isOnSale: p.is_on_sale,
-      originalPrice: p.original_price ? Number(p.original_price) : undefined,
-      visible: p.visible,
-      isSample: p.is_sample,
-    })),
-  };
+    // Fallback: If product images are missing due to RPC bug, fetch them directly
+    let productsWithImages = data.products || [];
+    if (productsWithImages.length > 0 && productsWithImages.every((p: any) => p.image === undefined || p.image === "")) {
+      const productIds = productsWithImages.map((p: any) => p.id);
+      const { data: realProducts, error: pError } = await supabase
+        .from("products")
+        .select("id, image")
+        .in("id", productIds);
+        
+      if (!pError && realProducts) {
+        const imageMap = new Map(realProducts.map((p: any) => [p.id, p.image]));
+        productsWithImages = productsWithImages.map((p: any) => ({
+          ...p,
+          image: imageMap.get(p.id) || ""
+        }));
+      }
+    }
+
+    return {
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      phone: data.phone || "",
+      countryCode: data.country_code || "51",
+      logo: data.logo,
+      plan: data.plan,
+      model: data.model,
+      brandColor: data.brand_color,
+      bgColor: data.bg_color,
+      bannerImage: data.banner_image,
+      bannerTitle: data.banner_title,
+      ownerId: data.owner_id,
+      active: data.active,
+      isPublished: data.is_published,
+      createdAt: data.created_at,
+      whatsappClicks: data.whatsapp_clicks || 0,
+      views: data.views || 0,
+      priceFilterEnabled: data.price_filter_enabled ?? false,
+      libroReclamacionesActivo: data.libro_reclamaciones_activo ?? false,
+      empresaRuc: data.empresa_ruc ?? undefined,
+      empresaRazonSocial: data.empresa_razon_social ?? undefined,
+      empresaDireccion: data.empresa_direccion ?? undefined,
+      planExpiresAt: data.plan_expires_at ?? undefined,
+      subscriptionStatus: data.subscription_status ?? "trial",
+      cancelledAt: data.cancelled_at ?? undefined,
+      cancelReason: data.cancel_reason ?? undefined,
+      planDurationMonths: data.plan_duration_months ?? undefined,
+      bioDescription: data.bio_description ?? undefined,
+      locationLat: data.location_lat ? Number(data.location_lat) : undefined,
+      locationLng: data.location_lng ? Number(data.location_lng) : undefined,
+      locationAddress: data.location_address ?? undefined,
+      quickLinks: data.quick_links ?? [],
+      bioLinksEnabled: data.bio_links_enabled ?? false,
+      bioLogo: data.bio_logo ?? undefined,
+      bioBanner: data.bio_banner ?? undefined,
+      bioTheme: data.bio_theme ?? "default",
+      bioTypography: data.bio_typography ?? "sans",
+      bioButtonStyle: data.bio_button_style === "rounded-full" ? "pill-solid" : (data.bio_button_style ?? "pill-solid"),
+      bioButtonColor: data.bio_button_color ?? undefined,
+      bioButtonTextColor: data.bio_button_text_color ?? undefined,
+      bioBgImage: data.bio_bg_image ?? undefined,
+      bioBgColor: data.bio_bg_color ?? undefined,
+      categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
+      products: (productsWithImages || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        categoryId: p.category_id,
+        image: p.image || "",
+        description: p.description,
+        isOnSale: p.is_on_sale,
+        originalPrice: p.original_price ? Number(p.original_price) : undefined,
+        visible: p.visible,
+        isSample: p.is_sample,
+      })),
+    };
+  })();
+
+  return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 function BioPublic() {

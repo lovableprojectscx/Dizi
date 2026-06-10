@@ -1,18 +1,30 @@
-import { createFileRoute, Outlet, Link, redirect, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, redirect, useRouterState, useRouter } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList, Link2 } from "lucide-react";
-import { getActiveSession, signOut } from "@/lib/auth";
+import { getActiveSession, getSessionSync, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
-    const session = await getActiveSession();
-    if (!session) {
-      throw redirect({ to: "/login" });
+    try {
+      const session = await getActiveSession();
+      if (!session) {
+        throw redirect({ to: "/login" });
+      }
+    } catch (err) {
+      // Si el error es una redirección intencional de TanStack Router, lo relanzamos
+      if (err && typeof err === "object" && "to" in err) {
+        throw err;
+      }
+      console.warn("[admin beforeLoad] Falló la verificación de sesión en red, usando almacenamiento local:", err);
+      const session = getSessionSync();
+      if (!session) {
+        throw redirect({ to: "/login" });
+      }
     }
   },
   component: AdminLayout,
@@ -21,19 +33,47 @@ export const Route = createFileRoute("/admin")({
 function AdminLayout() {
   const storeId = useApp((s) => s.currentStoreId);
   const stores = useApp((s) => s.stores);
+  const fetchError = useApp((s) => s.fetchError);
   const impersonating = useApp((s) => s.impersonatedBy);
   const stop = useApp((s) => s.stopImpersonation);
   const setStore = useApp((s) => s.setCurrentStore);
+  const router = useRouter();
 
   if (stores.length === 0) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <div className="space-y-1 text-center">
-            <h2 className="text-xl font-bold">Cargando panel...</h2>
-            <p className="text-sm text-muted-foreground">Estamos preparando tu catalogo</p>
-          </div>
+      <div className="flex h-screen w-full items-center justify-center bg-background p-4 text-center">
+        <div className="flex flex-col items-center gap-4 max-w-md">
+          {fetchError ? (
+            <>
+              <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold">Error de Conexión</h2>
+                <p className="text-sm text-muted-foreground leading-normal">
+                  No se pudo conectar con el servidor. Si estás usando Wi-Fi de Movistar o Claro, intenta desactivándolo y navegando con tus datos móviles (4G/5G).
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  router.invalidate();
+                }}
+                className="mt-2 font-bold h-10 px-6"
+              >
+                Reintentar
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="space-y-1">
+                <h2 className="text-xl font-bold">Cargando panel...</h2>
+                <p className="text-sm text-muted-foreground">Estamos preparando tu catalogo</p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );

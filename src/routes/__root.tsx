@@ -42,10 +42,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Esta página no pudo cargarse
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+        <p className="mt-2 text-sm text-muted-foreground leading-normal">
+          {error?.message || "Algo salió mal por nuestro lado."}
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground/60">
+          Si estás en Wi-Fi de Claro/Movistar, intenta desactivarlo y usar tus datos móviles.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button

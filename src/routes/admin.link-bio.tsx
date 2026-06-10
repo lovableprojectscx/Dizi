@@ -1690,8 +1690,8 @@ function LinkBioPage() {
             name={store.name}
             logo={bioLogo || store.logo || ""}
             bioDescription={bioDescription}
-            brandColor={store.brandColor}
-            bannerImage={bioBanner || store.bannerImage}
+            brandColor={store.brandColor || undefined}
+            bannerImage={bioBanner || store.bannerImage || undefined}
             phone={country + number.replace(/\D/g, "")}
             locationAddress={locationAddress}
             locationLat={locationLat}
@@ -1726,8 +1726,8 @@ function LinkBioPage() {
                 name={store.name}
                 logo={bioLogo || store.logo || ""}
                 bioDescription={bioDescription}
-                brandColor={store.brandColor}
-                bannerImage={bioBanner || store.bannerImage}
+                brandColor={store.brandColor || undefined}
+                bannerImage={bioBanner || store.bannerImage || undefined}
                 phone={country + number.replace(/\D/g, "")}
                 locationAddress={locationAddress}
                 locationLat={locationLat}

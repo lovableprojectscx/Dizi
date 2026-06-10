@@ -120,7 +120,7 @@ function TenantsPage() {
     // 5. Claim Book filter
     let matchesLibro = true;
     if (selectedLibro !== "all") {
-      matchesLibro = selectedLibro === "con_libro" ? s.libroReclamacionesActivo : !s.libroReclamacionesActivo;
+      matchesLibro = selectedLibro === "con_libro" ? !!s.libroReclamacionesActivo : !s.libroReclamacionesActivo;
     }
 
     return matchesSearch && matchesPlan && matchesStatus && matchesNiche && matchesLibro;

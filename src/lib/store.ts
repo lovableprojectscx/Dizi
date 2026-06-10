@@ -52,12 +52,12 @@ const mapStoreFromDB = (row: any): Store => ({
   products: (row.products || []).map((p: any) => ({
     id: p.id,
     name: p.name,
-    price: Number(p.price),
+    price: p.price !== null && p.price !== undefined ? Number(p.price) : null,
     categoryId: p.category_id,
     image: p.image,
     description: p.description,
     isOnSale: p.is_on_sale,
-    originalPrice: p.original_price ? Number(p.original_price) : undefined,
+    originalPrice: p.original_price !== null && p.original_price !== undefined ? Number(p.original_price) : null,
     visible: p.visible,
     isSample: p.is_sample,
   })),
@@ -469,7 +469,17 @@ export const useApp = create<AppState>()(
           }
         }
 
-        const p = { ...product, id: prodId, image: imageUrl };
+        const cleanPrice = (product.price !== undefined && product.price !== null && product.price !== 0) ? product.price : null;
+        const cleanOriginalPrice = (product.originalPrice !== undefined && product.originalPrice !== null && product.originalPrice !== 0) ? product.originalPrice : null;
+
+        const p = { 
+          ...product, 
+          id: prodId, 
+          image: imageUrl,
+          price: cleanPrice,
+          originalPrice: cleanOriginalPrice,
+          description: product.description || undefined
+        };
 
         try {
           const st = useApp.getState().stores.find((s) => s.id === storeId);
@@ -489,9 +499,9 @@ export const useApp = create<AppState>()(
           }
 
           const { error } = await supabase.from("products").upsert({
-            id: p.id, store_id: storeId, category_id: p.categoryId,
+            id: p.id, store_id: storeId, category_id: p.categoryId || null,
             name: p.name, price: p.price, original_price: p.originalPrice,
-            image: p.image, description: p.description, is_on_sale: p.isOnSale,
+            image: p.image, description: p.description || null, is_on_sale: p.isOnSale,
             visible: p.visible, is_sample: p.isSample,
           });
 
