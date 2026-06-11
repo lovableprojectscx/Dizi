@@ -37,19 +37,10 @@ function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Magic Importer States
-  const [importing, setImporting] = useState(false);
-  const [importInput, setImportInput] = useState("");
-  const [importedProducts, setImportedProducts] = useState<any[]>([]);
-  const [importStatus, setImportStatus] = useState("");
-  const [showImportBox, setShowImportBox] = useState(false);
-
   // Invite state — se valida contra Supabase al montar el componente
   const [invitePlan, setInvitePlan] = useState<PlanId | null>(null);
   const [inviteDurationMonths, setInviteDurationMonths] = useState<number>(1);
   const [inviteLoading, setInviteLoading] = useState(false);
-
-  const bookmarkletCode = `javascript:(async function(){const products=[];document.querySelectorAll("img").forEach(img=>{if(!img.src||!img.src.startsWith("http"))return;const c=img.closest("a")||img.closest("div");if(!c)return;const t=c.innerText||"";const pm=t.match(/(S\\/\\.?\\s*|\\$\\s*)(\\d+(\\.\\d{2})?)/i);const ls=t.split("\\n").map(l=>l.trim()).filter(l=>l.length>2);const nm=ls.find(l=>!l.match(/(S\\/\\.?\\s*|\\$\\s*|\\d+(\\.\\d{2})?)/i)&&l.length<80);if(nm&&pm){const pr=parseFloat(pm[2]);if(!products.some(p=>p.name===nm)){products.push({name:nm,price:pr,image:img.src,description:ls.join(" | ").substring(0,150)})}}});if(products.length===0){document.querySelectorAll("img").forEach(img=>{const p=img.parentElement;if(!p)return;const st=p.innerText||(p.parentElement?p.parentElement.innerText:"");const pm=st.match(/(S\\/\\.?\\s*|\\$\\s*)(\\d+(\\.\\d{2})?)/i);const nm=st.split("\\n")[0];if(pm&&nm&&nm.length<80){products.push({name:nm.trim(),price:parseFloat(pm[2]),image:img.src,description:""})}})}if(products.length===0){alert("No se detectaron productos. Asegúrate de estar en tu catálogo de WhatsApp.");return;}const ph=prompt("Extraímos "+products.length+" productos.\\n\\nIngresa tu número de WhatsApp de DIZI para importarlos (ej. 962749501):");if(!ph)return;const cp=ph.replace(/\\D/g,"");const fp=cp.startsWith("51")?cp:"51"+cp;try{const res=await fetch("https://dizi.idenza.site/api/import-whatsapp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone:fp,products})});const d=await res.json();if(res.ok&&d.success){alert("¡Mágico! Importados "+products.length+" productos reales. Regresa a DIZI.")}else{alert("Error: "+(d.error||"Error al guardar"))}}catch(err){alert("Error de conexión: "+err.message)}})();`;
 
   const BRAND_COLORS = [
     { id: "coral",   name: "Coral (Dizi)",   hex: "#FF823A" },
@@ -148,122 +139,6 @@ function RegisterPage() {
     else setSelectedModel(userPlanLevel === 0 ? "minimalista" : ALL_MODELS.find(m => m.planLevel <= userPlanLevel)?.id ?? "minimalista");
   }, [selectedNiche, plan]);
 
-  const handleImport = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (!importInput.trim()) {
-      const { toast } = await import("sonner");
-      toast.error("Por favor ingresa un enlace o número de WhatsApp válido.");
-      return;
-    }
-    setImporting(true);
-    setImportStatus("Esperando importación desde el marcador...");
-
-    let cleanPhone = importInput.replace(/\D/g, "");
-    if (importInput.includes("wa.me/c/")) {
-      const parts = importInput.split("wa.me/c/");
-      if (parts.length > 1) {
-        cleanPhone = parts[1].replace(/\D/g, "");
-      }
-    }
-    if (!cleanPhone.startsWith("51") && cleanPhone.length === 9) {
-      cleanPhone = "51" + cleanPhone;
-    }
-
-    // Lógica de sondeo (polling): verificar si el marcador envió productos a la tabla temporal
-    let attempts = 0;
-    const maxAttempts = 8; // ~16 segundos de espera activa
-    
-    const checkImport = async (): Promise<any[] | null> => {
-      try {
-        const res = await fetch(`/api/import-whatsapp?input=${encodeURIComponent(cleanPhone)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.source === "bookmarklet" && data.products) {
-            return data.products;
-          }
-        }
-      } catch (err) {
-        console.error("Error polling import status:", err);
-      }
-      return null;
-    };
-
-    const runPolling = () => {
-      return new Promise<any[] | null>((resolve) => {
-        const interval = setInterval(async () => {
-          attempts++;
-          setImportStatus(`Escaneando tu marcador (Intento ${attempts}/${maxAttempts})...`);
-          const products = await checkImport();
-          if (products) {
-            clearInterval(interval);
-            resolve(products);
-          } else if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            resolve(null);
-          }
-        }, 2000);
-      });
-    };
-
-    const imported = await runPolling();
-
-    if (imported && imported.length > 0) {
-      setImportedProducts(imported);
-      
-      let displayPhone = cleanPhone;
-      if (displayPhone.startsWith("51") && displayPhone.length > 9) {
-        displayPhone = displayPhone.substring(2);
-      }
-      setStorePhone(displayPhone);
-      
-      const { toast } = await import("sonner");
-      toast.success(`¡Mágico! Importamos ${imported.length} productos reales de tu catálogo.`);
-      setShowImportBox(false);
-      setImporting(false);
-      setImportStatus("");
-      return;
-    }
-
-    // Fallback: Si no se detectó nada desde el marcador, informamos y activamos el generador premium gratis
-    setImportStatus("Generando catálogo inteligente optimizado...");
-    const t1 = setTimeout(() => setImportStatus("Diseñando catálogo premium..."), 800);
-    
-    try {
-      const res = await fetch(`/api/import-whatsapp?input=${encodeURIComponent(importInput)}&name=${encodeURIComponent(storeName || "Mi Negocio")}`);
-      const data = await res.json();
-      if (res.ok && data.products) {
-        setImportedProducts(data.products);
-        
-        let displayPhone = data.phone;
-        if (displayPhone.startsWith("51") && displayPhone.length > 9) {
-          displayPhone = displayPhone.substring(2);
-        }
-        setStorePhone(displayPhone);
-
-        if (data.niche) {
-          setSelectedNiche(data.niche);
-        }
-        if (!storeName) {
-          setStoreName(data.niche === "floreria" ? "Florería Sorpresa" : data.niche === "comida" ? "Bocados & Sabores" : data.niche === "ropa" ? "Boutique Express" : data.niche === "bisuteria" ? "Joyas & Brillo" : data.niche === "tech" ? "Tecnología Smart" : data.niche === "belleza" ? "Cosmética Chic" : "Mi Tienda Mágica");
-        }
-        
-        const { toast } = await import("sonner");
-        toast.success(`¡Mágico! Se precargaron ${data.products.length} productos premium sugeridos.`);
-        setShowImportBox(false);
-      } else {
-        throw new Error(data.error || "No se pudo completar la importación.");
-      }
-    } catch (err: any) {
-      console.error(err);
-      const { toast } = await import("sonner");
-      toast.error("Error al importar. Crearemos tu catálogo vacío.");
-    } finally {
-      clearTimeout(t1);
-      setImporting(false);
-      setImportStatus("");
-    }
-  };
-
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 3) {
@@ -354,9 +229,7 @@ function RegisterPage() {
           subscriptionStatus: isTrial || plan === "semilla" ? "trial" : "active",
           planDurationMonths: isTrial ? 0 : (plan === "semilla" ? undefined : inviteDurationMonths),
           categories: [{ id: newCategoryId, name: "Principal" }],
-          products: importedProducts.length > 0 
-            ? importedProducts.map(p => ({ ...p, categoryId: newCategoryId }))
-            : [],
+          products: [],
         });
 
         if (inviteToken && invitePlan) {
@@ -483,17 +356,6 @@ function RegisterPage() {
 
         {/* Card del formulario */}
         <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10 overflow-hidden">
-          {importing && (
-            <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-3xl z-50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
-              <div className="relative w-16 h-16 mb-4">
-                <div className="absolute inset-0 rounded-full border-4 border-amber-100 animate-pulse" />
-                <div className="absolute inset-0 rounded-full border-4 border-t-amber-500 animate-spin" />
-              </div>
-              <h3 className="font-extrabold text-slate-800 text-sm tracking-wide uppercase">Cargando Magia</h3>
-              <p className="text-xs text-muted-foreground mt-2 animate-pulse font-medium">{importStatus}</p>
-            </div>
-          )}
-
           <form onSubmit={handleRegister} className="space-y-4 relative">
 
             {/* PASO 1 — Datos del negocio */}
@@ -526,105 +388,6 @@ function RegisterPage() {
                       required
                     />
                   </div>
-                </div>
-
-                {/* Botón/Caja de Importación Mágica */}
-                <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 text-[11px] font-black text-amber-700 uppercase tracking-wider">
-                      <span>✨ Importador Mágico</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowImportBox(!showImportBox)}
-                      className="text-[10px] font-extrabold text-amber-600 hover:text-amber-800 transition underline cursor-pointer"
-                    >
-                      {showImportBox ? "Cerrar" : "Importar Catálogo WA"}
-                    </button>
-                  </div>
-                  
-                  {showImportBox ? (
-                    <div className="space-y-3.5 animate-in fade-in slide-in-from-top-2 duration-200 text-left">
-                      <p className="text-[10px] text-amber-800 leading-relaxed font-semibold">
-                        Para importar tus **productos reales** gratis, sigue estos 3 sencillos pasos:
-                      </p>
-                      <div className="space-y-2 text-[10px] text-amber-700 font-medium pl-1">
-                        <div className="flex items-start gap-1.5">
-                          <span className="bg-amber-100 text-amber-800 rounded-full w-4 h-4 flex items-center justify-center shrink-0 text-[9px] font-bold">1</span>
-                          <div>
-                            Arrastra este botón a tu barra de marcadores/favoritos:
-                            <div className="mt-1.5">
-                              <a
-                                href={bookmarkletCode}
-                                onClick={(e) => {
-                                  const isMobile = /Android|iPhone/i.test(navigator.userAgent);
-                                  if (isMobile) {
-                                    e.preventDefault();
-                                    import("sonner").then(m => m.toast.error("En celular, mantén presionado el botón y cópialo como marcador.", { duration: 5000 }));
-                                  }
-                                }}
-                                className="inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-black uppercase tracking-wider shadow-sm select-none border border-amber-600/20 active:scale-95 transition cursor-grab"
-                                title="Arrastra esto a tu barra de marcadores"
-                              >
-                                📥 Importar a DIZI
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-1.5">
-                          <span className="bg-amber-100 text-amber-800 rounded-full w-4 h-4 flex items-center justify-center shrink-0 text-[9px] font-bold">2</span>
-                          <div>
-                            Abre tu catálogo de WhatsApp en una pestaña nueva:
-                            <div className="mt-1">
-                              <a
-                                href={`https://wa.me/c/${storePhone || "51962749501"}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-amber-600 hover:text-amber-800 font-bold underline"
-                              >
-                                Ver mi Catálogo en Web
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-1.5">
-                          <span className="bg-amber-100 text-amber-800 rounded-full w-4 h-4 flex items-center justify-center shrink-0 text-[9px] font-bold">3</span>
-                          <div>
-                            Una vez cargue la página, haz clic en tu marcador **📥 Importar a DIZI**, introduce tu teléfono y ¡regresa aquí!
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-amber-200/50 pt-2.5 space-y-2">
-                        <p className="text-[9px] text-amber-600/80 font-bold uppercase tracking-wider">O escanea tu número para importar:</p>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={importInput}
-                            onChange={(e) => setImportInput(e.target.value)}
-                            className="flex h-8 rounded-xl border border-amber-200 bg-white px-3 text-xs focus:outline-none w-full"
-                            placeholder="Número (ej. 962749501)"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleImport}
-                            disabled={importing}
-                            className="h-8 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-[10px] font-black uppercase tracking-wider transition shadow-sm cursor-pointer disabled:opacity-50"
-                          >
-                            Importar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-amber-600/70 leading-normal text-left">
-                      {importedProducts.length > 0 ? (
-                        <span className="text-emerald-600 font-bold">✓ ¡Catálogo de WhatsApp cargado ({importedProducts.length} productos)! Sigue con el registro.</span>
-                      ) : (
-                        "Importa tus productos reales de WhatsApp Business en segundos sin subir fotos manualmente."
-                      )}
-                    </p>
-                  )}
                 </div>
 
                 <button type="submit" className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer">

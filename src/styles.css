@@ -192,6 +192,16 @@
   animation: morph 12s ease-in-out infinite;
 }
 
+@keyframes soccer-spin {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(180deg); }
+  100% { transform: translateY(0) rotate(360deg); }
+}
+
+.animate-soccer-ball {
+  animation: soccer-spin 12s linear infinite;
+}
+
 /* Glassmorphic Utilities */
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);

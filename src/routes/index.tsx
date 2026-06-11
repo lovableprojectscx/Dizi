@@ -269,25 +269,52 @@ function LandingPage() {
         )}
       </header>
 
-      {/* Botón flotante 15 días gratis */}
+      {/* Botón flotante Promo Mundial */}
       <a
-        href="https://wa.me/51925176472?text=Hola%2C%20quiero%20probar%20Dizi%20y%20que%20me%20ayuden%20a%20configurar%20mi%20cat%C3%A1logo"
+        href="https://wa.me/51925176472?text=Hola%2C%20quiero%20la%20Promo%20Mundial%20de%20Dizi"
         target="_blank"
         rel="noreferrer"
         className="fixed bottom-6 right-5 z-50 flex flex-col items-center gap-1 group"
         style={{ filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.25))" }}
       >
-        <div className="w-14 h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 active:scale-95" style={{ background: "#0f172a", border: "2.5px solid #4ade80" }}>
-          <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 12v10H4V12"/>
-            <path d="M22 7H2v5h20V7z"/>
-            <path d="M12 22V7"/>
-            <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/>
-            <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 active:scale-95 relative" style={{ background: "#0f172a", border: "2.5px solid #4ade80" }}>
+          {/* Soccer Ball icon inside circular button */}
+          <svg viewBox="0 0 100 100" className="w-8 h-8 transition-transform duration-700 group-hover:rotate-[360deg] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="miniSoccerShade" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#ffffff"/>
+                <stop offset="65%" stopColor="#f3f4f6"/>
+                <stop offset="100%" stopColor="#9ca3af"/>
+              </radialGradient>
+              <radialGradient id="miniPentagonShade" cx="40%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#374151"/>
+                <stop offset="100%" stopColor="#0f172a"/>
+              </radialGradient>
+            </defs>
+            <circle cx="50" cy="50" r="46" fill="url(#miniSoccerShade)" />
+            <path d="M50,4 L50,18 M88,30 L76,35 M74,70 L62,76 M26,70 L38,76 M12,30 L24,35" stroke="#4b5563" strokeWidth="2.5" fill="none"/>
+            <polygon points="50,18 64,28 59,44 41,44 36,28" fill="url(#miniPentagonShade)" />
+            <polygon points="50,4 58,0 42,0" fill="url(#miniPentagonShade)" />
+            <polygon points="88,30 94,42 82,48 76,35" fill="url(#miniPentagonShade)" />
+            <polygon points="74,70 82,82 68,88 62,76" fill="url(#miniPentagonShade)" />
+            <polygon points="26,70 38,76 32,88 18,82" fill="url(#miniPentagonShade)" />
+            <polygon points="12,30 24,35 18,48 6,42" fill="url(#miniPentagonShade)" />
+            <circle cx="50" cy="50" r="46" fill="none" stroke="#374151" strokeWidth="3" />
           </svg>
+
+          {/* Overlapping Gift badge */}
+          <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-primary border-2 border-[#0f172a] flex items-center justify-center shadow-md animate-pulse">
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 12v10H4V12"/>
+              <path d="M22 7H2v5h20V7z"/>
+              <path d="M12 22V7"/>
+              <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/>
+              <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/>
+            </svg>
+          </div>
         </div>
         <span className="text-[9px] font-black px-2 py-0.5 rounded-full whitespace-nowrap tracking-wider" style={{ background: "#4ade80", color: "#052e16" }}>
-          15 DÍAS GRATIS
+          PROMO MUNDIAL
         </span>
       </a>
 
@@ -302,16 +329,14 @@ function LandingPage() {
           {/* Light Grid Overlay */}
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
-          {/* Floating clay-styled graphic elements */}
-          <div className="absolute left-[8%] top-[25%] hidden xl:block animate-float-slow opacity-80 pointer-events-none">
-            <svg viewBox="0 0 100 100" className="w-20 h-20" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="30" fill="url(#clayPrimary)" filter="drop-shadow(2px 8px 12px rgba(255,130,58,0.3))"/>
-              <circle cx="45" cy="45" r="28" fill="none" stroke="#fff" strokeWidth="1.5" opacity="0.4"/>
+          <div className="absolute left-[8%] top-[25%] hidden xl:block animate-float opacity-90 pointer-events-none">
+            <svg viewBox="0 0 120 120" className="w-24 h-24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20,50 C20,30 40,20 60,20 C80,20 100,30 100,50 C100,70 80,100 60,100 C40,100 20,70 20,50 Z" fill="url(#clayOrange)" filter="drop-shadow(2px 10px 15px rgba(251,146,60,0.3))"/>
               <defs>
-                <radialGradient id="clayPrimary" cx="30%" cy="30%" r="70%">
-                  <stop offset="0%" stopColor="#ffb085"/>
-                  <stop offset="50%" stopColor="#ff823a"/>
-                  <stop offset="100%" stopColor="#c74900"/>
+                <radialGradient id="clayOrange" cx="35%" cy="30%" r="65%">
+                  <stop offset="0%" stopColor="#ffedd5"/>
+                  <stop offset="60%" stopColor="#fb923c"/>
+                  <stop offset="100%" stopColor="#c2410c"/>
                 </radialGradient>
               </defs>
             </svg>
@@ -605,14 +630,15 @@ function LandingPage() {
               {/* Plan Emprendedor */}
               <PricingCard 
                 title="Emprendedor" 
-                price="S/ 14.90" 
+                price="S/ 9.90" 
                 desc="Tiendas de ropa, accesorios o repuestos."
                 features={[
                   "Hasta 50 productos",
                   "5 modelos de diseño en total",
+                  "Configuración asistida (Cupos limitados)",
                   "Buscador inteligente de productos",
                   "Descarga de Catálogo en PDF",
-                  "Soporte básico por WhatsApp",
+                  "Soporte por WhatsApp",
                   "Sin marca de agua (Marca propia)"
                 ]}
                 highlighted
@@ -622,12 +648,13 @@ function LandingPage() {
               {/* Plan Pro */}
               <PricingCard 
                 title="Catálogo Pro" 
-                price="S/ 19.90" 
+                price="S/ 14.90" 
                 desc="Minimarkets y tiendas con stock variado."
                 features={[
                   "Hasta 200 productos",
                   "Todos los modelos + 7 Diseños Elite",
                   "Diseños Premium por Nichos (Bloom / Bite)",
+                  "Configuración asistida (Cupos limitados)",
                   "Carrusel de Banners (hasta 3 portadas)",
                   "Botonera Dual (WhatsApp + Carrito)",
                   "Estadísticas básicas de visitas",
@@ -657,7 +684,7 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* CTA Section — Banner 30 días */}
+        {/* CTA Section — Promo Mundial */}
         <section className="py-20">
           <div className="container mx-auto max-w-3xl px-4">
             <div className="rounded-3xl overflow-hidden border border-zinc-800" style={{ background: "#0f172a" }}>
@@ -666,19 +693,19 @@ function LandingPage() {
               <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/5">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Oferta de lanzamiento</span>
+                  <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Campaña Especial</span>
                 </div>
-                <span className="text-white/30 text-xs">Solo para nuevos usuarios</span>
+                <span className="text-white/30 text-xs">Cupos limitados por mes</span>
               </div>
 
               {/* Main */}
               <div className="px-6 py-6 flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 {/* Número grande */}
                 <div className="shrink-0 flex items-end gap-1.5">
-                  <span className="text-7xl font-black text-white leading-none">15</span>
+                  <span className="text-7xl font-black text-white leading-none">9</span>
                   <div className="mb-2">
-                    <div className="text-primary text-sm font-black uppercase tracking-wider leading-tight">dias</div>
-                    <div className="text-white/30 text-xs uppercase tracking-widest">gratis</div>
+                    <div className="text-primary text-sm font-black uppercase tracking-wider leading-tight">soles</div>
+                    <div className="text-white/30 text-xs uppercase tracking-widest">primer mes</div>
                   </div>
                 </div>
 
@@ -687,10 +714,10 @@ function LandingPage() {
 
                 {/* Text */}
                 <div className="flex-1">
-                  <h3 className="text-white text-xl font-black leading-tight mb-1">Plan Emprendedor completo</h3>
-                  <p className="text-white/50 text-sm">Escríbenos y te ayudamos a configurar tu catálogo. Sin compromisos.</p>
+                  <h3 className="text-white text-xl font-black leading-tight mb-1">¡Promo Mundial Dizi!</h3>
+                  <p className="text-white/50 text-sm">Llévate el plan Emprendedor a S/. 9.90 o el plan Pro a S/. 14.90. Incluye configuración y diseño gratis por nuestro equipo.</p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {["50 productos", "Bio-Link personalizado", "Soporte directo", "Codigo QR"].map((f) => (
+                    {["Configuración gratis", "Emprendedor S/. 9.90", "Pro S/. 14.90", "Cupos limitados"].map((f) => (
                       <span key={f} className="text-[11px] font-semibold border border-white/10 text-white/50 px-2.5 py-1 rounded-full">{f}</span>
                     ))}
                   </div>
@@ -699,7 +726,7 @@ function LandingPage() {
                 {/* Botones */}
                 <div className="flex flex-col gap-2.5 shrink-0 w-full sm:w-auto">
                   <a
-                    href="https://wa.me/51925176472?text=Hola%2C%20quiero%20probar%20Dizi%20y%20que%20me%20ayuden%20a%20configurar%20mi%20cat%C3%A1logo"
+                    href="https://wa.me/51925176472?text=Hola%2C%20quiero%20la%20Promo%20Mundial%20de%20Dizi"
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] active:scale-95 text-white text-sm font-bold px-5 py-3 rounded-2xl transition-all shadow-lg shadow-green-900/40 whitespace-nowrap"
@@ -707,7 +734,7 @@ function LandingPage() {
                     <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white shrink-0" xmlns="http://www.w3.org/2000/svg">
                       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z"/>
                     </svg>
-                    Solicitar por WhatsApp
+                    Solicitar Promo por WhatsApp
                   </a>
                   <Link
                     to="/register"

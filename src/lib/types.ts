@@ -11,8 +11,8 @@ export interface Plan {
 
 export const PLANS: Record<PlanId, Plan> = {
   semilla:      { id: "semilla",      name: "Semilla",      productLimit: 7,        price: 0    },
-  emprendedor:  { id: "emprendedor",  name: "Emprendedor",  productLimit: 50,       price: 14.9 },
-  pro:          { id: "pro",          name: "Pro",          productLimit: 200,      price: 19.9 },
+  emprendedor:  { id: "emprendedor",  name: "Emprendedor",  productLimit: 50,       price: 9.9  },
+  pro:          { id: "pro",          name: "Pro",          productLimit: 200,      price: 14.9 },
   ilimitado:    { id: "ilimitado",    name: "Ilimitado",    productLimit: Infinity, price: 34.9 },
 };
 

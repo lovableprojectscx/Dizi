@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import type { PlanId } from "@/lib/types";
 
 export const INVITE_DURATION_OPTIONS = [
-  { value: 0,  label: "15 días (Prueba)" },
   { value: 1,  label: "1 mes" },
   { value: 3,  label: "3 meses" },
   { value: 6,  label: "6 meses" },
@@ -14,8 +13,8 @@ export const INVITE_DURATION_OPTIONS = [
 ] as const;
 
 const PLAN_OPTIONS: { value: PlanId; label: string }[] = [
-  { value: "emprendedor", label: "Emprendedor (S/ 14.90)" },
-  { value: "pro",         label: "Pro (S/ 19.90)" },
+  { value: "emprendedor", label: "Emprendedor (S/ 9.90)" },
+  { value: "pro",         label: "Pro (S/ 14.90)" },
   { value: "ilimitado",   label: "Ilimitado (S/ 34.90)" },
   { value: "semilla",     label: "Semilla (Gratis)" },
 ];
@@ -42,7 +41,7 @@ function formatShortDate(date: Date): string {
 export function InviteGenerator() {
   const addInvite = useApp((s) => s.addInvite);
   const [selectedPlan, setSelectedPlan] = useState<PlanId>("emprendedor");
-  const [durationMonths, setDurationMonths] = useState<number>(0);
+  const [durationMonths, setDurationMonths] = useState<number>(1);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [loading, setLoading] = useState(false);

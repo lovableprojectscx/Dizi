@@ -20,6 +20,7 @@ const features: Record<PlanId, string[]> = {
   emprendedor: [
     "Hasta 50 productos",
     "5 modelos de diseño en total",
+    "Configuración asistida (Cupos limitados)",
     "Buscador inteligente de productos",
     "Descarga de Catálogo en PDF",
     "Sin marca de agua (Marca propia)",
@@ -28,6 +29,7 @@ const features: Record<PlanId, string[]> = {
     "Hasta 200 productos",
     "Todos los modelos + 7 Diseños Elite",
     "Diseños Premium por Nichos (Bloom / Bite)",
+    "Configuración asistida (Cupos limitados)",
     "Carrusel de Banners (hasta 3 portadas)",
     "Botonera Dual (WhatsApp + Carrito)",
     "Estadísticas básicas de visitas",
@@ -38,9 +40,9 @@ const features: Record<PlanId, string[]> = {
     "Productos ilimitados",
     "Todos los modelos + 7 Diseños Elite",
     "Diseños Premium por Nichos (Bloom / Bite)",
+    "Configuración asistida (Cupos limitados)",
     "Carga rápida por fotos (Borradores masivos)",
     "Carrusel de Banners (hasta 5 portadas)",
-    "Soporte prioritario 24/7",
     "Sin marca de agua (Marca propia)",
   ],
 };
