@@ -15,8 +15,8 @@ export interface AuthState {
 // ─── Role helper ─────────────────────────────────────────────────────────────
 export function getUserRole(user: User | null): AuthRole {
   if (!user) return null;
-  const meta = user.user_metadata as { role?: string } | undefined;
-  if (meta?.role === "super_admin") return "super_admin";
+  const appMeta = user.app_metadata as { role?: string } | undefined;
+  if (appMeta?.role === "super_admin") return "super_admin";
   return "store_owner";
 }
 
