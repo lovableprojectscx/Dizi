@@ -1774,7 +1774,7 @@ export function PublicCatalog({
 
 
               {/* 2. NUESTRA UBICACIÓN (Si tiene coordenadas) */}
-              {store.locationLat && store.locationLng && renderBioButton(
+              {store.showMap !== false && store.locationLat && store.locationLng && renderBioButton(
                 "#",
                 "Nuestra Ubicación",
                 "#ea4335",
@@ -4575,7 +4575,7 @@ export function PublicCatalog({
             })()}
 
             {/* Módulo de Ubicación Geográfica */}
-            {store.locationLat && store.locationLng && (
+            {store.showMap !== false && store.locationLat && store.locationLng && (
               <div id="location-section" className="pt-8 border-t space-y-4 scroll-mt-6" style={{ borderColor: "var(--border)" }}>
                 <h3 className="text-xs font-black uppercase tracking-widest text-center text-muted-foreground flex items-center justify-center gap-2">
                   <span className="h-px w-8 bg-muted-foreground/30"></span>

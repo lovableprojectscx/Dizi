@@ -99,6 +99,7 @@ export interface Store {
   locationLat?: number;
   locationLng?: number;
   locationAddress?: string | null;
+  showMap?: boolean;
   quickLinks?: QuickLink[];
   bioLinksEnabled?: boolean;
   bioLogo?: string | null;

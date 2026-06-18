@@ -43,6 +43,7 @@ const mapStoreFromDB = (row: any): Store => ({
   locationLat: row.location_lat ? Number(row.location_lat) : undefined,
   locationLng: row.location_lng ? Number(row.location_lng) : undefined,
   locationAddress: row.location_address ?? undefined,
+  showMap: row.show_map ?? true,
   quickLinks: row.quick_links ?? [],
   bioLinksEnabled: row.bio_links_enabled ?? false,
   bioLogo: row.bio_logo ?? undefined,
@@ -234,6 +235,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.locationLat !== undefined) dbPatch.location_lat = updatedPatch.locationLat;
         if (updatedPatch.locationLng !== undefined) dbPatch.location_lng = updatedPatch.locationLng;
         if (updatedPatch.locationAddress !== undefined) dbPatch.location_address = updatedPatch.locationAddress;
+        if (updatedPatch.showMap !== undefined) dbPatch.show_map = updatedPatch.showMap;
         if (updatedPatch.quickLinks !== undefined) dbPatch.quick_links = updatedPatch.quickLinks;
         if (updatedPatch.bioLinksEnabled !== undefined) dbPatch.bio_links_enabled = updatedPatch.bioLinksEnabled;
         if (updatedPatch.bioLogo !== undefined) dbPatch.bio_logo = updatedPatch.bioLogo;

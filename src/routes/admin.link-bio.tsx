@@ -268,6 +268,7 @@ function PhonePreview({
   bioBgImage,
   bioBgColor,
   bioTypography = "sans",
+  showMap = true,
 }: {
   name: string;
   logo: string;
@@ -286,9 +287,10 @@ function PhonePreview({
   bioBgImage?: string;
   bioBgColor?: string;
   bioTypography?: string;
+  showMap?: boolean;
 }) {
   const hasWhatsApp = !!phone;
-  const hasLocation = !!(locationAddress.trim() && locationLat && locationLng);
+  const hasLocation = !!(showMap !== false && locationAddress.trim() && locationLat && locationLng);
 
   const allLinks = [
     ...(hasWhatsApp ? [{ label: "WhatsApp", url: "", icon: "whatsapp", isHardcoded: true }] : []),
@@ -572,6 +574,7 @@ function LinkBioPage() {
   const [locationAddress, setLocationAddress] = useState(store?.locationAddress || "");
   const [locationLat, setLocationLat] = useState<number | undefined>(store?.locationLat);
   const [locationLng, setLocationLng] = useState<number | undefined>(store?.locationLng);
+  const [showMap, setShowMap] = useState<boolean>(store?.showMap ?? true);
   
   const [newLinkLabel, setNewLinkLabel] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
@@ -647,6 +650,7 @@ function LinkBioPage() {
       lastSelectedAddress.current = store.locationAddress || "";
       setLocationLat(store.locationLat);
       setLocationLng(store.locationLng);
+      setShowMap(store.showMap ?? true);
       setBioLogo(store.bioLogo || "");
       setBioBanner(store.bioBanner || "");
       setBioTheme(store.bioTheme || "default");
@@ -816,6 +820,7 @@ function LinkBioPage() {
         locationAddress: locationAddress.trim(),
         locationLat,
         locationLng,
+        showMap,
         bioLogo: bioLogo || null,
         bioBanner: bioBanner || null,
         bioTheme,
@@ -1707,6 +1712,32 @@ function LinkBioPage() {
                     {/* ──────────────── TAB 3: UBICACIÓN ──────────────── */}
                     <TabsContent value="ubicacion" className="space-y-5 mt-2 animate-in fade-in duration-300">
                       
+                      {/* Toggle Habilitación del Mapa */}
+                      <div className="flex items-center justify-between pb-3 border-b border-border/40">
+                        <div className="flex items-center gap-1.5">
+                          <Label className="text-sm font-semibold text-foreground">Mostrar mapa en catálogo / Bio-Link</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
+                                <HelpCircle className="h-3.5 w-3.5" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs font-normal text-left">
+                              Si está desactivado, el mapa no se mostrará a tus clientes aunque tengas coordenadas configuradas.
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={showMap}
+                          onClick={() => setShowMap(!showMap)}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${showMap ? "bg-primary" : "bg-input"}`}
+                        >
+                          <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${showMap ? "translate-x-5" : "translate-x-0"}`} />
+                        </button>
+                      </div>
+
                       <div className="space-y-1.5 relative">
                         <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Dirección Comercial del Local</Label>
                         <div className="relative">
@@ -1821,6 +1852,7 @@ function LinkBioPage() {
                         bioBgImage={bioBgImage}
                         bioBgColor={bioBgColor}
                         bioTypography={bioTypography}
+                        showMap={showMap}
                       />
                     </div>
                   </SheetContent>
@@ -1865,6 +1897,7 @@ function LinkBioPage() {
             bioBgImage={bioBgImage}
             bioBgColor={bioBgColor}
             bioTypography={bioTypography}
+            showMap={showMap}
           />
         </div>
       </div>

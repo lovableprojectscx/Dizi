@@ -154,6 +154,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       locationLat: data.location_lat ? Number(data.location_lat) : undefined,
       locationLng: data.location_lng ? Number(data.location_lng) : undefined,
       locationAddress: data.location_address ?? undefined,
+      showMap: data.show_map ?? true,
       quickLinks: data.quick_links ?? [],
       bioLinksEnabled: data.bio_links_enabled ?? false,
       bioLogo: data.bio_logo ?? undefined,
