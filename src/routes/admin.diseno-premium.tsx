@@ -194,6 +194,7 @@ function DisenoPremiumPage() {
     const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : store.niche === "hamburgueseria" ? "bite" : "bloom");
     return defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" && store.niche === "floreria" ? "#fffaf8" : "#ffffff";
   });
+  const [textColor, setTextColor] = useState(store.textColor || "");
   const [bannerImages, setBannerImages] = useState<string[]>(() => {
     const raw = (store as any).bannerImage || "";
     return raw ? (raw.includes("|||") ? raw.split("|||") : [raw]) : [];
@@ -247,6 +248,7 @@ function DisenoPremiumPage() {
       setBrandColor(store.brandColor || (store.niche === "floreria" ? "#be185d" : store.niche === "hamburgueseria" ? "#ea580c" : "#FF823A"));
       const defaultModel = store.model && store.model !== "default" ? store.model : (store.niche === "floreria" ? "bloom" : store.niche === "hamburgueseria" ? "bite" : "bloom");
       setBgColor(store.bgColor || (defaultModel === "bite" ? "#09090b" : defaultModel === "bloom" && store.niche === "floreria" ? "#fffaf8" : "#ffffff"));
+      setTextColor(store.textColor || "");
       const raw = (store as any).bannerImage || "";
       setBannerImages(raw ? (raw.includes("|||") ? raw.split("|||") : [raw]) : []);
       setBannerTitle((store as any).bannerTitle || "");
@@ -270,6 +272,7 @@ function DisenoPremiumPage() {
     store.model !== selectedTemplate ||
     brandColor !== (store.brandColor || "") ||
     (store.bgColor || "") !== (bgColor || "") ||
+    textColor !== (store.textColor || "") ||
     bannerImages.filter(Boolean).join("|||") !== ((store as any).bannerImage || "") ||
     bannerTitle !== ((store as any).bannerTitle || "") ||
     bannerTagline !== ((store as any).bannerTagline || "") ||
@@ -287,6 +290,7 @@ function DisenoPremiumPage() {
         model: selectedTemplate,
         brandColor: brandColor || null,
         bgColor: bgColor || null,
+        textColor: textColor || null,
         bannerImage: serialized,
         bannerTitle: bannerTitle || null,
         niche: premiumModel,
@@ -357,6 +361,7 @@ function DisenoPremiumPage() {
     model: selectedTemplate,
     brandColor: brandColor,
     bgColor: bgColor,
+    textColor: textColor,
     bannerImage: bannerImages.filter(Boolean).join("|||"),
     bannerTitle: bannerTitle,
     niche: premiumModel,
@@ -599,6 +604,44 @@ function DisenoPremiumPage() {
                   onSelect={setBgColor}
                   allowCustom
                   customLabel="Fondo personalizado"
+                />
+              </div>
+
+              {/* Card 2.7: Text Color Selection */}
+              <div className="rounded-3xl border border-zinc-200/80 bg-white p-6 shadow-sm space-y-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                      <Sliders className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-base text-zinc-900">Color del Texto</h3>
+                      <p className="text-xs text-zinc-500">Color principal de textos, títulos y descripciones</p>
+                    </div>
+                  </div>
+                  {textColor && (
+                    <button
+                      type="button"
+                      onClick={() => setTextColor("")}
+                      className="text-[10px] text-red-600 hover:underline font-bold"
+                    >
+                      Restablecer
+                    </button>
+                  )}
+                </div>
+
+                <ColorSwatch
+                  colors={[
+                    { id: "default", name: "Texto automático", hex: "", display: "#e2e8f0" },
+                    { id: "dark", name: "Oscuro elegante", hex: "#111111", display: "#111111" },
+                    { id: "light", name: "Blanco puro", hex: "#ffffff", display: "#ffffff" },
+                    { id: "slate", name: "Pizarra", hex: "#475569", display: "#475569" },
+                    { id: "muted", name: "Gris", hex: "#6b7280", display: "#6b7280" },
+                  ]}
+                  selected={textColor}
+                  onSelect={setTextColor}
+                  allowCustom
+                  customLabel="Texto personalizado"
                 />
               </div>
             </div>

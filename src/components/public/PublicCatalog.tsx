@@ -3910,7 +3910,7 @@ export function PublicCatalog({
                         <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
                         <div className="relative z-10">
                           <h2 
-                            style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                            style={{ color: store.textColor ? store.textColor : undefined }}
                             className={cn("text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide", isSerif ? "font-serif" : "font-sans font-bold")}
                           >
                             {store.name}
@@ -3955,7 +3955,7 @@ export function PublicCatalog({
                     store.niche === "floreria" ? "border-rose-400" : "border-[var(--primary)]"
                   )}>
                                          <h3 
-                      style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                      style={{ color: store.textColor ? store.textColor : undefined }}
                       className={cn(
                         "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
                         isSerif ? "font-serif" : "font-sans font-bold"
@@ -4024,7 +4024,7 @@ export function PublicCatalog({
                                 </span>
                               )}
                               <h4 
-                                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                                style={{ color: store.textColor ? store.textColor : undefined }}
                                 className={cn(
                                   "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
                                   isSerif ? "font-serif" : "font-sans",
@@ -4034,7 +4034,7 @@ export function PublicCatalog({
                                 {p.name}
                               </h4>
                               <p 
-                                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.8 : undefined }}
+                                style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
                                 className="text-xs text-stone-500 line-clamp-2 h-8 leading-relaxed font-sans"
                               >
                                 {(p.description || "").replace(/#destacado/g, "").trim()}
@@ -4134,7 +4134,7 @@ export function PublicCatalog({
               {/* Inline Horizontal Category Selector */}
               <div className="space-y-3">
                 <h3 
-                  style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.7 : undefined }}
+                  style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.7 : undefined }}
                   className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left"
                 >
                   Categorías
@@ -4225,7 +4225,7 @@ export function PublicCatalog({
             {/* 4. Product Grid */}
             <div className="space-y-4 relative z-10">
               <h3 
-                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.7 : undefined }}
+                style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.7 : undefined }}
                 className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left"
               >
                 {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
@@ -4286,7 +4286,7 @@ export function PublicCatalog({
                           {/* Info */}
                           <div className="p-3 pt-1 space-y-1 text-left">
                             <h4 
-                              style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                              style={{ color: store.textColor ? store.textColor : undefined }}
                               className={cn(
                                 "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
                                 store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
@@ -4296,7 +4296,7 @@ export function PublicCatalog({
                             </h4>
                             {p.description && (
                               <p 
-                                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.8 : undefined }}
+                                style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
                                 className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans"
                               >
                                 {p.description}
