@@ -765,6 +765,7 @@ function DisenoPage() {
   const [selectedModel, setSelectedModel] = useState(store.model || "minimalista");
   const [brandColor, setBrandColor] = useState(store.brandColor || "");
   const [bgColor, setBgColor] = useState((store as any).bgColor || "");
+  const [textColor, setTextColor] = useState(store.textColor || "");
   const [bannerImage, setBannerImage] = useState((store as any).bannerImage || "");
   const [bannerTitle, setBannerTitle] = useState((store as any).bannerTitle || "");
   const [bannerStyle, setBannerStyle] = useState<"direct" | "framed" | "curved">((store as any).bannerStyle || "framed");
@@ -779,6 +780,7 @@ function DisenoPage() {
       setSelectedModel(store.model || "minimalista");
       setBrandColor(store.brandColor || "");
       setBgColor((store as any).bgColor || "");
+      setTextColor(store.textColor || "");
       setBannerImage((store as any).bannerImage || "");
       setBannerTitle((store as any).bannerTitle || "");
       setBannerStyle((store as any).bannerStyle || "framed");
@@ -797,6 +799,7 @@ function DisenoPage() {
     selectedModel !== (store.model || "minimalista") ||
     brandColor !== (store.brandColor || "") ||
     effectiveBgColor !== ((store as any).bgColor || "") ||
+    textColor !== (store.textColor || "") ||
     bannerImage !== ((store as any).bannerImage || "") ||
     bannerTitle !== ((store as any).bannerTitle || "") ||
     bannerStyle !== ((store as any).bannerStyle || "framed");
@@ -817,6 +820,7 @@ function DisenoPage() {
         model: selectedModel as any,
         brandColor: brandColor || null,
         bgColor: effectiveBgColor || null,
+        textColor: textColor || null,
         bannerImage: bannerImage || null,
         bannerTitle: bannerTitle || null,
         bannerStyle: bannerStyle || "framed",
@@ -849,6 +853,7 @@ function DisenoPage() {
     model: selectedModel,
     brandColor: brandColor,
     bgColor: effectiveBgColor,
+    textColor: textColor,
     bannerImage: bannerImage,
     bannerTitle: bannerTitle,
     bannerStyle: bannerStyle,
@@ -1159,6 +1164,43 @@ function DisenoPage() {
                     customLabel="Fondo personalizado"
                   />
                 )}
+              </div>
+
+              {/* Color de Texto */}
+              <div className="rounded-2xl border bg-zinc-50/30 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Sliders className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-955">Color del Texto</h4>
+                      <p className="text-[10px] text-zinc-550">Color principal de textos, títulos y descripciones</p>
+                    </div>
+                  </div>
+                  {textColor && (
+                    <button
+                      type="button"
+                      onClick={() => setTextColor("")}
+                      className="text-[10px] text-red-650 hover:underline font-bold"
+                    >
+                      Restablecer
+                    </button>
+                  )}
+                </div>
+                <ColorSwatch
+                  colors={[
+                    { id: "default", name: "Texto automático", hex: "", display: "#e2e8f0" },
+                    { id: "dark", name: "Oscuro elegante", hex: "#111111", display: "#111111" },
+                    { id: "light", name: "Blanco puro", hex: "#ffffff", display: "#ffffff" },
+                    { id: "slate", name: "Pizarra", hex: "#475569", display: "#475569" },
+                    { id: "muted", name: "Gris", hex: "#6b7280", display: "#6b7280" },
+                  ]}
+                  selected={textColor}
+                  onSelect={setTextColor}
+                  allowCustom
+                  customLabel="Texto personalizado"
+                />
               </div>
             </div>
           )}
