@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Category, PlanId, Product, Store, Invite, SubscriptionStatus } from "./types";
+import type { Category, PlanId, Product, Store, Invite, SubscriptionStatus, PlanPromotion } from "./types";
 import { supabase, uploadBase64ToStorage } from "./supabase";
 import { toast } from "sonner";
 
@@ -15,8 +15,13 @@ const mapStoreFromDB = (row: any): Store => ({
   model: row.model,
   brandColor: row.brand_color,
   bgColor: row.bg_color,
+  textColor: row.text_color,
   bannerImage: row.banner_image,
   bannerTitle: row.banner_title,
+  bannerStyle: row.banner_style ?? "direct",
+  niche: row.niche ?? "general",
+  catalogTypography: row.catalog_typography ?? "sans",
+  cardStyle: row.card_style ?? "standard",
   ownerId: row.owner_id,
   active: row.active,
   isPublished: row.is_published,
@@ -33,6 +38,7 @@ const mapStoreFromDB = (row: any): Store => ({
   cancelledAt: row.cancelled_at ?? undefined,
   cancelReason: row.cancel_reason ?? undefined,
   planDurationMonths: row.plan_duration_months ?? undefined,
+  customPrice: row.custom_price !== null && row.custom_price !== undefined ? Number(row.custom_price) : undefined,
   bioDescription: row.bio_description ?? undefined,
   locationLat: row.location_lat ? Number(row.location_lat) : undefined,
   locationLng: row.location_lng ? Number(row.location_lng) : undefined,
@@ -48,6 +54,8 @@ const mapStoreFromDB = (row: any): Store => ({
   bioButtonTextColor: row.bio_button_text_color ?? undefined,
   bioBgImage: row.bio_bg_image ?? undefined,
   bioBgColor: row.bio_bg_color ?? undefined,
+  bannerTagline: row.banner_tagline,
+  bannerBottomTag: row.banner_bottom_tag,
   categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
   products: (row.products || []).map((p: any) => ({
     id: p.id,
@@ -68,6 +76,7 @@ interface AppState {
   currentStoreId: string | null;
   impersonatedBy: string | null;
   fetchError: string | null;
+  promotions: PlanPromotion[];
   fetchData: () => Promise<void>;
   setCurrentStore: (id: string | null) => void;
   updateStore: (id: string, patch: Partial<Store>) => Promise<void>;
@@ -81,13 +90,15 @@ interface AppState {
   toggleProductVisible: (storeId: string, productId: string) => void;
   upsertCategory: (storeId: string, cat: Category) => void;
   deleteCategory: (storeId: string, catId: string) => void;
-  setPlan: (storeId: string, plan: PlanId, durationMonths?: number) => void;
+  setPlan: (storeId: string, plan: PlanId, durationMonths?: number, customPrice?: number) => Promise<void>;
   setTrialPlan: (storeId: string, plan: PlanId, durationDays?: number) => Promise<void>;
   toggleStoreActive: (storeId: string) => void;
   startImpersonation: (storeId: string) => void;
   stopImpersonation: () => void;
   incWhatsappClicks: (storeId: string) => void;
   incViews: (storeId: string) => void;
+  updatePlanPromotion: (planId: PlanId, patch: Partial<PlanPromotion>) => Promise<void>;
+  deleteStore: (storeId: string) => Promise<void>;
 }
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -106,6 +117,7 @@ export const useApp = create<AppState>()(
       currentStoreId: null,
       impersonatedBy: null,
       fetchError: null,
+      promotions: [],
 
       fetchData: async () => {
         set({ fetchError: null });
@@ -114,9 +126,14 @@ export const useApp = create<AppState>()(
             .from("stores")
             .select("*, categories(*), products(*)");
           if (error) throw error;
+
+          let dbPromotions: PlanPromotion[] = [];
+          // Note: plan_prices table was removed in migration 20260617010000.
+          // Using empty local array as pricing is now managed statically / via custom invites.
+
           if (data) {
             const dbStores = data.map((row) => mapStoreFromDB(row));
-            set({ stores: dbStores, fetchError: null });
+            set({ stores: dbStores, promotions: dbPromotions, fetchError: null });
           }
         } catch (err: any) {
           console.error("[fetchData] Supabase error:", err);
@@ -194,8 +211,13 @@ export const useApp = create<AppState>()(
         if (updatedPatch.niche !== undefined) dbPatch.niche = updatedPatch.niche;
         if (updatedPatch.brandColor !== undefined) dbPatch.brand_color = updatedPatch.brandColor;
         if ((updatedPatch as any).bgColor !== undefined) dbPatch.bg_color = (updatedPatch as any).bgColor;
+        if (updatedPatch.textColor !== undefined) dbPatch.text_color = updatedPatch.textColor;
         if ((updatedPatch as any).bannerImage !== undefined) dbPatch.banner_image = (updatedPatch as any).bannerImage;
         if ((updatedPatch as any).bannerTitle !== undefined) dbPatch.banner_title = (updatedPatch as any).bannerTitle;
+        if (updatedPatch.bannerStyle !== undefined) dbPatch.banner_style = updatedPatch.bannerStyle;
+        if (updatedPatch.catalogTypography !== undefined) dbPatch.catalog_typography = updatedPatch.catalogTypography;
+        if (updatedPatch.cardStyle !== undefined) dbPatch.card_style = updatedPatch.cardStyle;
+        if (updatedPatch.active !== undefined) dbPatch.active = updatedPatch.active;
         if (updatedPatch.isPublished !== undefined) dbPatch.is_published = updatedPatch.isPublished;
         if (updatedPatch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = updatedPatch.priceFilterEnabled;
         if (updatedPatch.libroReclamacionesActivo !== undefined) dbPatch.libro_reclamaciones_activo = updatedPatch.libroReclamacionesActivo;
@@ -207,6 +229,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.cancelledAt !== undefined) dbPatch.cancelled_at = updatedPatch.cancelledAt;
         if (updatedPatch.cancelReason !== undefined) dbPatch.cancel_reason = updatedPatch.cancelReason;
         if (updatedPatch.planDurationMonths !== undefined) dbPatch.plan_duration_months = updatedPatch.planDurationMonths;
+        if (updatedPatch.customPrice !== undefined) dbPatch.custom_price = updatedPatch.customPrice;
         if (updatedPatch.bioDescription !== undefined) dbPatch.bio_description = updatedPatch.bioDescription;
         if (updatedPatch.locationLat !== undefined) dbPatch.location_lat = updatedPatch.locationLat;
         if (updatedPatch.locationLng !== undefined) dbPatch.location_lng = updatedPatch.locationLng;
@@ -222,6 +245,8 @@ export const useApp = create<AppState>()(
         if (updatedPatch.bioButtonTextColor !== undefined) dbPatch.bio_button_text_color = updatedPatch.bioButtonTextColor;
         if (updatedPatch.bioBgImage !== undefined) dbPatch.bio_bg_image = updatedPatch.bioBgImage;
         if (updatedPatch.bioBgColor !== undefined) dbPatch.bio_bg_color = updatedPatch.bioBgColor;
+        if (updatedPatch.bannerTagline !== undefined) dbPatch.banner_tagline = updatedPatch.bannerTagline;
+        if (updatedPatch.bannerBottomTag !== undefined) dbPatch.banner_bottom_tag = updatedPatch.bannerBottomTag;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
@@ -294,13 +319,15 @@ export const useApp = create<AppState>()(
         set((s) => ({ stores: [...s.stores, store] }));
       },
 
-      addInvite: async ({ token, plan, durationMonths, notes }) => {
+      addInvite: async ({ token, plan, durationMonths, durationValue, durationUnit, customPrice, notes }) => {
         const { error } = await supabase.from("invites").insert({
           token,
           plan,
           duration_months: durationMonths ?? 1,
+          duration_value: durationValue ?? 1,
+          duration_unit: durationUnit ?? "months",
+          custom_price: customPrice ?? null,
           notes: notes ?? null,
-          // expires_at se calcula en el trigger de BD (30 días para el link)
         });
         if (error) {
           console.error("[addInvite] Error:", error);
@@ -325,18 +352,21 @@ export const useApp = create<AppState>()(
           const inviteArray = inviteData as any[];
           if (inviteArray && inviteArray.length > 0) {
             const invite = inviteArray[0];
-            const isTrial = invite.duration_months === 0;
+            const dVal = invite.duration_value ?? 1;
+            const dUnit = invite.duration_unit ?? "months";
+            const isTrial = dUnit === "days" || dVal === 0;
 
             // Calcular fecha y estado correctos
             const expiresAt = new Date();
-            if (isTrial) {
-              expiresAt.setDate(expiresAt.getDate() + 15);
+            if (dUnit === "days") {
+              expiresAt.setDate(expiresAt.getDate() + dVal);
             } else {
-              expiresAt.setMonth(expiresAt.getMonth() + (invite.duration_months ?? 1));
+              expiresAt.setMonth(expiresAt.getMonth() + dVal);
             }
 
             const subscriptionStatus = isTrial ? "trial" : "active";
-            const planDurationMonths = isTrial ? 0 : (invite.duration_months ?? 1);
+            const planDurationMonths = dUnit === "months" ? dVal : 0;
+            const customPrice = invite.custom_price !== null && invite.custom_price !== undefined ? Number(invite.custom_price) : undefined;
 
             // Actualizar estado local
             set((s) => ({
@@ -348,6 +378,7 @@ export const useApp = create<AppState>()(
                       planExpiresAt: expiresAt.toISOString(),
                       subscriptionStatus: subscriptionStatus as SubscriptionStatus,
                       planDurationMonths: planDurationMonths,
+                      customPrice: customPrice,
                     }
                   : st
               ),
@@ -415,6 +446,17 @@ export const useApp = create<AppState>()(
           console.error("[extendSubscription] Error:", error);
           toast.error("Error al extender la suscripcion");
         }
+      },
+
+      deleteStore: async (storeId) => {
+        const { error } = await supabase.from("stores").delete().eq("id", storeId);
+        if (error) {
+          console.error("[deleteStore] Error:", error);
+          throw error;
+        }
+        set((s) => ({
+          stores: s.stores.filter((st) => st.id !== storeId),
+        }));
       },
 
       setTrialPlan: async (storeId, plan, durationDays = 15) => {
@@ -624,52 +666,41 @@ export const useApp = create<AppState>()(
         }
       },
 
-      setPlan: async (storeId, plan, durationMonths) => {
+      setPlan: async (storeId, plan, durationMonths, customPrice) => {
         try {
-          if (plan === "semilla") {
-            const { error } = await supabase.from("stores").update({
-              plan,
-              plan_expires_at: null,
-              subscription_status: "trial",
-              plan_duration_months: null,
-            }).eq("id", storeId);
-            if (error) throw error;
+          const months = plan === "semilla" ? null : (durationMonths ?? 1);
+          const cPrice = plan === "semilla" ? null : (customPrice !== undefined ? customPrice : null);
 
-            set((s) => ({
-              stores: s.stores.map((st) =>
-                st.id === storeId
-                  ? { ...st, plan, planExpiresAt: undefined, subscriptionStatus: "trial", planDurationMonths: undefined }
-                  : st
-              ),
-            }));
-          } else {
-            const months = durationMonths ?? 1;
-            const { error } = await supabase.rpc("activate_subscription", {
-              p_store_id: storeId,
-              p_plan: plan,
-              p_duration_months: months,
-            });
-            if (error) throw error;
+          const { error } = await supabase.rpc("activate_subscription", {
+            p_store_id: storeId,
+            p_plan: plan,
+            p_duration_months: months,
+            p_custom_price: cPrice,
+          });
+          if (error) throw error;
 
-            const expiresAt = new Date();
-            expiresAt.setMonth(expiresAt.getMonth() + months);
+          const expiresAt = plan === "semilla" ? null : (() => {
+            const d = new Date();
+            d.setMonth(d.getMonth() + (durationMonths ?? 1));
+            return d.toISOString();
+          })();
 
-            set((s) => ({
-              stores: s.stores.map((st) =>
-                st.id === storeId
-                  ? {
-                      ...st,
-                      plan,
-                      planExpiresAt: expiresAt.toISOString(),
-                      subscriptionStatus: "active" as SubscriptionStatus,
-                      planDurationMonths: months,
-                      cancelledAt: undefined,
-                      cancelReason: undefined,
-                    }
-                  : st
-              ),
-            }));
-          }
+          set((s) => ({
+            stores: s.stores.map((st) =>
+              st.id === storeId
+                ? {
+                    ...st,
+                    plan,
+                    planExpiresAt: expiresAt ?? undefined,
+                    subscriptionStatus: plan === "semilla" ? "trial" : "active",
+                    planDurationMonths: plan === "semilla" ? undefined : (durationMonths ?? 1),
+                    cancelledAt: undefined,
+                    cancelReason: undefined,
+                    customPrice: plan === "semilla" ? undefined : (customPrice !== undefined ? customPrice : st.customPrice),
+                  }
+                : st
+            ),
+          }));
           toast.success("Plan actualizado");
         } catch (error) {
           console.error("[setPlan] Error:", error);
@@ -730,6 +761,29 @@ export const useApp = create<AppState>()(
         } catch (error) {
           console.error("[incViews] Error:", error);
         }
+      },
+
+      updatePlanPromotion: async (planId, patch) => {
+        const currentPromos = useApp.getState().promotions;
+        const existing = currentPromos.find((p) => p.plan_id === planId);
+
+        const merged = {
+          plan_id: planId,
+          regular_price: patch.regular_price ?? existing?.regular_price ?? 0,
+          promo_price: patch.promo_price !== undefined ? patch.promo_price : (existing?.promo_price ?? null),
+          promo_active: patch.promo_active ?? existing?.promo_active ?? false,
+          promo_label: patch.promo_label !== undefined ? patch.promo_label : (existing?.promo_label ?? null),
+          promo_until: patch.promo_until !== undefined ? patch.promo_until : (existing?.promo_until ?? null),
+        };
+
+        // Note: plan_prices table is deprecated, we only update local state if called.
+        set((state) => {
+          const exists = state.promotions.some((p) => p.plan_id === planId);
+          const nextPromos = exists
+            ? state.promotions.map((p) => (p.plan_id === planId ? { ...p, ...patch } : p))
+            : [...state.promotions, { ...merged, ...patch } as PlanPromotion];
+          return { promotions: nextPromos };
+        });
       },
     }),
     {

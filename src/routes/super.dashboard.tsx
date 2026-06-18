@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { InviteGenerator } from "@/components/InviteGenerator";
 import {
   Store as StoreIcon,
   UserPlus,
@@ -619,20 +618,32 @@ function SuperDashboard() {
       {/* ── FOOTER ACTIONS GRID ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Invite Generator (Occupies 2 columns on lg) */}
+        {/* Enlaces y Promociones Card (Acceso directo) */}
         <div className="lg:col-span-2">
-          <Card className="border-border/50 shadow-sm hover:shadow-md transition-shadow duration-300">
-            <CardHeader className="pb-1">
-              <CardTitle className="text-base font-bold flex items-center gap-1.5">
-                <UserPlus className="w-4.5 h-4.5 text-primary" />
-                Generar Códigos de Registro
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Crea enlaces únicos de activación con planes predefinidos para tus clientes.
-              </CardDescription>
+          <Card className="border-border/50 shadow-sm hover:shadow-md transition-all duration-300 bg-gradient-to-br from-primary/5 via-transparent to-transparent flex flex-col justify-between h-full">
+            <CardHeader>
+              <div className="flex items-center gap-2 text-primary">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-bold">Enlaces Promocionales y Descuentos</CardTitle>
+                  <CardDescription className="text-xs">
+                    Crea links de invitación con precios especiales y duraciones a la medida de tu cliente.
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="pt-2">
-              <InviteGenerator />
+            <CardContent className="space-y-4 pt-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Ahora el generador de enlaces se encuentra en su propia sección centralizada. Puedes crear códigos con descuentos, duraciones en días o meses y notas de seguimiento, así como revocar enlaces activos.
+              </p>
+              <Link to="/super/promociones">
+                <Button size="sm" className="w-full sm:w-auto flex items-center gap-2 shadow-sm">
+                  Ir a Enlaces Promocionales
+                  <ArrowUpRight className="w-4 h-4" />
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </div>

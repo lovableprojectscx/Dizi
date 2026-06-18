@@ -7,10 +7,17 @@ Este documento detalla la lógica de negocio y las conexiones técnicas entre la
 ## 1. Planes Disponibles
 
 Los planes están definidos en `src/lib/types.ts` bajo la constante `PLANS`:
-- **Semilla**: Plan gratuito básico (límite de 7 productos).
-- **Emprendedor**: Plan premium (límite de 50 productos).
-- **Pro**: Plan premium avanzado (límite de 200 productos).
-- **Ilimitado**: Plan premium ilimitado (productos ilimitados).
+
+| Plan | Límite de productos | Precio actual (`PLANS[].price`) |
+|---|---|---|
+| **Semilla** | 7 | Gratis (0) |
+| **Emprendedor** | 50 | S/ 9.90/mes |
+| **Pro** | 200 | S/ 14.90/mes |
+| **Ilimitado** | Ilimitado | S/ 34.90/mes |
+
+> ⚠️ **Los precios S/ 9.90 (Emprendedor) y S/ 14.90 (Pro) son PROMOCIONALES de lanzamiento.** Están hardcodeados como precio único en `types.ts`, así que hoy no se distinguen de un "precio regular". Cambiarlos afecta a la vez a `admin.plan.tsx` y al panel del superadmin (`SubscriptionManager.tsx`). La **landing** (`index.tsx`) tiene los precios escritos a mano aparte y hay que editarla por separado. La evaluación para hacer la promo gestionable desde el área de super está en `ARQUITECTURA.md` § 20.
+>
+> Recordatorio: la app **no cobra** (no hay pasarela); el precio es informativo y para el cálculo estimado de renovación. El cobro real se coordina por WhatsApp.
 
 ---
 

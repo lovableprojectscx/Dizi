@@ -1,7 +1,7 @@
 # Dizi — Arquitectura y Funcionalidades del Sistema
 
 > Documento de referencia técnica. Actualizar cada vez que se agregue o modifique una funcionalidad importante.
-> Última revisión: mayo 2026
+> Última revisión: junio 2026
 
 ---
 
@@ -9,11 +9,11 @@
 
 | Capa | Tecnología |
 |---|---|
-| Frontend | React 18 + TypeScript + Vite |
-| Routing | TanStack Router (file-based) |
+| Frontend | React 19 + TypeScript + Vite 7 |
+| Routing | TanStack Router / TanStack Start (file-based) |
 | Estado global | Zustand con `persist` middleware |
 | Backend / DB | Supabase (PostgreSQL + Auth + Storage) |
-| Estilos | Tailwind CSS v3 + shadcn/ui |
+| Estilos | Tailwind CSS v4 + shadcn/ui |
 | Notificaciones | Sonner (toasts) |
 | Imágenes | Conversión a WebP en el cliente (`image-utils.ts`) + upload a Supabase Storage (bio/reclamaciones) |
 | Mapas | Leaflet (selector de ubicación en Bio-Link) |
@@ -43,6 +43,7 @@ src/
 │   ├── login.tsx               ← Login cliente (/login)
 │   ├── register.tsx            ← Registro con invite token (/register)
 │   ├── novedades.tsx           ← Novedades y FAQ públicos (/novedades)
+│   ├── privacidad.tsx          ← Política de Privacidad pública (/privacidad, Ley 29733)  ← NUEVO
 │   ├── t.$slug.tsx             ← Catálogo público (/t/:slug)
 │   ├── bio.$slug.tsx           ← Bio-Link público (/bio/:slug)  ← NUEVO
 │   ├── admin.tsx               ← Layout del panel admin (/admin)
@@ -50,7 +51,8 @@ src/
 │   ├── admin.dashboard.tsx     ← Dashboard con métricas
 │   ├── admin.productos.tsx     ← Gestión de productos
 │   ├── admin.categorias.tsx    ← Gestión de categorías
-│   ├── admin.diseno.tsx        ← Selector de modelo visual y colores
+│   ├── admin.diseno.tsx        ← Selector de modelo visual estándar y colores
+│   ├── admin.diseno-premium.tsx ← Diseños Premium por nicho (restaurante/cafetería: Bloom/Bite)  ← NUEVO
 │   ├── admin.configuracion.tsx ← Datos del negocio (nombre, WhatsApp, logo, slug)
 │   ├── admin.plan.tsx          ← Vista del plan actual y vencimiento
 │   ├── admin.link-bio.tsx      ← Editor del Bio-Link (/admin/link-bio)  ← NUEVO
@@ -72,10 +74,25 @@ src/
 │       └── CatalogPdfExport.tsx       ← Exportación a PDF
 │
 └── supabase/
-    └── migrations/
-        └── 20260513_subscription_management.sql ← Migración de suscripciones
+    └── migrations/   (orden cronológico)
+        ├── 20260509000000_initial_schema.sql              ← Esquema inicial
+        ├── 20260510000001_add_missing_columns.sql
+        ├── 20260511000001_add_banner_columns.sql          ← Banner de portada
+        ├── 20260512000001_add_invites_table.sql           ← Tabla de invites
+        ├── 20260512000002_add_price_filter.sql            ← Filtro de precio
+        ├── 20260513_subscription_management.sql           ← Suscripciones (RPCs)
+        ├── 20260514000000_multitenant_rls.sql             ← RLS multi-tenant
+        ├── 20260514_libro_reclamaciones.sql               ← Libro de Reclamaciones
+        ├── 20260526000000_add_biolink_and_location.sql    ← Bio-Link + ubicación
+        ├── 20260527000000_add_bio_bg_customization.sql    ← Fondos del Bio-Link
+        ├── 20260527010000_optimize_sample_images_and_cleanup_base64.sql
+        ├── 20260527020000_secure_public_store_rpc.sql     ← Endurece get_public_store
+        ├── 20260530000000_fix_public_store_images.sql
+        ├── 20260603000000_add_views_and_stats.sql         ← Contador de visitas (views)  ← NUEVO
+        ├── 20260605000000_add_bio_typography.sql          ← Tipografía del Bio-Link  ← NUEVO
+        └── 20260611000000_security_mitigations.sql        ← Roles app_metadata + RLS invites/reclamaciones  ← NUEVO
 
-supabase_libro_reclamaciones.sql  ← Migración del Libro de Reclamaciones (raíz del proyecto)
+supabase_libro_reclamaciones.sql  ← Migración original del Libro de Reclamaciones (también en raíz del proyecto)
 ```
 
 ---
@@ -108,6 +125,7 @@ Cada tienda del sistema.
 | `active` | bool | Si la tienda está activa |
 | `is_published` | bool | Si el catálogo es visible al público |
 | `whatsapp_clicks` | int | Contador de clics en WhatsApp |
+| `views` | int | Contador de visitas al catálogo público ← NUEVO |
 | `owner_id` | uuid | FK al usuario Supabase Auth |
 | `created_at` | timestamptz | Fecha de creación |
 | `libro_reclamaciones_activo` | bool | Si el Libro de Reclamaciones está habilitado ← NUEVO |
@@ -124,6 +142,7 @@ Cada tienda del sistema.
 | `bio_button_text_color` | text | Color de texto de botones (hex) ← NUEVO |
 | `bio_bg_image` | text | URL (Storage) de imagen de fondo del Bio-Link ← NUEVO |
 | `bio_bg_color` | text | Color de fondo del Bio-Link (hex) ← NUEVO |
+| `bio_typography` | text | Tipografía del Bio-Link (`sans` por defecto; restringida a `sans` en plan semilla) ← NUEVO |
 | `location_lat` | float | Latitud de la ubicación del negocio ← NUEVO |
 | `location_lng` | float | Longitud de la ubicación del negocio ← NUEVO |
 | `location_address` | text | Dirección legible de la ubicación ← NUEVO |
@@ -205,7 +224,8 @@ Tabla del Libro de Reclamaciones, conforme a normativa peruana vigente.
 | `extend_subscription` | `p_store_id, p_months` | Extiende el vencimiento sumando meses |
 | `degrade_expired_plans` | ninguno | Degradar tiendas vencidas a semilla (para pg_cron) |
 | `increment_whatsapp_clicks` | `store_id_param` | Incrementa el contador de clics |
-| `get_public_store` | `store_slug` | Devuelve los datos públicos de una tienda por slug (usado en `/bio/:slug`) ← NUEVO |
+| `increment_views` | `store_id_param` | Incrementa el contador de visitas al catálogo público ← NUEVO |
+| `get_public_store` | `store_slug` | Devuelve los datos públicos de una tienda por slug (usado en `/bio/:slug`); incluye `views` y `bio_typography` ← NUEVO |
 | `insert_reclamacion` | Ver detalle § 17 | Inserta una reclamación con número correlativo atómico ← NUEVO |
 
 ---
@@ -214,12 +234,23 @@ Tabla del Libro de Reclamaciones, conforme a normativa peruana vigente.
 
 ### Definición de planes (`src/lib/types.ts`)
 
+Los precios viven en la constante `PLANS` como un **valor único global** (campo `price`). No existe precio por tienda ni override en base de datos.
+
 ```
-semilla      → 7 productos,   gratis
-emprendedor  → 50 productos,  S/ 14.90/mes
-pro          → 200 productos, S/ 19.90/mes
-ilimitado    → ∞ productos,   S/ 34.90/mes
+semilla      → 7 productos,   gratis        (price: 0)
+emprendedor  → 50 productos,  S/ 9.90/mes    (price: 9.9)
+pro          → 200 productos, S/ 14.90/mes   (price: 14.9)
+ilimitado    → ∞ productos,   S/ 34.90/mes   (price: 34.9)
 ```
+
+> ⚠️ **PRECIOS ACTUALES = PRECIOS DE PROMOCIÓN.** Los valores S/ 9.90 (Emprendedor) y S/ 14.90 (Pro) que hoy están hardcodeados en `PLANS` son **precios promocionales de lanzamiento**, no la lista de precios definitiva. Como el precio es una constante única, hoy NO hay forma de distinguir "precio promo" de "precio regular": el valor que está en `types.ts` es el que se muestra en TODOS lados.
+>
+> **Dónde se consume `PLANS[plan].price` (cambiar el número en `types.ts` los afecta a todos):**
+> - `src/routes/admin.plan.tsx` → tarjetas de plan que ve el cliente (`S/ {price}/mes`).
+> - `src/components/admin/SubscriptionManager.tsx` → "Precio total estimado" en el panel superadmin (`price × duración`).
+> - La **landing** (`src/routes/index.tsx`) **NO** usa `PLANS`: los precios están escritos a mano como strings (`price="S/ 9.90"`, etc.). Si se cambian los precios, hay que editar la landing por separado.
+>
+> **Pendiente de producto (evaluación de "precio promo configurable" — ver § 19):** para tener un precio regular + precio promocional gestionable desde `/super` haría falta un cambio de modelo de datos. Aún no está implementado.
 
 ### Ciclo de vida de una suscripción
 
@@ -674,6 +705,45 @@ No mezclar estos enfoques. El `updateStore()` en `store.ts` maneja ambos casos a
    Bio-Link:          https://dizi.idenza.site/bio/[slug]
    Reclamaciones:     botón en el catálogo público (si activo)
 ```
+
+---
+
+## 19. Diseño Premium por Nicho (`/admin/diseno-premium`) ← NUEVO MÓDULO
+
+Módulo de diseño separado del estándar (`/admin/diseno`), orientado a **nichos verticales** (restaurantes/cafeterías). Aparece en el sidebar como "Diseño Premium" (icono `Sparkles`).
+
+- Ofrece plantillas y paletas pensadas para carta/menú (familias **Bloom / Bite** según la landing).
+- Es funcionalidad de plan **Pro+** (en la landing se lista bajo "Diseños Premium por Nichos (Bloom / Bite)").
+- Comparte el render con `PublicCatalog.tsx` para la vista previa.
+
+> Nota: este módulo coexiste con `/admin/diseno`. La condición que mostraba el panel de banner solo para `elite`/`portada` (§ 17) sigue aplicando al diseño estándar.
+
+---
+
+## 20. Evaluación: Precio Promocional Configurable desde Superadmin (PROPUESTA — no implementado)
+
+Contexto: el precio S/ 9.90 del plan Emprendedor (y S/ 14.90 del Pro) es una **promo temporal**. Hoy el precio es una constante única en `types.ts`, por lo que no se puede separar "precio regular" de "precio promo", ni gestionarlo sin tocar código.
+
+### Mapa de impacto (todo lo que toca el precio hoy)
+
+| Lugar | Qué hace | Fuente del precio |
+|---|---|---|
+| `src/lib/types.ts` → `PLANS[plan].price` | Define el precio | Constante (única) |
+| `src/routes/admin.plan.tsx` | Tarjetas de plan del cliente (`/mes`) | Lee `PLANS` |
+| `src/components/admin/SubscriptionManager.tsx` | "Precio total estimado" = `price × meses` (superadmin) | Lee `PLANS` |
+| `src/routes/index.tsx` (landing) | Precios de marketing | **Strings hardcodeados** (no usa `PLANS`) |
+
+> Importante: hoy NO se cobra dentro de la app (no hay pasarela de pago). El "precio" es informativo y para el cálculo estimado de renovación. El cobro real se coordina por WhatsApp.
+
+### Opciones para implementar precio promo gestionable
+
+1. **Mínimo (solo código).** Agregar a `Plan` los campos `regularPrice` y `promoPrice` (o `promoActive`) en `types.ts`, y mostrar precio tachado + promo en `admin.plan.tsx` y la landing. Sigue requiriendo deploy para cambiar la promo. Esfuerzo bajo.
+
+2. **Configurable desde `/super` (recomendado si se quiere control sin deploy).** Crear una tabla `plan_pricing` en Supabase (`plan_id`, `regular_price`, `promo_price`, `promo_active`, `promo_label`, `valid_until`) + RPC de lectura pública y de escritura solo para super_admin (siguiendo el patrón de RLS de § 11 y de la migración `20260611000000_security_mitigations.sql`). El frontend leería precios desde ahí en vez de la constante. Esfuerzo medio. Permite encender/apagar la promo y poner fecha de fin desde el panel superadmin.
+
+3. **Promo por invite (alternativa ligera).** Como el alta hoy pasa por `invites` con `plan` y `duration_months`, se podría añadir un `price_override` al invite para precios negociados por cliente, sin tocar la lista global. Esfuerzo bajo-medio.
+
+> Recomendación: si la meta es "que el área de super pueda crear/editar la promo", la opción 2 es la correcta; las opciones 1 y 3 son parches útiles a corto plazo. **Ninguna está implementada todavía** — esta sección es la evaluación previa al desarrollo.
 
 ---
 

@@ -180,13 +180,44 @@ const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
     { key: "sprout", label: "Plantas" },
     { key: "leaf", label: "Follaje" },
   ],
+  nature: [
+    { key: "", label: "Ninguno" },
+    { key: "flower", label: "Flores" },
+    { key: "bouquet", label: "Arreglos" },
+    { key: "gift", label: "Regalos" },
+    { key: "heart", label: "Amor" },
+    { key: "sprout", label: "Plantas" },
+    { key: "leaf", label: "Follaje" },
+  ],
 };
 
-const isPremiumModel = (model?: string) => model === "bite" || model === "bloom";
+const isPremiumModel = (model?: string) => model === "bite" || model === "bloom" || model === "nature";
 
 const getNicheLabel = (model?: string) => {
   if (isPremiumModel(model)) return "Ícono para Categoría (Premium)";
   return "Ícono del Nicho";
+};
+
+const getAvailableIcons = (store: any) => {
+  if (store.niche === "general") {
+    return [
+      { key: "", label: "Ninguno" },
+      { key: "burger", label: "Burgers" },
+      { key: "fries", label: "Papas" },
+      { key: "drink", label: "Bebidas" },
+      { key: "combo", label: "Combos" },
+      { key: "dessert", label: "Postres" },
+      { key: "pizza", label: "Pizza" },
+      { key: "icecream", label: "Helado" },
+      { key: "flower", label: "Flores" },
+      { key: "bouquet", label: "Arreglos" },
+      { key: "gift", label: "Regalos" },
+      { key: "heart", label: "Amor" },
+      { key: "sprout", label: "Plantas" },
+      { key: "leaf", label: "Follaje" },
+    ];
+  }
+  return (store.model ? NICHE_ICONS[store.model] : []) || [];
 };
 
 const getCleanCategoryName = (rawName: string) => {
@@ -945,7 +976,7 @@ function ProductsPage() {
                         {getNicheLabel(store.model)}
                       </label>
                       <div className="flex flex-wrap gap-2">
-                        {((store.model ? NICHE_ICONS[store.model] : []) || []).map((item) => {
+                        {getAvailableIcons(store).map((item) => {
                           const active = selectedIconKey === item.key;
                           return (
                             <button
@@ -1070,7 +1101,7 @@ function ProductsPage() {
                       {getNicheLabel(store.model)}
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {((store.model ? NICHE_ICONS[store.model] : []) || []).map((item) => {
+                      {getAvailableIcons(store).map((item) => {
                         const active = editIconKey === item.key;
                         return (
                           <button

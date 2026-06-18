@@ -12,6 +12,11 @@ import {
   Loader2,
   CheckCircle2,
   MapPin,
+  Globe,
+  Youtube,
+  Phone,
+  Music,
+  Twitter,
   Star,
   Sparkles,
   Instagram,
@@ -34,6 +39,7 @@ import {
   ChevronLeft,
   ChevronRight,
   BadgeCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -58,6 +64,7 @@ import {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 
 const EMPTY_CART: any[] = [];
 
@@ -72,7 +79,7 @@ type ModelConfig = {
   cardShadow: string;
   cardBorder: boolean;
   headerStyle: "clean" | "bold" | "minimal";
-  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid" | "bite" | "bloom";
+  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid" | "bite" | "bloom" | "nature" | "lookbook";
 };
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
@@ -167,6 +174,16 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     isDark: false, imgRounded: "2rem", cardRounded: "2rem",
     cardShadow: "hover:shadow-xl hover:shadow-rose-100/50", cardBorder: true, headerStyle: "minimal", layout: "bloom",
   },
+  nature: {
+    vars: { "--background": "#f4f6f0", "--card": "#ffffff", "--primary": "#4b5c43", "--border": "#e3e7dc" } as any,
+    isDark: false, imgRounded: "2rem", cardRounded: "2rem",
+    cardShadow: "hover:shadow-xl hover:shadow-stone-200/50", cardBorder: true, headerStyle: "minimal", layout: "nature",
+  },
+  lookbook: {
+    vars: { "--background": "#fbfaf7", "--card": "#ffffff", "--primary": "#8b7365", "--border": "#e8e5de" } as any,
+    isDark: false, imgRounded: "0px", cardRounded: "0px",
+    cardShadow: "none", cardBorder: false, headerStyle: "minimal", layout: "lookbook",
+  },
 
   sunset_glow: {
     vars: { "--background": "#1a0a2e", "--card": "#2d1040", "--primary": "#fb923c", "--border": "#7c2d8e" } as any,
@@ -190,6 +207,21 @@ const getQuickLinkBranding = (label: string, url: string) => {
   const labelLower = label.toLowerCase();
   const urlLower = url.toLowerCase();
 
+  // WhatsApp
+  if (urlLower.includes("wa.me") || urlLower.includes("whatsapp.com") || labelLower.includes("whatsapp")) {
+    return {
+      bg: "#25d366",
+      borderColor: "#128c7e",
+      glowColor: "rgba(37, 211, 102, 0.45)",
+      baseColor: "#25d366",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#25d366" />
+          <path fill="#FFF" d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z" transform="scale(0.75) translate(4, 4)" />
+        </svg>
+      ),
+    };
+  }
   // Instagram
   if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
     return {
@@ -257,6 +289,66 @@ const getQuickLinkBranding = (label: string, url: string) => {
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <rect width="24" height="24" rx="5" fill="#0077b5" />
           <path fill="#FFF" d="M5.3 9h2.8v9H5.3zM6.7 5c1 0 1.8.8 1.8 1.8s-.8 1.8-1.8 1.8-1.8-.8-1.8-1.8.8-1.8 1.8-1.8zm5.2 4h2.7v1.2h.1c.4-.7 1.3-1.4 2.6-1.4 2.8 0 3.3 1.8 3.3 4.2v5h-2.8v-4.4c0-1.1 0-2.4-1.5-2.4s-1.7 1.2-1.7 2.3v4.5h-2.8V9z" />
+        </svg>
+      ),
+    };
+  }
+  // YouTube
+  if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be") || labelLower.includes("youtube")) {
+    return {
+      bg: "#ff0000",
+      borderColor: "#cc0000",
+      glowColor: "rgba(255, 0, 0, 0.45)",
+      baseColor: "#ff0000",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#ff0000" />
+          <path fill="#FFF" d="M10 8.5v7l6-3.5-6-3.5z" transform="scale(0.8) translate(3, 3)" />
+        </svg>
+      ),
+    };
+  }
+  // Spotify
+  if (urlLower.includes("spotify.com") || labelLower.includes("spotify")) {
+    return {
+      bg: "#1DB954",
+      borderColor: "#1aa34a",
+      glowColor: "rgba(29, 185, 84, 0.45)",
+      baseColor: "#1DB954",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#1DB954" />
+          <path fill="#FFF" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.565.387-.86.207-2.377-1.454-5.37-1.783-8.893-1.02-.336.073-.668-.14-.74-.477-.074-.337.14-.668.477-.74 3.856-.88 7.15-.502 9.81 1.13.295.178.387.563.206.86zm1.225-2.72c-.227.367-.707.487-1.074.26-2.72-1.672-6.87-2.157-10.076-1.182-.413.125-.848-.107-.973-.52-.125-.413.107-.847.52-.973 3.666-1.114 8.234-.567 11.343 1.346.367.227.487.707.26 1.07zm.106-2.833C14.384 8.8 8.12 8.583 4.512 9.68c-.556.168-1.137-.146-1.305-.702-.168-.556.146-1.137.702-1.305 4.17-1.266 11.07-1.01 15.19 1.436.5.297.665.94.368 1.44-.297.5-.94.665-1.44.368z" transform="scale(0.7) translate(5, 5)" />
+        </svg>
+      ),
+    };
+  }
+  // Pinterest
+  if (urlLower.includes("pinterest.com") || labelLower.includes("pinterest")) {
+    return {
+      bg: "#BD081C",
+      borderColor: "#a60718",
+      glowColor: "rgba(189, 8, 28, 0.45)",
+      baseColor: "#BD081C",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#BD081C" />
+          <path fill="#FFF" d="M12.017 0C5.396 0 0 5.397 0 12.017c0 5.078 3.158 9.41 7.63 11.162-.105-.947-.199-2.399.041-3.43.218-.93 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.21-.174.254-.402.148-1.5-.699-2.436-2.899-2.436-4.664 0-3.796 2.76-7.281 7.954-7.281 4.175 0 7.42 2.975 7.42 6.952 0 4.148-2.616 7.486-6.25 7.486-1.22 0-2.368-.634-2.76-1.38l-.752 2.863c-.272 1.042-1.01 2.348-1.505 3.161 1.125.347 2.316.536 3.553.536 6.62 0 12.017-5.396 12.017-12.017C24.017 5.397 18.637 0 12.017 0z" transform="scale(0.65) translate(6, 6)" />
+        </svg>
+      ),
+    };
+  }
+  // Twitter / X
+  if (urlLower.includes("twitter.com") || urlLower.includes("x.com") || labelLower.includes("twitter") || labelLower.includes(" x ")) {
+    return {
+      bg: "#000000",
+      borderColor: "#222222",
+      glowColor: "rgba(0, 0, 0, 0.45)",
+      baseColor: "#000000",
+      coloredIcon: (
+        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="12" fill="#000000" />
+          <path fill="#FFF" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" transform="scale(0.7) translate(5, 5)" />
         </svg>
       ),
     };
@@ -457,6 +549,78 @@ const scanProductBadges = (name: string, description?: string): { emoji: string;
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
 
+const getNicheTaglines = (niche?: string) => {
+  const n = (niche || "").toLowerCase();
+  if (n === "hamburgueseria") {
+    return {
+      tagline: "Hamburguesas Gourmet & Craft",
+      bottomTag: "Sabor Real & Artesanal",
+      buttonText: "Ver Menú"
+    };
+  }
+  if (n === "cafeteria" || n === "cafe") {
+    return {
+      tagline: "Café de Especialidad & Repostería",
+      bottomTag: "Tostado Local & Calidad",
+      buttonText: "Ver Menú"
+    };
+  }
+  if (n === "floreria" || n === "boutique_botanica") {
+    return {
+      tagline: "Catálogo Eco-friendly & Botánico",
+      bottomTag: "Sostenible & Local",
+      buttonText: "Ver Colección"
+    };
+  }
+  if (n === "boutique" || n === "moda" || n === "ropa") {
+    return {
+      tagline: "Moda & Tendencia Exclusiva",
+      bottomTag: "Diseño & Calidad de Autor",
+      buttonText: "Ver Colección"
+    };
+  }
+  if (n === "pasteleria" || n === "panaderia" || n === "dulces") {
+    return {
+      tagline: "Pastelería & Postres Artesanales",
+      bottomTag: "Horneado con Amor Diariamente",
+      buttonText: "Ver Menú"
+    };
+  }
+  if (n === "restaurante" || n === "gastronomia" || n === "comida") {
+    return {
+      tagline: "Experiencia Culinaria & Tradición",
+      bottomTag: "Ingredientes Frescos & Selectos",
+      buttonText: "Ver Carta"
+    };
+  }
+  if (n === "estetica" || n === "belleza" || n === "salon" || n === "spa") {
+    return {
+      tagline: "Estética, Cuidado & Belleza",
+      bottomTag: "Tu Experiencia de Bienestar",
+      buttonText: "Ver Servicios"
+    };
+  }
+  return {
+    tagline: "Catálogo Exclusivo",
+    bottomTag: "Calidad & Detalle",
+    buttonText: "Explorar"
+  };
+};
+
+const getNicheCategoryTitle = (niche?: string) => {
+  const n = (niche || "").toLowerCase();
+  if (n === "hamburgueseria" || n === "restaurante" || n === "gastronomia" || n === "comida") {
+    return "Nuestras Categorías";
+  }
+  if (n === "cafeteria" || n === "cafe" || n === "pasteleria" || n === "panaderia") {
+    return "Menú & Especialidades";
+  }
+  if (n === "floreria" || n === "boutique_botanica") {
+    return "Colecciones Botánicas";
+  }
+  return "Categorías";
+};
+
 const isInAppBrowser = () => {
   if (typeof window === "undefined") return false;
   const ua = navigator.userAgent || navigator.vendor || (window as any).opera || "";
@@ -479,6 +643,7 @@ export function PublicCatalog({
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>("all");
   const [cartOpen, setCartOpen] = useState(false);
+  const [isLookbookCatOpen, setIsLookbookCatOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -534,6 +699,62 @@ export function PublicCatalog({
   }, [store.bannerImage, store.plan]);
 
   const bannersCount = activeBanners.length;
+  
+  // Premium General visual configuration variables
+  const isSerif = store.niche === "floreria" || store.catalogTypography === "serif" || store.model === "nature";
+  const finalTypographyClass = store.niche === "floreria"
+    ? "typography-serif"
+    : store.catalogTypography === "serif"
+      ? "typography-serif"
+      : store.catalogTypography === "rounded"
+        ? "typography-rounded"
+        : store.catalogTypography === "modern"
+          ? "typography-modern"
+          : "typography-sans";
+
+  const cStyle = store.niche === "floreria" ? "curved" : (store.cardStyle || "standard");
+  
+  const featuredCardClass = store.niche === "floreria"
+    ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border border-rose-100/40 bg-white/75 hover:bg-white shadow-[0_8px_30px_rgba(253,244,245,0.7)] hover:shadow-[0_15px_35px_rgba(251,207,214,0.35)]"
+    : cStyle === "flat"
+      ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-none hover:shadow-none"
+      : cStyle === "shadow"
+        ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] hover:opacity-95 shadow-md hover:shadow-xl"
+        : cStyle === "curved"
+          ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.25rem_0.5rem_2.25rem_0.5rem] border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md"
+          : "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
+
+  const featuredImgClass = cn(
+    "relative aspect-square w-full overflow-hidden",
+    store.niche === "floreria"
+      ? "rounded-t-[7rem] rounded-b-[1.5rem] bg-rose-50/20 border border-rose-100/30"
+      : cStyle === "shadow"
+        ? "rounded-xl bg-muted border-none"
+        : cStyle === "curved"
+          ? "rounded-[1.75rem_0.375rem_1.75rem_0.375rem] bg-muted border border-[var(--border)]"
+          : "rounded-xl bg-muted border border-[var(--border)]"
+  );
+
+  const gridCardClass = store.niche === "floreria"
+    ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-rose-100/30 rounded-[2.5rem_0.5rem_2.5rem_0.5rem] bg-white/70 hover:bg-white hover:scale-[1.02] shadow-[0_4px_15px_rgba(253,244,245,0.5)] hover:shadow-[0_8px_25px_rgba(251,207,214,0.25)]"
+    : cStyle === "flat"
+      ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
+      : cStyle === "shadow"
+        ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border-none rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
+        : cStyle === "curved"
+          ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-[2.25rem_0.5rem_2.25rem_0.5rem] bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md"
+          : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
+
+  const gridImgClass = cn(
+    "relative overflow-hidden aspect-square m-2",
+    store.niche === "floreria"
+      ? "bg-rose-50/20 rounded-[2rem_0.5rem_2rem_0.5rem] border border-rose-100/20"
+      : cStyle === "shadow"
+        ? "bg-muted rounded-xl border-none"
+        : cStyle === "curved"
+          ? "bg-muted rounded-[1.75rem_0.375rem_1.75rem_0.375rem] border border-[var(--border)]"
+          : "bg-muted rounded-xl border border-[var(--border)]"
+  );
 
   useEffect(() => {
     if (bannersCount <= 1) return;
@@ -688,9 +909,9 @@ export function PublicCatalog({
   // All foreground vars recalculated from effectiveIsDark so any model+bg combo stays readable
   const themeVars: React.CSSProperties = {
     ...cfg.vars,
-    "--foreground":       effectiveIsDark ? "#f0f0f0" : "#111111",
-    "--foreground-muted": effectiveIsDark ? "#a0a0a0" : "#6b7280",
-    "--muted-foreground": effectiveIsDark ? "#94a3b8" : "#64748b",
+    "--foreground":       store.textColor || (effectiveIsDark ? "#f0f0f0" : "#111111"),
+    "--foreground-muted": store.textColor ? `color-mix(in srgb, ${store.textColor} 70%, transparent)` : (effectiveIsDark ? "#a0a0a0" : "#6b7280"),
+    "--muted-foreground": store.textColor ? `color-mix(in srgb, ${store.textColor} 60%, transparent)` : (effectiveIsDark ? "#94a3b8" : "#64748b"),
     "--muted":            effectiveIsDark ? "#1e293b" : "#f1f5f9",
     "--secondary":        effectiveIsDark ? "#1e2535" : "#f8fafc",
     "--border":           effectiveIsDark ? "#334155" : "#e2e8f0",
@@ -810,11 +1031,13 @@ export function PublicCatalog({
     defaultBg: string,
     defaultBorder: string,
     defaultText: string,
-    platform: "whatsapp" | "location" | "instagram" | "facebook" | "tiktok" | "linkedin" | "custom",
+    platform: "whatsapp" | "location" | "instagram" | "facebook" | "tiktok" | "linkedin" | "youtube" | "spotify" | "pinterest" | "twitter" | "custom",
     customIcon?: React.ReactNode,
     onClick?: (e: React.MouseEvent) => void,
     overrideBg?: string,
-    overrideText?: string
+    overrideText?: string,
+    thumbnailUrl?: string,
+    iconName?: string
   ) => {
     const buttonStyleId = store.bioButtonStyle || "pill-solid";
     let { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
@@ -851,11 +1074,28 @@ export function PublicCatalog({
 
     const getMonochromeIcon = () => {
       const iconClass = "h-5 w-5";
-      if (platform === "whatsapp") return <MessageCircle className={iconClass} />;
+      if (platform === "whatsapp") return <WhatsAppIcon className={iconClass} />;
       if (platform === "location") return <MapPin className={iconClass} />;
       if (platform === "instagram") return <Instagram className={iconClass} />;
       if (platform === "facebook") return <Facebook className={iconClass} />;
       if (platform === "linkedin") return <Linkedin className={iconClass} />;
+      if (platform === "youtube") return <Youtube className={iconClass} />;
+      if (platform === "spotify") return <Music className={iconClass} />;
+      if (platform === "twitter") return <Twitter className={iconClass} />;
+      return <Star className={iconClass} />;
+    };
+
+    const getCustomLucideIcon = (name: string) => {
+      const iconClass = "h-5 w-5";
+      if (name === "globe") return <Globe className={iconClass} />;
+      if (name === "phone") return <Phone className={iconClass} />;
+      if (name === "map-pin") return <MapPin className={iconClass} />;
+      if (name === "instagram") return <Instagram className={iconClass} />;
+      if (name === "facebook") return <Facebook className={iconClass} />;
+      if (name === "linkedin") return <Linkedin className={iconClass} />;
+      if (name === "youtube") return <Youtube className={iconClass} />;
+      if (name === "music" || name === "spotify") return <Music className={iconClass} />;
+      if (name === "twitter") return <Twitter className={iconClass} />;
       return <Star className={iconClass} />;
     };
 
@@ -880,10 +1120,18 @@ export function PublicCatalog({
         <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
         
         <div className={cn(
-          "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300",
-          isMonochrome ? "bg-transparent" : "bg-white rounded-full shadow-inner"
+          "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 overflow-hidden",
+          (isMonochrome && !thumbnailUrl) ? "bg-transparent" : "bg-white rounded-full shadow-inner border border-zinc-100"
         )}>
-          {isMonochrome ? getMonochromeIcon() : customIcon}
+          {thumbnailUrl ? (
+            <img src={thumbnailUrl} alt={label} className="h-full w-full object-cover" />
+          ) : iconName && iconName !== "" ? (
+            getCustomLucideIcon(iconName)
+          ) : isMonochrome ? (
+            getMonochromeIcon()
+          ) : (
+            customIcon
+          )}
         </div>
         <span className="flex-1 text-center pr-3">{label}</span>
       </a>
@@ -1179,7 +1427,7 @@ export function PublicCatalog({
   return (
     <div
       className={cn(
-        "min-h-screen bg-background text-foreground transition-colors duration-300",
+        "min-h-screen w-full overflow-x-hidden bg-background text-foreground transition-colors duration-300",
         finalIsDark ? "dark" : "",
         modelId === "glam" && "theme-glam",
         modelId === "bloom" && "theme-bloom",
@@ -1258,7 +1506,7 @@ export function PublicCatalog({
       {showInAppBanner && (
         <div className="bg-amber-600 text-white px-4 py-2.5 text-xs font-semibold flex items-center justify-between gap-3 shadow-md border-b border-amber-700 select-none animate-in slide-in-from-top duration-300 relative z-[99]">
           <div className="flex items-center gap-2 text-left">
-            <span className="text-sm shrink-0">⚠️</span>
+            <AlertTriangle className="h-4 w-4 text-white shrink-0" />
             <span>
               <strong>¿Estás en TikTok o Instagram?</strong> Si la redirección a WhatsApp falla, toca los <strong>3 puntos (...)</strong> arriba a la derecha y elige <strong>"Abrir en el navegador"</strong>.
             </span>
@@ -1270,10 +1518,10 @@ export function PublicCatalog({
                 sessionStorage.setItem("dismissed_inapp_banner", "true");
               } catch (e) {}
             }}
-            className="text-white hover:text-amber-200 transition font-bold text-sm px-1.5 py-0.5 rounded-md hover:bg-amber-700/50 shrink-0"
+            className="text-white hover:text-amber-200 transition font-bold text-sm p-1 rounded-md hover:bg-amber-700/50 shrink-0"
             title="Cerrar aviso"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
       )}
@@ -1329,14 +1577,14 @@ export function PublicCatalog({
                   "flex items-center gap-1.5 shadow-sm"
                 )}
               >
-                <MessageCircle className="h-3.5 w-3.5" />
+                <WhatsAppIcon className="h-3.5 w-3.5" />
                 <span>Contacto</span>
               </button>
             )}
           </div>
 
           {/* Search + Filtros button: modelos SIN hero banner */}
-          {!BANNER_MODELS.has(modelId) && modelId !== "bite" && modelId !== "bloom" && mode === "catalog" && (
+          {!BANNER_MODELS.has(modelId) && modelId !== "bite" && modelId !== "bloom" && modelId !== "lookbook" && mode === "catalog" && (
             <div className="mx-auto max-w-5xl px-4 pb-3 space-y-2">
               {/* Search row + Filtros button */}
               <div className="flex gap-2">
@@ -1539,14 +1787,26 @@ export function PublicCatalog({
                   const branding = getQuickLinkBranding(link.label, link.url);
                   const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
                   
-                  let platform: "instagram" | "facebook" | "linkedin" | "custom" = "custom";
+                  let platform: "instagram" | "facebook" | "linkedin" | "custom" | "whatsapp" | "tiktok" | "youtube" | "spotify" | "pinterest" | "twitter" = "custom";
                   const urlLower = link.url.toLowerCase();
                   if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
                     platform = "instagram";
                   } else if (urlLower.includes("facebook.com") || labelLower.includes("facebook")) {
                     platform = "facebook";
+                  } else if (urlLower.includes("tiktok.com") || labelLower.includes("tiktok")) {
+                    platform = "tiktok";
                   } else if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
                     platform = "linkedin";
+                  } else if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be") || labelLower.includes("youtube")) {
+                    platform = "youtube";
+                  } else if (urlLower.includes("spotify.com") || labelLower.includes("spotify")) {
+                    platform = "spotify";
+                  } else if (urlLower.includes("pinterest.com") || labelLower.includes("pinterest")) {
+                    platform = "pinterest";
+                  } else if (urlLower.includes("twitter.com") || urlLower.includes("x.com") || labelLower.includes("twitter") || labelLower.includes(" x ")) {
+                    platform = "twitter";
+                  } else if (urlLower.includes("wa.me") || urlLower.includes("whatsapp.com") || labelLower.includes("whatsapp")) {
+                    platform = "whatsapp";
                   }
 
                   const defaultBg = platform === "custom" ? "#1f2937" : (branding.baseColor || "#1f2937");
@@ -1568,7 +1828,9 @@ export function PublicCatalog({
                         branding.coloredIcon,
                         undefined,
                         finalBgColor,
-                        finalTextColor
+                        finalTextColor,
+                        link.thumbnailUrl,
+                        link.iconName
                       )}
                     </div>
                   );
@@ -1598,13 +1860,21 @@ export function PublicCatalog({
 
       {/* ── Hero Banner (Only for Elite/Banner models) ── */}
       {modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
-        <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden">
+        <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-zinc-950">
+          {/* Blurred background image on desktop/PC to avoid letterboxes, while keeping main banner fully visible */}
+          <div 
+            className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-xl opacity-60 scale-105 hidden md:block"
+            style={{ backgroundImage: `url(${activeBanners[0]})` }}
+          />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+          
           <img 
             src={activeBanners[0]} 
             alt={store.bannerTitle || store.name}
-            className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-1000"
+            className="absolute inset-0 w-full h-full object-cover md:object-contain animate-in fade-in duration-1000"
           />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-black/10 md:bg-black/35" />
+          
           <div className="relative z-10 text-center px-4 max-w-3xl animate-in zoom-in slide-in-from-bottom-8 duration-700">
             {store.bannerTitle && (
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase mb-4 drop-shadow-2xl">
@@ -1658,7 +1928,7 @@ export function PublicCatalog({
                     {activeCat === "sale" ? (
                       <><Flame className="h-3 w-3 text-red-500" /> Ofertas</>
                     ) : (
-                      store.categories.find(c => c.id === activeCat)?.name ?? activeCat
+                      parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? activeCat).label
                     )}
                     <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
                       <X className="h-3 w-3" />
@@ -1824,7 +2094,7 @@ export function PublicCatalog({
           </div>
         ) : cfg.layout === "overlay" ? (
           /* ── OVERLAY layout: portrait 3:4 cards with gradient text (ZARA / Instagram Shopping style) */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <div className={cn("grid gap-2", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2")}>
             {filtered.map((p) => (
               <article
                 key={p.id}
@@ -1857,7 +2127,7 @@ export function PublicCatalog({
                     </div>
                     <div className="flex gap-1">
                       <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="h-7 w-7 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center hover:bg-white/40 transition">
-                        <MessageCircle className="h-3.5 w-3.5" />
+                        <WhatsAppIcon className="h-3.5 w-3.5" />
                       </button>
                       <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition">
                         <Plus className="h-3.5 w-3.5" />
@@ -1867,6 +2137,360 @@ export function PublicCatalog({
                 </div>
               </article>
             ))}
+          </div>
+        ) : cfg.layout === "lookbook" ? (
+          /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
+          <div className="space-y-16 sm:space-y-24 select-none">
+            {/* 1. Editorial Cover Section */}
+            {mode === "catalog" && (
+              <header 
+                className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden border-b animate-in fade-in duration-700"
+                style={{ borderBottomColor: "var(--border)", backgroundColor: "var(--card)" }}
+              >
+                {activeBanners.length > 0 && (
+                  <div className="absolute inset-0 w-full h-full">
+                    <img
+                      src={activeBanners[0]}
+                      alt={store.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" />
+                  </div>
+                )}
+
+                <div 
+                  style={{ backgroundColor: "rgba(0, 0, 0, 0.65)", borderColor: "rgba(255, 255, 255, 0.15)" }}
+                  className="relative z-10 text-center px-6 py-8 md:px-10 md:py-10 border max-w-lg mx-4 md:mx-auto shadow-2xl space-y-5"
+                >
+                  {store.logo && (
+                    <img
+                      src={store.logo}
+                      alt="Logo"
+                      className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-full border border-white/20 mx-auto mb-1 shadow-md"
+                    />
+                  )}
+
+                  <span 
+                    style={{ color: "var(--primary)" }}
+                    className="block text-[9px] sm:text-[10px] font-black tracking-[0.3em] uppercase font-sans"
+                  >
+                    {store.bannerTagline || "COLECCIÓN EXCLUSIVA"}
+                  </span>
+
+                  <h1 
+                    className="text-3xl md:text-4.5xl lg:text-5xl font-serif font-light tracking-wide leading-tight uppercase text-white max-w-md mx-auto"
+                  >
+                    {store.bannerTitle || store.name}
+                  </h1>
+
+                  <p 
+                    className="text-xs sm:text-sm font-serif italic leading-relaxed text-white/80 max-w-sm mx-auto"
+                  >
+                    {store.bannerBottomTag || "Piezas exclusivas seleccionadas con un diseño atemporal."}
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2">
+                    {filtered.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          document.getElementById("product-0")?.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        style={{
+                          borderColor: "var(--primary)",
+                          color: "var(--primary)",
+                          "--hover-bg": "var(--primary)"
+                        } as React.CSSProperties}
+                        className="w-full sm:w-auto border text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[var(--hover-bg)] hover:text-white transition duration-300 active:scale-98 cursor-pointer whitespace-nowrap"
+                      >
+                        Ver Colección
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={supportClick}
+                      className="w-full sm:w-auto border border-white text-white text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-white hover:text-black transition duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+                    >
+                      <WhatsAppIcon className="h-3.5 w-3.5" />
+                      Contacto
+                    </button>
+                  </div>
+                </div>
+              </header>
+            )}
+
+            {/* 1.5. Minimal Lookbook Search Input & Categories */}
+            {mode === "catalog" && (
+              <div className="max-w-md mx-auto px-4 w-full relative pt-4 space-y-4">
+                <div className="relative">
+                  <Search 
+                    style={{ color: "var(--primary)" }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 opacity-65" 
+                  />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Buscar en la colección..."
+                    style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)", paddingLeft: "2.75rem" }}
+                    className="w-full border pr-4 py-2.5 text-xs tracking-widest uppercase outline-none focus:border-[var(--primary)] transition-colors shadow-2xs font-sans placeholder:opacity-60"
+                  />
+                </div>
+
+                {/* Dropdown Category Selector */}
+                {store.categories.length > 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setIsLookbookCatOpen(!isLookbookCatOpen)}
+                      style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" }}
+                      className="w-full border px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase flex items-center justify-between font-bold font-sans cursor-pointer focus:outline-none transition-colors"
+                    >
+                      <span>
+                        Categoría: {activeCat === "all" ? "Todos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
+                      </span>
+                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300 opacity-70", isLookbookCatOpen && "rotate-180")} />
+                    </button>
+
+                    {isLookbookCatOpen && (
+                      <>
+                        {/* Overlay to close the dropdown when clicking outside */}
+                        <div className="fixed inset-0 z-40" onClick={() => setIsLookbookCatOpen(false)} />
+                        
+                        <div 
+                          style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                          className="absolute left-0 right-0 mt-1 border shadow-md z-50 py-1 max-h-60 overflow-y-auto"
+                        >
+                          <button
+                            onClick={() => {
+                              setActiveCat("all");
+                              setIsLookbookCatOpen(false);
+                            }}
+                            style={{ 
+                              color: activeCat === "all" ? "var(--primary)" : "var(--foreground)",
+                              backgroundColor: activeCat === "all" ? "color-mix(in srgb, var(--primary) 8%, transparent)" : "transparent",
+                              "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)"
+                            } as React.CSSProperties}
+                            className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+                          >
+                            Todos
+                          </button>
+                          {store.categories.map((c) => {
+                            const { label } = parseCategoryName(c.name);
+                            const active = activeCat === c.id;
+                            return (
+                              <button
+                                key={c.id}
+                                onClick={() => {
+                                  setActiveCat(c.id);
+                                  setIsLookbookCatOpen(false);
+                                }}
+                                style={{ 
+                                  color: active ? "var(--primary)" : "var(--foreground)",
+                                  backgroundColor: active ? "color-mix(in srgb, var(--primary) 8%, transparent)" : "transparent",
+                                  "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)"
+                                } as React.CSSProperties}
+                                className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. Product List */}
+            <div className="space-y-20 sm:space-y-28">
+              {filtered.map((p, index) => {
+                const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
+                const cartItem = cart.find(item => item.productId === p.id);
+                const qty = cartItem ? cartItem.qty : 0;
+                return (
+                  <article
+                    key={p.id}
+                    id={`product-${index}`}
+                    style={{ borderBottomColor: "var(--border)" }}
+                    className={cn(
+                      "flex flex-col gap-6 md:gap-16 py-10 md:py-16 border-b last:border-b-0 scroll-mt-24 items-stretch",
+                      index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
+                    )}
+                    onClick={() => setViewingProduct(p)}
+                  >
+                  {/* 1. Large Fashion Aspect Ratio Image */}
+                  <div 
+                    style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                    className="relative w-full md:w-[45%] lg:w-[40%] aspect-[4/5] sm:aspect-[3/4] md:aspect-[3/4] overflow-hidden border shadow-xs shrink-0"
+                  >
+                    <img
+                      src={p.image || "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"}
+                      alt={p.name}
+                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
+                      }}
+                    />
+                    {p.isOnSale && (
+                      <span 
+                        style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" }}
+                        className="absolute top-4 left-4 text-[9px] font-bold tracking-[0.2em] uppercase border px-3 py-1 shadow-xs"
+                      >
+                        Oferta
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 2. Detailed Metadata Card */}
+                  <div className="space-y-6 text-left flex-1 flex flex-col justify-between py-2">
+                    <div className="space-y-4">
+                      <div className="flex items-baseline justify-between">
+                        <span 
+                          style={{ color: "var(--primary)" }}
+                          className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] uppercase font-sans"
+                        >
+                          {parseCategoryName(store.categories.find((c) => c.id === p.categoryId)?.name || "").label || "Colección"}
+                        </span>
+                        {/* Giant light serif index number */}
+                        <span 
+                          style={{ color: "var(--foreground)", opacity: 0.35 }}
+                          className="font-serif text-3xl sm:text-4xl font-light tracking-widest leading-none select-none"
+                        >
+                          {indexStr}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 
+                          style={{ color: "var(--foreground)" }}
+                          className="text-2xl sm:text-3xl font-serif font-light tracking-wide leading-tight"
+                        >
+                          {p.name}
+                        </h3>
+                        {p.description && (
+                          <p 
+                            style={{ color: "var(--foreground-muted)" }}
+                            className="text-xs sm:text-sm font-serif italic leading-relaxed"
+                          >
+                            {p.description.split(".")[0]}.
+                          </p>
+                        )}
+                        {p.description && p.description.includes(".") && (
+                          <p 
+                            style={{ color: "var(--foreground-muted)", opacity: 0.85 }}
+                            className="text-xs sm:text-sm leading-relaxed font-sans pt-1"
+                          >
+                            {p.description.split(".").slice(1).join(".")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 3. Pricing & Call to Action Row */}
+                    <div 
+                      style={{ borderTopColor: "var(--border)" }}
+                      className="pt-6 flex flex-wrap gap-4 items-center justify-between border-t mt-auto"
+                    >
+                      <div className="flex flex-col">
+                        <span 
+                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-[8px] font-bold tracking-widest uppercase font-sans"
+                        >
+                          Precio
+                        </span>
+                        <div className="flex items-baseline gap-2">
+                          <span 
+                            style={{ color: "var(--foreground)" }}
+                            className="text-xl sm:text-2xl font-serif font-normal"
+                          >
+                            {formatPrice(p.price)}
+                          </span>
+                          {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                            <span 
+                              style={{ color: "var(--muted-foreground)" }}
+                              className="text-xs line-through"
+                            >
+                              {formatPrice(p.originalPrice)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Dionelle-styled Counter & Checkout Block */}
+                      <div 
+                        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
+                        className="flex items-center border h-11 shrink-0 select-none"
+                      >
+                        {qty > 0 ? (
+                          <>
+                            <div 
+                              style={{ borderRightColor: "var(--border)" }}
+                              className="flex items-center h-full px-2 border-r"
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (qty === 1) {
+                                    cartRemove(store.id, p.id);
+                                  } else {
+                                    cartSet(store.id, p.id, qty - 1);
+                                  }
+                                }}
+                                className="w-8 h-8 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-90 transition"
+                              >
+                                <Minus className="h-3 w-3" />
+                              </button>
+                              <span className="w-8 text-center text-xs font-bold text-[var(--foreground)]">
+                                {qty}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cartSet(store.id, p.id, qty + 1);
+                                }}
+                                className="w-8 h-8 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-90 transition"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCartOpen(true);
+                              }}
+                              style={{ color: "var(--primary)", "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)" } as React.CSSProperties}
+                              className="h-full px-5 text-[10px] font-bold uppercase tracking-widest hover:bg-[var(--hover-bg)] transition active:scale-98"
+                            >
+                              Ver Carrito
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cartAdd(store.id, p.id);
+                              setCartOpen(true);
+                            }}
+                            style={{ color: "var(--primary)", "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)" } as React.CSSProperties}
+                            className="h-full px-6 hover:bg-[var(--hover-bg)] transition text-[10px] font-bold uppercase tracking-widest flex items-center justify-center"
+                          >
+                            Añadir al Carrito
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+            </div>
           </div>
         ) : cfg.layout === "editorial" ? (
           /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
@@ -1905,7 +2529,7 @@ export function PublicCatalog({
                     </div>
                     <div className="flex gap-2">
                       <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="text-xs border px-3 py-1.5 hover:bg-accent transition flex items-center gap-1" style={{ borderRadius: cfg.cardRounded }}>
-                        <MessageCircle className="h-3 w-3" /> Consultar
+                        <WhatsAppIcon className="h-3 w-3" /> Consultar
                       </button>
                       <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="bg-primary text-primary-foreground px-3 py-1.5 flex items-center gap-1 text-xs font-bold hover:opacity-90 transition" style={{ borderRadius: cfg.cardRounded }}>
                         <Plus className="h-3 w-3" /> Añadir
@@ -1942,7 +2566,7 @@ export function PublicCatalog({
                     <span className="text-white font-black text-2xl">{formatPrice(filtered[0].price)}</span>
                     <div className="flex gap-2">
                       <button onClick={(e)=>{e.stopPropagation();consultProduct(filtered[0].name);}} className="bg-white/20 backdrop-blur text-white text-xs px-3 py-2 font-bold hover:bg-white/30 transition flex items-center gap-1" style={{ borderRadius: cfg.cardRounded }}>
-                        <MessageCircle className="h-3.5 w-3.5" /> Consultar
+                        <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
                       </button>
                       <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,filtered[0].id);}} className="bg-primary text-primary-foreground text-xs px-4 py-2 font-bold hover:opacity-90 transition flex items-center gap-1" style={{ borderRadius: cfg.cardRounded }}>
                         <Plus className="h-3.5 w-3.5" /> Añadir
@@ -1952,7 +2576,7 @@ export function PublicCatalog({
                 </div>
               </article>
             )}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
               {filtered.slice(1).map((p) => (
                 <article
                   key={p.id}
@@ -1978,7 +2602,7 @@ export function PublicCatalog({
                     <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
                     <div className="flex gap-1.5">
                       <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="flex-1 text-[10px] border py-1.5 hover:bg-accent transition flex items-center justify-center gap-0.5" style={{ borderRadius: cfg.cardRounded }}>
-                        <MessageCircle className="h-3 w-3" /> Consultar
+                        <WhatsAppIcon className="h-3 w-3" /> Consultar
                       </button>
                       <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="bg-primary text-primary-foreground w-7 h-7 flex items-center justify-center hover:opacity-90 transition shrink-0" style={{ borderRadius: cfg.cardRounded }}>
                         <Plus className="h-3.5 w-3.5" />
@@ -2054,7 +2678,7 @@ export function PublicCatalog({
                         <div className="flex items-center justify-between">
                           <span className="text-white font-bold text-sm">{formatPrice(p.price)}</span>
                           <div className="flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm"><MessageCircle className="h-3 w-3" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm"><WhatsAppIcon className="h-3 w-3" /></button>
                             <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-7 w-7 bg-white text-black flex items-center justify-center hover:bg-white/90 transition"><Plus className="h-3 w-3" /></button>
                           </div>
                         </div>
@@ -2099,7 +2723,7 @@ export function PublicCatalog({
                       </div>
                       <div className="flex gap-2 shrink-0">
                         <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-10 px-4 text-xs font-bold border border-white/50 text-white backdrop-blur-sm hover:bg-white/10 transition" style={{ borderRadius: cfg.cardRounded }}>
-                          <MessageCircle className="h-3.5 w-3.5 inline mr-1" />Consultar
+                          <WhatsAppIcon className="h-3.5 w-3.5 inline mr-1" />Consultar
                         </button>
                         <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-10 px-4 text-xs font-bold text-black hover:opacity-90 transition" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}>
                           <Plus className="h-3.5 w-3.5 inline" />
@@ -2112,7 +2736,7 @@ export function PublicCatalog({
                       <div className="flex items-center justify-between">
                         <span className="text-white font-black text-sm">{formatPrice(p.price)}</span>
                         <div className="flex gap-1">
-                          <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm" style={{ borderRadius: cfg.cardRounded }}><MessageCircle className="h-3 w-3" /></button>
+                                                     <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm" style={{ borderRadius: cfg.cardRounded }}><WhatsAppIcon className="h-3 w-3" /></button>
                           <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}><Plus className="h-3 w-3 text-white" /></button>
                         </div>
                       </div>
@@ -2147,7 +2771,7 @@ export function PublicCatalog({
                         <div className="flex items-center justify-between">
                           <span className="font-black text-base" style={{ color: "var(--primary)" }}>{formatPrice(group[0].price)}</span>
                           <div className="flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); consultProduct(group[0].name); }} className="h-7 w-7 border border-white/30 text-white flex items-center justify-center hover:bg-white/10 backdrop-blur-sm" style={{ borderRadius: cfg.cardRounded }}><MessageCircle className="h-3 w-3" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); consultProduct(group[0].name); }} className="h-7 w-7 border border-white/30 text-white flex items-center justify-center hover:bg-white/10 backdrop-blur-sm" style={{ borderRadius: cfg.cardRounded }}><WhatsAppIcon className="h-3 w-3" /></button>
                             <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, group[0].id); }} className="h-7 w-7 flex items-center justify-center hover:opacity-90" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}><Plus className="h-3 w-3 text-white" /></button>
                           </div>
                         </div>
@@ -2182,7 +2806,7 @@ export function PublicCatalog({
           </div>
         ) : cfg.layout === "diagonal" ? (
           /* ── DIAGONAL layout: slanted clip-path cuts — Nike / streetwear editorial */
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
+          <div className={cn("grid gap-0", isMockup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
             {filtered.map((p, i) => {
               const fallback = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
               const slantRight = "polygon(0 0, 100% 0, 100% 88%, 0 100%)";
@@ -2218,7 +2842,7 @@ export function PublicCatalog({
                   <div className="px-5 pt-0 pb-5 -mt-4 relative z-10">
                     {/* Category label */}
                     <p className="text-[9px] uppercase tracking-[0.3em] font-bold mb-1" style={{ color: "var(--primary)" }}>
-                      {store.categories.find(c => c.id === p.categoryId)?.name}
+                      {parseCategoryName(store.categories.find(c => c.id === p.categoryId)?.name || "").label}
                     </p>
                     <h3 className="font-black text-base uppercase tracking-widest line-clamp-1 mb-3" style={{ color: "var(--foreground)" }}>
                       {p.name}
@@ -2236,7 +2860,7 @@ export function PublicCatalog({
                           className="h-9 px-3 text-xs font-black uppercase tracking-widest border transition hover:opacity-70"
                           style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
                         >
-                          <MessageCircle className="h-3.5 w-3.5" />
+                          <WhatsAppIcon className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
@@ -2254,7 +2878,7 @@ export function PublicCatalog({
           </div>
         ) : cfg.layout === "arch" ? (
           /* ── ARCH layout: arched portrait frames — luxury cosmetics / Byredo / AESOP style */
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 px-2 pb-4">
+          <div className={cn("grid gap-4 px-2 pb-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
             {filtered.map((p) => {
               const fallback = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80";
               return (
@@ -2330,18 +2954,23 @@ export function PublicCatalog({
                           <div
                             key={idx}
                             className={cn(
-                              "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
+                              "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-zinc-950",
                               idx === currentBannerIndex
                                 ? "opacity-100 scale-100 z-10"
                                 : "opacity-0 scale-105 z-0 pointer-events-none"
                             )}
                           >
+                            {/* Blurred background for PC */}
+                            <div 
+                              className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                              style={{ backgroundImage: `url(${slide})` }}
+                            />
                             <img
                               src={slide}
                               alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover md:object-contain relative z-10"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-20" />
                           </div>
                         ))}
                       </div>
@@ -2422,10 +3051,27 @@ export function PublicCatalog({
             {/* 2. Spotlight Carousel (Featured Products) */}
             {(() => {
               if (activeCat !== "all" || query.trim() !== "") return null;
-              const featuredProducts = productsWithImages.filter(
+              let isSaleOnly = false;
+              let isFallback = false;
+              let featuredProducts = productsWithImages.filter(
                 (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
               );
+              if (featuredProducts.length === 0) {
+                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
+                isSaleOnly = featuredProducts.length > 0;
+              }
+              if (featuredProducts.length === 0) {
+                featuredProducts = productsWithImages.slice(0, 4);
+                isFallback = true;
+              }
               if (featuredProducts.length === 0) return null;
+
+              const headerText = isSaleOnly 
+                ? "Ofertas Especiales" 
+                : isFallback 
+                ? "Te Recomendamos" 
+                : "Destacados de la Casa";
+
               return (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300" style={{ borderColor: "var(--primary)" }}>
@@ -2439,7 +3085,7 @@ export function PublicCatalog({
                       >
                         <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
                       </svg>
-                      Nuestros Destacados
+                      {headerText}
                     </h3>
                     <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest animate-pulse">Desliza →</span>
                   </div>
@@ -2451,7 +3097,7 @@ export function PublicCatalog({
                         <div
                           key={p.id}
                           onClick={() => setViewingProduct(p)}
-                          className="w-[280px] sm:w-[320px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
+                          className="w-[220px] sm:w-[280px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
                         >
                           <div className="space-y-3">
                             {/* Image */}
@@ -2495,7 +3141,7 @@ export function PublicCatalog({
                                 borderColor: "var(--primary)",
                                 color: "var(--primary)"
                               }}
-                              className="border bg-zinc-950/80 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 font-extrabold text-[10px] tracking-widest uppercase rounded-full px-5 py-2.5 shadow-[0_0_10px_rgba(234,88,12,0.1)] hover:shadow-[0_0_15px_var(--primary)]/40 flex items-center gap-1.5"
+                              className="border bg-zinc-950/80 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 font-extrabold text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest uppercase rounded-full px-3 py-2 sm:px-5 sm:py-2.5 shadow-[0_0_10px_rgba(234,88,12,0.1)] hover:shadow-[0_0_15px_var(--primary)]/40 flex items-center gap-1"
                             >
                               <Plus className="h-3.5 w-3.5" />
                               Añadir
@@ -2605,8 +3251,8 @@ export function PublicCatalog({
                 </div>
               </div>
             </div>
-
-            {/* 4. Product Grid */}
+ 
+             {/* 4. Product Grid */}
             <div className="space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
                 {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
@@ -2625,7 +3271,7 @@ export function PublicCatalog({
                 }
                 
                 return (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
                     {gridProducts.map((p) => (
                       <article
                         key={p.id}
@@ -2692,9 +3338,436 @@ export function PublicCatalog({
               })()}
             </div>
           </div>
+        ) : cfg.layout === "nature" ? (
+          /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
+          <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
+            {/* Elegant botanical watermarks in background */}
+            <div className="absolute top-[8%] -left-8 w-24 h-24 text-[#4b5c43] opacity-[0.06] pointer-events-none select-none z-0">
+              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-[15deg]">
+                <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+              </svg>
+            </div>
+            <div className="absolute top-[48%] -right-12 w-32 h-32 text-[#4b5c43] opacity-[0.06] pointer-events-none select-none z-0">
+              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-45">
+                <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+              </svg>
+            </div>
+
+                        {/* 1. Fluid Nature Banner */}
+            {(() => {
+              const banners = activeBanners;
+              return (
+                <div className="relative w-full z-10">
+                  {/* Image container: taller and curves in dynamically */}
+                  <div className="relative w-full h-[38vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border border-[#e3e7dc] bg-gradient-to-br from-[#dce4d4] to-[#f0f4eb] shadow-md">
+                    {banners.length > 0 ? (
+                      <>
+                        {/* Slides */}
+                                                 <div className="w-full h-full relative">
+                          {banners.map((slide, idx) => (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-[#f0f4eb]",
+                                idx === currentBannerIndex
+                                  ? "opacity-100 scale-100 z-10"
+                                  : "opacity-0 scale-105 z-0 pointer-events-none"
+                              )}
+                            >
+                              {/* Blurred background for PC */}
+                              <div 
+                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                                style={{ backgroundImage: `url(${slide})` }}
+                              />
+                              <img
+                                src={slide}
+                                alt={`${store.bannerTitle || store.name} ${idx + 1}`}
+                                className="w-full h-full object-cover md:object-contain relative z-10"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Arrows */}
+                        {banners.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
+                              }}
+                              className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 text-[#4b5c43] flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
+                            >
+                              <ChevronLeft className="h-4.5 w-4.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+                              }}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 text-[#4b5c43] flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
+                            >
+                              <ChevronRight className="h-4.5 w-4.5" />
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      /* Elegant nature placeholder banner */
+                      <div className="w-full h-full relative">
+                        {/* Elegant background colors with organic circles */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#e4e9dc] to-[#fcfcfb] opacity-80" />
+                        <div className="absolute right-2 bottom-0 top-0 w-1/2 text-[#4b5c43]/10 pointer-events-none flex items-center justify-center">
+                          <svg viewBox="0 0 100 100" fill="currentColor" className="w-40 h-40">
+                            <path d="M50 0C55 25 80 45 100 50C80 55 55 80 50 100C45 80 20 55 0 50C20 45 45 25 50 0Z" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Overlapping editorial card details */}
+                  {(() => {
+                    const nicheTags = getNicheTaglines(store.niche);
+                    const finalTagline = store.bannerTagline || nicheTags.tagline;
+                    const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
+                    return (
+                      <div className="relative -mt-14 mx-4 z-20 bg-[#faf9f5]/95 backdrop-blur-md border border-[#e3e7dc] rounded-[2rem] p-5 sm:p-6 shadow-[0_15px_30px_rgba(75,92,67,0.08)] text-left flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <span className="text-[9px] sm:text-[10px] text-[#5e6f56] font-bold tracking-widest uppercase font-sans">
+                            {finalTagline}
+                          </span>
+                          <h2 className="text-xl sm:text-2xl font-serif text-[#374431] font-normal leading-snug">
+                            {store.bannerTitle || `Abraza la pureza de la naturaleza`}
+                          </h2>
+                          {store.bioDescription && (
+                            <p className="text-stone-500 text-xs line-clamp-2 leading-relaxed">
+                              {store.bioDescription}
+                            </p>
+                          )}
+                        </div>
+                        <div className="pt-3 flex gap-2 items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              document.getElementById("nature-coleccion")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            className="inline-block bg-[#4b5c43] text-white text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                          >
+                            {nicheTags.buttonText}
+                          </button>
+                          {/* Decorative small organic element */}
+                          <span className="text-stone-400 text-xs italic flex items-center gap-1.5 font-serif">
+                            <Leaf className="h-3.5 w-3.5 text-[#4b5c43]/60" /> {finalBottomTag}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
+
+            {/* 2. Spotlight Carousel (Featured Products) */}
+            {(() => {
+              if (activeCat !== "all" || query.trim() !== "") return null;
+              
+              let isFallback = false;
+              let isSaleOnly = false;
+              let featuredProducts = productsWithImages.filter(
+                (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
+              );
+              if (featuredProducts.length === 0) {
+                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
+                isSaleOnly = featuredProducts.length > 0;
+                isFallback = true;
+              }
+              if (featuredProducts.length === 0) {
+                featuredProducts = productsWithImages.slice(0, 4);
+                isFallback = true;
+              }
+              if (featuredProducts.length === 0) return null;
+              
+              return (
+                <div className="space-y-4 relative z-10">
+                  <div className="flex items-center justify-between border-l-2 pl-3 border-[#4b5c43] transition-colors duration-300">
+                    <h3 className="text-sm font-serif font-normal text-[#374431] tracking-wider flex items-center gap-2 uppercase">
+                      <Flower className="h-4 w-4 text-[#4b5c43] animate-pulse" />
+                      {isSaleOnly ? "Ofertas Ecológicas" : isFallback ? "Recomendaciones" : "Destacados Naturales"}
+                    </h3>
+                    <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans">Desliza →</span>
+                  </div>
+
+                  {/* Horizontal Scroll of Featured Products */}
+                  <div className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
+                    <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
+                      {featuredProducts.map((p) => (
+                        <div
+                          key={p.id}
+                          onClick={() => setViewingProduct(p)}
+                          className="w-[210px] sm:w-[260px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border border-[#e3e7dc] bg-white hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
+                        >
+                          <div className="space-y-3">
+                            {/* Curved nature image card */}
+                            <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] bg-[#f4f6f0] border border-[#e3e7dc]/40">
+                              <img
+                                src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
+                                alt={p.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                loading="lazy"
+                              />
+                              <div className="absolute bottom-3 left-3 z-10 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md bg-[#4b5c43] font-sans">
+                                {p.isOnSale ? "Eco-Oferta" : isFallback ? "Eco-Sugerencia" : "Destacado"}
+                              </div>
+                            </div>
+                            {/* Info */}
+                            <div className="space-y-1 text-left px-1">
+                              <span className="text-[9px] font-bold text-[#5e6f56] uppercase tracking-wider font-sans block">Orgánico & Sostenible</span>
+                              <h4 className="font-serif font-normal text-sm text-[#374431] group-hover:text-[#4b5c43] transition-colors truncate">
+                                {p.name}
+                              </h4>
+                              <p className="text-[11px] text-stone-500 line-clamp-2 h-8 leading-snug font-sans">
+                                {(p.description || "").replace(/#destacado/g, "").trim()}
+                              </p>
+                            </div>
+                          </div>
+                          {/* Buy section */}
+                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#f4f6f0] px-1">
+                            <div className="text-left">
+                              <span className="text-sm font-semibold font-sans text-[#4b5c43]">
+                                {formatPrice(p.price)}
+                              </span>
+                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                <span className="text-[10px] text-stone-400 line-through block -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              {/* Consult button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  consultProduct(p.name);
+                                }}
+                                className="h-7 w-7 rounded-full border border-stone-200 bg-stone-50 text-[#4b5c43] hover:bg-[#4b5c43] hover:text-white transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                title="Consultar por WhatsApp"
+                              >
+                                <WhatsAppIcon className="h-3.5 w-3.5" />
+                              </button>
+                              {/* Add button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cartAdd(store.id, p.id);
+                                  setCartOpen(true);
+                                }}
+                                className="h-7 px-3 rounded-full text-white bg-[#4b5c43] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans"
+                              >
+                                <Plus className="h-3 w-3" />
+                                Añadir
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+                        {/* 3. Categories */}
+            <div id="nature-coleccion" className="space-y-6 font-sans relative z-10 scroll-mt-24">
+              {/* Category selector (Minimalist Editorial) */}
+              <div className="space-y-3 border-b border-[#e3e7dc]/50 pb-2">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8fa285] text-left">
+                  {getNicheCategoryTitle(store.niche)}
+                </h3>
+                
+                <div className="overflow-x-auto scrollbar-none -mx-4 pt-1 sm:-mx-4">
+                  <div className="flex gap-4 px-4 w-max min-w-full">
+                    <button
+                      onClick={() => setActiveCat("all")}
+                      className={cn(
+                        "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
+                        activeCat === "all"
+                          ? "text-[#4b5c43] font-extrabold"
+                          : "text-stone-400 hover:text-stone-700"
+                      )}
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+                      <span>Ver Todo</span>
+                      {activeCat === "all" && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4b5c43] rounded-full animate-in fade-in zoom-in duration-300" />
+                      )}
+                    </button>
+
+                    {store.products.some(p => p.isOnSale) && (
+                      <button
+                        onClick={() => setActiveCat("sale")}
+                        className={cn(
+                          "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
+                          activeCat === "sale"
+                            ? "text-[#4b5c43] font-extrabold"
+                            : "text-stone-400 hover:text-stone-700"
+                        )}
+                      >
+                        <Flame className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                        <span>Eco-Ofertas</span>
+                        {activeCat === "sale" && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4b5c43] rounded-full animate-in fade-in zoom-in duration-300" />
+                        )}
+                      </button>
+                    )}
+
+                    {store.categories.map((c) => {
+                      const { label, iconKey } = parseCategoryName(c.name);
+                      const active = activeCat === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setActiveCat(c.id)}
+                          className={cn(
+                            "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
+                            active
+                              ? "text-[#4b5c43] font-extrabold"
+                              : "text-stone-400 hover:text-stone-700"
+                          )}
+                        >
+                          {iconKey ? (
+                            <CategoryIcon iconKey={iconKey} className="h-3.5 w-3.5 shrink-0" />
+                          ) : (
+                            <Utensils className="h-3.5 w-3.5 shrink-0" />
+                          )}
+                          <span>{label}</span>
+                          {active && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4b5c43] rounded-full animate-in fade-in zoom-in duration-300" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Product Grid */}
+            <div className="space-y-4 relative z-10">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[#5e6f56] text-left">
+                {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
+              </h3>
+              {(() => {
+                const gridProducts = activeCat === "all"
+                  ? filtered.filter((p) => !(p.description?.includes("#destacado") || p.name?.includes("#destacado")))
+                  : filtered;
+                
+                if (gridProducts.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-xs text-stone-400 border border-[#e3e7dc] rounded-[2rem] bg-white/60">
+                      No hay productos botánicos en esta categoría.
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
+                    {gridProducts.map((p, idx) => {
+                      const isEven = idx % 2 === 0;
+                      return (
+                        <article
+                          key={p.id}
+                          className={cn(
+                            "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border-none bg-[#faf9f5] hover:shadow-[0_15px_30px_rgba(75,92,67,0.06)] shadow-xs select-none",
+                            isEven ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1" : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1"
+                          )}
+                          style={{
+                            boxShadow: "0 8px 24px -8px rgba(75, 92, 67, 0.08)"
+                          }}
+                          onClick={() => setViewingProduct(p)}
+                        >
+                          <div>
+                            {/* framed image with margins - leaf shapes alternating */}
+                            <div className={cn(
+                              "relative overflow-hidden aspect-square m-2.5 bg-[#f4f6f0] border border-[#e3e7dc]/30 transition-all duration-500",
+                              isEven ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]" : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]"
+                            )}>
+                              <img
+                                src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
+                                alt={p.name}
+                                className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                loading="lazy"
+                              />
+                              {p.isOnSale && (
+                                <span className="absolute top-3 right-3 text-white bg-[#4b5c43] text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans">
+                                  Oferta
+                                </span>
+                              )}
+                            </div>
+                            {/* Info */}
+                            <div className="p-3.5 pt-1 space-y-1 text-left">
+                              <span className="text-[8px] font-black text-[#8fa285] uppercase tracking-widest block font-sans">Orgánico</span>
+                              <h4 className="font-serif font-normal text-sm text-[#374431] group-hover:text-[#4b5c43] transition-colors line-clamp-1">
+                                {p.name}
+                              </h4>
+                              {p.description && (
+                                <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
+                                  {p.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Price & Actions */}
+                          <div className="px-3.5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
+                            <div className="flex flex-col text-left px-0.5">
+                              <span className="text-sm font-semibold text-[#4b5c43] font-sans">{formatPrice(p.price)}</span>
+                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                              {/* Consult */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  consultProduct(p.name);
+                                }}
+                                className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[#4b5c43] hover:bg-[#4b5c43] hover:text-white transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                title="Consultar por WhatsApp"
+                              >
+                                <WhatsAppIcon className="h-3.5 w-3.5" />
+                              </button>
+                              {/* Add */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cartAdd(store.id, p.id);
+                                  setCartOpen(true);
+                                }}
+                                className="h-7.5 px-3 rounded-full text-white bg-[#4b5c43] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
+                              >
+                                <Plus className="h-3 w-3" />
+                                Añadir
+                              </button>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         ) : cfg.layout === "bloom" ? (
           /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
-          <div className={cn("space-y-8 select-none relative", store.niche === "floreria" ? "font-serif" : "font-sans")}>
+          <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
             {store.niche === "floreria" && (
               <>
                 {/* Elegant floating leafy watermarks in background */}
@@ -2714,12 +3787,15 @@ export function PublicCatalog({
             {/* 1. Cover Banner Carousel */}
             {(() => {
               const banners = activeBanners;
+              const bStyle = store.niche === "floreria" ? "curved" : (store.bannerStyle || "framed");
               return (
                 <div className={cn(
-                  "relative w-full aspect-[21/9] sm:aspect-[21/7] p-1 overflow-hidden group/banner z-10",
-                  store.niche === "floreria"
-                    ? "rounded-[3.5rem_1.5rem_3.5rem_1.5rem] bg-gradient-to-tr from-rose-200/50 via-[#fffaf8] to-rose-200/50 shadow-[0_12px_35px_rgba(251,207,214,0.4)] border border-rose-100/50"
-                    : "rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-md"
+                  "relative w-full aspect-[21/9] sm:aspect-[21/7] overflow-hidden group/banner z-10",
+                  bStyle === "direct"
+                    ? "rounded-none -mx-4 w-[calc(100%+2rem)] border-none shadow-none p-0"
+                    : bStyle === "curved"
+                      ? "rounded-[3.5rem_1.5rem_3.5rem_1.5rem] bg-[var(--card)] border border-[var(--border)] shadow-md p-1"
+                      : "rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-md p-1"
                 )}>
                   <div className={cn(
                     "w-full h-full rounded-[inherit] overflow-hidden relative",
@@ -2728,23 +3804,28 @@ export function PublicCatalog({
                     {banners.length > 0 ? (
                       <>
                         {/* Slides */}
-                        <div className="w-full h-full relative">
+                                                 <div className="w-full h-full relative">
                           {banners.map((slide, idx) => (
                             <div
                               key={idx}
                               className={cn(
-                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
+                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-[#fdfaf8]",
                                 idx === currentBannerIndex
                                   ? "opacity-100 scale-100 z-10"
                                   : "opacity-0 scale-105 z-0 pointer-events-none"
                               )}
                             >
+                              {/* Blurred background for PC */}
+                              <div 
+                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                                style={{ backgroundImage: `url(${slide})` }}
+                              />
                               <img
                                 src={slide}
                                 alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover md:object-contain relative z-10"
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/35 via-transparent to-transparent" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/35 via-transparent to-transparent z-20" />
                             </div>
                           ))}
                         </div>
@@ -2808,7 +3889,10 @@ export function PublicCatalog({
                       >
                         <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
                         <div className="relative z-10">
-                          <h2 className={cn("text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide", store.niche === "floreria" ? "font-serif" : "font-sans font-bold")}>
+                          <h2 
+                            style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                            className={cn("text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide", isSerif ? "font-serif" : "font-sans font-bold")}
+                          >
                             {store.name}
                           </h2>
                           <p className={cn("text-xs font-semibold uppercase tracking-widest mt-2 font-sans", store.niche === "floreria" ? "text-rose-600/80" : "text-[var(--primary)]")}>
@@ -2850,10 +3934,13 @@ export function PublicCatalog({
                     "flex items-center justify-between border-l-2 pl-3 transition-colors duration-300",
                     store.niche === "floreria" ? "border-rose-400" : "border-[var(--primary)]"
                   )}>
-                    <h3 className={cn(
-                      "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
-                      store.niche === "floreria" ? "font-serif" : "font-sans font-bold"
-                    )}>
+                                         <h3 
+                      style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                      className={cn(
+                        "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
+                        isSerif ? "font-serif" : "font-sans font-bold"
+                      )}
+                    >
                       {store.niche === "floreria" ? (
                         <>
                           <Flower className="h-4 w-4 text-rose-500 animate-pulse" />
@@ -2877,19 +3964,14 @@ export function PublicCatalog({
                           key={p.id}
                           onClick={() => setViewingProduct(p)}
                           className={cn(
-                            "w-[280px] sm:w-[320px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative",
-                            store.niche === "floreria"
-                              ? "rounded-[2.5rem_1rem_2.5rem_1rem] border border-rose-100/40 bg-white/75 hover:bg-white shadow-[0_8px_30px_rgba(253,244,245,0.7)] hover:shadow-[0_15px_35px_rgba(251,207,214,0.35)]"
-                              : "rounded-3xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md"
+                            featuredCardClass
                           )}
                         >
                           <div className="space-y-3">
                             {/* Curved image like flower petal / Standard rounded image */}
                             <div className={cn(
                               "relative aspect-square w-full overflow-hidden",
-                              store.niche === "floreria"
-                                ? "rounded-t-[7rem] rounded-b-[1.5rem] bg-rose-50/20 border border-rose-100/30"
-                                : "rounded-2xl bg-muted border border-[var(--border)]"
+                              featuredImgClass
                             )}>
                               <img
                                 src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
@@ -2921,13 +4003,20 @@ export function PublicCatalog({
                                   {isFallback ? "Arreglo Sugerido" : "Sugerencia de la Florista"}
                                 </span>
                               )}
-                              <h4 className={cn(
-                                "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
-                                store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
-                              )}>
+                              <h4 
+                                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                                className={cn(
+                                  "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
+                                  isSerif ? "font-serif" : "font-sans",
+                                  store.niche === "floreria" ? "group-hover:text-rose-600" : "group-hover:text-[var(--primary)]"
+                                )}
+                              >
                                 {p.name}
                               </h4>
-                              <p className="text-xs text-stone-500 line-clamp-2 h-8 leading-relaxed font-sans">
+                              <p 
+                                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.8 : undefined }}
+                                className="text-xs text-stone-500 line-clamp-2 h-8 leading-relaxed font-sans"
+                              >
                                 {(p.description || "").replace(/#destacado/g, "").trim()}
                               </p>
                             </div>
@@ -2954,17 +4043,27 @@ export function PublicCatalog({
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                              {/* Consult button (Green) */}
+                              {/* Consult button (Adapts to Brand Color) */}
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   consultProduct(p.name);
                                 }}
-                                className="h-8 w-8 rounded-full border border-emerald-100 bg-emerald-50 hover:bg-emerald-500 hover:text-white transition-all duration-300 flex items-center justify-center text-emerald-600 shrink-0 shadow-xs active:scale-95"
+                                style={{
+                                  borderColor: store.niche === "floreria" ? undefined : "var(--primary)",
+                                  backgroundColor: store.niche === "floreria" ? undefined : "transparent",
+                                  color: store.niche === "floreria" ? undefined : "var(--primary)",
+                                }}
+                                className={cn(
+                                  "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
+                                  store.niche === "floreria"
+                                    ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                    : "hover:bg-[var(--primary)] hover:text-white"
+                                )}
                                 title="Consultar por WhatsApp"
                               >
-                                <MessageCircle className="h-4 w-4" />
+                                <WhatsAppIcon className="h-4 w-4" />
                               </button>
                               {/* Add to Cart button */}
                               <button
@@ -2977,7 +4076,7 @@ export function PublicCatalog({
                                 style={{
                                   backgroundColor: "var(--primary)",
                                 }}
-                                className="h-8 px-4 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-sm active:scale-95 font-sans"
+                                className="h-8 px-2.5 sm:px-4 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase shadow-sm active:scale-95 font-sans"
                               >
                                 <Plus className="h-3 w-3" />
                                 Añadir
@@ -3014,7 +4113,10 @@ export function PublicCatalog({
 
               {/* Inline Horizontal Category Selector */}
               <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left">
+                <h3 
+                  style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.7 : undefined }}
+                  className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left"
+                >
                   Categorías
                 </h3>
                 
@@ -3102,7 +4204,10 @@ export function PublicCatalog({
 
             {/* 4. Product Grid */}
             <div className="space-y-4 relative z-10">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left">
+              <h3 
+                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.7 : undefined }}
+                className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left"
+              >
                 {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
               </h3>
               {(() => {
@@ -3124,25 +4229,19 @@ export function PublicCatalog({
                 }
                 
                 return (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
                     {gridProducts.map((p) => (
                       <article
                         key={p.id}
                         className={cn(
-                          "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group",
-                          store.niche === "floreria"
-                            ? "border border-rose-100/30 rounded-[2.5rem_0.5rem_2.5rem_0.5rem] bg-white/70 hover:bg-white hover:scale-[1.02] shadow-[0_4px_15px_rgba(253,244,245,0.5)] hover:shadow-[0_8px_25px_rgba(251,207,214,0.25)]"
-                            : "border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md"
+                          gridCardClass
                         )}
                         onClick={() => setViewingProduct(p)}
                       >
                         <div>
                           {/* Asymmetric or standard image wrapper */}
                           <div className={cn(
-                            "relative overflow-hidden aspect-square m-2",
-                            store.niche === "floreria"
-                              ? "bg-rose-50/20 rounded-[2rem_0.5rem_2rem_0.5rem] border border-rose-100/20"
-                              : "bg-muted rounded-xl border border-[var(--border)]"
+                            gridImgClass
                           )}>
                             <img
                               src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
@@ -3166,14 +4265,20 @@ export function PublicCatalog({
                           </div>
                           {/* Info */}
                           <div className="p-3 pt-1 space-y-1 text-left">
-                            <h4 className={cn(
-                              "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
-                              store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
-                            )}>
+                            <h4 
+                              style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined }}
+                              className={cn(
+                                "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
+                                store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
+                              )}
+                            >
                               {p.name}
                             </h4>
                             {p.description && (
-                              <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
+                              <p 
+                                style={{ color: (store.niche === "general" && store.textColor) ? store.textColor : undefined, opacity: (store.niche === "general" && store.textColor) ? 0.8 : undefined }}
+                                className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans"
+                              >
                                 {p.description}
                               </p>
                             )}
@@ -3189,18 +4294,28 @@ export function PublicCatalog({
                             )}
                           </div>
                           <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                            {/* Consult button (Green) */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                consultProduct(p.name);
-                              }}
-                              className="h-8 w-8 rounded-full border border-emerald-100 bg-emerald-50 hover:bg-emerald-500 hover:text-white transition-all duration-300 flex items-center justify-center text-emerald-600 shrink-0 shadow-xs active:scale-95"
-                              title="Consultar por WhatsApp"
-                            >
-                              <MessageCircle className="h-4 w-4" />
-                            </button>
+                                                         {/* Consult button (Adapts to Brand Color) */}
+                             <button
+                               type="button"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 consultProduct(p.name);
+                               }}
+                               style={{
+                                 borderColor: store.niche === "floreria" ? undefined : "var(--primary)",
+                                 backgroundColor: store.niche === "floreria" ? undefined : "transparent",
+                                 color: store.niche === "floreria" ? undefined : "var(--primary)",
+                               }}
+                               className={cn(
+                                 "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
+                                 store.niche === "floreria"
+                                   ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                   : "hover:bg-[var(--primary)] hover:text-white"
+                               )}
+                               title="Consultar por WhatsApp"
+                             >
+                               <WhatsAppIcon className="h-4 w-4" />
+                             </button>
                             {/* Add to Cart button */}
                             <button
                               type="button"
@@ -3230,31 +4345,53 @@ export function PublicCatalog({
           /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
           <div className="space-y-4">
             {/* Banner de portada */}
-            {activeBanners[0] ? (
-              <div className="relative w-full overflow-hidden" style={{ borderRadius: cfg.cardRounded, aspectRatio: "16/7" }}>
-                <img
-                  src={activeBanners[0]}
-                  alt={store.name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
-                    {(store as any).bannerTitle || `Catálogo ${store.name}`}
-                  </p>
-                  <p className="text-white/70 text-xs mt-0.5">Toca un producto para más info</p>
+            {(() => {
+              const bStyle = store.bannerStyle || "framed";
+              const borderVal = bStyle === "direct"
+                ? "0px"
+                : bStyle === "curved"
+                  ? "3.5rem 1.5rem 3.5rem 1.5rem"
+                  : "1.5rem"; // 24px rounded
+              return activeBanners[0] ? (
+                <div 
+                  className={cn(
+                    "relative w-full overflow-hidden bg-zinc-950",
+                    bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : ""
+                  )} 
+                  style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
+                >
+                  {/* Blurred background for PC */}
+                  <div 
+                    className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                    style={{ backgroundImage: `url(${activeBanners[0]})` }}
+                  />
+                  <img
+                    src={activeBanners[0]}
+                    alt={store.name}
+                    className="absolute inset-0 w-full h-full object-cover md:object-contain"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                    <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
+                      {(store as any).bannerTitle || `Catálogo ${store.name}`}
+                    </p>
+                    <p className="text-white/70 text-xs mt-0.5">Toca un producto para más info</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              /* Placeholder banner si no hay imagen */
-              <div
-                className="w-full flex flex-col items-center justify-center gap-2 py-8 px-4 text-center"
-                style={{ borderRadius: cfg.cardRounded, background: `linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, #fff) 100%)` }}
-              >
-                <p className="text-white font-black text-2xl leading-tight">{(store as any).bannerTitle || `Catálogo ${store.name}`}</p>
-                <p className="text-white/80 text-sm">Bienvenido · Toca cualquier producto</p>
-              </div>
-            )}
+              ) : (
+                /* Placeholder banner si no hay imagen */
+                <div
+                  className={cn(
+                    "w-full flex flex-col items-center justify-center gap-2 py-8 px-4 text-center",
+                    bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : ""
+                  )}
+                  style={{ borderRadius: borderVal, background: `linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, #fff) 100%)` }}
+                >
+                  <p className="text-white font-black text-2xl leading-tight">{(store as any).bannerTitle || `Catálogo ${store.name}`}</p>
+                  <p className="text-white/80 text-sm">Bienvenido · Toca cualquier producto</p>
+                </div>
+              );
+            })()}
 
             {/* Grid de productos 2 columnas estilo app */}
             <div className="grid grid-cols-2 gap-3">
@@ -3305,7 +4442,7 @@ export function PublicCatalog({
           </div>
         ) : (
           /* ── GRID layout: standard responsive grid */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
             {filtered.map((p) => (
               <article
                 key={p.id}
@@ -3336,7 +4473,7 @@ export function PublicCatalog({
                   </div>
                   <div className="flex gap-2 pt-1">
                     <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium py-2 hover:bg-accent transition border border-border bg-background" style={{ borderRadius: cfg.cardRounded }}>
-                      <MessageCircle className="h-3.5 w-3.5" /> Consultar
+                      <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
                     </button>
                     <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="inline-flex items-center justify-center bg-primary text-primary-foreground w-9 h-9 hover:bg-primary/90 transition shrink-0" style={{ borderRadius: cfg.cardRounded }} aria-label="Agregar al carrito">
                       <Plus className="h-4 w-4" />
@@ -3448,7 +4585,8 @@ export function PublicCatalog({
                         className="inline-flex py-2.5 px-4 rounded-xl border items-center justify-center gap-2 text-xs font-black uppercase tracking-wider transition-all hover:scale-[1.01] hover:bg-muted/40 shadow-sm bg-card text-foreground"
                         style={{ borderColor: "var(--border)" }}
                       >
-                        📍 Ver en Google Maps
+                        <MapPin className="h-3.5 w-3.5" />
+                        Ver en Google Maps
                       </a>
                       <p className="text-[11px] text-muted-foreground font-semibold px-4 leading-relaxed">
                         {store.locationAddress}
@@ -3487,28 +4625,45 @@ export function PublicCatalog({
       )}
 
       {/* ── FAB ──────────────────────────────────────── */}
-      <button
-        onClick={() => (cartCount > 0 ? setCartOpen(true) : supportClick())}
-        className="fixed bottom-8 right-4 z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition"
-        style={{
-          borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
-          backgroundColor: "var(--primary)",
-          color: effectiveIsDark ? "#000" : "#fff",
-          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
-        }}
-        aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
-      >
-        {cartCount > 0 ? (
-          <>
-            <ShoppingBag className="h-6 w-6" />
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2" style={{ borderColor: "var(--primary)" }}>
-              {cartCount}
-            </span>
-          </>
-        ) : (
-          <ShoppingBag className="h-6 w-6 opacity-70" />
-        )}
-      </button>
+      {(!isMockup || cartCount > 0) && (
+        <button
+          onClick={() => {
+            if (isMockup) {
+              if (cartCount > 0) {
+                setCartOpen(true);
+              }
+              return;
+            }
+            if (cartCount > 0) {
+              setCartOpen(true);
+            } else {
+              supportClick();
+            }
+          }}
+          className={cn(
+            "z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition",
+            isMockup ? "absolute bottom-6 right-4" : "fixed bottom-8 right-4"
+          )}
+          style={{
+            borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
+            backgroundColor: "var(--primary)",
+            color: effectiveIsDark ? "#000" : "#fff",
+            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
+          }}
+          aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
+        >
+          {cartCount > 0 ? (
+            <>
+              <ShoppingBag className="h-6 w-6" />
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2" style={{ borderColor: "var(--primary)" }}>
+                {cartCount}
+              </span>
+            </>
+          ) : (
+            <MessageCircle className="h-6 w-6 opacity-70" />
+          )}
+        </button>
+      )}
 
       {/* ── Cart Sheet ───────────────────────────────── */}
       <Sheet open={cartOpen} onOpenChange={setCartOpen}>
@@ -3630,7 +4785,7 @@ export function PublicCatalog({
               onClick={sendOrder}
               disabled={cartLines.length === 0}
             >
-              <MessageCircle className="h-4 w-4" />
+              <WhatsAppIcon className="h-4 w-4" />
               Enviar pedido por WhatsApp
             </button>
             {isInAppBrowser() && (
@@ -3734,7 +4889,7 @@ export function PublicCatalog({
                       borderColor: activeCat === c.id ? "var(--primary)" : "var(--border)",
                     }}
                   >
-                    {c.name}
+                    {parseCategoryName(c.name).label}
                   </button>
                 ))}
               </div>
@@ -3938,7 +5093,7 @@ export function PublicCatalog({
                         const { label, iconKey } = parseCategoryName(cat.name);
                         return (
                           <>
-                            {(cfg.layout === "bite" || cfg.layout === "bloom") && iconKey && (
+                            {(cfg.layout === "bite" || cfg.layout === "bloom" || cfg.layout === "nature") && iconKey && (
                               <CategoryIcon 
                                 iconKey={iconKey} 
                                 className="h-3.5 w-3.5 shrink-0" 
@@ -3968,7 +5123,7 @@ export function PublicCatalog({
                     }}
                     onClick={() => { consultProduct(viewingProduct.name, viewingProduct.id); setViewingProduct(null); }}
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    <WhatsAppIcon className="h-4 w-4" />
                     Consultar
                   </button>
                   <button
@@ -4107,7 +5262,7 @@ export function PublicCatalog({
                 }}
                 className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5"
               >
-                <MessageCircle className="h-4 w-4" />
+                <WhatsAppIcon className="h-4 w-4" />
                 Intentar continuar
               </button>
             </div>

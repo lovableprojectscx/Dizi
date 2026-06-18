@@ -1,13 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Lock, Check, Sparkles, Crown, Palette, Image } from "lucide-react";
+import { Lock, Check, Sparkles, Crown, Palette, Image, Sliders, Eye } from "lucide-react";
 import { type PlanId, LAYOUT_IMAGE_SPECS } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { PublicCatalog } from "@/components/public/PublicCatalog";
 
 export const Route = createFileRoute("/admin/diseno")({
   component: DisenoPage,
@@ -766,6 +767,9 @@ function DisenoPage() {
   const [bgColor, setBgColor] = useState((store as any).bgColor || "");
   const [bannerImage, setBannerImage] = useState((store as any).bannerImage || "");
   const [bannerTitle, setBannerTitle] = useState((store as any).bannerTitle || "");
+  const [bannerStyle, setBannerStyle] = useState<"direct" | "framed" | "curved">((store as any).bannerStyle || "framed");
+  const [activeCustomizerTab, setActiveCustomizerTab] = useState<"estilo" | "colores" | "banners" | "ajustes">("estilo");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const userLevel = PLAN_LEVELS[store.plan];
 
@@ -777,6 +781,7 @@ function DisenoPage() {
       setBgColor((store as any).bgColor || "");
       setBannerImage((store as any).bannerImage || "");
       setBannerTitle((store as any).bannerTitle || "");
+      setBannerStyle((store as any).bannerStyle || "framed");
       setIsLoaded(true);
     }
   }, [store, isLoaded]);
@@ -793,7 +798,8 @@ function DisenoPage() {
     brandColor !== (store.brandColor || "") ||
     effectiveBgColor !== ((store as any).bgColor || "") ||
     bannerImage !== ((store as any).bannerImage || "") ||
-    bannerTitle !== ((store as any).bannerTitle || "");
+    bannerTitle !== ((store as any).bannerTitle || "") ||
+    bannerStyle !== ((store as any).bannerStyle || "framed");
 
   const handleModelSelect = (modelId: string) => {
     const def = MODELS.find(m => m.id === modelId);
@@ -813,12 +819,14 @@ function DisenoPage() {
         bgColor: effectiveBgColor || null,
         bannerImage: bannerImage || null,
         bannerTitle: bannerTitle || null,
+        bannerStyle: bannerStyle || "framed",
       } as any);
 
       // Update local state to the saved URL with cache-busting timestamp
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
       if (updatedStore) {
         setBannerImage((updatedStore as any).bannerImage ?? "");
+        setBannerStyle((updatedStore as any).bannerStyle ?? "framed");
       }
 
       toast.success("🎨 Diseño aplicado a tu catálogo", { id: toastId });
@@ -835,387 +843,656 @@ function DisenoPage() {
     { label: "Ilimitado", level: 3, color: "text-amber-700 bg-amber-50 border border-amber-200" },
   ];
 
+
+  const previewStore = {
+    ...store,
+    model: selectedModel,
+    brandColor: brandColor,
+    bgColor: effectiveBgColor,
+    bannerImage: bannerImage,
+    bannerTitle: bannerTitle,
+    bannerStyle: bannerStyle,
+  };
+
   return (
-    <div className="max-w-5xl pb-24 space-y-10">
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-          <Palette className="h-6 w-6 text-primary" />
-          Diseño del Catálogo
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Escoge el modelo visual, el color de marca y el fondo. Los cambios se aplican al instante en tu catálogo público.
-        </p>
+    <div className="w-full max-w-7xl mx-auto px-4 py-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between border-b pb-5 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
+            <Palette className="h-8 w-8 text-primary animate-pulse" />
+            Personalizador de Diseños
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Diseña un catálogo espectacular y fácil de usar para tus clientes. Los cambios se reflejan en tiempo real.
+          </p>
+        </div>
+        <Badge className="bg-primary/10 text-primary border border-primary/20 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+          {store.model && store.model !== "default" ? `Diseño ${store.model.toUpperCase()} Activo` : "Diseño Estándar Activo"}
+        </Badge>
       </div>
 
-      {/* ── Personalización de colores ─────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* Color de Marca */}
-        <div className="rounded-2xl border bg-card p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Palette className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-bold text-sm">Color de Acento</h2>
-              <p className="text-[11px] text-muted-foreground">Botones, precios y elementos clave</p>
-            </div>
-            {brandColor && (
-              <button onClick={() => setBrandColor("")}
-                className="ml-auto text-[10px] text-destructive hover:underline font-medium">Quitar</button>
-            )}
-          </div>
-          <ColorSwatch
-            colors={BRAND_COLORS}
-            selected={brandColor}
-            onSelect={setBrandColor}
-            allowCustom
-            customLabel="Hex personalizado"
-          />
-        </div>
-
-        {/* Color de Fondo */}
-        <div className={cn("rounded-2xl border bg-card p-5 space-y-4", isBgLocked && "opacity-60")}>
-          <div className="flex items-center gap-2">
-            <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", isBgLocked ? "bg-muted" : "bg-primary/10")}>
-              {isBgLocked
-                ? <Lock className="h-4 w-4 text-muted-foreground" />
-                : <Image className="h-4 w-4 text-primary" />
-              }
-            </div>
-            <div>
-              <h2 className="font-bold text-sm">Color de Fondo</h2>
-              <p className="text-[11px] text-muted-foreground">
-                {isBgLocked
-                  ? `"${selectedModelDef?.name}" tiene un fondo exclusivo bloqueado`
-                  : "Cambia el fondo de tu catálogo"
-                }
-              </p>
-            </div>
-            {!isBgLocked && bgColor && (
-              <button onClick={() => setBgColor("")}
-                className="ml-auto text-[10px] text-destructive hover:underline font-medium">Quitar</button>
-            )}
-          </div>
-          {isBgLocked ? (
-            <div className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-3 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full shrink-0 shadow-inner"
-                style={{ background: `linear-gradient(135deg, ${selectedModelDef?.bg}, ${selectedModelDef?.cardBg})` }} />
-              <div>
-                <p className="text-xs font-semibold text-foreground">Fondo único del modelo</p>
-                <p className="text-[10px] text-muted-foreground">Este diseño incluye un degradado o paleta especial que define su identidad</p>
-              </div>
-            </div>
-          ) : (
-            <ColorSwatch
-              colors={BG_COLORS}
-              selected={bgColor}
-              onSelect={setBgColor}
-              allowCustom
-              customLabel="Fondo personalizado"
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Panel de imagen de portada — solo visible cuando modelo = "elite" */}
-      {(selectedModel === "elite" || selectedModel === "portada") && (
-        <div className="rounded-2xl border bg-card p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Image className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-bold text-sm">Imagen de Portada</h2>
-              <p className="text-[11px] text-muted-foreground">Aparece como banner en la parte superior de tu catálogo</p>
-            </div>
-          </div>
-
-          {/* Preview del banner */}
-          {bannerImage && (
-            <div className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: "16/7" }}>
-              <img src={bannerImage} alt="Banner" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <button
-                onClick={() => setBannerImage("")}
-                className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition text-xs font-bold"
-              >✕</button>
-              <p className="absolute bottom-2 left-3 text-white text-xs font-bold drop-shadow">{bannerTitle || store.name}</p>
-            </div>
-          )}
-
-          {/* Guía de dimensiones del banner */}
-          <div className="flex items-start gap-3 rounded-xl bg-muted/40 border border-border px-3 py-2.5">
-            <svg className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                <span className="text-xs font-semibold text-foreground">Panorámica 16:7</span>
-                <span className="text-[10px] bg-primary/10 text-primary font-bold rounded-full px-2 py-0.5">1920 × 700 px mínimo</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground leading-snug">
-                El banner ocupa todo el ancho superior del catálogo. Usa una imagen muy ancha (paisaje) para evitar recortes laterales.
-                Herramienta recomendada:{" "}
-                <a href="https://squoosh.app" target="_blank" rel="noreferrer" className="text-primary underline">squoosh.app</a>
-              </p>
-            </div>
-          </div>
-
-          {/* Dropzone */}
-          <div className="relative">
-            <label className={`flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed rounded-xl cursor-pointer transition hover:border-primary hover:bg-primary/5 ${bannerImage ? "border-primary/30 bg-primary/5" : "border-border"}`}>
-              <Image className="h-6 w-6 text-muted-foreground" />
-              <span className="text-sm font-medium">{bannerImage ? "Cambiar imagen" : "Subir imagen de portada"}</span>
-              <span className="text-xs text-muted-foreground">JPG, PNG, WEBP — hasta 10 MB · se optimiza automáticamente</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  if (file.size > 10 * 1024 * 1024) { toast.error("Imagen muy grande (máx 10 MB)"); return; }
-                  try {
-                    const { convertImageToWebP } = await import("@/lib/image-utils");
-                    const webp = await convertImageToWebP(file);
-                    setBannerImage(webp);
-                  } catch { toast.error("No se pudo procesar la imagen"); }
-                }}
-              />
-            </label>
-          </div>
-
-          {/* Título del banner */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Título del banner (opcional)</label>
-            <input
-              type="text"
-              value={bannerTitle}
-              onChange={(e) => setBannerTitle(e.target.value)}
-              placeholder={`Catálogo ${store.name}`}
-              className="flex h-10 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Vista previa del combo seleccionado */}
-      {(brandColor || effectiveBgColor) && (
-        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-4">
-          <div className="flex gap-2 shrink-0">
-            {effectiveBgColor && (
-              <div className="h-8 w-8 rounded-full border-2 border-primary/30 shadow"
-                style={{ backgroundColor: effectiveBgColor }} />
-            )}
-            {brandColor && (
-              <div className="h-8 w-8 rounded-full border-2 border-primary/30 shadow"
-                style={{ backgroundColor: brandColor }} />
-            )}
-          </div>
-          <div className="text-sm">
-            <span className="font-semibold">Personalización activa</span>
-            <span className="text-muted-foreground ml-2">
-              {effectiveBgColor && `Fondo: ${effectiveBgColor}`}
-              {effectiveBgColor && brandColor && " · "}
-              {brandColor && `Acento: ${brandColor}`}
-            </span>
-          </div>
-          <Sparkles className="h-4 w-4 text-primary ml-auto shrink-0" />
-        </div>
-      )}
-
-      {/* ── Tabs por plan ─────────────────────────────── */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="w-full overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
-          <TabsList className="flex h-11 items-center justify-start rounded-xl bg-muted p-1 text-muted-foreground min-w-[360px] w-full">
-            {planGroups.map((group) => (
-              <TabsTrigger
-                key={group.level}
-                value={String(group.level)}
-                className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              >
-                {group.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-
-        {planGroups.map((group) => {
-          const groupModels = MODELS.filter((m) => m.planLevel === group.level);
-          const locked = group.level > userLevel;
-
+      {/* ── Sub-navigation slider tabs ───────────────── */}
+      <div className="bg-zinc-100/80 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl p-1.5 w-full flex gap-1 shadow-sm border border-zinc-200/40 dark:border-zinc-800/40 mb-8 sticky top-14 z-30">
+        {[
+          { id: "estilo", label: "Estilo & Plantilla", icon: Sparkles },
+          { id: "colores", label: "Paleta de Colores", icon: Palette },
+          { id: "banners", label: "Portada & Banners", icon: Image },
+          { id: "ajustes", label: "Ajustes de Diseño", icon: Sliders },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const active = activeCustomizerTab === tab.id;
           return (
-            <TabsContent key={group.level} value={String(group.level)}
-              className="mt-8 animate-in fade-in-50 duration-300">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="font-bold text-lg">{group.label}</h2>
-                    {locked && (
-                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                        <Lock className="h-3 w-3" /> Requiere actualización de plan
-                      </p>
-                    )}
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveCustomizerTab(tab.id as any)}
+              className={cn(
+                "flex-grow py-3 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer select-none",
+                active
+                  ? "bg-white dark:bg-zinc-955 text-zinc-900 dark:text-zinc-50 shadow-sm border border-zinc-200/20"
+                  : "text-zinc-500 hover:text-zinc-855 dark:text-zinc-400 dark:hover:text-zinc-200"
+              )}
+            >
+              <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "text-zinc-400")} />
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-10 items-start">
+        {/* Left Side: Configuration Controls */}
+        <div className="flex-grow w-full max-w-2xl space-y-6 min-h-[480px]">
+
+          {/* TAB 1: ESTILO & PLANTILLA */}
+          {activeCustomizerTab === "estilo" && (
+            <div className="rounded-3xl border border-zinc-200/85 bg-white p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-zinc-900">Seleccionar Plantilla</h3>
+                  <p className="text-xs text-zinc-500">Escoge el modelo visual idóneo para tus productos y marca.</p>
+                </div>
+              </div>
+
+              {/* Tabs por plan */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <div className="w-full overflow-x-auto pb-2 scrollbar-none">
+                  <TabsList className="flex h-11 items-center justify-start rounded-xl bg-zinc-100 p-1 text-muted-foreground w-full">
+                    {planGroups.map((group) => (
+                      <TabsTrigger
+                        key={group.level}
+                        value={String(group.level)}
+                        className="flex-grow inline-flex items-center justify-center whitespace-nowrap rounded-lg px-2 py-2 text-xs font-bold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border"
+                      >
+                        {group.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+
+                {planGroups.map((group) => {
+                  const groupModels = MODELS.filter((m) => m.planLevel === group.level);
+                  const locked = group.level > userLevel;
+
+                  return (
+                    <TabsContent key={group.level} value={String(group.level)} className="mt-6 animate-in fade-in-50 duration-300">
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-extrabold text-sm text-zinc-800">Modelos del Plan {group.label}</h4>
+                            {locked && (
+                              <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                                <Lock className="h-3 w-3" /> Requiere actualización de plan
+                              </p>
+                            )}
+                          </div>
+                          {locked && (
+                            <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-widest bg-zinc-100 border-none text-zinc-500">
+                              Bloqueado
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {groupModels.map((model) => {
+                            const isLocked = model.planLevel > userLevel;
+                            const isSelected = selectedModel === model.id;
+                            const isActive = (store.model || "minimalista") === model.id;
+
+                            return (
+                              <div
+                                key={model.id}
+                                onClick={() => !isLocked && handleModelSelect(model.id)}
+                                className={cn(
+                                  "group relative rounded-2xl overflow-hidden border-2 transition-all duration-300",
+                                  isLocked
+                                    ? "opacity-60 cursor-not-allowed grayscale-[20%]"
+                                    : "cursor-pointer hover:shadow-lg hover:-translate-y-0.5",
+                                  isSelected
+                                    ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
+                                    : "border-zinc-200/80 bg-zinc-50/30 hover:border-primary/40"
+                                )}
+                              >
+                                {/* Check seleccionado */}
+                                {isSelected && !isLocked && (
+                                  <div className="absolute top-2.5 right-2.5 z-20 h-6.5 w-6.5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow animate-in zoom-in duration-200">
+                                    <Check className="h-3.5 w-3.5" />
+                                  </div>
+                                )}
+
+                                {/* Candado */}
+                                {isLocked && (
+                                  <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1.5">
+                                    <div className="h-8 w-8 rounded-full bg-white/90 shadow flex items-center justify-center">
+                                      <Lock className="h-4 w-4 text-zinc-500" />
+                                    </div>
+                                    <span className="text-[8px] font-extrabold uppercase tracking-widest text-zinc-500">
+                                      Premium
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Preview visual */}
+                                <div className="relative">
+                                  {model.bgLocked && !isLocked && (
+                                    <div className="absolute top-2.5 right-2.5 z-20">
+                                      <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white rounded-full px-2 py-0.5">
+                                        <Lock className="h-2 w-2" />
+                                        <span className="text-[6.5px] font-bold">Fondo único</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                  {model.badge && !isLocked && (
+                                    <div className="absolute top-2.5 left-2.5 z-20">
+                                      <Badge className="bg-black/45 backdrop-blur-md text-white border-none text-[7.5px] font-bold tracking-wider uppercase py-0.5 px-1.5">
+                                        {model.badge}
+                                      </Badge>
+                                    </div>
+                                  )}
+                                  <ModelPreview model={model} storeName={store.name} />
+                                </div>
+
+                                {/* Footer info */}
+                                <div className="p-3 border-t bg-white flex flex-col gap-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-extrabold text-xs text-zinc-800">{model.name}</span>
+                                    {isActive && (
+                                      <Badge className="h-4.5 px-1.5 text-[8px] font-extrabold bg-primary/10 text-primary border-none">
+                                        ACTIVO
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] text-zinc-500 leading-snug line-clamp-2">
+                                    {model.desc}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+
+              {/* Upgrade CTA */}
+              {(store.plan === "semilla" || store.plan === "emprendedor") && (
+                <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 p-4.5 flex items-center gap-4 mt-6">
+                  <Crown className="h-8 w-8 text-blue-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-xs text-blue-900">Desbloquea diseños premium exclusivos</p>
+                    <p className="text-[11px] text-blue-700 mt-0.5">
+                      Actualiza tu plan y obtén acceso a los {MODELS.filter(m => m.planLevel > userLevel).length} modelos avanzados restantes.
+                    </p>
                   </div>
-                  {locked && (
-                    <Badge variant="outline"
-                      className="text-[10px] font-bold uppercase tracking-widest bg-muted border-none">
-                      Bloqueado
-                    </Badge>
+                  <a
+                    href="https://wa.me/51925176472?text=Hola,%20quiero%20actualizar%2520mi%2520plan%2520en%2520Dizi"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-xs font-bold transition shadow"
+                  >
+                    Saber más
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: PALETA DE COLORES */}
+          {activeCustomizerTab === "colores" && (
+            <div className="rounded-3xl border border-zinc-200/85 bg-white p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Palette className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-zinc-900">Paleta de Colores</h3>
+                  <p className="text-xs text-zinc-550">Personaliza los colores del catálogo para adaptarlos a tu identidad de marca.</p>
+                </div>
+              </div>
+
+              {/* Color de Acento */}
+              <div className="rounded-2xl border bg-zinc-50/30 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Palette className="h-4.5 w-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-955">Color de Acento</h4>
+                      <p className="text-[10px] text-zinc-500">Botones, precios y elementos destacados</p>
+                    </div>
+                  </div>
+                  {brandColor && (
+                    <button
+                      type="button"
+                      onClick={() => setBrandColor("")}
+                      className="text-[10px] text-red-650 hover:underline font-bold"
+                    >
+                      Restablecer
+                    </button>
+                  )}
+                </div>
+                <ColorSwatch
+                  colors={BRAND_COLORS}
+                  selected={brandColor}
+                  onSelect={setBrandColor}
+                  allowCustom
+                  customLabel="Hex personalizado"
+                />
+              </div>
+
+              {/* Color de Fondo */}
+              <div className={cn("rounded-2xl border p-5 space-y-4 transition-all", isBgLocked ? "bg-zinc-100/40 opacity-75" : "bg-zinc-50/30")}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", isBgLocked ? "bg-zinc-200" : "bg-primary/10")}>
+                      {isBgLocked ? (
+                        <Lock className="h-4 w-4 text-zinc-500" />
+                      ) : (
+                        <Image className="h-4.5 w-4.5 text-primary" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-955">Color de Fondo</h4>
+                      <p className="text-[10px] text-zinc-550">
+                        {isBgLocked
+                          ? `Fondo único bloqueado para "${selectedModelDef?.name}"`
+                          : "Color de fondo de la aplicación y tarjetas"}
+                      </p>
+                    </div>
+                  </div>
+                  {!isBgLocked && bgColor && (
+                    <button
+                      type="button"
+                      onClick={() => setBgColor("")}
+                      className="text-[10px] text-red-650 hover:underline font-bold"
+                    >
+                      Restablecer
+                    </button>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {groupModels.map((model) => {
-                    const isLocked = model.planLevel > userLevel;
-                    const isSelected = selectedModel === model.id;
-                    const isActive = (store.model || "minimalista") === model.id;
+                {isBgLocked ? (
+                  <div className="rounded-xl border border-dashed bg-white px-4 py-3 flex items-center gap-3">
+                    <div
+                      className="h-8 w-8 rounded-full shrink-0 shadow-inner"
+                      style={{ background: `linear-gradient(135deg, ${selectedModelDef?.bg}, ${selectedModelDef?.cardBg})` }}
+                    />
+                    <div>
+                      <p className="text-xs font-bold text-zinc-800">Fondo Especial del Modelo</p>
+                      <p className="text-[10px] text-zinc-550 leading-snug">Este diseño utiliza un fondo diseñado exclusivamente para mantener su elegancia.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <ColorSwatch
+                    colors={BG_COLORS}
+                    selected={bgColor}
+                    onSelect={setBgColor}
+                    allowCustom
+                    customLabel="Fondo personalizado"
+                  />
+                )}
+              </div>
+            </div>
+          )}
 
-                    return (
-                      <div
-                        key={model.id}
-                        onClick={() => !isLocked && handleModelSelect(model.id)}
-                        className={cn(
-                          "group relative rounded-2xl overflow-hidden border-2 transition-all duration-300",
-                          isLocked
-                            ? "opacity-55 cursor-not-allowed grayscale-[25%]"
-                            : "cursor-pointer hover:shadow-2xl hover:-translate-y-1",
-                          isSelected
-                            ? "border-primary shadow-2xl shadow-primary/20 -translate-y-1"
-                            : "border-border hover:border-primary/40 bg-card"
-                        )}
-                      >
-                        {/* Check seleccionado */}
-                        {isSelected && !isLocked && (
-                          <div className="absolute top-3 right-3 z-20 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-lg animate-in zoom-in duration-200">
-                            <Check className="h-4 w-4" />
-                          </div>
-                        )}
-
-                        {/* Candado */}
-                        {isLocked && (
-                          <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
-                            <div className="h-10 w-10 rounded-full bg-white/90 shadow-xl flex items-center justify-center">
-                              <Lock className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                              Premium
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Preview visual */}
-                        <div className="relative">
-                          {model.bgLocked && !isLocked && (
-                            <div className="absolute top-3 right-3 z-20">
-                              <div className="flex items-center gap-1 bg-black/50 backdrop-blur-sm text-white rounded-full px-2 py-1">
-                                <Lock className="h-2.5 w-2.5" />
-                                <span className="text-[7px] font-bold">Fondo único</span>
-                              </div>
-                            </div>
-                          )}
-                          {model.badge && !isLocked && (
-                            <div className="absolute top-3 left-3 z-20">
-                              <Badge className="bg-black/40 backdrop-blur-md text-white border-none text-[8px] font-bold tracking-widest uppercase py-1 px-2">
-                                {model.badge}
-                              </Badge>
-                            </div>
-                          )}
-                          <ModelPreview model={model} storeName={store.name} />
-                        </div>
-
-                        {/* Footer info */}
-                        <div className="p-4 border-t bg-card/50 flex flex-col gap-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-sm">{model.name}</span>
-                            {isActive && (
-                              <Badge className="h-5 px-1.5 text-[9px] font-bold bg-primary/10 text-primary border-none">
-                                ACTIVO
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                            {model.desc}
-                          </p>
-                          {/* Badge de proporcion recomendada */}
-                          {(() => {
-                            const layoutKey = model.layout === "banner_grid" ? "banner_grid" : model.layout;
-                            const spec = LAYOUT_IMAGE_SPECS[layoutKey];
-                            if (!spec) return null;
-                            return (
-                              <div className="flex items-center gap-1.5 pt-0.5">
-                                <div className="flex items-center gap-1 bg-muted rounded-full px-2 py-0.5">
-                                  <svg className="w-2.5 h-2.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                  </svg>
-                                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wide">
-                                    {spec.label}
-                                  </span>
-                                </div>
-                                <span className="text-[9px] text-muted-foreground">para productos</span>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* TAB 3: PORTADA & BANNERS */}
+          {activeCustomizerTab === "banners" && (
+            <div className="rounded-3xl border border-zinc-200/85 bg-white p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Image className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-zinc-900">Portada & Banners</h3>
+                  <p className="text-xs text-zinc-550">Sube imágenes de portada para darle la bienvenida a tus visitantes.</p>
                 </div>
               </div>
-            </TabsContent>
-          );
-        })}
-      </Tabs>
 
-      {/* ── Upgrade CTA ─────────────────────────────── */}
-      {(store.plan === "semilla" || store.plan === "emprendedor") && (
-        <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 flex items-center gap-4">
-          <Crown className="h-9 w-9 text-blue-500 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-blue-900">Desbloquea todos los diseños</p>
-            <p className="text-sm text-blue-800 mt-0.5">
-              Actualiza tu plan y obtén acceso a los {MODELS.filter(m => m.planLevel > userLevel).length} modelos premium restantes.
-            </p>
-          </div>
-          <a
-            href="https://wa.me/51925176472?text=Hola,%20quiero%20actualizar%20mi%20plan%20en%20Dizi"
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-lg"
-          >
-            Saber más
-          </a>
+              {!(selectedModel === "elite" || selectedModel === "portada") ? (
+                <div className="rounded-3xl border border-dashed border-zinc-200 bg-zinc-50/50 p-8 text-center space-y-4">
+                  <div className="mx-auto h-12 w-12 rounded-full bg-zinc-100 flex items-center justify-center">
+                    <Image className="h-6 w-6 text-zinc-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-extrabold text-sm text-zinc-955">El modelo actual no admite Portada</h4>
+                    <p className="text-xs text-zinc-555 max-w-sm mx-auto leading-relaxed">
+                      Para poder agregar imágenes de portada y banners, por favor selecciona una plantilla de diseño que lo soporte (como <strong>Elite</strong> o <strong>Portada con Banner</strong>) en la pestaña de <strong>Estilo & Plantilla</strong>.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setActiveCustomizerTab("estilo")}
+                    className="rounded-full text-xs font-bold"
+                  >
+                    Elegir plantilla
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Preview del banner */}
+                  {bannerImage && (
+                    <div className="relative w-full overflow-hidden rounded-2xl border shadow-inner" style={{ aspectRatio: "16/7" }}>
+                      <img src={bannerImage} alt="Banner" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <button
+                        type="button"
+                        onClick={() => setBannerImage("")}
+                        className="absolute top-3 right-3 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-all text-xs font-bold border border-white/10"
+                      >
+                        ✕
+                      </button>
+                      <p className="absolute bottom-3 left-4 text-white text-xs font-extrabold drop-shadow">
+                        {bannerTitle || store.name}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Guía de dimensiones */}
+                  <div className="flex items-start gap-3 rounded-2xl bg-zinc-50 border px-4 py-3.5">
+                    <svg className="w-4 h-4 text-zinc-550 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                        <span className="text-xs font-bold text-zinc-800">Proporción recomendada: 16:7</span>
+                        <span className="text-[9px] bg-primary/10 text-primary font-extrabold rounded-full px-2 py-0.5 uppercase tracking-wide">
+                          1920 × 700 px mínimo
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-zinc-555 leading-relaxed">
+                        El banner se adapta al ancho total del catálogo. Recomendamos imágenes horizontales limpias. Puedes usar la herramienta gratuita{" "}
+                        <a href="https://squoosh.app" target="_blank" rel="noreferrer" className="text-primary underline font-bold">squoosh.app</a> para comprimir tus imágenes antes de subirlas.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Dropzone */}
+                  <div className="relative">
+                    <label className={cn(
+                      "flex flex-col items-center justify-center gap-2.5 py-8 border-2 border-dashed rounded-2xl cursor-pointer transition-all hover:border-primary hover:bg-primary/5",
+                      bannerImage ? "border-primary/20 bg-primary/5" : "border-zinc-200"
+                    )}>
+                      <Image className="h-7 w-7 text-zinc-400" />
+                      <span className="text-xs font-bold text-zinc-800">{bannerImage ? "Reemplazar imagen de portada" : "Subir imagen de portada"}</span>
+                      <span className="text-[10px] text-zinc-555">Formatos: JPG, PNG, WEBP — máx 10MB</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 10 * 1024 * 1024) { toast.error("Imagen muy grande (máx 10 MB)"); return; }
+                          try {
+                            const { convertImageToWebP } = await import("@/lib/image-utils");
+                            const webp = await convertImageToWebP(file);
+                            setBannerImage(webp);
+                          } catch { toast.error("No se pudo procesar la imagen"); }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Título del banner */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Título del banner (opcional)</label>
+                    <input
+                      type="text"
+                      value={bannerTitle}
+                      onChange={(e) => setBannerTitle(e.target.value)}
+                      placeholder={`Catálogo ${store.name}`}
+                      className="flex h-10 w-full rounded-xl border border-input bg-transparent px-3.5 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: AJUSTES DE DISEÑO */}
+          {activeCustomizerTab === "ajustes" && (
+            <div className="rounded-3xl border border-zinc-200/85 bg-white p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sliders className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-zinc-900">Ajustes de Diseño</h3>
+                  <p className="text-xs text-zinc-555">Ajustes detallados para pulir la apariencia final de tu catálogo.</p>
+                </div>
+              </div>
+
+              {/* Corte del Banner (Banner Style) */}
+              {(selectedModel === "elite" || selectedModel === "portada") ? (
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-0.5">
+                    <h4 className="font-bold text-xs text-zinc-955">Estilo del Corte de Portada</h4>
+                    <p className="text-[10px] text-zinc-500">Controla cómo se integra la imagen de cabecera con el catálogo.</p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: "direct", label: "Directo", desc: "Borde recto" },
+                      { id: "framed", label: "Con Margen", desc: "Efecto recuadro" },
+                      { id: "curved", label: "Curvado", desc: "Curva suave" },
+                    ].map((style) => {
+                      const active = bannerStyle === style.id;
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setBannerStyle(style.id as any)}
+                          className={cn(
+                            "flex flex-col gap-1.5 p-3 rounded-xl border-2 text-left cursor-pointer transition-all hover:border-primary/50",
+                            active ? "border-primary bg-primary/5 shadow-sm" : "border-zinc-200 bg-white"
+                          )}
+                        >
+                          <span className="text-[11px] font-bold text-zinc-900">{style.label}</span>
+                          <span className="text-[9px] text-zinc-555 leading-snug">{style.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : userLevel >= 2 ? (
+                <div className="rounded-3xl border border-primary/20 bg-primary/5 p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4.5 w-4.5 text-primary" />
+                    <h4 className="font-extrabold text-xs text-zinc-955">Personalizador Avanzado Disponible</h4>
+                  </div>
+                  <p className="text-[10px] text-zinc-650 leading-relaxed">
+                    Tu plan **{store.plan.toUpperCase()}** incluye el Personalizador de Diseños Premium. Configura tipografías personalizadas, estilos de tarjetas con sombras, y temas específicos para tu nicho.
+                  </p>
+                  <Link
+                    to="/admin/diseno-premium"
+                    className="inline-flex items-center justify-center bg-primary hover:bg-primary/90 text-white rounded-full text-[10px] font-extrabold py-2 px-4 shadow w-fit transition-all active:scale-95 border-none cursor-pointer"
+                  >
+                    Ir a Diseño Premium
+                  </Link>
+                </div>
+              ) : (
+                <div className="rounded-3xl border border-zinc-200 bg-zinc-50/50 p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4.5 w-4.5 text-zinc-400" />
+                    <h4 className="font-extrabold text-xs text-zinc-955">Ajustes Premium Bloqueados</h4>
+                  </div>
+                  <p className="text-[10px] text-zinc-555 leading-relaxed">
+                    Las configuraciones de tipografías premium, estilos de tarjetas de producto (borde flotante, sombra suave) y cortes especiales están reservadas para el personalizador avanzado en los planes <strong>Pro</strong> e <strong>Ilimitado</strong>.
+                  </p>
+                  <a
+                    href="https://wa.me/51925176472?text=Hola,%20quiero%2520saber%2520mas%2520sobre%2520disenos%2520premium"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-[10px] font-extrabold py-2 px-4 shadow w-fit transition-all active:scale-95 border-none"
+                  >
+                    Desbloquear Diseños Premium
+                  </a>
+                </div>
+              )}
+
+              {/* Información Técnica del Layout Activo */}
+              <div className="rounded-2xl border border-zinc-200 bg-zinc-50/30 p-4 space-y-3">
+                <h4 className="font-extrabold text-xs text-zinc-800">Especificaciones de la Plantilla</h4>
+                <div className="grid grid-cols-2 gap-4 text-[10px]">
+                  <div className="space-y-1">
+                    <span className="text-zinc-550 block font-semibold">Estructura del Layout:</span>
+                    <span className="font-bold text-zinc-800 uppercase tracking-wide bg-zinc-200 px-1.5 py-0.5 rounded-sm">
+                      {selectedModelDef?.layout || "grid"}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-zinc-550 block font-semibold">Proporción de Producto:</span>
+                    {(() => {
+                      const layoutKey = selectedModelDef?.layout === "banner_grid" ? "banner_grid" : selectedModelDef?.layout;
+                      const spec = LAYOUT_IMAGE_SPECS[layoutKey as any];
+                      return (
+                        <span className="font-bold text-zinc-800 uppercase tracking-wide">
+                          {spec?.label || "Sin especificar"}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
-      )}
 
-      {/* ── Sticky save ──────────────────────────────── */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3 items-center">
-        <div className="bg-card rounded-full shadow-2xl border px-4 py-2 flex items-center gap-4">
+        {/* Right Side: Smartphone Mockup Frame */}
+        <div className="hidden lg:flex lg:sticky lg:top-6 w-full lg:w-[410px] flex-col items-center shrink-0">
+          <div className="relative w-[390px] h-[780px] bg-zinc-950 rounded-[48px] p-3.5 border-[6px] border-zinc-800 ring-1 ring-zinc-700/50 flex flex-col overflow-hidden select-none" style={{
+            boxShadow: `0 25px 60px -15px ${brandColor ? brandColor + "25" : "rgba(79, 70, 229, 0.15)"}`
+          }}>
+            {/* Notch / Dynamic Island */}
+            <div className="absolute top-4.5 left-1/2 -translate-x-1/2 w-28 h-5.5 bg-black rounded-full z-40 flex items-center justify-center">
+              <div className="w-10 h-1 bg-zinc-900 rounded-full" />
+            </div>
+
+            {/* Status Bar */}
+            <div className="h-6 bg-[#09090b] w-full shrink-0 flex items-center justify-between px-6 pt-1 text-[10px] text-zinc-400 font-bold z-30">
+              <span>9:41</span>
+              <div className="flex items-center gap-1.5">
+                <span>5G</span>
+                <div className="w-4 h-2 border border-zinc-700 rounded-xs p-0.5 flex items-center">
+                  <div className="w-full h-full bg-zinc-400 rounded-[2px]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Simulated Live Frame */}
+            <div className="flex-grow overflow-y-auto no-scrollbar rounded-[34px] border border-zinc-900 bg-[#09090b] relative">
+              <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+            </div>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground text-center mt-4 max-w-[320px] leading-relaxed">
+            <strong>Simulador Interactivo:</strong> Puedes hacer scroll, navegar categorías y agregar productos en tiempo real.
+          </p>
+        </div>
+      </div>
+
+      {/* Floating Save/Preview Banner */}
+      <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex gap-3 items-center w-[calc(100%-2rem)] max-w-sm md:max-w-md justify-center">
+        <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-full shadow-2xl border px-4 py-2 flex items-center justify-between gap-3 animate-in slide-in-from-bottom-4 duration-300 w-full">
+          {/* Preview Button on Mobile/Tablet */}
+          <button
+            type="button"
+            onClick={() => setIsPreviewOpen(true)}
+            className="flex lg:hidden items-center justify-center gap-1.5 px-4 py-2 rounded-full border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-zinc-900 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
+          >
+            <Eye className="h-3.5 w-3.5 text-zinc-650" />
+            <span>Previsualizar</span>
+          </button>
+
           {isDirty ? (
-            <>
-              <span className="text-sm font-medium text-muted-foreground">
-                <span className="inline-block h-2 w-2 rounded-full bg-amber-400 mr-1.5 animate-pulse" />
-                Cambios sin guardar
+            <div className="flex items-center gap-2.5 ml-auto text-xs">
+              <span className="hidden sm:inline-flex text-[10px] font-bold text-zinc-400 items-center shrink-0">
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-500 mr-1.5 animate-pulse" />
+                Editado
               </span>
-              <Button onClick={save} className="rounded-full px-6 font-bold gap-2 shadow-lg">
-                <Check className="h-4 w-4" />
-                Aplicar diseño
+              <Button onClick={save} className="rounded-full bg-primary hover:bg-primary/95 text-white font-bold px-5 py-2 text-xs shadow-lg transition-transform active:scale-95 border-none cursor-pointer">
+                <Check className="h-3.5 w-3.5 mr-1" />
+                Guardar
               </Button>
-            </>
+            </div>
           ) : (
-            <span className="text-sm text-muted-foreground flex items-center gap-2 px-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Diseño guardado —{" "}
-              <span className="font-bold text-foreground">
-                {MODELS.find(m => m.id === selectedModel)?.name}
+            <div className="flex items-center gap-1.5 px-2 py-1 ml-auto">
+              <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
+              <span className="text-[10px] sm:text-xs text-zinc-500 font-bold shrink-0">
+                Diseño Guardado
               </span>
-            </span>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Mobile Preview Modal */}
+      {isPreviewOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-[390px] h-[85vh] bg-zinc-950 rounded-[40px] p-3 border-[6px] border-zinc-800 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setIsPreviewOpen(false)}
+              className="absolute top-4 right-4 z-[110] h-8 w-8 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-black/80 transition-all border border-zinc-800 cursor-pointer text-xs font-bold"
+            >
+              ✕
+            </button>
+
+            {/* Notch / Dynamic Island */}
+            <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-[105] flex items-center justify-center">
+              <div className="w-8 h-1 bg-zinc-900 rounded-full" />
+            </div>
+
+            {/* Status Bar */}
+            <div className="h-5 bg-[#09090b] w-full shrink-0 flex items-center justify-between px-6 pt-1 text-[9px] text-zinc-400 font-bold z-[104] select-none">
+              <span>9:41</span>
+              <div className="flex items-center gap-1">
+                <span>5G</span>
+                <div className="w-3.5 h-1.5 border border-zinc-700 rounded-xs p-0.25 flex items-center">
+                  <div className="w-full h-full bg-zinc-400 rounded-[2px]" />
+                </div>
+              </div>
+            </div>
+
+            {/* Simulated Live Frame */}
+            <div className="flex-grow overflow-y-auto no-scrollbar rounded-[28px] border border-zinc-900 bg-[#09090b] relative">
+              <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

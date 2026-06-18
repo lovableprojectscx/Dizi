@@ -26,6 +26,9 @@ import {
   Lock,
   Copy,
   Check,
+  Youtube,
+  Music,
+  Twitter,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures } from "@/lib/types";
@@ -127,6 +130,125 @@ const formatSocialUrl = (
   return clean;
 };
 
+/* ─── helpers ─── */
+const getPlatformColors = (platform: string) => {
+  if (platform === "whatsapp") return { bg: "#25D366", border: "#128C7E" };
+  if (platform === "instagram") return { bg: "#dc2743", border: "#bc1888" };
+  if (platform === "facebook") return { bg: "#1877f2", border: "#1062cc" };
+  if (platform === "tiktok") return { bg: "#000000", border: "#111111" };
+  if (platform === "linkedin") return { bg: "#0077b5", border: "#005a8a" };
+  if (platform === "location") return { bg: "#ea4335", border: "#d93025" };
+  if (platform === "youtube") return { bg: "#ff0000", border: "#cc0000" };
+  if (platform === "spotify") return { bg: "#1DB954", border: "#1aa34a" };
+  if (platform === "pinterest") return { bg: "#BD081C", border: "#a60718" };
+  if (platform === "twitter") return { bg: "#000000", border: "#222222" };
+  return { bg: "#1f2937", border: "#374151" };
+};
+
+const getMockupIconAndBrand = (link: QuickLink) => {
+  const labelLower = link.label.toLowerCase();
+  const urlLower = (link.url || "").toLowerCase();
+  
+  let platform = "custom";
+  let char = link.label.charAt(0);
+
+  if (urlLower.includes("wa.me") || urlLower.includes("whatsapp.com") || labelLower.includes("whatsapp")) {
+    platform = "whatsapp";
+    char = "W";
+  } else if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
+    platform = "instagram";
+    char = "I";
+  } else if (urlLower.includes("facebook.com") || labelLower.includes("facebook") || urlLower.includes("fb.com")) {
+    platform = "facebook";
+    char = "F";
+  } else if (urlLower.includes("tiktok.com") || labelLower.includes("tiktok")) {
+    platform = "tiktok";
+    char = "T";
+  } else if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
+    platform = "linkedin";
+    char = "L";
+  } else if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be") || labelLower.includes("youtube")) {
+    platform = "youtube";
+    char = "Y";
+  } else if (urlLower.includes("spotify.com") || labelLower.includes("spotify")) {
+    platform = "spotify";
+    char = "S";
+  } else if (urlLower.includes("pinterest.com") || labelLower.includes("pinterest")) {
+    platform = "pinterest";
+    char = "P";
+  } else if (urlLower.includes("twitter.com") || urlLower.includes("x.com") || labelLower.includes("twitter") || labelLower.includes(" x ")) {
+    platform = "twitter";
+    char = "X";
+  }
+
+  return { platform, char };
+};
+
+const getMockupBrandIcon = (platform: string, iconName?: string, isMonochrome?: boolean) => {
+  const iconClass = "h-3.5 w-3.5";
+  
+  if (iconName) {
+    if (iconName === "globe") return <Globe className={iconClass} />;
+    if (iconName === "phone") return <Phone className={iconClass} />;
+    if (iconName === "map-pin") return <MapPin className={iconClass} />;
+    if (iconName === "instagram") return <Instagram className={iconClass} />;
+    if (iconName === "facebook") return <Facebook className={iconClass} />;
+    if (iconName === "linkedin") return <Linkedin className={iconClass} />;
+    if (iconName === "youtube") return <Youtube className={iconClass} />;
+    if (iconName === "music" || iconName === "spotify") return <Music className={iconClass} />;
+    if (iconName === "twitter") return <Twitter className={iconClass} />;
+  }
+
+  if (isMonochrome) {
+    if (platform === "whatsapp") return <Phone className={iconClass} />;
+    if (platform === "location") return <MapPin className={iconClass} />;
+    if (platform === "instagram") return <Instagram className={iconClass} />;
+    if (platform === "facebook") return <Facebook className={iconClass} />;
+    if (platform === "linkedin") return <Linkedin className={iconClass} />;
+    if (platform === "youtube") return <Youtube className={iconClass} />;
+    if (platform === "spotify") return <Music className={iconClass} />;
+    if (platform === "twitter") return <Twitter className={iconClass} />;
+    return null;
+  }
+
+  if (platform === "whatsapp") {
+    return (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill="#25d366" />
+        <path fill="#FFF" d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z" transform="scale(0.75) translate(4, 4)" />
+      </svg>
+    );
+  }
+  if (platform === "location") {
+    return (
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="12" fill="#ea4335" />
+        <path fill="#FFF" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" transform="scale(0.7) translate(5, 4)" />
+      </svg>
+    );
+  }
+  if (platform === "instagram") {
+    return <Instagram className="h-3 w-3 text-pink-600 animate-in fade-in" />;
+  }
+  if (platform === "facebook") {
+    return <Facebook className="h-3 w-3 text-blue-600 animate-in fade-in" />;
+  }
+  if (platform === "linkedin") {
+    return <Linkedin className="h-3 w-3 text-[#0077b5] animate-in fade-in" />;
+  }
+  if (platform === "youtube") {
+    return <Youtube className="h-3 w-3 text-red-600 animate-in fade-in" />;
+  }
+  if (platform === "spotify") {
+    return <Music className="h-3 w-3 text-emerald-600 animate-in fade-in" />;
+  }
+  if (platform === "twitter") {
+    return <Twitter className="h-3 w-3 text-black dark:text-white animate-in fade-in" />;
+  }
+
+  return null;
+};
+
 /* ─── phone preview (mini mockup) ─── */
 function PhonePreview({
   name,
@@ -138,10 +260,6 @@ function PhonePreview({
   locationAddress,
   locationLat,
   locationLng,
-  instagramUrl,
-  facebookUrl,
-  tiktokUrl,
-  linkedinUrl,
   customLinks,
   bioTheme = "default",
   bioButtonStyle = "pill-solid",
@@ -160,10 +278,6 @@ function PhonePreview({
   locationAddress: string;
   locationLat?: number;
   locationLng?: number;
-  instagramUrl: string;
-  facebookUrl: string;
-  tiktokUrl: string;
-  linkedinUrl: string;
   customLinks: QuickLink[];
   bioTheme?: string;
   bioButtonStyle?: string;
@@ -175,14 +289,24 @@ function PhonePreview({
 }) {
   const hasWhatsApp = !!phone;
   const hasLocation = !!(locationAddress.trim() && locationLat && locationLng);
-  const allLinks: { label: string; icon: string; bgColor?: string; textColor?: string }[] = [
-    ...(hasWhatsApp ? [{ label: "WhatsApp", icon: "whatsapp" }] : []),
-    ...(instagramUrl ? [{ label: "Instagram", icon: "instagram" }] : []),
-    ...(facebookUrl ? [{ label: "Facebook", icon: "facebook" }] : []),
-    ...(tiktokUrl ? [{ label: "TikTok", icon: "tiktok" }] : []),
-    ...(linkedinUrl ? [{ label: "LinkedIn", icon: "linkedin" }] : []),
-    ...(hasLocation ? [{ label: "Ubicación", icon: "location" }] : []),
-    ...customLinks.map((l) => ({ label: l.label, icon: "star", bgColor: l.bgColor, textColor: l.textColor })),
+
+  const allLinks = [
+    ...(hasWhatsApp ? [{ label: "WhatsApp", url: "", icon: "whatsapp", isHardcoded: true }] : []),
+    ...(hasLocation ? [{ label: "Ubicación", url: "", icon: "location", isHardcoded: true }] : []),
+    ...customLinks.map((l) => {
+      const { platform, char } = getMockupIconAndBrand(l);
+      return {
+        label: l.label,
+        url: l.url,
+        icon: platform,
+        char: char,
+        bgColor: l.bgColor,
+        textColor: l.textColor,
+        thumbnailUrl: l.thumbnailUrl,
+        iconName: l.iconName,
+        isHardcoded: false
+      };
+    }),
   ];
 
   // Resolve mockup background theme
@@ -255,16 +379,6 @@ function PhonePreview({
   };
 
   let { type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
-
-  const getPlatformColors = (platform: string) => {
-    if (platform === "whatsapp") return { bg: "#25D366", border: "#128C7E" };
-    if (platform === "instagram") return { bg: "#dc2743", border: "#bc1888" };
-    if (platform === "facebook") return { bg: "#1877f2", border: "#1062cc" };
-    if (platform === "tiktok") return { bg: "#000000", border: "#111111" };
-    if (platform === "linkedin") return { bg: "#0077b5", border: "#005a8a" };
-    if (platform === "location") return { bg: "#ea4335", border: "#d93025" };
-    return { bg: "#1f2937", border: "#374151" };
-  };
 
   return (
     <div className="w-full max-w-[270px] mx-auto select-none">
@@ -354,8 +468,8 @@ function PhonePreview({
             </div>
             {/* Links */}
             <div className="px-2 pt-2 space-y-1">
-              {allLinks.slice(0, 6).map((link, idx) => {
-                const defaultColors = getPlatformColors(link.icon);
+              {allLinks.slice(0, 7).map((link, idx) => {
+                const defaultColors = getPlatformColors(link.icon || "custom");
                 const baseBg = link.bgColor || bioButtonColor || defaultColors.bg;
                 const baseText = link.textColor || bioButtonTextColor || "#ffffff";
 
@@ -404,10 +518,16 @@ function PhonePreview({
                     <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
                     
                     <div className={cn(
-                       "h-5 w-5 flex items-center justify-center shrink-0 mr-1.5 transition-transform duration-300 group-hover:scale-110",
-                       isMonochrome ? "bg-transparent text-current" : "bg-white rounded-full shadow-inner"
+                       "h-5 w-5 flex items-center justify-center shrink-0 mr-1.5 transition-transform duration-300 group-hover:scale-110 overflow-hidden",
+                       (isMonochrome && !link.thumbnailUrl) ? "bg-transparent text-current" : "bg-white rounded-full shadow-inner border border-zinc-100"
                     )}>
-                      <span className={cn("text-[5px] font-black", !isMonochrome ? "text-gray-800" : "")}>{link.label.charAt(0)}</span>
+                      {link.thumbnailUrl ? (
+                        <img src={link.thumbnailUrl} className="h-full w-full object-cover" />
+                      ) : (
+                        getMockupBrandIcon(link.icon || "custom", link.iconName, isMonochrome) || (
+                          <span className={cn("text-[5px] font-black", !isMonochrome ? "text-gray-800" : "")}>{link.char}</span>
+                        )
+                      )}
                     </div>
                     <span className="truncate flex-1 text-center pr-1.5">{link.label}</span>
                   </div>
@@ -447,22 +567,19 @@ function LinkBioPage() {
       ? store?.phone.slice((store?.countryCode || "").length)
       : store?.phone || ""
   );
-  const [instagramUrl, setInstagramUrl] = useState("");
-  const [facebookUrl, setFacebookUrl] = useState("");
-  const [tiktokUrl, setTikTokUrl] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [instagramBgColor, setInstagramBgColor] = useState("");
-  const [facebookBgColor, setFacebookBgColor] = useState("");
-  const [tiktokBgColor, setTiktokBgColor] = useState("");
-  const [linkedinBgColor, setLinkedinBgColor] = useState("");
+
   const [customLinks, setCustomLinks] = useState<QuickLink[]>([]);
   const [locationAddress, setLocationAddress] = useState(store?.locationAddress || "");
   const [locationLat, setLocationLat] = useState<number | undefined>(store?.locationLat);
   const [locationLng, setLocationLng] = useState<number | undefined>(store?.locationLng);
+  
   const [newLinkLabel, setNewLinkLabel] = useState("");
   const [newLinkUrl, setNewLinkUrl] = useState("");
   const [newLinkBgColor, setNewLinkBgColor] = useState("");
   const [newLinkTextColor, setNewLinkTextColor] = useState("");
+  const [newLinkThumbnail, setNewLinkThumbnail] = useState("");
+  const [newLinkIcon, setNewLinkIcon] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -541,43 +658,7 @@ function LinkBioPage() {
       setBioBgColor(store.bioBgColor || "#0f172a");
       setActiveBgTab(store.bioBgImage ? "image" : "color");
 
-      const qLinks = store.quickLinks || [];
-      let ig = "", fb = "", tt = "", li = "";
-      const others: QuickLink[] = [];
-      qLinks.forEach((link) => {
-        const urlLower = link.url.toLowerCase();
-        const labelLower = link.label.toLowerCase();
-        if (urlLower.includes("instagram.com") || labelLower === "instagram") {
-          ig = link.url.includes("/") ? link.url : `https://instagram.com/${link.url}`;
-        } else if (urlLower.includes("facebook.com") || labelLower === "facebook") {
-          fb = link.url.includes("/") ? link.url : `https://facebook.com/${link.url}`;
-        } else if (urlLower.includes("tiktok.com") || labelLower === "tiktok") {
-          tt = link.url.includes("/") ? link.url : `https://tiktok.com/@${link.url}`;
-        } else if (urlLower.includes("linkedin.com") || labelLower === "linkedin") {
-          li = link.url.includes("/") ? link.url : `https://linkedin.com/in/${link.url}`;
-        } else {
-          others.push(link);
-        }
-      });
-      setInstagramUrl(ig);
-      setFacebookUrl(fb);
-      setTikTokUrl(tt);
-      setLinkedinUrl(li);
-      // Load social network colors
-      qLinks.forEach((link) => {
-        const urlLower = link.url.toLowerCase();
-        const labelLower = link.label.toLowerCase();
-        if (urlLower.includes("instagram.com") || labelLower === "instagram") {
-          if (link.bgColor) setInstagramBgColor(link.bgColor);
-        } else if (urlLower.includes("facebook.com") || labelLower === "facebook") {
-          if (link.bgColor) setFacebookBgColor(link.bgColor);
-        } else if (urlLower.includes("tiktok.com") || labelLower === "tiktok") {
-          if (link.bgColor) setTiktokBgColor(link.bgColor);
-        } else if (urlLower.includes("linkedin.com") || labelLower === "linkedin") {
-          if (link.bgColor) setLinkedinBgColor(link.bgColor);
-        }
-      });
-      setCustomLinks(others);
+      setCustomLinks(store.quickLinks || []);
       setIsLoaded(true);
     }
   }, [store, isLoaded]);
@@ -681,15 +762,41 @@ function LinkBioPage() {
 
   const bioUrl = `${window.location.origin}/bio/${store.slug}`;
 
-  const handleBlurSocial = (
-    value: string,
-    platform: "instagram" | "facebook" | "tiktok" | "linkedin"
-  ) => {
-    const formatted = formatSocialUrl(value, platform);
-    if (platform === "instagram") setInstagramUrl(formatted);
-    else if (platform === "facebook") setFacebookUrl(formatted);
-    else if (platform === "tiktok") setTikTokUrl(formatted);
-    else if (platform === "linkedin") setLinkedinUrl(formatted);
+  const compressToThumbnail = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 120; // 120px is perfect for a small thumbnail icon
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/webp", 0.8));
+          } else {
+            resolve(event.target?.result as string);
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const copyText = async (text: string) => {
@@ -700,19 +807,12 @@ function LinkBioPage() {
   };
 
   const save = async () => {
-    const finalQuickLinks: QuickLink[] = [];
-    if (instagramUrl.trim()) finalQuickLinks.push({ label: "Instagram", url: formatSocialUrl(instagramUrl, "instagram"), bgColor: instagramBgColor || undefined });
-    if (facebookUrl.trim()) finalQuickLinks.push({ label: "Facebook", url: formatSocialUrl(facebookUrl, "facebook"), bgColor: facebookBgColor || undefined });
-    if (tiktokUrl.trim()) finalQuickLinks.push({ label: "TikTok", url: formatSocialUrl(tiktokUrl, "tiktok"), bgColor: tiktokBgColor || undefined });
-    if (linkedinUrl.trim()) finalQuickLinks.push({ label: "LinkedIn", url: formatSocialUrl(linkedinUrl, "linkedin"), bgColor: linkedinBgColor || undefined });
-    customLinks.forEach((link) => finalQuickLinks.push(link));
-
     setSaving(true);
     try {
       await update(store.id, {
         bioDescription: bioDescription.trim(),
         bioLinksEnabled,
-        quickLinks: finalQuickLinks,
+        quickLinks: customLinks,
         locationAddress: locationAddress.trim(),
         locationLat,
         locationLng,
@@ -880,12 +980,21 @@ function LinkBioPage() {
                         />
                       </div>
 
-                      {/* Redes Sociales */}
-                      <div className="space-y-3 pt-4 border-t border-border/30">
-                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Redes Oficiales</Label>
-                        
-                        {/* WhatsApp Auto-Vínculo */}
-                        <div className="bg-emerald-500/[0.02] border border-emerald-500/10 p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs mb-3">
+                      {/* Enlaces Unificados (Estilo Linktree) */}
+                      <div className="space-y-4 pt-4 border-t border-border/30">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">
+                            Enlaces de tu Bio-Link
+                          </Label>
+                          {store && store.plan === "semilla" && (
+                            <span className="text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200/50 font-bold uppercase tracking-wider">
+                              {customLinks.length}/5 Enlaces
+                            </span>
+                          )}
+                        </div>
+
+                        {/* WhatsApp Auto-Vínculo (Solo informativo) */}
+                        <div className="bg-emerald-500/[0.02] border border-emerald-500/10 p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs">
                           <div className="flex items-center gap-2">
                             <Phone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                             <p className="text-muted-foreground text-[11px]">
@@ -897,375 +1006,363 @@ function LinkBioPage() {
                           </span>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          {/* Instagram */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold flex items-center gap-1.5">
-                              <Instagram className="h-3.5 w-3.5 text-pink-600" /> Instagram
-                            </Label>
-                            <Input
-                              value={instagramUrl}
-                              onChange={(e) => setInstagramUrl(e.target.value)}
-                              onBlur={() => handleBlurSocial(instagramUrl, "instagram")}
-                              placeholder="Usuario o enlace completo"
-                              className="bg-transparent text-sm h-10 w-full rounded-lg"
-                            />
-                            {instagramUrl.trim() && (
-                              store && !canUsePremiumBioFeatures(store) ? (
-                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                  <span className="flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> Color personalizado
-                                  </span>
-                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={instagramBgColor || "#E1306C"}
-                                    onChange={(e) => setInstagramBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{instagramBgColor || "Color de botón"}</span>
-                                  {instagramBgColor && (
-                                    <button type="button" onClick={() => setInstagramBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
-                              )
-                            )}
-                          </div>
-
-                          {/* Facebook */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold flex items-center gap-1.5">
-                              <Facebook className="h-3.5 w-3.5 text-blue-600" /> Facebook
-                            </Label>
-                            <Input
-                              value={facebookUrl}
-                              onChange={(e) => setFacebookUrl(e.target.value)}
-                              onBlur={() => handleBlurSocial(facebookUrl, "facebook")}
-                              placeholder="Usuario o enlace completo"
-                              className="bg-transparent text-sm h-10 w-full rounded-lg"
-                            />
-                            {facebookUrl.trim() && (
-                              store && !canUsePremiumBioFeatures(store) ? (
-                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                  <span className="flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> Color personalizado
-                                  </span>
-                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={facebookBgColor || "#1877f2"}
-                                    onChange={(e) => setFacebookBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{facebookBgColor || "Color de botón"}</span>
-                                  {facebookBgColor && (
-                                    <button type="button" onClick={() => setFacebookBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
-                              )
-                            )}
-                          </div>
-
-                          {/* TikTok */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold flex items-center gap-1.5">
-                              <svg className="h-3.5 w-3.5 fill-current text-foreground dark:text-white" viewBox="0 0 24 24">
-                                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .8.11V9.4a6.27 6.27 0 0 0-3.11 0A6.33 6.33 0 0 0 2 15.68a6.32 6.32 0 0 0 10.4 4.84 6.26 6.26 0 0 0 1.95-4.52V8.82a8.27 8.27 0 0 0 5.24 1.86V7.28a4.89 4.89 0 0 1-3.11-.59z" />
-                              </svg>
-                              TikTok
-                            </Label>
-                            <Input
-                              value={tiktokUrl}
-                              onChange={(e) => setTikTokUrl(e.target.value)}
-                              onBlur={() => handleBlurSocial(tiktokUrl, "tiktok")}
-                              placeholder="Usuario o enlace completo"
-                              className="bg-transparent text-sm h-10 w-full rounded-lg"
-                            />
-                            {tiktokUrl.trim() && (
-                              store && !canUsePremiumBioFeatures(store) ? (
-                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                  <span className="flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> Color personalizado
-                                  </span>
-                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={tiktokBgColor || "#010101"}
-                                    onChange={(e) => setTiktokBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{tiktokBgColor || "Color de botón"}</span>
-                                  {tiktokBgColor && (
-                                    <button type="button" onClick={() => setTiktokBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
-                              )
-                            )}
-                          </div>
-
-                          {/* LinkedIn */}
-                          <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold flex items-center gap-1.5">
-                              <Linkedin className="h-3.5 w-3.5 text-[#0077b5]" /> LinkedIn
-                            </Label>
-                            <Input
-                              value={linkedinUrl}
-                              onChange={(e) => setLinkedinUrl(e.target.value)}
-                              onBlur={() => handleBlurSocial(linkedinUrl, "linkedin")}
-                              placeholder="Usuario o enlace completo"
-                              className="bg-transparent text-sm h-10 w-full rounded-lg"
-                            />
-                            {linkedinUrl.trim() && (
-                              store && !canUsePremiumBioFeatures(store) ? (
-                                <div className="flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400 mt-1 pl-1">
-                                  <span className="flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> Color personalizado
-                                  </span>
-                                  <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                </div>
-                              ) : (
-                                <div className="flex items-center gap-1.5 border rounded-lg px-2 py-1 bg-muted/10 h-8 mt-1">
-                                  <input
-                                    type="color"
-                                    value={linkedinBgColor || "#0077b5"}
-                                    onChange={(e) => setLinkedinBgColor(e.target.value)}
-                                    className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate flex-1">{linkedinBgColor || "Color de botón"}</span>
-                                  {linkedinBgColor && (
-                                    <button type="button" onClick={() => setLinkedinBgColor("")} className="text-[9px] text-destructive hover:underline font-bold">Reset</button>
-                                  )}
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Enlaces personalizados */}
-                      <div className="space-y-3 border-t border-border/40 pt-4">
-                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Enlaces Adicionales</Label>
-                        <div className="flex flex-col gap-4 bg-muted/[0.03] p-4 rounded-xl border border-border/40">
-                          <div className="flex flex-col sm:flex-row gap-3 items-end">
-                            <div className="flex-1 w-full space-y-1">
+                        {/* Agregar Nuevo Enlace Form */}
+                        <div className="bg-muted/[0.03] p-4 rounded-xl border border-border/40 space-y-3">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            Agregar Nuevo Enlace
+                          </p>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <div className="space-y-1">
                               <Label className="text-xs text-muted-foreground font-medium">Texto del Botón</Label>
                               <Input
                                 value={newLinkLabel}
                                 onChange={(e) => setNewLinkLabel(e.target.value)}
-                                placeholder="Ej: Catálogo Mayorista PDF 📄"
+                                placeholder="Ej: Síguenos en Instagram"
                                 className="h-9 bg-transparent rounded-lg text-sm"
                               />
                             </div>
-                            <div className="flex-[2] w-full space-y-1">
+                            <div className="space-y-1">
                               <Label className="text-xs text-muted-foreground font-medium">Enlace (URL)</Label>
                               <Input
                                 value={newLinkUrl}
                                 onChange={(e) => setNewLinkUrl(e.target.value)}
-                                placeholder="Ej: miweb.com/catalogo.pdf"
+                                placeholder="Ej: instagram.com/mitienda"
                                 className="h-9 bg-transparent rounded-lg text-sm"
                               />
                             </div>
                           </div>
-                          
-                          <div className="flex flex-col sm:flex-row gap-4 items-end justify-between border-t border-border/20 pt-3">
-                            <div className="grid grid-cols-2 gap-3 w-full sm:max-w-md">
-                              <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground font-semibold">Color de Fondo (Opcional)</Label>
-                                <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-9">
-                                  <input
-                                    type="color"
-                                    value={newLinkBgColor || "#000000"}
-                                    onChange={(e) => setNewLinkBgColor(e.target.value)}
-                                    className="h-6 w-6 rounded-md cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate text-muted-foreground">
-                                    {newLinkBgColor || "Por defecto"}
-                                  </span>
-                                  {newLinkBgColor && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setNewLinkBgColor("")}
-                                      className="text-[9px] text-destructive hover:underline ml-auto font-bold pr-1 font-sans"
-                                    >
-                                      ✕
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
 
-                              <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground font-semibold">Color de Texto (Opcional)</Label>
-                                <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-9">
-                                  <input
-                                    type="color"
-                                    value={newLinkTextColor || "#ffffff"}
-                                    onChange={(e) => setNewLinkTextColor(e.target.value)}
-                                    className="h-6 w-6 rounded-md cursor-pointer border shrink-0"
-                                  />
-                                  <span className="text-[10px] font-mono truncate text-muted-foreground">
-                                    {newLinkTextColor || "Por defecto"}
-                                  </span>
-                                  {newLinkTextColor && (
-                                    <button
-                                      type="button"
-                                      onClick={() => setNewLinkTextColor("")}
-                                      className="text-[9px] text-destructive hover:underline ml-auto font-bold pr-1 font-sans"
-                                    >
-                                      ✕
-                                    </button>
-                                  )}
-                                </div>
+                          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between border-t border-border/20 pt-3">
+                            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground font-semibold">Icono (Opcional):</span>
+                                <select
+                                  value={newLinkIcon}
+                                  onChange={(e) => setNewLinkIcon(e.target.value)}
+                                  className="text-xs bg-card border rounded-md px-2 py-1 outline-none h-8 text-foreground"
+                                >
+                                  <option value="">Auto-detectar o ninguno</option>
+                                  <option value="globe">Globo / Sitio Web</option>
+                                  <option value="phone">Teléfono</option>
+                                  <option value="map-pin">Ubicación</option>
+                                  <option value="instagram">Instagram</option>
+                                  <option value="facebook">Facebook</option>
+                                  <option value="linkedin">LinkedIn</option>
+                                  <option value="youtube">YouTube</option>
+                                  <option value="music">Música / Spotify</option>
+                                  <option value="twitter">Twitter / X</option>
+                                </select>
                               </div>
                             </div>
 
                             <Button
-                              onClick={() => {
-                                if (store && customLinks.length >= getBioLinksLimit(store)) {
-                                  toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces personalizados. Sube de plan para agregar más.`);
+                              onClick={async () => {
+                                if (store && store.plan === "semilla" && customLinks.length >= getBioLinksLimit(store)) {
+                                  toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces. Sube de plan para agregar más.`);
                                   return;
                                 }
                                 if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
                                   toast.error("Ingresa el título y el enlace");
                                   return;
                                 }
+                                
+                                let formattedUrl = newLinkUrl.trim();
+                                if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+                                  const urlLower = formattedUrl.toLowerCase();
+                                  if (urlLower.includes("instagram.com") || newLinkLabel.toLowerCase().includes("instagram")) {
+                                    formattedUrl = formatSocialUrl(formattedUrl, "instagram");
+                                  } else if (urlLower.includes("facebook.com") || newLinkLabel.toLowerCase().includes("facebook")) {
+                                    formattedUrl = formatSocialUrl(formattedUrl, "facebook");
+                                  } else if (urlLower.includes("tiktok.com") || newLinkLabel.toLowerCase().includes("tiktok")) {
+                                    formattedUrl = formatSocialUrl(formattedUrl, "tiktok");
+                                  } else if (urlLower.includes("linkedin.com") || newLinkLabel.toLowerCase().includes("linkedin")) {
+                                    formattedUrl = formatSocialUrl(formattedUrl, "linkedin");
+                                  } else {
+                                    formattedUrl = "https://" + formattedUrl;
+                                  }
+                                }
+
                                 setCustomLinks([
                                   ...customLinks,
                                   {
                                     label: newLinkLabel.trim(),
-                                    url: newLinkUrl.trim(),
+                                    url: formattedUrl,
                                     bgColor: newLinkBgColor || undefined,
                                     textColor: newLinkTextColor || undefined,
+                                    thumbnailUrl: newLinkThumbnail || undefined,
+                                    iconName: newLinkIcon || undefined,
                                   },
                                 ]);
                                 setNewLinkLabel("");
                                 setNewLinkUrl("");
                                 setNewLinkBgColor("");
                                 setNewLinkTextColor("");
-                                toast.success("Enlace personalizado agregado");
+                                setNewLinkThumbnail("");
+                                setNewLinkIcon("");
+                                toast.success("Enlace agregado");
                               }}
                               type="button"
                               className="h-9 font-bold px-5 w-full sm:w-auto cursor-pointer rounded-lg text-xs"
                             >
-                              <Plus className="h-3.5 w-3.5 mr-1" /> Añadir botón
+                              <Plus className="h-3.5 w-3.5 mr-1" /> Añadir enlace
                             </Button>
                           </div>
                         </div>
 
-                        {store && store.plan === "semilla" && (
-                          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                            <Crown className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                            <div className="space-y-0.5">
-                              <p className="font-bold">Límite del Plan Semilla</p>
-                              <p>Puedes agregar un máximo de 5 enlaces personalizados en el plan gratuito. Actualmente tienes {customLinks.length}/5 creados.</p>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="space-y-2 pt-1">
+                        {/* Listado de Enlaces Activos con Reordenamiento y Edición Inline */}
+                        <div className="space-y-3 pt-2">
                           {customLinks.length === 0 ? (
-                            <p className="text-xs text-muted-foreground italic py-1 pl-1">No has agregado enlaces personalizados aún.</p>
+                            <div className="text-center py-6 border border-dashed rounded-xl bg-muted/5">
+                              <p className="text-xs text-muted-foreground italic">No has agregado enlaces aún. Comienza agregando uno arriba.</p>
+                            </div>
                           ) : (
-                            customLinks.map((link, idx) => (
-                              <div key={idx} className="flex flex-col gap-2.5 p-3 rounded-xl border bg-card text-xs shadow-sm">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0 flex-1">
-                                    <p className="font-bold text-foreground truncate">{link.label}</p>
-                                    <p className="font-mono text-[10px] text-muted-foreground truncate">{link.url}</p>
-                                  </div>
-                                  <Button
-                                    onClick={() => { setCustomLinks(customLinks.filter((_, i) => i !== idx)); toast.success("Enlace eliminado"); }}
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer rounded-lg"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                
-                                {store && !canUsePremiumBioFeatures(store) ? (
-                                  <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[10px] text-amber-600 dark:text-amber-400">
-                                    <span className="flex items-center gap-1">
-                                      <Lock className="h-3.5 w-3.5" /> Colores personalizados por botón
-                                    </span>
-                                    <span className="font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded text-[8px] uppercase">Premium</span>
-                                  </div>
-                                ) : (
-                                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/40">
-                                    <div className="space-y-1">
-                                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Fondo de este Botón</span>
-                                      <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
-                                        <input
-                                          type="color"
-                                          value={link.bgColor || "#000000"}
-                                          onChange={(e) => {
-                                            const updated = [...customLinks];
-                                            updated[idx] = { ...link, bgColor: e.target.value };
-                                            setCustomLinks(updated);
-                                          }}
-                                          className="h-5 w-5 rounded cursor-pointer border shrink-0"
-                                        />
-                                        <span className="text-[9px] font-mono truncate">{link.bgColor || "Defecto"}</span>
-                                        {link.bgColor && (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              const updated = [...customLinks];
-                                              const item = { ...updated[idx] };
-                                              delete item.bgColor;
-                                              updated[idx] = item;
-                                              setCustomLinks(updated);
-                                            }}
-                                            className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1 font-sans"
-                                          >
-                                            Reset
-                                          </button>
-                                        )}
+                            customLinks.map((link, idx) => {
+                              const { platform } = getMockupIconAndBrand(link);
+                              
+                              return (
+                                <div key={idx} className="bg-card border border-border/60 rounded-xl p-3.5 shadow-sm space-y-3 relative group/card">
+                                  {/* Encabezado del item con acciones */}
+                                  <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 uppercase">
+                                        {platform === "custom" ? link.label.charAt(0) : platform.charAt(0)}
                                       </div>
+                                      <span className="text-xs font-bold text-foreground truncate">{link.label || "Enlace sin título"}</span>
+                                      <span className="text-[9px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border/30 capitalize shrink-0">
+                                        {platform}
+                                      </span>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {/* Subir/Bajar botones */}
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={idx === 0}
+                                        onClick={() => {
+                                          const updated = [...customLinks];
+                                          const temp = updated[idx];
+                                          updated[idx] = updated[idx - 1];
+                                          updated[idx - 1] = temp;
+                                          setCustomLinks(updated);
+                                        }}
+                                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md"
+                                      >
+                                        ▲
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        disabled={idx === customLinks.length - 1}
+                                        onClick={() => {
+                                          const updated = [...customLinks];
+                                          const temp = updated[idx];
+                                          updated[idx] = updated[idx + 1];
+                                          updated[idx + 1] = temp;
+                                          setCustomLinks(updated);
+                                        }}
+                                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md"
+                                      >
+                                        ▼
+                                      </Button>
+                                      
+                                      <Button
+                                        onClick={() => {
+                                          setCustomLinks(customLinks.filter((_, i) => i !== idx));
+                                          toast.success("Enlace eliminado");
+                                        }}
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7 text-destructive hover:bg-destructive/10 rounded-md"
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  </div>
+
+                                  {/* Inputs de Edición Inline */}
+                                  <div className="grid gap-3 sm:grid-cols-2">
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] text-muted-foreground font-semibold">Título del Enlace</Label>
+                                      <Input
+                                        value={link.label}
+                                        onChange={(e) => {
+                                          const updated = [...customLinks];
+                                          updated[idx] = { ...link, label: e.target.value };
+                                          setCustomLinks(updated);
+                                        }}
+                                        className="h-8 bg-transparent text-xs rounded-md"
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] text-muted-foreground font-semibold">Enlace (URL)</Label>
+                                      <Input
+                                        value={link.url}
+                                        onChange={(e) => {
+                                          const updated = [...customLinks];
+                                          updated[idx] = { ...link, url: e.target.value };
+                                          setCustomLinks(updated);
+                                        }}
+                                        className="h-8 bg-transparent text-xs rounded-md"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Miniatura y Override de Icono */}
+                                  <div className="grid gap-3 sm:grid-cols-2 pt-1">
+                                    <div className="space-y-1">
+                                      <Label className="text-[10px] text-muted-foreground font-semibold block">Icono de Lucide</Label>
+                                      <select
+                                        value={link.iconName || ""}
+                                        onChange={(e) => {
+                                          const updated = [...customLinks];
+                                          updated[idx] = { ...link, iconName: e.target.value || undefined };
+                                          setCustomLinks(updated);
+                                        }}
+                                        className="w-full text-xs bg-card border rounded-md px-2 h-8 text-foreground outline-none"
+                                      >
+                                        <option value="">Auto-detectar o ninguno</option>
+                                        <option value="globe">Globo / Sitio Web</option>
+                                        <option value="phone">Teléfono</option>
+                                        <option value="map-pin">Ubicación</option>
+                                        <option value="instagram">Instagram</option>
+                                        <option value="facebook">Facebook</option>
+                                        <option value="linkedin">LinkedIn</option>
+                                        <option value="youtube">YouTube</option>
+                                        <option value="music">Música / Spotify</option>
+                                        <option value="twitter">Twitter / X</option>
+                                      </select>
                                     </div>
 
+                                    {/* Uploader de Miniatura Personalizada */}
                                     <div className="space-y-1">
-                                      <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Texto de este Botón</span>
-                                      <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
+                                      <Label className="text-[10px] text-muted-foreground font-semibold block">Imagen de Miniatura (Uploader)</Label>
+                                      <div className="flex items-center gap-2">
+                                        <div className="h-8 w-8 rounded-full border bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                                          {link.thumbnailUrl ? (
+                                            <img src={link.thumbnailUrl} className="h-full w-full object-cover" />
+                                          ) : (
+                                            <span className="text-[8px] text-muted-foreground uppercase font-bold">Icon</span>
+                                          )}
+                                        </div>
                                         <input
-                                          type="color"
-                                          value={link.textColor || "#ffffff"}
-                                          onChange={(e) => {
-                                            const updated = [...customLinks];
-                                            updated[idx] = { ...link, textColor: e.target.value };
-                                            setCustomLinks(updated);
+                                          type="file"
+                                          accept="image/*"
+                                          id={`thumb-upload-${idx}`}
+                                          className="hidden"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                              try {
+                                                const base64 = await compressToThumbnail(file);
+                                                const updated = [...customLinks];
+                                                updated[idx] = { ...link, thumbnailUrl: base64 };
+                                                setCustomLinks(updated);
+                                                toast.success("Miniatura cargada");
+                                              } catch (err) {
+                                                toast.error("Error al procesar la imagen");
+                                              }
+                                            }
                                           }}
-                                          className="h-5 w-5 rounded cursor-pointer border shrink-0"
                                         />
-                                        <span className="text-[9px] font-mono truncate">{link.textColor || "Defecto"}</span>
-                                        {link.textColor && (
+                                        <label
+                                          htmlFor={`thumb-upload-${idx}`}
+                                          className="text-[10px] font-bold border rounded-md px-2.5 h-8 flex items-center justify-center bg-card hover:bg-muted/30 cursor-pointer transition-colors"
+                                        >
+                                          Subir Foto
+                                        </label>
+                                        {link.thumbnailUrl && (
                                           <button
                                             type="button"
                                             onClick={() => {
                                               const updated = [...customLinks];
                                               const item = { ...updated[idx] };
-                                              delete item.textColor;
+                                              delete item.thumbnailUrl;
                                               updated[idx] = item;
                                               setCustomLinks(updated);
                                             }}
-                                            className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1 font-sans"
+                                            className="text-[10px] text-destructive hover:underline font-bold"
                                           >
-                                            Reset
+                                            Eliminar
                                           </button>
                                         )}
                                       </div>
                                     </div>
                                   </div>
-                                )}
-                              </div>
-                            ))
+
+                                  {/* Colores Personalizados (Premium) */}
+                                  {store && canUsePremiumBioFeatures(store) && (
+                                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/30">
+                                      <div className="space-y-1">
+                                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Fondo de este Botón</span>
+                                        <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
+                                          <input
+                                            type="color"
+                                            value={link.bgColor || "#000000"}
+                                            onChange={(e) => {
+                                              const updated = [...customLinks];
+                                              updated[idx] = { ...link, bgColor: e.target.value };
+                                              setCustomLinks(updated);
+                                            }}
+                                            className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                          />
+                                          <span className="text-[9px] font-mono truncate">{link.bgColor || "Defecto"}</span>
+                                          {link.bgColor && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const updated = [...customLinks];
+                                                const item = { ...updated[idx] };
+                                                delete item.bgColor;
+                                                updated[idx] = item;
+                                                setCustomLinks(updated);
+                                              }}
+                                              className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1 font-sans"
+                                            >
+                                              Reset
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-1">
+                                        <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">Texto de este Botón</span>
+                                        <div className="flex items-center gap-1.5 border rounded-lg p-1 bg-muted/10 h-7">
+                                          <input
+                                            type="color"
+                                            value={link.textColor || "#ffffff"}
+                                            onChange={(e) => {
+                                              const updated = [...customLinks];
+                                              updated[idx] = { ...link, textColor: e.target.value };
+                                              setCustomLinks(updated);
+                                            }}
+                                            className="h-5 w-5 rounded cursor-pointer border shrink-0"
+                                          />
+                                          <span className="text-[9px] font-mono truncate">{link.textColor || "Defecto"}</span>
+                                          {link.textColor && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                const updated = [...customLinks];
+                                                const item = { ...updated[idx] };
+                                                delete item.textColor;
+                                                updated[idx] = item;
+                                                setCustomLinks(updated);
+                                              }}
+                                              className="text-[9px] text-destructive ml-auto hover:underline font-bold pr-1 font-sans"
+                                            >
+                                              Reset
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
                           )}
                         </div>
                       </div>
@@ -1341,7 +1438,7 @@ function LinkBioPage() {
                       <div className="space-y-3 border-t border-border/40 pt-4">
                         <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">Fotos del Bio-Link</Label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
+                          <div className="space-y-1.5 flex flex-col">
                             <Label className="text-xs text-muted-foreground font-bold">Foto de Perfil Especial</Label>
                             <ImageUploadGuided
                               value={bioLogo}
@@ -1349,8 +1446,22 @@ function LinkBioPage() {
                               spec={bioLogoSpec}
                               label="Subir foto de perfil"
                             />
+                            {store.logo && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setBioLogo(store.logo || "");
+                                  toast.success("Foto de perfil sincronizada con el logo de tu tienda");
+                                }}
+                                className="mt-1.5 h-8 text-[10px] font-bold self-start cursor-pointer"
+                              >
+                                <Copy className="h-3.5 w-3.5 mr-1" /> Usar logo de mi tienda
+                              </Button>
+                            )}
                           </div>
-                          <div className="space-y-1.5">
+                          <div className="space-y-1.5 flex flex-col">
                             <Label className="text-xs text-muted-foreground font-bold">Foto de Portada Especial</Label>
                             <ImageUploadGuided
                               value={bioBanner}
@@ -1358,6 +1469,20 @@ function LinkBioPage() {
                               spec={bioBannerSpec}
                               label="Subir foto de portada"
                             />
+                            {store.bannerImage && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setBioBanner(store.bannerImage || "");
+                                  toast.success("Foto de portada sincronizada con el banner de tu tienda");
+                                }}
+                                className="mt-1.5 h-8 text-[10px] font-bold self-start cursor-pointer"
+                              >
+                                <Copy className="h-3.5 w-3.5 mr-1" /> Usar portada de mi tienda
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1663,12 +1788,48 @@ function LinkBioPage() {
                 </div>
               )}
 
-              {/* Save */}
-              <div className="pt-3 border-t border-border/40 flex justify-end">
+              {/* Save & Preview */}
+              <div className="pt-3 border-t border-border/40 flex flex-col sm:flex-row items-center justify-end gap-3 w-full">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full sm:w-auto px-6 h-11 font-bold text-sm rounded-lg lg:hidden flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                      Ver Vista Previa
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[80vh] p-4 rounded-t-3xl border-t-2 border-primary/20 overflow-y-auto">
+                    <div className="py-4">
+                      <PhonePreview
+                        name={store.name}
+                        logo={bioLogo || store.logo || ""}
+                        bioDescription={bioDescription}
+                        brandColor={store.brandColor || undefined}
+                        bannerImage={bioBanner || store.bannerImage || undefined}
+                        phone={country + number.replace(/\D/g, "")}
+                        locationAddress={locationAddress}
+                        locationLat={locationLat}
+                        locationLng={locationLng}
+                        customLinks={customLinks}
+                        bioTheme={bioTheme}
+                        bioButtonStyle={bioButtonStyle}
+                        bioButtonColor={bioButtonColor}
+                        bioButtonTextColor={bioButtonTextColor}
+                        bioBgImage={bioBgImage}
+                        bioBgColor={bioBgColor}
+                        bioTypography={bioTypography}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+
                 <Button
                   onClick={save}
                   disabled={saving}
-                  className="w-full sm:w-auto px-10 h-11 font-bold shadow-lg shadow-primary/20 text-sm rounded-lg"
+                  className="w-full sm:w-auto px-10 h-11 font-bold shadow-lg shadow-primary/20 text-sm rounded-lg cursor-pointer"
                 >
                   {saving ? (
                     <span className="flex items-center gap-2">
@@ -1696,10 +1857,6 @@ function LinkBioPage() {
             locationAddress={locationAddress}
             locationLat={locationLat}
             locationLng={locationLng}
-            instagramUrl={instagramUrl}
-            facebookUrl={facebookUrl}
-            tiktokUrl={tiktokUrl}
-            linkedinUrl={linkedinUrl}
             customLinks={customLinks}
             bioTheme={bioTheme}
             bioButtonStyle={bioButtonStyle}
@@ -1710,44 +1867,6 @@ function LinkBioPage() {
             bioTypography={bioTypography}
           />
         </div>
-      </div>
-
-      {/* Mobile floating preview button */}
-      <div className="lg:hidden fixed bottom-6 right-6 z-40">
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button className="h-12 w-12 rounded-full shadow-2xl cursor-pointer flex items-center justify-center p-0 bg-primary text-white border border-primary/20 hover:scale-105 active:scale-95 transition-all">
-              <Smartphone className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80vh] p-4 rounded-t-3xl border-t-2 border-primary/20 overflow-y-auto">
-            <div className="py-4">
-              <PhonePreview
-                name={store.name}
-                logo={bioLogo || store.logo || ""}
-                bioDescription={bioDescription}
-                brandColor={store.brandColor || undefined}
-                bannerImage={bioBanner || store.bannerImage || undefined}
-                phone={country + number.replace(/\D/g, "")}
-                locationAddress={locationAddress}
-                locationLat={locationLat}
-                locationLng={locationLng}
-                instagramUrl={instagramUrl}
-                facebookUrl={facebookUrl}
-                tiktokUrl={tiktokUrl}
-                linkedinUrl={linkedinUrl}
-                customLinks={customLinks}
-                bioTheme={bioTheme}
-                bioButtonStyle={bioButtonStyle}
-                bioButtonColor={bioButtonColor}
-                bioButtonTextColor={bioButtonTextColor}
-                bioBgImage={bioBgImage}
-                bioBgColor={bioBgColor}
-                bioTypography={bioTypography}
-              />
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
     </div>
   );

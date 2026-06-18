@@ -16,6 +16,9 @@ export const PLANS: Record<PlanId, Plan> = {
   ilimitado:    { id: "ilimitado",    name: "Ilimitado",    productLimit: Infinity, price: 34.9 },
 };
 
+
+
+
 export const PLAN_DURATION_OPTIONS = [
   { value: 1,  label: "1 mes" },
   { value: 3,  label: "3 meses" },
@@ -53,6 +56,8 @@ export interface QuickLink {
   url: string;
   bgColor?: string;
   textColor?: string;
+  thumbnailUrl?: string;
+  iconName?: string;
 }
 
 export interface Store {
@@ -64,8 +69,12 @@ export interface Store {
   logo?: string | null;
   brandColor?: string | null;
   bgColor?: string | null;
+  textColor?: string | null;
   bannerImage?: string | null;
   bannerTitle?: string | null;
+  bannerStyle?: "direct" | "framed" | "curved" | null;
+  catalogTypography?: "sans" | "serif" | "rounded" | "modern" | null;
+  cardStyle?: "standard" | "flat" | "shadow" | "curved" | null;
   plan: PlanId;
   active: boolean;
   createdAt: string;
@@ -85,6 +94,7 @@ export interface Store {
   cancelledAt?: string;
   cancelReason?: string;
   planDurationMonths?: number;
+  customPrice?: number;
   bioDescription?: string | null;
   locationLat?: number;
   locationLng?: number;
@@ -100,6 +110,8 @@ export interface Store {
   bioButtonTextColor?: string | null;
   bioBgImage?: string | null;
   bioBgColor?: string | null;
+  bannerTagline?: string | null;
+  bannerBottomTag?: string | null;
   categories: Category[];
   products: Product[];
 }
@@ -112,6 +124,9 @@ export interface Invite {
   durationMonths: number;
   expiresAt: string;
   notes?: string;
+  customPrice?: number;
+  durationValue?: number;
+  durationUnit?: "days" | "months";
 }
 
 // ─── Helpers de suscripcion ──────────────────────────────────────────────────

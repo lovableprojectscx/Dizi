@@ -30,6 +30,12 @@ export function ImageUploadGuided({
   const [ratioMessage, setRatioMessage] = useState("");
   const [showHint, setShowHint] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const [showUrlInput, setShowUrlInput] = useState(() => {
+    if (typeof value === "string" && value.startsWith("http")) {
+      return !value.includes(".supabase.co/");
+    }
+    return false;
+  });
 
   const handleUrlChange = async (url: string) => {
     onChange(url);
@@ -263,21 +269,43 @@ export function ImageUploadGuided({
 
       {/* ── URL manual ── */}
       <div className="space-y-1.5">
-        <div className="relative flex items-center">
-          <Input
-            placeholder="O pega una URL de imagen..."
-            value={isDataUrl ? "" : (value || "")}
-            onChange={(e) => handleUrlChange(e.target.value)}
-            className="text-xs pr-8"
-            disabled={importing || converting}
-          />
-          {importing && (
-            <Loader2 className="absolute right-2.5 h-3.5 w-3.5 animate-spin text-muted-foreground" />
-          )}
-        </div>
+        {!showUrlInput ? (
+          <button
+            type="button"
+            onClick={() => setShowUrlInput(true)}
+            className="text-[10px] text-muted-foreground hover:text-primary transition-colors font-semibold flex items-center gap-1 mt-1 cursor-pointer"
+          >
+            <span>🔗 Pegar enlace de imagen (avanzado)</span>
+          </button>
+        ) : (
+          <div className="space-y-1.5 border-t border-border/20 pt-2 mt-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Enlace de imagen</span>
+              <button
+                type="button"
+                onClick={() => setShowUrlInput(false)}
+                className="text-[10px] text-destructive hover:underline font-bold"
+              >
+                Ocultar
+              </button>
+            </div>
+            <div className="relative flex items-center">
+              <Input
+                placeholder="O pega una URL de imagen..."
+                value={isDataUrl ? "" : (value || "")}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                className="text-xs pr-8"
+                disabled={importing || converting}
+              />
+              {importing && (
+                <Loader2 className="absolute right-2.5 h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              )}
+            </div>
+          </div>
+        )}
 
         {importWarning && (
-          <p className="text-[11px] leading-relaxed text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 whitespace-pre-line">
+          <p className="text-[11px] leading-relaxed text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 whitespace-pre-line mt-1.5">
             {importWarning}
           </p>
         )}

@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList, Link2 } from "lucide-react";
+import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList, Link2, AlertTriangle } from "lucide-react";
 import { getActiveSession, getSessionSync, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -104,6 +104,24 @@ function AdminLayout() {
                   <span className="hidden sm:inline">Salir</span>
                   <span className="sm:hidden ml-1">Salir</span>
                 </Link>
+              </Button>
+            </div>
+          )}
+          {store && !store.active && (
+            <div className="bg-red-50 text-red-900 border-b border-red-200 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30">
+              <span className="flex items-start gap-2 leading-tight flex-1">
+                <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-red-800">Tu catálogo digital está actualmente suspendido</p>
+                  <p className="text-xs text-red-700">
+                    Tu tienda ha sido pausada temporalmente debido a inactividad en tu plan Semilla. Tu enlace original ha sido liberado, y actualmente tu catálogo está accesible bajo el enlace de soporte temporal <code>/t/{store.slug}</code>.
+                  </p>
+                </div>
+              </span>
+              <Button size="sm" variant="destructive" asChild className="h-8 font-bold text-xs shrink-0 bg-red-600 hover:bg-red-700 text-white self-start sm:self-center">
+                <a href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, mi catálogo de la tienda "${store.name}" fue suspendido por inactividad. Quisiera reactivarlo.`)}`} target="_blank" rel="noopener noreferrer">
+                  Contactar a Soporte
+                </a>
               </Button>
             </div>
           )}

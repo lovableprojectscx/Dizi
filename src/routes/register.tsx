@@ -40,6 +40,9 @@ function RegisterPage() {
   // Invite state — se valida contra Supabase al montar el componente
   const [invitePlan, setInvitePlan] = useState<PlanId | null>(null);
   const [inviteDurationMonths, setInviteDurationMonths] = useState<number>(1);
+  const [inviteDurationValue, setInviteDurationValue] = useState<number | null>(null);
+  const [inviteDurationUnit, setInviteDurationUnit] = useState<"days" | "months" | null>(null);
+  const [inviteCustomPrice, setInviteCustomPrice] = useState<number | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const BRAND_COLORS = [
@@ -66,27 +69,25 @@ function RegisterPage() {
     if (!inviteToken) return;
     setInviteLoading(true);
     supabase
-      .from("invites")
-      .select("plan, used, expires_at, duration_months")
-      .eq("token", inviteToken)
-      .single()
+      .rpc("check_invite", { p_token: inviteToken })
       .then(({ data, error }) => {
-        if (error || !data) {
-          console.warn("[register] Invite no encontrado o error:", error?.message);
-        } else if (data.used) {
-          console.warn("[register] Invite ya fue usado");
-        } else if (new Date(data.expires_at) < new Date()) {
-          console.warn("[register] Invite expirado");
+        const inviteArray = data as any[];
+        if (error || !inviteArray || inviteArray.length === 0) {
+          console.warn("[register] Invite no encontrado, expirado o ya usado:", error?.message);
         } else {
-          setInvitePlan(data.plan as PlanId);
-          setInviteDurationMonths(data.duration_months ?? 1);
+          const invite = inviteArray[0];
+          setInvitePlan(invite.plan as PlanId);
+          setInviteDurationMonths(invite.duration_months ?? 1);
+          setInviteDurationValue(invite.duration_value ?? null);
+          setInviteDurationUnit(invite.duration_unit as "days" | "months" ?? null);
+          setInviteCustomPrice(invite.custom_price !== null && invite.custom_price !== undefined ? Number(invite.custom_price) : null);
         }
         setInviteLoading(false);
       });
   }, [inviteToken]);
 
   const plan: PlanId = invitePlan ?? "semilla";
-  const isTrial = invitePlan !== null && inviteDurationMonths === 0;
+  const isTrial = invitePlan !== null && (inviteDurationMonths === 0 || inviteDurationUnit === "days");
   const isPremium = plan !== "semilla";
 
   const niches = [
@@ -195,20 +196,25 @@ function RegisterPage() {
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
         const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
 
-        // Calcular fecha de vencimiento del plan (15 días si es prueba, meses si es invitación)
-        const planExpiresAt = isTrial
-          ? (() => {
-              const d = new Date();
-              d.setDate(d.getDate() + 15);
-              return d.toISOString();
-            })()
-          : inviteDurationMonths
-            ? (() => {
-                const d = new Date();
-                d.setMonth(d.getMonth() + inviteDurationMonths);
-                return d.toISOString();
-              })()
-            : undefined;
+        // Calcular fecha de vencimiento del plan (días o meses según la invitación)
+        const planExpiresAt = (() => {
+          if (plan === "semilla") return undefined;
+          const d = new Date();
+          if (inviteDurationUnit === "days" && inviteDurationValue) {
+            d.setDate(d.getDate() + inviteDurationValue);
+            return d.toISOString();
+          } else if (inviteDurationUnit === "months" && inviteDurationValue) {
+            d.setMonth(d.getMonth() + inviteDurationValue);
+            return d.toISOString();
+          } else if (isTrial) {
+            d.setDate(d.getDate() + 15);
+            return d.toISOString();
+          } else if (inviteDurationMonths) {
+            d.setMonth(d.getMonth() + inviteDurationMonths);
+            return d.toISOString();
+          }
+          return undefined;
+        })();
 
         await addStore({
           id: newStoreId,
@@ -226,8 +232,17 @@ function RegisterPage() {
           ownerId: userId,
           niche: selectedNiche,
           planExpiresAt,
-          subscriptionStatus: isTrial || plan === "semilla" ? "trial" : "active",
-          planDurationMonths: isTrial ? 0 : (plan === "semilla" ? undefined : inviteDurationMonths),
+          subscriptionStatus: (plan === "semilla")
+            ? "trial"
+            : (inviteDurationUnit === "days" || isTrial)
+              ? "trial"
+              : "active",
+          planDurationMonths: (plan === "semilla")
+            ? undefined
+            : (inviteDurationUnit === "days" || isTrial)
+              ? 0
+              : (inviteDurationValue ?? inviteDurationMonths),
+          customPrice: inviteCustomPrice !== null ? inviteCustomPrice : undefined,
           categories: [{ id: newCategoryId, name: "Principal" }],
           products: [],
         });
@@ -312,10 +327,18 @@ function RegisterPage() {
         )}
         {!inviteLoading && invitePlan && (
           <div className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-primary/20">
-            {isTrial
-              ? `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}`
-              : `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? 'mes' : 'meses'}`
-            }
+            {(() => {
+              const priceText = inviteCustomPrice !== null ? ` (Precio especial: S/ ${inviteCustomPrice.toFixed(2)})` : "";
+              if (inviteDurationUnit === "days" && inviteDurationValue) {
+                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} días${priceText}`;
+              } else if (inviteDurationUnit === "months" && inviteDurationValue) {
+                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} ${inviteDurationValue === 1 ? 'mes' : 'meses'}${priceText}`;
+              } else if (isTrial) {
+                return `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}${priceText}`;
+              } else {
+                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? 'mes' : 'meses'}${priceText}`;
+              }
+            })()}
           </div>
         )}
         {!inviteLoading && inviteToken && !invitePlan && (
