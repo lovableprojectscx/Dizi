@@ -138,7 +138,7 @@ const MODELS: ModelDef[] = [
   {
     id: "nocturno", name: "Nocturno", layout: "overlay",
     desc: "Dark mode de alto impacto. Cards portrait 3:4 con texto sobre imagen oscura. Fondo exclusivo.",
-    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true, bgLocked: true,
+    planLevel: 2, badge: "Pro", imgShape: "rounded", isDark: true,
     bg: "#0f172a", cardBg: "#1e293b", primaryColor: "#818cf8",
     textColor: "#f1f5f9", accentColor: "#312e81", borderRadius: "16px",
   },
@@ -166,7 +166,7 @@ const MODELS: ModelDef[] = [
   {
     id: "aurora", name: "Aurora Glass", layout: "tiles",
     desc: "Tiles glassmorphism con degradado cósmico. Fondo único irrepetible.",
-    planLevel: 2, badge: "Pro ✦", imgShape: "rounded", isDark: true, bgLocked: true,
+    planLevel: 2, badge: "Pro ✦", imgShape: "rounded", isDark: true,
     bg: "#0d0d1a", cardBg: "#1a1040", primaryColor: "#a855f7",
     textColor: "#e2d9f3", accentColor: "#2d1b6e", borderRadius: "24px",
   },
@@ -175,21 +175,21 @@ const MODELS: ModelDef[] = [
   {
     id: "luxury", name: "Luxury Gold", layout: "editorial",
     desc: "Lista tipo Net-a-Porter: imagen cuadrada + info detallada. Oscuro, dorado, intemporal. Fondo exclusivo.",
-    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true, bgLocked: true,
+    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true,
     bg: "#09090b", cardBg: "#18181b", primaryColor: "#ca8a04",
     textColor: "#fafafa", accentColor: "#292524", borderRadius: "4px",
   },
   {
     id: "dark_fashion", name: "Dark Fashion", layout: "magazine",
     desc: "Revista editorial oscura: banners full-width alternados con pares verticales 3:4. Fondo exclusivo.",
-    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true, bgLocked: true,
+    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true,
     bg: "#111111", cardBg: "#1c1c1c", primaryColor: "#f5f5f5",
     textColor: "#f5f5f5", accentColor: "#2a2a2a", borderRadius: "0px",
   },
   {
     id: "slash", name: "Slash Diagonal", layout: "diagonal",
     desc: "Cortes diagonales de alto impacto. Imagen slanted + texto. Estilo Nike / streetwear. Fondo exclusivo.",
-    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true, bgLocked: true,
+    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true,
     bg: "#0d1117", cardBg: "#1c2128", primaryColor: "#faec45",
     textColor: "#f0f0f0", accentColor: "#21262d", borderRadius: "0px",
   },
@@ -210,7 +210,7 @@ const MODELS: ModelDef[] = [
   {
     id: "sunset_glow", name: "Sunset Glow", layout: "overlay",
     desc: "Degradado atardecer en el fondo — naranja, rosa y morado — con cards portrait flotantes.",
-    planLevel: 3, badge: "Elite ✦", imgShape: "rounded", isDark: true, bgLocked: true,
+    planLevel: 3, badge: "Elite ✦", imgShape: "rounded", isDark: true,
     bg: "#1a0a2e", cardBg: "#2d1040", primaryColor: "#fb923c",
     textColor: "#ffe4d6", accentColor: "#7c2d8e", borderRadius: "20px",
   },

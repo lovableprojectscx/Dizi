@@ -875,9 +875,23 @@ export function PublicCatalog({
     return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
   };
 
-  // If user set a custom bgColor AND model doesn't have a locked background, apply it
+  // HSP color model formula for perceived brightness to determine text color on a solid background
+  const getContrastColor = (hex: string): string => {
+    const h = hex.replace("#", "");
+    if (h.length < 6) return "#ffffff";
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    const brightness = Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+    return brightness > 165 ? "#000000" : "#ffffff";
+  };
+
+  const primaryColor = store.brandColor || (cfg.vars as any)["--primary"] || "#4f46e5";
+  const primaryTextColor = getContrastColor(primaryColor);
+
+  // If user set a custom bgColor, apply it (standard models can have their background customized)
   const rawBg = (store as any).bgColor as string | undefined;
-  const customBg = BG_LOCKED_MODELS.has(modelId) ? undefined : rawBg;
+  const customBg = rawBg || undefined;
   const effectiveIsDark = customBg
     ? hexLuminance(customBg) < 0.18   // threshold: < 18% luminance = dark bg
     : cfg.isDark;
@@ -907,7 +921,7 @@ export function PublicCatalog({
     dark_fashion:"linear-gradient(180deg, #111111 0%, #1a1a1a 100%)",
     slash:       "linear-gradient(150deg, #0d1117 0%, #1c1728 50%, #0d1117 100%)",
   };
-  const modelGradient = MODEL_GRADIENTS[modelId];
+  const modelGradient = customBg ? undefined : MODEL_GRADIENTS[modelId];
 
   // Apply brand color and background color overrides
   // All foreground vars recalculated from effectiveIsDark so any model+bg combo stays readable
@@ -920,10 +934,11 @@ export function PublicCatalog({
     "--secondary":        effectiveIsDark ? "#1e2535" : "#f8fafc",
     "--border":           effectiveIsDark ? "#334155" : "#e2e8f0",
     ...(store.brandColor ? { "--primary": store.brandColor } : {}),
+    "--primary-foreground": primaryTextColor,
     ...(customBg ? { "--background": customBg } : {}),
     ...(effectiveCardBg ? { "--card": effectiveCardBg } : {}),
     // Gradient for locked models — sets the actual background-image CSS property
-    ...(modelGradient ? { backgroundImage: modelGradient } : {}),
+    ...(modelGradient ? { backgroundImage: modelGradient } : { backgroundImage: "none" }),
   } as React.CSSProperties;
 
   /* ── Bio-Link Customizations (Theme & Buttons) ── */
@@ -1010,6 +1025,7 @@ export function PublicCatalog({
       "--border": borderCol,
       "--card": cardBg,
       ...(store.brandColor ? { "--primary": store.brandColor } : {}),
+      "--primary-foreground": primaryTextColor,
       ...((background.includes("gradient") || background.startsWith("url(")) 
         ? { backgroundImage: background, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" } 
         : { backgroundImage: "none" }),
@@ -2869,7 +2885,7 @@ export function PublicCatalog({
                         <button
                           onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
                           className="h-9 px-4 text-xs font-black uppercase tracking-widest transition hover:opacity-80"
-                          style={{ backgroundColor: "var(--primary)", color: effectiveIsDark ? "#000" : "#fff" }}
+                          style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
                         >
                           <Plus className="h-3.5 w-3.5 inline" />
                         </button>
@@ -4132,7 +4148,7 @@ export function PublicCatalog({
                       style={{
                         borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
                         backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--card)",
-                        color: activeCat === "all" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                        color: activeCat === "all" ? "var(--primary-foreground)" : "var(--foreground)",
                       }}
                       className={cn(
                         "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
@@ -4141,7 +4157,7 @@ export function PublicCatalog({
                           : "hover:bg-primary/5"
                       )}
                     >
-                      <LayoutGrid className="h-4 w-4 shrink-0" style={{ color: activeCat === "all" ? (effectiveIsDark ? "#000" : "#fff") : "var(--primary)" }} />
+                      <LayoutGrid className="h-4 w-4 shrink-0" style={{ color: activeCat === "all" ? "var(--primary-foreground)" : "var(--primary)" }} />
                       <span>Ver Todo</span>
                     </button>
 
@@ -4152,7 +4168,7 @@ export function PublicCatalog({
                         style={{
                           borderColor: activeCat === "sale" ? "var(--primary)" : "var(--border)",
                           backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--card)",
-                          color: activeCat === "sale" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                          color: activeCat === "sale" ? "var(--primary-foreground)" : "var(--foreground)",
                         }}
                         className={cn(
                           "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
@@ -4161,7 +4177,7 @@ export function PublicCatalog({
                             : "hover:bg-primary/5"
                         )}
                       >
-                        <Flame className="h-4 w-4 shrink-0" style={{ color: activeCat === "sale" ? (effectiveIsDark ? "#000" : "#fff") : "#ef4444" }} />
+                        <Flame className="h-4 w-4 shrink-0" style={{ color: activeCat === "sale" ? "var(--primary-foreground)" : "#ef4444" }} />
                         <span>Ofertas</span>
                       </button>
                     )}
@@ -4176,7 +4192,7 @@ export function PublicCatalog({
                           style={{
                             borderColor: active ? "var(--primary)" : "var(--border)",
                             backgroundColor: active ? "var(--primary)" : "var(--card)",
-                            color: active ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                            color: active ? "var(--primary-foreground)" : "var(--foreground)",
                           }}
                           className={cn(
                             "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
@@ -4189,12 +4205,12 @@ export function PublicCatalog({
                             <CategoryIcon 
                               iconKey={iconKey} 
                               className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? (effectiveIsDark ? "#000" : "#fff") : "var(--primary)" }}
+                              style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
                             />
                           ) : (
                             <Utensils 
                               className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? (effectiveIsDark ? "#000" : "#fff") : "var(--primary)" }}
+                              style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
                             />
                           )}
                           <span>{label}</span>
@@ -4651,7 +4667,7 @@ export function PublicCatalog({
           style={{
             borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
             backgroundColor: "var(--primary)",
-            color: effectiveIsDark ? "#000" : "#fff",
+            color: "var(--primary-foreground)",
             boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
           }}
           aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
@@ -4782,7 +4798,7 @@ export function PublicCatalog({
               className="w-full h-12 font-bold transition hover:opacity-90 flex items-center justify-center gap-2 text-sm"
               style={{
                 backgroundColor: "var(--primary)",
-                color: effectiveIsDark ? "#000" : "#fff",
+                color: "var(--primary-foreground)",
                 borderRadius: cfg.cardRounded,
                 ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
               }}
@@ -4858,7 +4874,7 @@ export function PublicCatalog({
                   style={{
                     borderRadius: cfg.cardRounded,
                     backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--secondary)",
-                    color: activeCat === "all" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                    color: activeCat === "all" ? "var(--primary-foreground)" : "var(--foreground)",
                     borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
                   }}
                 >
@@ -4872,7 +4888,7 @@ export function PublicCatalog({
                   style={{
                     borderRadius: cfg.cardRounded,
                     backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--secondary)",
-                    color: activeCat === "sale" ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                    color: activeCat === "sale" ? "var(--primary-foreground)" : "var(--foreground)",
                     borderColor: activeCat === "sale" ? "var(--primary)" : "var(--border)",
                   }}
                 >
@@ -4889,7 +4905,7 @@ export function PublicCatalog({
                     style={{
                       borderRadius: cfg.cardRounded,
                       backgroundColor: activeCat === c.id ? "var(--primary)" : "var(--secondary)",
-                      color: activeCat === c.id ? (effectiveIsDark ? "#000" : "#fff") : "var(--foreground)",
+                      color: activeCat === c.id ? "var(--primary-foreground)" : "var(--foreground)",
                       borderColor: activeCat === c.id ? "var(--primary)" : "var(--border)",
                     }}
                   >
@@ -4938,7 +4954,7 @@ export function PublicCatalog({
                 className="w-full h-12 font-bold text-sm transition hover:opacity-90 flex items-center justify-center gap-2"
                 style={{
                   backgroundColor: "var(--primary)",
-                  color: effectiveIsDark ? "#000" : "#fff",
+                  color: "var(--primary-foreground)",
                   borderRadius: cfg.cardRounded,
                   ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
                 }}
@@ -5135,7 +5151,7 @@ export function PublicCatalog({
                     style={{
                       borderRadius: cfg.cardRounded,
                       backgroundColor: "var(--primary)",
-                      color: effectiveIsDark ? "#000" : "#fff",
+                      color: "var(--primary-foreground)",
                       ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
                     }}
                     onClick={() => { cartAdd(store.id, viewingProduct.id); setViewingProduct(null); setCartOpen(true); }}
@@ -5262,7 +5278,7 @@ export function PublicCatalog({
                 }}
                 style={{
                   backgroundColor: "var(--primary)",
-                  color: effectiveIsDark ? "#000" : "#fff",
+                  color: "var(--primary-foreground)",
                 }}
                 className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5"
               >
