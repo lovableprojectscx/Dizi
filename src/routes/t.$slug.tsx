@@ -180,7 +180,16 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
         originalPrice: p.original_price ? Number(p.original_price) : undefined,
         visible: p.visible,
         isSample: p.is_sample,
-      })),
+        sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+        createdAt: p.created_at,
+      })).sort((a, b) => {
+        if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
+          return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+        }
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      }),
     };
   })();
 

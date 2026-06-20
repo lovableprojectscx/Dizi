@@ -69,7 +69,16 @@ const mapStoreFromDB = (row: any): Store => ({
     originalPrice: p.original_price !== null && p.original_price !== undefined ? Number(p.original_price) : null,
     visible: p.visible,
     isSample: p.is_sample,
-  })),
+    sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+    createdAt: p.created_at,
+  })).sort((a, b) => {
+    if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
+      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+    }
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return dateB - dateA; // newest first
+  }),
 });
 
 interface AppState {
@@ -89,6 +98,7 @@ interface AppState {
   upsertProduct: (storeId: string, product: Product) => void;
   deleteProduct: (storeId: string, productId: string) => void;
   toggleProductVisible: (storeId: string, productId: string) => void;
+  swapProductsOrder: (storeId: string, index1: number, index2: number) => Promise<void>;
   upsertCategory: (storeId: string, cat: Category) => void;
   deleteCategory: (storeId: string, catId: string) => void;
   setPlan: (storeId: string, plan: PlanId, durationMonths?: number, customPrice?: number) => Promise<void>;
@@ -101,6 +111,9 @@ interface AppState {
   updatePlanPromotion: (planId: PlanId, patch: Partial<PlanPromotion>) => Promise<void>;
   deleteStore: (storeId: string) => Promise<void>;
 }
+
+let productDebounceTimer: any = null;
+const pendingProductUpdates = new Map<string, { id: string; store_id: string; sort_order: number }>();
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -516,18 +529,29 @@ export const useApp = create<AppState>()(
         const cleanPrice = (product.price !== undefined && product.price !== null && product.price !== 0) ? product.price : null;
         const cleanOriginalPrice = (product.originalPrice !== undefined && product.originalPrice !== null && product.originalPrice !== 0) ? product.originalPrice : null;
 
+        const st = useApp.getState().stores.find((s) => s.id === storeId);
+        const exists = st ? st.products.some((pr) => pr.id === prodId) : false;
+        
+        let finalSortOrder = product.sortOrder;
+        if (!exists && (finalSortOrder === undefined || finalSortOrder === null)) {
+          const maxOrder = st && st.products.length > 0
+            ? Math.max(...st.products.map(pr => pr.sortOrder ?? 0))
+            : 0;
+          finalSortOrder = maxOrder + 1;
+        }
+
         const p = { 
           ...product, 
           id: prodId, 
           image: imageUrl,
           price: cleanPrice,
           originalPrice: cleanOriginalPrice,
-          description: product.description || undefined
+          description: product.description || undefined,
+          sortOrder: finalSortOrder !== undefined && finalSortOrder !== null ? finalSortOrder : 0,
+          createdAt: product.createdAt || new Date().toISOString()
         };
 
         try {
-          const st = useApp.getState().stores.find((s) => s.id === storeId);
-          const exists = st ? st.products.some((pr) => pr.id === p.id) : false;
           const isNewRealProduct = !exists && !p.isSample;
           const hasOnlySamples = st ? (st.products.length > 0 && st.products.every((pr) => pr.isSample)) : false;
 
@@ -547,6 +571,7 @@ export const useApp = create<AppState>()(
             name: p.name, price: p.price, original_price: p.originalPrice,
             image: p.image, description: p.description || null, is_on_sale: p.isOnSale,
             visible: p.visible, is_sample: p.isSample,
+            sort_order: p.sortOrder,
           });
 
           if (error) throw error;
@@ -559,11 +584,21 @@ export const useApp = create<AppState>()(
               const hasOnlySamples = st.products.length > 0 && st.products.every((pr) => pr.isSample);
               let currentProducts = st.products;
               if (isNewRealProduct && hasOnlySamples) currentProducts = [];
+              
+              const updatedList = exists
+                ? currentProducts.map((pr) => (pr.id === p.id ? p : pr))
+                : [...currentProducts, p];
+
               return {
                 ...st,
-                products: exists
-                  ? currentProducts.map((pr) => (pr.id === p.id ? p : pr))
-                  : [...currentProducts, p],
+                products: updatedList.sort((a, b) => {
+                  if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
+                    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+                  }
+                  const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                  const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                  return dateB - dateA;
+                }),
               };
             }),
           }));
@@ -618,6 +653,64 @@ export const useApp = create<AppState>()(
           console.error("[toggleProductVisible] Error:", error);
           toast.error("Error al cambiar visibilidad");
         }
+      },
+
+      swapProductsOrder: async (storeId, index1, index2) => {
+        const store = useApp.getState().stores.find((st) => st.id === storeId);
+        if (!store) return;
+
+        const updatedProducts = [...store.products];
+        if (index1 < 0 || index1 >= updatedProducts.length || index2 < 0 || index2 >= updatedProducts.length) {
+          return;
+        }
+
+        // Intercambiar de forma local
+        const temp = updatedProducts[index1];
+        updatedProducts[index1] = updatedProducts[index2];
+        updatedProducts[index2] = temp;
+
+        // Asignar nuevos sortOrder basados en el nuevo índice (* 10)
+        const reordered = updatedProducts.map((p, idx) => ({
+          ...p,
+          sortOrder: idx * 10
+        }));
+
+        // Actualizar el estado de Zustand de forma optimista
+        set((s) => ({
+          stores: s.stores.map((st) =>
+            st.id === storeId ? { ...st, products: reordered } : st
+          )
+        }));
+
+        // Registrar los cambios en el mapa de actualizaciones pendientes
+        reordered.forEach((p) => {
+          const original = store.products.find((op) => op.id === p.id);
+          if (!original || original.sortOrder !== p.sortOrder) {
+            pendingProductUpdates.set(p.id, {
+              id: p.id,
+              store_id: storeId,
+              sort_order: p.sortOrder
+            });
+          }
+        });
+
+        // Configurar el debounce para sincronizar con Supabase en segundo plano
+        if (productDebounceTimer) clearTimeout(productDebounceTimer);
+        productDebounceTimer = setTimeout(async () => {
+          const updates = Array.from(pendingProductUpdates.values());
+          pendingProductUpdates.clear();
+
+          if (updates.length === 0) return;
+
+          try {
+            const { error } = await supabase.from("products").upsert(updates);
+            if (error) throw error;
+            console.log(`[swapProductsOrder] Sincronizados ${updates.length} productos en base de datos.`);
+          } catch (err) {
+            console.error("[swapProductsOrder] Error al guardar orden de productos en Supabase:", err);
+            toast.error("Error al guardar el nuevo orden en el servidor.");
+          }
+        }, 1000);
       },
 
       upsertCategory: async (storeId, cat) => {

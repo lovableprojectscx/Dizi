@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
@@ -347,6 +347,7 @@ function ProductsPage() {
   const upsert = useApp((s) => s.upsertProduct);
   const del = useApp((s) => s.deleteProduct);
   const toggle = useApp((s) => s.toggleProductVisible);
+  const swap = useApp((s) => s.swapProductsOrder);
   const upsertCategory = useApp((s) => s.upsertCategory);
   const deleteCategory = useApp((s) => s.deleteCategory);
 
@@ -767,11 +768,12 @@ function ProductsPage() {
                   <TableHead>Precio</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Visible</TableHead>
+                  <TableHead className="w-24">Orden</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {store.products.map((p) => (
+                {store.products.map((p, idx) => (
                   <TableRow key={p.id}>
                     <TableCell>
                       {p.image ? (
@@ -825,6 +827,32 @@ function ProductsPage() {
                     <TableCell>
                       <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-0.5">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={idx === 0}
+                          onClick={() => swap(store.id, idx, idx - 1)}
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+                          title="Subir"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={idx === store.products.length - 1}
+                          onClick={() => swap(store.id, idx, idx + 1)}
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+                          title="Bajar"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4" />
@@ -843,7 +871,7 @@ function ProductsPage() {
                 ))}
                 {store.products.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
                       Aún no tienes productos. Crea el primero.
                     </TableCell>
                   </TableRow>
@@ -859,7 +887,7 @@ function ProductsPage() {
                 Aún no tienes productos. Crea el primero.
               </p>
             )}
-            {store.products.map((p) => (
+            {store.products.map((p, idx) => (
               <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
                 {p.image ? (
                   <img src={p.image} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
@@ -908,7 +936,31 @@ function ProductsPage() {
                 </div>
                 <div className="flex flex-col items-center gap-2 shrink-0">
                   <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 items-center">
+                    <div className="flex items-center gap-0.5 border border-border/60 rounded-md p-0.5 bg-muted/10">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={idx === 0}
+                        onClick={() => swap(store.id, idx, idx - 1)}
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+                        title="Subir"
+                      >
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={idx === store.products.length - 1}
+                        onClick={() => swap(store.id, idx, idx + 1)}
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+                        title="Bajar"
+                      >
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>

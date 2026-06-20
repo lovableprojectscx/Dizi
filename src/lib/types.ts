@@ -49,6 +49,8 @@ export interface Product {
   originalPrice?: number | null;
   visible: boolean;
   isSample?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
 }
 
 export interface QuickLink {
