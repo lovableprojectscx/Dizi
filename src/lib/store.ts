@@ -77,7 +77,9 @@ const mapStoreFromDB = (row: any): Store => ({
     }
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return dateB - dateA; // newest first
+    const valA = isNaN(dateA) ? 0 : dateA;
+    const valB = isNaN(dateB) ? 0 : dateB;
+    return valB - valA; // newest first
   }),
 });
 
@@ -113,7 +115,7 @@ interface AppState {
 }
 
 let productDebounceTimer: any = null;
-const pendingProductUpdates = new Map<string, any>();
+const pendingProductIds = new Map<string, string>(); // Map<productId, storeId>
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -597,7 +599,9 @@ export const useApp = create<AppState>()(
                   }
                   const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
                   const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-                  return dateB - dateA;
+                  const valA = isNaN(dateA) ? 0 : dateA;
+                  const valB = isNaN(dateB) ? 0 : dateB;
+                  return valB - valA;
                 }),
               };
             }),
@@ -682,32 +686,45 @@ export const useApp = create<AppState>()(
           )
         }));
 
-        // Registrar los cambios en el mapa de actualizaciones pendientes
+        // Registrar los IDs de los productos modificados y sus correspondientes tiendas
         reordered.forEach((p) => {
           const original = store.products.find((op) => op.id === p.id);
           if (!original || original.sortOrder !== p.sortOrder) {
-            pendingProductUpdates.set(p.id, {
-              id: p.id,
-              store_id: storeId,
-              category_id: p.categoryId || null,
-              name: p.name,
-              price: p.price,
-              original_price: p.originalPrice,
-              image: p.image,
-              description: p.description || null,
-              is_on_sale: p.isOnSale,
-              visible: p.visible,
-              is_sample: p.isSample,
-              sort_order: p.sortOrder
-            });
+            pendingProductIds.set(p.id, storeId);
           }
         });
 
         // Configurar el debounce para sincronizar con Supabase en segundo plano
         if (productDebounceTimer) clearTimeout(productDebounceTimer);
         productDebounceTimer = setTimeout(async () => {
-          const updates = Array.from(pendingProductUpdates.values());
-          pendingProductUpdates.clear();
+          const entries = Array.from(pendingProductIds.entries());
+          pendingProductIds.clear();
+
+          if (entries.length === 0) return;
+
+          const updates: any[] = [];
+          const storesState = useApp.getState().stores;
+
+          entries.forEach(([productId, sId]) => {
+            const currentStore = storesState.find((st) => st.id === sId);
+            const p = currentStore?.products.find((pr) => pr.id === productId);
+            if (p) {
+              updates.push({
+                id: p.id,
+                store_id: sId,
+                category_id: p.categoryId || null,
+                name: p.name,
+                price: p.price,
+                original_price: p.originalPrice,
+                image: p.image,
+                description: p.description || null,
+                is_on_sale: p.isOnSale,
+                visible: p.visible,
+                is_sample: p.isSample,
+                sort_order: p.sortOrder,
+              });
+            }
+          });
 
           if (updates.length === 0) return;
 
