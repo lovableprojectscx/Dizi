@@ -169,6 +169,7 @@ Cada tienda del sistema.
 | `is_on_sale` | bool | Si está en oferta |
 | `visible` | bool | Si aparece en el catálogo público |
 | `is_sample` | bool | Producto de ejemplo (se eliminan al crear el primero real) |
+| `sort_order` | int | Posición para el ordenamiento manual personalizado |
 
 ### `reclamaciones` ← NUEVA TABLA
 Tabla del Libro de Reclamaciones, conforme a normativa peruana vigente.
