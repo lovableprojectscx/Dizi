@@ -113,7 +113,7 @@ interface AppState {
 }
 
 let productDebounceTimer: any = null;
-const pendingProductUpdates = new Map<string, { id: string; store_id: string; sort_order: number }>();
+const pendingProductUpdates = new Map<string, any>();
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -689,6 +689,15 @@ export const useApp = create<AppState>()(
             pendingProductUpdates.set(p.id, {
               id: p.id,
               store_id: storeId,
+              category_id: p.categoryId || null,
+              name: p.name,
+              price: p.price,
+              original_price: p.originalPrice,
+              image: p.image,
+              description: p.description || null,
+              is_on_sale: p.isOnSale,
+              visible: p.visible,
+              is_sample: p.isSample,
               sort_order: p.sortOrder
             });
           }
