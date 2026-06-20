@@ -42,3 +42,16 @@ Para garantizar la estabilidad del servicio en tiendas con cientos de productos,
 ## 4. Validación Técnica y QA
 - **Pruebas de Compilación**: Se ejecutó `vite build` en el entorno local de desarrollo para verificar que el tipado estático de TypeScript y el bundle de producción compilaran sin errores. El proceso finalizó exitosamente en `10.87s`.
 - **Integridad**: No se presentaron efectos colaterales en la lógica de cobro de planes, carritos de compras o carga masiva de fotos.
+
+---
+
+## 5. Correcciones Críticas Durante Despliegue (QA & Hotfixes)
+
+### A. Corrección de Not-Null Constraint en PostgreSQL
+* **Problema**: Se detectó un error `code 23502` durante las pruebas de guardado del orden en caliente. La cláusula `INSERT` implícita en la consulta `upsert` de Supabase requería que todas las columnas definidas como `NOT NULL` sin default (`name` y `price`) estuvieran presentes en el payload.
+* **Solución**: Se expandió el payload de `upsert` en el frontend para mandar todas las columnas requeridas (tomadas del estado local fresco en la llamada final de debounce), lo que resolvió el error de manera definitiva sin sobrecostos de red.
+
+### B. Solución al Límite de 100 Argumentos en Funciones de Postgres
+* **Problema**: Al cargar el catálogo público de la tienda, la base de datos arrojaba el error `code 54023: cannot pass more than 100 arguments to a function`. Esto ocurría porque la función RPC `get_public_store` construía un único objeto JSONB usando `jsonb_build_object` con 51 llaves (lo que se traduce en 102 argumentos pasados a la función interna, superando el límite duro de PostgreSQL de 100 parámetros).
+* **Solución**: Se generó la migración [20260620010000_fix_get_public_store_argument_limit.sql](file:///c:/Users/JACK%20FRANKLIN/Desktop/Proyectos%20Idenza/Catalogo%20Dinamico%20SAAS/catalog-connect-main/supabase/migrations/20260620010000_fix_get_public_store_argument_limit.sql) que divide la consulta en dos bloques `jsonb_build_object` independientes y los concatena usando el operador `||` de Postgres. Esto redujo los parámetros de la llamada a la mitad y restableció el correcto funcionamiento del catálogo público inmediatamente.
+
