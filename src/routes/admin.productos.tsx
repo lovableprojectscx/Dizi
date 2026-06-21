@@ -584,7 +584,12 @@ function ProductsPage() {
   };
 
   const openEdit = (p: Product) => {
-    setEditing(p);
+    // Limpiar el tag #destacado y espacios sobrantes del inicio/fin al iniciar la edición
+    const cleanDesc = (p.description || "").replace(/#destacado/g, "").trim();
+    setEditing({
+      ...p,
+      description: cleanDesc,
+    });
     setPriceInput(p.price === null || p.price === undefined || p.price === 0 ? "" : p.price.toString());
     setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
     setIsFeatured(p.description?.includes("#destacado") || p.name?.includes("#destacado") || false);
@@ -1333,7 +1338,7 @@ function ProductsPage() {
                 <Label>Descripción (opcional)</Label>
                 <Textarea
                   rows={3}
-                  value={(editing.description ?? "").replace(/#destacado/g, "").trim()}
+                  value={editing.description ?? ""}
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </div>
