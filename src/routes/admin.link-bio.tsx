@@ -30,6 +30,20 @@ import {
   Music,
   Twitter,
 } from "lucide-react";
+
+const Tiktok = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures } from "@/lib/types";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -197,6 +211,7 @@ const getMockupBrandIcon = (platform: string, iconName?: string, isMonochrome?: 
     if (iconName === "youtube") return <Youtube className={iconClass} />;
     if (iconName === "music" || iconName === "spotify") return <Music className={iconClass} />;
     if (iconName === "twitter") return <Twitter className={iconClass} />;
+    if (iconName === "tiktok") return <Tiktok className={iconClass} />;
   }
 
   if (isMonochrome) {
@@ -208,6 +223,7 @@ const getMockupBrandIcon = (platform: string, iconName?: string, isMonochrome?: 
     if (platform === "youtube") return <Youtube className={iconClass} />;
     if (platform === "spotify") return <Music className={iconClass} />;
     if (platform === "twitter") return <Twitter className={iconClass} />;
+    if (platform === "tiktok") return <Tiktok className={iconClass} />;
     return null;
   }
 
@@ -244,6 +260,9 @@ const getMockupBrandIcon = (platform: string, iconName?: string, isMonochrome?: 
   }
   if (platform === "twitter") {
     return <Twitter className="h-3 w-3 text-black dark:text-white animate-in fade-in" />;
+  }
+  if (platform === "tiktok") {
+    return <Tiktok className="h-3 w-3 text-black dark:text-white animate-in fade-in" />;
   }
 
   return null;
@@ -1052,6 +1071,7 @@ function LinkBioPage() {
                                   <option value="map-pin">Ubicación</option>
                                   <option value="instagram">Instagram</option>
                                   <option value="facebook">Facebook</option>
+                                  <option value="tiktok">TikTok</option>
                                   <option value="linkedin">LinkedIn</option>
                                   <option value="youtube">YouTube</option>
                                   <option value="music">Música / Spotify</option>
@@ -1234,6 +1254,7 @@ function LinkBioPage() {
                                         <option value="map-pin">Ubicación</option>
                                         <option value="instagram">Instagram</option>
                                         <option value="facebook">Facebook</option>
+                                        <option value="tiktok">TikTok</option>
                                         <option value="linkedin">LinkedIn</option>
                                         <option value="youtube">YouTube</option>
                                         <option value="music">Música / Spotify</option>

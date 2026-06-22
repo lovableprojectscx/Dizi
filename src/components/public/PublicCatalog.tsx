@@ -41,6 +41,20 @@ import {
   BadgeCheck,
   AlertTriangle,
 } from "lucide-react";
+
+const Tiktok = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+  </svg>
+);
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Drawer,
@@ -1102,6 +1116,7 @@ export function PublicCatalog({
       if (platform === "youtube") return <Youtube className={iconClass} />;
       if (platform === "spotify") return <Music className={iconClass} />;
       if (platform === "twitter") return <Twitter className={iconClass} />;
+      if (platform === "tiktok") return <Tiktok className={iconClass} />;
       return <Star className={iconClass} />;
     };
 
@@ -1116,6 +1131,7 @@ export function PublicCatalog({
       if (name === "youtube") return <Youtube className={iconClass} />;
       if (name === "music" || name === "spotify") return <Music className={iconClass} />;
       if (name === "twitter") return <Twitter className={iconClass} />;
+      if (name === "tiktok") return <Tiktok className={iconClass} />;
       return <Star className={iconClass} />;
     };
 
