@@ -664,6 +664,8 @@ export function PublicCatalog({
   const [showInAppHelpModal, setShowInAppHelpModal] = useState(false);
   const [pendingOrderMsg, setPendingOrderMsg] = useState("");
   const [copied, setCopied] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successOrderUrl, setSuccessOrderUrl] = useState("");
   const [showInAppBanner, setShowInAppBanner] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -1435,7 +1437,11 @@ export function PublicCatalog({
       setPendingOrderMsg(signedMsg);
       setShowInAppHelpModal(true);
     } else {
-      window.open(buildWaUrl(store.phone, signedMsg), "_blank");
+      const waUrl = buildWaUrl(store.phone, signedMsg);
+      setSuccessOrderUrl(waUrl);
+      window.open(waUrl, "_blank");
+      cartClear(store.id);
+      setShowSuccessModal(true);
     }
   };
 
@@ -5352,8 +5358,12 @@ export function PublicCatalog({
               </button>
               <button
                 onClick={() => {
-                  window.open(buildWaUrl(store.phone, pendingOrderMsg), "_blank");
+                  const waUrl = buildWaUrl(store.phone, pendingOrderMsg);
+                  setSuccessOrderUrl(waUrl);
+                  window.open(waUrl, "_blank");
                   setShowInAppHelpModal(false);
+                  cartClear(store.id);
+                  setShowSuccessModal(true);
                 }}
                 style={{
                   backgroundColor: "var(--primary)",
@@ -5363,6 +5373,101 @@ export function PublicCatalog({
               >
                 <WhatsAppIcon className="h-4 w-4" />
                 Intentar continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Success and Viral Loop Modal ── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200">
+            {/* Close button */}
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center justify-center transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Icon & Title */}
+            <div className="flex flex-col items-center text-center space-y-3 pt-2">
+              <div className="relative flex items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-12 w-12 rounded-full bg-green-400 opacity-20"></span>
+                <span className="animate-pulse absolute inline-flex h-16 w-16 rounded-full bg-green-400 opacity-10"></span>
+                <div className="h-14 w-14 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center shrink-0 border border-green-200/30 dark:border-green-900/30">
+                  <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">¡Pedido enviado a WhatsApp!</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 px-2 leading-relaxed">
+                  Recuerda presionar el botón de <strong className="text-zinc-800 dark:text-zinc-200">"Enviar"</strong> en el chat de WhatsApp que se acaba de abrir para completar tu pedido.
+                </p>
+              </div>
+            </div>
+
+            {/* Recovery block */}
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  if (successOrderUrl) {
+                    window.open(successOrderUrl, "_blank");
+                  }
+                }}
+                className="w-full h-11 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/20 transition"
+              >
+                <WhatsAppIcon className="h-4 w-4" />
+                ¿No se abrió WhatsApp? Volver a intentar
+              </button>
+            </div>
+
+            {/* Tarjeta del Loop Viral (Creación de Tiendas) */}
+            <div 
+              style={{
+                borderColor: `${primaryColor}20`,
+                backgroundColor: `${primaryColor}06`,
+              }}
+              className="border rounded-2xl p-5 space-y-3.5 flex flex-col items-center text-center"
+            >
+              <div 
+                style={{ backgroundColor: `${primaryColor}15` }}
+                className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
+              >
+                <Sparkles style={{ color: primaryColor }} className="h-4 w-4" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">¿Quieres vender con un catálogo como este?</h4>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal px-2">
+                  Crea tu propia tienda gratis en <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en 2 minutos y automatiza tus pedidos por WhatsApp.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  const isSemilla = store.plan === "semilla";
+                  const refUrl = isSemilla 
+                    ? "https://dizi.idenza.site" 
+                    : `https://dizi.idenza.site?ref=${store.slug}`;
+                  window.open(refUrl, "_blank");
+                }}
+                style={{
+                  backgroundColor: primaryColor,
+                  boxShadow: `0 4px 12px ${primaryColor}25`,
+                }}
+                className="w-full h-10 rounded-xl font-bold text-xs text-white transition hover:opacity-95 active:scale-98 flex items-center justify-center"
+              >
+                Crear mi catálogo gratis
+              </button>
+            </div>
+
+            {/* Close footer button */}
+            <div className="pt-1">
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full h-11 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold transition text-zinc-700 dark:text-zinc-300 flex items-center justify-center"
+              >
+                Cerrar
               </button>
             </div>
           </div>
