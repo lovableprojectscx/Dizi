@@ -41,7 +41,7 @@ import {
   BadgeCheck,
   AlertTriangle,
 } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Drawer,
   DrawerContent,
@@ -4745,6 +4745,10 @@ export function PublicCatalog({
           className="h-[80vh] rounded-t-3xl p-0 flex flex-col border-0"
           style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
         >
+          <SheetTitle className="sr-only">Pedido</SheetTitle>
+          <SheetDescription className="sr-only">
+            Resumen de productos seleccionados en tu carrito de compras.
+          </SheetDescription>
           {/* Header */}
           <div
             className="flex items-center gap-3 px-5 pt-5 pb-3 shrink-0"
@@ -5026,6 +5030,12 @@ export function PublicCatalog({
           className="h-[92vh] rounded-t-3xl p-0 overflow-hidden flex flex-col border-0 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:bottom-auto md:right-auto md:h-[70vh] md:max-w-3xl md:w-full md:rounded-3xl md:border md:shadow-2xl"
           style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
         >
+          <SheetTitle className="sr-only">
+            {viewingProduct ? viewingProduct.name : "Detalle de Producto"}
+          </SheetTitle>
+          <SheetDescription className="sr-only">
+            {viewingProduct && viewingProduct.description ? viewingProduct.description : "Detalle del producto seleccionado."}
+          </SheetDescription>
           {viewingProduct && (
             <div className="flex flex-col h-full md:flex-row md:overflow-hidden">
               {/* Image — taller for overlay/magazine, shorter for editorial */}
