@@ -1389,6 +1389,15 @@ export function PublicCatalog({
     .filter((l): l is NonNullable<typeof l> => l !== null);
   const total = cartLines.reduce((a, l) => a + (l.product.price || 0) * l.qty, 0);
 
+  const appendDiziSignature = (text: string) => {
+    const showBranding = store.plan === "semilla" ? true : (store.showDiziBranding ?? true);
+    if (!showBranding) return text;
+    if (store.plan === "semilla") {
+      return `${text}\n\n_Catálogo creado gratis con Dizi: dizi.idenza.site_`;
+    }
+    return `${text}\n\n_Catálogo creado con Dizi: dizi.idenza.site?ref=${store.slug}_`;
+  };
+
   /* ── Actions ─────────────────────────────────────── */
   const sendOrder = () => {
     const hasQuoteItems = cartLines.some((l) => !l.product.price);
@@ -1404,23 +1413,26 @@ export function PublicCatalog({
     const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
     incClicks(store.id);
 
+    const signedMsg = appendDiziSignature(msg);
+
     if (isInAppBrowser()) {
-      setPendingOrderMsg(msg);
+      setPendingOrderMsg(signedMsg);
       setShowInAppHelpModal(true);
     } else {
-      window.open(buildWaUrl(store.phone, msg), "_blank");
+      window.open(buildWaUrl(store.phone, signedMsg), "_blank");
     }
   };
 
   const consultProduct = (name: string, id?: string) => {
     incClicks(store.id);
     const msg = `Hola, me interesa el producto: ${name}`;
+    const signedMsg = appendDiziSignature(msg);
 
     if (isInAppBrowser()) {
-      setPendingOrderMsg(msg);
+      setPendingOrderMsg(signedMsg);
       setShowInAppHelpModal(true);
     } else {
-      window.open(buildWaUrl(store.phone, msg), "_blank");
+      window.open(buildWaUrl(store.phone, signedMsg), "_blank");
     }
   };
 
@@ -1434,12 +1446,13 @@ export function PublicCatalog({
   const supportClick = () => {
     incClicks(store.id);
     const msg = `Hola ${store.name}, tengo una consulta.`;
+    const signedMsg = appendDiziSignature(msg);
 
     if (isInAppBrowser()) {
-      setPendingOrderMsg(msg);
+      setPendingOrderMsg(signedMsg);
       setShowInAppHelpModal(true);
     } else {
-      window.open(buildWaUrl(store.phone, msg), "_blank");
+      window.open(buildWaUrl(store.phone, signedMsg), "_blank");
     }
   };
 

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
+import { getEffectivePlan } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -64,6 +65,7 @@ function ConfigPage() {
   const [empresaRuc, setEmpresaRuc] = useState(store?.empresaRuc ?? "");
   const [empresaRazonSocial, setEmpresaRazonSocial] = useState(store?.empresaRazonSocial ?? "");
   const [empresaDireccion, setEmpresaDireccion] = useState(store?.empresaDireccion ?? "");
+  const [showDiziBranding, setShowDiziBranding] = useState(store?.showDiziBranding ?? true);
 
   const [copiedCatalog, setCopiedCatalog] = useState(false);
   const [copiedBio, setCopiedBio] = useState(false);
@@ -87,6 +89,7 @@ function ConfigPage() {
       setEmpresaRuc(store.empresaRuc ?? "");
       setEmpresaRazonSocial(store.empresaRazonSocial ?? "");
       setEmpresaDireccion(store.empresaDireccion ?? "");
+      setShowDiziBranding(store.showDiziBranding ?? true);
       setIsLoaded(true);
     }
   }, [store, isLoaded]);
@@ -159,6 +162,7 @@ function ConfigPage() {
         empresaRuc: empresaRuc.trim() || undefined,
         empresaRazonSocial: empresaRazonSocial.trim() || undefined,
         empresaDireccion: empresaDireccion.trim() || undefined,
+        showDiziBranding: showDiziBranding,
       });
       
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
@@ -436,6 +440,40 @@ function ConfigPage() {
               />
             </button>
           </div>
+
+          {/* Firma Viral de WhatsApp */}
+          {(() => {
+            const effectivePlan = store ? getEffectivePlan(store) : "semilla";
+            const isSemilla = effectivePlan === "semilla";
+            
+            return (
+              <div className="pt-4 border-t border-border/30 flex items-center justify-between">
+                <div className="space-y-0.5 max-w-[80%]">
+                  <p className="text-sm font-semibold">Firma de Dizi en WhatsApp</p>
+                  <p className="text-xs text-muted-foreground">
+                    Añade un enlace discreto de Dizi al final de los mensajes enviados por tus clientes (incluye tu enlace de afiliado en planes pagos).
+                  </p>
+                  {isSemilla && (
+                    <p className="text-[10px] text-amber-600 font-medium mt-1">
+                      * Obligatorio en el Plan Semilla. Actualiza tu plan para poder desactivarlo.
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  disabled={isSemilla}
+                  aria-checked={isSemilla ? true : showDiziBranding}
+                  onClick={() => setShowDiziBranding(!showDiziBranding)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${isSemilla ? "opacity-50 cursor-not-allowed bg-primary" : (showDiziBranding ? "bg-primary" : "bg-input")}`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${isSemilla || showDiziBranding ? "translate-x-5" : "translate-x-0"}`}
+                  />
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Libro de reclamaciones */}
           <div className="pt-4 border-t border-border/30 space-y-4">

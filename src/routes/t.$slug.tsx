@@ -168,6 +168,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       bioBgColor: data.bio_bg_color ?? undefined,
       bannerTagline: data.banner_tagline,
       bannerBottomTag: data.banner_bottom_tag,
+      showDiziBranding: data.show_dizi_branding ?? true,
       categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
       products: (productsWithImages || []).map((p: any) => ({
         id: p.id,

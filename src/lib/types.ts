@@ -102,6 +102,7 @@ export interface Store {
   locationLng?: number;
   locationAddress?: string | null;
   showMap?: boolean;
+  showDiziBranding?: boolean;
   quickLinks?: QuickLink[];
   bioLinksEnabled?: boolean;
   bioLogo?: string | null;
