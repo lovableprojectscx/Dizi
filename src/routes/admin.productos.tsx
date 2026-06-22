@@ -265,10 +265,21 @@ function CategorySelect({
           placeholder="Nombre de categoría..."
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
+          ref={(el) => {
+            if (el) {
+              const handleNativeKeyDown = (e: KeyboardEvent) => {
+                if (e.key === " ") e.stopPropagation();
+              };
+              if ((el as any)._keydownHandler) {
+                el.removeEventListener("keydown", (el as any)._keydownHandler);
+              }
+              el.addEventListener("keydown", handleNativeKeyDown);
+              (el as any)._keydownHandler = handleNativeKeyDown;
+            }
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); handleCreate(); }
             if (e.key === "Escape") { setCreating(false); setNewName(""); }
-            if (e.key === " ") { e.stopPropagation(); }
           }}
           className="h-9 text-sm"
         />
@@ -1023,9 +1034,20 @@ function ProductsPage() {
                       placeholder="Ej: Menú del día, Bebidas, Postres..."
                       value={newCatName}
                       onChange={(e) => setNewCatName(e.target.value)}
+                      ref={(el) => {
+                        if (el) {
+                          const handleNativeKeyDown = (e: KeyboardEvent) => {
+                            if (e.key === " ") e.stopPropagation();
+                          };
+                          if ((el as any)._keydownHandler) {
+                            el.removeEventListener("keydown", (el as any)._keydownHandler);
+                          }
+                          el.addEventListener("keydown", handleNativeKeyDown);
+                          (el as any)._keydownHandler = handleNativeKeyDown;
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleAddCategoryTab();
-                        if (e.key === " ") e.stopPropagation();
                       }}
                       autoFocus
                     />
@@ -1151,9 +1173,20 @@ function ProductsPage() {
                     id="edit-cat-name"
                     value={editCatName}
                     onChange={(e) => setEditCatName(e.target.value)}
+                    ref={(el) => {
+                      if (el) {
+                        const handleNativeKeyDown = (e: KeyboardEvent) => {
+                          if (e.key === " ") e.stopPropagation();
+                        };
+                        if ((el as any)._keydownHandler) {
+                          el.removeEventListener("keydown", (el as any)._keydownHandler);
+                        }
+                        el.addEventListener("keydown", handleNativeKeyDown);
+                        (el as any)._keydownHandler = handleNativeKeyDown;
+                      }
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSaveEditCategoryTab();
-                      if (e.key === " ") e.stopPropagation();
                     }}
                     autoFocus
                   />
@@ -1211,58 +1244,105 @@ function ProductsPage() {
 
       {/* Dialog formulario de producto */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90dvh] flex flex-col p-0 gap-0">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b shrink-0">
-            <DialogTitle>{editing.id ? "Editar producto" : "Nuevo producto"}</DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background">
+          <DialogHeader className="px-6 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
+            <div className="pr-6">
+              <DialogTitle className="text-lg font-extrabold tracking-tight flex items-center gap-2 text-foreground">
+                <span className="h-5 w-1 rounded bg-primary" />
+                {editing.id ? "Editar Producto" : "Nuevo Producto"}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                Configura los detalles del artículo para publicarlo en tu catálogo digital.
+              </DialogDescription>
+            </div>
           </DialogHeader>
-          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
-            <ImageUploadGuided
-              value={editing.image}
-              onChange={(image) => setEditing({ ...editing, image })}
-              spec={imageSpec}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <Label>Nombre del producto</Label>
-                <Input
-                  value={editing.name}
-                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === " ") e.stopPropagation();
-                  }}
+
+          <div className="overflow-y-auto flex-1 p-5 md:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              
+              {/* Columna Izquierda: Imagen y Multimedia (col-span 5) */}
+              <div className="md:col-span-5 space-y-3.5">
+                <div className="space-y-0.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Imagen del Producto</h3>
+                  <p className="text-[10px] text-muted-foreground/60 leading-normal hidden sm:block">
+                    Formatos JPG, PNG, WebP de hasta 10MB.
+                  </p>
+                </div>
+                <ImageUploadGuided
+                  value={editing.image}
+                  onChange={(image) => setEditing({ ...editing, image })}
+                  spec={imageSpec}
+                  label=""
                 />
               </div>
 
-              <div className="col-span-2 bg-muted/30 p-3 rounded-xl space-y-3">
-                <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm cursor-pointer font-medium text-primary">
+              {/* Columna Derecha: Parámetros del Producto (col-span 7) */}
+              <div className="md:col-span-7 space-y-4">
+                
+                {/* Nombre */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Nombre del producto</Label>
+                  <Input
+                    placeholder="Ej. iPhone 15 Pro Max 256GB"
+                    className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
+                    value={editing.name}
+                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    ref={(el) => {
+                      if (el) {
+                        const handleNativeKeyDown = (e: KeyboardEvent) => {
+                          if (e.key === " ") e.stopPropagation();
+                        };
+                        if ((el as any)._keydownHandler) {
+                          el.removeEventListener("keydown", (el as any)._keydownHandler);
+                        }
+                        el.addEventListener("keydown", handleNativeKeyDown);
+                        (el as any)._keydownHandler = handleNativeKeyDown;
+                      }
+                    }}
+                  />
+                </div>
+
+                {/* Card de Interruptores (Oferta y Destacado) */}
+                <div className="border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/10 p-4 rounded-xl space-y-3.5 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">¿Este producto está en oferta?</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Muestra un precio de oferta junto al original tachado.</p>
+                    </div>
                     <Switch
                       checked={!!editing.isOnSale}
                       onCheckedChange={(v) => setEditing({ ...editing, isOnSale: v })}
+                      className="data-[state=checked]:bg-primary"
                     />
-                    Este producto está en oferta?
-                  </label>
+                  </div>
 
                   {isPremiumModel(store.model) && (
-                    <label className="flex items-center gap-2 text-sm cursor-pointer font-medium text-orange-600">
+                    <div className="border-t border-slate-100 dark:border-slate-800/50 pt-3.5 flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-xs text-orange-600 dark:text-orange-500">¿Destacar producto (Premium)?</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Se mostrará en la sección destacada de tu catálogo.</p>
+                      </div>
                       <Switch
                         checked={isFeatured}
                         onCheckedChange={setIsFeatured}
+                        className="data-[state=checked]:bg-orange-500"
                       />
-                      Destacar producto (Premium)?
-                    </label>
+                    </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {editing.isOnSale ? (
-                    <>
-                      <div>
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Precio Original</Label>
+                {/* Precios y Categorías */}
+                {editing.isOnSale ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Precio Original</Label>
+                      <div className="relative flex items-center mt-1">
+                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">S/</span>
                         <Input
                           type="text"
                           inputMode="decimal"
                           placeholder="50.00"
+                          className="pl-8 h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
                           value={originalPriceInput}
                           onChange={(e) => {
                             let val = e.target.value.replace(",", ".");
@@ -1273,12 +1353,16 @@ function ProductsPage() {
                           }}
                         />
                       </div>
-                      <div>
-                        <Label className="text-[10px] uppercase font-bold text-primary">Precio Oferta</Label>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-primary">Precio Oferta</Label>
+                      <div className="relative flex items-center mt-1">
+                        <span className="absolute left-3 text-sm text-primary/70 font-semibold select-none">S/</span>
                         <Input
                           type="text"
                           inputMode="decimal"
                           placeholder="35.00"
+                          className="pl-8 h-10 rounded-xl border-primary/30 bg-primary/5 text-primary font-semibold focus-visible:ring-primary text-sm"
                           value={priceInput}
                           onChange={(e) => {
                             let val = e.target.value.replace(",", ".");
@@ -1287,21 +1371,33 @@ function ProductsPage() {
                             if (parts.length > 2) return;
                             setPriceInput(val);
                           }}
-                          className="border-primary/50 bg-primary/5"
                         />
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <Label className="flex items-center justify-between">
-                          <span>Precio (S/)</span>
-                          <span className="text-[10px] text-muted-foreground font-normal">Opcional (A consultar)</span>
-                        </Label>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                        <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
+                      </Label>
+                      <CategorySelect
+                        value={editing.categoryId}
+                        categories={store.categories}
+                        onChange={(v) => setEditing({ ...editing, categoryId: v })}
+                        onCreateCategory={handleCreateCategory}
+                        storeModel={store.model}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Precio</Label>
+                      <div className="relative flex items-center mt-1">
+                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">S/</span>
                         <Input
                           type="text"
                           inputMode="decimal"
-                          placeholder="0.00"
+                          placeholder="0.00 (Dejar vacío para consultar)"
+                          className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm"
                           value={priceInput}
                           onChange={(e) => {
                             let val = e.target.value.replace(",", ".");
@@ -1312,58 +1408,66 @@ function ProductsPage() {
                           }}
                         />
                       </div>
-                      <div>
-                        <Label className="flex items-center gap-1">
-                          <Tag className="h-3 w-3" /> Categoría
-                        </Label>
-                        <CategorySelect
-                          value={editing.categoryId}
-                          categories={store.categories}
-                          onChange={(v) => setEditing({ ...editing, categoryId: v })}
-                          onCreateCategory={handleCreateCategory}
-                          storeModel={store.model}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                        <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
+                      </Label>
+                      <CategorySelect
+                        value={editing.categoryId}
+                        categories={store.categories}
+                        onChange={(v) => setEditing({ ...editing, categoryId: v })}
+                        onCreateCategory={handleCreateCategory}
+                        storeModel={store.model}
+                      />
+                    </div>
+                  </div>
+                )}
 
-              {editing.isOnSale && (
-                <div className="col-span-2">
-                  <Label className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" /> Categoría
-                  </Label>
-                  <CategorySelect
-                    value={editing.categoryId}
-                    categories={store.categories}
-                    onChange={(v) => setEditing({ ...editing, categoryId: v })}
-                    onCreateCategory={handleCreateCategory}
-                    storeModel={store.model}
+                {/* Descripción */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Descripción (opcional)</Label>
+                  <Textarea
+                    rows={3}
+                    placeholder="Ej. Especificaciones técnicas, colores, stock o detalles..."
+                    className="focus-visible:ring-primary rounded-xl min-h-[90px] text-sm py-2.5 resize-none border-slate-200 dark:border-slate-800"
+                    value={editing.description ?? ""}
+                    onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                    ref={(el) => {
+                      if (el) {
+                        const handleNativeKeyDown = (e: KeyboardEvent) => {
+                          if (e.key === " " || e.key === "Enter") {
+                            e.stopPropagation();
+                          }
+                        };
+                        if ((el as any)._keydownHandler) {
+                          el.removeEventListener("keydown", (el as any)._keydownHandler);
+                        }
+                        el.addEventListener("keydown", handleNativeKeyDown);
+                        (el as any)._keydownHandler = handleNativeKeyDown;
+                      }
+                    }}
                   />
                 </div>
-              )}
 
-              <div className="col-span-2">
-                <Label>Descripción (opcional)</Label>
-                <Textarea
-                  rows={3}
-                  value={editing.description ?? ""}
-                  onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === " " || e.key === "Enter") {
-                      e.stopPropagation();
-                    }
-                  }}
-                />
               </div>
             </div>
           </div>
-          <DialogFooter className="px-5 py-4 border-t shrink-0 flex-row gap-2 sm:justify-end">
-            <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setOpen(false)}>
+
+          <DialogFooter className="px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 justify-end w-full">
+            <Button
+              variant="outline"
+              className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
+              onClick={() => setOpen(false)}
+            >
               Cancelar
             </Button>
-            <Button className="flex-1 sm:flex-none" onClick={save}>Guardar producto</Button>
+            <Button
+              className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-xs text-white"
+              onClick={save}
+            >
+              Guardar producto
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1616,8 +1720,17 @@ function ProductsPage() {
                             onChange={(e) => updateActiveDraft({ name: e.target.value })}
                             placeholder="Ej. Casaca Impermeable"
                             className="h-9 mt-1 text-sm rounded-lg"
-                            onKeyDown={(e) => {
-                              if (e.key === " ") e.stopPropagation();
+                            ref={(el) => {
+                              if (el) {
+                                const handleNativeKeyDown = (e: KeyboardEvent) => {
+                                  if (e.key === " ") e.stopPropagation();
+                                };
+                                if ((el as any)._keydownHandler) {
+                                  el.removeEventListener("keydown", (el as any)._keydownHandler);
+                                }
+                                el.addEventListener("keydown", handleNativeKeyDown);
+                                (el as any)._keydownHandler = handleNativeKeyDown;
+                              }
                             }}
                           />
                         </div>
@@ -1664,9 +1777,18 @@ function ProductsPage() {
                             onChange={(e) => updateActiveDraft({ description: e.target.value })}
                             placeholder="Ej. Tallas S, M, L. Material algodón..."
                             className="mt-1 text-xs rounded-lg resize-none"
-                            onKeyDown={(e) => {
-                              if (e.key === " " || e.key === "Enter") {
-                                e.stopPropagation();
+                            ref={(el) => {
+                              if (el) {
+                                const handleNativeKeyDown = (e: KeyboardEvent) => {
+                                  if (e.key === " " || e.key === "Enter") {
+                                    e.stopPropagation();
+                                  }
+                                };
+                                if ((el as any)._keydownHandler) {
+                                  el.removeEventListener("keydown", (el as any)._keydownHandler);
+                                }
+                                el.addEventListener("keydown", handleNativeKeyDown);
+                                (el as any)._keydownHandler = handleNativeKeyDown;
                               }
                             }}
                           />

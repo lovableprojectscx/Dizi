@@ -6,6 +6,7 @@ import type { ImageSpec } from "@/lib/types";
 import { checkImageRatio } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadGuidedProps {
   value: string;
@@ -140,25 +141,25 @@ export function ImageUploadGuided({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label>{label}</Label>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">{label}</Label>
         <button
           type="button"
           onClick={() => setShowHint(!showHint)}
-          className="flex items-center gap-1 text-xs text-primary hover:underline"
+          className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:opacity-90 transition-opacity"
         >
-          <Info className="w-3 h-3" />
-          {showHint ? "Ocultar guia" : "Ver proporcion recomendada"}
+          <Info className="w-3.5 h-3.5" />
+          {showHint ? "Ocultar guía" : "Ver proporción"}
         </button>
       </div>
 
       {/* ── Guia de proporcion ── */}
       {showHint && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+        <div className="rounded-xl border border-primary/10 bg-primary/5 p-3 space-y-2">
           <div className="flex items-start gap-3">
             {/* Visualizacion de proporcion */}
             <div className="shrink-0">
               <div
-                className="bg-primary/20 border border-primary/30 rounded flex items-center justify-center"
+                className="bg-primary/10 border border-primary/20 rounded flex items-center justify-center"
                 style={{
                   width: `${Math.min(52, 52 * (rW / Math.max(rW, rH)))}px`,
                   height: `${Math.min(52, 52 * (rH / Math.max(rW, rH)))}px`,
@@ -169,12 +170,12 @@ export function ImageUploadGuided({
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-xs text-primary">{spec.label} — {spec.width} x {spec.height} px</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{spec.hint}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{spec.hint}</p>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground border-t pt-2 mt-1">
             Tolerancia: hasta un {Math.round(spec.tolerance * 100)}% de diferencia se acepta sin aviso.
-            Herramienta gratuita recomendada para recortar:{" "}
+            Herramienta recomendada:{" "}
             <a href="https://squoosh.app" target="_blank" rel="noreferrer" className="text-primary underline">squoosh.app</a>
           </p>
         </div>
@@ -190,45 +191,41 @@ export function ImageUploadGuided({
           const f = e.dataTransfer.files[0];
           if (f) handleFile(f);
         }}
-        className={[
-          "relative border-2 border-dashed rounded-xl overflow-hidden transition-all",
-          drag ? "border-primary bg-primary/5 scale-[1.01]" : "border-border",
+        className={cn(
+          "relative border border-dashed rounded-xl overflow-hidden transition-all flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/5 hover:bg-slate-100/50 dark:hover:bg-slate-900/10",
+          drag ? "border-primary bg-primary/5 scale-[1.01]" : "border-slate-200 dark:border-slate-800",
           converting || importing ? "opacity-70" : "",
-        ].join(" ")}
-        style={{ paddingBottom: `${Math.min(previewHeightPercent, 85)}%` }}
+          hasImage ? "w-full" : "w-full h-32 sm:h-auto sm:aspect-square"
+        )}
+        style={hasImage ? { aspectRatio: `${rW} / ${rH}` } : undefined}
       >
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {converting || importing ? (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground text-center px-4">
-              <span className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs font-medium">
-                {converting ? "Optimizando imagen..." : "Importando imagen externa..."}
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                {converting ? "Convirtiendo a WebP" : "Intentando descargar y optimizar"}
-              </span>
+        {converting || importing ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground text-center px-4">
+            <span className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-semibold">
+              {converting ? "Optimizando imagen..." : "Importando imagen..."}
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              {converting ? "Convirtiendo a WebP" : "Descargando de URL externa"}
+            </span>
+          </div>
+        ) : hasImage ? (
+          <img
+            ref={imgRef}
+            src={value}
+            alt="preview"
+            className="absolute inset-0 w-full h-full object-cover"
+            onLoad={(e) => checkRatioAfterLoad(e.currentTarget)}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-1.5 text-muted-foreground px-4 text-center">
+            <UploadCloud className="w-6 h-6 text-muted-foreground/60" />
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Seleccionar imagen</p>
+              <p className="text-[10px] text-muted-foreground">Formatos JPG, PNG, WebP (máx. 10MB)</p>
             </div>
-          ) : hasImage ? (
-            <img
-              ref={imgRef}
-              src={value}
-              alt="preview"
-              className="absolute inset-0 w-full h-full object-cover"
-              onLoad={(e) => checkRatioAfterLoad(e.currentTarget)}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-muted-foreground px-4 text-center">
-              <UploadCloud className="w-8 h-8 opacity-40" />
-              <div>
-                <p className="text-sm font-medium">Arrastra una imagen aqui</p>
-                <p className="text-xs opacity-60 mt-0.5">
-                  Proporcion recomendada: <strong>{spec.label}</strong>
-                </p>
-                <p className="text-[10px] opacity-50">JPG, PNG, WEBP hasta 10 MB</p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Input invisible */}
         {!converting && !importing && (
@@ -242,7 +239,7 @@ export function ImageUploadGuided({
 
         {/* Badge de proporcion recomendada (siempre visible) */}
         {!hasImage && !converting && !importing && (
-          <div className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm border rounded-full px-2 py-0.5 flex items-center gap-1">
+          <div className="absolute bottom-2 right-2 z-10 bg-background/90 backdrop-blur-sm border border-slate-100 dark:border-slate-800 rounded-full px-2 py-0.5 flex items-center gap-1 shadow-sm">
             <span className="text-[9px] font-bold text-muted-foreground">{spec.label}</span>
           </div>
         )}
