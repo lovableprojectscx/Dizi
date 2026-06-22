@@ -4647,6 +4647,46 @@ export function PublicCatalog({
         </div>
       )}
 
+      {/* ── Footer Branding Dizi ─────────────────────── */}
+      {(() => {
+        const showBranding = store.plan === "semilla" ? true : (store.showDiziBranding ?? true);
+        if (!showBranding) return null;
+
+        const isSemilla = store.plan === "semilla";
+        const refUrl = isSemilla 
+          ? "https://dizi.idenza.site" 
+          : `https://dizi.idenza.site?ref=${store.slug}`;
+
+        return (
+          <div 
+            className={cn(
+              "py-6 text-center flex flex-col items-center justify-center gap-1", 
+              !store.libroReclamacionesActivo && "border-t"
+            )} 
+            style={!store.libroReclamacionesActivo ? { borderColor: "var(--border)" } : undefined}
+          >
+            <a
+              href={refUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all group"
+            >
+              {isSemilla ? (
+                <>
+                  <span className="opacity-80 group-hover:opacity-100 transition-opacity">Crea tu catálogo gratis con</span>
+                  <span className="text-primary font-black tracking-tight group-hover:scale-105 transition-transform duration-300">Dizi</span>
+                </>
+              ) : (
+                <>
+                  <span className="opacity-60 group-hover:opacity-100 transition-opacity">Creado con</span>
+                  <span className="text-primary/80 group-hover:text-primary font-bold tracking-tight">Dizi</span>
+                </>
+              )}
+            </a>
+          </div>
+        );
+      })()}
+
       {/* ── Modal Libro de Reclamaciones ─────────────── */}
       {libroOpen && (
         <LibroReclamacionesModal
