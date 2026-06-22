@@ -268,6 +268,7 @@ function CategorySelect({
           onKeyDown={(e) => {
             if (e.key === "Enter") { e.preventDefault(); handleCreate(); }
             if (e.key === "Escape") { setCreating(false); setNewName(""); }
+            if (e.key === " ") { e.stopPropagation(); }
           }}
           className="h-9 text-sm"
         />
@@ -1022,7 +1023,10 @@ function ProductsPage() {
                       placeholder="Ej: Menú del día, Bebidas, Postres..."
                       value={newCatName}
                       onChange={(e) => setNewCatName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddCategoryTab()}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddCategoryTab();
+                        if (e.key === " ") e.stopPropagation();
+                      }}
                       autoFocus
                     />
                   </div>
@@ -1147,7 +1151,10 @@ function ProductsPage() {
                     id="edit-cat-name"
                     value={editCatName}
                     onChange={(e) => setEditCatName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSaveEditCategoryTab()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveEditCategoryTab();
+                      if (e.key === " ") e.stopPropagation();
+                    }}
                     autoFocus
                   />
                 </div>
@@ -1220,6 +1227,9 @@ function ProductsPage() {
                 <Input
                   value={editing.name}
                   onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === " ") e.stopPropagation();
+                  }}
                 />
               </div>
 
@@ -1340,6 +1350,11 @@ function ProductsPage() {
                   rows={3}
                   value={editing.description ?? ""}
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === " " || e.key === "Enter") {
+                      e.stopPropagation();
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -1601,6 +1616,9 @@ function ProductsPage() {
                             onChange={(e) => updateActiveDraft({ name: e.target.value })}
                             placeholder="Ej. Casaca Impermeable"
                             className="h-9 mt-1 text-sm rounded-lg"
+                            onKeyDown={(e) => {
+                              if (e.key === " ") e.stopPropagation();
+                            }}
                           />
                         </div>
 
@@ -1646,6 +1664,11 @@ function ProductsPage() {
                             onChange={(e) => updateActiveDraft({ description: e.target.value })}
                             placeholder="Ej. Tallas S, M, L. Material algodón..."
                             className="mt-1 text-xs rounded-lg resize-none"
+                            onKeyDown={(e) => {
+                              if (e.key === " " || e.key === "Enter") {
+                                e.stopPropagation();
+                              }
+                            }}
                           />
                         </div>
                       </div>
