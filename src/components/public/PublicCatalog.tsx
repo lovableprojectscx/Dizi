@@ -838,8 +838,30 @@ export function PublicCatalog({
 
   const cStyle = (isPremiumModel && store.niche === "floreria") ? "curved" : (store.cardStyle || "standard");
 
-  const featuredCardClass = (isPremiumModel && store.niche === "floreria")
-    ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border border-rose-100/40 bg-white/75 hover:bg-white shadow-[0_8px_30px_rgba(253,244,245,0.7)] hover:shadow-[0_15px_35px_rgba(251,207,214,0.35)]"
+  const isFloristBloom = isPremiumModel && store.niche === "floreria";
+
+  const featuredCardStyle: React.CSSProperties = isFloristBloom ? {
+    borderColor: "color-mix(in srgb, var(--primary) 15%, transparent)",
+    backgroundColor: "color-mix(in srgb, var(--card) 75%, transparent)"
+  } : {};
+
+  const featuredImgStyle: React.CSSProperties = isFloristBloom ? {
+    backgroundColor: "color-mix(in srgb, var(--primary) 5%, transparent)",
+    borderColor: "color-mix(in srgb, var(--primary) 10%, transparent)"
+  } : {};
+
+  const gridCardStyle: React.CSSProperties = isFloristBloom ? {
+    borderColor: "color-mix(in srgb, var(--primary) 12%, transparent)",
+    backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)"
+  } : {};
+
+  const gridImgStyle: React.CSSProperties = isFloristBloom ? {
+    backgroundColor: "color-mix(in srgb, var(--primary) 5%, transparent)",
+    borderColor: "color-mix(in srgb, var(--primary) 8%, transparent)"
+  } : {};
+
+  const featuredCardClass = isFloristBloom
+    ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border hover:bg-[var(--card)] shadow-md hover:shadow-xl"
     : cStyle === "flat"
       ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-none hover:shadow-none"
       : cStyle === "shadow"
@@ -851,7 +873,7 @@ export function PublicCatalog({
   const featuredImgClass = cn(
     "relative aspect-square w-full overflow-hidden",
     (isPremiumModel && store.niche === "floreria")
-      ? "rounded-t-[7rem] rounded-b-[1.5rem] bg-rose-50/20 border border-rose-100/30"
+      ? "rounded-t-[7rem] rounded-b-[1.5rem] border"
       : cStyle === "shadow"
         ? "rounded-xl bg-muted border-none"
         : cStyle === "curved"
@@ -860,7 +882,7 @@ export function PublicCatalog({
   );
 
   const gridCardClass = (isPremiumModel && store.niche === "floreria")
-    ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-rose-100/30 rounded-[2.5rem_0.5rem_2.5rem_0.5rem] bg-white/70 hover:bg-white hover:scale-[1.02] shadow-[0_4px_15px_rgba(253,244,245,0.5)] hover:shadow-[0_8px_25px_rgba(251,207,214,0.25)]"
+    ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-[2.5rem_0.5rem_2.5rem_0.5rem] hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
     : cStyle === "flat"
       ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
       : cStyle === "shadow"
@@ -872,7 +894,7 @@ export function PublicCatalog({
   const gridImgClass = cn(
     "relative overflow-hidden aspect-square m-2",
     (isPremiumModel && store.niche === "floreria")
-      ? "bg-rose-50/20 rounded-[2rem_0.5rem_2rem_0.5rem] border border-rose-100/20"
+      ? "rounded-[2rem_0.5rem_2rem_0.5rem] border"
       : cStyle === "shadow"
         ? "bg-muted rounded-xl border-none"
         : cStyle === "curved"
@@ -1651,7 +1673,7 @@ export function PublicCatalog({
                     placeholder="¿Qué estás buscando hoy?"
                     className={cn(
                       "w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition",
-                      modelId === "bite" && "bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-orange-600 focus:border-orange-600"
+                      modelId === "bite" && "bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
                     )}
                   />
                 </div>
@@ -3070,7 +3092,7 @@ export function PublicCatalog({
                               className={cn(
                                 "h-1.5 rounded-full transition-all duration-300",
                                 idx === currentBannerIndex
-                                  ? "w-4 bg-orange-500"
+                                  ? "w-4 bg-[var(--primary)]"
                                   : "w-1.5 bg-zinc-500 hover:bg-zinc-400"
                               )}
                             />
@@ -3087,7 +3109,7 @@ export function PublicCatalog({
                         <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
                           {store.name}
                         </h2>
-                        <p className="text-xs text-orange-500 font-bold uppercase tracking-widest mt-1">
+                        <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-widest mt-1">
                           {store.niche === "hamburgueseria"
                             ? "Premium Burger Experience"
                             : store.niche === "cafeteria"
@@ -3163,13 +3185,13 @@ export function PublicCatalog({
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 loading="lazy"
                               />
-                              <div className="absolute top-2 left-2 bg-orange-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
+                              <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
                                 Destacado
                               </div>
                             </div>
                             {/* Info */}
                             <div className="space-y-1 text-left px-1">
-                              <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-orange-500 transition-colors truncate">
+                              <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-[var(--primary)] transition-colors truncate">
                                 {p.name}
                               </h4>
                               <p className="text-xs text-zinc-400 line-clamp-2 h-8 leading-snug">
@@ -3180,7 +3202,7 @@ export function PublicCatalog({
                           {/* Buy section */}
                           <div className="flex items-center justify-between pt-3 mt-3 border-t border-zinc-800/80 px-1">
                             <div>
-                              <span className="text-base font-black text-orange-500">{formatPrice(p.price)}</span>
+                              <span className="text-base font-black text-[var(--primary)]">{formatPrice(p.price)}</span>
                               {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                                 <span className="text-xs text-zinc-500 line-through block -mt-1">{formatPrice(p.originalPrice)}</span>
                               )}
@@ -3220,7 +3242,7 @@ export function PublicCatalog({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="¿Qué estás buscando hoy?"
-                    className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-orange-600 focus:border-orange-600"
+                    className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
                   />
                 </div>
               )}
@@ -3350,7 +3372,7 @@ export function PublicCatalog({
                           </div>
                           {/* Info */}
                           <div className="p-3 pt-1 space-y-1 text-left">
-                            <h4 className="font-extrabold text-sm text-white group-hover:text-orange-500 transition-colors line-clamp-1">
+                            <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-1">
                               {p.name}
                             </h4>
                             {p.description && (
@@ -3364,7 +3386,7 @@ export function PublicCatalog({
                         {/* Price & Action */}
                         <div className="px-3.5 pb-4 pt-0 flex items-center justify-between mt-auto">
                           <div className="flex flex-col text-left">
-                            <span className="text-sm font-black text-orange-500" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
+                            <span className="text-sm font-black text-[var(--primary)]" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
                             {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                               <span className="text-[10px] text-zinc-500 line-through -mt-1">{formatPrice(p.originalPrice)}</span>
                             )}
@@ -3397,33 +3419,40 @@ export function PublicCatalog({
           /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
           <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
             {/* Elegant botanical watermarks in background */}
-            <div className="absolute top-[8%] -left-8 w-24 h-24 text-[#4b5c43] opacity-[0.06] pointer-events-none select-none z-0">
+            <div className="absolute top-[8%] -left-8 w-24 h-24 opacity-[0.06] pointer-events-none select-none z-0" style={{ color: "var(--primary)" }}>
               <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-[15deg]">
                 <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
               </svg>
             </div>
-            <div className="absolute top-[48%] -right-12 w-32 h-32 text-[#4b5c43] opacity-[0.06] pointer-events-none select-none z-0">
+            <div className="absolute top-[48%] -right-12 w-32 h-32 opacity-[0.06] pointer-events-none select-none z-0" style={{ color: "var(--primary)" }}>
               <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-45">
                 <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
               </svg>
             </div>
 
-                        {/* 1. Fluid Nature Banner */}
+            {/* 1. Fluid Nature Banner */}
             {(() => {
               const banners = activeBanners;
               return (
                 <div className="relative w-full z-10">
                   {/* Image container: taller and curves in dynamically */}
-                  <div className="relative w-full h-[38vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border border-[#e3e7dc] bg-gradient-to-br from-[#dce4d4] to-[#f0f4eb] shadow-md">
+                  <div 
+                    style={{ 
+                      borderColor: "var(--border)", 
+                      background: "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--card)) 0%, color-mix(in srgb, var(--primary) 2%, var(--card)) 100%)" 
+                    }}
+                    className="relative w-full h-[38vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
+                  >
                     {banners.length > 0 ? (
                       <>
                         {/* Slides */}
-                                                 <div className="w-full h-full relative">
+                        <div className="w-full h-full relative">
                           {banners.map((slide, idx) => (
                             <div
                               key={idx}
+                              style={{ backgroundColor: "var(--background)" }}
                               className={cn(
-                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-[#f0f4eb]",
+                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
                                 idx === currentBannerIndex
                                   ? "opacity-100 scale-100 z-10"
                                   : "opacity-0 scale-105 z-0 pointer-events-none"
@@ -3453,9 +3482,10 @@ export function PublicCatalog({
                                 e.stopPropagation();
                                 setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
                               }}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 text-[#4b5c43] flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
+                              style={{ color: "var(--primary)" }}
+                              className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
                             >
-                              <ChevronLeft className="h-4.5 w-4.5" />
+                              <ChevronLeft className="h-5 w-5" />
                             </button>
                             <button
                               type="button"
@@ -3463,19 +3493,50 @@ export function PublicCatalog({
                                 e.stopPropagation();
                                 setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
                               }}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 text-[#4b5c43] flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
+                              style={{ color: "var(--primary)" }}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
                             >
-                              <ChevronRight className="h-4.5 w-4.5" />
+                              <ChevronRight className="h-5 w-5" />
                             </button>
                           </>
+                        )}
+
+                        {/* Indicator dots */}
+                        {banners.length > 1 && (
+                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/30 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
+                            {banners.map((_, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCurrentBannerIndex(idx);
+                                }}
+                                className={cn(
+                                  "h-1.5 rounded-full transition-all duration-300",
+                                  idx === currentBannerIndex
+                                    ? "w-4 bg-white"
+                                    : "w-1.5 bg-white/50 hover:bg-white/80"
+                                )}
+                              />
+                            ))}
+                          </div>
                         )}
                       </>
                     ) : (
                       /* Elegant nature placeholder banner */
                       <div className="w-full h-full relative">
                         {/* Elegant background colors with organic circles */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#e4e9dc] to-[#fcfcfb] opacity-80" />
-                        <div className="absolute right-2 bottom-0 top-0 w-1/2 text-[#4b5c43]/10 pointer-events-none flex items-center justify-center">
+                        <div 
+                          style={{ 
+                            background: "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--background)) 0%, var(--background) 100%)" 
+                          }}
+                          className="absolute inset-0 opacity-80" 
+                        />
+                        <div 
+                          style={{ color: "var(--primary)", opacity: 0.1 }}
+                          className="absolute right-2 bottom-0 top-0 w-1/2 pointer-events-none flex items-center justify-center"
+                        >
                           <svg viewBox="0 0 100 100" fill="currentColor" className="w-40 h-40">
                             <path d="M50 0C55 25 80 45 100 50C80 55 55 80 50 100C45 80 20 55 0 50C20 45 45 25 50 0Z" />
                           </svg>
@@ -3490,12 +3551,24 @@ export function PublicCatalog({
                     const finalTagline = store.bannerTagline || nicheTags.tagline;
                     const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
                     return (
-                      <div className="relative -mt-14 mx-4 z-20 bg-[#faf9f5]/95 backdrop-blur-md border border-[#e3e7dc] rounded-[2rem] p-5 sm:p-6 shadow-[0_15px_30px_rgba(75,92,67,0.08)] text-left flex flex-col justify-between">
+                      <div 
+                        style={{ 
+                          backgroundColor: "color-mix(in srgb, var(--card) 95%, transparent)", 
+                          borderColor: "var(--border)" 
+                        }}
+                        className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
+                      >
                         <div className="space-y-1.5">
-                          <span className="text-[9px] sm:text-[10px] text-[#5e6f56] font-bold tracking-widest uppercase font-sans">
+                          <span 
+                            style={{ color: "var(--muted-foreground)" }}
+                            className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
+                          >
                             {finalTagline}
                           </span>
-                          <h2 className="text-xl sm:text-2xl font-serif text-[#374431] font-normal leading-snug">
+                          <h2 
+                            style={{ color: "var(--foreground)" }}
+                            className="text-xl sm:text-2xl font-serif font-normal leading-snug"
+                          >
                             {store.bannerTitle || `Abraza la pureza de la naturaleza`}
                           </h2>
                           {store.bioDescription && (
@@ -3510,13 +3583,17 @@ export function PublicCatalog({
                             onClick={() => {
                               document.getElementById("nature-coleccion")?.scrollIntoView({ behavior: "smooth" });
                             }}
-                            className="inline-block bg-[#4b5c43] text-white text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                            style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
+                            className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
                           >
                             {nicheTags.buttonText}
                           </button>
                           {/* Decorative small organic element */}
                           <span className="text-stone-400 text-xs italic flex items-center gap-1.5 font-serif">
-                            <Leaf className="h-3.5 w-3.5 text-[#4b5c43]/60" /> {finalBottomTag}
+                            <Leaf 
+                              style={{ color: "color-mix(in srgb, var(--primary) 60%, transparent)" }}
+                              className="h-3.5 w-3.5" 
+                            /> {finalBottomTag}
                           </span>
                         </div>
                       </div>
@@ -3548,9 +3625,18 @@ export function PublicCatalog({
               
               return (
                 <div className="space-y-4 relative z-10">
-                  <div className="flex items-center justify-between border-l-2 pl-3 border-[#4b5c43] transition-colors duration-300">
-                    <h3 className="text-sm font-serif font-normal text-[#374431] tracking-wider flex items-center gap-2 uppercase">
-                      <Flower className="h-4 w-4 text-[#4b5c43] animate-pulse" />
+                  <div 
+                    style={{ borderColor: "var(--primary)" }}
+                    className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300"
+                  >
+                    <h3 
+                      style={{ color: "var(--foreground)" }}
+                      className="text-sm font-serif font-normal tracking-wider flex items-center gap-2 uppercase"
+                    >
+                      <Flower 
+                        style={{ color: "var(--primary)" }}
+                        className="h-4 w-4 animate-pulse" 
+                      />
                       {isSaleOnly ? "Ofertas Ecológicas" : isFallback ? "Recomendaciones" : "Destacados Naturales"}
                     </h3>
                     <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans">Desliza →</span>
@@ -3563,25 +3649,43 @@ export function PublicCatalog({
                         <div
                           key={p.id}
                           onClick={() => setViewingProduct(p)}
-                          className="w-[210px] sm:w-[260px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border border-[#e3e7dc] bg-white hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
+                          style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
+                          className="w-[210px] sm:w-[260px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
                         >
                           <div className="space-y-3">
                             {/* Curved nature image card */}
-                            <div className="relative aspect-square w-full overflow-hidden rounded-[2rem] bg-[#f4f6f0] border border-[#e3e7dc]/40">
+                            <div 
+                              style={{ 
+                                backgroundColor: "var(--muted)", 
+                                borderColor: "color-mix(in srgb, var(--border) 40%, transparent)" 
+                              }}
+                              className="relative aspect-square w-full overflow-hidden rounded-[2rem] border"
+                            >
                               <img
                                 src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
                                 alt={p.name}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                 loading="lazy"
                               />
-                              <div className="absolute bottom-3 left-3 z-10 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md bg-[#4b5c43] font-sans">
+                              <div 
+                                style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
+                                className="absolute bottom-3 left-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans"
+                              >
                                 {p.isOnSale ? "Eco-Oferta" : isFallback ? "Eco-Sugerencia" : "Destacado"}
                               </div>
                             </div>
                             {/* Info */}
                             <div className="space-y-1 text-left px-1">
-                              <span className="text-[9px] font-bold text-[#5e6f56] uppercase tracking-wider font-sans block">Orgánico & Sostenible</span>
-                              <h4 className="font-serif font-normal text-sm text-[#374431] group-hover:text-[#4b5c43] transition-colors truncate">
+                              <span 
+                                style={{ color: "var(--muted-foreground)" }}
+                                className="text-[9px] font-bold uppercase tracking-wider font-sans block"
+                              >
+                                Orgánico & Sostenible
+                              </span>
+                              <h4 
+                                style={{ color: "var(--foreground)" }}
+                                className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors truncate"
+                              >
                                 {p.name}
                               </h4>
                               <p className="text-[11px] text-stone-500 line-clamp-2 h-8 leading-snug font-sans">
@@ -3590,9 +3694,12 @@ export function PublicCatalog({
                             </div>
                           </div>
                           {/* Buy section */}
-                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#f4f6f0] px-1">
+                          <div 
+                            style={{ borderColor: "var(--border)" }}
+                            className="flex items-center justify-between pt-3 mt-3 border-t px-1"
+                          >
                             <div className="text-left">
-                              <span className="text-sm font-semibold font-sans text-[#4b5c43]">
+                              <span className="text-sm font-semibold font-sans text-[var(--primary)]">
                                 {formatPrice(p.price)}
                               </span>
                               {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
@@ -3607,7 +3714,7 @@ export function PublicCatalog({
                                   e.stopPropagation();
                                   consultProduct(p.name);
                                 }}
-                                className="h-7 w-7 rounded-full border border-stone-200 bg-stone-50 text-[#4b5c43] hover:bg-[#4b5c43] hover:text-white transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                className="h-7 w-7 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
                                 title="Consultar por WhatsApp"
                               >
                                 <WhatsAppIcon className="h-3.5 w-3.5" />
@@ -3620,7 +3727,7 @@ export function PublicCatalog({
                                   cartAdd(store.id, p.id);
                                   setCartOpen(true);
                                 }}
-                                className="h-7 px-3 rounded-full text-white bg-[#4b5c43] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans"
+                                className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans"
                               >
                                 <Plus className="h-3 w-3" />
                                 Añadir
@@ -3635,11 +3742,17 @@ export function PublicCatalog({
               );
             })()}
 
-                        {/* 3. Categories */}
+            {/* 3. Categories */}
             <div id="nature-coleccion" className="space-y-6 font-sans relative z-10 scroll-mt-24">
               {/* Category selector (Minimalist Editorial) */}
-              <div className="space-y-3 border-b border-[#e3e7dc]/50 pb-2">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8fa285] text-left">
+              <div 
+                style={{ borderColor: "color-mix(in srgb, var(--border) 50%, transparent)" }}
+                className="space-y-3 border-b pb-2"
+              >
+                <h3 
+                  style={{ color: "var(--muted-foreground)" }}
+                  className="text-[10px] font-black uppercase tracking-[0.2em] text-left"
+                >
                   {getNicheCategoryTitle(store.niche)}
                 </h3>
                 
@@ -3650,14 +3763,14 @@ export function PublicCatalog({
                       className={cn(
                         "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
                         activeCat === "all"
-                          ? "text-[#4b5c43] font-extrabold"
+                          ? "text-[var(--primary)] font-extrabold"
                           : "text-stone-400 hover:text-stone-700"
                       )}
                     >
                       <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
                       <span>Ver Todo</span>
                       {activeCat === "all" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4b5c43] rounded-full animate-in fade-in zoom-in duration-300" />
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
                       )}
                     </button>
 
@@ -3667,14 +3780,14 @@ export function PublicCatalog({
                         className={cn(
                           "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
                           activeCat === "sale"
-                            ? "text-[#4b5c43] font-extrabold"
+                            ? "text-[var(--primary)] font-extrabold"
                             : "text-stone-400 hover:text-stone-700"
                         )}
                       >
                         <Flame className="h-3.5 w-3.5 shrink-0 text-red-500" />
                         <span>Eco-Ofertas</span>
                         {activeCat === "sale" && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4b5c43] rounded-full animate-in fade-in zoom-in duration-300" />
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
                         )}
                       </button>
                     )}
@@ -3689,7 +3802,7 @@ export function PublicCatalog({
                           className={cn(
                             "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
                             active
-                              ? "text-[#4b5c43] font-extrabold"
+                              ? "text-[var(--primary)] font-extrabold"
                               : "text-stone-400 hover:text-stone-700"
                           )}
                         >
@@ -3700,7 +3813,7 @@ export function PublicCatalog({
                           )}
                           <span>{label}</span>
                           {active && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4b5c43] rounded-full animate-in fade-in zoom-in duration-300" />
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
                           )}
                         </button>
                       );
@@ -3712,7 +3825,10 @@ export function PublicCatalog({
 
             {/* 4. Product Grid */}
             <div className="space-y-4 relative z-10">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-[#5e6f56] text-left">
+              <h3 
+                style={{ color: "var(--muted-foreground)" }}
+                className="text-xs font-bold uppercase tracking-widest text-left"
+              >
                 {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
               </h3>
               {(() => {
@@ -3722,7 +3838,13 @@ export function PublicCatalog({
                 
                 if (gridProducts.length === 0) {
                   return (
-                    <div className="text-center py-12 text-xs text-stone-400 border border-[#e3e7dc] rounded-[2rem] bg-white/60">
+                    <div 
+                      style={{ 
+                        borderColor: "var(--border)", 
+                        backgroundColor: "color-mix(in srgb, var(--card) 60%, transparent)" 
+                      }}
+                      className="text-center py-12 text-xs text-stone-400 border rounded-[2rem]"
+                    >
                       No hay productos botánicos en esta categoría.
                     </div>
                   );
@@ -3735,21 +3857,28 @@ export function PublicCatalog({
                       return (
                         <article
                           key={p.id}
+                          style={{
+                            borderColor: "var(--border)",
+                            boxShadow: "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)"
+                          }}
                           className={cn(
-                            "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border-none bg-[#faf9f5] hover:shadow-[0_15px_30px_rgba(75,92,67,0.06)] shadow-xs select-none",
+                            "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none",
                             isEven ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1" : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1"
                           )}
-                          style={{
-                            boxShadow: "0 8px 24px -8px rgba(75, 92, 67, 0.08)"
-                          }}
                           onClick={() => setViewingProduct(p)}
                         >
                           <div>
                             {/* framed image with margins - leaf shapes alternating */}
-                            <div className={cn(
-                              "relative overflow-hidden aspect-square m-2.5 bg-[#f4f6f0] border border-[#e3e7dc]/30 transition-all duration-500",
-                              isEven ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]" : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]"
-                            )}>
+                            <div 
+                              style={{ 
+                                backgroundColor: "var(--muted)", 
+                                borderColor: "color-mix(in srgb, var(--border) 30%, transparent)" 
+                              }}
+                              className={cn(
+                                "relative overflow-hidden aspect-square m-2.5 border transition-all duration-500",
+                                isEven ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]" : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]"
+                              )}
+                            >
                               <img
                                 src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
                                 alt={p.name}
@@ -3757,15 +3886,26 @@ export function PublicCatalog({
                                 loading="lazy"
                               />
                               {p.isOnSale && (
-                                <span className="absolute top-3 right-3 text-white bg-[#4b5c43] text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans">
+                                <span 
+                                  style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
+                                  className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans"
+                                >
                                   Oferta
                                 </span>
                               )}
                             </div>
                             {/* Info */}
                             <div className="p-3.5 pt-1 space-y-1 text-left">
-                              <span className="text-[8px] font-black text-[#8fa285] uppercase tracking-widest block font-sans">Orgánico</span>
-                              <h4 className="font-serif font-normal text-sm text-[#374431] group-hover:text-[#4b5c43] transition-colors line-clamp-1">
+                              <span 
+                                style={{ color: "var(--muted-foreground)" }}
+                                className="text-[8px] font-black uppercase tracking-widest block font-sans"
+                              >
+                                Orgánico
+                              </span>
+                              <h4 
+                                style={{ color: "var(--foreground)" }}
+                                className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
+                              >
                                 {p.name}
                               </h4>
                               {p.description && (
@@ -3779,9 +3919,14 @@ export function PublicCatalog({
                           {/* Price & Actions */}
                           <div className="px-3.5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
                             <div className="flex flex-col text-left px-0.5">
-                              <span className="text-sm font-semibold text-[#4b5c43] font-sans">{formatPrice(p.price)}</span>
+                              <span className="text-sm font-semibold text-[var(--primary)] font-sans">{formatPrice(p.price)}</span>
                               {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                                <span 
+                                  style={{ color: "var(--muted-foreground)" }}
+                                  className="text-[10px] line-through -mt-1 font-sans"
+                                >
+                                  {formatPrice(p.originalPrice)}
+                                </span>
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 self-end sm:self-auto">
@@ -3792,7 +3937,7 @@ export function PublicCatalog({
                                   e.stopPropagation();
                                   consultProduct(p.name);
                                 }}
-                                className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[#4b5c43] hover:bg-[#4b5c43] hover:text-white transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
                                 title="Consultar por WhatsApp"
                               >
                                 <WhatsAppIcon className="h-3.5 w-3.5" />
@@ -3805,7 +3950,7 @@ export function PublicCatalog({
                                   cartAdd(store.id, p.id);
                                   setCartOpen(true);
                                 }}
-                                className="h-7.5 px-3 rounded-full text-white bg-[#4b5c43] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
+                                className="h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
                               >
                                 <Plus className="h-3 w-3" />
                                 Añadir
@@ -3820,18 +3965,18 @@ export function PublicCatalog({
               })()}
             </div>
           </div>
-        ) : cfg.layout === "bloom" ? (
+) : cfg.layout === "bloom" ? (
           /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
           <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
             {store.niche === "floreria" && (
               <>
                 {/* Elegant floating leafy watermarks in background */}
-                <div className="absolute top-[12%] -left-12 w-28 h-28 text-rose-800 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block">
+                <div className="absolute top-[12%] -left-12 w-28 h-28 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block" style={{ color: "var(--primary)" }}>
                   <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-45">
                     <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
                   </svg>
                 </div>
-                <div className="absolute top-[52%] -right-16 w-36 h-36 text-rose-800 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block">
+                <div className="absolute top-[52%] -right-16 w-36 h-36 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block" style={{ color: "var(--primary)" }}>
                   <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-12">
                     <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
                   </svg>
@@ -3950,7 +4095,12 @@ export function PublicCatalog({
                           >
                             {store.name}
                           </h2>
-                          <p className={cn("text-xs font-semibold uppercase tracking-widest mt-2 font-sans", store.niche === "floreria" ? "text-rose-600/80" : "text-[var(--primary)]")}>
+                          <p className="text-xs font-semibold uppercase tracking-widest mt-2 font-sans"
+                          style={{
+                            color: store.niche === "floreria"
+                              ? "color-mix(in srgb, var(--primary) 80%, transparent)"
+                              : "var(--primary)"
+                          }}>
                             {store.niche === "floreria" ? "Arreglos & Detalles Florales" : "Catálogo Oficial"}
                           </p>
                         </div>
@@ -3987,7 +4137,7 @@ export function PublicCatalog({
                 <div className="space-y-4 relative z-10">
                   <div className={cn(
                     "flex items-center justify-between border-l-2 pl-3 transition-colors duration-300",
-                    store.niche === "floreria" ? "border-rose-400" : "border-[var(--primary)]"
+                    ""
                   )}>
                                          <h3 
                       style={{ color: store.textColor ? store.textColor : undefined }}
@@ -3998,7 +4148,7 @@ export function PublicCatalog({
                     >
                       {store.niche === "floreria" ? (
                         <>
-                          <Flower className="h-4 w-4 text-rose-500 animate-pulse" />
+                          <Flower className="h-4 w-4 animate-pulse" style={{ color: "var(--primary)" }} />
                           {isSaleOnly ? "Ofertas Especiales" : isFallback ? "Recomendados para ti" : "Arreglos Destacados"}
                         </>
                       ) : (
@@ -4054,7 +4204,7 @@ export function PublicCatalog({
                             {/* Info */}
                             <div className="space-y-1 text-left px-1">
                               {store.niche === "floreria" && (
-                                <span className="text-[10px] italic text-rose-400 font-serif block mb-0.5">
+                                <span className="text-[10px] italic font-serif block mb-0.5" style={{ color: "color-mix(in srgb, var(--primary) 70%, transparent)" }}>
                                   {isFallback ? "Arreglo Sugerido" : "Sugerencia de la Florista"}
                                 </span>
                               )}
@@ -4063,7 +4213,7 @@ export function PublicCatalog({
                                 className={cn(
                                   "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
                                   isSerif ? "font-serif" : "font-sans",
-                                  store.niche === "floreria" ? "group-hover:text-rose-600" : "group-hover:text-[var(--primary)]"
+                                  "group-hover:text-[var(--primary)]"
                                 )}
                               >
                                 {p.name}
@@ -4343,7 +4493,7 @@ export function PublicCatalog({
                         {/* Price & Action */}
                         <div className="px-3 pb-3.5 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
                           <div className="flex flex-col text-left px-0.5">
-                            <span className="text-sm font-semibold text-rose-600 font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
+                            <span className="text-sm font-semibold font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
                             {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                               <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
                             )}
