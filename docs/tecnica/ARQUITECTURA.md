@@ -147,6 +147,7 @@ Cada tienda del sistema.
 | `location_lng` | float | Longitud de la ubicación del negocio ← NUEVO |
 | `location_address` | text | Dirección legible de la ubicación ← NUEVO |
 | `quick_links` | jsonb | Array de `QuickLink[]` (links del Bio-Link) ← NUEVO |
+| `referred_by` | text | Slug de la tienda que la recomendó (para loop viral) ← NUEVO |
 
 ### `categories`
 | Columna | Tipo | Descripción |

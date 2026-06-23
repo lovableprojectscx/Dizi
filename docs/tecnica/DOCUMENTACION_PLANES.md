@@ -97,3 +97,31 @@ const isTrial = store.subscriptionStatus === "trial" && store.plan !== "semilla"
 
 ### Mi Plan (`admin.plan.tsx`)
 - Muestra un banner ámbar premium (`bg-amber-50/60 border-amber-200`) con un icono de reloj (`Clock`) e indica: *"Período de prueba activo hasta [fecha] ([X] días restantes)"*.
+
+---
+
+## 7. Programa de Referidos e Invitaciones (Módulo 4 / Loop Viral)
+
+El sistema implementa un programa de recompensas por referidos para fomentar el crecimiento orgánico de la plataforma. Tanto la tienda referente como la tienda referida reciben un beneficio (habitualmente 1 mes de suscripción gratuita) cuando la tienda referida adquiere un plan de pago.
+
+### A. Estructura de Datos en Supabase
+Se agregó la columna `referred_by` a la tabla `stores` para registrar la procedencia del registro:
+- **Columna**: `referred_by` (tipo `text`, almacena el slug de la tienda que la recomendó).
+- **Actualización en el registro**: Dado que la creación inicial de tiendas se realiza a través de la función RPC `initialize_store`, por razones de compatibilidad con la firma del procedimiento almacenado, la persistencia de `referred_by` se realiza inmediatamente después mediante un `.update()` sobre el registro recién creado.
+
+### B. Captura de la Recomendación en el Registro (`register.tsx`)
+1. El usuario accede al formulario de registro con un enlace estructurado como `/register?ref=SLUG_TIENDA_REFERENTE`.
+2. El componente detecta el parámetro de consulta `ref` de la URL mediante `URLSearchParams`.
+3. Al enviar el formulario, el valor de `ref` se pasa como propiedad `referredBy` en el payload de creación de la tienda.
+4. Si está presente, el store de Zustand ejecuta la inicialización de la tienda y a continuación actualiza la fila correspondiente en la tabla `stores` con el slug de procedencia.
+
+### C. Panel del Comercio - Compartir Enlace (`admin.plan.tsx`)
+En la vista "Mi Plan", se muestra una tarjeta destacada con detalles sobre el Programa de Referidos:
+- **Generación dinámica del enlace**: El enlace personal de la tienda es `https://dizi.idenza.site/register?ref={store.slug}`.
+- **Copiar Enlace**: Botón con comportamiento interactivo que guarda el enlace en el portapapeles con fallback seguro.
+- **Compartir por WhatsApp**: Redirige a la API de WhatsApp con un mensaje predefinido para enviar a contactos de negocios, invitándolos a registrarse y explicándoles la promoción.
+
+### D. Consola de Superadministrador (`SubscriptionManager.tsx`)
+Para una gestión simplificada y libre de errores de facturación, el superadmin puede ver claramente quién recomendó a cada comercio:
+- Si la tienda posee un valor en `referred_by`, se visualiza en color púrpura destacado el mensaje: *"Recomendado por: {store.referredBy}"* debajo de la información del plan.
+- Esto permite al administrador de soporte procesar manualmente la extensión gratuita de los meses de suscripción (mediante la acción "Renovar/Extender" del panel) a ambas tiendas una vez confirmado el pago del plan por el nuevo comercio.
