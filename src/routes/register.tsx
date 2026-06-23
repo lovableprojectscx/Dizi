@@ -63,6 +63,7 @@ function RegisterPage() {
 
   // Leer token de la URL
   const inviteToken = new URLSearchParams(window.location.search).get("invite");
+  const refToken = new URLSearchParams(window.location.search).get("ref");
 
   // Validar invite contra Supabase al montar
   useEffect(() => {
@@ -243,6 +244,7 @@ function RegisterPage() {
               ? 0
               : (inviteDurationValue ?? inviteDurationMonths),
           customPrice: inviteCustomPrice !== null ? inviteCustomPrice : undefined,
+          referredBy: refToken || undefined,
           categories: [{ id: newCategoryId, name: "Principal" }],
           products: [],
         });

@@ -309,6 +309,13 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                   </p>
                 )}
 
+                {store.referredBy && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 font-bold">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    Recomendado por: {store.referredBy}
+                  </p>
+                )}
+
                 {store.cancelledAt && (
                   <p className="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5 bg-red-500/5 p-2 rounded border border-red-500/10">
                     <XCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />

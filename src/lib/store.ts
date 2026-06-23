@@ -45,6 +45,7 @@ const mapStoreFromDB = (row: any): Store => ({
   locationAddress: row.location_address ?? undefined,
   showMap: row.show_map ?? true,
   showDiziBranding: row.show_dizi_branding ?? true,
+  referredBy: row.referred_by ?? null,
   quickLinks: row.quick_links ?? [],
   bioLinksEnabled: row.bio_links_enabled ?? false,
   bioLogo: row.bio_logo ?? undefined,
@@ -300,6 +301,14 @@ export const useApp = create<AppState>()(
         if (rpcError) {
           console.error("[addStore] RPC error:", rpcError);
           throw rpcError;
+        }
+
+        if (store.referredBy) {
+          const { error: refError } = await supabase
+            .from("stores")
+            .update({ referred_by: store.referredBy })
+            .eq("id", store.id);
+          if (refError) console.error("[addStore] Referral tracking update error:", refError);
         }
 
         // No es necesario actualizar las columnas de facturación directamente desde el cliente

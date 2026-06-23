@@ -2,8 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { PLANS, type PlanId, daysUntilExpiry, formatDate } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/plan")({
   component: PlanPage,
@@ -222,6 +224,68 @@ function PlanPage() {
           );
         })}
       </div>
+
+      {/* ── Sección de Referidos / Recompensas ── */}
+      <Card className="border border-primary/20 bg-primary/5 dark:bg-primary/10 overflow-hidden rounded-2xl">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className="md:col-span-8 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs shrink-0">🎉</span>
+                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">Gana meses gratis con nuestro Programa de Referidos</h3>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Comparte Dizi con otros negocios y emprendedores. Por cada tienda recomendada que adquiera cualquier plan de pago, <strong>ambos recibirán 1 mes gratis adicional</strong> de suscripción de forma automática.
+              </p>
+              <div className="pt-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                <div className="bg-background border rounded-xl px-3.5 h-10 flex items-center text-xs font-mono text-muted-foreground select-all truncate flex-1 min-w-0">
+                  https://dizi.idenza.site/register?ref={store.slug}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-10 text-xs font-semibold px-4 cursor-pointer hover:bg-slate-100"
+                    onClick={async () => {
+                      const url = `https://dizi.idenza.site/register?ref=${store.slug}`;
+                      try {
+                        await navigator.clipboard.writeText(url);
+                        toast.success("¡Enlace copiado al portapapeles!");
+                      } catch {
+                        // Fallback
+                        const el = document.createElement("textarea");
+                        el.value = url;
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(el);
+                        toast.success("¡Enlace copiado!");
+                      }
+                    }}
+                  >
+                    Copiar enlace
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-10 text-xs font-bold px-4 bg-primary text-white hover:opacity-95 shadow-sm"
+                    onClick={() => {
+                      const text = `Hola, te recomiendo Dizi para crear el catálogo digital de tu tienda. Es super rápido, profesional y te permite recibir pedidos por WhatsApp. Regístrate gratis usando mi enlace y si te suscribes, ¡ambos ganamos 1 mes gratis adicional! 🚀\n\nhttps://dizi.idenza.site/register?ref=${store.slug}`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                    }}
+                  >
+                    Compartir por WhatsApp
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="hidden md:flex md:col-span-4 justify-center items-center">
+              <div className="h-24 w-24 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-5xl select-none animate-bounce">
+                🎁
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

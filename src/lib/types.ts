@@ -103,6 +103,7 @@ export interface Store {
   locationAddress?: string | null;
   showMap?: boolean;
   showDiziBranding?: boolean;
+  referredBy?: string | null;
   quickLinks?: QuickLink[];
   bioLinksEnabled?: boolean;
   bioLogo?: string | null;
