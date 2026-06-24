@@ -1975,9 +1975,9 @@ export function PublicCatalog({
       {/* ── Hero Banner (Only for Elite/Banner models) ── */}
       {modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
         <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-zinc-950">
-          {/* Blurred background image on desktop/PC to avoid letterboxes, while keeping main banner fully visible */}
+          {/* Blurred background image to avoid letterboxes, while keeping main banner fully visible */}
           <div 
-            className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-xl opacity-60 scale-105 hidden md:block"
+            className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-xl opacity-60 scale-105"
             style={{ backgroundImage: `url(${activeBanners[0]})` }}
           />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
@@ -1985,7 +1985,7 @@ export function PublicCatalog({
           <img 
             src={activeBanners[0]} 
             alt={store.bannerTitle || store.name}
-            className="absolute inset-0 w-full h-full object-cover md:object-contain animate-in fade-in duration-1000"
+            className="absolute inset-0 w-full h-full object-contain animate-in fade-in duration-1000"
           />
           <div className="absolute inset-0 bg-black/10 md:bg-black/35" />
           
@@ -3074,15 +3074,15 @@ export function PublicCatalog({
                                 : "opacity-0 scale-105 z-0 pointer-events-none"
                             )}
                           >
-                            {/* Blurred background for PC */}
+                            {/* Blurred background */}
                             <div 
-                              className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                              className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
                               style={{ backgroundImage: `url(${slide})` }}
                             />
                             <img
                               src={slide}
                               alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                              className="w-full h-full object-cover md:object-contain relative z-10"
+                              className="w-full h-full object-contain relative z-10"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-20" />
                           </div>
@@ -3480,7 +3480,7 @@ export function PublicCatalog({
                       borderColor: "var(--border)", 
                       background: "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--card)) 0%, color-mix(in srgb, var(--primary) 2%, var(--card)) 100%)" 
                     }}
-                    className="relative w-full h-[38vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
+                    className="relative w-full h-[25vh] xs:h-[28vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
                   >
                     {banners.length > 0 ? (
                       <>
@@ -3497,15 +3497,15 @@ export function PublicCatalog({
                                   : "opacity-0 scale-105 z-0 pointer-events-none"
                               )}
                             >
-                              {/* Blurred background for PC */}
+                              {/* Blurred background */}
                               <div 
-                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
                                 style={{ backgroundImage: `url(${slide})` }}
                               />
                               <img
                                 src={slide}
                                 alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                className="w-full h-full object-cover md:object-contain relative z-10"
+                                className="w-full h-full object-contain relative z-10"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
                             </div>
@@ -4054,15 +4054,15 @@ export function PublicCatalog({
                                   : "opacity-0 scale-105 z-0 pointer-events-none"
                               )}
                             >
-                              {/* Blurred background for PC */}
+                              {/* Blurred background */}
                               <div 
-                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
                                 style={{ backgroundImage: `url(${slide})` }}
                               />
                               <img
                                 src={slide}
                                 alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                className="w-full h-full object-cover md:object-contain relative z-10"
+                                className="w-full h-full object-contain relative z-10"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-stone-900/35 via-transparent to-transparent z-20" />
                             </div>
@@ -4604,15 +4604,15 @@ export function PublicCatalog({
                   )} 
                   style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
                 >
-                  {/* Blurred background for PC */}
+                  {/* Blurred background */}
                   <div 
-                    className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 hidden md:block"
+                    className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
                     style={{ backgroundImage: `url(${activeBanners[0]})` }}
                   />
                   <img
                     src={activeBanners[0]}
                     alt={store.name}
-                    className="absolute inset-0 w-full h-full object-cover md:object-contain"
+                    className="absolute inset-0 w-full h-full object-contain"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
                   <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
