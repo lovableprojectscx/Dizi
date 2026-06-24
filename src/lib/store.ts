@@ -46,6 +46,8 @@ const mapStoreFromDB = (row: any): Store => ({
   showMap: row.show_map ?? true,
   showDiziBranding: row.show_dizi_branding ?? true,
   referredBy: row.referred_by ?? null,
+  referralRewarded: row.referral_rewarded ?? false,
+  referralCredit: row.referral_credit ? Number(row.referral_credit) : 0,
   quickLinks: row.quick_links ?? [],
   bioLinksEnabled: row.bio_links_enabled ?? false,
   bioLogo: row.bio_logo ?? undefined,

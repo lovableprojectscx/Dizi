@@ -34,7 +34,8 @@ import {
   Info,
   DollarSign,
   Trash2,
-  MessageCircle
+  MessageCircle,
+  Gift
 } from "lucide-react";
 import type { Store, PlanId, SubscriptionStatus } from "@/lib/types";
 import { PLANS, PLAN_DURATION_OPTIONS, daysUntilExpiry, formatDate } from "@/lib/types";
@@ -310,9 +311,29 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 )}
 
                 {store.referredBy && (
-                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 font-bold">
-                    <Info className="w-3.5 h-3.5 shrink-0" />
-                    Recomendado por: {store.referredBy}
+                  <div className="space-y-1">
+                    <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 font-bold">
+                      <Info className="w-3.5 h-3.5 shrink-0" />
+                      Recomendado por: {store.referredBy}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground flex items-center gap-1.5 pl-5">
+                      {store.referralRewarded ? (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Recompensa entregada (automática)
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-500" /> Recompensa pendiente (se activa con pago)
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {store.referralCredit !== undefined && store.referralCredit > 0 && (
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 font-bold bg-indigo-500/5 px-2 py-1.5 rounded-lg border border-indigo-500/10">
+                    <Gift className="w-3.5 h-3.5 shrink-0" />
+                    Crédito por referir: S/ {store.referralCredit.toFixed(2)}
                   </p>
                 )}
 

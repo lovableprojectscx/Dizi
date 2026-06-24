@@ -104,6 +104,8 @@ export interface Store {
   showMap?: boolean;
   showDiziBranding?: boolean;
   referredBy?: string | null;
+  referralRewarded?: boolean;
+  referralCredit?: number;
   quickLinks?: QuickLink[];
   bioLinksEnabled?: boolean;
   bioLogo?: string | null;
