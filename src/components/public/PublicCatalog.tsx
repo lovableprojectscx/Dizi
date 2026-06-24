@@ -569,55 +569,89 @@ const getNicheTaglines = (niche?: string) => {
     return {
       tagline: "Hamburguesas Gourmet & Craft",
       bottomTag: "Sabor Real & Artesanal",
-      buttonText: "Ver Menú"
+      buttonText: "Ver Menú",
+      productTagline: "Artesanal & Delicioso",
+      productTag: "Gourmet",
+      featuredTitle: "Los más Vendidos"
     };
   }
   if (n === "cafeteria" || n === "cafe") {
     return {
       tagline: "Café de Especialidad & Repostería",
       bottomTag: "Tostado Local & Calidad",
-      buttonText: "Ver Menú"
+      buttonText: "Ver Menú",
+      productTagline: "Fresco & Artesanal",
+      productTag: "Especial",
+      featuredTitle: "Recomendados"
     };
   }
   if (n === "floreria" || n === "boutique_botanica") {
     return {
       tagline: "Catálogo Eco-friendly & Botánico",
       bottomTag: "Sostenible & Local",
-      buttonText: "Ver Colección"
+      buttonText: "Ver Colección",
+      productTagline: "Orgánico & Sostenible",
+      productTag: "Orgánico",
+      featuredTitle: "Destacados Naturales"
+    };
+  }
+  if (n === "jugueteria" || n === "juguetes" || n === "peluches" || n === "infantil") {
+    return {
+      tagline: "Peluches Súper Suaves & Premium",
+      bottomTag: "Regala Ternura & Felicidad",
+      buttonText: "Ver Catálogo",
+      productTagline: "Suave & Antialérgico",
+      productTag: "Premium",
+      featuredTitle: "Destacados Wambo"
     };
   }
   if (n === "boutique" || n === "moda" || n === "ropa") {
     return {
       tagline: "Moda & Tendencia Exclusiva",
       bottomTag: "Diseño & Calidad de Autor",
-      buttonText: "Ver Colección"
+      buttonText: "Ver Colección",
+      productTagline: "Diseño Exclusivo",
+      productTag: "Tendencia",
+      featuredTitle: "Los más Buscados"
     };
   }
   if (n === "pasteleria" || n === "panaderia" || n === "dulces") {
     return {
       tagline: "Pastelería & Postres Artesanales",
       bottomTag: "Horneado con Amor Diariamente",
-      buttonText: "Ver Menú"
+      buttonText: "Ver Menú",
+      productTagline: "Horneado Hoy",
+      productTag: "Delicia",
+      featuredTitle: "Especiales de la Casa"
     };
   }
   if (n === "restaurante" || n === "gastronomia" || n === "comida") {
     return {
       tagline: "Experiencia Culinaria & Tradición",
       bottomTag: "Ingredientes Frescos & Selectos",
-      buttonText: "Ver Carta"
+      buttonText: "Ver Carta",
+      productTagline: "Fresco & Selecto",
+      productTag: "Premium",
+      featuredTitle: "Recomendaciones del Chef"
     };
   }
   if (n === "estetica" || n === "belleza" || n === "salon" || n === "spa") {
     return {
       tagline: "Estética, Cuidado & Belleza",
       bottomTag: "Tu Experiencia de Bienestar",
-      buttonText: "Ver Servicios"
+      buttonText: "Ver Servicios",
+      productTagline: "Cuidado Profesional",
+      productTag: "Bienestar",
+      featuredTitle: "Servicios Destacados"
     };
   }
   return {
     tagline: "Catálogo Exclusivo",
     bottomTag: "Calidad & Detalle",
-    buttonText: "Explorar"
+    buttonText: "Explorar",
+    productTagline: "Garantía & Calidad",
+    productTag: "Exclusivo",
+    featuredTitle: "Destacados"
   };
 };
 
@@ -631,6 +665,9 @@ const getNicheCategoryTitle = (niche?: string) => {
   }
   if (n === "floreria" || n === "boutique_botanica") {
     return "Colecciones Botánicas";
+  }
+  if (n === "jugueteria" || n === "juguetes" || n === "peluches" || n === "infantil") {
+    return "Nuestras Colecciones";
   }
   return "Categorías";
 };
@@ -3415,9 +3452,11 @@ export function PublicCatalog({
               })()}
             </div>
           </div>
-        ) : cfg.layout === "nature" ? (
-          /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
-          <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
+        ) : cfg.layout === "nature" ? (() => {
+          const nicheTags = getNicheTaglines(store.niche);
+          return (
+            /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
+            <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
             {/* Elegant botanical watermarks in background */}
             <div className="absolute top-[8%] -left-8 w-24 h-24 opacity-[0.06] pointer-events-none select-none z-0" style={{ color: "var(--primary)" }}>
               <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-[15deg]">
@@ -3547,7 +3586,6 @@ export function PublicCatalog({
 
                   {/* Overlapping editorial card details */}
                   {(() => {
-                    const nicheTags = getNicheTaglines(store.niche);
                     const finalTagline = store.bannerTagline || nicheTags.tagline;
                     const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
                     return (
@@ -3637,7 +3675,7 @@ export function PublicCatalog({
                         style={{ color: "var(--primary)" }}
                         className="h-4 w-4 animate-pulse" 
                       />
-                      {isSaleOnly ? "Ofertas Ecológicas" : isFallback ? "Recomendaciones" : "Destacados Naturales"}
+                      {isSaleOnly ? (store.niche === "floreria" ? "Ofertas Ecológicas" : "Ofertas Especiales") : isFallback ? "Recomendaciones" : nicheTags.featuredTitle}
                     </h3>
                     <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans">Desliza →</span>
                   </div>
@@ -3680,7 +3718,7 @@ export function PublicCatalog({
                                 style={{ color: "var(--muted-foreground)" }}
                                 className="text-[9px] font-bold uppercase tracking-wider font-sans block"
                               >
-                                Orgánico & Sostenible
+                                {nicheTags.productTagline}
                               </span>
                               <h4 
                                 style={{ color: "var(--foreground)" }}
@@ -3900,7 +3938,7 @@ export function PublicCatalog({
                                 style={{ color: "var(--muted-foreground)" }}
                                 className="text-[8px] font-black uppercase tracking-widest block font-sans"
                               >
-                                Orgánico
+                                {nicheTags.productTag}
                               </span>
                               <h4 
                                 style={{ color: "var(--foreground)" }}
@@ -3965,7 +4003,8 @@ export function PublicCatalog({
               })()}
             </div>
           </div>
-) : cfg.layout === "bloom" ? (
+          );
+        })() : cfg.layout === "bloom" ? (
           /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
           <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
             {store.niche === "floreria" && (
