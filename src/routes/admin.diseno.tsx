@@ -111,27 +111,29 @@ const MODELS: ModelDef[] = [
     textColor: "#451a03", accentColor: "#fef3c7", borderRadius: "6px",
   },
 
-  /* ══ PLAN EMPRENDEDOR — 3 modelos ══════════════════════ */
-  {
-    id: "nature_mint", name: "Nature Mint", layout: "grid",
-    desc: "Verde teal fresco con imágenes redondeadas. Salud, bienestar y cafés.",
-    planLevel: 1, badge: "Fresh", imgShape: "rounded",
-    bg: "#f0fefb", cardBg: "#ffffff", primaryColor: "#0d9488",
-    textColor: "#134e4a", accentColor: "#99f6e4", borderRadius: "24px",
-  },
+  /* ══ PLAN SEMILLA — agrega Vibrante y Eco Hero ══════════ */
   {
     id: "vibrante", name: "Vibrante", layout: "overlay",
     desc: "Cards portrait 3:4 con texto sobre gradiente. Energético tipo Instagram Shopping.",
-    planLevel: 1, badge: "Trending", imgShape: "rounded",
+    planLevel: 0, badge: "Popular", imgShape: "rounded",
     bg: "#fff7ed", cardBg: "#ffffff", primaryColor: "#ea580c",
     textColor: "#431407", accentColor: "#ffedd5", borderRadius: "20px",
   },
   {
     id: "eco", name: "Eco Hero", layout: "hero",
     desc: "Banner hero panorámico + galería circular. El primer producto siempre destaca.",
-    planLevel: 1, badge: "Premium", imgShape: "circle",
+    planLevel: 0, badge: "Versátil", imgShape: "circle",
     bg: "#f0fdf4", cardBg: "#ffffff", primaryColor: "#16a34a",
     textColor: "#14532d", accentColor: "#dcfce7", borderRadius: "999px",
+  },
+
+  /* ══ PLAN EMPRENDEDOR — 1 modelo ════════════════════════ */
+  {
+    id: "nature_mint", name: "Nature Mint", layout: "grid",
+    desc: "Verde teal fresco con imágenes redondeadas. Salud, bienestar y cafés.",
+    planLevel: 1, badge: "Fresh", imgShape: "rounded",
+    bg: "#f0fefb", cardBg: "#ffffff", primaryColor: "#0d9488",
+    textColor: "#134e4a", accentColor: "#99f6e4", borderRadius: "24px",
   },
 
   /* ══ PLAN PRO — 4 modelos ═══════════════════════════════ */

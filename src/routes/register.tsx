@@ -409,10 +409,10 @@ function RegisterPage() {
     // Semilla (0)
     { id: "minimalista",  layout: "grid",       name: "Minimalista",        desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",         planLevel: 0, niches: ["general","ropa","bisuteria","floreria"], p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false } },
     { id: "clasico",      layout: "grid",       name: "Clásico Cálido",     desc: "Tipografía serif y tonos terrosos. Artesanías.",          planLevel: 0, niches: ["general","servicios","comida","floreria"], p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false } },
+    { id: "vibrante",     layout: "overlay",    name: "Vibrante",           desc: "Cards portrait con texto sobre gradiente. Instagram.",   planLevel: 0, niches: ["comida","ropa","general"],                p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false } },
+    { id: "eco",          layout: "hero",       name: "Eco Hero",           desc: "Banner hero panorámico + galería circular.",             planLevel: 0, niches: ["servicios","general","floreria"],         p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false } },
     // Emprendedor (1)
     { id: "nature_mint",  layout: "grid",       name: "Nature Mint",        desc: "Verde teal fresco. Salud, bienestar y cafés.",           planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false } },
-    { id: "vibrante",     layout: "overlay",    name: "Vibrante",           desc: "Cards portrait con texto sobre gradiente. Instagram.",   planLevel: 1, niches: ["comida","ropa","general"],                p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false } },
-    { id: "eco",          layout: "hero",       name: "Eco Hero",           desc: "Banner hero panorámico + galería circular.",             planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false } },
     // Pro (2)
     { id: "nocturno",     layout: "overlay",    name: "Nocturno",           desc: "Dark mode de alto impacto con overlay oscuro.",          planLevel: 2, niches: ["tech","ropa"],                           p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true  } },
     { id: "elite",        layout: "hero",       name: "Elite ✦",            desc: "Banner cinematográfico. Identidad visual fuerte.",       planLevel: 2, niches: ["general","ropa","tech"],                 p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false } },
@@ -746,7 +746,7 @@ function RegisterPage() {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex justify-between">
                     <span>Modelo de Catálogo</span>
                     {userPlanLevel === 0 && (
-                      <span className="text-[10px] text-muted-foreground font-normal normal-case">2 disponibles en Semilla</span>
+                      <span className="text-[10px] text-muted-foreground font-normal normal-case">4 disponibles en Semilla</span>
                     )}
                   </label>
                   <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
