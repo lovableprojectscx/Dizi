@@ -105,6 +105,7 @@ export interface Store {
   showDiziBranding?: boolean;
   referredBy?: string | null;
   referralRewarded?: boolean;
+  onboardingCompleted?: boolean;
   quickLinks?: QuickLink[];
   bioLinksEnabled?: boolean;
   bioLogo?: string | null;

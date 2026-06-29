@@ -7,6 +7,8 @@ import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList, Link2, AlertT
 import { getActiveSession, getSessionSync, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { OnboardingWizard } from "@/components/admin/OnboardingWizard";
+
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
@@ -87,6 +89,7 @@ function AdminLayout() {
 
   return (
     <SidebarProvider>
+      <OnboardingWizard />
       <div className="min-h-screen flex w-full">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">

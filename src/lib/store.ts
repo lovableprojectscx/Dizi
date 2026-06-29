@@ -60,6 +60,7 @@ const mapStoreFromDB = (row: any): Store => ({
   bioBgColor: row.bio_bg_color ?? undefined,
   bannerTagline: row.banner_tagline,
   bannerBottomTag: row.banner_bottom_tag,
+  onboardingCompleted: row.onboarding_completed ?? false,
   categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
   products: (row.products || []).map((p: any) => ({
     id: p.id,
@@ -270,6 +271,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.bannerBottomTag !== undefined) dbPatch.banner_bottom_tag = updatedPatch.bannerBottomTag;
         if (updatedPatch.referredBy !== undefined) dbPatch.referred_by = updatedPatch.referredBy;
         if (updatedPatch.referralRewarded !== undefined) dbPatch.referral_rewarded = updatedPatch.referralRewarded;
+        if (updatedPatch.onboardingCompleted !== undefined) dbPatch.onboarding_completed = updatedPatch.onboardingCompleted;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
