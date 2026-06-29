@@ -35,11 +35,6 @@ export function OnboardingWizard() {
   const updateStore = useApp((s) => s.updateStore);
   const upsertProduct = useApp((s) => s.upsertProduct);
 
-  // If there's no active store, or if onboarding is already completed, don't show
-  if (!store || store.onboardingCompleted) {
-    return null;
-  }
-
   // Determine starting step dynamically based on what's missing
   const initialStep = React.useMemo(() => {
     if (!store) return 1;
@@ -73,15 +68,15 @@ export function OnboardingWizard() {
   }, [storeId, store?.logo, store?.bannerImage, store?.products?.length]);
 
   // Step 1 States: Identity (Name, Logo, Banner)
-  const [storeName, setStoreName] = useState(store.name || "");
+  const [storeName, setStoreName] = useState(store?.name || "");
   const [facebookUrl, setFacebookUrl] = useState("");
-  const [logoBase64, setLogoBase64] = useState<string | null>(store.logo || null);
-  const [bannerBase64, setBannerBase64] = useState<string | null>(store.bannerImage || null);
+  const [logoBase64, setLogoBase64] = useState<string | null>(store?.logo || null);
+  const [bannerBase64, setBannerBase64] = useState<string | null>(store?.bannerImage || null);
   const [fbConnected, setFbConnected] = useState(false);
 
   // Step 2 States: Bio-Link
-  const [bioEnabled, setBioEnabled] = useState(store.bioLinksEnabled || false);
-  const [bioDescription, setBioDescription] = useState(store.bioDescription || "");
+  const [bioEnabled, setBioEnabled] = useState(store?.bioLinksEnabled || false);
+  const [bioDescription, setBioDescription] = useState(store?.bioDescription || "");
   const [copiedLink, setCopiedLink] = useState(false);
 
   // Step 3 States: First Product
@@ -89,6 +84,12 @@ export function OnboardingWizard() {
   const [productPrice, setProductPrice] = useState("");
   const [productImage, setProductImage] = useState<string | null>(null);
   const [productLoading, setProductLoading] = useState(false);
+
+  // If there's no active store, or if onboarding is already completed, don't show
+  // Placed AFTER all hooks to adhere to React Rules of Hooks!
+  if (!store || store.onboardingCompleted) {
+    return null;
+  }
 
   const bioUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/bio/${store.slug}`;
 
