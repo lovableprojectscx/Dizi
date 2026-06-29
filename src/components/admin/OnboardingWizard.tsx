@@ -40,9 +40,37 @@ export function OnboardingWizard() {
     return null;
   }
 
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Determine starting step dynamically based on what's missing
+  const initialStep = React.useMemo(() => {
+    if (!store) return 1;
+    const hasBrand = !!(store.logo || store.bannerImage);
+    const hasProducts = store.products && store.products.some((p) => !p.isSample);
+    
+    // If they have logo/banner but no products, go straight to Step 3
+    if (hasBrand && !hasProducts) {
+      return 3;
+    }
+    // If they have products but no logo/banner, start on Step 1 (logo/banner)
+    return 1;
+  }, [store, store?.logo, store?.bannerImage, store?.products]);
+
+  const [step, setStep] = useState<1 | 2 | 3>(initialStep);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+
+  // Auto-skip onboarding if they already have both brand elements AND products configured
+  React.useEffect(() => {
+    if (!store || store.onboardingCompleted) return;
+
+    const hasBrand = !!(store.logo || store.bannerImage);
+    const hasProducts = store.products && store.products.some((p) => !p.isSample);
+
+    if (hasBrand && hasProducts) {
+      // Auto-skip
+      updateStore(store.id, { onboardingCompleted: true });
+      setIsOpen(false);
+    }
+  }, [storeId, store?.logo, store?.bannerImage, store?.products?.length]);
 
   // Step 1 States: Identity (Name, Logo, Banner)
   const [storeName, setStoreName] = useState(store.name || "");
