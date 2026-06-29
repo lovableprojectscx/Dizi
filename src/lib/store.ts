@@ -107,7 +107,7 @@ interface AppState {
   swapProductsOrder: (storeId: string, index1: number, index2: number) => Promise<void>;
   upsertCategory: (storeId: string, cat: Category) => void;
   deleteCategory: (storeId: string, catId: string) => void;
-  setPlan: (storeId: string, plan: PlanId, durationMonths?: number, customPrice?: number) => Promise<void>;
+  setPlan: (storeId: string, plan: PlanId, durationMonths?: number, customPrice?: number, keepExpiration?: boolean, manualExpiration?: string) => Promise<void>;
   setTrialPlan: (storeId: string, plan: PlanId, durationDays?: number) => Promise<void>;
   toggleStoreActive: (storeId: string) => void;
   startImpersonation: (storeId: string) => void;
@@ -800,7 +800,7 @@ export const useApp = create<AppState>()(
         }
       },
 
-      setPlan: async (storeId, plan, durationMonths, customPrice) => {
+      setPlan: async (storeId, plan, durationMonths, customPrice, keepExpiration = false, manualExpiration) => {
         try {
           const months = plan === "semilla" ? null : (durationMonths ?? 1);
           const cPrice = plan === "semilla" ? null : (customPrice !== undefined ? customPrice : null);
@@ -808,12 +808,21 @@ export const useApp = create<AppState>()(
           const { error } = await supabase.rpc("activate_subscription", {
             p_store_id: storeId,
             p_plan: plan,
-            p_duration_months: months,
+            p_duration_months: keepExpiration ? null : months,
             p_custom_price: cPrice,
+            p_keep_expiration: keepExpiration,
+            p_manual_expiration: manualExpiration || null,
           });
           if (error) throw error;
 
           const expiresAt = plan === "semilla" ? null : (() => {
+            if (keepExpiration) {
+              const currentStore = useApp.getState().stores.find(st => st.id === storeId);
+              return currentStore?.planExpiresAt || null;
+            }
+            if (manualExpiration) {
+              return manualExpiration;
+            }
             const d = new Date();
             d.setMonth(d.getMonth() + (durationMonths ?? 1));
             return d.toISOString();
@@ -827,7 +836,7 @@ export const useApp = create<AppState>()(
                     plan,
                     planExpiresAt: expiresAt ?? undefined,
                     subscriptionStatus: plan === "semilla" ? "trial" : "active",
-                    planDurationMonths: plan === "semilla" ? undefined : (durationMonths ?? 1),
+                    planDurationMonths: plan === "semilla" ? undefined : (keepExpiration ? st.planDurationMonths : (durationMonths ?? 1)),
                     cancelledAt: undefined,
                     cancelReason: undefined,
                     customPrice: plan === "semilla" ? undefined : (customPrice !== undefined ? customPrice : st.customPrice),

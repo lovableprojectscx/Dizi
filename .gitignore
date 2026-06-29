@@ -37,3 +37,9 @@ dist-ssr
 .env.production
 .env.development
 *.key
+
+# Temporary directories
+scratch/
+AUTOMATIZAR PDF/
+~$*.docx
+

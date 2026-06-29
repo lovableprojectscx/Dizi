@@ -1,3 +1,4 @@
+import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
@@ -11,6 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -136,8 +144,11 @@ function TenantsPage() {
   const navigate = useNavigate();
   
   const [q, setQ] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  const selectedStore = stores.find((s) => s.id === selectedStoreId);
 
   // Advanced filter states
   const [selectedPlan, setSelectedPlan] = useState<string>("all");
@@ -198,8 +209,9 @@ function TenantsPage() {
     navigate({ to: "/admin/dashboard" });
   };
 
-  const toggleExpand = (id: string) => {
-    setExpandedId((prev) => (prev === id ? null : id));
+  const openManagePanel = (id: string) => {
+    setSelectedStoreId(id);
+    setIsPanelOpen(true);
   };
 
   // Alertas al tope: tiendas que vencen en <= 7 dias
@@ -251,7 +263,7 @@ function TenantsPage() {
 
       {/* ── Barra de Búsqueda y Botón Filtros ── */}
       <div className="bg-background border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 shadow-sm space-y-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -261,24 +273,11 @@ function TenantsPage() {
               className="pl-9 h-10 text-sm border-zinc-200 dark:border-zinc-800"
             />
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setShowFilters(!showFilters)}
-            className={`h-10 text-xs font-semibold gap-1.5 px-4 border-zinc-200 dark:border-zinc-800 transition-colors ${showFilters ? "bg-primary/5 text-primary border-primary/30" : "bg-background"}`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            {showFilters ? "Ocultar Filtros" : "Filtros Avanzados"}
-          </Button>
-        </div>
-
-        {/* Panel Desplegable de Filtros */}
-        {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Filtrar por Plan</label>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-[140px]">
               <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                <SelectTrigger className="h-9 text-xs">
-                  <SelectValue placeholder="Planes" />
+                <SelectTrigger className="h-10 text-xs font-semibold bg-background border-zinc-200 dark:border-zinc-800">
+                  <SelectValue placeholder="Plan" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los planes</SelectItem>
@@ -290,10 +289,9 @@ function TenantsPage() {
               </Select>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Filtrar por Estado</label>
+            <div className="w-[150px]">
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="h-9 text-xs">
+                <SelectTrigger className="h-10 text-xs font-semibold bg-background border-zinc-200 dark:border-zinc-800">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -306,6 +304,20 @@ function TenantsPage() {
               </Select>
             </div>
 
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`h-10 text-xs font-semibold gap-1.5 px-4 border-zinc-200 dark:border-zinc-800 transition-colors ${showFilters ? "bg-primary/5 text-primary border-primary/30" : "bg-background"}`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              {showFilters ? "Menos Filtros" : "Más Filtros"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Panel Desplegable de Filtros Secundarios */}
+        {showFilters && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
               <label className="text-[10px] uppercase font-bold text-muted-foreground">Giro o Nicho</label>
               <Select value={selectedNiche} onValueChange={setSelectedNiche}>
@@ -326,7 +338,7 @@ function TenantsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Libro de Recl.</label>
+              <label className="text-[10px] uppercase font-bold text-muted-foreground">Libro de Reclamaciones</label>
               <Select value={selectedLibro} onValueChange={setSelectedLibro}>
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue placeholder="Libro" />
@@ -338,24 +350,24 @@ function TenantsPage() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        )}
 
-            {(selectedPlan !== "all" || selectedStatus !== "all" || selectedNiche !== "all" || selectedLibro !== "all") && (
-              <div className="sm:col-span-4 flex justify-end pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedPlan("all");
-                    setSelectedStatus("all");
-                    setSelectedNiche("all");
-                    setSelectedLibro("all");
-                  }}
-                  className="h-8 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                >
-                  Restaurar Filtros
-                </Button>
-              </div>
-            )}
+        {(selectedPlan !== "all" || selectedStatus !== "all" || selectedNiche !== "all" || selectedLibro !== "all") && (
+          <div className="flex justify-end pt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedPlan("all");
+                setSelectedStatus("all");
+                setSelectedNiche("all");
+                setSelectedLibro("all");
+              }}
+              className="h-8 text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+            >
+              Restaurar Filtros
+            </Button>
           </div>
         )}
       </div>
@@ -414,9 +426,9 @@ function TenantsPage() {
           </TableHeader>
           <TableBody className="divide-y">
             {sorted.map((s) => (
-              <>
+              <React.Fragment key={s.id}>
                 {/* Store Main Row */}
-                <TableRow key={s.id} className={`hover:bg-muted/5 transition-colors ${expandedId === s.id ? "bg-muted/10 border-b-transparent" : ""}`}>
+                <TableRow className="hover:bg-muted/5 transition-colors">
                   <TableCell className="py-4 pl-6">
                     <div className="flex items-center gap-3">
                       {s.logo ? (
@@ -482,21 +494,11 @@ function TenantsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         size="sm"
-                        variant={expandedId === s.id ? "default" : "outline"}
-                        className={`h-8 text-xs gap-1 transition-colors ${expandedId === s.id ? "shadow-inner" : "border-zinc-200 dark:border-zinc-800 bg-background"}`}
-                        onClick={() => toggleExpand(s.id)}
+                        variant="outline"
+                        className="h-8 text-xs gap-1 border-zinc-200 dark:border-zinc-800 bg-background hover:bg-zinc-50 font-bold"
+                        onClick={() => openManagePanel(s.id)}
                       >
-                        {expandedId === s.id ? (
-                          <>
-                            Ocultar
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          </>
-                        ) : (
-                          <>
-                            Gestionar
-                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                          </>
-                        )}
+                        Gestionar
                       </Button>
                       
                       <Button 
@@ -510,16 +512,7 @@ function TenantsPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-
-                {/* Sub-row Expandible (SubscriptionManager) */}
-                {expandedId === s.id && (
-                  <TableRow key={s.id + "_sub"} className="bg-zinc-50/30 hover:bg-zinc-50/30 dark:bg-zinc-900/10 dark:hover:bg-zinc-900/10">
-                    <TableCell colSpan={6} className="p-4 border-b">
-                      <SubscriptionManager store={s} />
-                    </TableCell>
-                  </TableRow>
-                )}
-              </>
+              </React.Fragment>
             ))}
             
             {sorted.length === 0 && (
@@ -588,25 +581,15 @@ function TenantsPage() {
             </div>
 
             {/* Panel de Gestión del Comercio */}
-            <div className="border-t pt-3">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Panel de Control</span>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  className="h-6 text-[10px] font-bold px-2 gap-1 text-primary"
-                  onClick={() => toggleExpand(s.id)}
-                >
-                  {expandedId === s.id ? "Cerrar Panel" : "Abrir Panel"}
-                  {expandedId === s.id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </Button>
-              </div>
-
-              {expandedId === s.id && (
-                <div className="mb-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <SubscriptionManager store={s} />
-                </div>
-              )}
+            <div className="border-t pt-3 flex flex-col gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-9 font-bold gap-1.5 border-zinc-200 dark:border-zinc-800 bg-background text-foreground"
+                onClick={() => openManagePanel(s.id)}
+              >
+                Gestionar Tienda
+              </Button>
 
               <Button 
                 size="sm" 
@@ -626,6 +609,26 @@ function TenantsPage() {
           </div>
         )}
       </div>
+
+      {/* ── Slide-over Panel de Gestión (Sheet) ── */}
+      <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto p-6 bg-zinc-50 dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800">
+          <SheetHeader className="mb-4">
+            <SheetTitle className="text-xl font-bold flex items-center gap-2">
+              <StoreIcon className="w-5 h-5 text-primary" />
+              Gestión de Comercio
+            </SheetTitle>
+            <SheetDescription>
+              Configuración de plan, accesos y soporte para la tienda.
+            </SheetDescription>
+          </SheetHeader>
+          {selectedStore && (
+            <div className="mt-4">
+              <SubscriptionManager store={selectedStore} />
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
     </div>
   );

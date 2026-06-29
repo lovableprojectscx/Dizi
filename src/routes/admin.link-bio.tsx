@@ -1012,7 +1012,7 @@ function LinkBioPage() {
                           </Label>
                           {store && store.plan === "semilla" && (
                             <span className="text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200/50 font-bold uppercase tracking-wider">
-                              {customLinks.length}/5 Enlaces
+                              {customLinks.length}/{getBioLinksLimit(store)} Enlaces
                             </span>
                           )}
                         </div>
@@ -1080,32 +1080,47 @@ function LinkBioPage() {
                               </div>
                             </div>
 
-                            <Button
-                              onClick={async () => {
-                                if (store && store.plan === "semilla" && customLinks.length >= getBioLinksLimit(store)) {
-                                  toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces. Sube de plan para agregar más.`);
-                                  return;
-                                }
-                                if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
-                                  toast.error("Ingresa el título y el enlace");
-                                  return;
-                                }
-                                
-                                let formattedUrl = newLinkUrl.trim();
-                                if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
-                                  const urlLower = formattedUrl.toLowerCase();
-                                  if (urlLower.includes("instagram.com") || newLinkLabel.toLowerCase().includes("instagram")) {
-                                    formattedUrl = formatSocialUrl(formattedUrl, "instagram");
-                                  } else if (urlLower.includes("facebook.com") || newLinkLabel.toLowerCase().includes("facebook")) {
-                                    formattedUrl = formatSocialUrl(formattedUrl, "facebook");
-                                  } else if (urlLower.includes("tiktok.com") || newLinkLabel.toLowerCase().includes("tiktok")) {
-                                    formattedUrl = formatSocialUrl(formattedUrl, "tiktok");
-                                  } else if (urlLower.includes("linkedin.com") || newLinkLabel.toLowerCase().includes("linkedin")) {
-                                    formattedUrl = formatSocialUrl(formattedUrl, "linkedin");
-                                  } else {
-                                    formattedUrl = "https://" + formattedUrl;
+                            {store && store.plan === "semilla" && customLinks.length >= getBioLinksLimit(store) ? (
+                              <div className="flex flex-col items-end gap-1.5 w-full sm:w-auto shrink-0">
+                                <Button
+                                  type="button"
+                                  disabled
+                                  className="w-full sm:w-auto text-xs font-bold gap-1.5 h-9 bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed dark:bg-zinc-800 dark:border-zinc-700"
+                                >
+                                  <Lock className="h-3.5 w-3.5" />
+                                  Añadir enlace
+                                </Button>
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block text-right leading-tight max-w-[240px]">
+                                  Límite del plan gratuito alcanzado. Actualiza tu plan para añadir enlaces ilimitados.
+                                </span>
+                              </div>
+                            ) : (
+                              <Button
+                                onClick={async () => {
+                                  if (store && store.plan === "semilla" && customLinks.length >= getBioLinksLimit(store)) {
+                                    toast.error(`El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces. Sube de plan para agregar más.`);
+                                    return;
                                   }
-                                }
+                                  if (!newLinkLabel.trim() || !newLinkUrl.trim()) {
+                                    toast.error("Ingresa el título y el enlace");
+                                    return;
+                                  }
+                                  
+                                  let formattedUrl = newLinkUrl.trim();
+                                  if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
+                                    const urlLower = formattedUrl.toLowerCase();
+                                    if (urlLower.includes("instagram.com") || newLinkLabel.toLowerCase().includes("instagram")) {
+                                      formattedUrl = formatSocialUrl(formattedUrl, "instagram");
+                                    } else if (urlLower.includes("facebook.com") || newLinkLabel.toLowerCase().includes("facebook")) {
+                                      formattedUrl = formatSocialUrl(formattedUrl, "facebook");
+                                    } else if (urlLower.includes("tiktok.com") || newLinkLabel.toLowerCase().includes("tiktok")) {
+                                      formattedUrl = formatSocialUrl(formattedUrl, "tiktok");
+                                    } else if (urlLower.includes("linkedin.com") || newLinkLabel.toLowerCase().includes("linkedin")) {
+                                      formattedUrl = formatSocialUrl(formattedUrl, "linkedin");
+                                    } else {
+                                      formattedUrl = "https://" + formattedUrl;
+                                    }
+                                  }
 
                                 setCustomLinks([
                                   ...customLinks,
@@ -1131,6 +1146,7 @@ function LinkBioPage() {
                             >
                               <Plus className="h-3.5 w-3.5 mr-1" /> Añadir enlace
                             </Button>
+                          )}
                           </div>
                         </div>
 

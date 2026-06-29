@@ -173,13 +173,6 @@ const MODELS: ModelDef[] = [
 
   /* ══ PLAN ILIMITADO — 3 modelos elite ══════════════════ */
   {
-    id: "luxury", name: "Luxury Gold", layout: "editorial",
-    desc: "Lista tipo Net-a-Porter: imagen cuadrada + info detallada. Oscuro, dorado, intemporal. Fondo exclusivo.",
-    planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true,
-    bg: "#09090b", cardBg: "#18181b", primaryColor: "#ca8a04",
-    textColor: "#fafafa", accentColor: "#292524", borderRadius: "4px",
-  },
-  {
     id: "dark_fashion", name: "Dark Fashion", layout: "magazine",
     desc: "Revista editorial oscura: banners full-width alternados con pares verticales 3:4. Fondo exclusivo.",
     planLevel: 3, badge: "Elite ✦", imgShape: "square", isDark: true,

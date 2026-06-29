@@ -13,7 +13,8 @@ export const Route = createFileRoute("/admin/plan")({
 
 const features: Record<PlanId, string[]> = {
   semilla: [
-    "Hasta 7 productos",
+    "Hasta 20 productos",
+    "Hasta 3 enlaces rápidos (Bio)",
     "2 modelos de diseño clásicos",
     "Múltiples categorías",
     "Pedidos por WhatsApp",

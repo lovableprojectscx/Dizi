@@ -239,7 +239,7 @@ Tabla del Libro de Reclamaciones, conforme a normativa peruana vigente.
 Los precios viven en la constante `PLANS` como un **valor único global** (campo `price`). No existe precio por tienda ni override en base de datos.
 
 ```
-semilla      → 7 productos,   gratis        (price: 0)
+semilla      → 20 productos,  gratis        (price: 0)
 emprendedor  → 50 productos,  S/ 9.90/mes    (price: 9.9)
 pro          → 200 productos, S/ 14.90/mes   (price: 14.9)
 ilimitado    → ∞ productos,   S/ 34.90/mes   (price: 34.9)
@@ -351,7 +351,7 @@ Cada modelo tiene:
 | `grid` | 1:1 cuadrada | 1000×1000 | minimalista, clasico, nature_mint, forest_deep, elite |
 | `overlay` | 3:4 vertical | 900×1200 | vibrante, nocturno, sunset_glow |
 | `hero` | 1:1 cuadrada | 1000×1000 | eco |
-| `editorial` | 4:3 horizontal | 1200×900 | corporativo, luxury, boutique |
+| `editorial` | 4:3 horizontal | 1200×900 | corporativo, boutique |
 | `magazine` | 21:9 panorámica | 2100×900 | dark_fashion |
 | `tiles` | 2:3 vertical | 800×1200 | aurora |
 | `spotlight` | 3:4 vertical | 900×1200 | boutique |
@@ -364,7 +364,7 @@ Cada modelo tiene:
 **Semilla (gratis):** minimalista, clasico
 **Emprendedor:** nature_mint, vibrante, eco
 **Pro:** nocturno, elite, boutique, corporativo, aurora
-**Ilimitado:** luxury, dark_fashion, slash, arch_studio, portada, sunset_glow, forest_deep
+**Ilimitado:** dark_fashion, slash, arch_studio, portada, sunset_glow, forest_deep
 
 ### Panel de imagen de portada (banner)
 Solo visible cuando el modelo seleccionado es `"elite"` o `"portada"`.

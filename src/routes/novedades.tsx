@@ -264,11 +264,11 @@ const FAQ = [
   },
   {
     q: "¿Cuántos productos puedo subir?",
-    a: "Depende de tu plan: Semilla (gratis) permite hasta 7 productos, Emprendedor hasta 50, Pro hasta 200, e Ilimitado sin límite. Puedes cambiar de plan en cualquier momento.",
+    a: "Depende de tu plan: Semilla (gratis) permite hasta 20 productos, Emprendedor hasta 50, Pro hasta 200, e Ilimitado sin límite. Puedes cambiar de plan en cualquier momento.",
   },
   {
     q: "¿Qué pasa si mi suscripción vence?",
-    a: "Tienes 3 días de gracia donde todo sigue igual. Luego, los productos que excedan el límite del plan gratuito (7) se ocultan del catálogo público, pero no se borran. Tu diseño premium se mantiene 15 días más, y después cambia al modelo básico. Al renovar, todo vuelve a la normalidad automáticamente.",
+    a: "Tienes 3 días de gracia donde todo sigue igual. Luego, los productos que excedan el límite del plan gratuito (20) se ocultan del catálogo público, pero no se borran. Tu diseño premium se mantiene 15 días más, y después cambia al modelo básico. Al renovar, todo vuelve a la normalidad automáticamente.",
   },
   {
     q: "¿Cómo realizan el pedido mis clientes?",
@@ -280,7 +280,7 @@ const FAQ = [
   },
   {
     q: "¿Puedo personalizar los colores y el diseño?",
-    a: "Sí. Tienes más de 15 modelos de diseño y puedes cambiar el color de acento y el fondo del catálogo. Los planes superiores desbloquean modelos premium como Luxury Gold, Dark Fashion, Portada con Banner, entre otros.",
+    a: "Sí. Tienes más de 15 modelos de diseño y puedes cambiar el color de acento y el fondo del catálogo. Los planes superiores desbloquean modelos premium como Dark Fashion, Portada con Banner, entre otros.",
   },
   {
     q: "¿Puedo cambiar mi link personalizado después?",

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Search,
   ShoppingBag,
@@ -680,6 +680,157 @@ const isInAppBrowser = () => {
   const isTikTok = ua.indexOf("TikTok") > -1 || ua.indexOf("musical_ly") > -1;
   return isInstagram || isFB || isTikTok;
 };
+
+interface DiziNativeAdCardProps {
+  layout?: "grid" | "lookbook" | "editorial" | "bloom" | "nature" | "bite";
+  primaryColor?: string;
+  slug?: string;
+  cardRounded?: string;
+  imgRounded?: string;
+  cardShadow?: string;
+  cardBorder?: boolean;
+}
+
+function DiziNativeAdCard({
+  layout = "grid",
+  primaryColor = "#1f2937",
+  slug = "",
+  cardRounded = "0.75rem",
+  imgRounded = "0.5rem",
+  cardShadow = "shadow-sm",
+  cardBorder = true,
+}: DiziNativeAdCardProps) {
+  const adLink = `https://dizi.idenza.site/register?ref=${slug}`;
+
+  if (layout === "lookbook") {
+    return (
+      <div 
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
+        className="w-full border-t border-b py-12 px-6 sm:px-12 flex flex-col items-center justify-center text-center space-y-6 select-none animate-in fade-in duration-500"
+      >
+        <div className="h-16 w-16 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm animate-pulse">
+          <img src="/images/dizi_ad_brand_3d.webp" alt="Dizi" className="h-full w-full object-cover" />
+        </div>
+        <div className="space-y-2 max-w-lg">
+          <h3 className="text-xl sm:text-2xl font-serif font-light tracking-wide leading-tight text-zinc-900 dark:text-zinc-100">
+            ¿Quieres un catálogo digital tan elegante como este?
+          </h3>
+          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
+            Crea tu propia tienda digital autoadministrable en <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en minutos y automatiza tus ventas por WhatsApp de forma profesional.
+          </p>
+        </div>
+        <a
+          href={adLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            backgroundColor: primaryColor,
+            boxShadow: `0 4px 12px ${primaryColor}20`,
+          }}
+          className="px-6 py-2.5 text-[10px] tracking-[0.2em] uppercase font-bold text-white transition hover:opacity-95 active:scale-98"
+        >
+          Crear mi catálogo gratis
+        </a>
+      </div>
+    );
+  }
+
+  if (layout === "editorial") {
+    return (
+      <div 
+        style={{ borderColor: "var(--border)" }}
+        className="flex gap-4 py-6 border-b border-dashed items-center select-none animate-in fade-in duration-300"
+      >
+        <div className="h-10 w-10 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-xs">
+          <img src="/images/dizi_ad_brand_3d.webp" alt="Dizi" className="h-full w-full object-cover" />
+        </div>
+        <div className="flex-1 text-left min-w-0">
+          <h4 className="font-semibold text-xs leading-snug text-zinc-900 dark:text-zinc-100 truncate">
+            Crea tu tienda con el diseño premium de DIZI
+          </h4>
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+            Muestra tus productos en una experiencia fluida y atractiva.
+          </p>
+        </div>
+        <a
+          href={adLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: primaryColor,
+            borderColor: primaryColor,
+          }}
+          className="border text-[9px] tracking-wider uppercase font-bold px-3 py-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition shrink-0"
+        >
+          Crear gratis
+        </a>
+      </div>
+    );
+  }
+
+  const borderStyle = cardBorder ? "border border-zinc-200 dark:border-zinc-800" : "";
+  const extraPadding = layout === "bloom" || layout === "nature" || layout === "bite" ? "p-4" : "p-3";
+
+  return (
+    <div
+      style={{
+        borderRadius: cardRounded,
+        backgroundColor: "var(--card)",
+      }}
+      className={`overflow-hidden flex flex-col justify-between select-none transition-all duration-300 border bg-card hover:shadow-md animate-in fade-in duration-300 text-left ${borderStyle} ${cardShadow}`}
+    >
+      <div className={`flex flex-col flex-1 ${extraPadding} space-y-3.5`}>
+        {/* Banner header inside ad card - rendering WebP image */}
+        <div 
+          className="relative overflow-hidden bg-muted flex items-center justify-center text-center border border-zinc-200/50 dark:border-zinc-800/50"
+          style={{ 
+            borderRadius: imgRounded,
+            aspectRatio: layout === "grid" ? "4/3" : "1/1"
+          }}
+        >
+          <img
+            src="/images/dizi_ad_brand_3d.webp"
+            alt="Dizi Catálogos"
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+          />
+          <span 
+            style={{ backgroundColor: `${primaryColor}20`, color: primaryColor, backdropFilter: "blur(4px)" }}
+            className="absolute top-2 right-2 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full z-10 shadow-xs"
+          >
+            Patrocinado
+          </span>
+        </div>
+
+        {/* Info */}
+        <div className="space-y-1 text-left flex-1">
+          <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 font-sans line-clamp-1">
+            Vende más con DIZI gratis
+          </h4>
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-normal line-clamp-2">
+            Crea tu propio catálogo virtual profesional con pedidos automáticos a WhatsApp en 2 minutos.
+          </p>
+        </div>
+      </div>
+
+      {/* Button footer */}
+      <div className={`px-3 pb-3.5 pt-0 ${layout === "bloom" || layout === "nature" || layout === "bite" ? "px-4 pb-4" : ""}`}>
+        <a
+          href={adLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            backgroundColor: primaryColor,
+          }}
+          className="w-full h-8.5 rounded-xl font-bold text-[10px] text-white transition hover:opacity-95 active:scale-98 flex items-center justify-center gap-1 uppercase tracking-wider font-sans shadow-sm"
+        >
+          Crear mi catálogo
+        </a>
+      </div>
+    </div>
+  );
+}
+
 
 export function PublicCatalog({
   store,
@@ -2146,63 +2297,92 @@ export function PublicCatalog({
             ) : (
               /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
               <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
-                {filtered.slice(0, 6).map((p) => (
-                  <article
-                    key={p.id}
-                    className={cn(
-                      "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
-                      cfg.cardShadow,
-                      bioTypography === "serif" && "border-gray-100 hover:border-black/20"
-                    )}
-                    style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
-                    onClick={() => setViewingProduct(p)}
-                  >
-                    {/* Imagen cuadrada */}
-                    <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
-                      <img
-                        src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
-                        alt={p.name}
-                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                        }}
-                      />
-                      {p.isOnSale && (
-                        <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">OFERTA</span>
+                {(() => {
+                  const bioProducts = filtered.slice(0, 5);
+                  const showAd = store.plan === "semilla" && !isMockup;
+                  return (
+                    <>
+                      {bioProducts.map((p, index) => {
+                        const isLastNoAd = index === bioProducts.length - 1 && bioProducts.length <= 4;
+                        return (
+                          <React.Fragment key={p.id}>
+                            <article
+                              className={cn(
+                                "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
+                                cfg.cardShadow,
+                                bioTypography === "serif" && "border-gray-100 hover:border-black/20"
+                              )}
+                              style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
+                              onClick={() => setViewingProduct(p)}
+                            >
+                              {/* Imagen cuadrada */}
+                              <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
+                                <img
+                                  src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
+                                  alt={p.name}
+                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  loading="lazy"
+                                  style={{ borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0` }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                                  }}
+                                />
+                                {p.isOnSale && <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow"><Flame className="h-2.5 w-2.5" /> Oferta</span>}
+                              </div>
+                              {/* Info */}
+                              <div className="p-2.5 flex flex-col gap-1 flex-1">
+                                <h3 className={cn(
+                                  "line-clamp-2 leading-snug flex-1 text-left",
+                                  bioTypography === "serif" ? "font-serif-editorial text-[13px] font-normal text-foreground" :
+                                  bioTypography === "rounded" ? "font-sans-bloom text-xs font-medium" :
+                                  bioTypography === "modern" ? "font-sans-vibe text-xs font-medium" :
+                                  "text-xs font-semibold"
+                                )}>
+                                  {p.name}
+                                </h3>
+                                <div className="flex items-center justify-between mt-1">
+                                  <div>
+                                    <span className={cn(
+                                      "text-sm font-black text-primary",
+                                      bioTypography === "serif" && "font-serif-editorial font-bold"
+                                    )}>{formatPrice(p.price)}</span>
+                                    {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                      <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
+                                    className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </article>
+                            {showAd && isLastNoAd && (
+                              <DiziNativeAdCard 
+                                layout="grid" 
+                                primaryColor={primaryColor} 
+                                slug={store.slug}
+                                cardRounded={cfg.cardRounded || "0.75rem"}
+                                cardShadow={cfg.cardShadow}
+                              />
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                      {showAd && bioProducts.length > 4 && (
+                        <DiziNativeAdCard 
+                          layout="grid" 
+                          primaryColor={primaryColor} 
+                          slug={store.slug}
+                          cardRounded={cfg.cardRounded || "0.75rem"}
+                          cardShadow={cfg.cardShadow}
+                        />
                       )}
-                    </div>
-                    {/* Info */}
-                    <div className="p-2.5 flex flex-col gap-1 flex-1">
-                      <h3 className={cn(
-                        "line-clamp-2 leading-snug flex-1",
-                        bioTypography === "serif" ? "font-serif-editorial text-[13px] font-normal text-foreground" :
-                        bioTypography === "rounded" ? "font-sans-bloom text-xs font-medium" :
-                        bioTypography === "modern" ? "font-sans-vibe text-xs font-medium" :
-                        "text-xs font-semibold"
-                      )}>
-                        {p.name}
-                      </h3>
-                      <div className="flex items-center justify-between mt-1">
-                        <div>
-                          <span className={cn(
-                            "text-sm font-black text-primary",
-                            bioTypography === "serif" && "font-serif-editorial font-bold"
-                          )}>{formatPrice(p.price)}</span>
-                          {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                            <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
-                          )}
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
-                          className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
-                        >
-                          <Plus className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -2423,8 +2603,12 @@ export function PublicCatalog({
                 const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
                 const cartItem = cart.find(item => item.productId === p.id);
                 const qty = cartItem ? cartItem.qty : 0;
+                const showAd = store.plan === "semilla" && !isMockup;
+                const isAdPos = index === 4;
+                const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
                 return (
-                  <article
+                  <React.Fragment key={p.id}>
+                    <article
                     key={p.id}
                     id={`product-${index}`}
                     style={{ borderBottomColor: "var(--border)" }}
@@ -2602,8 +2786,16 @@ export function PublicCatalog({
                     </div>
                   </div>
                 </article>
-              );
-            })}
+                {showAd && (isAdPos || isLastNoAd) && (
+                  <DiziNativeAdCard 
+                    layout="lookbook"
+                    primaryColor={primaryColor}
+                    slug={store.slug}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
             </div>
           </div>
         ) : cfg.layout === "editorial" ? (
@@ -3386,67 +3578,86 @@ export function PublicCatalog({
                 
                 return (
                   <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
-                    {gridProducts.map((p) => (
-                      <article
-                        key={p.id}
-                        className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-zinc-800 rounded-3xl bg-zinc-900/30 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg"
-                        onClick={() => setViewingProduct(p)}
-                      >
-                        <div>
-                          {/* 1:1 image */}
-                          <div className="relative overflow-hidden bg-zinc-950 aspect-square rounded-2xl m-2 border border-zinc-800">
-                            <img
-                              src={p.image || "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"}
-                              alt={p.name}
-                              className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              loading="lazy"
-                            />
-                            {p.isOnSale && (
-                              <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
-                                Oferta
-                              </span>
-                            )}
-                          </div>
-                          {/* Info */}
-                          <div className="p-3 pt-1 space-y-1 text-left">
-                            <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-1">
-                              {p.name}
-                            </h4>
-                            {p.description && (
-                              <p className="text-[11px] text-zinc-400 line-clamp-2 h-7 leading-snug">
-                                {p.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Price & Action */}
-                        <div className="px-3.5 pb-4 pt-0 flex items-center justify-between mt-auto">
-                          <div className="flex flex-col text-left">
-                            <span className="text-sm font-black text-[var(--primary)]" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                            {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                              <span className="text-[10px] text-zinc-500 line-through -mt-1">{formatPrice(p.originalPrice)}</span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cartAdd(store.id, p.id);
-                              setCartOpen(true);
-                            }}
-                            style={{
-                              borderColor: "var(--primary)",
-                              color: "var(--primary)"
-                            }}
-                            className="h-8 px-3 rounded-xl border bg-zinc-950/60 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-[0_2px_10px_rgba(0,0,0,0.3)] hover:shadow-[0_0_12px_var(--primary)]/30 active:scale-95"
+                    {gridProducts.map((p, index) => {
+                      const showAd = store.plan === "semilla" && !isMockup;
+                      const isAdPos = index === 4;
+                      const isLastNoAd = index === gridProducts.length - 1 && gridProducts.length <= 4;
+                      
+                      return (
+                        <React.Fragment key={p.id}>
+                          <article
+                            key={p.id}
+                            className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-zinc-800 rounded-3xl bg-zinc-900/30 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg text-left"
+                            onClick={() => setViewingProduct(p)}
                           >
-                            <Plus className="h-3.5 w-3.5" />
-                            Añadir
-                          </button>
-                        </div>
-                      </article>
-                    ))}
+                            <div>
+                              {/* 1:1 image */}
+                              <div className="relative overflow-hidden bg-zinc-950 aspect-square rounded-2xl m-2 border border-zinc-800">
+                                <img
+                                  src={p.image || "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"}
+                                  alt={p.name}
+                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  loading="lazy"
+                                />
+                                {p.isOnSale && (
+                                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
+                                    Oferta
+                                  </span>
+                                )}
+                              </div>
+                              {/* Info */}
+                              <div className="p-3 pt-1 space-y-1 text-left">
+                                <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-1">
+                                  {p.name}
+                                </h4>
+                                {p.description && (
+                                  <p className="text-[11px] text-zinc-400 line-clamp-2 h-7 leading-snug">
+                                    {p.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Price & Action */}
+                            <div className="px-3.5 pb-4 pt-0 flex items-center justify-between mt-auto">
+                              <div className="flex flex-col text-left">
+                                <span className="text-sm font-black text-[var(--primary)]" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
+                                {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                  <span className="text-[10px] text-zinc-500 line-through -mt-1">{formatPrice(p.originalPrice)}</span>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cartAdd(store.id, p.id);
+                                  setCartOpen(true);
+                                }}
+                                style={{
+                                  borderColor: "var(--primary)",
+                                  color: "var(--primary)"
+                                }}
+                                className="h-8 px-3 rounded-xl border bg-zinc-950/60 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-[0_2px_10px_rgba(0,0,0,0.3)] hover:shadow-[0_0_12px_var(--primary)]/30 active:scale-95 font-sans"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                Añadir
+                              </button>
+                            </div>
+                          </article>
+                          {showAd && (isAdPos || isLastNoAd) && (
+                            <DiziNativeAdCard 
+                              layout="bite" 
+                              primaryColor={primaryColor} 
+                              slug={store.slug}
+                              cardRounded={cfg.cardRounded}
+                              imgRounded={cfg.imgRounded}
+                              cardShadow={cfg.cardShadow}
+                              cardBorder={cfg.cardBorder}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                 );
               })()}
@@ -3892,110 +4103,127 @@ export function PublicCatalog({
                   <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
                     {gridProducts.map((p, idx) => {
                       const isEven = idx % 2 === 0;
+                      const showAd = store.plan === "semilla" && !isMockup;
+                      const isAdPos = idx === 4;
+                      const isLastNoAd = idx === gridProducts.length - 1 && gridProducts.length <= 4;
+                      
                       return (
-                        <article
-                          key={p.id}
-                          style={{
-                            borderColor: "var(--border)",
-                            boxShadow: "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)"
-                          }}
-                          className={cn(
-                            "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none",
-                            isEven ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1" : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1"
-                          )}
-                          onClick={() => setViewingProduct(p)}
-                        >
-                          <div>
-                            {/* framed image with margins - leaf shapes alternating */}
-                            <div 
-                              style={{ 
-                                backgroundColor: "var(--muted)", 
-                                borderColor: "color-mix(in srgb, var(--border) 30%, transparent)" 
-                              }}
-                              className={cn(
-                                "relative overflow-hidden aspect-square m-2.5 border transition-all duration-500",
-                                isEven ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]" : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]"
-                              )}
-                            >
-                              <img
-                                src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
-                                alt={p.name}
-                                className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                loading="lazy"
-                              />
-                              {p.isOnSale && (
-                                <span 
-                                  style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
-                                  className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans"
-                                >
-                                  Oferta
-                                </span>
-                              )}
-                            </div>
-                            {/* Info */}
-                            <div className="p-3.5 pt-1 space-y-1 text-left">
-                              <span 
-                                style={{ color: "var(--muted-foreground)" }}
-                                className="text-[8px] font-black uppercase tracking-widest block font-sans"
+                        <React.Fragment key={p.id}>
+                          <article
+                            key={p.id}
+                            style={{
+                              borderColor: "var(--border)",
+                              boxShadow: "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)"
+                            }}
+                            className={cn(
+                              "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none text-left",
+                              isEven ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1" : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1"
+                            )}
+                            onClick={() => setViewingProduct(p)}
+                          >
+                            <div>
+                              {/* framed image with margins - leaf shapes alternating */}
+                              <div 
+                                style={{ 
+                                  backgroundColor: "var(--muted)", 
+                                  borderColor: "color-mix(in srgb, var(--border) 30%, transparent)" 
+                                }}
+                                className={cn(
+                                  "relative overflow-hidden aspect-square m-2.5 border transition-all duration-500",
+                                  isEven ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]" : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]"
+                                )}
                               >
-                                {nicheTags.productTag}
-                              </span>
-                              <h4 
-                                style={{ color: "var(--foreground)" }}
-                                className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
-                              >
-                                {p.name}
-                              </h4>
-                              {p.description && (
-                                <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
-                                  {p.description}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Price & Actions */}
-                          <div className="px-3.5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
-                            <div className="flex flex-col text-left px-0.5">
-                              <span className="text-sm font-semibold text-[var(--primary)] font-sans">{formatPrice(p.price)}</span>
-                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                <img
+                                  src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
+                                  alt={p.name}
+                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                  loading="lazy"
+                                />
+                                {p.isOnSale && (
+                                  <span 
+                                    style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
+                                    className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans"
+                                  >
+                                    Oferta
+                                  </span>
+                                )}
+                              </div>
+                              {/* Info */}
+                              <div className="p-3.5 pt-1 space-y-1 text-left">
                                 <span 
                                   style={{ color: "var(--muted-foreground)" }}
-                                  className="text-[10px] line-through -mt-1 font-sans"
+                                  className="text-[8px] font-black uppercase tracking-widest block font-sans"
                                 >
-                                  {formatPrice(p.originalPrice)}
+                                  {nicheTags.productTag}
                                 </span>
-                              )}
+                                <h4 
+                                  style={{ color: "var(--foreground)" }}
+                                  className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
+                                >
+                                  {p.name}
+                                </h4>
+                                {p.description && (
+                                  <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
+                                    {p.description}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                              {/* Consult */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  consultProduct(p.name);
-                                }}
-                                className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
-                                title="Consultar por WhatsApp"
-                              >
-                                <WhatsAppIcon className="h-3.5 w-3.5" />
-                              </button>
-                              {/* Add */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cartAdd(store.id, p.id);
-                                  setCartOpen(true);
-                                }}
-                                className="h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
-                              >
-                                <Plus className="h-3 w-3" />
-                                Añadir
-                              </button>
+
+                            {/* Price & Actions */}
+                            <div className="px-3.5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
+                              <div className="flex flex-col text-left px-0.5">
+                                <span className="text-sm font-semibold text-[var(--primary)] font-sans">{formatPrice(p.price)}</span>
+                                {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                  <span 
+                                    style={{ color: "var(--muted-foreground)" }}
+                                    className="text-[10px] line-through -mt-1 font-sans"
+                                  >
+                                    {formatPrice(p.originalPrice)}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                                {/* Consult */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    consultProduct(p.name);
+                                  }}
+                                  className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                  title="Consultar por WhatsApp"
+                                >
+                                  <WhatsAppIcon className="h-3.5 w-3.5" />
+                                </button>
+                                {/* Add */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cartAdd(store.id, p.id);
+                                    setCartOpen(true);
+                                  }}
+                                  className="h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  Añadir
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        </article>
+                          </article>
+                          {showAd && (isAdPos || isLastNoAd) && (
+                            <DiziNativeAdCard 
+                              layout="nature" 
+                              primaryColor={primaryColor} 
+                              slug={store.slug}
+                              cardRounded={cfg.cardRounded}
+                              imgRounded={cfg.imgRounded}
+                              cardShadow={cfg.cardShadow}
+                              cardBorder={cfg.cardBorder}
+                            />
+                          )}
+                        </React.Fragment>
                       );
                     })}
                   </div>
@@ -4337,21 +4565,44 @@ export function PublicCatalog({
 
             {/* 3. Navigation and Search Block (Search + Categories) */}
             <div className="space-y-6 font-sans relative z-10">
-              {/* Search Bar at full width */}
+              {/* Search Bar & Filtros side-by-side */}
               {mode === "catalog" && (
-                <div className="relative w-full">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--primary)]" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={store.niche === "floreria" ? "¿Buscas algún arreglo floral en especial?" : "¿Qué estás buscando hoy?"}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--primary)]" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder={store.niche === "floreria" ? "¿Buscas algún arreglo floral?" : "¿Qué buscas hoy?"}
+                      style={{
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--foreground)",
+                      }}
+                      className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition placeholder-muted-foreground focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] shadow-sm"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsFilterOpen(true)}
                     style={{
                       backgroundColor: "var(--card)",
                       borderColor: "var(--border)",
                       color: "var(--foreground)",
                     }}
-                    className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition placeholder-muted-foreground focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] shadow-sm"
-                  />
+                    className="border px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" style={{ color: "var(--primary)" }} />
+                    <span>Filtros</span>
+                    {(() => {
+                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                      return cnt > 0 ? (
+                        <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+                          {cnt}
+                        </span>
+                      ) : null;
+                    })()}
+                  </button>
                 </div>
               )}
 
@@ -4365,8 +4616,8 @@ export function PublicCatalog({
                 </h3>
                 
                 {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
-                <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">
-                  <div className="flex gap-2.5 px-4 w-max min-w-full">
+                <div className="overflow-x-auto md:overflow-x-visible scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">
+                  <div className="flex md:flex-wrap gap-2.5 px-4 w-max md:w-full min-w-full md:min-w-0 md:justify-center">
                     <button
                       onClick={() => setActiveCat("all")}
                       style={{
@@ -4443,6 +4694,28 @@ export function PublicCatalog({
                     })}
                   </div>
                 </div>
+
+                {/* Active filter tags */}
+                {(activeCat !== "all" || priceRange) && (
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {activeCat !== "all" && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
+                        Cat: {activeCat === "sale" ? "Ofertas" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
+                        <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                    {priceRange && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
+                        Precio: S/ {priceRange[0]} - S/ {priceRange[1]}
+                        <button onClick={() => setPriceRange(null)} className="ml-1 hover:opacity-60 transition">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -4474,112 +4747,131 @@ export function PublicCatalog({
                 
                 return (
                   <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
-                    {gridProducts.map((p) => (
-                      <article
-                        key={p.id}
-                        className={cn(
-                          gridCardClass
-                        )}
-                        onClick={() => setViewingProduct(p)}
-                      >
-                        <div>
-                          {/* Asymmetric or standard image wrapper */}
-                          <div className={cn(
-                            gridImgClass
-                          )}>
-                            <img
-                              src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
-                              alt={p.name}
-                              className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              loading="lazy"
-                            />
-                            {p.isOnSale && (
-                              <span 
-                                style={{
-                                  backgroundColor: store.niche === "floreria" ? undefined : "var(--primary)",
-                                }}
-                                className={cn(
-                                  "absolute top-2.5 right-2.5 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10",
-                                  store.niche === "floreria" ? "bg-rose-500" : ""
+                    {gridProducts.map((p, index) => {
+                      const showAd = store.plan === "semilla" && !isMockup;
+                      const isAdPos = index === 4;
+                      const isLastNoAd = index === gridProducts.length - 1 && gridProducts.length <= 4;
+                      
+                      return (
+                        <React.Fragment key={p.id}>
+                          <article
+                            key={p.id}
+                            className={cn(
+                              gridCardClass
+                            )}
+                            onClick={() => setViewingProduct(p)}
+                          >
+                            <div>
+                              {/* Asymmetric or standard image wrapper */}
+                              <div className={cn(
+                                gridImgClass
+                              )}>
+                                <img
+                                  src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
+                                  alt={p.name}
+                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  loading="lazy"
+                                />
+                                {p.isOnSale && (
+                                  <span 
+                                    style={{
+                                      backgroundColor: store.niche === "floreria" ? undefined : "var(--primary)",
+                                    }}
+                                    className={cn(
+                                      "absolute top-2.5 right-2.5 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10",
+                                      store.niche === "floreria" ? "bg-rose-500" : ""
+                                    )}
+                                  >
+                                    Oferta
+                                  </span>
                                 )}
-                              >
-                                Oferta
-                              </span>
-                            )}
-                          </div>
-                          {/* Info */}
-                          <div className="p-3 pt-1 space-y-1 text-left">
-                            <h4 
-                              style={{ color: store.textColor ? store.textColor : undefined }}
-                              className={cn(
-                                "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
-                                store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
-                              )}
-                            >
-                              {p.name}
-                            </h4>
-                            {p.description && (
-                              <p 
-                                style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
-                                className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans"
-                              >
-                                {p.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                              </div>
+                              {/* Info */}
+                              <div className="p-3 pt-1 space-y-1 text-left">
+                                <h4 
+                                  style={{ color: store.textColor ? store.textColor : undefined }}
+                                  className={cn(
+                                    "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
+                                    store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
+                                  )}
+                                >
+                                  {p.name}
+                                </h4>
+                                {p.description && (
+                                  <p 
+                                    style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
+                                    className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans"
+                                  >
+                                    {p.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
 
-                        {/* Price & Action */}
-                        <div className="px-3 pb-3.5 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
-                          <div className="flex flex-col text-left px-0.5">
-                            <span className="text-sm font-semibold font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                            {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                              <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                                                         {/* Consult button (Adapts to Brand Color) */}
-                             <button
-                               type="button"
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 consultProduct(p.name);
-                               }}
-                               style={{
-                                 borderColor: store.niche === "floreria" ? undefined : "var(--primary)",
-                                 backgroundColor: store.niche === "floreria" ? undefined : "transparent",
-                                 color: store.niche === "floreria" ? undefined : "var(--primary)",
-                               }}
-                               className={cn(
-                                 "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
-                                 store.niche === "floreria"
-                                   ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
-                                   : "hover:bg-[var(--primary)] hover:text-white"
-                               )}
-                               title="Consultar por WhatsApp"
-                             >
-                               <WhatsAppIcon className="h-4 w-4" />
-                             </button>
-                            {/* Add to Cart button */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                cartAdd(store.id, p.id);
-                                setCartOpen(true);
-                              }}
-                              style={{
-                                backgroundColor: "var(--primary)",
-                              }}
-                              className="h-8 px-3 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              Añadir
-                            </button>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
+                            {/* Price & Action */}
+                            <div className="px-3 pb-3.5 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
+                              <div className="flex flex-col text-left px-0.5">
+                                <span className="text-sm font-semibold font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
+                                {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                                  <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                                {/* Consult button (Adapts to Brand Color) */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    consultProduct(p.name);
+                                  }}
+                                  style={{
+                                    borderColor: store.niche === "floreria" ? undefined : "var(--primary)",
+                                    backgroundColor: store.niche === "floreria" ? undefined : "transparent",
+                                    color: store.niche === "floreria" ? undefined : "var(--primary)",
+                                  }}
+                                  className={cn(
+                                    "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
+                                    store.niche === "floreria"
+                                      ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                      : "hover:bg-[var(--primary)] hover:text-white"
+                                  )}
+                                  title="Consultar por WhatsApp"
+                                >
+                                  <WhatsAppIcon className="h-4 w-4" />
+                                </button>
+                                {/* Add to Cart button */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cartAdd(store.id, p.id);
+                                    setCartOpen(true);
+                                  }}
+                                  style={{
+                                    backgroundColor: "var(--primary)",
+                                  }}
+                                  className="h-8 px-3 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                  Añadir
+                                </button>
+                              </div>
+                            </div>
+                          </article>
+                          {showAd && (isAdPos || isLastNoAd) && (
+                            <DiziNativeAdCard 
+                              layout="bloom" 
+                              primaryColor={primaryColor} 
+                              slug={store.slug}
+                              cardRounded={cfg.cardRounded}
+                              imgRounded={cfg.imgRounded}
+                              cardShadow={cfg.cardShadow}
+                              cardBorder={cfg.cardBorder}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                 );
               })()}
@@ -4687,45 +4979,64 @@ export function PublicCatalog({
         ) : (
           /* ── GRID layout: standard responsive grid */
           <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
-            {filtered.map((p) => (
-              <article
-                key={p.id}
-                className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group", cfg.cardBorder ? "border" : "", cfg.cardShadow)}
-                style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)", borderColor: cfg.cardBorder ? "var(--border)" : "transparent" }}
-                onClick={() => setViewingProduct(p)}
-              >
-                <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "4/3" }}>
-                  <img 
-                    src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} 
-                    alt={p.name} 
-                    className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    loading="lazy" 
-                    style={{ borderRadius: cfg.imgRounded }} 
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                    }}
-                  />
-                  {p.isOnSale && <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"><Flame className="h-2.5 w-2.5" /> Oferta</span>}
-                </div>
-                <div className="p-3 flex flex-col flex-1 gap-2">
-                  <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{p.name}</h3>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-base font-black text-primary">{formatPrice(p.price)}</span>
-                    {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                      <span className="text-[11px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>
-                    )}
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium py-2 hover:bg-accent transition border border-border bg-background" style={{ borderRadius: cfg.cardRounded }}>
-                      <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
-                    </button>
-                    <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="inline-flex items-center justify-center bg-primary text-primary-foreground w-9 h-9 hover:bg-primary/90 transition shrink-0" style={{ borderRadius: cfg.cardRounded }} aria-label="Agregar al carrito">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
+            {filtered.map((p, index) => {
+              const showAd = store.plan === "semilla" && !isMockup;
+              const isAdPos = index === 4;
+              const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+              
+              return (
+                <React.Fragment key={p.id}>
+                  <article
+                    key={p.id}
+                    className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group text-left", cfg.cardBorder ? "border" : "", cfg.cardShadow)}
+                    style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)", borderColor: cfg.cardBorder ? "var(--border)" : "transparent" }}
+                    onClick={() => setViewingProduct(p)}
+                  >
+                    <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "4/3" }}>
+                      <img 
+                        src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} 
+                        alt={p.name} 
+                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        loading="lazy" 
+                        style={{ borderRadius: cfg.imgRounded }} 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                        }}
+                      />
+                      {p.isOnSale && <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"><Flame className="h-2.5 w-2.5" /> Oferta</span>}
+                    </div>
+                    <div className="p-3 flex flex-col flex-1 gap-2">
+                      <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{p.name}</h3>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-base font-black text-primary">{formatPrice(p.price)}</span>
+                        {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                          <span className="text-[11px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium py-2 hover:bg-accent transition border border-border bg-background" style={{ borderRadius: cfg.cardRounded }}>
+                          <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
+                        </button>
+                        <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="inline-flex items-center justify-center bg-primary text-primary-foreground w-9 h-9 hover:bg-primary/90 transition shrink-0" style={{ borderRadius: cfg.cardRounded }} aria-label="Agregar al carrito">
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                  {showAd && (isAdPos || isLastNoAd) && (
+                    <DiziNativeAdCard 
+                      layout="grid" 
+                      primaryColor={primaryColor} 
+                      slug={store.slug}
+                      cardRounded={cfg.cardRounded}
+                      imgRounded={cfg.imgRounded}
+                      cardShadow={cfg.cardShadow}
+                      cardBorder={cfg.cardBorder}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
         )}
 
@@ -5440,17 +5751,17 @@ export function PublicCatalog({
         </SheetContent>
       </Sheet>
 
-      {/* Floating Badge for Plan Semilla stores on BioLink */}
-      {mode === "bio" && store.plan === "semilla" && (
+      {/* Floating Badge for Plan Semilla stores */}
+      {store.plan === "semilla" && !isMockup && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <a
-            href="https://dizi.idenza.site"
+            href={`https://dizi.idenza.site/register?ref=${store.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 shadow-md text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
           >
             <span>Crea tu catálogo gratis con</span>
-            <span className="text-primary font-black tracking-tight">Dizi</span>
+            <span className="text-primary font-black tracking-tight font-sans">Dizi</span>
           </a>
         </div>
       )}
@@ -5612,43 +5923,42 @@ export function PublicCatalog({
               </button>
             </div>
 
-            {/* Tarjeta del Loop Viral (Creación de Tiendas) */}
-            <div 
-              style={{
-                borderColor: `${primaryColor}20`,
-                backgroundColor: `${primaryColor}06`,
-              }}
-              className="border rounded-2xl p-5 space-y-3.5 flex flex-col items-center text-center"
-            >
+            {/* Tarjeta del Loop Viral (Creación de Tiendas) - Solo para tiendas Semilla */}
+            {store.plan === "semilla" && (
               <div 
-                style={{ backgroundColor: `${primaryColor}15` }}
-                className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
-              >
-                <Sparkles style={{ color: primaryColor }} className="h-4 w-4" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">¿Quieres vender con un catálogo como este?</h4>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal px-2">
-                  Crea tu propia tienda gratis en <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en 2 minutos y automatiza tus pedidos por WhatsApp.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  const isSemilla = store.plan === "semilla";
-                  const refUrl = isSemilla 
-                    ? "https://dizi.idenza.site" 
-                    : `https://dizi.idenza.site?ref=${store.slug}`;
-                  window.open(refUrl, "_blank");
-                }}
                 style={{
-                  backgroundColor: primaryColor,
-                  boxShadow: `0 4px 12px ${primaryColor}25`,
+                  borderColor: `${primaryColor}20`,
+                  backgroundColor: `${primaryColor}06`,
                 }}
-                className="w-full h-10 rounded-xl font-bold text-xs text-white transition hover:opacity-95 active:scale-98 flex items-center justify-center"
+                className="border rounded-2xl p-5 space-y-3.5 flex flex-col items-center text-center animate-in fade-in duration-300"
               >
-                Crear mi catálogo gratis
-              </button>
-            </div>
+                <div 
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                  className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
+                >
+                  <Sparkles style={{ color: primaryColor }} className="h-4 w-4" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">¿Quieres vender con un catálogo como este?</h4>
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal px-2">
+                    Crea tu propia tienda gratis en <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en 2 minutos y automatiza tus pedidos por WhatsApp.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const refUrl = `https://dizi.idenza.site/register?ref=${store.slug}`;
+                    window.open(refUrl, "_blank");
+                  }}
+                  style={{
+                    backgroundColor: primaryColor,
+                    boxShadow: `0 4px 12px ${primaryColor}25`,
+                  }}
+                  className="w-full h-10 rounded-xl font-bold text-xs text-white transition hover:opacity-95 active:scale-98 flex items-center justify-center"
+                >
+                  Crear mi catálogo gratis
+                </button>
+              </div>
+            )}
 
             {/* Close footer button */}
             <div className="pt-1">

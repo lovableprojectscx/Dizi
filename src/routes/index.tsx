@@ -618,7 +618,8 @@ function LandingPage() {
                 price="S/ 0.00" 
                 desc="Para micro-emprendedores probando el mercado."
                 features={[
-                  "Hasta 7 productos",
+                  "Hasta 20 productos",
+                  "Hasta 3 enlaces rápidos (Bio)",
                   "2 modelos de diseño clásicos",
                   "Múltiples categorías",
                   "Link personalizado",

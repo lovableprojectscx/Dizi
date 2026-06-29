@@ -10,7 +10,7 @@ export interface Plan {
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  semilla:      { id: "semilla",      name: "Semilla",      productLimit: 7,        price: 0    },
+  semilla:      { id: "semilla",      name: "Semilla",      productLimit: 20,       price: 0    },
   emprendedor:  { id: "emprendedor",  name: "Emprendedor",  productLimit: 50,       price: 9.9  },
   pro:          { id: "pro",          name: "Pro",          productLimit: 200,      price: 14.9 },
   ilimitado:    { id: "ilimitado",    name: "Ilimitado",    productLimit: Infinity, price: 34.9 },
@@ -231,7 +231,7 @@ export function isPlanActive(store: Store): boolean {
 
 /** Retorna el limite de enlaces personalizados en el BioLink */
 export function getBioLinksLimit(store: Store): number {
-  if (store.plan === "semilla") return 5;
+  if (getEffectivePlan(store) === "semilla") return 3;
   return Infinity;
 }
 
@@ -340,7 +340,7 @@ export function getImageSpec(store: Store): ImageSpec {
   // Mapear modelo a layout
   const LAYOUT_MAP: Record<string, string> = {
     minimalista: "grid", clasico: "grid", nature_mint: "grid",
-    vibrante: "overlay", eco: "hero", luxury: "editorial",
+    vibrante: "overlay", eco: "hero",
     pastel: "spotlight", boutique: "editorial", nocturno: "overlay",
     neon: "grid", dark_fashion: "overlay", tropical: "grid",
     corporativo: "grid", moderno: "grid", terroso: "grid",

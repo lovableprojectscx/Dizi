@@ -116,7 +116,6 @@ function RegisterPage() {
     { id: "corporativo",  name: "Corporativo Azul",  desc: "Lista profesional. Servicios.",             planLevel: 2, niches: ["servicios"],                             p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false } },
     { id: "aurora",       name: "Aurora Glass",      desc: "Glassmorphism con degradado cosmico.",      planLevel: 2, niches: ["tech","bisuteria"],                      p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true  } },
     // Ilimitado (3)
-    { id: "luxury",       name: "Luxury Gold",       desc: "Oscuro, dorado, intemporal.",               planLevel: 3, niches: ["bisuteria","ropa"],                      p: { bg: "#09090b", card: "#18181b", accent: "#ca8a04", dark: true  } },
     { id: "dark_fashion", name: "Dark Fashion",      desc: "Revista editorial oscura.",                 planLevel: 3, niches: ["ropa"],                                  p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true  } },
     { id: "slash",        name: "Slash Diagonal",    desc: "Cortes diagonales. Estilo Nike.",           planLevel: 3, niches: ["ropa","tech"],                           p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true  } },
     { id: "arch_studio",  name: "Arch Studio",       desc: "Marcos en arco. Elegante y ligero.",        planLevel: 3, niches: ["servicios","general","floreria"],        p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false } },
