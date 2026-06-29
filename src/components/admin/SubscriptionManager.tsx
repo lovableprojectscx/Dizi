@@ -387,36 +387,27 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           </div>
 
           {/* Card: Referidos e Info comercial */}
-          {(store.referredBy || (store.referralCredit !== undefined && store.referralCredit > 0)) && (
+          {store.referredBy && (
             <div className="bg-white dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-3">
               <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">Referidos y Recompensas</span>
               
-              {store.referredBy && (
-                <div className="space-y-1">
-                  <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 font-bold">
-                    <Info className="w-3.5 h-3.5 shrink-0" />
-                    Recomendado por: {store.referredBy}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground pl-5 font-medium">
-                    {store.referralRewarded ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Recompensa entregada
-                      </span>
-                    ) : (
-                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-amber-500" /> Recompensa pendiente de pago
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {store.referralCredit !== undefined && store.referralCredit > 0 && (
-                <p className="text-xs text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 font-bold bg-indigo-500/5 px-2 py-1.5 rounded-lg border border-indigo-500/10">
-                  <Gift className="w-4 h-4 shrink-0 text-indigo-500" />
-                  Crédito por referir: S/ {store.referralCredit.toFixed(2)}
+              <div className="space-y-1">
+                <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 font-bold">
+                  <Info className="w-3.5 h-3.5 shrink-0" />
+                  Recomendado por: {store.referredBy}
                 </p>
-              )}
+                <p className="text-[10px] text-muted-foreground pl-5 font-medium">
+                  {store.referralRewarded ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Recompensa entregada
+                    </span>
+                  ) : (
+                    <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" /> Recompensa pendiente de pago
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
           )}
 

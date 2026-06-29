@@ -47,7 +47,6 @@ const mapStoreFromDB = (row: any): Store => ({
   showDiziBranding: row.show_dizi_branding ?? true,
   referredBy: row.referred_by ?? null,
   referralRewarded: row.referral_rewarded ?? false,
-  referralCredit: row.referral_credit ? Number(row.referral_credit) : 0,
   quickLinks: row.quick_links ?? [],
   bioLinksEnabled: row.bio_links_enabled ?? false,
   bioLogo: row.bio_logo ?? undefined,
@@ -271,7 +270,6 @@ export const useApp = create<AppState>()(
         if (updatedPatch.bannerBottomTag !== undefined) dbPatch.banner_bottom_tag = updatedPatch.bannerBottomTag;
         if (updatedPatch.referredBy !== undefined) dbPatch.referred_by = updatedPatch.referredBy;
         if (updatedPatch.referralRewarded !== undefined) dbPatch.referral_rewarded = updatedPatch.referralRewarded;
-        if (updatedPatch.referralCredit !== undefined) dbPatch.referral_credit = updatedPatch.referralCredit;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
