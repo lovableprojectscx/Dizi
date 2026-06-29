@@ -20,6 +20,310 @@ export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
 
+/* ─── ModelLayoutPreview ─────────────────────────────────────
+   Renderiza una miniatura fiel a la disposición real de cada
+   layout de catálogo usando los colores propios del modelo.
+──────────────────────────────────────────────────────────── */
+type MiniModel = { layout: string; p: { bg: string; card: string; accent: string; dark: boolean } };
+
+function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
+  const { bg, card, accent, dark } = m.p;
+  const muted = dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.13)";
+  const mutedSoft = dark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)";
+  const textDark = dark ? "#fff" : "#111";
+
+  const Header = () => (
+    <div className="flex items-center gap-1.5 px-2 py-1.5 shrink-0" style={{ backgroundColor: bg, borderBottom: `1px solid ${accent}33` }}>
+      <div className="h-3.5 w-3.5 rounded-full flex items-center justify-center text-[6px] font-black text-white shrink-0" style={{ backgroundColor: accent }}>D</div>
+      <div className="h-1 rounded-full w-8 flex-1" style={{ backgroundColor: muted }} />
+      <div className="h-3 rounded-full px-1.5 text-[4.5px] font-bold flex items-center" style={{ backgroundColor: accent, color: "#fff" }}>Contacto</div>
+    </div>
+  );
+
+  // GRID: rejilla 2×3 con tarjetas
+  if (m.layout === "grid") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="px-1.5 py-1 shrink-0">
+          <div className="h-2 rounded-full w-full" style={{ backgroundColor: dark ? "rgba(255,255,255,0.08)" : accent + "22" }} />
+        </div>
+        <div className="grid grid-cols-3 gap-1 px-1.5 pb-1.5 flex-1 overflow-hidden">
+          {[0,1,2,3,4,5].map((i) => (
+            <div key={i} className="rounded overflow-hidden flex flex-col" style={{ backgroundColor: card, border: `1px solid ${accent}33` }}>
+              <div style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}55` }} />
+              <div className="p-0.5 space-y-0.5">
+                <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
+                <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent, opacity: 0.85 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // OVERLAY: portrait 3:4 con texto sobre gradiente
+  if (m.layout === "overlay") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="flex gap-1 px-1.5 py-1 flex-1 overflow-hidden">
+          {[0,1,2].map((i) => (
+            <div key={i} className="flex-1 relative overflow-hidden rounded-lg">
+              <div className="absolute inset-0" style={{ background: i % 2 === 0 ? `linear-gradient(160deg, ${accent}dd, ${card}99)` : `linear-gradient(160deg, ${card}99, ${accent}cc)` }} />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 40%, transparent 75%)" }} />
+              {i === 0 && <div className="absolute top-1 left-1 text-[4px] font-black px-1 rounded-full" style={{ backgroundColor: "#ef4444", color: "#fff" }}>OFERTA</div>}
+              <div className="absolute bottom-0 left-0 right-0 p-1 space-y-0.5">
+                <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                <div className="h-1 rounded-full w-2/5" style={{ backgroundColor: accent }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // HERO: banner + mini grid circular
+  if (m.layout === "hero") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="px-1.5 pt-1 shrink-0">
+          <div className="relative w-full overflow-hidden rounded-lg" style={{ height: "40px" }}>
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}ee, ${accent}55)` }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 35%, transparent)" }} />
+            <div className="absolute bottom-1.5 left-2 space-y-0.5">
+              <div className="h-1 rounded-full w-12" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-1.5 rounded-full w-8" style={{ backgroundColor: "#fff", opacity: 0.6 }} />
+            </div>
+            <div className="absolute bottom-1.5 right-2 h-2.5 px-1.5 rounded-full flex items-center text-[4px] font-bold" style={{ backgroundColor: accent, color: "#fff" }}>Añadir</div>
+          </div>
+        </div>
+        <div className="flex gap-1 px-1.5 py-1 flex-1">
+          {[0,1,2,3].map((i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className="w-full" style={{ aspectRatio: "1/1", borderRadius: "999px", background: i % 2 === 0 ? `${accent}cc` : `${accent}44`, border: `1.5px solid ${accent}66` }} />
+              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // EDITORIAL: lista horizontal
+  if (m.layout === "editorial") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="flex-1 overflow-hidden px-1.5 py-1 space-y-1">
+          {[0,1,2].map((i) => (
+            <div key={i} className="flex gap-1.5 items-center py-1" style={{ borderBottom: `1px solid ${accent}33` }}>
+              <div className="shrink-0 rounded overflow-hidden" style={{ width: "22px", height: "22px", background: i === 0 ? `linear-gradient(135deg, ${accent}, ${accent}55)` : `linear-gradient(135deg, ${accent}55, ${accent}22)` }} />
+              <div className="flex-1 space-y-0.5">
+                <div className="h-1 rounded-full" style={{ width: i === 0 ? "80%" : i === 1 ? "65%" : "72%", backgroundColor: muted }} />
+                <div className="h-0.5 rounded-full w-full" style={{ backgroundColor: mutedSoft }} />
+              </div>
+              <div className="shrink-0 h-1.5 rounded-full w-6" style={{ backgroundColor: accent, opacity: 0.85 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // TILES: 1 banner ancho + 2 cuadros
+  if (m.layout === "tiles") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="px-1.5 pt-1 space-y-1 flex-1 overflow-hidden">
+          <div className="relative overflow-hidden w-full rounded-lg" style={{ height: "36px" }}>
+            <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${accent}ee, ${accent}55)` }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 30%, transparent)" }} />
+            <div className="absolute top-1 right-1 h-3 px-1 flex items-center rounded text-[4px] font-bold" style={{ backgroundColor: accent, color: dark ? "#000" : "#fff", opacity: 0.9 }}>NUEVO</div>
+            <div className="absolute bottom-1 left-2 space-y-0.5">
+              <div className="h-1 rounded-full w-14" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+            </div>
+          </div>
+          <div className="flex gap-1 flex-1 pb-1">
+            {[0,1].map((i) => (
+              <div key={i} className="flex-1 relative overflow-hidden rounded-lg" style={{ minHeight: "32px" }}>
+                <div className="absolute inset-0" style={{ background: i === 0 ? `linear-gradient(145deg, ${accent}cc, ${accent}66)` : `linear-gradient(145deg, ${accent}77, ${accent}dd)` }} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 35%, transparent)" }} />
+                <div className="absolute bottom-0 left-0 right-0 p-1">
+                  <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // SPOTLIGHT: 1 grande izquierda + 2 apilados derecha
+  if (m.layout === "spotlight") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="flex gap-1 px-1.5 pb-1.5 pt-1 flex-1 overflow-hidden">
+          <div className="flex-1 relative overflow-hidden rounded-xl">
+            <div className="absolute inset-0" style={{ background: `linear-gradient(150deg, ${accent}dd, ${accent}66)` }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 28%, rgba(0,0,0,0.05) 70%)" }} />
+            <div className="absolute top-1.5 left-1.5 text-[4px] font-bold tracking-widest uppercase" style={{ color: accent }}>Destacado</div>
+            <div className="absolute bottom-0 left-0 right-0 p-1.5 space-y-0.5">
+              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: "#fff", opacity: 0.55 }} />
+              <div className="h-1 rounded-full w-3/5" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-2 rounded-full w-8 mt-0.5" style={{ backgroundColor: accent, opacity: 0.85 }} />
+            </div>
+          </div>
+          <div className="flex-1 flex flex-col gap-1">
+            {[0,1].map((i) => (
+              <div key={i} className="flex-1 relative overflow-hidden rounded-lg">
+                <div className="absolute inset-0" style={{ background: i === 0 ? `linear-gradient(120deg, ${accent}99, ${accent}55)` : `linear-gradient(120deg, ${accent}cc, ${accent}88)` }} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 38%, transparent)" }} />
+                <div className="absolute bottom-0 left-0 right-0 p-1">
+                  <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DIAGONAL: cortes estilo Nike
+  if (m.layout === "diagonal") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="flex-1 overflow-hidden">
+          {[0,1].map((i) => (
+            <div key={i} className="flex" style={{ height: "40%" }}>
+              <div className="flex-1 relative overflow-hidden" style={{
+                clipPath: i % 2 === 0 ? "polygon(0 0, 100% 0, 100% 80%, 0 100%)" : "polygon(0 0, 100% 0, 100% 100%, 0 80%)",
+                background: i === 0 ? `linear-gradient(120deg, ${accent}dd, ${accent}66)` : `linear-gradient(120deg, ${accent}99, ${accent}cc)`,
+              }}>
+                <div className="absolute top-1 left-1.5 text-[4px] font-black px-1 py-0.5 tracking-widest" style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}>{i === 0 ? "NEW" : "SALE"}</div>
+              </div>
+              <div className="w-2/5 px-1.5 py-1 flex flex-col justify-center gap-0.5" style={{ backgroundColor: card }}>
+                <div className="h-0.5 rounded-full w-full" style={{ backgroundColor: muted }} />
+                <div className="h-1.5 rounded-full w-3/4" style={{ backgroundColor: accent, opacity: 0.85 }} />
+                <div className="h-2 rounded w-10 flex items-center justify-center text-[4px] font-black" style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}>AÑADIR</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ARCH: marcos en arco
+  if (m.layout === "arch") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="flex gap-1.5 px-2 py-1.5 flex-1 overflow-hidden items-start">
+          {[0,1,2].map((i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className="relative overflow-hidden w-full" style={{
+                aspectRatio: "3/4",
+                borderRadius: "999px 999px 6px 6px",
+                background: i === 0 ? `linear-gradient(160deg, ${accent}cc, ${accent}55)` : i === 1 ? `linear-gradient(160deg, ${accent}55, ${accent}88)` : `linear-gradient(160deg, ${accent}88, ${accent}cc)`,
+                border: `1px solid ${accent}55`,
+                opacity: i === 0 ? 1 : 0.7,
+              }}>
+                <div className="absolute top-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)" }} />
+              </div>
+              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
+              <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent, opacity: 0.85 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // MAGAZINE: full-width banner + pares 3:4
+  if (m.layout === "magazine") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="flex-1 overflow-hidden space-y-0.5 pt-1">
+          <div className="relative overflow-hidden mx-0" style={{ height: "30px" }}>
+            <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}44)` }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }} />
+            <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
+              <div className="h-1 rounded-sm w-16" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div className="h-2.5 px-1 flex items-center text-[4px] font-bold" style={{ border: "0.5px solid rgba(255,255,255,0.5)", color: "#fff" }}>VER</div>
+            </div>
+          </div>
+          <div className="flex gap-0.5 flex-1 pb-1">
+            {[0,1].map((i) => (
+              <div key={i} className="flex-1 relative overflow-hidden" style={{ minHeight: "44px" }}>
+                <div className="absolute inset-0" style={{ background: i === 0 ? `linear-gradient(160deg, ${accent}99, ${accent}55)` : `linear-gradient(160deg, ${accent}dd, ${accent}88)` }} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 40%, transparent)" }} />
+                <div className="absolute bottom-0 left-0 right-0 p-1">
+                  <div className="h-0.5 rounded-sm w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // BANNER_GRID: banner + grid 2 col
+  if (m.layout === "banner_grid") {
+    return (
+      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+        <Header />
+        <div className="px-1.5 pt-1 pb-0.5 shrink-0">
+          <div className="relative w-full overflow-hidden rounded-lg mb-1" style={{ height: "32px" }}>
+            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}66)` }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 40%, transparent)" }} />
+            <div className="absolute bottom-1.5 left-2 space-y-0.5">
+              <div className="h-1 rounded-full w-12" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-1 px-1.5 pb-1.5 flex-1">
+          {[0,1,2,3].map((i) => (
+            <div key={i} className="overflow-hidden flex flex-col rounded" style={{ backgroundColor: card }}>
+              <div style={{ aspectRatio: "1/1", background: i % 2 === 0 ? `linear-gradient(135deg, ${accent}bb, ${accent}44)` : `linear-gradient(135deg, ${accent}44, ${accent}bb)` }} />
+              <div className="p-0.5 space-y-0.5">
+                <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
+                <div className="h-1 rounded-full w-2/5" style={{ backgroundColor: accent, opacity: 0.9 }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback grid
+  return (
+    <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <Header />
+      <div className="grid grid-cols-3 gap-1 px-1.5 pb-1.5 pt-1 flex-1 overflow-hidden">
+        {[0,1,2,3,4,5].map((i) => (
+          <div key={i} className="rounded overflow-hidden flex flex-col" style={{ backgroundColor: card, border: `1px solid ${accent}33`, padding: "3px" }}>
+            <div style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}44` }} />
+            <div className="h-0.5 rounded-full w-4/5 mt-0.5" style={{ backgroundColor: muted }} />
+            <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent, opacity: 0.85 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RegisterPage() {
   const navigate = useNavigate();
   const addStore = useApp((s) => s.addStore);
@@ -103,25 +407,25 @@ function RegisterPage() {
   // Modelos sincronizados exactamente con admin.diseno.tsx
   const ALL_MODELS = [
     // Semilla (0)
-    { id: "minimalista",  name: "Minimalista",       desc: "Limpio, moderno y atemporal.",              planLevel: 0, niches: ["general","ropa","bisuteria","floreria"], p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false } },
-    { id: "clasico",      name: "Clasico Calido",    desc: "Tipografia serif y tonos terrosos.",        planLevel: 0, niches: ["general","servicios","comida","floreria"], p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false } },
+    { id: "minimalista",  layout: "grid",       name: "Minimalista",        desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",         planLevel: 0, niches: ["general","ropa","bisuteria","floreria"], p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false } },
+    { id: "clasico",      layout: "grid",       name: "Clásico Cálido",     desc: "Tipografía serif y tonos terrosos. Artesanías.",          planLevel: 0, niches: ["general","servicios","comida","floreria"], p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false } },
     // Emprendedor (1)
-    { id: "nature_mint",  name: "Nature Mint",       desc: "Verde teal fresco. Salud y cafes.",         planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false } },
-    { id: "vibrante",     name: "Vibrante",          desc: "Energetico tipo Instagram Shopping.",       planLevel: 1, niches: ["comida","ropa","general"],                p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false } },
-    { id: "eco",          name: "Eco Hero",          desc: "Banner hero panoramico + galeria.",         planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false } },
+    { id: "nature_mint",  layout: "grid",       name: "Nature Mint",        desc: "Verde teal fresco. Salud, bienestar y cafés.",           planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false } },
+    { id: "vibrante",     layout: "overlay",    name: "Vibrante",           desc: "Cards portrait con texto sobre gradiente. Instagram.",   planLevel: 1, niches: ["comida","ropa","general"],                p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false } },
+    { id: "eco",          layout: "hero",       name: "Eco Hero",           desc: "Banner hero panorámico + galería circular.",             planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false } },
     // Pro (2)
-    { id: "nocturno",     name: "Nocturno",          desc: "Dark mode de alto impacto.",                planLevel: 2, niches: ["tech","ropa"],                           p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true  } },
-    { id: "elite",        name: "Elite",             desc: "Banner cinematografico. Identidad fuerte.", planLevel: 2, niches: ["general","ropa","tech"],                 p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false } },
-    { id: "boutique",     name: "Boutique",          desc: "Editorial fashion. Estilo Farfetch.",       planLevel: 2, niches: ["ropa","bisuteria"],                      p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false } },
-    { id: "corporativo",  name: "Corporativo Azul",  desc: "Lista profesional. Servicios.",             planLevel: 2, niches: ["servicios"],                             p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false } },
-    { id: "aurora",       name: "Aurora Glass",      desc: "Glassmorphism con degradado cosmico.",      planLevel: 2, niches: ["tech","bisuteria"],                      p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true  } },
+    { id: "nocturno",     layout: "overlay",    name: "Nocturno",           desc: "Dark mode de alto impacto con overlay oscuro.",          planLevel: 2, niches: ["tech","ropa"],                           p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true  } },
+    { id: "elite",        layout: "hero",       name: "Elite ✦",            desc: "Banner cinematográfico. Identidad visual fuerte.",       planLevel: 2, niches: ["general","ropa","tech"],                 p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false } },
+    { id: "boutique",     layout: "spotlight",  name: "Boutique",           desc: "1 producto estrella grande + 2 apilados. Farfetch.",     planLevel: 2, niches: ["ropa","bisuteria"],                      p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false } },
+    { id: "corporativo",  layout: "editorial",  name: "Corporativo Azul",   desc: "Lista horizontal profesional. Servicios.",               planLevel: 2, niches: ["servicios"],                             p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false } },
+    { id: "aurora",       layout: "tiles",      name: "Aurora Glass",       desc: "Tiles glassmorphism con degradado cósmico.",             planLevel: 2, niches: ["tech","bisuteria"],                      p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true  } },
     // Ilimitado (3)
-    { id: "dark_fashion", name: "Dark Fashion",      desc: "Revista editorial oscura.",                 planLevel: 3, niches: ["ropa"],                                  p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true  } },
-    { id: "slash",        name: "Slash Diagonal",    desc: "Cortes diagonales. Estilo Nike.",           planLevel: 3, niches: ["ropa","tech"],                           p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true  } },
-    { id: "arch_studio",  name: "Arch Studio",       desc: "Marcos en arco. Elegante y ligero.",        planLevel: 3, niches: ["servicios","general","floreria"],        p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false } },
-    { id: "portada",      name: "Portada con Banner",desc: "Banner personalizable + grid 2 columnas.",  planLevel: 3, niches: ["general","floreria","comida"],            p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false } },
-    { id: "sunset_glow",  name: "Sunset Glow",       desc: "Degradado atardecer con cards flotantes.",  planLevel: 3, niches: ["ropa","bisuteria","floreria"],           p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true  } },
-    { id: "forest_deep",  name: "Forest Deep",       desc: "Bosque oscuro. Fotografico y organico.",    planLevel: 3, niches: ["servicios","general"],                   p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true  } },
+    { id: "dark_fashion", layout: "magazine",   name: "Dark Fashion",       desc: "Revista editorial oscura. Banners full-width.",          planLevel: 3, niches: ["ropa"],                                  p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true  } },
+    { id: "slash",        layout: "diagonal",   name: "Slash Diagonal",     desc: "Cortes diagonales de alto impacto. Estilo Nike.",        planLevel: 3, niches: ["ropa","tech"],                           p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true  } },
+    { id: "arch_studio",  layout: "arch",       name: "Arch Studio",        desc: "Marcos en arco. Tipografía ligera y elegante.",          planLevel: 3, niches: ["servicios","general","floreria"],        p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false } },
+    { id: "portada",      layout: "banner_grid",name: "Portada con Banner",  desc: "Banner personalizable + catálogo en grid 2 columnas.",   planLevel: 3, niches: ["general","floreria","comida"],            p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false } },
+    { id: "sunset_glow",  layout: "overlay",    name: "Sunset Glow",        desc: "Degradado atardecer con cards portrait flotantes.",      planLevel: 3, niches: ["ropa","bisuteria","floreria"],           p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true  } },
+    { id: "forest_deep",  layout: "grid",       name: "Forest Deep",        desc: "Bosque oscuro. Fotográfico y orgánico.",                 planLevel: 3, niches: ["servicios","general"],                   p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true  } },
   ];
 
   const planLevelMap: Record<PlanId, number> = { semilla: 0, emprendedor: 1, pro: 2, ilimitado: 3 };
@@ -445,11 +749,11 @@ function RegisterPage() {
                       <span className="text-[10px] text-muted-foreground font-normal normal-case">2 disponibles en Semilla</span>
                     )}
                   </label>
-                  <div className="grid gap-2 max-h-[250px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
                     {/* Recomendados para el nicho */}
                     {models.filter(m => m.recommended && !m.locked).length > 0 && (
                       <>
-                        <div className="flex items-center gap-1 px-1">
+                        <div className="col-span-2 flex items-center gap-1.5 px-0.5">
                           <Star className="w-3 h-3 text-primary fill-primary" />
                           <p className="text-[10px] font-black text-primary uppercase tracking-widest">Sugeridos para tu negocio</p>
                         </div>
@@ -457,30 +761,34 @@ function RegisterPage() {
                           <div
                             key={m.id + "_rec"}
                             onClick={() => setSelectedModel(m.id)}
-                            className={`relative p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all bg-white/40 hover:bg-white/80 ${selectedModel === m.id ? "bg-primary/5 border-primary ring-2 ring-primary/20 shadow-sm" : "border-slate-100"}`}
+                            className={`relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden group ${
+                              selectedModel === m.id
+                                ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
+                                : "border-slate-100 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5"
+                            }`}
                           >
-                            <div className="w-14 h-14 shrink-0 rounded-lg overflow-hidden border" style={{ backgroundColor: m.p.bg }}>
-                              <div className="h-3 w-full" style={{ backgroundColor: m.p.accent }} />
-                              <div className="p-1 flex flex-col gap-1">
-                                <div className="h-1.5 rounded-full w-4/5" style={{ backgroundColor: m.p.dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)" }} />
-                                <div className="h-1.5 rounded-full w-3/5" style={{ backgroundColor: m.p.dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }} />
-                                <div className="flex gap-1 mt-0.5">
-                                  <div className="h-5 w-5 rounded" style={{ backgroundColor: m.p.card, border: `1px solid ${m.p.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }} />
-                                  <div className="h-5 w-5 rounded" style={{ backgroundColor: m.p.card, border: `1px solid ${m.p.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }} />
+                            {/* Thumbnail layout-fiel */}
+                            <div className="relative">
+                              <ModelLayoutPreview model={m} />
+                              {selectedModel === m.id && (
+                                <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
+                                  <CheckCircle2 className="w-3 h-3" />
                                 </div>
+                              )}
+                              <div className="absolute top-2 left-2 z-10">
+                                <span className="bg-primary text-white text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full">Ideal</span>
                               </div>
                             </div>
-                            <div className="flex-1 text-left">
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-sm text-slate-800">{m.name}</span>
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-primary text-white uppercase tracking-wider">Ideal</span>
-                              </div>
-                              <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
+                            {/* Footer */}
+                            <div className="p-2 bg-white border-t border-slate-100">
+                              <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">{m.name}</div>
+                              <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">{m.desc}</div>
                             </div>
-                            {selectedModel === m.id && <CheckCircle2 className="w-4.5 h-4.5 text-primary shrink-0" />}
                           </div>
                         ))}
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1 pt-1.5">Todos los modelos</p>
+                        <div className="col-span-2">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-0.5 pt-2 pb-1">Todos los modelos</p>
+                        </div>
                       </>
                     )}
                     {/* Todos los modelos */}
@@ -488,29 +796,38 @@ function RegisterPage() {
                       <div
                         key={m.id}
                         onClick={() => !m.locked && setSelectedModel(m.id)}
-                        className={`relative p-3.5 rounded-xl border flex items-center gap-3 transition-all ${m.locked ? "opacity-50 cursor-not-allowed bg-muted/30 border-slate-100" : selectedModel === m.id ? "bg-primary/5 border-primary ring-2 ring-primary/20 shadow-sm cursor-pointer" : "bg-white/40 hover:bg-white/80 border-slate-100 cursor-pointer"}`}
+                        className={`relative rounded-xl border-2 overflow-hidden transition-all ${
+                          m.locked
+                            ? "opacity-50 cursor-not-allowed grayscale-[20%]"
+                            : "cursor-pointer hover:shadow-md hover:-translate-y-0.5"
+                        } ${
+                          selectedModel === m.id && !m.locked
+                            ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
+                            : "border-slate-100 hover:border-primary/40"
+                        }`}
                       >
-                        <div className={`w-14 h-14 shrink-0 rounded-lg overflow-hidden border ${m.locked ? "grayscale" : ""}`} style={{ backgroundColor: m.p.bg }}>
-                          <div className="h-3 w-full" style={{ backgroundColor: m.locked ? "#ccc" : m.p.accent }} />
-                          <div className="p-1 flex flex-col gap-1">
-                            <div className="h-1.5 rounded-full w-4/5" style={{ backgroundColor: m.p.dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)" }} />
-                            <div className="h-1.5 rounded-full w-3/5" style={{ backgroundColor: m.p.dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)" }} />
-                            <div className="flex gap-1 mt-0.5">
-                              <div className="h-5 w-5 rounded" style={{ backgroundColor: m.p.card, border: `1px solid ${m.p.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }} />
-                              <div className="h-5 w-5 rounded" style={{ backgroundColor: m.p.card, border: `1px solid ${m.p.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}` }} />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex-1 text-left">
-                          <div className="font-bold text-sm leading-tight text-slate-800">{m.name}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
-                        </div>
-                        {!m.locked && selectedModel === m.id && <CheckCircle2 className="w-4.5 h-4.5 text-primary shrink-0" />}
+                        {/* Candado overlay */}
                         {m.locked && (
-                          <span className="flex items-center gap-1 text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded shrink-0">
-                            <Lock className="w-2.5 h-2.5" /> PRO
-                          </span>
+                          <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1">
+                            <div className="h-7 w-7 rounded-full bg-white/90 shadow flex items-center justify-center">
+                              <Lock className="h-3.5 w-3.5 text-slate-500" />
+                            </div>
+                            <span className="text-[7px] font-extrabold uppercase tracking-widest text-slate-500">Premium</span>
+                          </div>
                         )}
+                        {/* Checkmark */}
+                        {selectedModel === m.id && !m.locked && (
+                          <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
+                            <CheckCircle2 className="w-3 h-3" />
+                          </div>
+                        )}
+                        {/* Thumbnail layout-fiel */}
+                        <ModelLayoutPreview model={m} />
+                        {/* Footer */}
+                        <div className="p-2 bg-white border-t border-slate-100">
+                          <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">{m.name}</div>
+                          <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">{m.desc}</div>
+                        </div>
                       </div>
                     ))}
                   </div>
