@@ -1868,7 +1868,7 @@ export function PublicCatalog({
                 <button
                   onClick={() => setIsFilterOpen(true)}
                   className={cn(
-                    "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition",
+                    "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition md:hidden",
                     modelId === "bite" && "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   )}
                 >
@@ -2171,7 +2171,7 @@ export function PublicCatalog({
               </div>
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className="relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition"
+                className="relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition md:hidden"
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 <span>Filtros</span>
@@ -2216,8 +2216,109 @@ export function PublicCatalog({
 
       {/* ── Product Area ──────────────────────────────── */}
       <main className="mx-auto max-w-5xl px-4 pt-6 pb-32">
-        {mode === "bio" && (
-          <div id="catalogo" className="pt-2 mb-6 scroll-mt-20">
+        <div className={cn("w-full", mode === "catalog" && "flex flex-col md:flex-row gap-8 items-start")}>
+          {/* SIDEBAR DE FILTROS (Desktop) */}
+          {mode === "catalog" && (
+            <aside className="hidden md:block w-[240px] shrink-0 space-y-6 self-start sticky top-[120px] bg-card p-5 border rounded-2xl">
+              {/* Categorías */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left">
+                  Categorías
+                </h3>
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={() => setActiveCat("all")}
+                    className={cn(
+                      "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
+                      activeCat === "all" 
+                        ? "bg-primary text-primary-foreground font-black" 
+                        : "hover:bg-accent text-foreground"
+                    )}
+                  >
+                    <span>Todos</span>
+                    <span className="text-[10px] opacity-75">
+                      ({productsWithImages.length})
+                    </span>
+                  </button>
+                  
+                  {productsWithImages.some(p => p.isOnSale) && (
+                    <button
+                      onClick={() => setActiveCat("sale")}
+                      className={cn(
+                        "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
+                        activeCat === "sale" 
+                          ? "bg-primary text-primary-foreground font-black" 
+                          : "hover:bg-accent text-foreground"
+                      )}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <Flame className="h-3.5 w-3.5 text-red-500" />
+                        Ofertas
+                      </span>
+                      <span className="text-[10px] opacity-75">
+                        ({productsWithImages.filter(p => p.isOnSale).length})
+                      </span>
+                    </button>
+                  )}
+
+                  {store.categories.map((c) => {
+                    const { label } = parseCategoryName(c.name);
+                    const count = productsWithImages.filter(p => p.categoryId === c.id).length;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setActiveCat(c.id)}
+                        className={cn(
+                          "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
+                          activeCat === c.id 
+                            ? "bg-primary text-primary-foreground font-black" 
+                            : "hover:bg-accent text-foreground"
+                        )}
+                      >
+                        <span className="truncate pr-1">{label}</span>
+                        <span className="text-[10px] opacity-75 shrink-0">
+                          ({count})
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Filtro de Precio */}
+              {hasPriceFilter && (
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left">
+                    Filtrar por Precio
+                  </h3>
+                  <PriceRangeSlider
+                    min={priceMin}
+                    max={priceMax}
+                    value={priceRange ?? [priceMin, priceMax]}
+                    onChange={setPriceRange}
+                    onReset={() => setPriceRange(null)}
+                    isDark={effectiveIsDark}
+                  />
+                </div>
+              )}
+              
+              {/* Limpiar Filtros */}
+              {(activeCat !== "all" || priceRange) && (
+                <button
+                  onClick={() => { setActiveCat("all"); setPriceRange(null); }}
+                  className="w-full text-center py-2 border border-border hover:bg-muted text-xs font-bold rounded-lg transition"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Limpiar filtros
+                </button>
+              )}
+            </aside>
+          )}
+
+          {/* AREA PRINCIPAL */}
+          <div className={cn("w-full", mode === "catalog" && "flex-1 min-w-0")}>
+            {mode === "bio" && (
+              <div id="catalogo" className="pt-2 mb-6 scroll-mt-20">
             {bioTypography === "serif" ? (
               <h2 className="font-serif-editorial text-xl font-normal text-center text-foreground flex items-center justify-center gap-4">
                 <span className="h-[1px] w-12 bg-foreground/10"></span>
@@ -4590,7 +4691,7 @@ export function PublicCatalog({
                       borderColor: "var(--border)",
                       color: "var(--foreground)",
                     }}
-                    className="border px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0"
+                    className="border px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0 md:hidden"
                   >
                     <SlidersHorizontal className="h-4 w-4" style={{ color: "var(--primary)" }} />
                     <span>Filtros</span>
@@ -5153,6 +5254,8 @@ export function PublicCatalog({
             )}
           </div>
         )}
+          </div>
+        </div>
       </main>
 
       {/* ── Footer libro de reclamaciones ────────────── */}
