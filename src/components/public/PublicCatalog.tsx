@@ -4093,17 +4093,17 @@ export function PublicCatalog({
                           {/* Buy section */}
                           <div 
                             style={{ borderColor: "var(--border)" }}
-                            className="flex items-center justify-between pt-3 mt-3 border-t px-1"
+                            className="flex items-center justify-between pt-3 mt-3 border-t px-1 gap-1"
                           >
-                            <div className="text-left">
-                              <span className="text-sm font-semibold font-sans text-[var(--primary)]">
+                            <div className="text-left min-w-0">
+                              <span className="text-sm font-semibold font-sans text-[var(--primary)] whitespace-nowrap truncate block">
                                 {formatPrice(p.price)}
                               </span>
                               {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                <span className="text-[10px] text-stone-400 line-through block -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                                <span className="text-[10px] text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">{formatPrice(p.originalPrice)}</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 shrink-0">
                               {/* Consult button */}
                               <button
                                 type="button"
@@ -4124,7 +4124,7 @@ export function PublicCatalog({
                                   cartAdd(store.id, p.id);
                                   setCartOpen(true);
                                 }}
-                                className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans"
+                                className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans shrink-0"
                               >
                                 <Plus className="h-3 w-3" />
                                 Añadir
@@ -4646,23 +4646,23 @@ export function PublicCatalog({
                             "flex items-center justify-between pt-3 mt-3 border-t px-1",
                             store.niche === "floreria" ? "border-rose-100/30" : "border-[var(--border)]"
                           )}>
-                            <div className="text-left">
+                            <div className="text-left min-w-0">
                               <span 
                                 style={{
                                   color: store.niche === "floreria" ? undefined : "var(--primary)",
                                 }}
                                 className={cn(
-                                  "text-base font-semibold font-sans",
+                                  "text-base font-semibold font-sans whitespace-nowrap truncate block",
                                   store.niche === "floreria" ? "text-rose-600" : ""
                                 )}
                               >
                                 {formatPrice(p.price)}
                               </span>
                               {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                <span className="text-xs text-stone-400 line-through block -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                                <span className="text-xs text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">{formatPrice(p.originalPrice)}</span>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 shrink-0">
                               {/* Consult button (Adapts to Brand Color) */}
                               <button
                                 type="button"
@@ -4696,7 +4696,7 @@ export function PublicCatalog({
                                 style={{
                                   backgroundColor: "var(--primary)",
                                 }}
-                                className="h-8 px-2.5 sm:px-4 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase shadow-sm active:scale-95 font-sans"
+                                className="h-8 px-2.5 sm:px-4 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase shadow-sm active:scale-95 font-sans shrink-0"
                               >
                                 <Plus className="h-3 w-3" />
                                 Añadir
@@ -4957,14 +4957,14 @@ export function PublicCatalog({
                             </div>
 
                             {/* Price & Action */}
-                            <div className="px-3 pb-3.5 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
-                              <div className="flex flex-col text-left px-0.5">
-                                <span className="text-sm font-semibold font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
+                            <div className="px-3 pb-3.5 pt-0 flex flex-row items-center justify-between mt-auto gap-1">
+                              <div className="flex flex-col text-left px-0.5 min-w-0">
+                                <span className="text-sm font-semibold font-sans whitespace-nowrap truncate" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
                                 {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                  <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans">{formatPrice(p.originalPrice)}</span>
+                                  <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans whitespace-nowrap truncate">{formatPrice(p.originalPrice)}</span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                              <div className="flex items-center gap-1 shrink-0">
                                 {/* Consult button (Adapts to Brand Color) */}
                                 <button
                                   type="button"
@@ -4998,7 +4998,7 @@ export function PublicCatalog({
                                   style={{
                                     backgroundColor: "var(--primary)",
                                   }}
-                                  className="h-8 px-3 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans"
+                                  className="h-8 px-2.5 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans shrink-0"
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                   Añadir
