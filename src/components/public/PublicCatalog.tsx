@@ -40,6 +40,21 @@ import {
   ChevronRight,
   BadgeCheck,
   AlertTriangle,
+  Shirt,
+  Gem,
+  Smartphone,
+  Laptop,
+  Headphones,
+  Gamepad,
+  Home,
+  Lightbulb,
+  Sofa,
+  Dumbbell,
+  Scissors,
+  Camera,
+  Coffee,
+  Beer,
+  Croissant,
 } from "lucide-react";
 
 const Tiktok = ({ className }: { className?: string }) => (
@@ -488,6 +503,38 @@ function CategoryIcon({ iconKey, className, style }: { iconKey: string; classNam
         return <Sprout className={sizeClass} />;
       case "leaf":
         return <Leaf className={sizeClass} />;
+      case "shirt":
+        return <Shirt className={sizeClass} />;
+      case "gem":
+        return <Gem className={sizeClass} />;
+      case "smartphone":
+        return <Smartphone className={sizeClass} />;
+      case "laptop":
+        return <Laptop className={sizeClass} />;
+      case "headphones":
+        return <Headphones className={sizeClass} />;
+      case "gamepad":
+        return <Gamepad className={sizeClass} />;
+      case "home":
+        return <Home className={sizeClass} />;
+      case "lightbulb":
+        return <Lightbulb className={sizeClass} />;
+      case "sofa":
+        return <Sofa className={sizeClass} />;
+      case "dumbbell":
+        return <Dumbbell className={sizeClass} />;
+      case "scissors":
+        return <Scissors className={sizeClass} />;
+      case "camera":
+        return <Camera className={sizeClass} />;
+      case "coffee":
+        return <Coffee className={sizeClass} />;
+      case "beer":
+        return <Beer className={sizeClass} />;
+      case "croissant":
+        return <Croissant className={sizeClass} />;
+      case "sparkles":
+        return <Sparkles className={sizeClass} />;
       case "bouquet":
         return (
           <svg

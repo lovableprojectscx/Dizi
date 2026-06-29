@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, Shirt, Gem, Smartphone, Laptop, Headphones, Gamepad, Home, Lightbulb, Sofa, Dumbbell, Scissors, Camera, Coffee, Beer, Croissant } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
@@ -137,6 +137,38 @@ function CategoryIcon({ iconKey, className }: { iconKey: string; className?: str
       return <Sprout className={sizeClass} />;
     case "leaf":
       return <Leaf className={sizeClass} />;
+    case "shirt":
+      return <Shirt className={sizeClass} />;
+    case "gem":
+      return <Gem className={sizeClass} />;
+    case "smartphone":
+      return <Smartphone className={sizeClass} />;
+    case "laptop":
+      return <Laptop className={sizeClass} />;
+    case "headphones":
+      return <Headphones className={sizeClass} />;
+    case "gamepad":
+      return <Gamepad className={sizeClass} />;
+    case "home":
+      return <Home className={sizeClass} />;
+    case "lightbulb":
+      return <Lightbulb className={sizeClass} />;
+    case "sofa":
+      return <Sofa className={sizeClass} />;
+    case "dumbbell":
+      return <Dumbbell className={sizeClass} />;
+    case "scissors":
+      return <Scissors className={sizeClass} />;
+    case "camera":
+      return <Camera className={sizeClass} />;
+    case "coffee":
+      return <Coffee className={sizeClass} />;
+    case "beer":
+      return <Beer className={sizeClass} />;
+    case "croissant":
+      return <Croissant className={sizeClass} />;
+    case "sparkles":
+      return <Sparkles className={sizeClass} />;
     case "bouquet":
       return (
         <svg
@@ -199,25 +231,38 @@ const getNicheLabel = (model?: string) => {
 };
 
 const getAvailableIcons = (store: any) => {
-  if (store.niche === "general") {
-    return [
-      { key: "", label: "Ninguno" },
-      { key: "burger", label: "Burgers" },
-      { key: "fries", label: "Papas" },
-      { key: "drink", label: "Bebidas" },
-      { key: "combo", label: "Combos" },
-      { key: "dessert", label: "Postres" },
-      { key: "pizza", label: "Pizza" },
-      { key: "icecream", label: "Helado" },
-      { key: "flower", label: "Flores" },
-      { key: "bouquet", label: "Arreglos" },
-      { key: "gift", label: "Regalos" },
-      { key: "heart", label: "Amor" },
-      { key: "sprout", label: "Plantas" },
-      { key: "leaf", label: "Follaje" },
-    ];
-  }
-  return (store.model ? NICHE_ICONS[store.model] : []) || [];
+  return [
+    { key: "", label: "Ninguno" },
+    { key: "burger", label: "Burgers" },
+    { key: "fries", label: "Papas" },
+    { key: "drink", label: "Bebidas" },
+    { key: "combo", label: "Combos" },
+    { key: "pizza", label: "Pizza" },
+    { key: "icecream", label: "Helado" },
+    { key: "dessert", label: "Postres" },
+    { key: "coffee", label: "Café" },
+    { key: "beer", label: "Bar/Licores" },
+    { key: "croissant", label: "Panadería" },
+    { key: "flower", label: "Flores" },
+    { key: "bouquet", label: "Arreglos" },
+    { key: "gift", label: "Regalos" },
+    { key: "heart", label: "Amor" },
+    { key: "sprout", label: "Plantas" },
+    { key: "leaf", label: "Follaje" },
+    { key: "shirt", label: "Ropa/Moda" },
+    { key: "gem", label: "Joyas/Accesorios" },
+    { key: "smartphone", label: "Celulares" },
+    { key: "laptop", label: "Laptops/PC" },
+    { key: "headphones", label: "Audífonos" },
+    { key: "gamepad", label: "Videojuegos" },
+    { key: "home", label: "Hogar/Deco" },
+    { key: "lightbulb", label: "Iluminación" },
+    { key: "sofa", label: "Muebles" },
+    { key: "dumbbell", label: "Deportes/Fitness" },
+    { key: "scissors", label: "Estética/Salón" },
+    { key: "camera", label: "Fotografía" },
+    { key: "sparkles", label: "Novedades/Destacados" },
+  ];
 };
 
 const getCleanCategoryName = (rawName: string) => {
