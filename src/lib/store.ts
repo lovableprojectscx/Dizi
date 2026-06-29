@@ -269,6 +269,9 @@ export const useApp = create<AppState>()(
         if (updatedPatch.bioBgColor !== undefined) dbPatch.bio_bg_color = updatedPatch.bioBgColor;
         if (updatedPatch.bannerTagline !== undefined) dbPatch.banner_tagline = updatedPatch.bannerTagline;
         if (updatedPatch.bannerBottomTag !== undefined) dbPatch.banner_bottom_tag = updatedPatch.bannerBottomTag;
+        if (updatedPatch.referredBy !== undefined) dbPatch.referred_by = updatedPatch.referredBy;
+        if (updatedPatch.referralRewarded !== undefined) dbPatch.referral_rewarded = updatedPatch.referralRewarded;
+        if (updatedPatch.referralCredit !== undefined) dbPatch.referral_credit = updatedPatch.referralCredit;
 
         try {
           if (Object.keys(dbPatch).length > 0) {

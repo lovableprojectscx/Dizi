@@ -12,7 +12,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Store as StoreIcon, ShieldCheck, LogOut, BadgePercent } from "lucide-react";
+import { LayoutDashboard, Store as StoreIcon, ShieldCheck, LogOut, BadgePercent, Users } from "lucide-react";
 import { getActiveSession, getSessionSync, getUserRole, signOut } from "@/lib/auth";
 
 export const Route = createFileRoute("/super")({
@@ -46,6 +46,7 @@ const items = [
   { title: "Dashboard", url: "/super/dashboard", icon: LayoutDashboard },
   { title: "Tiendas", url: "/super/tiendas", icon: StoreIcon },
   { title: "Promociones", url: "/super/promociones", icon: BadgePercent },
+  { title: "Referidos", url: "/super/referidos", icon: Users },
 ];
 
 function SuperLayout() {

@@ -20,6 +20,7 @@ import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as SuperTiendasRouteImport } from './routes/super.tiendas'
+import { Route as SuperReferidosRouteImport } from './routes/super.referidos'
 import { Route as SuperPromocionesRouteImport } from './routes/super.promociones'
 import { Route as SuperLoginRouteImport } from './routes/super.login'
 import { Route as SuperDashboardRouteImport } from './routes/super.dashboard'
@@ -87,6 +88,11 @@ const TSlugRoute = TSlugRouteImport.update({
 const SuperTiendasRoute = SuperTiendasRouteImport.update({
   id: '/tiendas',
   path: '/tiendas',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperReferidosRoute = SuperReferidosRouteImport.update({
+  id: '/referidos',
+  path: '/referidos',
   getParentRoute: () => SuperRoute,
 } as any)
 const SuperPromocionesRoute = SuperPromocionesRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
   '/super/promociones': typeof SuperPromocionesRoute
+  '/super/referidos': typeof SuperReferidosRoute
   '/super/tiendas': typeof SuperTiendasRoute
   '/t/$slug': typeof TSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
   '/super/promociones': typeof SuperPromocionesRoute
+  '/super/referidos': typeof SuperReferidosRoute
   '/super/tiendas': typeof SuperTiendasRoute
   '/t/$slug': typeof TSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
   '/super/promociones': typeof SuperPromocionesRoute
+  '/super/referidos': typeof SuperReferidosRoute
   '/super/tiendas': typeof SuperTiendasRoute
   '/t/$slug': typeof TSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/super/dashboard'
     | '/super/login'
     | '/super/promociones'
+    | '/super/referidos'
     | '/super/tiendas'
     | '/t/$slug'
     | '/admin/'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/super/dashboard'
     | '/super/login'
     | '/super/promociones'
+    | '/super/referidos'
     | '/super/tiendas'
     | '/t/$slug'
     | '/admin'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/super/dashboard'
     | '/super/login'
     | '/super/promociones'
+    | '/super/referidos'
     | '/super/tiendas'
     | '/t/$slug'
     | '/admin/'
@@ -400,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/tiendas'
       fullPath: '/super/tiendas'
       preLoaderRoute: typeof SuperTiendasRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/referidos': {
+      id: '/super/referidos'
+      path: '/referidos'
+      fullPath: '/super/referidos'
+      preLoaderRoute: typeof SuperReferidosRouteImport
       parentRoute: typeof SuperRoute
     }
     '/super/promociones': {
@@ -528,6 +547,7 @@ interface SuperRouteChildren {
   SuperDashboardRoute: typeof SuperDashboardRoute
   SuperLoginRoute: typeof SuperLoginRoute
   SuperPromocionesRoute: typeof SuperPromocionesRoute
+  SuperReferidosRoute: typeof SuperReferidosRoute
   SuperTiendasRoute: typeof SuperTiendasRoute
   SuperIndexRoute: typeof SuperIndexRoute
 }
@@ -536,6 +556,7 @@ const SuperRouteChildren: SuperRouteChildren = {
   SuperDashboardRoute: SuperDashboardRoute,
   SuperLoginRoute: SuperLoginRoute,
   SuperPromocionesRoute: SuperPromocionesRoute,
+  SuperReferidosRoute: SuperReferidosRoute,
   SuperTiendasRoute: SuperTiendasRoute,
   SuperIndexRoute: SuperIndexRoute,
 }
