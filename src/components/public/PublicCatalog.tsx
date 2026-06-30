@@ -4959,15 +4959,17 @@ export function PublicCatalog({
                             </div>
 
                             {/* Price & Action */}
-                            <div className="px-3 pb-3.5 pt-0 flex flex-row items-center justify-between mt-auto gap-1">
-                              <div className="flex flex-col text-left px-0.5 min-w-0">
-                                <span className="text-sm font-semibold font-sans whitespace-nowrap truncate" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
+                            <div className="px-3 pb-3.5 pt-0 mt-auto">
+                              {/* Price — always full width, never truncated */}
+                              <div className="flex flex-col text-left px-0.5 mb-2">
+                                <span className="text-sm font-semibold font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
                                 {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                  <span className="text-[10px] text-stone-400 line-through -mt-1 font-sans whitespace-nowrap truncate">{formatPrice(p.originalPrice)}</span>
+                                  <span className="text-[10px] text-stone-400 line-through -mt-0.5 font-sans">{formatPrice(p.originalPrice)}</span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                {/* Consult button (Adapts to Brand Color) */}
+                              {/* Buttons row */}
+                              <div className="flex items-center gap-1.5">
+                                {/* Consult button */}
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -5000,7 +5002,7 @@ export function PublicCatalog({
                                   style={{
                                     backgroundColor: "var(--primary)",
                                   }}
-                                  className="h-8 px-2.5 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans shrink-0"
+                                  className="flex-1 h-8 px-2.5 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans"
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                   Añadir
