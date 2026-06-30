@@ -2536,7 +2536,7 @@ export function PublicCatalog({
           </div>
         ) : cfg.layout === "overlay" ? (
           /* ── OVERLAY layout: portrait 3:4 cards with gradient text (ZARA / Instagram Shopping style) */
-          <div className={cn("grid gap-2", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2")}>
+          <div className={cn("grid gap-2", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2")}>
             {filtered.map((p) => (
               <article
                 key={p.id}
@@ -3030,7 +3030,7 @@ export function PublicCatalog({
                 </div>
               </article>
             )}
-            <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
+            <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
               {filtered.slice(1).map((p) => (
                 <article
                   key={p.id}
@@ -3725,7 +3725,7 @@ export function PublicCatalog({
                 }
                 
                 return (
-                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
+                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
                     {gridProducts.map((p, index) => {
                       const showAd = store.plan === "semilla" && !isMockup;
                       const isAdPos = index === 4;
@@ -4248,7 +4248,7 @@ export function PublicCatalog({
                 }
                 
                 return (
-                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
+                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
                     {gridProducts.map((p, idx) => {
                       const isEven = idx % 2 === 0;
                       const showAd = store.plan === "semilla" && !isMockup;
@@ -4319,8 +4319,9 @@ export function PublicCatalog({
                             </div>
 
                             {/* Price & Actions */}
-                            <div className="px-3.5 pb-4 pt-0 flex flex-col sm:flex-row sm:items-center justify-between mt-auto gap-2">
-                              <div className="flex flex-col text-left px-0.5">
+                            <div className="px-3.5 pb-4 pt-0 mt-auto">
+                              {/* Price row */}
+                              <div className="flex flex-col text-left px-0.5 mb-2">
                                 <span className="text-sm font-semibold text-[var(--primary)] font-sans">{formatPrice(p.price)}</span>
                                 {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
                                   <span 
@@ -4331,7 +4332,8 @@ export function PublicCatalog({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                              {/* Buttons row */}
+                              <div className="flex items-center gap-1.5">
                                 {/* Consult */}
                                 <button
                                   type="button"
@@ -4352,7 +4354,7 @@ export function PublicCatalog({
                                     cartAdd(store.id, p.id);
                                     setCartOpen(true);
                                   }}
-                                  className="h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
+                                  className="flex-1 h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
                                 >
                                   <Plus className="h-3 w-3" />
                                   Añadir
@@ -4894,7 +4896,7 @@ export function PublicCatalog({
                 }
                 
                 return (
-                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
+                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
                     {gridProducts.map((p, index) => {
                       const showAd = store.plan === "semilla" && !isMockup;
                       const isAdPos = index === 4;
@@ -5126,7 +5128,7 @@ export function PublicCatalog({
           </div>
         ) : (
           /* ── GRID layout: standard responsive grid */
-          <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4")}>
+          <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
             {filtered.map((p, index) => {
               const showAd = store.plan === "semilla" && !isMockup;
               const isAdPos = index === 4;
