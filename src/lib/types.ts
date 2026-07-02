@@ -112,6 +112,8 @@ export interface Store {
   bioBanner?: string | null;
   bioTheme?: string | null;
   bioTypography?: "sans" | "serif" | "rounded" | "modern" | null;
+  /** Mostrar el botón "Ver Catálogo" en el Bio-Link. null = comportamiento por defecto (solo serif). */
+  bioShowCatalogButton?: boolean | null;
   bioButtonStyle?: string | null;
   bioButtonColor?: string | null;
   bioButtonTextColor?: string | null;

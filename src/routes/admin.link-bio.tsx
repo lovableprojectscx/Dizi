@@ -29,6 +29,7 @@ import {
   Youtube,
   Music,
   Twitter,
+  LayoutGrid,
 } from "lucide-react";
 
 const Tiktok = ({ className }: { className?: string }) => (
@@ -288,6 +289,7 @@ function PhonePreview({
   bioBgColor,
   bioTypography = "sans",
   showMap = true,
+  showCatalogButton = false,
 }: {
   name: string;
   logo: string;
@@ -307,6 +309,7 @@ function PhonePreview({
   bioBgColor?: string;
   bioTypography?: string;
   showMap?: boolean;
+  showCatalogButton?: boolean;
 }) {
   const hasWhatsApp = !!phone;
   const hasLocation = !!(showMap !== false && locationAddress.trim() && locationLat && locationLng);
@@ -554,6 +557,23 @@ function PhonePreview({
                   </div>
                 );
               })}
+              {/* Mini botón Ver Catálogo */}
+              {showCatalogButton && (
+                <div
+                  className={cn(
+                    "relative w-full py-1 font-extrabold uppercase text-[6px] tracking-wider flex items-center justify-center gap-1 border border-dashed rounded-full opacity-80",
+                    bioTypography === "serif" ? "font-serif-editorial" :
+                    bioTypography === "rounded" ? "font-sans-bloom" :
+                    bioTypography === "modern" ? "font-sans-vibe" :
+                    "font-sans",
+                    previewTextColor
+                  )}
+                  style={{ borderColor: "rgba(128,128,128,0.4)", background: "transparent" }}
+                >
+                  <LayoutGrid className="h-2 w-2" />
+                  Ver Catálogo
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -574,6 +594,9 @@ function LinkBioPage() {
   const [bioBanner, setBioBanner] = useState(store?.bioBanner || "");
   const [bioTheme, setBioTheme] = useState(store?.bioTheme || "default");
   const [bioTypography, setBioTypography] = useState(store?.bioTypography || "sans");
+  const [showCatalogButton, setShowCatalogButton] = useState<boolean>(
+    store?.bioShowCatalogButton ?? (store?.bioTypography || "sans") === "serif"
+  );
   const [bioButtonStyle, setBioButtonStyle] = useState(store?.bioButtonStyle || "pill-solid");
   const [bioButtonColor, setBioButtonColor] = useState(store?.bioButtonColor || "");
   const [bioButtonTextColor, setBioButtonTextColor] = useState(store?.bioButtonTextColor || "");
@@ -674,6 +697,7 @@ function LinkBioPage() {
       setBioBanner(store.bioBanner || "");
       setBioTheme(store.bioTheme || "default");
       setBioTypography(store.bioTypography || "sans");
+      setShowCatalogButton(store.bioShowCatalogButton ?? (store.bioTypography || "sans") === "serif");
       setBioButtonStyle(store.bioButtonStyle || "pill-solid");
       setBioButtonColor(store.bioButtonColor || "");
       setBioButtonTextColor(store.bioButtonTextColor || "");
@@ -844,6 +868,7 @@ function LinkBioPage() {
         bioBanner: bioBanner || null,
         bioTheme,
         bioTypography,
+        bioShowCatalogButton: showCatalogButton,
         bioButtonStyle,
         bioButtonColor: bioButtonColor || null,
         bioButtonTextColor: bioButtonTextColor || null,
@@ -1028,6 +1053,35 @@ function LinkBioPage() {
                           <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
                             Activo
                           </span>
+                        </div>
+
+                        {/* Botón "Ver Catálogo" (ancla al catálogo dentro del Bio-Link) */}
+                        <div className="bg-muted/[0.03] border border-border/40 p-2.5 rounded-lg flex items-center justify-between gap-3 text-xs">
+                          <div className="flex items-center gap-2">
+                            <LayoutGrid className="h-3.5 w-3.5 text-primary shrink-0" />
+                            <p className="text-muted-foreground text-[11px]">
+                              Botón <span className="font-bold text-foreground">"Ver Catálogo"</span>: baja directo a tus productos
+                            </p>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" className="text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-help">
+                                  <HelpCircle className="h-3.5 w-3.5" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs font-normal text-left">
+                                Agrega un botón que desplaza suavemente hacia la sección de productos de tu Bio-Link. Ideal si tienes varios enlaces y quieres que tus clientes lleguen rápido al catálogo.
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={showCatalogButton}
+                            onClick={() => setShowCatalogButton(!showCatalogButton)}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${showCatalogButton ? "bg-primary" : "bg-input"}`}
+                          >
+                            <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${showCatalogButton ? "translate-x-5" : "translate-x-0"}`} />
+                          </button>
                         </div>
 
                         {/* Agregar Nuevo Enlace Form */}
@@ -1890,6 +1944,7 @@ function LinkBioPage() {
                         bioBgColor={bioBgColor}
                         bioTypography={bioTypography}
                         showMap={showMap}
+                        showCatalogButton={showCatalogButton}
                       />
                     </div>
                   </SheetContent>
@@ -1935,6 +1990,7 @@ function LinkBioPage() {
             bioBgColor={bioBgColor}
             bioTypography={bioTypography}
             showMap={showMap}
+            showCatalogButton={showCatalogButton}
           />
         </div>
       </div>

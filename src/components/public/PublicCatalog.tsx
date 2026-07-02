@@ -1096,14 +1096,14 @@ export function PublicCatalog({
   } : {};
 
   const featuredCardClass = isFloristBloom
-    ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border hover:bg-[var(--card)] shadow-md hover:shadow-xl"
+    ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border hover:bg-[var(--card)] shadow-md hover:shadow-xl"
     : cStyle === "flat"
-      ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-none hover:shadow-none"
+      ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-none hover:shadow-none"
       : cStyle === "shadow"
-        ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] hover:opacity-95 shadow-md hover:shadow-xl"
+        ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] hover:opacity-95 shadow-md hover:shadow-xl"
         : cStyle === "curved"
-          ? "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.25rem_0.5rem_2.25rem_0.5rem] border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md"
-          : "w-[220px] sm:w-[280px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
+          ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.25rem_0.5rem_2.25rem_0.5rem] border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md"
+          : "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
 
   const featuredImgClass = cn(
     "relative aspect-square w-full overflow-hidden",
@@ -1416,7 +1416,7 @@ export function PublicCatalog({
         
         <div className={cn(
           "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 overflow-hidden",
-          (isMonochrome && !thumbnailUrl) ? "bg-transparent" : "bg-white rounded-full shadow-inner border border-zinc-100"
+          (isMonochrome && !thumbnailUrl) ? "bg-transparent" : "bg-white rounded-full shadow-inner border border-zinc-100 text-zinc-800"
         )}>
           {thumbnailUrl ? (
             <img src={thumbnailUrl} alt={label} className="h-full w-full object-cover" />
@@ -2149,8 +2149,8 @@ export function PublicCatalog({
                 });
               })()}
 
-              {/* 1.5. VER CATÁLOGO COMPLETO (Serif only) */}
-              {bioTypography === "serif" && renderBioButton(
+              {/* 1.5. VER CATÁLOGO — configurable desde Link en Bio; null = comportamiento histórico (solo serif) */}
+              {(store.bioShowCatalogButton ?? (bioTypography === "serif")) && renderBioButton(
                 "#catalogo",
                 "Ver Catálogo",
                 "#111111",
@@ -2262,7 +2262,7 @@ export function PublicCatalog({
       )}
 
       {/* ── Product Area ──────────────────────────────── */}
-      <main className="mx-auto max-w-5xl px-4 pt-6 pb-32">
+      <main className={cn("mx-auto px-4 pt-6 pb-32", mode === "catalog" ? "max-w-7xl" : "max-w-5xl")}>
         <div className={cn("w-full", mode === "catalog" && "flex flex-col md:flex-row gap-8 items-start")}>
           {/* SIDEBAR DE FILTROS (Desktop) */}
           {mode === "catalog" && (
@@ -3518,16 +3518,22 @@ export function PublicCatalog({
                 featuredProducts = productsWithImages.slice(0, 4);
                 isFallback = true;
               }
+              // Respetar el filtro de precio activo (igual que el grid)
+              if (priceRange) {
+                featuredProducts = featuredProducts.filter(
+                  (p) => p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1]
+                );
+              }
               if (featuredProducts.length === 0) return null;
 
-              const headerText = isSaleOnly 
+              const headerText = isSaleOnly
                 ? "Ofertas Especiales" 
                 : isFallback 
                 ? "Te Recomendamos" 
                 : "Destacados de la Casa";
 
               return (
-                <div className="space-y-4">
+                <div data-carousel className="space-y-4">
                   <div className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300" style={{ borderColor: "var(--primary)" }}>
                     <h3 className="text-sm sm:text-base font-black text-white tracking-widest flex items-center gap-2 uppercase">
                       {/* Premium 4-point diamond SVG */}
@@ -3541,17 +3547,45 @@ export function PublicCatalog({
                       </svg>
                       {headerText}
                     </h3>
-                    <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest animate-pulse">Desliza →</span>
+                    {featuredProducts.length > 1 && (
+                      <>
+                        <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest animate-pulse md:hidden">Desliza →</span>
+                        <div className="hidden md:flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            aria-label="Anterior"
+                            onClick={(e) => {
+                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                              s?.scrollBy({ left: -320, behavior: "smooth" });
+                            }}
+                            className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Siguiente"
+                            onClick={(e) => {
+                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                              s?.scrollBy({ left: 320, behavior: "smooth" });
+                            }}
+                            className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* TWO-DIV PATTERN to prevent shadow and scale clipping */}
-                  <div className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
+                  <div data-carousel-scroll className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
                     <div className="flex gap-4 px-4 snap-x snap-mandatory w-max min-w-full">
                       {featuredProducts.map((p) => (
                         <div
                           key={p.id}
                           onClick={() => setViewingProduct(p)}
-                          className="w-[220px] sm:w-[280px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
+                          className="w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
                         >
                           <div className="space-y-3">
                             {/* Image */}
@@ -3568,10 +3602,10 @@ export function PublicCatalog({
                             </div>
                             {/* Info */}
                             <div className="space-y-1 text-left px-1">
-                              <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-[var(--primary)] transition-colors truncate">
+                              <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
                                 {p.name}
                               </h4>
-                              <p className="text-xs text-zinc-400 line-clamp-2 h-8 leading-snug">
+                              <p className="text-xs text-zinc-400 line-clamp-2 leading-4 min-h-8">
                                 {(p.description || "").replace(/#destacado/g, "").trim()}
                               </p>
                             </div>
@@ -3755,11 +3789,11 @@ export function PublicCatalog({
                               </div>
                               {/* Info */}
                               <div className="p-3 pt-1 space-y-1 text-left">
-                                <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-1">
+                                <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-5 min-h-10">
                                   {p.name}
                                 </h4>
                                 {p.description && (
-                                  <p className="text-[11px] text-zinc-400 line-clamp-2 h-7 leading-snug">
+                                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-4 min-h-8">
                                     {p.description}
                                   </p>
                                 )}
@@ -4018,10 +4052,16 @@ export function PublicCatalog({
                 featuredProducts = productsWithImages.slice(0, 4);
                 isFallback = true;
               }
+              // Respetar el filtro de precio activo (igual que el grid)
+              if (priceRange) {
+                featuredProducts = featuredProducts.filter(
+                  (p) => p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1]
+                );
+              }
               if (featuredProducts.length === 0) return null;
-              
+
               return (
-                <div className="space-y-4 relative z-10">
+                <div data-carousel className="space-y-4 relative z-10">
                   <div 
                     style={{ borderColor: "var(--primary)" }}
                     className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300"
@@ -4036,18 +4076,46 @@ export function PublicCatalog({
                       />
                       {isSaleOnly ? (store.niche === "floreria" ? "Ofertas Ecológicas" : "Ofertas Especiales") : isFallback ? "Recomendaciones" : nicheTags.featuredTitle}
                     </h3>
-                    <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans">Desliza →</span>
+                    {featuredProducts.length > 1 && (
+                      <>
+                        <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">Desliza →</span>
+                        <div className="hidden md:flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            aria-label="Anterior"
+                            onClick={(e) => {
+                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                              s?.scrollBy({ left: -320, behavior: "smooth" });
+                            }}
+                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Siguiente"
+                            onClick={(e) => {
+                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                              s?.scrollBy({ left: 320, behavior: "smooth" });
+                            }}
+                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Horizontal Scroll of Featured Products */}
-                  <div className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
+                  <div data-carousel-scroll className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
                     <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
                       {featuredProducts.map((p) => (
                         <div
                           key={p.id}
                           onClick={() => setViewingProduct(p)}
                           style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
-                          className="w-[210px] sm:w-[260px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
+                          className="w-[210px] sm:w-[260px] lg:w-[290px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
                         >
                           <div className="space-y-3">
                             {/* Curved nature image card */}
@@ -4081,11 +4149,11 @@ export function PublicCatalog({
                               </span>
                               <h4 
                                 style={{ color: "var(--foreground)" }}
-                                className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors truncate"
+                                className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]"
                               >
                                 {p.name}
                               </h4>
-                              <p className="text-[11px] text-stone-500 line-clamp-2 h-8 leading-snug font-sans">
+                              <p className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans">
                                 {(p.description || "").replace(/#destacado/g, "").trim()}
                               </p>
                             </div>
@@ -4548,10 +4616,16 @@ export function PublicCatalog({
                 featuredProducts = productsWithImages.slice(0, 4);
                 isFallback = true;
               }
+              // Respetar el filtro de precio activo (igual que el grid)
+              if (priceRange) {
+                featuredProducts = featuredProducts.filter(
+                  (p) => p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1]
+                );
+              }
               if (featuredProducts.length === 0) return null;
-              
+
               return (
-                <div className="space-y-4 relative z-10">
+                <div data-carousel className="space-y-4 relative z-10">
                   <div className={cn(
                     "flex items-center justify-between border-l-2 pl-3 transition-colors duration-300",
                     ""
@@ -4575,11 +4649,39 @@ export function PublicCatalog({
                         </>
                       )}
                     </h3>
-                    <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans">Desliza →</span>
+                    {featuredProducts.length > 1 && (
+                      <>
+                        <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">Desliza →</span>
+                        <div className="hidden md:flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            aria-label="Anterior"
+                            onClick={(e) => {
+                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                              s?.scrollBy({ left: -320, behavior: "smooth" });
+                            }}
+                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Siguiente"
+                            onClick={(e) => {
+                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                              s?.scrollBy({ left: 320, behavior: "smooth" });
+                            }}
+                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* TWO-DIV PATTERN to prevent shadow and scale clipping */}
-                  <div className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
+                  <div data-carousel-scroll className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
                     <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
                       {featuredProducts.map((p) => (
                         <div
@@ -4625,22 +4727,38 @@ export function PublicCatalog({
                                   {isFallback ? "Arreglo Sugerido" : "Sugerencia de la Florista"}
                                 </span>
                               )}
-                              <h4 
+                              <h4
                                 style={{ color: store.textColor ? store.textColor : undefined }}
                                 className={cn(
-                                  "font-semibold text-sm sm:text-base text-stone-800 transition-colors truncate",
+                                  "font-semibold text-sm sm:text-base text-stone-800 transition-colors line-clamp-2 leading-snug min-h-[2.5rem]",
                                   isSerif ? "font-serif" : "font-sans",
                                   "group-hover:text-[var(--primary)]"
                                 )}
                               >
                                 {p.name}
                               </h4>
-                              <p 
-                                style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
-                                className="text-xs text-stone-500 line-clamp-2 h-8 leading-relaxed font-sans"
-                              >
-                                {(p.description || "").replace(/#destacado/g, "").trim()}
-                              </p>
+                              {(() => {
+                                const cleanDesc = (p.description || "").replace(/#destacado/g, "").trim();
+                                return (
+                                  <>
+                                    <p
+                                      style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
+                                      className="text-xs text-stone-500 line-clamp-2 leading-5 min-h-10 font-sans"
+                                    >
+                                      {cleanDesc}
+                                    </p>
+                                    {cleanDesc.length > 60 && (
+                                      <span
+                                        className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider font-sans opacity-80 group-hover:opacity-100 transition-opacity"
+                                        style={{ color: "var(--primary)" }}
+                                      >
+                                        Ver más
+                                        <ChevronRight className="h-3 w-3" />
+                                      </span>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </div>
                           </div>
                           {/* Buy section */}
@@ -4756,17 +4874,17 @@ export function PublicCatalog({
                 </div>
               )}
 
-              {/* Inline Horizontal Category Selector */}
+              {/* Inline Horizontal Category Selector — solo móvil: en desktop el sidebar ya cumple esta función */}
               <div className="space-y-3">
-                <h3 
+                <h3
                   style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.7 : undefined }}
-                  className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left"
+                  className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left md:hidden"
                 >
                   Categorías
                 </h3>
-                
+
                 {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
-                <div className="overflow-x-auto md:overflow-x-visible scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">
+                <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3 md:hidden">
                   <div className="flex md:flex-wrap gap-2.5 px-4 w-max md:w-full min-w-full md:min-w-0 md:justify-center">
                     <button
                       onClick={() => setActiveCat("all")}
@@ -4938,22 +5056,31 @@ export function PublicCatalog({
                               </div>
                               {/* Info */}
                               <div className="p-3 pt-1 space-y-1 text-left">
-                                <h4 
+                                <h4
                                   style={{ color: store.textColor ? store.textColor : undefined }}
                                   className={cn(
-                                    "font-semibold text-sm text-stone-800 transition-colors line-clamp-1",
+                                    "font-semibold text-sm text-stone-800 transition-colors line-clamp-2 leading-5 min-h-10",
                                     store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
                                   )}
                                 >
                                   {p.name}
                                 </h4>
                                 {p.description && (
-                                  <p 
+                                  <p
                                     style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
-                                    className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans"
+                                    className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans"
                                   >
                                     {p.description}
                                   </p>
+                                )}
+                                {p.description && p.description.trim().length > 50 && (
+                                  <span
+                                    className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider font-sans opacity-80 group-hover:opacity-100 transition-opacity"
+                                    style={{ color: "var(--primary)" }}
+                                  >
+                                    Ver más
+                                    <ChevronRight className="h-3 w-3" />
+                                  </span>
                                 )}
                               </div>
                             </div>

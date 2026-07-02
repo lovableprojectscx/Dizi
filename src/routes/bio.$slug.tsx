@@ -110,6 +110,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       bioBanner: data.bio_banner ?? undefined,
       bioTheme: data.bio_theme ?? "default",
       bioTypography: data.bio_typography ?? "sans",
+      bioShowCatalogButton: data.bio_show_catalog_button ?? null,
       bioButtonStyle: data.bio_button_style === "rounded-full" ? "pill-solid" : (data.bio_button_style ?? "pill-solid"),
       bioButtonColor: data.bio_button_color ?? undefined,
       bioButtonTextColor: data.bio_button_text_color ?? undefined,

@@ -53,6 +53,7 @@ const mapStoreFromDB = (row: any): Store => ({
   bioBanner: row.bio_banner ?? undefined,
   bioTheme: row.bio_theme ?? "default",
   bioTypography: row.bio_typography ?? "sans",
+  bioShowCatalogButton: row.bio_show_catalog_button ?? null,
   bioButtonStyle: row.bio_button_style === "rounded-full" ? "pill-solid" : (row.bio_button_style ?? "pill-solid"),
   bioButtonColor: row.bio_button_color ?? undefined,
   bioButtonTextColor: row.bio_button_text_color ?? undefined,
@@ -262,6 +263,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.bioBanner !== undefined) dbPatch.bio_banner = updatedPatch.bioBanner;
         if (updatedPatch.bioTheme !== undefined) dbPatch.bio_theme = updatedPatch.bioTheme;
         if (updatedPatch.bioTypography !== undefined) dbPatch.bio_typography = updatedPatch.bioTypography;
+        if (updatedPatch.bioShowCatalogButton !== undefined) dbPatch.bio_show_catalog_button = updatedPatch.bioShowCatalogButton;
         if (updatedPatch.bioButtonStyle !== undefined) dbPatch.bio_button_style = updatedPatch.bioButtonStyle;
         if (updatedPatch.bioButtonColor !== undefined) dbPatch.bio_button_color = updatedPatch.bioButtonColor;
         if (updatedPatch.bioButtonTextColor !== undefined) dbPatch.bio_button_text_color = updatedPatch.bioButtonTextColor;
