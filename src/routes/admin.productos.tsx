@@ -23,6 +23,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -439,12 +449,49 @@ function ProductsPage() {
     }
   };
 
+  // Reusable AlertDialog state
+  const [confirmConfig, setConfirmConfig] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    cancelText?: string;
+    actionText?: string;
+    onAction: () => void;
+    onCancel?: () => void;
+  } | null>(null);
+
+  const showConfirm = (config: Omit<NonNullable<typeof confirmConfig>, "open">) => {
+    setConfirmConfig({ ...config, open: true });
+  };
+
   // Products UI state
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product>(empty());
   const [priceInput, setPriceInput] = useState("");
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+
+  const handleSingleProductOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      const hasChanges = 
+        editing.name.trim() !== "" || 
+        priceInput.trim() !== "" || 
+        editing.image !== "" || 
+        (editing.description || "").trim() !== "";
+      
+      if (hasChanges) {
+        showConfirm({
+          title: "Cambios sin guardar",
+          description: "Tienes cambios sin guardar en este producto. ¿Deseas cerrar el formulario y perder los cambios?",
+          actionText: "Descartar",
+          cancelText: "Seguir editando",
+          onAction: () => setOpen(false)
+        });
+        return;
+      }
+    }
+    setOpen(isOpen);
+  };
 
   interface BulkDraft {
     id: string;
@@ -471,6 +518,21 @@ function ProductsPage() {
   const activeDraft = bulkDrafts.find((d) => d.id === selectedDraftId) || null;
 
   const handleBulkButtonClick = () => {
+    if (bulkDrafts.length > 0) {
+      showConfirm({
+        title: "Carga masiva activa",
+        description: "Tienes una carga masiva en progreso con fotos sin guardar. ¿Deseas continuar editando tu lista actual de fotos o prefieres descartarla y subir fotos nuevas?",
+        actionText: "Continuar editando",
+        cancelText: "Subir nuevas",
+        onAction: () => {
+          setBulkOpen(true);
+        },
+        onCancel: () => {
+          fileInputRef.current?.click();
+        }
+      });
+      return;
+    }
     fileInputRef.current?.click();
   };
 
@@ -512,6 +574,9 @@ function ProductsPage() {
       const newCatId = await handleCreateCategory("General");
       defaultCatId = newCatId || "";
     }
+
+    // Limpiar URLs previas para evitar fugas de memoria
+    bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
 
     const newDrafts: BulkDraft[] = Array.from(files).map((file) => {
       const baseName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
@@ -763,6 +828,55 @@ function ProductsPage() {
 
         {/* ── PRODUCTS TAB CONTENT ── */}
         <TabsContent value="productos" className="space-y-4 mt-6">
+          {/* Banner de recuperación de carga masiva en progreso */}
+          {!bulkOpen && bulkDrafts.length > 0 && (
+            <div className="animate-in fade-in slide-in-from-top-4 duration-300 rounded-2xl border border-amber-200/80 dark:border-amber-900/35 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-sm backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-start gap-3">
+                <div className="text-amber-600 dark:text-amber-500 mt-0.5 shrink-0 bg-amber-100 dark:bg-amber-900/40 p-2 rounded-xl">
+                  <Images className="h-5 w-5 animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-amber-800 dark:text-amber-200 text-sm">
+                    Carga masiva en progreso
+                  </h4>
+                  <p className="text-xs text-amber-700/85 dark:text-amber-300/80 mt-0.5 leading-relaxed">
+                    Tienes <strong>{bulkDrafts.length} fotos</strong> configuradas sin guardar. Puedes continuar editándolas o descartarlas.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 self-end sm:self-center shrink-0 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 sm:flex-none h-8.5 text-xs font-semibold rounded-lg bg-transparent border-amber-300/50 hover:bg-amber-100/50 dark:border-amber-800/40 dark:hover:bg-amber-900/30 text-amber-800 dark:text-amber-300 transition-all active:scale-95 cursor-pointer"
+                  onClick={() => {
+                    showConfirm({
+                      title: "Descartar borradores",
+                      description: "¿Estás seguro de que deseas descartar estos borradores de carga masiva? Se perderán todas las fotos y datos configurados.",
+                      actionText: "Sí, descartar",
+                      cancelText: "Cancelar",
+                      onAction: () => {
+                        bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+                        setBulkDrafts([]);
+                        setSelectedDraftId(null);
+                      }
+                    });
+                  }}
+                >
+                  Descartar
+                </Button>
+                <Button
+                  size="sm"
+                  className="flex-1 sm:flex-none h-8.5 text-xs font-bold gap-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20 transition-all active:scale-95 cursor-pointer"
+                  onClick={() => setBulkOpen(true)}
+                >
+                  <Plus className="h-3 w-3" />
+                  Continuar Editando
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h2 className="text-xl font-bold tracking-tight">Mis Productos</h2>
@@ -923,7 +1037,13 @@ function ProductsPage() {
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          if (confirm("¿Eliminar " + p.name + "?")) del(store.id, p.id);
+                          showConfirm({
+                            title: "Eliminar producto",
+                            description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
+                            actionText: "Eliminar",
+                            cancelText: "Cancelar",
+                            onAction: () => del(store.id, p.id)
+                          });
                         }}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -1031,7 +1151,13 @@ function ProductsPage() {
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => {
-                        if (confirm("¿Eliminar " + p.name + "?")) del(store.id, p.id);
+                        showConfirm({
+                          title: "Eliminar producto",
+                          description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
+                          actionText: "Eliminar",
+                          cancelText: "Cancelar",
+                          onAction: () => del(store.id, p.id)
+                        });
                       }}
                     >
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -1062,7 +1188,11 @@ function ProductsPage() {
                   <Plus className="h-4 w-4" /> Nueva Categoría
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] max-h-[90dvh] flex flex-col">
+              <DialogContent 
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onEscapeKeyDown={(e) => e.preventDefault()}
+                className="sm:max-w-[425px] max-h-[90dvh] flex flex-col"
+              >
                 <DialogHeader>
                   <DialogTitle>Crear Categoría</DialogTitle>
                   <DialogDescription>
@@ -1188,9 +1318,13 @@ function ProductsPage() {
                         toast.error("Mueve o elimina los productos antes de eliminar esta categoría");
                         return;
                       }
-                      if (confirm(`¿Eliminar la categoría "${getCleanCategoryName(c.name)}"?`)) {
-                        deleteCategory(store.id, c.id);
-                      }
+                      showConfirm({
+                        title: "Eliminar categoría",
+                        description: `¿Estás seguro de que deseas eliminar la categoría "${getCleanCategoryName(c.name)}"? Esta acción no se puede deshacer.`,
+                        actionText: "Eliminar",
+                        cancelText: "Cancelar",
+                        onAction: () => deleteCategory(store.id, c.id)
+                      });
                     }}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -1202,7 +1336,11 @@ function ProductsPage() {
 
           {/* Dialog Editar Categoría */}
           <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-            <DialogContent className="sm:max-w-[425px] max-h-[90dvh] flex flex-col">
+            <DialogContent 
+              onPointerDownOutside={(e) => e.preventDefault()}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              className="sm:max-w-[425px] max-h-[90dvh] flex flex-col"
+            >
               <DialogHeader>
                 <DialogTitle>Editar Categoría</DialogTitle>
                 <DialogDescription>
@@ -1288,8 +1426,12 @@ function ProductsPage() {
       </Tabs>
 
       {/* Dialog formulario de producto */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background">
+      <Dialog open={open} onOpenChange={handleSingleProductOpenChange}>
+        <DialogContent 
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background"
+        >
           <DialogHeader className="px-6 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
             <div className="pr-6">
               <DialogTitle className="text-lg font-extrabold tracking-tight flex items-center gap-2 text-foreground">
@@ -1503,7 +1645,7 @@ function ProductsPage() {
             <Button
               variant="outline"
               className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
-              onClick={() => setOpen(false)}
+              onClick={() => handleSingleProductOpenChange(false)}
             >
               Cancelar
             </Button>
@@ -1529,7 +1671,11 @@ function ProductsPage() {
 
       {/* Dialog Carga Rápida / Upgrade */}
       <Dialog open={bulkOpen} onOpenChange={(val) => { if (!uploadingDrafts) setBulkOpen(val); }}>
-        <DialogContent className="max-w-4xl w-[95vw] md:w-[85vw] max-h-[95dvh] md:max-h-[85dvh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl border-primary/10">
+        <DialogContent 
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          className="max-w-4xl w-[95vw] md:w-[85vw] max-h-[95dvh] md:max-h-[85dvh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl border-primary/10"
+        >
           <DialogHeader className="px-5 pt-5 pb-3 border-b shrink-0">
             <div>
               <DialogTitle className="text-lg md:text-xl font-extrabold text-foreground flex items-center gap-2">
@@ -1885,10 +2031,18 @@ function ProductsPage() {
                 variant="outline"
                 className="flex-1 sm:flex-none text-xs rounded-xl cursor-pointer"
                 onClick={() => {
-                  bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
-                  setBulkDrafts([]);
-                  setSelectedDraftId(null);
-                  setBulkOpen(false);
+                  showConfirm({
+                    title: "Cancelar Carga Masiva",
+                    description: "¿Estás seguro de que deseas cancelar? Se descartarán todas las fotos y configuraciones de este borrador.",
+                    actionText: "Sí, cancelar",
+                    cancelText: "Volver a editar",
+                    onAction: () => {
+                      bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
+                      setBulkDrafts([]);
+                      setSelectedDraftId(null);
+                      setBulkOpen(false);
+                    }
+                  });
                 }}
               >
                 Cancelar
@@ -1912,6 +2066,45 @@ function ProductsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Diálogo de Confirmación Reutilizable (AlertDialog) */}
+      <AlertDialog 
+        open={!!confirmConfig?.open} 
+        onOpenChange={(val) => {
+          if (!val) setConfirmConfig(prev => prev ? { ...prev, open: false } : null);
+        }}
+      >
+        <AlertDialogContent className="max-w-[400px] w-[90vw] rounded-2xl border-none shadow-2xl bg-background p-6 text-slate-900 dark:text-zinc-50">
+          <AlertDialogHeader className="gap-1.5">
+            <AlertDialogTitle className="text-base font-bold text-foreground">
+              {confirmConfig?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground leading-relaxed">
+              {confirmConfig?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-row gap-2 mt-4 sm:justify-end">
+            <AlertDialogCancel 
+              className="flex-1 sm:flex-none text-xs h-9 rounded-xl border border-slate-200 dark:border-slate-800 font-semibold cursor-pointer"
+              onClick={() => {
+                confirmConfig?.onCancel?.();
+                setConfirmConfig(null);
+              }}
+            >
+              {confirmConfig?.cancelText || "Cancelar"}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="flex-1 sm:flex-none text-xs h-9 rounded-xl font-bold bg-primary hover:opacity-90 text-white cursor-pointer"
+              onClick={() => {
+                confirmConfig?.onAction();
+                setConfirmConfig(null);
+              }}
+            >
+              {confirmConfig?.actionText || "Aceptar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
