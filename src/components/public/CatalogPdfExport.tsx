@@ -718,7 +718,7 @@ async function generateCatalogPdf(
         // Rústico: Textos debajo de la imagen
         textX = cardX + 4;
         textW = CARD_W - 8;
-        nameY = actualCardY + IMG_H + 8;
+        nameY = actualCardY + IMG_H + 6;
         descY = nameY + 5;
         priceY = actualCardY + CARD_H - 3;
       } else if (isNordico) {
@@ -732,27 +732,21 @@ async function generateCatalogPdf(
         // Moderno, Oscuro, Elegante: Imagen izquierda, textos derecha
         textX = imgX + IMG_W + 3;
         textW = CARD_W - IMG_W - 9;
-        nameY = prod.isOnSale ? imgY + 7 : imgY + 2;
-        descY = nameY + 8;
+        nameY = imgY + 2;
+        descY = nameY + 6;
         priceY = actualCardY + CARD_H - 6;
       }
 
-      // Badge de oferta
+      // Badge de oferta sobre la imagen (previene solapamientos con el texto)
       if (prod.isOnSale) {
-        const badgeX = isRustico ? cardX + CARD_W - 18 : textX;
-        const badgeY = isRustico ? actualCardY + IMG_H + 4 : imgY;
+        const badgeX = imgX + 1.5;
+        const badgeY = imgY + 1.5;
         doc.setFillColor("#ef4444");
         doc.roundedRect(badgeX, badgeY, 14, 4.5, 1, 1, "F");
         setFont("bold");
         doc.setFontSize(5.5);
         doc.setTextColor("#ffffff");
         doc.text("OFERTA", badgeX + 7, badgeY + 3.2, { align: "center" });
-
-        // Ajustar posición vertical del nombre si es Rústico
-        if (isRustico) {
-          nameY = actualCardY + IMG_H + 11;
-          descY = nameY + 5;
-        }
       }
 
       // Nombre producto (más grande y destacado)
