@@ -136,8 +136,12 @@ function blendColors(fg: string, bg: string, alpha: number): string {
   }
 }
 
-/** Descarga una imagen, la redimensiona a un tamaño máximo (400px) y la convierte a JPEG Base64 comprimido */
-async function urlToBase64(url: string, maxDim = 400): Promise<string | null> {
+/** Descarga una imagen, la recorta (object-fit: cover) al aspect ratio objetivo y la convierte a JPEG comprimido */
+async function urlToBase64(
+  url: string,
+  targetAspectRatio?: number,
+  maxDim = 400,
+): Promise<string | null> {
   try {
     // Evitamos problemas de caché del navegador que causan errores de CORS ficticios
     const separator = url.includes("?") ? "&" : "?";
@@ -155,23 +159,54 @@ async function urlToBase64(url: string, maxDim = 400): Promise<string | null> {
       img.src = blobUrl;
     });
 
-    // Calcular nuevas dimensiones manteniendo la relación de aspecto
-    let width = img.width;
-    let height = img.height;
-    if (width > maxDim || height > maxDim) {
-      if (width > height) {
-        height = Math.round((height * maxDim) / width);
-        width = maxDim;
+    // Calcular dimensiones del canvas final respetando el aspect ratio objetivo
+    let canvasWidth = maxDim;
+    let canvasHeight = maxDim;
+
+    if (targetAspectRatio) {
+      if (targetAspectRatio > 1) {
+        // Ancho es mayor que alto (ej. Rústico)
+        canvasWidth = maxDim;
+        canvasHeight = Math.round(maxDim / targetAspectRatio);
       } else {
-        width = Math.round((width * maxDim) / height);
-        height = maxDim;
+        // Alto es mayor que ancho
+        canvasHeight = maxDim;
+        canvasWidth = Math.round(maxDim * targetAspectRatio);
+      }
+    } else {
+      // Mantener aspect ratio original
+      if (img.width > img.height) {
+        canvasHeight = Math.round((img.height * maxDim) / img.width);
+        canvasWidth = maxDim;
+      } else {
+        canvasWidth = Math.round((img.width * maxDim) / img.height);
+        canvasHeight = maxDim;
+      }
+    }
+
+    // Calcular de qué parte de la imagen origen cortar (cropping en el centro al estilo 'object-fit: cover')
+    let sourceX = 0;
+    let sourceY = 0;
+    let sourceWidth = img.width;
+    let sourceHeight = img.height;
+
+    if (targetAspectRatio) {
+      const imgAspectRatio = img.width / img.height;
+      if (imgAspectRatio > targetAspectRatio) {
+        // La imagen origen es más ancha de lo requerido, cortamos a los lados
+        sourceWidth = img.height * targetAspectRatio;
+        sourceX = (img.width - sourceWidth) / 2;
+      } else {
+        // La imagen origen es más alta de lo requerido, cortamos arriba y abajo
+        sourceHeight = img.width / targetAspectRatio;
+        sourceY = (img.height - sourceHeight) / 2;
       }
     }
 
     // Dibujar en canvas y exportar como JPEG comprimido
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       URL.revokeObjectURL(blobUrl);
@@ -180,9 +215,10 @@ async function urlToBase64(url: string, maxDim = 400): Promise<string | null> {
 
     // Fondo blanco por si la imagen tiene transparencia (ej. PNG/WebP transparentes)
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    ctx.drawImage(img, 0, 0, width, height);
+    // Dibujar recortado y centrado
+    ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvasWidth, canvasHeight);
     const compressedBase64 = canvas.toDataURL("image/jpeg", 0.75); // 75% calidad
 
     URL.revokeObjectURL(blobUrl);
@@ -252,6 +288,12 @@ async function generateCatalogPdf(
     doc.setFont(fontName, style);
   };
 
+  // Descargar y comprimir logo una sola vez al inicio (con relación de aspecto 1:1 para evitar distorsión)
+  let logoB64: string | null = null;
+  if (store.logo) {
+    logoB64 = await urlToBase64(store.logo, 1);
+  }
+
   /* ── Helpers de dibujo ─────────────────── */
   const newPage = () => {
     doc.addPage();
@@ -298,16 +340,13 @@ async function generateCatalogPdf(
 
     const logoY = 45;
     let logoLoaded = false;
-    if (store.logo) {
-      const b64 = await urlToBase64(store.logo);
-      if (b64) {
-        try {
-          doc.setFillColor("#ffffff");
-          doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 2, 2, "F");
-          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
-          logoLoaded = true;
-        } catch {}
-      }
+    if (logoB64) {
+      try {
+        doc.setFillColor("#ffffff");
+        doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 2, 2, "F");
+        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        logoLoaded = true;
+      } catch {}
     }
     if (!logoLoaded) {
       doc.setFillColor(t.card);
@@ -351,14 +390,11 @@ async function generateCatalogPdf(
 
     const logoY = 42;
     let logoLoaded = false;
-    if (store.logo) {
-      const b64 = await urlToBase64(store.logo);
-      if (b64) {
-        try {
-          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
-          logoLoaded = true;
-        } catch {}
-      }
+    if (logoB64) {
+      try {
+        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        logoLoaded = true;
+      } catch {}
     }
     doc.setDrawColor(t.accent);
     doc.setLineWidth(0.5);
@@ -399,16 +435,13 @@ async function generateCatalogPdf(
 
     const logoY = 46;
     let logoLoaded = false;
-    if (store.logo) {
-      const b64 = await urlToBase64(store.logo);
-      if (b64) {
-        try {
-          doc.setFillColor("#ffffff");
-          doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 2, "F");
-          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
-          logoLoaded = true;
-        } catch {}
-      }
+    if (logoB64) {
+      try {
+        doc.setFillColor("#ffffff");
+        doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 2, "F");
+        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        logoLoaded = true;
+      } catch {}
     }
     if (!logoLoaded) {
       doc.setFillColor("#ffffff");
@@ -448,16 +481,13 @@ async function generateCatalogPdf(
 
     const logoY = 48;
     let logoLoaded = false;
-    if (store.logo) {
-      const b64 = await urlToBase64(store.logo);
-      if (b64) {
-        try {
-          doc.setFillColor("#ffffff");
-          doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
-          logoLoaded = true;
-        } catch {}
-      }
+    if (logoB64) {
+      try {
+        doc.setFillColor("#ffffff");
+        doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
+        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        logoLoaded = true;
+      } catch {}
     }
     if (!logoLoaded) {
       doc.setFillColor("#ffffff");
@@ -492,16 +522,13 @@ async function generateCatalogPdf(
 
     const logoY = 51;
     let logoLoaded = false;
-    if (store.logo) {
-      const b64 = await urlToBase64(store.logo);
-      if (b64) {
-        try {
-          doc.setFillColor("#ffffff");
-          doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
-          logoLoaded = true;
-        } catch {}
-      }
+    if (logoB64) {
+      try {
+        doc.setFillColor("#ffffff");
+        doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
+        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        logoLoaded = true;
+      } catch {}
     }
     if (!logoLoaded) {
       doc.setFillColor("#ffffff");
@@ -658,7 +685,7 @@ async function generateCatalogPdf(
       let imgLoaded = false;
 
       if (prod.image) {
-        const b64 = await urlToBase64(prod.image);
+        const b64 = await urlToBase64(prod.image, IMG_W / IMG_H);
         if (b64) {
           try {
             doc.addImage(b64, "JPEG", imgX, imgY, IMG_W, IMG_H, undefined, "FAST");
