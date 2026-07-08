@@ -429,30 +429,37 @@ async function generateCatalogPdf(
 
     y = 36;
 
-    /* ── Grid de productos: 2 columnas ── */
-    const CARD_H = 54; // altura por tarjeta en mm
-    const IMG_SIZE = 34;
-    const GAP = 6;
+    /* ── Configuración de tarjeta según el estilo de diseño ── */
+    const isNordico = theme.id === "nordico";
+    const isRustico = theme.id === "rustico";
 
-    let col = 0; // 0 = izq, 1 = der
+    const CARD_H = isNordico ? 46 : (isRustico ? 68 : 54);
+    const COLS = isNordico ? 1 : 2;
+    const GAP = 6;
+    const CARD_W = isNordico ? (PAGE_W - MARGIN * 2) : COL_W;
+    
+    // Dimensiones de la imagen
+    const IMG_W = isRustico ? (CARD_W - 6) : (isNordico ? 40 : 34);
+    const IMG_H = isRustico ? 36 : (isNordico ? 40 : 34);
+
+    let col = 0; // 0 = izq, 1 = der (solo aplica cuando COLS es 2)
 
     for (let pi = 0; pi < group.products.length; pi++) {
       const prod = group.products[pi];
 
       // Coordenadas
-      const cardX = MARGIN + col * (COL_W + GAP);
-
+      const cardX = MARGIN + col * (CARD_W + GAP);
       checkY(CARD_H + 4);
       const actualCardY = y; // puede haber cambiado tras checkY
 
       // ---- 1. DIBUJAR TARJETA (FONDO Y BORDE) ----
       doc.setFillColor(t.card);
-      doc.roundedRect(cardX, actualCardY, COL_W, CARD_H, 2.5, 2.5, "F");
+      doc.roundedRect(cardX, actualCardY, CARD_W, CARD_H, 2.5, 2.5, "F");
 
       // Borde de la tarjeta
       doc.setDrawColor(blendColors(t.accent, t.bg, theme.id === "oscuro" ? 0.3 : 0.25));
       doc.setLineWidth(0.2);
-      doc.roundedRect(cardX, actualCardY, COL_W, CARD_H, 2.5, 2.5, "S");
+      doc.roundedRect(cardX, actualCardY, CARD_W, CARD_H, 2.5, 2.5, "S");
 
       // ---- 2. DIBUJAR IMAGEN O PLACEHOLDER (ENCIMA DE LA TARJETA) ----
       const imgX = cardX + 3;
@@ -463,7 +470,7 @@ async function generateCatalogPdf(
         const b64 = await urlToBase64(prod.image);
         if (b64) {
           try {
-            doc.addImage(b64, "JPEG", imgX, imgY, IMG_SIZE, IMG_SIZE, undefined, "FAST");
+            doc.addImage(b64, "JPEG", imgX, imgY, IMG_W, IMG_H, undefined, "FAST");
             imgLoaded = true;
           } catch {
             /* fallback */
@@ -474,34 +481,63 @@ async function generateCatalogPdf(
       if (!imgLoaded) {
         // Placeholder con inicial
         doc.setFillColor(blendColors(t.accent, t.card, 0.13));
-        doc.roundedRect(imgX, imgY, IMG_SIZE, IMG_SIZE, 2, 2, "F");
+        doc.roundedRect(imgX, imgY, IMG_W, IMG_H, 2, 2, "F");
         setFont("bold");
         doc.setFontSize(14);
         doc.setTextColor(t.accent);
         doc.text(
           safe(prod.name.charAt(0).toUpperCase()),
-          imgX + IMG_SIZE / 2,
-          imgY + IMG_SIZE / 2 + 2,
+          imgX + IMG_W / 2,
+          imgY + IMG_H / 2 + 2,
           { align: "center" },
         );
       }
 
       // ---- 3. DIBUJAR TEXTOS DE PRODUCTO ----
-      const textX = imgX + IMG_SIZE + 3;
-      const textW = COL_W - IMG_SIZE - 9;
+      let textX, textW, nameY, descY, priceY;
 
-      // Badge oferta
+      if (isRustico) {
+        // Rústico: Textos debajo de la imagen
+        textX = cardX + 4;
+        textW = CARD_W - 8;
+        nameY = actualCardY + IMG_H + 8;
+        descY = nameY + 5;
+        priceY = actualCardY + CARD_H - 3;
+      } else if (isNordico) {
+        // Nórdico: Imagen a la izquierda (grande), textos a la derecha
+        textX = imgX + IMG_W + 5;
+        textW = CARD_W - IMG_W - 11;
+        nameY = actualCardY + 6;
+        descY = nameY + 6;
+        priceY = actualCardY + CARD_H - 5;
+      } else {
+        // Moderno, Oscuro, Elegante: Imagen izquierda, textos derecha
+        textX = imgX + IMG_W + 3;
+        textW = CARD_W - IMG_W - 9;
+        nameY = prod.isOnSale ? imgY + 7 : imgY + 2;
+        descY = nameY + 8;
+        priceY = actualCardY + CARD_H - 6;
+      }
+
+      // Badge de oferta
       if (prod.isOnSale) {
+        const badgeX = isRustico ? cardX + CARD_W - 18 : textX;
+        const badgeY = isRustico ? actualCardY + IMG_H + 4 : imgY;
         doc.setFillColor("#ef4444");
-        doc.roundedRect(textX, imgY, 14, 4.5, 1, 1, "F");
+        doc.roundedRect(badgeX, badgeY, 14, 4.5, 1, 1, "F");
         setFont("bold");
         doc.setFontSize(5.5);
         doc.setTextColor("#ffffff");
-        doc.text("OFERTA", textX + 7, imgY + 3.2, { align: "center" });
+        doc.text("OFERTA", badgeX + 7, badgeY + 3.2, { align: "center" });
+
+        // Ajustar posición vertical del nombre si es Rústico
+        if (isRustico) {
+          nameY = actualCardY + IMG_H + 11;
+          descY = nameY + 5;
+        }
       }
 
       // Nombre producto
-      const nameY = prod.isOnSale ? imgY + 7 : imgY + 2;
       setFont("bold");
       doc.setFontSize(7.5);
       doc.setTextColor(t.text);
@@ -513,36 +549,61 @@ async function generateCatalogPdf(
         setFont("normal");
         doc.setFontSize(6);
         doc.setTextColor(t.subtext);
+        const maxLines = isNordico ? 4 : 2; // Más líneas en Nórdico por el ancho
         const descLines = doc.splitTextToSize(safe(prod.description), textW);
-        doc.text(descLines.slice(0, 3), textX, nameY + 8);
+        doc.text(descLines.slice(0, maxLines), textX, descY);
       }
 
-      // Precio
-      const priceY = actualCardY + CARD_H - 6;
+      // Precio y Precio de Oferta
       if (prod.isOnSale && prod.originalPrice) {
-        // Precio original tachado
         setFont("normal");
         doc.setFontSize(6);
         doc.setTextColor(t.subtext);
         const origText = formatPrice(prod.originalPrice);
-        doc.text(safe(origText), textX, priceY - 4);
-        // Línea tachado
-        const origW = doc.getTextWidth(safe(origText));
-        doc.setDrawColor(t.subtext);
-        doc.setLineWidth(0.3);
-        doc.line(textX, priceY - 5, textX + origW, priceY - 5);
+
+        if (isRustico || isNordico) {
+          // Rústico/Nórdico: Precios en horizontal (Tachado, Actual)
+          const origW = doc.getTextWidth(safe(origText));
+          doc.text(safe(origText), textX, priceY);
+          // Línea de tachado
+          doc.setDrawColor(t.subtext);
+          doc.setLineWidth(0.3);
+          doc.line(textX, priceY - 1, textX + origW, priceY - 1);
+
+          setFont("bold");
+          doc.setFontSize(9);
+          doc.setTextColor(t.accent);
+          doc.text(safe(formatPrice(prod.price)), textX + origW + 3, priceY);
+        } else {
+          // Estilo original vertical (Tachado arriba, Actual abajo)
+          doc.text(safe(origText), textX, priceY - 4);
+          const origW = doc.getTextWidth(safe(origText));
+          doc.setDrawColor(t.subtext);
+          doc.setLineWidth(0.3);
+          doc.line(textX, priceY - 5, textX + origW, priceY - 5);
+
+          setFont("bold");
+          doc.setFontSize(9);
+          doc.setTextColor(t.accent);
+          doc.text(safe(formatPrice(prod.price)), textX, priceY);
+        }
+      } else {
+        setFont("bold");
+        doc.setFontSize(9);
+        doc.setTextColor(t.accent);
+        doc.text(safe(formatPrice(prod.price)), textX, priceY);
       }
-      setFont("bold");
-      doc.setFontSize(9);
-      doc.setTextColor(t.accent);
-      doc.text(safe(formatPrice(prod.price)), textX, priceY);
 
       // Avanzar columna / fila
-      if (col === 0) {
-        col = 1;
-      } else {
-        col = 0;
+      if (COLS === 1) {
         y += CARD_H + 4;
+      } else {
+        if (col === 0) {
+          col = 1;
+        } else {
+          col = 0;
+          y += CARD_H + 4;
+        }
       }
 
       processedCount++;
@@ -553,8 +614,8 @@ async function generateCatalogPdf(
       }
     }
 
-    // Si quedó col izquierda sin par, avanzar fila
-    if (col === 1) y += CARD_H + 4;
+    // Si quedó col izquierda sin par al terminar, avanzar fila
+    if (COLS === 2 && col === 1) y += CARD_H + 4;
   }
 
   /* ── PÁGINA FINAL: CTA ─────────────────── */
