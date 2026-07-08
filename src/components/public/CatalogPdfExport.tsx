@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Store, Product } from "@/lib/types";
 import { formatPrice } from "@/lib/whatsapp";
+import { supabase } from "@/lib/supabase";
 
 /* ─────────────────────────────────────────────────────────
    PDF STYLE THEMES
@@ -144,12 +145,40 @@ async function urlToBase64(
   isCircle = false,
 ): Promise<string | null> {
   try {
-    // Evitamos problemas de caché del navegador que causan errores de CORS ficticios
-    const separator = url.includes("?") ? "&" : "?";
-    const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
-    const res = await fetch(cacheBusterUrl, { mode: "cors" });
-    if (!res.ok) return null;
-    const blob = await res.blob();
+    let blob: Blob;
+
+    // Detectar si la URL pertenece al almacenamiento de Supabase para poder descargarla con el cliente JS
+    // y adjuntar automáticamente las cabeceras de autorización de la sesión (ej. rol soporte/super-admin)
+    const storageMatch = url.match(/\/storage\/v1\/object\/(public|sign)\/([^/]+)\/(.+)$/);
+    if (storageMatch) {
+      const bucket = storageMatch[2];
+      let path = storageMatch[3];
+      const qIndex = path.indexOf("?");
+      if (qIndex !== -1) {
+        path = path.substring(0, qIndex);
+      }
+
+      // Descargamos la imagen usando el SDK de Supabase
+      const { data, error } = await supabase.storage.from(bucket).download(path);
+      if (error || !data) {
+        console.warn(`[PDF Storage Download Fail] bucket: ${bucket}, path: ${path}`, error);
+        // Fallback a fetch tradicional por si falla
+        const separator = url.includes("?") ? "&" : "?";
+        const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
+        const res = await fetch(cacheBusterUrl, { mode: "cors" });
+        if (!res.ok) return null;
+        blob = await res.blob();
+      } else {
+        blob = data;
+      }
+    } else {
+      // Descarga directa mediante fetch tradicional para URLs externas
+      const separator = url.includes("?") ? "&" : "?";
+      const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
+      const res = await fetch(cacheBusterUrl, { mode: "cors" });
+      if (!res.ok) return null;
+      blob = await res.blob();
+    }
 
     // Crear objeto Image para dibujar en Canvas
     const img = new Image();
