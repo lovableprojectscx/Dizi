@@ -288,56 +288,247 @@ async function generateCatalogPdf(
 
   const logoSize = 28;
   const logoX = PAGE_W / 2 - logoSize / 2;
-  const logoY = 51; // Overlapping en el borde del bloque decorativo
 
-  // Bloque decorativo superior
-  doc.setFillColor(t.accent);
-  doc.rect(0, 0, PAGE_W, 65, "F");
+  if (theme.id === "elegante") {
+    // ---- PORTADA ELEGANTE (Luxury Gold & Cream) ----
+    doc.setDrawColor(t.accent);
+    doc.setLineWidth(0.3);
+    doc.rect(10, 10, PAGE_W - 20, PAGE_H - 20, "S");
+    doc.rect(11.5, 11.5, PAGE_W - 23, PAGE_H - 23, "S");
 
-  // Cargar logo centrado
-  let logoLoaded = false;
-  if (store.logo) {
-    const b64 = await urlToBase64(store.logo);
-    if (b64) {
-      try {
-        // Fondo blanco redondeado para resaltar el logo
-        doc.setFillColor("#ffffff");
-        doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-        doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
-        logoLoaded = true;
-      } catch {
-        /* fallback */
+    const logoY = 45;
+    let logoLoaded = false;
+    if (store.logo) {
+      const b64 = await urlToBase64(store.logo);
+      if (b64) {
+        try {
+          doc.setFillColor("#ffffff");
+          doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 2, 2, "F");
+          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+          logoLoaded = true;
+        } catch {}
       }
     }
-  }
-  if (!logoLoaded) {
-    doc.setFillColor("#ffffff");
-    doc.roundedRect(logoX, logoY, logoSize, logoSize, 3, 3, "F");
+    if (!logoLoaded) {
+      doc.setFillColor(t.card);
+      doc.roundedRect(logoX, logoY, logoSize, logoSize, 2, 2, "F");
+      doc.setDrawColor(t.accent);
+      doc.setLineWidth(0.35);
+      doc.roundedRect(logoX, logoY, logoSize, logoSize, 2, 2, "S");
+      setFont("bold");
+      doc.setFontSize(18);
+      doc.setTextColor(t.accent);
+      doc.text(safe(store.name.charAt(0).toUpperCase()), PAGE_W / 2, logoY + logoSize / 2 + 3, {
+        align: "center",
+      });
+    }
+
     setFont("bold");
-    doc.setFontSize(18);
+    doc.setFontSize(26);
+    doc.setTextColor(t.header);
+    doc.text(safe(store.name.toUpperCase()), PAGE_W / 2, 92, { align: "center" });
+
+    doc.setDrawColor(t.accent);
+    doc.setLineWidth(0.4);
+    doc.line(PAGE_W / 2 - 30, 99, PAGE_W / 2 - 4, 99);
+    doc.line(PAGE_W / 2 + 4, 99, PAGE_W / 2 + 30, 99);
+    doc.setFillColor(t.accent);
+    doc.triangle(PAGE_W / 2, 97.5, PAGE_W / 2 - 2, 99, PAGE_W / 2 + 2, 99, "FD");
+    doc.triangle(PAGE_W / 2, 100.5, PAGE_W / 2 - 2, 99, PAGE_W / 2 + 2, 99, "FD");
+
+    setFont("italic");
+    doc.setFontSize(10);
+    doc.setTextColor(t.subtext);
+    doc.text("Catálogo Oficial de Productos", PAGE_W / 2, 108, { align: "center" });
+
+    y = 125;
+
+  } else if (theme.id === "oscuro") {
+    // ---- PORTADA PREMIUM DARK ----
+    doc.setDrawColor(t.accent);
+    doc.setLineWidth(0.35);
+    doc.rect(10, 10, PAGE_W - 20, PAGE_H - 20, "S");
+
+    const logoY = 42;
+    let logoLoaded = false;
+    if (store.logo) {
+      const b64 = await urlToBase64(store.logo);
+      if (b64) {
+        try {
+          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+          logoLoaded = true;
+        } catch {}
+      }
+    }
+    doc.setDrawColor(t.accent);
+    doc.setLineWidth(0.5);
+    doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 4, "S");
+
+    if (!logoLoaded) {
+      setFont("bold");
+      doc.setFontSize(20);
+      doc.setTextColor(t.accent);
+      doc.text(safe(store.name.charAt(0).toUpperCase()), PAGE_W / 2, logoY + logoSize / 2 + 3, {
+        align: "center",
+      });
+    }
+
+    setFont("bold");
+    doc.setFontSize(26);
     doc.setTextColor(t.accent);
-    doc.text(safe(store.name.charAt(0).toUpperCase()), PAGE_W / 2, logoY + logoSize / 2 + 3, {
-      align: "center",
-    });
+    doc.text(safe(store.name.toUpperCase()), PAGE_W / 2, 92, { align: "center" });
+
+    setFont("normal");
+    doc.setFontSize(9);
+    doc.setTextColor("#ffffffcc");
+    doc.text("COLECCIÓN EXCLUSIVA DE PRODUCTOS", PAGE_W / 2, 100, { align: "center" });
+
+    doc.setFillColor(t.accent);
+    doc.rect(PAGE_W / 2 - 20, 106, 40, 0.4, "F");
+
+    y = 125;
+
+  } else if (theme.id === "rustico") {
+    // ---- PORTADA CÁLIDO RÚSTICO (Artisan & Cozy) ----
+    doc.setFillColor(t.accent);
+    doc.rect(0, 0, 6, PAGE_H, "F");
+    doc.rect(PAGE_W - 6, 0, 6, PAGE_H, "F");
+
+    doc.setFillColor(t.accent);
+    doc.rect(6, 35, PAGE_W - 12, 50, "F");
+
+    const logoY = 46;
+    let logoLoaded = false;
+    if (store.logo) {
+      const b64 = await urlToBase64(store.logo);
+      if (b64) {
+        try {
+          doc.setFillColor("#ffffff");
+          doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 2, "F");
+          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+          logoLoaded = true;
+        } catch {}
+      }
+    }
+    if (!logoLoaded) {
+      doc.setFillColor("#ffffff");
+      doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 2, "F");
+      setFont("bold");
+      doc.setFontSize(18);
+      doc.setTextColor(t.accent);
+      doc.text(safe(store.name.charAt(0).toUpperCase()), PAGE_W / 2, logoY + logoSize / 2 + 3, {
+        align: "center",
+      });
+    }
+
+    setFont("bold");
+    doc.setFontSize(24);
+    doc.setTextColor(t.header);
+    doc.text(safe(store.name.toUpperCase()), PAGE_W / 2, 102, { align: "center" });
+
+    setFont("italic");
+    doc.setFontSize(9.5);
+    doc.setTextColor(t.subtext);
+    doc.text("Hecho con amor · Catálogo de Productos", PAGE_W / 2, 109, { align: "center" });
+
+    doc.setDrawColor(t.accent);
+    doc.setLineWidth(0.3);
+    doc.line(PAGE_W / 2 - 30, 116, PAGE_W / 2 + 30, 116);
+    doc.setFillColor(t.accent);
+    doc.circle(PAGE_W / 2, 116, 1.2, "FD");
+    doc.circle(PAGE_W / 2 - 10, 116, 0.8, "FD");
+    doc.circle(PAGE_W / 2 + 10, 116, 0.8, "FD");
+
+    y = 130;
+
+  } else if (theme.id === "nordico") {
+    // ---- PORTADA NÓRDICO ORGÁNICO (Clean Scandinavian) ----
+    doc.setFillColor(t.accent);
+    doc.rect(0, 0, 14, PAGE_H, "F");
+
+    const logoY = 48;
+    let logoLoaded = false;
+    if (store.logo) {
+      const b64 = await urlToBase64(store.logo);
+      if (b64) {
+        try {
+          doc.setFillColor("#ffffff");
+          doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
+          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+          logoLoaded = true;
+        } catch {}
+      }
+    }
+    if (!logoLoaded) {
+      doc.setFillColor("#ffffff");
+      doc.roundedRect(logoX, logoY, logoSize, logoSize, 3, 3, "F");
+      setFont("bold");
+      doc.setFontSize(18);
+      doc.setTextColor(t.accent);
+      doc.text(safe(store.name.charAt(0).toUpperCase()), PAGE_W / 2 + 7, logoY + logoSize / 2 + 3, {
+        align: "center",
+      });
+    }
+
+    setFont("bold");
+    doc.setFontSize(22);
+    doc.setTextColor(t.header);
+    doc.text(safe(store.name.toUpperCase()), PAGE_W / 2 + 7, 98, { align: "center" });
+
+    setFont("normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(t.subtext);
+    doc.text("DISEÑO Y SELECCIÓN NATURAL", PAGE_W / 2 + 7, 105, { align: "center" });
+
+    doc.setFillColor(t.accent);
+    doc.rect(MARGIN + 10, 112, PAGE_W - (MARGIN + 10) * 2 - 10, 0.3, "F");
+
+    y = 125;
+
+  } else {
+    // ---- PORTADA MODERNO (Indigo Editorial) ----
+    doc.setFillColor(t.accent);
+    doc.rect(0, 0, PAGE_W, 65, "F");
+
+    const logoY = 51;
+    let logoLoaded = false;
+    if (store.logo) {
+      const b64 = await urlToBase64(store.logo);
+      if (b64) {
+        try {
+          doc.setFillColor("#ffffff");
+          doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
+          doc.addImage(b64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+          logoLoaded = true;
+        } catch {}
+      }
+    }
+    if (!logoLoaded) {
+      doc.setFillColor("#ffffff");
+      doc.roundedRect(logoX, logoY, logoSize, logoSize, 3, 3, "F");
+      setFont("bold");
+      doc.setFontSize(18);
+      doc.setTextColor(t.accent);
+      doc.text(safe(store.name.charAt(0).toUpperCase()), PAGE_W / 2, logoY + logoSize / 2 + 3, {
+        align: "center",
+      });
+    }
+
+    setFont("bold");
+    doc.setFontSize(24);
+    doc.setTextColor(t.header);
+    doc.text(safe(store.name.toUpperCase()), PAGE_W / 2, 94, { align: "center" });
+
+    setFont("normal");
+    doc.setFontSize(9);
+    doc.setTextColor(t.subtext);
+    doc.text("CATALOGO DIGITAL DE PRODUCTOS", PAGE_W / 2, 102, { align: "center" });
+
+    y = 112;
+    doc.setFillColor(t.accent);
+    doc.rect(MARGIN + 20, y, PAGE_W - (MARGIN + 20) * 2, 0.4, "F");
+    y += 10;
   }
-
-  // Nombre de la tienda
-  setFont("bold");
-  doc.setFontSize(24);
-  doc.setTextColor(theme.id === "oscuro" ? t.accent : t.header);
-  doc.text(safe(store.name.toUpperCase()), PAGE_W / 2, 94, { align: "center" });
-
-  // Subtítulo
-  setFont("normal");
-  doc.setFontSize(9);
-  doc.setTextColor(t.subtext);
-  doc.text("CATALOGO DIGITAL DE PRODUCTOS", PAGE_W / 2, 102, { align: "center" });
-
-  // Separador elegante
-  y = 112;
-  doc.setFillColor(t.accent);
-  doc.rect(MARGIN + 20, y, PAGE_W - (MARGIN + 20) * 2, 0.4, "F");
-  y += 10;
 
   // Resumen de portada
   const visibleProds = (store.products || []).filter((p) => p.visible);
@@ -357,25 +548,25 @@ async function generateCatalogPdf(
     setFont("normal");
     doc.setFontSize(9);
     doc.setTextColor(t.subtext);
-    doc.text(safe(item!), PAGE_W / 2, y + i * 7, { align: "center" });
+    doc.text(safe(item!), theme.id === "nordico" ? PAGE_W / 2 + 7 : PAGE_W / 2, y + i * 7, { align: "center" });
   });
 
   y += summaryItems.length * 7 + 12;
 
   // Divider
   doc.setFillColor(t.accent);
-  doc.rect(MARGIN + 30, y, PAGE_W - (MARGIN + 30) * 2, 0.3, "F");
+  doc.rect(theme.id === "nordico" ? MARGIN + 10 : MARGIN + 30, y, theme.id === "nordico" ? PAGE_W - (MARGIN + 10) * 2 - 10 : PAGE_W - (MARGIN + 30) * 2, 0.3, "F");
   y += 10;
 
   // Info "cómo pedir"
   setFont("normal");
   doc.setFontSize(8.5);
   doc.setTextColor(t.text);
-  doc.text("Para realizar tu pedido o consultar disponibilidad,", PAGE_W / 2, y, {
+  doc.text("Para realizar tu pedido o consultar disponibilidad,", theme.id === "nordico" ? PAGE_W / 2 + 7 : PAGE_W / 2, y, {
     align: "center",
   });
   y += 5.5;
-  doc.text("contactanos por WhatsApp con el nombre del producto.", PAGE_W / 2, y, {
+  doc.text("contactanos por WhatsApp con el nombre del producto.", theme.id === "nordico" ? PAGE_W / 2 + 7 : PAGE_W / 2, y, {
     align: "center",
   });
 
@@ -537,27 +728,27 @@ async function generateCatalogPdf(
         }
       }
 
-      // Nombre producto
+      // Nombre producto (más grande y destacado)
       setFont("bold");
-      doc.setFontSize(7.5);
+      doc.setFontSize(8.5);
       doc.setTextColor(t.text);
       const nameLines = doc.splitTextToSize(safe(prod.name), textW);
       doc.text(nameLines.slice(0, 2), textX, nameY);
 
-      // Descripción
+      // Descripción (más legible)
       if (prod.description) {
         setFont("normal");
-        doc.setFontSize(6);
+        doc.setFontSize(6.5);
         doc.setTextColor(t.subtext);
         const maxLines = isNordico ? 4 : 2; // Más líneas en Nórdico por el ancho
         const descLines = doc.splitTextToSize(safe(prod.description), textW);
         doc.text(descLines.slice(0, maxLines), textX, descY);
       }
 
-      // Precio y Precio de Oferta
+      // Precio y Precio de Oferta (más grandes y con mejor separación)
       if (prod.isOnSale && prod.originalPrice) {
         setFont("normal");
-        doc.setFontSize(6);
+        doc.setFontSize(7);
         doc.setTextColor(t.subtext);
         const origText = formatPrice(prod.originalPrice);
 
@@ -571,9 +762,9 @@ async function generateCatalogPdf(
           doc.line(textX, priceY - 1, textX + origW, priceY - 1);
 
           setFont("bold");
-          doc.setFontSize(9);
+          doc.setFontSize(10);
           doc.setTextColor(t.accent);
-          doc.text(safe(formatPrice(prod.price)), textX + origW + 3, priceY);
+          doc.text(safe(formatPrice(prod.price)), textX + origW + 4, priceY);
         } else {
           // Estilo original vertical (Tachado arriba, Actual abajo)
           doc.text(safe(origText), textX, priceY - 4);
@@ -583,13 +774,13 @@ async function generateCatalogPdf(
           doc.line(textX, priceY - 5, textX + origW, priceY - 5);
 
           setFont("bold");
-          doc.setFontSize(9);
+          doc.setFontSize(10);
           doc.setTextColor(t.accent);
           doc.text(safe(formatPrice(prod.price)), textX, priceY);
         }
       } else {
         setFont("bold");
-        doc.setFontSize(9);
+        doc.setFontSize(10);
         doc.setTextColor(t.accent);
         doc.text(safe(formatPrice(prod.price)), textX, priceY);
       }
