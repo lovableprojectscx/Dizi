@@ -145,10 +145,10 @@ async function urlToBase64(
   isCircle = false,
 ): Promise<string | null> {
   try {
-    let blob: Blob;
+    let blob: Blob | null = null;
+    let useBlobUrl = false;
 
-    // Detectar si la URL pertenece al almacenamiento de Supabase para poder descargarla con el cliente JS
-    // y adjuntar automáticamente las cabeceras de autorización de la sesión (ej. rol soporte/super-admin)
+    // 1. Intentar descargar mediante el cliente de Supabase si aplica
     const storageMatch = url.match(/\/storage\/v1\/object\/(public|sign)\/([^/]+)\/(.+)$/);
     if (storageMatch) {
       const bucket = storageMatch[2];
@@ -157,37 +157,63 @@ async function urlToBase64(
       if (qIndex !== -1) {
         path = path.substring(0, qIndex);
       }
-
-      // Descargamos la imagen usando el SDK de Supabase
-      const { data, error } = await supabase.storage.from(bucket).download(path);
-      if (error || !data) {
-        console.warn(`[PDF Storage Download Fail] bucket: ${bucket}, path: ${path}`, error);
-        // Fallback a fetch tradicional por si falla
-        const separator = url.includes("?") ? "&" : "?";
-        const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
-        const res = await fetch(cacheBusterUrl, { mode: "cors" });
-        if (!res.ok) return null;
-        blob = await res.blob();
-      } else {
-        blob = data;
+      try {
+        const { data, error } = await supabase.storage.from(bucket).download(path);
+        if (!error && data) {
+          blob = data;
+          useBlobUrl = true;
+        }
+      } catch (e) {
+        console.warn("[PDF Supabase Download Exception]", e);
       }
-    } else {
-      // Descarga directa mediante fetch tradicional para URLs externas
-      const separator = url.includes("?") ? "&" : "?";
-      const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
-      const res = await fetch(cacheBusterUrl, { mode: "cors" });
-      if (!res.ok) return null;
-      blob = await res.blob();
     }
 
-    // Crear objeto Image para dibujar en Canvas
+    // 2. Si no es de Supabase o falló la descarga por SDK, intentar fetch tradicional (sin y con cache buster)
+    if (!blob) {
+      try {
+        const res = await fetch(url, { mode: "cors" });
+        if (res.ok) {
+          blob = await res.blob();
+          useBlobUrl = true;
+        }
+      } catch (e) {
+        try {
+          const separator = url.includes("?") ? "&" : "?";
+          const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
+          const res = await fetch(cacheBusterUrl, { mode: "cors" });
+          if (res.ok) {
+            blob = await res.blob();
+            useBlobUrl = true;
+          }
+        } catch (e2) {
+          console.warn("[PDF Fetch Failed]", e2);
+        }
+      }
+    }
+
+    // 3. Cargar en objeto Image para procesar en canvas
     const img = new Image();
-    const blobUrl = URL.createObjectURL(blob);
-    await new Promise((resolve, reject) => {
-      img.onload = resolve;
-      img.onerror = reject;
-      img.src = blobUrl;
-    });
+    if (useBlobUrl && blob) {
+      const blobUrl = URL.createObjectURL(blob);
+      try {
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = blobUrl;
+        });
+      } finally {
+        URL.revokeObjectURL(blobUrl);
+      }
+    } else {
+      // FALLBACK DIRECTO: Si los métodos de descarga directa fallaron (por CORS, headers, CDN),
+      // intentamos cargar la imagen directamente con crossOrigin = anonymous.
+      img.crossOrigin = "anonymous";
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
 
     // Calcular dimensiones del canvas final respetando el aspect ratio objetivo
     let canvasWidth = maxDim;
@@ -238,10 +264,7 @@ async function urlToBase64(
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
     const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      URL.revokeObjectURL(blobUrl);
-      return null;
-    }
+    if (!ctx) return null;
 
     if (isCircle) {
       // Recorte circular
@@ -263,7 +286,6 @@ async function urlToBase64(
       ? canvas.toDataURL("image/png")
       : canvas.toDataURL("image/jpeg", 0.75); // 75% calidad para JPEGs
 
-    URL.revokeObjectURL(blobUrl);
     return compressedBase64;
   } catch (err) {
     console.error("[PDF Image Compress Error]", err);
