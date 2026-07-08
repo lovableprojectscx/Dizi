@@ -136,11 +136,12 @@ function blendColors(fg: string, bg: string, alpha: number): string {
   }
 }
 
-/** Descarga una imagen, la recorta (object-fit: cover) al aspect ratio objetivo y la convierte a JPEG comprimido */
+/** Descarga una imagen, la recorta (object-fit: cover) al aspect ratio objetivo (y opcionalmente a un círculo) y la convierte a JPEG/PNG comprimido */
 async function urlToBase64(
   url: string,
   targetAspectRatio?: number,
   maxDim = 400,
+  isCircle = false,
 ): Promise<string | null> {
   try {
     // Evitamos problemas de caché del navegador que causan errores de CORS ficticios
@@ -203,7 +204,7 @@ async function urlToBase64(
       }
     }
 
-    // Dibujar en canvas y exportar como JPEG comprimido
+    // Dibujar en canvas
     const canvas = document.createElement("canvas");
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
@@ -213,13 +214,25 @@ async function urlToBase64(
       return null;
     }
 
-    // Fondo blanco por si la imagen tiene transparencia (ej. PNG/WebP transparentes)
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    if (isCircle) {
+      // Recorte circular
+      ctx.beginPath();
+      ctx.arc(canvasWidth / 2, canvasHeight / 2, canvasWidth / 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+    } else {
+      // Fondo blanco por si la imagen tiene transparencia (ej. PNG/WebP transparentes)
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    }
 
     // Dibujar recortado y centrado
     ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvasWidth, canvasHeight);
-    const compressedBase64 = canvas.toDataURL("image/jpeg", 0.75); // 75% calidad
+
+    // Exportar. Si es círculo, exportamos como PNG para conservar transparencia en las esquinas
+    const compressedBase64 = isCircle
+      ? canvas.toDataURL("image/png")
+      : canvas.toDataURL("image/jpeg", 0.75); // 75% calidad para JPEGs
 
     URL.revokeObjectURL(blobUrl);
     return compressedBase64;
@@ -288,10 +301,12 @@ async function generateCatalogPdf(
     doc.setFont(fontName, style);
   };
 
-  // Descargar y comprimir logo una sola vez al inicio (con relación de aspecto 1:1 para evitar distorsión)
+  // Descargar y comprimir logo una sola vez al inicio. Si el tema usa círculo, hacemos un recorte circular
   let logoB64: string | null = null;
+  const isCircleLogo = theme.id === "rustico" || theme.id === "oscuro";
+  const logoFormat = isCircleLogo ? "PNG" : "JPEG";
   if (store.logo) {
-    logoB64 = await urlToBase64(store.logo, 1);
+    logoB64 = await urlToBase64(store.logo, 1, 400, isCircleLogo);
   }
 
   /* ── Helpers de dibujo ─────────────────── */
@@ -344,7 +359,7 @@ async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 2, 2, "F");
-        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -392,7 +407,7 @@ async function generateCatalogPdf(
     let logoLoaded = false;
     if (logoB64) {
       try {
-        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -439,7 +454,7 @@ async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 2, "F");
-        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -485,7 +500,7 @@ async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -526,7 +541,7 @@ async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-        doc.addImage(logoB64, "JPEG", logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
