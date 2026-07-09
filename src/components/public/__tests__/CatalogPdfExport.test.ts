@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
-import { urlToBase64 } from "../CatalogPdfExport";
+import { urlToBase64, generateCatalogPdf } from "../CatalogPdfExport";
 import { supabase } from "@/lib/supabase";
+import type { Store } from "@/lib/types";
 
 // Mock Supabase storage
 vi.mock("@/lib/supabase", () => {
@@ -13,6 +14,51 @@ vi.mock("@/lib/supabase", () => {
         })),
       },
     },
+  };
+});
+
+// Mock jsPDF
+let pageCount = 1;
+const mockLink = vi.fn();
+const mockText = vi.fn();
+const mockAddPage = vi.fn().mockImplementation(() => {
+  pageCount++;
+});
+const mockSave = vi.fn();
+const mockSetPage = vi.fn();
+const mockGetNumberOfPages = vi.fn().mockImplementation(() => pageCount);
+const mockGetTextWidth = vi.fn(() => 20);
+
+vi.mock("jspdf", () => {
+  const jsPDFMock = vi.fn().mockImplementation(function (this: any) {
+    return {
+      setFont: vi.fn(),
+      setFontSize: vi.fn(),
+      setTextColor: vi.fn(),
+      setFillColor: vi.fn(),
+      setDrawColor: vi.fn(),
+      setLineWidth: vi.fn(),
+      rect: vi.fn(),
+      roundedRect: vi.fn(),
+      circle: vi.fn(),
+      triangle: vi.fn(),
+      line: vi.fn(),
+      text: mockText,
+      addImage: vi.fn(),
+      addPage: mockAddPage,
+      link: mockLink,
+      setPage: mockSetPage,
+      save: mockSave,
+      splitTextToSize: vi.fn((text) => [text]),
+      getTextWidth: mockGetTextWidth,
+      internal: {
+        getNumberOfPages: mockGetNumberOfPages,
+      },
+    };
+  });
+
+  return {
+    default: jsPDFMock,
   };
 });
 
@@ -88,6 +134,15 @@ describe("CatalogPdfExport - urlToBase64 unit tests", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLink.mockClear();
+    mockText.mockClear();
+    mockAddPage.mockClear();
+    mockSave.mockClear();
+    mockSetPage.mockClear();
+    mockGetNumberOfPages.mockClear();
+    mockGetTextWidth.mockClear();
+    pageCount = 1;
+
     createdCanvases = [];
     canvasContext = null;
     mockWidth = 100;
@@ -129,15 +184,12 @@ describe("CatalogPdfExport - urlToBase64 unit tests", () => {
 
   it("debe hacer fallback a crossOrigin=anonymous si el fetch falla por CORS u otro error", async () => {
     const mockFetch = vi.mocked(globalThis.fetch);
-    // Simular que el fetch lanza un TypeError (CORS block)
     mockFetch.mockRejectedValue(new TypeError("Failed to fetch"));
 
     const externalUrl = "https://images.unsplash.com/photo-123456?w=600";
     const base64 = await urlToBase64(externalUrl);
 
-    // Se llamó a fetch
     expect(mockFetch).toHaveBeenCalled();
-    // Y se generó el base64 usando la carga directa de imagen
     expect(base64).toContain("data:image/jpeg;base64,mockedData");
   });
 
@@ -155,5 +207,73 @@ describe("CatalogPdfExport - urlToBase64 unit tests", () => {
     const canvas = createdCanvases[0];
     expect(canvas.toDataURL).toHaveBeenCalledWith("image/png");
     expect(canvasContext.clip).toHaveBeenCalled();
+  });
+});
+
+describe("CatalogPdfExport - generateCatalogPdf integration tests", () => {
+  it("debe crear el catálogo PDF con índice interactivo y enlaces de WhatsApp", async () => {
+    const mockStore: Store = {
+      id: "store-123",
+      slug: "test-store",
+      name: "Grano & Miga",
+      phone: "51925176472",
+      countryCode: "PE",
+      logo: "https://example.com/logo.jpg",
+      plan: "pro",
+      active: true,
+      createdAt: new Date().toISOString(),
+      whatsappClicks: 0,
+      categories: [
+        { id: "cat-1", name: "Panes", storeId: "store-123" },
+        { id: "cat-2", name: "Pasteles", storeId: "store-123" },
+      ] as any,
+      products: [
+        {
+          id: "prod-1",
+          name: "Masa Madre",
+          price: 15,
+          visible: true,
+          categoryId: "cat-1",
+          image: "https://example.com/pan.jpg",
+        },
+        {
+          id: "prod-2",
+          name: "Croissant",
+          price: 8,
+          visible: true,
+          categoryId: "cat-2",
+          image: "https://example.com/croissant.jpg",
+        },
+      ] as any,
+    };
+
+    const mockTheme = {
+      id: "moderno",
+      name: "Moderno",
+      desc: "Diseño elegante",
+      preview: {
+        bg: "#ffffff",
+        accent: "#4f46e5",
+        header: "#1f2937",
+        text: "#374151",
+        subtext: "#6b7280",
+        card: "#f3f4f6",
+      },
+    };
+
+    // 2. Ejecutar la generación del catálogo
+    await generateCatalogPdf(mockStore, mockTheme as any);
+
+    // Verificar que se haya llamado a addPage (para el índice y las categorías)
+    expect(mockAddPage).toHaveBeenCalled();
+
+    // Verificar que se haya llamado a setPage para volver a la página de índice (pág. 2)
+    expect(mockSetPage).toHaveBeenCalledWith(2);
+
+    // Verificar que se hayan creado enlaces (para el índice y los botones "PEDIR" de WhatsApp)
+    expect(mockLink).toHaveBeenCalled();
+
+    // Verificar que se haya guardado el PDF con el nombre correcto
+    expect(mockSave).toHaveBeenCalledWith("Grano_&_Miga_catalogo_moderno.pdf");
   });
 });

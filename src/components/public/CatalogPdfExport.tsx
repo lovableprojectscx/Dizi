@@ -328,7 +328,7 @@ function safe(str: string | undefined | null): string {
    PDF GENERATOR CORE
    Genera el PDF puro con jsPDF (sin html2canvas, 100% vectorial)
 ───────────────────────────────────────────────────────── */
-async function generateCatalogPdf(
+export async function generateCatalogPdf(
   store: Store,
   theme: PdfTheme,
   onProgress?: (current: number, total: number) => void,
