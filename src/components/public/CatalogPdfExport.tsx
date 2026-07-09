@@ -138,7 +138,7 @@ function blendColors(fg: string, bg: string, alpha: number): string {
 }
 
 /** Descarga una imagen, la recorta (object-fit: cover) al aspect ratio objetivo (y opcionalmente a un círculo) y la convierte a JPEG/PNG comprimido */
-async function urlToBase64(
+export async function urlToBase64(
   url: string,
   targetAspectRatio?: number,
   maxDim = 400,
