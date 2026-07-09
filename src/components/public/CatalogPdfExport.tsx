@@ -12,7 +12,7 @@ import { Download, X, Loader2, Check, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Store, Product } from "@/lib/types";
-import { formatPrice } from "@/lib/whatsapp";
+import { formatPrice, buildWaUrl } from "@/lib/whatsapp";
 import { supabase } from "@/lib/supabase";
 
 /* ─────────────────────────────────────────────────────────
@@ -663,9 +663,14 @@ async function generateCatalogPdf(
     align: "center",
   });
 
+  // ── PÁGINA 2: ÍNDICE DE CATEGORÍAS ──
+  newPage();
+  const indexPageNum = doc.internal.getNumberOfPages();
+
   /* ── PÁGINAS DE PRODUCTOS POR CATEGORÍA ── */
   // Agrupar: primero por categoría, luego sin categoría
   const grouped: Array<{ catName: string; products: Product[] }> = [];
+  const categoryPageNumbers: Array<{ name: string; page: number }> = [];
 
   if (cats.length > 0) {
     cats.forEach((cat) => {
@@ -686,6 +691,7 @@ async function generateCatalogPdf(
 
   for (const group of grouped) {
     newPage();
+    categoryPageNumbers.push({ name: group.catName, page: doc.internal.getNumberOfPages() });
 
     /* ── Encabezado de categoría ── */
     // Bloque de color a la izquierda
@@ -872,6 +878,43 @@ async function generateCatalogPdf(
         doc.text(safe(formatPrice(prod.price)), textX, priceY);
       }
 
+      // ---- 4. DIBUJAR BOTÓN COMPRAR (WHATSAPP) ----
+      if (store.phone) {
+        const msg = `Hola, me interesa el producto "${prod.name}" del catálogo.`;
+        const waUrl = buildWaUrl(store.phone, msg);
+
+        let btnX, btnY, btnW, btnH;
+        if (isRustico) {
+          btnW = 20;
+          btnH = 5.5;
+          btnX = cardX + CARD_W - btnW - 4;
+          btnY = priceY - 4.5;
+        } else if (isNordico) {
+          btnW = 22;
+          btnH = 6;
+          btnX = cardX + CARD_W - btnW - 6;
+          btnY = priceY - 4.8;
+        } else {
+          btnW = 20;
+          btnH = 5.5;
+          btnX = cardX + CARD_W - btnW - 4;
+          btnY = priceY - 4.5;
+        }
+
+        // Fondo del botón (verde whatsapp redondeado)
+        doc.setFillColor("#16a34a");
+        doc.roundedRect(btnX, btnY, btnW, btnH, 1, 1, "F");
+
+        // Texto del botón
+        setFont("bold");
+        doc.setFontSize(6);
+        doc.setTextColor("#ffffff");
+        doc.text("PEDIR", btnX + btnW / 2, btnY + btnH / 2 + 1, { align: "center" });
+
+        // Link clickable
+        doc.link(btnX, btnY, btnW, btnH, { url: waUrl });
+      }
+
       // Avanzar columna / fila
       if (COLS === 1) {
         y += CARD_H + 4;
@@ -923,6 +966,75 @@ async function generateCatalogPdf(
     PAGE_H - 20,
     { align: "center" },
   );
+
+  /* ── DIBUJAR CONTENIDO EN EL ÍNDICE (PÁGINA 2) ── */
+  doc.setPage(indexPageNum);
+
+  // Margen superior
+  let indexY = 24;
+
+  // Encabezado de la página de Índice
+  doc.setFillColor(t.accent);
+  doc.rect(MARGIN, indexY, 3, 10, "F");
+
+  setFont("bold");
+  doc.setFontSize(18);
+  doc.setTextColor(theme.id === "oscuro" ? t.accent : t.header);
+  doc.text("ÍNDICE DE CATEGORÍAS", MARGIN + 6, indexY + 7.5);
+
+  indexY += 16;
+
+  setFont("normal");
+  doc.setFontSize(9);
+  doc.setTextColor(theme.id === "oscuro" ? "#ffffffb3" : t.subtext);
+  doc.text("Haz clic en cualquier categoría para ir directamente a la página correspondiente.", MARGIN, indexY);
+
+  indexY += 8;
+
+  // Línea separadora
+  doc.setFillColor(t.accent);
+  doc.rect(MARGIN, indexY, PAGE_W - MARGIN * 2, 0.4, "F");
+
+  indexY += 16;
+
+  categoryPageNumbers.forEach((item) => {
+    // Dibujar nombre de la categoría
+    setFont("bold");
+    doc.setFontSize(10);
+    doc.setTextColor(t.text);
+    doc.text(safe(item.name.toUpperCase()), MARGIN, indexY);
+
+    const nameW = doc.getTextWidth(safe(item.name.toUpperCase()));
+
+    // Dibujar número de página alineado a la derecha
+    setFont("bold");
+    doc.setFontSize(10);
+    doc.setTextColor(t.accent);
+    const pageText = `Pág. ${item.page}`;
+    const pageW = doc.getTextWidth(pageText);
+    const pageX = PAGE_W - MARGIN - pageW;
+    doc.text(pageText, pageX, indexY);
+
+    // Dibujar puntos de relleno (dotted leaders)
+    setFont("normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(theme.id === "oscuro" ? "#ffffff4d" : t.subtext + "80");
+    const dotsStart = MARGIN + nameW + 3;
+    const dotsEnd = pageX - 3;
+    let dotsText = "";
+    let currentDotsW = 0;
+    const dotW = doc.getTextWidth(".");
+    while (dotsStart + currentDotsW < dotsEnd) {
+      dotsText += ".";
+      currentDotsW += dotW + 0.3; // Espaciador de puntos
+    }
+    doc.text(dotsText, dotsStart, indexY - 0.5);
+
+    // Link clickable que cubre toda la fila para saltar de página en el PDF
+    doc.link(MARGIN, indexY - 6, PAGE_W - MARGIN * 2, 8, { pageNumber: item.page });
+
+    indexY += 12;
+  });
 
   /* ── GUARDAR ─────────────────────────────── */
   const filename = `${safe(store.name).replace(/\s+/g, "_")}_catalogo_${theme.id}.pdf`;
