@@ -70,7 +70,13 @@ const Tiktok = ({ className }: { className?: string }) => (
     <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
   </svg>
 );
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Drawer,
   DrawerContent,
@@ -83,6 +89,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useApp, useCart } from "@/lib/store";
 import { buildWaUrl, formatPrice } from "@/lib/whatsapp";
+import { toast } from "sonner";
 import type { Store, Product } from "@/lib/types";
 import {
   getEffectiveProductLimit,
@@ -90,6 +97,7 @@ import {
   isSubscriptionExpired,
   modelGraceDaysLeft,
   PLANS,
+  planAllowsPromoBar,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
@@ -108,121 +116,345 @@ type ModelConfig = {
   cardShadow: string;
   cardBorder: boolean;
   headerStyle: "clean" | "bold" | "minimal";
-  layout: "grid" | "overlay" | "editorial" | "hero" | "magazine" | "tiles" | "spotlight" | "diagonal" | "arch" | "banner_grid" | "bite" | "bloom" | "nature" | "lookbook";
+  layout:
+    | "grid"
+    | "overlay"
+    | "editorial"
+    | "hero"
+    | "magazine"
+    | "tiles"
+    | "spotlight"
+    | "diagonal"
+    | "arch"
+    | "banner_grid"
+    | "bite"
+    | "bloom"
+    | "nature"
+    | "lookbook";
 };
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
   /* ── Plan Semilla ──────────────────────────────────── */
   minimalista: {
-    vars: { "--background": "#ffffff", "--card": "#f8fafc", "--primary": "#4f46e5", "--border": "#e2e8f0" } as any,
-    isDark: false, imgRounded: "0.75rem", cardRounded: "1rem",
-    cardShadow: "hover:shadow-md", cardBorder: true, headerStyle: "clean", layout: "grid",
+    vars: {
+      "--background": "#ffffff",
+      "--card": "#f8fafc",
+      "--primary": "#4f46e5",
+      "--border": "#e2e8f0",
+    } as any,
+    isDark: false,
+    imgRounded: "0.75rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-md",
+    cardBorder: true,
+    headerStyle: "clean",
+    layout: "grid",
   },
   clasico: {
-    vars: { "--background": "#fdfaf5", "--card": "#fef9ef", "--primary": "#92400e", "--border": "#fde68a" } as any,
-    isDark: false, imgRounded: "0.25rem", cardRounded: "0.375rem",
-    cardShadow: "hover:shadow-sm", cardBorder: true, headerStyle: "clean", layout: "grid",
+    vars: {
+      "--background": "#fdfaf5",
+      "--card": "#fef9ef",
+      "--primary": "#92400e",
+      "--border": "#fde68a",
+    } as any,
+    isDark: false,
+    imgRounded: "0.25rem",
+    cardRounded: "0.375rem",
+    cardShadow: "hover:shadow-sm",
+    cardBorder: true,
+    headerStyle: "clean",
+    layout: "grid",
   },
   /* ── Plan Emprendedor ──────────────────────────────── */
   nature_mint: {
-    vars: { "--background": "#f0fefb", "--card": "#ffffff", "--primary": "#0d9488", "--border": "#99f6e4" } as any,
-    isDark: false, imgRounded: "1.25rem", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-lg hover:shadow-teal-200/60", cardBorder: true, headerStyle: "clean", layout: "grid",
+    vars: {
+      "--background": "#f0fefb",
+      "--card": "#ffffff",
+      "--primary": "#0d9488",
+      "--border": "#99f6e4",
+    } as any,
+    isDark: false,
+    imgRounded: "1.25rem",
+    cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-lg hover:shadow-teal-200/60",
+    cardBorder: true,
+    headerStyle: "clean",
+    layout: "grid",
   },
   vibrante: {
-    vars: { "--background": "#fff7ed", "--card": "#ffffff", "--primary": "#ea580c", "--border": "#ffedd5" } as any,
-    isDark: false, imgRounded: "1rem", cardRounded: "1.25rem",
-    cardShadow: "hover:shadow-xl hover:shadow-orange-300/40", cardBorder: false, headerStyle: "bold", layout: "overlay",
+    vars: {
+      "--background": "#fff7ed",
+      "--card": "#ffffff",
+      "--primary": "#ea580c",
+      "--border": "#ffedd5",
+    } as any,
+    isDark: false,
+    imgRounded: "1rem",
+    cardRounded: "1.25rem",
+    cardShadow: "hover:shadow-xl hover:shadow-orange-300/40",
+    cardBorder: false,
+    headerStyle: "bold",
+    layout: "overlay",
   },
   eco: {
-    vars: { "--background": "#f0fdf4", "--card": "#ffffff", "--primary": "#16a34a", "--border": "#bbf7d0" } as any,
-    isDark: false, imgRounded: "9999px", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-lg hover:shadow-green-200/60", cardBorder: true, headerStyle: "clean", layout: "hero",
+    vars: {
+      "--background": "#f0fdf4",
+      "--card": "#ffffff",
+      "--primary": "#16a34a",
+      "--border": "#bbf7d0",
+    } as any,
+    isDark: false,
+    imgRounded: "9999px",
+    cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-lg hover:shadow-green-200/60",
+    cardBorder: true,
+    headerStyle: "clean",
+    layout: "hero",
   },
   /* ── Plan Pro ──────────────────────────────────────── */
   nocturno: {
-    vars: { "--background": "#0f172a", "--card": "#1e293b", "--primary": "#818cf8", "--border": "#334155" } as any,
-    isDark: true, imgRounded: "0.875rem", cardRounded: "1rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-indigo-900/60", cardBorder: false, headerStyle: "bold", layout: "overlay",
+    vars: {
+      "--background": "#0f172a",
+      "--card": "#1e293b",
+      "--primary": "#818cf8",
+      "--border": "#334155",
+    } as any,
+    isDark: true,
+    imgRounded: "0.875rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-indigo-900/60",
+    cardBorder: false,
+    headerStyle: "bold",
+    layout: "overlay",
   },
   boutique: {
-    vars: { "--background": "#faf9f7", "--card": "#f5efe8", "--primary": "#9333ea", "--border": "#ede9fe" } as any,
-    isDark: false, imgRounded: "0.75rem", cardRounded: "1rem",
-    cardShadow: "hover:shadow-xl hover:shadow-purple-200/50", cardBorder: false, headerStyle: "minimal", layout: "spotlight",
+    vars: {
+      "--background": "#faf9f7",
+      "--card": "#f5efe8",
+      "--primary": "#9333ea",
+      "--border": "#ede9fe",
+    } as any,
+    isDark: false,
+    imgRounded: "0.75rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-xl hover:shadow-purple-200/50",
+    cardBorder: false,
+    headerStyle: "minimal",
+    layout: "spotlight",
   },
   corporativo: {
-    vars: { "--background": "#eff6ff", "--card": "#ffffff", "--primary": "#1d4ed8", "--border": "#bfdbfe" } as any,
-    isDark: false, imgRounded: "0.375rem", cardRounded: "0.5rem",
-    cardShadow: "hover:shadow-md", cardBorder: true, headerStyle: "clean", layout: "editorial",
+    vars: {
+      "--background": "#eff6ff",
+      "--card": "#ffffff",
+      "--primary": "#1d4ed8",
+      "--border": "#bfdbfe",
+    } as any,
+    isDark: false,
+    imgRounded: "0.375rem",
+    cardRounded: "0.5rem",
+    cardShadow: "hover:shadow-md",
+    cardBorder: true,
+    headerStyle: "clean",
+    layout: "editorial",
   },
   aurora: {
-    vars: { "--background": "#0d0d1a", "--card": "#1a1040", "--primary": "#a855f7", "--border": "#2d1b6e" } as any,
-    isDark: true, imgRounded: "1.25rem", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-purple-700/50", cardBorder: false, headerStyle: "bold", layout: "tiles",
+    vars: {
+      "--background": "#0d0d1a",
+      "--card": "#1a1040",
+      "--primary": "#a855f7",
+      "--border": "#2d1b6e",
+    } as any,
+    isDark: true,
+    imgRounded: "1.25rem",
+    cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-purple-700/50",
+    cardBorder: false,
+    headerStyle: "bold",
+    layout: "tiles",
   },
   /* ── Plan Ilimitado ────────────────────────────────── */
   luxury: {
-    vars: { "--background": "#09090b", "--card": "#18181b", "--primary": "#ca8a04", "--border": "#3f3010" } as any,
-    isDark: true, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-2xl hover:shadow-yellow-900/40", cardBorder: true, headerStyle: "minimal", layout: "editorial",
+    vars: {
+      "--background": "#09090b",
+      "--card": "#18181b",
+      "--primary": "#ca8a04",
+      "--border": "#3f3010",
+    } as any,
+    isDark: true,
+    imgRounded: "0px",
+    cardRounded: "0px",
+    cardShadow: "hover:shadow-2xl hover:shadow-yellow-900/40",
+    cardBorder: true,
+    headerStyle: "minimal",
+    layout: "editorial",
   },
   dark_fashion: {
-    vars: { "--background": "#111111", "--card": "#1c1c1c", "--primary": "#f5f5f5", "--border": "#2a2a2a" } as any,
-    isDark: true, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-2xl", cardBorder: false, headerStyle: "minimal", layout: "magazine",
+    vars: {
+      "--background": "#111111",
+      "--card": "#1c1c1c",
+      "--primary": "#f5f5f5",
+      "--border": "#2a2a2a",
+    } as any,
+    isDark: true,
+    imgRounded: "0px",
+    cardRounded: "0px",
+    cardShadow: "hover:shadow-2xl",
+    cardBorder: false,
+    headerStyle: "minimal",
+    layout: "magazine",
   },
   slash: {
-    vars: { "--background": "#0d1117", "--card": "#1c2128", "--primary": "#faec45", "--border": "#21262d" } as any,
-    isDark: true, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "", cardBorder: false, headerStyle: "bold", layout: "diagonal",
+    vars: {
+      "--background": "#0d1117",
+      "--card": "#1c2128",
+      "--primary": "#faec45",
+      "--border": "#21262d",
+    } as any,
+    isDark: true,
+    imgRounded: "0px",
+    cardRounded: "0px",
+    cardShadow: "",
+    cardBorder: false,
+    headerStyle: "bold",
+    layout: "diagonal",
   },
   arch_studio: {
-    vars: { "--background": "#faf9f6", "--card": "#f4f2ed", "--primary": "#9c6b4e", "--border": "#e8e0d5" } as any,
-    isDark: false, imgRounded: "999px", cardRounded: "1rem",
-    cardShadow: "hover:shadow-lg hover:shadow-stone-200/80", cardBorder: true, headerStyle: "minimal", layout: "arch",
+    vars: {
+      "--background": "#faf9f6",
+      "--card": "#f4f2ed",
+      "--primary": "#9c6b4e",
+      "--border": "#e8e0d5",
+    } as any,
+    isDark: false,
+    imgRounded: "999px",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-lg hover:shadow-stone-200/80",
+    cardBorder: true,
+    headerStyle: "minimal",
+    layout: "arch",
   },
   /* ── Plan Ilimitado: Portada ───────────────────────── */
   portada: {
-    vars: { "--background": "#ffffff", "--card": "#f8fafc", "--primary": "#FF823A", "--border": "#ffe4d5" } as any,
-    isDark: false, imgRounded: "0.875rem", cardRounded: "1rem",
-    cardShadow: "hover:shadow-md", cardBorder: false, headerStyle: "clean", layout: "banner_grid",
+    vars: {
+      "--background": "#ffffff",
+      "--card": "#f8fafc",
+      "--primary": "#FF823A",
+      "--border": "#ffe4d5",
+    } as any,
+    isDark: false,
+    imgRounded: "0.875rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-md",
+    cardBorder: false,
+    headerStyle: "clean",
+    layout: "banner_grid",
   },
   /* ── Nuevos modelos Elite ──────────────────────────── */
   elite: {
-    vars: { "--background": "#ffffff", "--card": "#ffffff", "--primary": "#1e1e1e", "--border": "#e5e7eb" } as any,
-    isDark: false, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "hover:shadow-xl", cardBorder: true, headerStyle: "minimal", layout: "grid",
+    vars: {
+      "--background": "#ffffff",
+      "--card": "#ffffff",
+      "--primary": "#1e1e1e",
+      "--border": "#e5e7eb",
+    } as any,
+    isDark: false,
+    imgRounded: "0px",
+    cardRounded: "0px",
+    cardShadow: "hover:shadow-xl",
+    cardBorder: true,
+    headerStyle: "minimal",
+    layout: "grid",
   },
   bite: {
-    vars: { "--background": "#09090b", "--card": "#18181b", "--primary": "#ea580c", "--border": "#27272a" } as any,
-    isDark: true, imgRounded: "1rem", cardRounded: "1rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-orange-950/20", cardBorder: true, headerStyle: "bold", layout: "bite",
+    vars: {
+      "--background": "#09090b",
+      "--card": "#18181b",
+      "--primary": "#ea580c",
+      "--border": "#27272a",
+    } as any,
+    isDark: true,
+    imgRounded: "1rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-orange-950/20",
+    cardBorder: true,
+    headerStyle: "bold",
+    layout: "bite",
   },
   bloom: {
-    vars: { "--background": "#fffaf8", "--card": "#ffffff", "--primary": "#be185d", "--border": "#ffe4e6" } as any,
-    isDark: false, imgRounded: "2rem", cardRounded: "2rem",
-    cardShadow: "hover:shadow-xl hover:shadow-rose-100/50", cardBorder: true, headerStyle: "minimal", layout: "bloom",
+    vars: {
+      "--background": "#fffaf8",
+      "--card": "#ffffff",
+      "--primary": "#be185d",
+      "--border": "#ffe4e6",
+    } as any,
+    isDark: false,
+    imgRounded: "2rem",
+    cardRounded: "2rem",
+    cardShadow: "hover:shadow-xl hover:shadow-rose-100/50",
+    cardBorder: true,
+    headerStyle: "minimal",
+    layout: "bloom",
   },
   nature: {
-    vars: { "--background": "#f4f6f0", "--card": "#ffffff", "--primary": "#4b5c43", "--border": "#e3e7dc" } as any,
-    isDark: false, imgRounded: "2rem", cardRounded: "2rem",
-    cardShadow: "hover:shadow-xl hover:shadow-stone-200/50", cardBorder: true, headerStyle: "minimal", layout: "nature",
+    vars: {
+      "--background": "#f4f6f0",
+      "--card": "#ffffff",
+      "--primary": "#4b5c43",
+      "--border": "#e3e7dc",
+    } as any,
+    isDark: false,
+    imgRounded: "2rem",
+    cardRounded: "2rem",
+    cardShadow: "hover:shadow-xl hover:shadow-stone-200/50",
+    cardBorder: true,
+    headerStyle: "minimal",
+    layout: "nature",
   },
   lookbook: {
-    vars: { "--background": "#fbfaf7", "--card": "#ffffff", "--primary": "#8b7365", "--border": "#e8e5de" } as any,
-    isDark: false, imgRounded: "0px", cardRounded: "0px",
-    cardShadow: "none", cardBorder: false, headerStyle: "minimal", layout: "lookbook",
+    vars: {
+      "--background": "#fbfaf7",
+      "--card": "#ffffff",
+      "--primary": "#8b7365",
+      "--border": "#e8e5de",
+    } as any,
+    isDark: false,
+    imgRounded: "0px",
+    cardRounded: "0px",
+    cardShadow: "none",
+    cardBorder: false,
+    headerStyle: "minimal",
+    layout: "lookbook",
   },
 
   sunset_glow: {
-    vars: { "--background": "#1a0a2e", "--card": "#2d1040", "--primary": "#fb923c", "--border": "#7c2d8e" } as any,
-    isDark: true, imgRounded: "1.25rem", cardRounded: "1.5rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-orange-700/40", cardBorder: false, headerStyle: "bold", layout: "overlay",
+    vars: {
+      "--background": "#1a0a2e",
+      "--card": "#2d1040",
+      "--primary": "#fb923c",
+      "--border": "#7c2d8e",
+    } as any,
+    isDark: true,
+    imgRounded: "1.25rem",
+    cardRounded: "1.5rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-orange-700/40",
+    cardBorder: false,
+    headerStyle: "bold",
+    layout: "overlay",
   },
   forest_deep: {
-    vars: { "--background": "#0d1f0f", "--card": "#1a2e1c", "--primary": "#4ade80", "--border": "#166534" } as any,
-    isDark: true, imgRounded: "0.875rem", cardRounded: "1rem",
-    cardShadow: "hover:shadow-2xl hover:shadow-green-900/60", cardBorder: false, headerStyle: "clean", layout: "grid",
+    vars: {
+      "--background": "#0d1f0f",
+      "--card": "#1a2e1c",
+      "--primary": "#4ade80",
+      "--border": "#166534",
+    } as any,
+    isDark: true,
+    imgRounded: "0.875rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-2xl hover:shadow-green-900/60",
+    cardBorder: false,
+    headerStyle: "clean",
+    layout: "grid",
   },
 };
 
@@ -230,14 +462,25 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
  * Modelos con fondo bloqueado — su diseño visual depende del fondo original
  * y no debe ser sobrescrito por el color personalizado del usuario.
  */
-const BG_LOCKED_MODELS = new Set(["nocturno", "aurora", "luxury", "dark_fashion", "slash", "sunset_glow"]);
+const BG_LOCKED_MODELS = new Set([
+  "nocturno",
+  "aurora",
+  "luxury",
+  "dark_fashion",
+  "slash",
+  "sunset_glow",
+]);
 
 const getQuickLinkBranding = (label: string, url: string) => {
   const labelLower = label.toLowerCase();
   const urlLower = url.toLowerCase();
 
   // WhatsApp
-  if (urlLower.includes("wa.me") || urlLower.includes("whatsapp.com") || labelLower.includes("whatsapp")) {
+  if (
+    urlLower.includes("wa.me") ||
+    urlLower.includes("whatsapp.com") ||
+    labelLower.includes("whatsapp")
+  ) {
     return {
       bg: "#25d366",
       borderColor: "#128c7e",
@@ -246,7 +489,11 @@ const getQuickLinkBranding = (label: string, url: string) => {
       coloredIcon: (
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="#25d366" />
-          <path fill="#FFF" d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z" transform="scale(0.75) translate(4, 4)" />
+          <path
+            fill="#FFF"
+            d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z"
+            transform="scale(0.75) translate(4, 4)"
+          />
         </svg>
       ),
     };
@@ -270,7 +517,10 @@ const getQuickLinkBranding = (label: string, url: string) => {
             </linearGradient>
           </defs>
           <rect width="24" height="24" rx="5.5" fill="url(#instaGradBtn)" />
-          <path fill="#FFF" d="M12 5.5c-1.782 0-2.004.007-2.705.039a3.7 3.7 0 0 0-1.226.235A2.215 2.215 0 0 0 6.83 7.073a3.7 3.7 0 0 0-.235 1.226C6.563 8.996 6.556 9.218 6.556 11s.007 2.004.039 2.705a3.7 3.7 0 0 0 .235 1.226 2.215 2.215 0 0 0 1.299 1.299c.358.14.786.22 1.226.235.701.032.923.039 2.705.039s2.004-.007 2.705-.039a3.7 3.7 0 0 0 1.226-.235 2.215 2.215 0 0 0 1.299-1.299c.14-.358.22-.786.235-1.226.032-.701.039-.923.039-2.705s-.007-2.004-.039-2.705a3.7 3.7 0 0 0-.235-1.226 2.215 2.215 0 0 0-1.299-1.299c-.358-.14-.786-.22-1.226-.235C14.004 5.507 13.782 5.5 12 5.5zm0 1.17c1.752 0 1.96.007 2.652.039.64.029.988.136 1.22.226a1.045 1.045 0 0 1 .618.618c.09.232.197.58.226 1.22.032.692.039.9.039 2.652s-.007 1.96-.039 2.652c-.029.64-.136.988-.226 1.22a1.045 1.045 0 0 1-.618.618c-.232.09-.58.197-1.22.226-.692.032-.9.039-2.652.039s-1.96-.007-2.652-.039c-.64-.029-.988-.136-1.22-.226a1.045 1.045 0 0 1-.618-.618c-.09-.232-.197-.58-.226-1.22-.032-.692-.039-.9-.039-2.652s.007-1.96.039-2.652c.029-.64.136-.988.226-1.22a1.045 1.045 0 0 1 .618-.618c.232-.09.58-.197 1.22-.226.692-.032.9-.039 2.652-.039zM12 8.16a2.84 2.84 0 1 0 2.84 2.84A2.84 2.84 0 0 0 12 8.16zm0 4.51a1.67 1.67 0 1 1 1.67-1.67A1.67 1.67 0 0 1 12 12.67zm3.125-4.22a.664.664 0 1 0 .664-.664.664.664 0 0 0-.664.664z" />
+          <path
+            fill="#FFF"
+            d="M12 5.5c-1.782 0-2.004.007-2.705.039a3.7 3.7 0 0 0-1.226.235A2.215 2.215 0 0 0 6.83 7.073a3.7 3.7 0 0 0-.235 1.226C6.563 8.996 6.556 9.218 6.556 11s.007 2.004.039 2.705a3.7 3.7 0 0 0 .235 1.226 2.215 2.215 0 0 0 1.299 1.299c.358.14.786.22 1.226.235.701.032.923.039 2.705.039s2.004-.007 2.705-.039a3.7 3.7 0 0 0 1.226-.235 2.215 2.215 0 0 0 1.299-1.299c.14-.358.22-.786.235-1.226.032-.701.039-.923.039-2.705s-.007-2.004-.039-2.705a3.7 3.7 0 0 0-.235-1.226 2.215 2.215 0 0 0-1.299-1.299c-.358-.14-.786-.22-1.226-.235C14.004 5.507 13.782 5.5 12 5.5zm0 1.17c1.752 0 1.96.007 2.652.039.64.029.988.136 1.22.226a1.045 1.045 0 0 1 .618.618c.09.232.197.58.226 1.22.032.692.039.9.039 2.652s-.007 1.96-.039 2.652c-.029.64-.136.988-.226 1.22a1.045 1.045 0 0 1-.618.618c-.232.09-.58.197-1.22.226-.692.032-.9.039-2.652.039s-1.96-.007-2.652-.039c-.64-.029-.988-.136-1.22-.226a1.045 1.045 0 0 1-.618-.618c-.09-.232-.197-.58-.226-1.22-.032-.692-.039-.9-.039-2.652s.007-1.96.039-2.652c.029-.64.136-.988.226-1.22a1.045 1.045 0 0 1 .618-.618c.232-.09.58-.197 1.22-.226.692-.032.9-.039 2.652-.039zM12 8.16a2.84 2.84 0 1 0 2.84 2.84A2.84 2.84 0 0 0 12 8.16zm0 4.51a1.67 1.67 0 1 1 1.67-1.67A1.67 1.67 0 0 1 12 12.67zm3.125-4.22a.664.664 0 1 0 .664-.664.664.664 0 0 0-.664.664z"
+          />
         </svg>
       ),
     };
@@ -285,7 +535,10 @@ const getQuickLinkBranding = (label: string, url: string) => {
       coloredIcon: (
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="#1877f2" />
-          <path fill="#FFF" d="M14 12h-2.5v8h-3v-8h-2v-2.5h2v-1.8c0-2.2 1.4-3.4 3.3-3.4.9 0 1.7.1 1.9.1v2.2h-1.3c-1.1 0-1.3.5-1.3 1.3v1.6h2.5L14 12z" />
+          <path
+            fill="#FFF"
+            d="M14 12h-2.5v8h-3v-8h-2v-2.5h2v-1.8c0-2.2 1.4-3.4 3.3-3.4.9 0 1.7.1 1.9.1v2.2h-1.3c-1.1 0-1.3.5-1.3 1.3v1.6h2.5L14 12z"
+          />
         </svg>
       ),
     };
@@ -301,7 +554,10 @@ const getQuickLinkBranding = (label: string, url: string) => {
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="#000000" />
           <g transform="translate(4.2, 4.3) scale(0.65)">
-            <path fill="#FFF" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .8.11V9.4a6.27 6.27 0 0 0-3.11 0A6.33 6.33 0 0 0 2 15.68a6.32 6.32 0 0 0 10.4 4.84 6.26 6.26 0 0 0 1.95-4.52V8.82a8.27 8.27 0 0 0 5.24 1.86V7.28a4.89 4.89 0 0 1-3.11-.59z" />
+            <path
+              fill="#FFF"
+              d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .8.11V9.4a6.27 6.27 0 0 0-3.11 0A6.33 6.33 0 0 0 2 15.68a6.32 6.32 0 0 0 10.4 4.84 6.26 6.26 0 0 0 1.95-4.52V8.82a8.27 8.27 0 0 0 5.24 1.86V7.28a4.89 4.89 0 0 1-3.11-.59z"
+            />
           </g>
         </svg>
       ),
@@ -317,13 +573,20 @@ const getQuickLinkBranding = (label: string, url: string) => {
       coloredIcon: (
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <rect width="24" height="24" rx="5" fill="#0077b5" />
-          <path fill="#FFF" d="M5.3 9h2.8v9H5.3zM6.7 5c1 0 1.8.8 1.8 1.8s-.8 1.8-1.8 1.8-1.8-.8-1.8-1.8.8-1.8 1.8-1.8zm5.2 4h2.7v1.2h.1c.4-.7 1.3-1.4 2.6-1.4 2.8 0 3.3 1.8 3.3 4.2v5h-2.8v-4.4c0-1.1 0-2.4-1.5-2.4s-1.7 1.2-1.7 2.3v4.5h-2.8V9z" />
+          <path
+            fill="#FFF"
+            d="M5.3 9h2.8v9H5.3zM6.7 5c1 0 1.8.8 1.8 1.8s-.8 1.8-1.8 1.8-1.8-.8-1.8-1.8.8-1.8 1.8-1.8zm5.2 4h2.7v1.2h.1c.4-.7 1.3-1.4 2.6-1.4 2.8 0 3.3 1.8 3.3 4.2v5h-2.8v-4.4c0-1.1 0-2.4-1.5-2.4s-1.7 1.2-1.7 2.3v4.5h-2.8V9z"
+          />
         </svg>
       ),
     };
   }
   // YouTube
-  if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be") || labelLower.includes("youtube")) {
+  if (
+    urlLower.includes("youtube.com") ||
+    urlLower.includes("youtu.be") ||
+    labelLower.includes("youtube")
+  ) {
     return {
       bg: "#ff0000",
       borderColor: "#cc0000",
@@ -347,7 +610,11 @@ const getQuickLinkBranding = (label: string, url: string) => {
       coloredIcon: (
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="#1DB954" />
-          <path fill="#FFF" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.565.387-.86.207-2.377-1.454-5.37-1.783-8.893-1.02-.336.073-.668-.14-.74-.477-.074-.337.14-.668.477-.74 3.856-.88 7.15-.502 9.81 1.13.295.178.387.563.206.86zm1.225-2.72c-.227.367-.707.487-1.074.26-2.72-1.672-6.87-2.157-10.076-1.182-.413.125-.848-.107-.973-.52-.125-.413.107-.847.52-.973 3.666-1.114 8.234-.567 11.343 1.346.367.227.487.707.26 1.07zm.106-2.833C14.384 8.8 8.12 8.583 4.512 9.68c-.556.168-1.137-.146-1.305-.702-.168-.556.146-1.137.702-1.305 4.17-1.266 11.07-1.01 15.19 1.436.5.297.665.94.368 1.44-.297.5-.94.665-1.44.368z" transform="scale(0.7) translate(5, 5)" />
+          <path
+            fill="#FFF"
+            d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm4.586 14.424c-.18.295-.565.387-.86.207-2.377-1.454-5.37-1.783-8.893-1.02-.336.073-.668-.14-.74-.477-.074-.337.14-.668.477-.74 3.856-.88 7.15-.502 9.81 1.13.295.178.387.563.206.86zm1.225-2.72c-.227.367-.707.487-1.074.26-2.72-1.672-6.87-2.157-10.076-1.182-.413.125-.848-.107-.973-.52-.125-.413.107-.847.52-.973 3.666-1.114 8.234-.567 11.343 1.346.367.227.487.707.26 1.07zm.106-2.833C14.384 8.8 8.12 8.583 4.512 9.68c-.556.168-1.137-.146-1.305-.702-.168-.556.146-1.137.702-1.305 4.17-1.266 11.07-1.01 15.19 1.436.5.297.665.94.368 1.44-.297.5-.94.665-1.44.368z"
+            transform="scale(0.7) translate(5, 5)"
+          />
         </svg>
       ),
     };
@@ -362,13 +629,22 @@ const getQuickLinkBranding = (label: string, url: string) => {
       coloredIcon: (
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="#BD081C" />
-          <path fill="#FFF" d="M12.017 0C5.396 0 0 5.397 0 12.017c0 5.078 3.158 9.41 7.63 11.162-.105-.947-.199-2.399.041-3.43.218-.93 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.21-.174.254-.402.148-1.5-.699-2.436-2.899-2.436-4.664 0-3.796 2.76-7.281 7.954-7.281 4.175 0 7.42 2.975 7.42 6.952 0 4.148-2.616 7.486-6.25 7.486-1.22 0-2.368-.634-2.76-1.38l-.752 2.863c-.272 1.042-1.01 2.348-1.505 3.161 1.125.347 2.316.536 3.553.536 6.62 0 12.017-5.396 12.017-12.017C24.017 5.397 18.637 0 12.017 0z" transform="scale(0.65) translate(6, 6)" />
+          <path
+            fill="#FFF"
+            d="M12.017 0C5.396 0 0 5.397 0 12.017c0 5.078 3.158 9.41 7.63 11.162-.105-.947-.199-2.399.041-3.43.218-.93 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345-.09.375-.293 1.199-.334 1.363-.053.21-.174.254-.402.148-1.5-.699-2.436-2.899-2.436-4.664 0-3.796 2.76-7.281 7.954-7.281 4.175 0 7.42 2.975 7.42 6.952 0 4.148-2.616 7.486-6.25 7.486-1.22 0-2.368-.634-2.76-1.38l-.752 2.863c-.272 1.042-1.01 2.348-1.505 3.161 1.125.347 2.316.536 3.553.536 6.62 0 12.017-5.396 12.017-12.017C24.017 5.397 18.637 0 12.017 0z"
+            transform="scale(0.65) translate(6, 6)"
+          />
         </svg>
       ),
     };
   }
   // Twitter / X
-  if (urlLower.includes("twitter.com") || urlLower.includes("x.com") || labelLower.includes("twitter") || labelLower.includes(" x ")) {
+  if (
+    urlLower.includes("twitter.com") ||
+    urlLower.includes("x.com") ||
+    labelLower.includes("twitter") ||
+    labelLower.includes(" x ")
+  ) {
     return {
       bg: "#000000",
       borderColor: "#222222",
@@ -377,14 +653,22 @@ const getQuickLinkBranding = (label: string, url: string) => {
       coloredIcon: (
         <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="12" fill="#000000" />
-          <path fill="#FFF" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" transform="scale(0.7) translate(5, 5)" />
+          <path
+            fill="#FFF"
+            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+            transform="scale(0.7) translate(5, 5)"
+          />
         </svg>
       ),
     };
   }
 
   // Fallback (Custom Link)
-  const isStar = labelLower.includes("reseña") || labelLower.includes("opinion") || labelLower.includes("calific") || labelLower.includes("opinión");
+  const isStar =
+    labelLower.includes("reseña") ||
+    labelLower.includes("opinion") ||
+    labelLower.includes("calific") ||
+    labelLower.includes("opinión");
   return {
     bg: "#1f2937",
     borderColor: "#374151",
@@ -393,12 +677,20 @@ const getQuickLinkBranding = (label: string, url: string) => {
     coloredIcon: isStar ? (
       <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="12" fill="#f59e0b" />
-        <path fill="#FFF" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" transform="scale(0.7) translate(5, 5)" />
+        <path
+          fill="#FFF"
+          d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+          transform="scale(0.7) translate(5, 5)"
+        />
       </svg>
     ) : (
       <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="12" fill="#4b5563" />
-        <path fill="#FFF" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" transform="scale(0.7) translate(5, 5)" />
+        <path
+          fill="#FFF"
+          d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
+          transform="scale(0.7) translate(5, 5)"
+        />
       </svg>
     ),
   };
@@ -409,7 +701,7 @@ const parseCategoryName = (name: string) => {
   const [label, iconKey] = name.split("|");
   return {
     label: label ? label.trim() : "",
-    iconKey: iconKey ? iconKey.trim() : ""
+    iconKey: iconKey ? iconKey.trim() : "",
   };
 };
 
@@ -430,7 +722,15 @@ const getCleanCategoryName = (rawName: string) => {
   return emoji ? `${emoji} ${label}` : label;
 };
 
-function CategoryIcon({ iconKey, className, style }: { iconKey: string; className?: string; style?: React.CSSProperties }) {
+function CategoryIcon({
+  iconKey,
+  className,
+  style,
+}: {
+  iconKey: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   const sizeClass = className || "h-4 w-4";
   const getIcon = () => {
     switch (iconKey) {
@@ -557,50 +857,117 @@ function CategoryIcon({ iconKey, className, style }: { iconKey: string; classNam
         return null;
     }
   };
-  return <span style={style} className="inline-flex shrink-0">{getIcon()}</span>;
+  return (
+    <span style={style} className="inline-flex shrink-0">
+      {getIcon()}
+    </span>
+  );
 }
 
-const scanProductBadges = (name: string, description?: string): { emoji: string; label: string }[] => {
+const scanProductBadges = (
+  name: string,
+  description?: string,
+): { emoji: string; label: string }[] => {
   const text = `${name} ${description || ""}`.toLowerCase();
   const badges: { emoji: string; label: string }[] = [];
 
-  if (text.includes("picante") || text.includes("chile") || text.includes("aji") || text.includes("hot") || text.includes("spicy")) {
+  if (
+    text.includes("picante") ||
+    text.includes("chile") ||
+    text.includes("aji") ||
+    text.includes("hot") ||
+    text.includes("spicy")
+  ) {
     badges.push({ emoji: "🌶️", label: "Picante" });
   }
-  if (text.includes("vegano") || text.includes("vegan") || text.includes("vegetariano") || text.includes("vegetarian")) {
+  if (
+    text.includes("vegano") ||
+    text.includes("vegan") ||
+    text.includes("vegetariano") ||
+    text.includes("vegetarian")
+  ) {
     badges.push({ emoji: "🌱", label: "Vegano" });
   }
-  if (text.includes("sin gluten") || text.includes("gluten-free") || text.includes("gluten free") || text.includes("celiaco")) {
+  if (
+    text.includes("sin gluten") ||
+    text.includes("gluten-free") ||
+    text.includes("gluten free") ||
+    text.includes("celiaco")
+  ) {
     badges.push({ emoji: "🌾", label: "Sin Gluten" });
   }
 
   if (text.includes("algodón") || text.includes("algodon") || text.includes("cotton")) {
     badges.push({ emoji: "🧵", label: "Algodón" });
   }
-  if (text.includes("invierno") || text.includes("winter") || text.includes("frío") || text.includes("frio")) {
+  if (
+    text.includes("invierno") ||
+    text.includes("winter") ||
+    text.includes("frío") ||
+    text.includes("frio")
+  ) {
     badges.push({ emoji: "❄️", label: "Invierno" });
   }
-  if (text.includes("verano") || text.includes("summer") || text.includes("playa") || text.includes("calor")) {
+  if (
+    text.includes("verano") ||
+    text.includes("summer") ||
+    text.includes("playa") ||
+    text.includes("calor")
+  ) {
     badges.push({ emoji: "☀️", label: "Verano" });
   }
 
-  if (text.includes("cumpleaños") || text.includes("cumple") || text.includes("birthday") || text.includes("aniversario")) {
+  if (
+    text.includes("cumpleaños") ||
+    text.includes("cumple") ||
+    text.includes("birthday") ||
+    text.includes("aniversario")
+  ) {
     badges.push({ emoji: "🎂", label: "Cumpleaños" });
   }
-  if (text.includes("amor") || text.includes("love") || text.includes("romántico") || text.includes("romantico") || text.includes("pareja") || text.includes("novia") || text.includes("novio")) {
+  if (
+    text.includes("amor") ||
+    text.includes("love") ||
+    text.includes("romántico") ||
+    text.includes("romantico") ||
+    text.includes("pareja") ||
+    text.includes("novia") ||
+    text.includes("novio")
+  ) {
     badges.push({ emoji: "❤️", label: "Amor" });
   }
-  if (text.includes("condolencias") || text.includes("pesame") || text.includes("luto") || text.includes("condolence")) {
+  if (
+    text.includes("condolencias") ||
+    text.includes("pesame") ||
+    text.includes("luto") ||
+    text.includes("condolence")
+  ) {
     badges.push({ emoji: "🕊️", label: "Pésame" });
   }
 
-  if (text.includes("express") || text.includes("rápido") || text.includes("rapido") || text.includes("fast") || text.includes("corto")) {
+  if (
+    text.includes("express") ||
+    text.includes("rápido") ||
+    text.includes("rapido") ||
+    text.includes("fast") ||
+    text.includes("corto")
+  ) {
     badges.push({ emoji: "⚡", label: "Express" });
   }
-  if (text.includes("orgánico") || text.includes("organico") || text.includes("organic") || text.includes("natural")) {
+  if (
+    text.includes("orgánico") ||
+    text.includes("organico") ||
+    text.includes("organic") ||
+    text.includes("natural")
+  ) {
     badges.push({ emoji: "🌿", label: "Orgánico" });
   }
-  if (text.includes("relajante") || text.includes("relax") || text.includes("antiestrés") || text.includes("antiestres")) {
+  if (
+    text.includes("relajante") ||
+    text.includes("relax") ||
+    text.includes("antiestrés") ||
+    text.includes("antiestres")
+  ) {
     badges.push({ emoji: "💆", label: "Relajante" });
   }
 
@@ -608,7 +975,17 @@ const scanProductBadges = (name: string, description?: string): { emoji: string;
 };
 
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
-const BANNER_MODELS = new Set(["elite", "portada", "luxury", "boutique", "nocturno", "dark_fashion", "aurora", "slash", "sunset_glow"]);
+const BANNER_MODELS = new Set([
+  "elite",
+  "portada",
+  "luxury",
+  "boutique",
+  "nocturno",
+  "dark_fashion",
+  "aurora",
+  "slash",
+  "sunset_glow",
+]);
 
 const getNicheTaglines = (niche?: string) => {
   const n = (niche || "").toLowerCase();
@@ -619,7 +996,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Menú",
       productTagline: "Artesanal & Delicioso",
       productTag: "Gourmet",
-      featuredTitle: "Los más Vendidos"
+      featuredTitle: "Los más Vendidos",
     };
   }
   if (n === "cafeteria" || n === "cafe") {
@@ -629,7 +1006,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Menú",
       productTagline: "Fresco & Artesanal",
       productTag: "Especial",
-      featuredTitle: "Recomendados"
+      featuredTitle: "Recomendados",
     };
   }
   if (n === "floreria" || n === "boutique_botanica") {
@@ -639,7 +1016,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Colección",
       productTagline: "Orgánico & Sostenible",
       productTag: "Orgánico",
-      featuredTitle: "Destacados Naturales"
+      featuredTitle: "Destacados Naturales",
     };
   }
   if (n === "jugueteria" || n === "juguetes" || n === "peluches" || n === "infantil") {
@@ -649,7 +1026,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Catálogo",
       productTagline: "Suave & Antialérgico",
       productTag: "Premium",
-      featuredTitle: "Destacados Wambo"
+      featuredTitle: "Destacados Wambo",
     };
   }
   if (n === "boutique" || n === "moda" || n === "ropa") {
@@ -659,7 +1036,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Colección",
       productTagline: "Diseño Exclusivo",
       productTag: "Tendencia",
-      featuredTitle: "Los más Buscados"
+      featuredTitle: "Los más Buscados",
     };
   }
   if (n === "pasteleria" || n === "panaderia" || n === "dulces") {
@@ -669,7 +1046,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Menú",
       productTagline: "Horneado Hoy",
       productTag: "Delicia",
-      featuredTitle: "Especiales de la Casa"
+      featuredTitle: "Especiales de la Casa",
     };
   }
   if (n === "restaurante" || n === "gastronomia" || n === "comida") {
@@ -679,7 +1056,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Carta",
       productTagline: "Fresco & Selecto",
       productTag: "Premium",
-      featuredTitle: "Recomendaciones del Chef"
+      featuredTitle: "Recomendaciones del Chef",
     };
   }
   if (n === "estetica" || n === "belleza" || n === "salon" || n === "spa") {
@@ -689,7 +1066,7 @@ const getNicheTaglines = (niche?: string) => {
       buttonText: "Ver Servicios",
       productTagline: "Cuidado Profesional",
       productTag: "Bienestar",
-      featuredTitle: "Servicios Destacados"
+      featuredTitle: "Servicios Destacados",
     };
   }
   return {
@@ -698,7 +1075,7 @@ const getNicheTaglines = (niche?: string) => {
     buttonText: "Explorar",
     productTagline: "Garantía & Calidad",
     productTag: "Exclusivo",
-    featuredTitle: "Destacados"
+    featuredTitle: "Destacados",
   };
 };
 
@@ -751,19 +1128,25 @@ function DiziNativeAdCard({
 
   if (layout === "lookbook") {
     return (
-      <div 
+      <div
         style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
         className="w-full border-t border-b py-12 px-6 sm:px-12 flex flex-col items-center justify-center text-center space-y-6 select-none animate-in fade-in duration-500"
       >
         <div className="h-16 w-16 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm animate-pulse">
-          <img src="/images/dizi_ad_brand_3d.webp" alt="Dizi" className="h-full w-full object-cover" />
+          <img
+            src="/images/dizi_ad_brand_3d.webp"
+            alt="Dizi"
+            className="h-full w-full object-cover"
+          />
         </div>
         <div className="space-y-2 max-w-lg">
           <h3 className="text-xl sm:text-2xl font-serif font-light tracking-wide leading-tight text-zinc-900 dark:text-zinc-100">
             ¿Quieres un catálogo digital tan elegante como este?
           </h3>
           <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-sans leading-relaxed">
-            Crea tu propia tienda digital autoadministrable en <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en minutos y automatiza tus ventas por WhatsApp de forma profesional.
+            Crea tu propia tienda digital autoadministrable en{" "}
+            <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en minutos y
+            automatiza tus ventas por WhatsApp de forma profesional.
           </p>
         </div>
         <a
@@ -784,12 +1167,16 @@ function DiziNativeAdCard({
 
   if (layout === "editorial") {
     return (
-      <div 
+      <div
         style={{ borderColor: "var(--border)" }}
         className="flex gap-4 py-6 border-b border-dashed items-center select-none animate-in fade-in duration-300"
       >
         <div className="h-10 w-10 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-xs">
-          <img src="/images/dizi_ad_brand_3d.webp" alt="Dizi" className="h-full w-full object-cover" />
+          <img
+            src="/images/dizi_ad_brand_3d.webp"
+            alt="Dizi"
+            className="h-full w-full object-cover"
+          />
         </div>
         <div className="flex-1 text-left min-w-0">
           <h4 className="font-semibold text-xs leading-snug text-zinc-900 dark:text-zinc-100 truncate">
@@ -816,7 +1203,8 @@ function DiziNativeAdCard({
   }
 
   const borderStyle = cardBorder ? "border border-zinc-200 dark:border-zinc-800" : "";
-  const extraPadding = layout === "bloom" || layout === "nature" || layout === "bite" ? "p-4" : "p-3";
+  const extraPadding =
+    layout === "bloom" || layout === "nature" || layout === "bite" ? "p-4" : "p-3";
 
   return (
     <div
@@ -828,11 +1216,11 @@ function DiziNativeAdCard({
     >
       <div className={`flex flex-col flex-1 ${extraPadding} space-y-3.5`}>
         {/* Banner header inside ad card - rendering WebP image */}
-        <div 
+        <div
           className="relative overflow-hidden bg-muted flex items-center justify-center text-center border border-zinc-200/50 dark:border-zinc-800/50"
-          style={{ 
+          style={{
             borderRadius: imgRounded,
-            aspectRatio: layout === "grid" ? "4/3" : "1/1"
+            aspectRatio: layout === "grid" ? "4/3" : "1/1",
           }}
         >
           <img
@@ -841,8 +1229,12 @@ function DiziNativeAdCard({
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
           />
-          <span 
-            style={{ backgroundColor: `${primaryColor}20`, color: primaryColor, backdropFilter: "blur(4px)" }}
+          <span
+            style={{
+              backgroundColor: `${primaryColor}20`,
+              color: primaryColor,
+              backdropFilter: "blur(4px)",
+            }}
             className="absolute top-2 right-2 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full z-10 shadow-xs"
           >
             Patrocinado
@@ -855,13 +1247,16 @@ function DiziNativeAdCard({
             Vende más con DIZI gratis
           </h4>
           <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-sans leading-normal line-clamp-2">
-            Crea tu propio catálogo virtual profesional con pedidos automáticos a WhatsApp en 2 minutos.
+            Crea tu propio catálogo virtual profesional con pedidos automáticos a WhatsApp en 2
+            minutos.
           </p>
         </div>
       </div>
 
       {/* Button footer */}
-      <div className={`px-3 pb-3.5 pt-0 ${layout === "bloom" || layout === "nature" || layout === "bite" ? "px-4 pb-4" : ""}`}>
+      <div
+        className={`px-3 pb-3.5 pt-0 ${layout === "bloom" || layout === "nature" || layout === "bite" ? "px-4 pb-4" : ""}`}
+      >
         <a
           href={adLink}
           target="_blank"
@@ -877,7 +1272,6 @@ function DiziNativeAdCard({
     </div>
   );
 }
-
 
 export function PublicCatalog({
   store,
@@ -901,6 +1295,7 @@ export function PublicCatalog({
   const [copied, setCopied] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successOrderUrl, setSuccessOrderUrl] = useState("");
+  const [promoBarClosed, setPromoBarClosed] = useState(false);
   const [showInAppBanner, setShowInAppBanner] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -940,7 +1335,7 @@ export function PublicCatalog({
     const raw = store.bannerImage || "";
     if (!raw) return [];
     const all = raw.includes("|||") ? raw.split("|||") : [raw];
-    
+
     // Enforce limits: Semilla = 0, Emprendedor = 1, Pro = 3, Ilimitado = 5
     const planId = store.plan;
     if (planId === "semilla") return [];
@@ -950,8 +1345,6 @@ export function PublicCatalog({
   }, [store.bannerImage, store.plan]);
 
   const bannersCount = activeBanners.length;
-  
-
 
   useEffect(() => {
     if (bannersCount <= 1) return;
@@ -960,7 +1353,6 @@ export function PublicCatalog({
     }, 5000);
     return () => clearInterval(interval);
   }, [bannersCount]);
-
 
   const [productImages, setProductImages] = useState<Record<string, string>>({});
   const [imagesLoaded, setImagesLoaded] = useState(false);
@@ -999,12 +1391,11 @@ export function PublicCatalog({
   const productsWithImages = useMemo(() => {
     return (store.products || []).map((p) => {
       const hasRealImage = !!productImages[p.id];
-      const placeholder = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgNjAwIDYwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjwvc3ZnPg==";
+      const placeholder =
+        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgNjAwIDYwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjwvc3ZnPg==";
       return {
         ...p,
-        image: hasRealImage 
-          ? productImages[p.id] 
-          : (imagesLoaded ? (p.image || "") : placeholder),
+        image: hasRealImage ? productImages[p.id] : imagesLoaded ? p.image || "" : placeholder,
       };
     });
   }, [store.products, productImages, imagesLoaded]);
@@ -1030,7 +1421,9 @@ export function PublicCatalog({
 
     // 2. Evitar contar visitas de bots/crawlers automáticos
     const userAgent = typeof navigator !== "undefined" ? navigator.userAgent : "";
-    const isBot = /bot|google|baidu|bing|msn|duckduckbot|teoma|slurp|yandex|lighthouse/i.test(userAgent);
+    const isBot = /bot|google|baidu|bing|msn|duckduckbot|teoma|slurp|yandex|lighthouse/i.test(
+      userAgent,
+    );
     if (isBot) {
       return;
     }
@@ -1057,43 +1450,56 @@ export function PublicCatalog({
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
-  const isPremiumModel = modelId === "bloom" || modelId === "nature" || modelId === "bite" || modelId === "lookbook";
+  const isPremiumModel =
+    modelId === "bloom" || modelId === "nature" || modelId === "bite" || modelId === "lookbook";
 
   // Premium General visual configuration variables
-  const isSerif = (isPremiumModel && (store.niche === "floreria" || modelId === "nature")) || (!isPremiumModel && store.catalogTypography === "serif");
-  const finalTypographyClass = (isPremiumModel && (store.niche === "floreria" || modelId === "nature"))
-    ? "typography-serif"
-    : store.catalogTypography === "serif"
+  const isSerif =
+    (isPremiumModel && (store.niche === "floreria" || modelId === "nature")) ||
+    (!isPremiumModel && store.catalogTypography === "serif");
+  const finalTypographyClass =
+    isPremiumModel && (store.niche === "floreria" || modelId === "nature")
       ? "typography-serif"
-      : store.catalogTypography === "rounded"
-        ? "typography-rounded"
-        : store.catalogTypography === "modern"
-          ? "typography-modern"
-          : "typography-sans";
+      : store.catalogTypography === "serif"
+        ? "typography-serif"
+        : store.catalogTypography === "rounded"
+          ? "typography-rounded"
+          : store.catalogTypography === "modern"
+            ? "typography-modern"
+            : "typography-sans";
 
-  const cStyle = (isPremiumModel && store.niche === "floreria") ? "curved" : (store.cardStyle || "standard");
+  const cStyle =
+    isPremiumModel && store.niche === "floreria" ? "curved" : store.cardStyle || "standard";
 
   const isFloristBloom = isPremiumModel && store.niche === "floreria";
 
-  const featuredCardStyle: React.CSSProperties = isFloristBloom ? {
-    borderColor: "color-mix(in srgb, var(--primary) 15%, transparent)",
-    backgroundColor: "color-mix(in srgb, var(--card) 75%, transparent)"
-  } : {};
+  const featuredCardStyle: React.CSSProperties = isFloristBloom
+    ? {
+        borderColor: "color-mix(in srgb, var(--primary) 15%, transparent)",
+        backgroundColor: "color-mix(in srgb, var(--card) 75%, transparent)",
+      }
+    : {};
 
-  const featuredImgStyle: React.CSSProperties = isFloristBloom ? {
-    backgroundColor: "color-mix(in srgb, var(--primary) 5%, transparent)",
-    borderColor: "color-mix(in srgb, var(--primary) 10%, transparent)"
-  } : {};
+  const featuredImgStyle: React.CSSProperties = isFloristBloom
+    ? {
+        backgroundColor: "color-mix(in srgb, var(--primary) 5%, transparent)",
+        borderColor: "color-mix(in srgb, var(--primary) 10%, transparent)",
+      }
+    : {};
 
-  const gridCardStyle: React.CSSProperties = isFloristBloom ? {
-    borderColor: "color-mix(in srgb, var(--primary) 12%, transparent)",
-    backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)"
-  } : {};
+  const gridCardStyle: React.CSSProperties = isFloristBloom
+    ? {
+        borderColor: "color-mix(in srgb, var(--primary) 12%, transparent)",
+        backgroundColor: "color-mix(in srgb, var(--card) 70%, transparent)",
+      }
+    : {};
 
-  const gridImgStyle: React.CSSProperties = isFloristBloom ? {
-    backgroundColor: "color-mix(in srgb, var(--primary) 5%, transparent)",
-    borderColor: "color-mix(in srgb, var(--primary) 8%, transparent)"
-  } : {};
+  const gridImgStyle: React.CSSProperties = isFloristBloom
+    ? {
+        backgroundColor: "color-mix(in srgb, var(--primary) 5%, transparent)",
+        borderColor: "color-mix(in srgb, var(--primary) 8%, transparent)",
+      }
+    : {};
 
   const featuredCardClass = isFloristBloom
     ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border hover:bg-[var(--card)] shadow-md hover:shadow-xl"
@@ -1107,34 +1513,35 @@ export function PublicCatalog({
 
   const featuredImgClass = cn(
     "relative aspect-square w-full overflow-hidden",
-    (isPremiumModel && store.niche === "floreria")
+    isPremiumModel && store.niche === "floreria"
       ? "rounded-t-[7rem] rounded-b-[1.5rem] border"
       : cStyle === "shadow"
         ? "rounded-xl bg-muted border-none"
         : cStyle === "curved"
           ? "rounded-[1.75rem_0.375rem_1.75rem_0.375rem] bg-muted border border-[var(--border)]"
-          : "rounded-xl bg-muted border border-[var(--border)]"
+          : "rounded-xl bg-muted border border-[var(--border)]",
   );
 
-  const gridCardClass = (isPremiumModel && store.niche === "floreria")
-    ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-[2.5rem_0.5rem_2.5rem_0.5rem] hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
-    : cStyle === "flat"
-      ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
-      : cStyle === "shadow"
-        ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border-none rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
-        : cStyle === "curved"
-          ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-[2.25rem_0.5rem_2.25rem_0.5rem] bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md"
-          : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
+  const gridCardClass =
+    isPremiumModel && store.niche === "floreria"
+      ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-[2.5rem_0.5rem_2.5rem_0.5rem] hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
+      : cStyle === "flat"
+        ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
+        : cStyle === "shadow"
+          ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border-none rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
+          : cStyle === "curved"
+            ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-[2.25rem_0.5rem_2.25rem_0.5rem] bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md"
+            : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
 
   const gridImgClass = cn(
     "relative overflow-hidden aspect-square m-2",
-    (isPremiumModel && store.niche === "floreria")
+    isPremiumModel && store.niche === "floreria"
       ? "rounded-[2rem_0.5rem_2rem_0.5rem] border"
       : cStyle === "shadow"
         ? "bg-muted rounded-xl border-none"
         : cStyle === "curved"
           ? "bg-muted rounded-[1.75rem_0.375rem_1.75rem_0.375rem] border border-[var(--border)]"
-          : "bg-muted rounded-xl border border-[var(--border)]"
+          : "bg-muted rounded-xl border border-[var(--border)]",
   );
 
   // Calculate luminance of a hex color (0 = black, 1 = white)
@@ -1144,7 +1551,7 @@ export function PublicCatalog({
     const r = parseInt(h.slice(0, 2), 16) / 255;
     const g = parseInt(h.slice(2, 4), 16) / 255;
     const b = parseInt(h.slice(4, 6), 16) / 255;
-    const toLinear = (c: number) => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
     return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
   };
 
@@ -1166,7 +1573,7 @@ export function PublicCatalog({
   const rawBg = (store as any).bgColor as string | undefined;
   const customBg = rawBg || undefined;
   const effectiveIsDark = customBg
-    ? hexLuminance(customBg) < 0.18   // threshold: < 18% luminance = dark bg
+    ? hexLuminance(customBg) < 0.18 // threshold: < 18% luminance = dark bg
     : cfg.isDark;
 
   // Blend hex color with white — pure JS, no color-mix (max browser compat)
@@ -1176,7 +1583,10 @@ export function PublicCatalog({
     const r = parseInt(h.slice(0, 2), 16);
     const g = parseInt(h.slice(2, 4), 16);
     const b = parseInt(h.slice(4, 6), 16);
-    const blend = (c: number) => Math.round(c + (255 - c) * amount).toString(16).padStart(2, "0");
+    const blend = (c: number) =>
+      Math.round(c + (255 - c) * amount)
+        .toString(16)
+        .padStart(2, "0");
     return `#${blend(r)}${blend(g)}${blend(b)}`;
   };
 
@@ -1187,12 +1597,12 @@ export function PublicCatalog({
 
   // Gradient backgrounds for locked models that have a special identity
   const MODEL_GRADIENTS: Record<string, string> = {
-    aurora:      "radial-gradient(ellipse at 20% 50%, #2d1b6e 0%, #0d0d1a 50%, #1a0830 100%)",
-    nocturno:    "linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
+    aurora: "radial-gradient(ellipse at 20% 50%, #2d1b6e 0%, #0d0d1a 50%, #1a0830 100%)",
+    nocturno: "linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)",
     sunset_glow: "radial-gradient(ellipse at 80% 20%, #7c2d8e 0%, #1a0a2e 45%, #0f0520 100%)",
-    luxury:      "linear-gradient(180deg, #09090b 0%, #18101a 50%, #09090b 100%)",
-    dark_fashion:"linear-gradient(180deg, #111111 0%, #1a1a1a 100%)",
-    slash:       "linear-gradient(150deg, #0d1117 0%, #1c1728 50%, #0d1117 100%)",
+    luxury: "linear-gradient(180deg, #09090b 0%, #18101a 50%, #09090b 100%)",
+    dark_fashion: "linear-gradient(180deg, #111111 0%, #1a1a1a 100%)",
+    slash: "linear-gradient(150deg, #0d1117 0%, #1c1728 50%, #0d1117 100%)",
   };
   const modelGradient = customBg ? undefined : MODEL_GRADIENTS[modelId];
 
@@ -1200,12 +1610,20 @@ export function PublicCatalog({
   // All foreground vars recalculated from effectiveIsDark so any model+bg combo stays readable
   const themeVars: React.CSSProperties = {
     ...cfg.vars,
-    "--foreground":       store.textColor || (effectiveIsDark ? "#f0f0f0" : "#111111"),
-    "--foreground-muted": store.textColor ? `color-mix(in srgb, ${store.textColor} 70%, transparent)` : (effectiveIsDark ? "#a0a0a0" : "#6b7280"),
-    "--muted-foreground": store.textColor ? `color-mix(in srgb, ${store.textColor} 60%, transparent)` : (effectiveIsDark ? "#94a3b8" : "#64748b"),
-    "--muted":            effectiveIsDark ? "#1e293b" : "#f1f5f9",
-    "--secondary":        effectiveIsDark ? "#1e2535" : "#f8fafc",
-    "--border":           effectiveIsDark ? "#334155" : "#e2e8f0",
+    "--foreground": store.textColor || (effectiveIsDark ? "#f0f0f0" : "#111111"),
+    "--foreground-muted": store.textColor
+      ? `color-mix(in srgb, ${store.textColor} 70%, transparent)`
+      : effectiveIsDark
+        ? "#a0a0a0"
+        : "#6b7280",
+    "--muted-foreground": store.textColor
+      ? `color-mix(in srgb, ${store.textColor} 60%, transparent)`
+      : effectiveIsDark
+        ? "#94a3b8"
+        : "#64748b",
+    "--muted": effectiveIsDark ? "#1e293b" : "#f1f5f9",
+    "--secondary": effectiveIsDark ? "#1e2535" : "#f8fafc",
+    "--border": effectiveIsDark ? "#334155" : "#e2e8f0",
     ...(store.brandColor ? { "--primary": store.brandColor } : {}),
     "--primary-foreground": primaryTextColor,
     ...(customBg ? { "--background": customBg } : {}),
@@ -1218,7 +1636,7 @@ export function PublicCatalog({
   const isBioMode = mode === "bio";
   const bioTheme = store.bioTheme || "default";
   const bioTypography = store.bioTypography || "sans";
-  
+
   let bioThemeVars: React.CSSProperties = { ...themeVars };
   let finalIsDark = effectiveIsDark;
 
@@ -1289,7 +1707,8 @@ export function PublicCatalog({
     finalIsDark = isDark;
     bioThemeVars = {
       ...cfg.vars,
-      "--background": (background.includes("gradient") || background.startsWith("url(")) ? "#0f172a" : background,
+      "--background":
+        background.includes("gradient") || background.startsWith("url(") ? "#0f172a" : background,
       "--foreground": isDark ? "#f8fafc" : "#0f172a",
       "--foreground-muted": isDark ? "#cbd5e1" : "#475569",
       "--muted-foreground": isDark ? "#94a3b8" : "#64748b",
@@ -1299,14 +1718,19 @@ export function PublicCatalog({
       "--card": cardBg,
       ...(store.brandColor ? { "--primary": store.brandColor } : {}),
       "--primary-foreground": primaryTextColor,
-      ...((background.includes("gradient") || background.startsWith("url(")) 
-        ? { backgroundImage: background, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" } 
+      ...(background.includes("gradient") || background.startsWith("url(")
+        ? {
+            backgroundImage: background,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }
         : { backgroundImage: "none" }),
     } as any;
   }
 
   const getButtonStyle = (styleId: string) => {
-    const activeStyle = store.plan === "semilla" ? "pill-solid" : (styleId || "pill-solid");
+    const activeStyle = store.plan === "semilla" ? "pill-solid" : styleId || "pill-solid";
     const parts = activeStyle.split("-");
     const shape = parts[0] || "pill";
     const type = parts[1] || "solid";
@@ -1324,13 +1748,24 @@ export function PublicCatalog({
     defaultBg: string,
     defaultBorder: string,
     defaultText: string,
-    platform: "whatsapp" | "location" | "instagram" | "facebook" | "tiktok" | "linkedin" | "youtube" | "spotify" | "pinterest" | "twitter" | "custom",
+    platform:
+      | "whatsapp"
+      | "location"
+      | "instagram"
+      | "facebook"
+      | "tiktok"
+      | "linkedin"
+      | "youtube"
+      | "spotify"
+      | "pinterest"
+      | "twitter"
+      | "custom",
     customIcon?: React.ReactNode,
     onClick?: (e: React.MouseEvent) => void,
     overrideBg?: string,
     overrideText?: string,
     thumbnailUrl?: string,
-    iconName?: string
+    iconName?: string,
   ) => {
     const buttonStyleId = store.bioButtonStyle || "pill-solid";
     let { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
@@ -1403,21 +1838,27 @@ export function PublicCatalog({
         className={cn(
           "relative w-full p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)]",
           radiusClass,
-          extraClasses
+          extraClasses,
         )}
-        style={{
-          background: bg,
-          borderColor: borderColor,
-          color: color,
-          "--hover-glow": hoverGlow,
-        } as React.CSSProperties}
+        style={
+          {
+            background: bg,
+            borderColor: borderColor,
+            color: color,
+            "--hover-glow": hoverGlow,
+          } as React.CSSProperties
+        }
       >
         <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
-        
-        <div className={cn(
-          "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 overflow-hidden",
-          (isMonochrome && !thumbnailUrl) ? "bg-transparent" : "bg-white rounded-full shadow-inner border border-zinc-100 text-zinc-800"
-        )}>
+
+        <div
+          className={cn(
+            "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300 overflow-hidden",
+            isMonochrome && !thumbnailUrl
+              ? "bg-transparent"
+              : "bg-white rounded-full shadow-inner border border-zinc-100 text-zinc-800",
+          )}
+        >
           {thumbnailUrl ? (
             <img src={thumbnailUrl} alt={label} className="h-full w-full object-cover" />
           ) : iconName && iconName !== "" ? (
@@ -1466,11 +1907,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("spicy") ||
               p.name.toLowerCase().includes("ají") ||
               p.name.toLowerCase().includes("salsa") ||
-              (p.description && (
-                p.description.toLowerCase().includes("picante") ||
-                p.description.toLowerCase().includes("spicy") ||
-                p.description.toLowerCase().includes("ají")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("picante") ||
+                  p.description.toLowerCase().includes("spicy") ||
+                  p.description.toLowerCase().includes("ají"))),
           );
         } else if (selectedDiet === "vegan") {
           result = result.filter(
@@ -1479,11 +1919,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("vegano") ||
               p.name.toLowerCase().includes("vegetariano") ||
               p.name.toLowerCase().includes("ensalada") ||
-              (p.description && (
-                p.description.toLowerCase().includes("vegan") ||
-                p.description.toLowerCase().includes("vegano") ||
-                p.description.toLowerCase().includes("vegetariano")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("vegan") ||
+                  p.description.toLowerCase().includes("vegano") ||
+                  p.description.toLowerCase().includes("vegetariano"))),
           );
         } else if (selectedDiet === "gluten") {
           result = result.filter(
@@ -1491,10 +1930,9 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("sin gluten") ||
               p.name.toLowerCase().includes("gluten free") ||
               p.name.toLowerCase().includes("sin tacc") ||
-              (p.description && (
-                p.description.toLowerCase().includes("sin gluten") ||
-                p.description.toLowerCase().includes("gluten free")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("sin gluten") ||
+                  p.description.toLowerCase().includes("gluten free"))),
           );
         }
       } else if (modelId === "glam") {
@@ -1504,11 +1942,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("algodón") ||
               p.name.toLowerCase().includes("cotton") ||
               p.name.toLowerCase().includes("hilo") ||
-              (p.description && (
-                p.description.toLowerCase().includes("algodón") ||
-                p.description.toLowerCase().includes("cotton") ||
-                p.description.toLowerCase().includes("hilo")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("algodón") ||
+                  p.description.toLowerCase().includes("cotton") ||
+                  p.description.toLowerCase().includes("hilo"))),
           );
         } else if (selectedDiet === "winter") {
           result = result.filter(
@@ -1519,11 +1956,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("casaca") ||
               p.name.toLowerCase().includes("sweat") ||
               p.name.toLowerCase().includes("hoodie") ||
-              (p.description && (
-                p.description.toLowerCase().includes("invierno") ||
-                p.description.toLowerCase().includes("lana") ||
-                p.description.toLowerCase().includes("abrigo")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("invierno") ||
+                  p.description.toLowerCase().includes("lana") ||
+                  p.description.toLowerCase().includes("abrigo"))),
           );
         } else if (selectedDiet === "summer") {
           result = result.filter(
@@ -1534,11 +1970,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("shor") ||
               p.name.toLowerCase().includes("polo") ||
               p.name.toLowerCase().includes("top") ||
-              (p.description && (
-                p.description.toLowerCase().includes("verano") ||
-                p.description.toLowerCase().includes("lino") ||
-                p.description.toLowerCase().includes("playa")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("verano") ||
+                  p.description.toLowerCase().includes("lino") ||
+                  p.description.toLowerCase().includes("playa"))),
           );
         }
       } else if (modelId === "bloom") {
@@ -1550,11 +1985,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("te amo") ||
               p.name.toLowerCase().includes("aniversario") ||
               p.name.toLowerCase().includes("corazón") ||
-              (p.description && (
-                p.description.toLowerCase().includes("amor") ||
-                p.description.toLowerCase().includes("te amo") ||
-                p.description.toLowerCase().includes("romántico")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("amor") ||
+                  p.description.toLowerCase().includes("te amo") ||
+                  p.description.toLowerCase().includes("romántico"))),
           );
         } else if (selectedDiet === "birthday") {
           result = result.filter(
@@ -1563,10 +1997,9 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("alegre") ||
               p.name.toLowerCase().includes("sol") ||
               p.name.toLowerCase().includes("globo") ||
-              (p.description && (
-                p.description.toLowerCase().includes("cumple") ||
-                p.description.toLowerCase().includes("celebrar")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("cumple") ||
+                  p.description.toLowerCase().includes("celebrar"))),
           );
         } else if (selectedDiet === "condolences") {
           result = result.filter(
@@ -1576,10 +2009,9 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("blanca") ||
               p.name.toLowerCase().includes("lágrima") ||
               p.name.toLowerCase().includes("urna") ||
-              (p.description && (
-                p.description.toLowerCase().includes("pésame") ||
-                p.description.toLowerCase().includes("condolencia")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("pésame") ||
+                  p.description.toLowerCase().includes("condolencia"))),
           );
         }
       } else if (modelId === "vibe") {
@@ -1589,10 +2021,9 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("express") ||
               p.name.toLowerCase().includes("rápido") ||
               p.name.toLowerCase().includes("30 min") ||
-              (p.description && (
-                p.description.toLowerCase().includes("express") ||
-                p.description.toLowerCase().includes("30 minutos")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("express") ||
+                  p.description.toLowerCase().includes("30 minutos"))),
           );
         } else if (selectedDiet === "organic") {
           result = result.filter(
@@ -1601,11 +2032,10 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("natural") ||
               p.name.toLowerCase().includes("soya") ||
               p.name.toLowerCase().includes("vege") ||
-              (p.description && (
-                p.description.toLowerCase().includes("orgánic") ||
-                p.description.toLowerCase().includes("natural") ||
-                p.description.toLowerCase().includes("soya")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("orgánic") ||
+                  p.description.toLowerCase().includes("natural") ||
+                  p.description.toLowerCase().includes("soya"))),
           );
         } else if (selectedDiet === "relax") {
           result = result.filter(
@@ -1615,10 +2045,9 @@ export function PublicCatalog({
               p.name.toLowerCase().includes("antiestrés") ||
               p.name.toLowerCase().includes("aroma") ||
               p.name.toLowerCase().includes("lavanda") ||
-              (p.description && (
-                p.description.toLowerCase().includes("relaj") ||
-                p.description.toLowerCase().includes("descanso")
-              ))
+              (p.description &&
+                (p.description.toLowerCase().includes("relaj") ||
+                  p.description.toLowerCase().includes("descanso"))),
           );
         }
       }
@@ -1633,7 +2062,12 @@ export function PublicCatalog({
       .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
       .filter((p) => {
         if (!priceRange) return true;
-        return p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1];
+        return (
+          p.price !== null &&
+          p.price !== undefined &&
+          p.price >= priceRange[0] &&
+          p.price <= priceRange[1]
+        );
       });
 
     // Apply sorting
@@ -1644,12 +2078,22 @@ export function PublicCatalog({
     } else if (sortBy === "name_asc") {
       result = [...result].sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === "rating_desc") {
-      const getRating = (prod: Product) => ((prod.price || 0) > 80 ? 4.9 : (prod.price || 0) > 15 ? 4.8 : 4.5);
+      const getRating = (prod: Product) =>
+        (prod.price || 0) > 80 ? 4.9 : (prod.price || 0) > 15 ? 4.8 : 4.5;
       result = [...result].sort((a, b) => getRating(b) - getRating(a));
     }
 
     return result;
-  }, [productsWithImages, activeCat, query, priceRange, effectiveProductLimit, sortBy, selectedDiet, modelId]);
+  }, [
+    productsWithImages,
+    activeCat,
+    query,
+    priceRange,
+    effectiveProductLimit,
+    sortBy,
+    selectedDiet,
+    modelId,
+  ]);
 
   const filtered = useMemo(() => {
     return rawFiltered;
@@ -1682,9 +2126,10 @@ export function PublicCatalog({
         return `• ${l.product.name} x${l.qty} — ${formatPrice(itemPrice)}`;
       })
       .join("\n");
-    const totalMsg = total > 0 
-      ? `${formatPrice(total)}${hasQuoteItems ? " + artículos a cotizar" : ""}`
-      : "A consultar";
+    const totalMsg =
+      total > 0
+        ? `${formatPrice(total)}${hasQuoteItems ? " + artículos a cotizar" : ""}`
+        : "A consultar";
     const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
     incClicks(store.id);
 
@@ -1747,7 +2192,7 @@ export function PublicCatalog({
         isBioMode && bioTypography === "sans" && "typography-sans",
         isBioMode && bioTypography === "serif" && "typography-serif",
         isBioMode && bioTypography === "rounded" && "typography-rounded",
-        isBioMode && bioTypography === "modern" && "typography-modern"
+        isBioMode && bioTypography === "modern" && "typography-modern",
       )}
       style={isBioMode && bioTheme !== "default" ? bioThemeVars : themeVars}
       translate="no"
@@ -1782,7 +2227,95 @@ export function PublicCatalog({
         .scrollbar-none::-webkit-scrollbar {
           display: none;
         }
+        @keyframes marquee {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-100%, 0, 0); }
+        }
+        .animate-marquee {
+          animation: marquee 25s linear infinite;
+        }
       `}</style>
+      {/* Cintillo de Anuncios Promocional */}
+      {store.promoBarEnabled && store.promoBarText && !promoBarClosed && planAllowsPromoBar(store) && (
+        <div
+          data-testid="promo-bar"
+          className="sticky top-0 z-50 w-full flex items-center justify-between px-4 py-2 border-b backdrop-blur-md transition-all duration-300 shadow-sm"
+          style={{
+            backgroundColor: store.promoBarBgColor || "var(--primary)",
+            color: store.promoBarTextColor || "#ffffff",
+            borderColor: "rgba(0,0,0,0.08)",
+          }}
+        >
+          {/* Contenido / Botón */}
+          <div
+            className={cn(
+              "flex-1 flex items-center justify-center gap-3 text-xs font-bold font-sans overflow-hidden",
+              store.promoBarActionType !== "none" && "cursor-pointer select-none"
+            )}
+            onClick={() => {
+              if (store.promoBarActionType === "none" || !store.promoBarActionType) return;
+              
+              if (store.promoBarActionType === "product" && store.promoBarActionValue) {
+                const prod = store.products?.find((p) => p.id === store.promoBarActionValue);
+                if (prod) setViewingProduct(prod);
+              } else if (store.promoBarActionType === "category" && store.promoBarActionValue) {
+                setActiveCat(store.promoBarActionValue);
+                // Scroll suave a productos
+                document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
+              } else if (store.promoBarActionType === "url" && store.promoBarActionValue) {
+                window.open(store.promoBarActionValue, "_blank", "noopener,noreferrer");
+              } else if (store.promoBarActionType === "coupon" && store.promoBarActionValue) {
+                try {
+                  navigator.clipboard.writeText(store.promoBarActionValue);
+                  toast.success(`¡Cupón "${store.promoBarActionValue}" copiado!`);
+                } catch (e) {
+                  fallbackCopy(store.promoBarActionValue);
+                }
+              } else if (store.promoBarActionType === "cart") {
+                setCartOpen(true);
+              }
+            }}
+          >
+            {store.promoBarIsMarquee ? (
+              <div className="w-full overflow-hidden whitespace-nowrap flex select-none">
+                <div className="flex shrink-0 items-center justify-around min-w-full animate-marquee gap-4 pr-4">
+                  <span>{store.promoBarText}</span>
+                  <span className="opacity-35 select-none">✦</span>
+                  <span>{store.promoBarText}</span>
+                  <span className="opacity-35 select-none">✦</span>
+                </div>
+                <div className="flex shrink-0 items-center justify-around min-w-full animate-marquee gap-4 pr-4" aria-hidden="true">
+                  <span>{store.promoBarText}</span>
+                  <span className="opacity-35 select-none">✦</span>
+                  <span>{store.promoBarText}</span>
+                  <span className="opacity-35 select-none">✦</span>
+                </div>
+              </div>
+            ) : (
+              <span className="text-center truncate">{store.promoBarText}</span>
+            )}
+
+            {store.promoBarActionType !== "none" && store.promoBarActionType && (
+              <span className="shrink-0 text-[9px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-0.5 select-none transition">
+                {store.promoBarActionType === "coupon" ? "Copiar" : "Ver"}
+                <ChevronRight className="h-3 w-3" />
+              </span>
+            )}
+          </div>
+
+          {/* Botón de cerrar */}
+          <button
+            onClick={() => {
+              setPromoBarClosed(true);
+            }}
+            className="p-1 rounded-full hover:bg-black/10 active:bg-black/20 transition shrink-0 ml-3"
+            aria-label="Cerrar aviso"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Preview banner */}
       {!store.isPublished && (
         <div className="bg-primary/20 border-b border-primary/30 text-primary px-4 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">
@@ -1793,17 +2326,26 @@ export function PublicCatalog({
       {/* Banner: modelo premium en periodo de gracia (solo visible al owner via previewMode) */}
       {modelDaysLeft !== null && modelDaysLeft > 0 && !store.isPublished && (
         <div className="bg-amber-500 text-white px-4 py-2 text-center text-xs font-semibold">
-          Estas usando el modelo <strong>{store.model}</strong> de tu plan anterior.
-          En <strong>{modelDaysLeft} dia{modelDaysLeft !== 1 ? "s" : ""}</strong> cambiara automaticamente al modelo Semilla.
-          {" "}<a href="/admin/plan" className="underline hover:no-underline">Renueva para conservarlo</a>.
+          Estas usando el modelo <strong>{store.model}</strong> de tu plan anterior. En{" "}
+          <strong>
+            {modelDaysLeft} dia{modelDaysLeft !== 1 ? "s" : ""}
+          </strong>{" "}
+          cambiara automaticamente al modelo Semilla.{" "}
+          <a href="/admin/plan" className="underline hover:no-underline">
+            Renueva para conservarlo
+          </a>
+          .
         </div>
       )}
 
       {/* Banner: modelo ya cambiado a semilla (solo visible al owner) */}
       {modelDaysLeft === 0 && !store.isPublished && (
         <div className="bg-destructive text-white px-4 py-2 text-center text-xs font-semibold">
-          Tu suscripcion vencio. El catalogo ahora usa el modelo Semilla.
-          {" "}<a href="/admin/plan" className="underline hover:no-underline">Renueva tu plan</a> para recuperar tu diseno original.
+          Tu suscripcion vencio. El catalogo ahora usa el modelo Semilla.{" "}
+          <a href="/admin/plan" className="underline hover:no-underline">
+            Renueva tu plan
+          </a>{" "}
+          para recuperar tu diseno original.
         </div>
       )}
 
@@ -1820,7 +2362,9 @@ export function PublicCatalog({
           <div className="flex items-center gap-2 text-left">
             <AlertTriangle className="h-4 w-4 text-white shrink-0" />
             <span>
-              <strong>¿Estás en TikTok o Instagram?</strong> Si la redirección a WhatsApp falla, toca los <strong>3 puntos (...)</strong> arriba a la derecha y elige <strong>"Abrir en el navegador"</strong>.
+              <strong>¿Estás en TikTok o Instagram?</strong> Si la redirección a WhatsApp falla,
+              toca los <strong>3 puntos (...)</strong> arriba a la derecha y elige{" "}
+              <strong>"Abrir en el navegador"</strong>.
             </span>
           </div>
           <button
@@ -1861,7 +2405,14 @@ export function PublicCatalog({
                 </div>
               )}
               <span
-                className={cn("text-sm truncate", cfg.headerStyle === "bold" ? "font-black tracking-tight" : cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase text-xs" : "font-bold")}
+                className={cn(
+                  "text-sm truncate",
+                  cfg.headerStyle === "bold"
+                    ? "font-black tracking-tight"
+                    : cfg.headerStyle === "minimal"
+                      ? "font-light tracking-widest uppercase text-xs"
+                      : "font-bold",
+                )}
               >
                 {store.name}
               </span>
@@ -1874,7 +2425,7 @@ export function PublicCatalog({
                 className={cn(
                   "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
                   "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
-                  "flex items-center gap-1.5 shadow-sm"
+                  "flex items-center gap-1.5 shadow-sm",
                 )}
               >
                 <Info className="h-3.5 w-3.5" />
@@ -1886,7 +2437,7 @@ export function PublicCatalog({
                 className={cn(
                   "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
                   "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
-                  "flex items-center gap-1.5 shadow-sm"
+                  "flex items-center gap-1.5 shadow-sm",
                 )}
               >
                 <WhatsAppIcon className="h-3.5 w-3.5" />
@@ -1896,69 +2447,85 @@ export function PublicCatalog({
           </div>
 
           {/* Search + Filtros button: modelos SIN hero banner */}
-          {!BANNER_MODELS.has(modelId) && modelId !== "bite" && modelId !== "bloom" && modelId !== "lookbook" && mode === "catalog" && (
-            <div className="mx-auto max-w-5xl px-4 pb-3 space-y-2">
-              {/* Search row + Filtros button */}
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="¿Qué estás buscando hoy?"
-                    className={cn(
-                      "w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition",
-                      modelId === "bite" && "bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
-                    )}
-                  />
-                </div>
-                <button
-                  onClick={() => setIsFilterOpen(true)}
-                  className={cn(
-                    "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition md:hidden",
-                    modelId === "bite" && "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                  )}
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span>Filtros</span>
-                  {(() => {
-                    const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
-                    return cnt > 0 ? (
-                      <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
-                        {cnt}
-                      </span>
-                    ) : null;
-                  })()}
-                </button>
-              </div>
-
-              {/* Active filter tags */}
-              {(activeCat !== "all" || priceRange) && (
-                <div className="flex flex-wrap gap-1.5">
-                  {activeCat !== "all" && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                      {activeCat === "sale" ? (
-                        <><Flame className="h-3 w-3 text-red-500" /> Ofertas</>
-                      ) : (
-                        parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? activeCat).label
+          {!BANNER_MODELS.has(modelId) &&
+            modelId !== "bite" &&
+            modelId !== "bloom" &&
+            modelId !== "lookbook" &&
+            mode === "catalog" && (
+              <div className="mx-auto max-w-5xl px-4 pb-3 space-y-2">
+                {/* Search row + Filtros button */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="¿Qué estás buscando hoy?"
+                      className={cn(
+                        "w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition",
+                        modelId === "bite" &&
+                          "bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]",
                       )}
-                      <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  )}
-                  {priceRange && (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                      Hasta S/ {priceRange[1]}
-                      <button onClick={() => setPriceRange(null)} className="ml-1 hover:opacity-60 transition">
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  )}
+                    />
+                  </div>
+                  <button
+                    onClick={() => setIsFilterOpen(true)}
+                    className={cn(
+                      "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition md:hidden",
+                      modelId === "bite" &&
+                        "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white",
+                    )}
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span>Filtros</span>
+                    {(() => {
+                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                      return cnt > 0 ? (
+                        <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+                          {cnt}
+                        </span>
+                      ) : null;
+                    })()}
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Active filter tags */}
+                {(activeCat !== "all" || priceRange) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeCat !== "all" && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        {activeCat === "sale" ? (
+                          <>
+                            <Flame className="h-3 w-3 text-red-500" /> Ofertas
+                          </>
+                        ) : (
+                          parseCategoryName(
+                            store.categories.find((c) => c.id === activeCat)?.name ?? activeCat,
+                          ).label
+                        )}
+                        <button
+                          onClick={() => setActiveCat("all")}
+                          className="ml-1 hover:opacity-60 transition"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                    {priceRange && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        Hasta S/ {priceRange[1]}
+                        <button
+                          onClick={() => setPriceRange(null)}
+                          className="ml-1 hover:opacity-60 transition"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
         </header>
       )}
 
@@ -1967,14 +2534,14 @@ export function PublicCatalog({
         <section className="w-full animate-in fade-in slide-in-from-top-4 duration-500">
           {/* Banner Panorámico */}
           <div className="relative w-full h-[35vw] max-h-[220px] bg-muted overflow-hidden">
-            {(store.bioBanner || activeBanners[0]) ? (
+            {store.bioBanner || activeBanners[0] ? (
               <img
                 src={store.bioBanner || activeBanners[0]}
                 alt={store.name}
                 className="w-full h-full object-cover animate-in fade-in duration-550"
               />
             ) : (
-              <div 
+              <div
                 className="w-full h-full flex items-center justify-center"
                 style={{
                   background: `linear-gradient(135deg, var(--primary) 0%, var(--background) 100%)`,
@@ -1986,19 +2553,23 @@ export function PublicCatalog({
           </div>
 
           {/* Perfil & Links */}
-          <div className={cn(
-            "relative max-w-xl mx-auto px-4 text-center pb-4 flex flex-col items-center",
-            bioTypography === "serif" ? "-mt-16 space-y-5" : "-mt-10 space-y-4"
-          )}>
+          <div
+            className={cn(
+              "relative max-w-xl mx-auto px-4 text-center pb-4 flex flex-col items-center",
+              bioTypography === "serif" ? "-mt-16 space-y-5" : "-mt-10 space-y-4",
+            )}
+          >
             {/* Logo Solapado */}
             <div className="inline-block relative">
-              {(store.bioLogo || store.logo) ? (
+              {store.bioLogo || store.logo ? (
                 <img
-                  src={(store.bioLogo || store.logo) || undefined}
+                  src={store.bioLogo || store.logo || undefined}
                   alt={store.name}
                   className={cn(
                     "rounded-full object-cover border shadow-lg animate-in fade-in duration-300 bg-white",
-                    bioTypography === "serif" ? "h-32 w-32 p-1 border-gray-100" : "h-20 w-20 border-4"
+                    bioTypography === "serif"
+                      ? "h-32 w-32 p-1 border-gray-100"
+                      : "h-20 w-20 border-4",
                   )}
                   style={bioTypography === "serif" ? {} : { borderColor: "var(--background)" }}
                 />
@@ -2006,12 +2577,16 @@ export function PublicCatalog({
                 <div
                   className={cn(
                     "rounded-full flex items-center justify-center shadow-lg border text-xl font-black uppercase text-primary bg-white",
-                    bioTypography === "serif" ? "h-32 w-32 border-gray-100" : "h-20 w-20 border-4"
+                    bioTypography === "serif" ? "h-32 w-32 border-gray-100" : "h-20 w-20 border-4",
                   )}
-                  style={bioTypography === "serif" ? {} : {
-                    borderColor: "var(--background)",
-                    backgroundColor: "var(--secondary)",
-                  }}
+                  style={
+                    bioTypography === "serif"
+                      ? {}
+                      : {
+                          borderColor: "var(--background)",
+                          backgroundColor: "var(--secondary)",
+                        }
+                  }
                 >
                   {store.name.charAt(0)}
                 </div>
@@ -2022,7 +2597,9 @@ export function PublicCatalog({
             {bioTypography === "serif" ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-center gap-2">
-                  <h1 className="font-serif-editorial text-3xl font-semibold tracking-tight text-foreground">{store.name}</h1>
+                  <h1 className="font-serif-editorial text-3xl font-semibold tracking-tight text-foreground">
+                    {store.name}
+                  </h1>
                   <BadgeCheck className="w-5 h-5 text-gray-400 shrink-0" />
                 </div>
                 {store.bioDescription && (
@@ -2033,7 +2610,9 @@ export function PublicCatalog({
               </div>
             ) : (
               <div className="space-y-2">
-                <h1 className="text-2xl font-black tracking-tight uppercase text-foreground">{store.name}</h1>
+                <h1 className="text-2xl font-black tracking-tight uppercase text-foreground">
+                  {store.name}
+                </h1>
                 {store.bioDescription && (
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
                     {store.bioDescription}
@@ -2049,122 +2628,177 @@ export function PublicCatalog({
             {/* Enlaces Rápidos (Quick Links - Estilo Branded Oficial / Charcoal) */}
             <div className="flex flex-col gap-2.5 pt-4 max-w-md mx-auto w-full px-2">
               {/* 1. PEDIR POR WHATSAPP */}
-              {store.phone && renderBioButton(
-                `https://wa.me/${store.phone}`,
-                "Pedir por WhatsApp",
-                "#25D366",
-                "#128C7E",
-                "#ffffff",
-                "whatsapp",
-                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
-                  <path fill="#25D366" d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2z" />
-                  <path fill="#FFF" d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z" />
-                </svg>,
-                () => incClicks(store.id)
-              )}
-
-
+              {store.phone &&
+                renderBioButton(
+                  `https://wa.me/${store.phone}`,
+                  "Pedir por WhatsApp",
+                  "#25D366",
+                  "#128C7E",
+                  "#ffffff",
+                  "whatsapp",
+                  <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                    <path
+                      fill="#25D366"
+                      d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2z"
+                    />
+                    <path
+                      fill="#FFF"
+                      d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z"
+                    />
+                  </svg>,
+                  () => incClicks(store.id),
+                )}
 
               {/* 2. NUESTRA UBICACIÓN (Si tiene coordenadas) */}
-              {store.showMap !== false && store.locationLat && store.locationLng && renderBioButton(
-                "#",
-                "Nuestra Ubicación",
-                "#ea4335",
-                "#d93025",
-                "#ffffff",
-                "location",
-                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="12" fill="#ea4335" />
-                  <path fill="#FFF" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" transform="scale(0.7) translate(5, 4)" />
-                </svg>,
-                scrollToLocation
-              )}
+              {store.showMap !== false &&
+                store.locationLat &&
+                store.locationLng &&
+                renderBioButton(
+                  "#",
+                  "Nuestra Ubicación",
+                  "#ea4335",
+                  "#d93025",
+                  "#ffffff",
+                  "location",
+                  <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="12" fill="#ea4335" />
+                    <path
+                      fill="#FFF"
+                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                      transform="scale(0.7) translate(5, 4)"
+                    />
+                  </svg>,
+                  scrollToLocation,
+                )}
 
               {/* 3. Enlaces rápidos del usuario (Redes sociales oficiales + personalizados) */}
               {(() => {
                 let customLinkCount = 0;
                 const isSemilla = store.plan === "semilla";
 
-                return store.quickLinks && store.quickLinks.map((link, idx) => {
-                  const labelLower = link.label.toLowerCase();
-                  const isOfficialSocial = ["instagram", "facebook", "tiktok", "linkedin"].includes(labelLower);
+                return (
+                  store.quickLinks &&
+                  store.quickLinks.map((link, idx) => {
+                    const labelLower = link.label.toLowerCase();
+                    const isOfficialSocial = [
+                      "instagram",
+                      "facebook",
+                      "tiktok",
+                      "linkedin",
+                    ].includes(labelLower);
 
-                  if (!isOfficialSocial) {
-                    customLinkCount++;
-                    if (isSemilla && customLinkCount > 5) {
-                      return null;
+                    if (!isOfficialSocial) {
+                      customLinkCount++;
+                      if (isSemilla && customLinkCount > 5) {
+                        return null;
+                      }
                     }
-                  }
 
-                  const branding = getQuickLinkBranding(link.label, link.url);
-                  const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
-                  
-                  let platform: "instagram" | "facebook" | "linkedin" | "custom" | "whatsapp" | "tiktok" | "youtube" | "spotify" | "pinterest" | "twitter" = "custom";
-                  const urlLower = link.url.toLowerCase();
-                  if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
-                    platform = "instagram";
-                  } else if (urlLower.includes("facebook.com") || labelLower.includes("facebook")) {
-                    platform = "facebook";
-                  } else if (urlLower.includes("tiktok.com") || labelLower.includes("tiktok")) {
-                    platform = "tiktok";
-                  } else if (urlLower.includes("linkedin.com") || labelLower.includes("linkedin")) {
-                    platform = "linkedin";
-                  } else if (urlLower.includes("youtube.com") || urlLower.includes("youtu.be") || labelLower.includes("youtube")) {
-                    platform = "youtube";
-                  } else if (urlLower.includes("spotify.com") || labelLower.includes("spotify")) {
-                    platform = "spotify";
-                  } else if (urlLower.includes("pinterest.com") || labelLower.includes("pinterest")) {
-                    platform = "pinterest";
-                  } else if (urlLower.includes("twitter.com") || urlLower.includes("x.com") || labelLower.includes("twitter") || labelLower.includes(" x ")) {
-                    platform = "twitter";
-                  } else if (urlLower.includes("wa.me") || urlLower.includes("whatsapp.com") || labelLower.includes("whatsapp")) {
-                    platform = "whatsapp";
-                  }
+                    const branding = getQuickLinkBranding(link.label, link.url);
+                    const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
 
-                  const defaultBg = platform === "custom" ? "#1f2937" : (branding.baseColor || "#1f2937");
-                  const defaultBorder = branding.borderColor === "transparent" ? defaultBg : branding.borderColor;
+                    let platform:
+                      | "instagram"
+                      | "facebook"
+                      | "linkedin"
+                      | "custom"
+                      | "whatsapp"
+                      | "tiktok"
+                      | "youtube"
+                      | "spotify"
+                      | "pinterest"
+                      | "twitter" = "custom";
+                    const urlLower = link.url.toLowerCase();
+                    if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
+                      platform = "instagram";
+                    } else if (
+                      urlLower.includes("facebook.com") ||
+                      labelLower.includes("facebook")
+                    ) {
+                      platform = "facebook";
+                    } else if (urlLower.includes("tiktok.com") || labelLower.includes("tiktok")) {
+                      platform = "tiktok";
+                    } else if (
+                      urlLower.includes("linkedin.com") ||
+                      labelLower.includes("linkedin")
+                    ) {
+                      platform = "linkedin";
+                    } else if (
+                      urlLower.includes("youtube.com") ||
+                      urlLower.includes("youtu.be") ||
+                      labelLower.includes("youtube")
+                    ) {
+                      platform = "youtube";
+                    } else if (urlLower.includes("spotify.com") || labelLower.includes("spotify")) {
+                      platform = "spotify";
+                    } else if (
+                      urlLower.includes("pinterest.com") ||
+                      labelLower.includes("pinterest")
+                    ) {
+                      platform = "pinterest";
+                    } else if (
+                      urlLower.includes("twitter.com") ||
+                      urlLower.includes("x.com") ||
+                      labelLower.includes("twitter") ||
+                      labelLower.includes(" x ")
+                    ) {
+                      platform = "twitter";
+                    } else if (
+                      urlLower.includes("wa.me") ||
+                      urlLower.includes("whatsapp.com") ||
+                      labelLower.includes("whatsapp")
+                    ) {
+                      platform = "whatsapp";
+                    }
 
-                  // Force default/brand colors for Semilla stores
-                  const finalBgColor = isSemilla ? undefined : link.bgColor;
-                  const finalTextColor = isSemilla ? undefined : link.textColor;
+                    const defaultBg =
+                      platform === "custom" ? "#1f2937" : branding.baseColor || "#1f2937";
+                    const defaultBorder =
+                      branding.borderColor === "transparent" ? defaultBg : branding.borderColor;
 
-                  return (
-                    <div key={idx} className="w-full">
-                      {renderBioButton(
-                        href,
-                        link.label,
-                        branding.bg,
-                        defaultBorder,
-                        "#ffffff",
-                        platform,
-                        branding.coloredIcon,
-                        undefined,
-                        finalBgColor,
-                        finalTextColor,
-                        link.thumbnailUrl,
-                        link.iconName
-                      )}
-                    </div>
-                  );
-                });
+                    // Force default/brand colors for Semilla stores
+                    const finalBgColor = isSemilla ? undefined : link.bgColor;
+                    const finalTextColor = isSemilla ? undefined : link.textColor;
+
+                    return (
+                      <div key={idx} className="w-full">
+                        {renderBioButton(
+                          href,
+                          link.label,
+                          branding.bg,
+                          defaultBorder,
+                          "#ffffff",
+                          platform,
+                          branding.coloredIcon,
+                          undefined,
+                          finalBgColor,
+                          finalTextColor,
+                          link.thumbnailUrl,
+                          link.iconName,
+                        )}
+                      </div>
+                    );
+                  })
+                );
               })()}
 
               {/* 1.5. VER CATÁLOGO — configurable desde Link en Bio; null = comportamiento histórico (solo serif) */}
-              {(store.bioShowCatalogButton ?? (bioTypography === "serif")) && renderBioButton(
-                "#catalogo",
-                "Ver Catálogo",
-                "#111111",
-                "#111111",
-                "#ffffff",
-                "custom",
-                <LayoutGrid className="h-5 w-5" />,
-                (e) => {
-                  e.preventDefault();
-                  document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
-                },
-                "transparent",
-                "var(--foreground)"
-              )}
+              {(store.bioShowCatalogButton ?? bioTypography === "serif") &&
+                renderBioButton(
+                  "#catalogo",
+                  "Ver Catálogo",
+                  "#111111",
+                  "#111111",
+                  "#ffffff",
+                  "custom",
+                  <LayoutGrid className="h-5 w-5" />,
+                  (e) => {
+                    e.preventDefault();
+                    document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
+                  },
+                  "transparent",
+                  "var(--foreground)",
+                )}
             </div>
           </div>
         </section>
@@ -2174,19 +2808,19 @@ export function PublicCatalog({
       {modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
         <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-zinc-950">
           {/* Blurred background image to avoid letterboxes, while keeping main banner fully visible */}
-          <div 
+          <div
             className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-xl opacity-60 scale-105"
             style={{ backgroundImage: `url(${activeBanners[0]})` }}
           />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-          
-          <img 
-            src={activeBanners[0]} 
+
+          <img
+            src={activeBanners[0]}
             alt={store.bannerTitle || store.name}
             className="absolute inset-0 w-full h-full object-contain animate-in fade-in duration-1000"
           />
           <div className="absolute inset-0 bg-black/10 md:bg-black/35" />
-          
+
           <div className="relative z-10 text-center px-4 max-w-3xl animate-in zoom-in slide-in-from-bottom-8 duration-700">
             {store.bannerTitle && (
               <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase mb-4 drop-shadow-2xl">
@@ -2238,11 +2872,18 @@ export function PublicCatalog({
                 {activeCat !== "all" && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                     {activeCat === "sale" ? (
-                      <><Flame className="h-3 w-3 text-red-500" /> Ofertas</>
+                      <>
+                        <Flame className="h-3 w-3 text-red-500" /> Ofertas
+                      </>
                     ) : (
-                      parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? activeCat).label
+                      parseCategoryName(
+                        store.categories.find((c) => c.id === activeCat)?.name ?? activeCat,
+                      ).label
                     )}
-                    <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
+                    <button
+                      onClick={() => setActiveCat("all")}
+                      className="ml-1 hover:opacity-60 transition"
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -2250,7 +2891,10 @@ export function PublicCatalog({
                 {priceRange && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                     Hasta S/ {priceRange[1]}
-                    <button onClick={() => setPriceRange(null)} className="ml-1 hover:opacity-60 transition">
+                    <button
+                      onClick={() => setPriceRange(null)}
+                      className="ml-1 hover:opacity-60 transition"
+                    >
                       <X className="h-3 w-3" />
                     </button>
                   </span>
@@ -2262,8 +2906,15 @@ export function PublicCatalog({
       )}
 
       {/* ── Product Area ──────────────────────────────── */}
-      <main className={cn("mx-auto px-4 pt-6 pb-32", mode === "catalog" ? "max-w-7xl" : "max-w-5xl")}>
-        <div className={cn("w-full", mode === "catalog" && "flex flex-col md:flex-row gap-8 items-start")}>
+      <main
+        className={cn("mx-auto px-4 pt-6 pb-32", mode === "catalog" ? "max-w-7xl" : "max-w-5xl")}
+      >
+        <div
+          className={cn(
+            "w-full",
+            mode === "catalog" && "flex flex-col md:flex-row gap-8 items-start",
+          )}
+        >
           {/* SIDEBAR DE FILTROS (Desktop) */}
           {mode === "catalog" && (
             <aside className="hidden md:block w-[240px] shrink-0 space-y-6 self-start sticky top-[120px] bg-card p-5 border rounded-2xl">
@@ -2277,25 +2928,23 @@ export function PublicCatalog({
                     onClick={() => setActiveCat("all")}
                     className={cn(
                       "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
-                      activeCat === "all" 
-                        ? "bg-primary text-primary-foreground font-black" 
-                        : "hover:bg-accent text-foreground"
+                      activeCat === "all"
+                        ? "bg-primary text-primary-foreground font-black"
+                        : "hover:bg-accent text-foreground",
                     )}
                   >
                     <span>Todos</span>
-                    <span className="text-[10px] opacity-75">
-                      ({productsWithImages.length})
-                    </span>
+                    <span className="text-[10px] opacity-75">({productsWithImages.length})</span>
                   </button>
-                  
-                  {productsWithImages.some(p => p.isOnSale) && (
+
+                  {productsWithImages.some((p) => p.isOnSale) && (
                     <button
                       onClick={() => setActiveCat("sale")}
                       className={cn(
                         "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
-                        activeCat === "sale" 
-                          ? "bg-primary text-primary-foreground font-black" 
-                          : "hover:bg-accent text-foreground"
+                        activeCat === "sale"
+                          ? "bg-primary text-primary-foreground font-black"
+                          : "hover:bg-accent text-foreground",
                       )}
                     >
                       <span className="flex items-center gap-1.5">
@@ -2303,29 +2952,27 @@ export function PublicCatalog({
                         Ofertas
                       </span>
                       <span className="text-[10px] opacity-75">
-                        ({productsWithImages.filter(p => p.isOnSale).length})
+                        ({productsWithImages.filter((p) => p.isOnSale).length})
                       </span>
                     </button>
                   )}
 
                   {store.categories.map((c) => {
                     const { label } = parseCategoryName(c.name);
-                    const count = productsWithImages.filter(p => p.categoryId === c.id).length;
+                    const count = productsWithImages.filter((p) => p.categoryId === c.id).length;
                     return (
                       <button
                         key={c.id}
                         onClick={() => setActiveCat(c.id)}
                         className={cn(
                           "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
-                          activeCat === c.id 
-                            ? "bg-primary text-primary-foreground font-black" 
-                            : "hover:bg-accent text-foreground"
+                          activeCat === c.id
+                            ? "bg-primary text-primary-foreground font-black"
+                            : "hover:bg-accent text-foreground",
                         )}
                       >
                         <span className="truncate pr-1">{label}</span>
-                        <span className="text-[10px] opacity-75 shrink-0">
-                          ({count})
-                        </span>
+                        <span className="text-[10px] opacity-75 shrink-0">({count})</span>
                       </button>
                     );
                   })}
@@ -2348,11 +2995,14 @@ export function PublicCatalog({
                   />
                 </div>
               )}
-              
+
               {/* Limpiar Filtros */}
               {(activeCat !== "all" || priceRange) && (
                 <button
-                  onClick={() => { setActiveCat("all"); setPriceRange(null); }}
+                  onClick={() => {
+                    setActiveCat("all");
+                    setPriceRange(null);
+                  }}
                   className="w-full text-center py-2 border border-border hover:bg-muted text-xs font-bold rounded-lg transition"
                   style={{ color: "var(--muted-foreground)" }}
                 >
@@ -2366,2055 +3016,1843 @@ export function PublicCatalog({
           <div className={cn("w-full", mode === "catalog" && "flex-1 min-w-0")}>
             {mode === "bio" && (
               <div id="catalogo" className="pt-2 mb-6 scroll-mt-20">
-            {bioTypography === "serif" ? (
-              <h2 className="font-serif-editorial text-xl font-normal text-center text-foreground flex items-center justify-center gap-4">
-                <span className="h-[1px] w-12 bg-foreground/10"></span>
-                Nuestra Colección
-                <span className="h-[1px] w-12 bg-foreground/10"></span>
-              </h2>
-            ) : (
-              <h2 className="text-xs font-black uppercase tracking-wider text-center text-muted-foreground flex items-center justify-center gap-2">
-                <span className="h-px w-8 bg-muted-foreground/30"></span>
-                <ShoppingBag className="h-3.5 w-3.5 opacity-60" />
-                NUESTRA CARTA ONLINE
-                <span className="h-px w-8 bg-muted-foreground/30"></span>
-              </h2>
-            )}
-          </div>
-        )}
-        {filtered.length === 0 && cfg.layout !== "bite" && cfg.layout !== "bloom" ? (
-          <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
-        ) : mode === "bio" ? (
-          <div className="w-full">
-            <div className="max-w-md mx-auto mb-6 px-1">
-              {/* Horizontal Category Scroll */}
-              <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
-                <button
-                  onClick={() => setActiveCat("all")}
-                  className={cn(
-                    "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium",
-                    bioTypography === "serif" ? "rounded-none" : "rounded-full",
-                    activeCat === "all"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-secondary text-muted-foreground border-border hover:border-primary"
-                  )}
-                >
-                  Todos
-                </button>
-                
-                {productsWithImages.some(p => p.isOnSale) && (
-                  <button
-                    onClick={() => setActiveCat("sale")}
-                    className={cn(
-                      "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium flex items-center gap-1",
-                      bioTypography === "serif" ? "rounded-none" : "rounded-full",
-                      activeCat === "sale"
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-secondary text-muted-foreground border-border hover:border-primary"
-                    )}
-                  >
-                    <Flame className="h-3 w-3 text-red-500" />
-                    Ofertas
-                  </button>
+                {bioTypography === "serif" ? (
+                  <h2 className="font-serif-editorial text-xl font-normal text-center text-foreground flex items-center justify-center gap-4">
+                    <span className="h-[1px] w-12 bg-foreground/10"></span>
+                    Nuestra Colección
+                    <span className="h-[1px] w-12 bg-foreground/10"></span>
+                  </h2>
+                ) : (
+                  <h2 className="text-xs font-black uppercase tracking-wider text-center text-muted-foreground flex items-center justify-center gap-2">
+                    <span className="h-px w-8 bg-muted-foreground/30"></span>
+                    <ShoppingBag className="h-3.5 w-3.5 opacity-60" />
+                    CATALOGO ONLINE
+                    <span className="h-px w-8 bg-muted-foreground/30"></span>
+                  </h2>
                 )}
-
-                {store.categories.map((c) => {
-                  const { label } = parseCategoryName(c.name);
-                  const active = activeCat === c.id;
-                  return (
+              </div>
+            )}
+            {filtered.length === 0 && cfg.layout !== "bite" && cfg.layout !== "bloom" ? (
+              <div className="py-20 text-center text-muted-foreground text-sm">
+                No encontramos productos.
+              </div>
+            ) : mode === "bio" ? (
+              <div className="w-full">
+                <div className="max-w-md mx-auto mb-6 px-1">
+                  {/* Horizontal Category Scroll */}
+                  <div className="flex gap-2 overflow-x-auto scrollbar-none py-1">
                     <button
-                      key={c.id}
-                      onClick={() => setActiveCat(c.id)}
+                      onClick={() => setActiveCat("all")}
                       className={cn(
                         "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium",
                         bioTypography === "serif" ? "rounded-none" : "rounded-full",
-                        active
+                        activeCat === "all"
                           ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-secondary text-muted-foreground border-border hover:border-primary"
+                          : "bg-secondary text-muted-foreground border-border hover:border-primary",
                       )}
                     >
-                      {label}
+                      Todos
                     </button>
-                  );
-                })}
-              </div>
-            </div>
 
-            {filtered.length === 0 ? (
-              <div className="py-20 text-center text-muted-foreground text-sm">No encontramos productos.</div>
-            ) : (
-              /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
-                {(() => {
-                  const bioProducts = filtered.slice(0, 5);
-                  const showAd = store.plan === "semilla" && !isMockup;
-                  return (
-                    <>
-                      {bioProducts.map((p, index) => {
-                        const isLastNoAd = index === bioProducts.length - 1 && bioProducts.length <= 4;
-                        return (
-                          <React.Fragment key={p.id}>
-                            <article
-                              className={cn(
-                                "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
-                                cfg.cardShadow,
-                                bioTypography === "serif" && "border-gray-100 hover:border-black/20"
-                              )}
-                              style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
-                              onClick={() => setViewingProduct(p)}
-                            >
-                              {/* Imagen cuadrada */}
-                              <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
-                                <img
-                                  src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
-                                  alt={p.name}
-                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                  loading="lazy"
-                                  style={{ borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0` }}
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                                  }}
-                                />
-                                {p.isOnSale && <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow"><Flame className="h-2.5 w-2.5" /> Oferta</span>}
-                              </div>
-                              {/* Info */}
-                              <div className="p-2.5 flex flex-col gap-1 flex-1">
-                                <h3 className={cn(
-                                  "line-clamp-2 leading-snug flex-1 text-left",
-                                  bioTypography === "serif" ? "font-serif-editorial text-[13px] font-normal text-foreground" :
-                                  bioTypography === "rounded" ? "font-sans-bloom text-xs font-medium" :
-                                  bioTypography === "modern" ? "font-sans-vibe text-xs font-medium" :
-                                  "text-xs font-semibold"
-                                )}>
-                                  {p.name}
-                                </h3>
-                                <div className="flex items-center justify-between mt-1">
-                                  <div>
-                                    <span className={cn(
-                                      "text-sm font-black text-primary",
-                                      bioTypography === "serif" && "font-serif-editorial font-bold"
-                                    )}>{formatPrice(p.price)}</span>
-                                    {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                      <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
+                    {productsWithImages.some((p) => p.isOnSale) && (
+                      <button
+                        onClick={() => setActiveCat("sale")}
+                        className={cn(
+                          "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium flex items-center gap-1",
+                          bioTypography === "serif" ? "rounded-none" : "rounded-full",
+                          activeCat === "sale"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-secondary text-muted-foreground border-border hover:border-primary",
+                        )}
+                      >
+                        <Flame className="h-3 w-3 text-red-500" />
+                        Ofertas
+                      </button>
+                    )}
+
+                    {store.categories.map((c) => {
+                      const { label } = parseCategoryName(c.name);
+                      const active = activeCat === c.id;
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => setActiveCat(c.id)}
+                          className={cn(
+                            "px-4 py-2 text-xs uppercase tracking-wider transition border whitespace-nowrap font-medium",
+                            bioTypography === "serif" ? "rounded-none" : "rounded-full",
+                            active
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-secondary text-muted-foreground border-border hover:border-primary",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {filtered.length === 0 ? (
+                  <div className="py-20 text-center text-muted-foreground text-sm">
+                    No encontramos productos.
+                  </div>
+                ) : (
+                  /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
+                    {(() => {
+                      const bioProducts = filtered.slice(0, 5);
+                      const showAd = store.plan === "semilla" && !isMockup;
+                      return (
+                        <>
+                          {bioProducts.map((p, index) => {
+                            const isLastNoAd =
+                              index === bioProducts.length - 1 && bioProducts.length <= 4;
+                            return (
+                              <React.Fragment key={p.id}>
+                                <article
+                                  className={cn(
+                                    "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
+                                    cfg.cardShadow,
+                                    bioTypography === "serif" &&
+                                      "border-gray-100 hover:border-black/20",
+                                  )}
+                                  style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
+                                  onClick={() => setViewingProduct(p)}
+                                >
+                                  {/* Imagen cuadrada */}
+                                  <div
+                                    className="relative overflow-hidden bg-muted"
+                                    style={{ aspectRatio: "1/1" }}
+                                  >
+                                    <img
+                                      src={
+                                        p.image ||
+                                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                                      }
+                                      alt={p.name}
+                                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      loading="lazy"
+                                      style={{
+                                        borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0`,
+                                      }}
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src =
+                                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                                      }}
+                                    />
+                                    {p.isOnSale && (
+                                      <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
+                                        <Flame className="h-2.5 w-2.5" /> Oferta
+                                      </span>
                                     )}
                                   </div>
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
-                                    className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-                            </article>
-                            {showAd && isLastNoAd && (
-                              <DiziNativeAdCard 
-                                layout="grid" 
-                                primaryColor={primaryColor} 
-                                slug={store.slug}
-                                cardRounded={cfg.cardRounded || "0.75rem"}
-                                cardShadow={cfg.cardShadow}
-                              />
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
-                      {showAd && bioProducts.length > 4 && (
-                        <DiziNativeAdCard 
-                          layout="grid" 
-                          primaryColor={primaryColor} 
-                          slug={store.slug}
-                          cardRounded={cfg.cardRounded || "0.75rem"}
-                          cardShadow={cfg.cardShadow}
-                        />
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-          </div>
-        ) : cfg.layout === "overlay" ? (
-          /* ── OVERLAY layout: portrait 3:4 cards with gradient text (ZARA / Instagram Shopping style) */
-          <div className={cn("grid gap-2", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2")}>
-            {filtered.map((p) => (
-              <article
-                key={p.id}
-                className="relative overflow-hidden cursor-pointer group"
-                style={{ borderRadius: cfg.cardRounded, aspectRatio: "3/4" }}
-                onClick={() => setViewingProduct(p)}
-              >
-                <img
-                  src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} alt={p.name}
-                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  loading="lazy"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                  }}
-                />
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                {p.isOnSale && (
-                  <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">OFERTA</span>
-                )}
-                {/* Text on image */}
-                <div className="absolute bottom-0 left-0 right-0 p-3">
-                  <p className="text-white text-xs font-semibold line-clamp-1 mb-1">{p.name}</p>
-                  <div className="flex items-center justify-between gap-1">
-                    <div>
-                      <span className="text-white font-black text-sm">{formatPrice(p.price)}</span>
-                      {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                        <span className="text-white/50 text-[10px] line-through ml-1">{formatPrice(p.originalPrice)}</span>
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="h-7 w-7 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center hover:bg-white/40 transition">
-                        <WhatsAppIcon className="h-3.5 w-3.5" />
-                      </button>
-                      <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition">
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : cfg.layout === "lookbook" ? (
-          /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
-          <div className="space-y-16 sm:space-y-24 select-none">
-            {/* 1. Editorial Cover Section */}
-            {mode === "catalog" && (
-              <header 
-                className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden border-b animate-in fade-in duration-700"
-                style={{ borderBottomColor: "var(--border)", backgroundColor: "var(--card)" }}
-              >
-                {activeBanners.length > 0 && (
-                  <div className="absolute inset-0 w-full h-full">
-                    <img
-                      src={activeBanners[0]}
-                      alt={store.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" />
-                  </div>
-                )}
-
-                <div 
-                  style={{ backgroundColor: "rgba(0, 0, 0, 0.65)", borderColor: "rgba(255, 255, 255, 0.15)" }}
-                  className="relative z-10 text-center px-6 py-8 md:px-10 md:py-10 border max-w-lg mx-4 md:mx-auto shadow-2xl space-y-5"
-                >
-                  {store.logo && (
-                    <img
-                      src={store.logo}
-                      alt="Logo"
-                      className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-full border border-white/20 mx-auto mb-1 shadow-md"
-                    />
-                  )}
-
-                  <span 
-                    style={{ color: "var(--primary)" }}
-                    className="block text-[9px] sm:text-[10px] font-black tracking-[0.3em] uppercase font-sans"
-                  >
-                    {store.bannerTagline || "COLECCIÓN EXCLUSIVA"}
-                  </span>
-
-                  <h1 
-                    className="text-3xl md:text-4.5xl lg:text-5xl font-serif font-light tracking-wide leading-tight uppercase text-white max-w-md mx-auto"
-                  >
-                    {store.bannerTitle || store.name}
-                  </h1>
-
-                  <p 
-                    className="text-xs sm:text-sm font-serif italic leading-relaxed text-white/80 max-w-sm mx-auto"
-                  >
-                    {store.bannerBottomTag || "Piezas exclusivas seleccionadas con un diseño atemporal."}
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2">
-                    {filtered.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          document.getElementById("product-0")?.scrollIntoView({ behavior: "smooth" });
-                        }}
-                        style={{
-                          borderColor: "var(--primary)",
-                          color: "var(--primary)",
-                          "--hover-bg": "var(--primary)"
-                        } as React.CSSProperties}
-                        className="w-full sm:w-auto border text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[var(--hover-bg)] hover:text-white transition duration-300 active:scale-98 cursor-pointer whitespace-nowrap"
-                      >
-                        Ver Colección
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={supportClick}
-                      className="w-full sm:w-auto border border-white text-white text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-white hover:text-black transition duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
-                    >
-                      <WhatsAppIcon className="h-3.5 w-3.5" />
-                      Contacto
-                    </button>
-                  </div>
-                </div>
-              </header>
-            )}
-
-            {/* 1.5. Minimal Lookbook Search Input & Categories */}
-            {mode === "catalog" && (
-              <div className="max-w-md mx-auto px-4 w-full relative pt-4 space-y-4">
-                <div className="relative">
-                  <Search 
-                    style={{ color: "var(--primary)" }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 opacity-65" 
-                  />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Buscar en la colección..."
-                    style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)", paddingLeft: "2.75rem" }}
-                    className="w-full border pr-4 py-2.5 text-xs tracking-widest uppercase outline-none focus:border-[var(--primary)] transition-colors shadow-2xs font-sans placeholder:opacity-60"
-                  />
-                </div>
-
-                {/* Dropdown Category Selector */}
-                {store.categories.length > 0 && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setIsLookbookCatOpen(!isLookbookCatOpen)}
-                      style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" }}
-                      className="w-full border px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase flex items-center justify-between font-bold font-sans cursor-pointer focus:outline-none transition-colors"
-                    >
-                      <span>
-                        Categoría: {activeCat === "all" ? "Todos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
-                      </span>
-                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-300 opacity-70", isLookbookCatOpen && "rotate-180")} />
-                    </button>
-
-                    {isLookbookCatOpen && (
-                      <>
-                        {/* Overlay to close the dropdown when clicking outside */}
-                        <div className="fixed inset-0 z-40" onClick={() => setIsLookbookCatOpen(false)} />
-                        
-                        <div 
-                          style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                          className="absolute left-0 right-0 mt-1 border shadow-md z-50 py-1 max-h-60 overflow-y-auto"
-                        >
-                          <button
-                            onClick={() => {
-                              setActiveCat("all");
-                              setIsLookbookCatOpen(false);
-                            }}
-                            style={{ 
-                              color: activeCat === "all" ? "var(--primary)" : "var(--foreground)",
-                              backgroundColor: activeCat === "all" ? "color-mix(in srgb, var(--primary) 8%, transparent)" : "transparent",
-                              "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)"
-                            } as React.CSSProperties}
-                            className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
-                          >
-                            Todos
-                          </button>
-                          {store.categories.map((c) => {
-                            const { label } = parseCategoryName(c.name);
-                            const active = activeCat === c.id;
-                            return (
-                              <button
-                                key={c.id}
-                                onClick={() => {
-                                  setActiveCat(c.id);
-                                  setIsLookbookCatOpen(false);
-                                }}
-                                style={{ 
-                                  color: active ? "var(--primary)" : "var(--foreground)",
-                                  backgroundColor: active ? "color-mix(in srgb, var(--primary) 8%, transparent)" : "transparent",
-                                  "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)"
-                                } as React.CSSProperties}
-                                className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
-                              >
-                                {label}
-                              </button>
+                                  {/* Info */}
+                                  <div className="p-2.5 flex flex-col gap-1 flex-1">
+                                    <h3
+                                      className={cn(
+                                        "line-clamp-2 leading-snug flex-1 text-left",
+                                        bioTypography === "serif"
+                                          ? "font-serif-editorial text-[13px] font-normal text-foreground"
+                                          : bioTypography === "rounded"
+                                            ? "font-sans-bloom text-xs font-medium"
+                                            : bioTypography === "modern"
+                                              ? "font-sans-vibe text-xs font-medium"
+                                              : "text-xs font-semibold",
+                                      )}
+                                    >
+                                      {p.name}
+                                    </h3>
+                                    <div className="flex items-center justify-between mt-1">
+                                      <div>
+                                        <span
+                                          className={cn(
+                                            "text-sm font-black text-primary",
+                                            bioTypography === "serif" &&
+                                              "font-serif-editorial font-bold",
+                                          )}
+                                        >
+                                          {formatPrice(p.price)}
+                                        </span>
+                                        {p.isOnSale &&
+                                          p.originalPrice &&
+                                          p.price &&
+                                          p.originalPrice > p.price && (
+                                            <span className="text-[10px] text-muted-foreground line-through ml-1">
+                                              {formatPrice(p.originalPrice)}
+                                            </span>
+                                          )}
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          cartAdd(store.id, p.id);
+                                        }}
+                                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </article>
+                                {showAd && isLastNoAd && (
+                                  <DiziNativeAdCard
+                                    layout="grid"
+                                    primaryColor={primaryColor}
+                                    slug={store.slug}
+                                    cardRounded={cfg.cardRounded || "0.75rem"}
+                                    cardShadow={cfg.cardShadow}
+                                  />
+                                )}
+                              </React.Fragment>
                             );
                           })}
-                        </div>
-                      </>
-                    )}
+                          {showAd && bioProducts.length > 4 && (
+                            <DiziNativeAdCard
+                              layout="grid"
+                              primaryColor={primaryColor}
+                              slug={store.slug}
+                              cardRounded={cfg.cardRounded || "0.75rem"}
+                              cardShadow={cfg.cardShadow}
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
-            )}
-
-            {/* 2. Product List */}
-            <div className="space-y-20 sm:space-y-28">
-              {filtered.map((p, index) => {
-                const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
-                const cartItem = cart.find(item => item.productId === p.id);
-                const qty = cartItem ? cartItem.qty : 0;
-                const showAd = store.plan === "semilla" && !isMockup;
-                const isAdPos = index === 4;
-                const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
-                return (
-                  <React.Fragment key={p.id}>
-                    <article
+            ) : cfg.layout === "overlay" ? (
+              /* ── OVERLAY layout: portrait 3:4 cards with gradient text (ZARA / Instagram Shopping style) */
+              <div
+                className={cn(
+                  "grid gap-2",
+                  isMockup
+                    ? "grid-cols-2"
+                    : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2",
+                )}
+              >
+                {filtered.map((p) => (
+                  <article
                     key={p.id}
-                    id={`product-${index}`}
-                    style={{ borderBottomColor: "var(--border)" }}
+                    className="relative overflow-hidden cursor-pointer group"
+                    style={{ borderRadius: cfg.cardRounded, aspectRatio: "3/4" }}
+                    onClick={() => setViewingProduct(p)}
+                  >
+                    <img
+                      src={
+                        p.image ||
+                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                      }
+                      alt={p.name}
+                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                      }}
+                    />
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    {p.isOnSale && (
+                      <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                        OFERTA
+                      </span>
+                    )}
+                    {/* Text on image */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="text-white text-xs font-semibold line-clamp-1 mb-1">{p.name}</p>
+                      <div className="flex items-center justify-between gap-1">
+                        <div>
+                          <span className="text-white font-black text-sm">
+                            {formatPrice(p.price)}
+                          </span>
+                          {p.isOnSale &&
+                            p.originalPrice &&
+                            p.price &&
+                            p.originalPrice > p.price && (
+                              <span className="text-white/50 text-[10px] line-through ml-1">
+                                {formatPrice(p.originalPrice)}
+                              </span>
+                            )}
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              consultProduct(p.name);
+                            }}
+                            className="h-7 w-7 rounded-full bg-white/20 backdrop-blur text-white flex items-center justify-center hover:bg-white/40 transition"
+                          >
+                            <WhatsAppIcon className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cartAdd(store.id, p.id);
+                            }}
+                            className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : cfg.layout === "lookbook" ? (
+              /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
+              <div className="space-y-16 sm:space-y-24 select-none">
+                {/* 1. Editorial Cover Section */}
+                {mode === "catalog" && (
+                  <header
+                    className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden border-b animate-in fade-in duration-700"
+                    style={{ borderBottomColor: "var(--border)", backgroundColor: "var(--card)" }}
+                  >
+                    {activeBanners.length > 0 && (
+                      <div className="absolute inset-0 w-full h-full">
+                        <img
+                          src={activeBanners[0]}
+                          alt={store.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" />
+                      </div>
+                    )}
+
+                    <div
+                      style={{
+                        backgroundColor: "rgba(0, 0, 0, 0.65)",
+                        borderColor: "rgba(255, 255, 255, 0.15)",
+                      }}
+                      className="relative z-10 text-center px-6 py-8 md:px-10 md:py-10 border max-w-lg mx-4 md:mx-auto shadow-2xl space-y-5"
+                    >
+                      {store.logo && (
+                        <img
+                          src={store.logo}
+                          alt="Logo"
+                          className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-full border border-white/20 mx-auto mb-1 shadow-md"
+                        />
+                      )}
+
+                      <span
+                        style={{ color: "var(--primary)" }}
+                        className="block text-[9px] sm:text-[10px] font-black tracking-[0.3em] uppercase font-sans"
+                      >
+                        {store.bannerTagline || "COLECCIÓN EXCLUSIVA"}
+                      </span>
+
+                      <h1 className="text-3xl md:text-4.5xl lg:text-5xl font-serif font-light tracking-wide leading-tight uppercase text-white max-w-md mx-auto">
+                        {store.bannerTitle || store.name}
+                      </h1>
+
+                      <p className="text-xs sm:text-sm font-serif italic leading-relaxed text-white/80 max-w-sm mx-auto">
+                        {store.bannerBottomTag ||
+                          "Piezas exclusivas seleccionadas con un diseño atemporal."}
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2">
+                        {filtered.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              document
+                                .getElementById("product-0")
+                                ?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            style={
+                              {
+                                borderColor: "var(--primary)",
+                                color: "var(--primary)",
+                                "--hover-bg": "var(--primary)",
+                              } as React.CSSProperties
+                            }
+                            className="w-full sm:w-auto border text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-[var(--hover-bg)] hover:text-white transition duration-300 active:scale-98 cursor-pointer whitespace-nowrap"
+                          >
+                            Ver Colección
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={supportClick}
+                          className="w-full sm:w-auto border border-white text-white text-[9px] font-bold uppercase tracking-[0.2em] px-6 py-2.5 hover:bg-white hover:text-black transition duration-300 active:scale-98 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+                        >
+                          <WhatsAppIcon className="h-3.5 w-3.5" />
+                          Contacto
+                        </button>
+                      </div>
+                    </div>
+                  </header>
+                )}
+
+                {/* 1.5. Minimal Lookbook Search Input & Categories */}
+                {mode === "catalog" && (
+                  <div className="max-w-md mx-auto px-4 w-full relative pt-4 space-y-4">
+                    <div className="relative">
+                      <Search
+                        style={{ color: "var(--primary)" }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 opacity-65"
+                      />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Buscar en la colección..."
+                        style={{
+                          backgroundColor: "var(--card)",
+                          borderColor: "var(--border)",
+                          color: "var(--foreground)",
+                          paddingLeft: "2.75rem",
+                        }}
+                        className="w-full border pr-4 py-2.5 text-xs tracking-widest uppercase outline-none focus:border-[var(--primary)] transition-colors shadow-2xs font-sans placeholder:opacity-60"
+                      />
+                    </div>
+
+                    {/* Dropdown Category Selector */}
+                    {store.categories.length > 0 && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsLookbookCatOpen(!isLookbookCatOpen)}
+                          style={{
+                            backgroundColor: "var(--card)",
+                            borderColor: "var(--border)",
+                            color: "var(--foreground)",
+                          }}
+                          className="w-full border px-4 py-2.5 text-[10px] tracking-[0.2em] uppercase flex items-center justify-between font-bold font-sans cursor-pointer focus:outline-none transition-colors"
+                        >
+                          <span>
+                            Categoría:{" "}
+                            {activeCat === "all"
+                              ? "Todos"
+                              : parseCategoryName(
+                                  store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                                ).label}
+                          </span>
+                          <ChevronDown
+                            className={cn(
+                              "h-3.5 w-3.5 transition-transform duration-300 opacity-70",
+                              isLookbookCatOpen && "rotate-180",
+                            )}
+                          />
+                        </button>
+
+                        {isLookbookCatOpen && (
+                          <>
+                            {/* Overlay to close the dropdown when clicking outside */}
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setIsLookbookCatOpen(false)}
+                            />
+
+                            <div
+                              style={{
+                                backgroundColor: "var(--card)",
+                                borderColor: "var(--border)",
+                              }}
+                              className="absolute left-0 right-0 mt-1 border shadow-md z-50 py-1 max-h-60 overflow-y-auto"
+                            >
+                              <button
+                                onClick={() => {
+                                  setActiveCat("all");
+                                  setIsLookbookCatOpen(false);
+                                }}
+                                style={
+                                  {
+                                    color:
+                                      activeCat === "all" ? "var(--primary)" : "var(--foreground)",
+                                    backgroundColor:
+                                      activeCat === "all"
+                                        ? "color-mix(in srgb, var(--primary) 8%, transparent)"
+                                        : "transparent",
+                                    "--hover-bg":
+                                      "color-mix(in srgb, var(--primary) 10%, transparent)",
+                                  } as React.CSSProperties
+                                }
+                                className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+                              >
+                                Todos
+                              </button>
+                              {store.categories.map((c) => {
+                                const { label } = parseCategoryName(c.name);
+                                const active = activeCat === c.id;
+                                return (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => {
+                                      setActiveCat(c.id);
+                                      setIsLookbookCatOpen(false);
+                                    }}
+                                    style={
+                                      {
+                                        color: active ? "var(--primary)" : "var(--foreground)",
+                                        backgroundColor: active
+                                          ? "color-mix(in srgb, var(--primary) 8%, transparent)"
+                                          : "transparent",
+                                        "--hover-bg":
+                                          "color-mix(in srgb, var(--primary) 10%, transparent)",
+                                      } as React.CSSProperties
+                                    }
+                                    className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] cursor-pointer hover:bg-[var(--hover-bg)] transition-colors"
+                                  >
+                                    {label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. Product List */}
+                <div className="space-y-20 sm:space-y-28">
+                  {filtered.map((p, index) => {
+                    const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
+                    const cartItem = cart.find((item) => item.productId === p.id);
+                    const qty = cartItem ? cartItem.qty : 0;
+                    const showAd = store.plan === "semilla" && !isMockup;
+                    const isAdPos = index === 4;
+                    const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+                    return (
+                      <React.Fragment key={p.id}>
+                        <article
+                          key={p.id}
+                          id={`product-${index}`}
+                          style={{ borderBottomColor: "var(--border)" }}
+                          className={cn(
+                            "flex flex-col gap-6 md:gap-16 py-10 md:py-16 border-b last:border-b-0 scroll-mt-24 items-stretch",
+                            index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse",
+                          )}
+                          onClick={() => setViewingProduct(p)}
+                        >
+                          {/* 1. Large Fashion Aspect Ratio Image */}
+                          <div
+                            style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                            className="relative w-full md:w-[45%] lg:w-[40%] aspect-[4/5] sm:aspect-[3/4] md:aspect-[3/4] overflow-hidden border shadow-xs shrink-0"
+                          >
+                            <img
+                              src={
+                                p.image ||
+                                "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
+                              }
+                              alt={p.name}
+                              className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
+                              }}
+                            />
+                            {p.isOnSale && (
+                              <span
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="absolute top-4 left-4 text-[9px] font-bold tracking-[0.2em] uppercase border px-3 py-1 shadow-xs"
+                              >
+                                Oferta
+                              </span>
+                            )}
+                          </div>
+
+                          {/* 2. Detailed Metadata Card */}
+                          <div className="space-y-6 text-left flex-1 flex flex-col justify-between py-2">
+                            <div className="space-y-4">
+                              <div className="flex items-baseline justify-between">
+                                <span
+                                  style={{ color: "var(--primary)" }}
+                                  className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] uppercase font-sans"
+                                >
+                                  {parseCategoryName(
+                                    store.categories.find((c) => c.id === p.categoryId)?.name || "",
+                                  ).label || "Colección"}
+                                </span>
+                                {/* Giant light serif index number */}
+                                <span
+                                  style={{ color: "var(--foreground)", opacity: 0.35 }}
+                                  className="font-serif text-3xl sm:text-4xl font-light tracking-widest leading-none select-none"
+                                >
+                                  {indexStr}
+                                </span>
+                              </div>
+
+                              <div className="space-y-2">
+                                <h3
+                                  style={{ color: "var(--foreground)" }}
+                                  className="text-2xl sm:text-3xl font-serif font-light tracking-wide leading-tight"
+                                >
+                                  {p.name}
+                                </h3>
+                                {p.description && (
+                                  <p
+                                    style={{ color: "var(--foreground-muted)" }}
+                                    className="text-xs sm:text-sm font-serif italic leading-relaxed"
+                                  >
+                                    {p.description.split(".")[0]}.
+                                  </p>
+                                )}
+                                {p.description && p.description.includes(".") && (
+                                  <p
+                                    style={{ color: "var(--foreground-muted)", opacity: 0.85 }}
+                                    className="text-xs sm:text-sm leading-relaxed font-sans pt-1"
+                                  >
+                                    {p.description.split(".").slice(1).join(".")}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 3. Pricing & Call to Action Row */}
+                            <div
+                              style={{ borderTopColor: "var(--border)" }}
+                              className="pt-6 flex flex-wrap gap-4 items-center justify-between border-t mt-auto"
+                            >
+                              <div className="flex flex-col">
+                                <span
+                                  style={{ color: "var(--muted-foreground)" }}
+                                  className="text-[8px] font-bold tracking-widest uppercase font-sans"
+                                >
+                                  Precio
+                                </span>
+                                <div className="flex items-baseline gap-2">
+                                  <span
+                                    style={{ color: "var(--foreground)" }}
+                                    className="text-xl sm:text-2xl font-serif font-normal"
+                                  >
+                                    {formatPrice(p.price)}
+                                  </span>
+                                  {p.isOnSale &&
+                                    p.originalPrice &&
+                                    p.price &&
+                                    p.originalPrice > p.price && (
+                                      <span
+                                        style={{ color: "var(--muted-foreground)" }}
+                                        className="text-xs line-through"
+                                      >
+                                        {formatPrice(p.originalPrice)}
+                                      </span>
+                                    )}
+                                </div>
+                              </div>
+
+                              {/* Dionelle-styled Counter & Checkout Block */}
+                              <div
+                                style={{
+                                  borderColor: "var(--border)",
+                                  backgroundColor: "var(--card)",
+                                }}
+                                className="flex items-center border h-11 shrink-0 select-none"
+                              >
+                                {qty > 0 ? (
+                                  <>
+                                    <div
+                                      style={{ borderRightColor: "var(--border)" }}
+                                      className="flex items-center h-full px-2 border-r"
+                                    >
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (qty === 1) {
+                                            cartRemove(store.id, p.id);
+                                          } else {
+                                            cartSet(store.id, p.id, qty - 1);
+                                          }
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-90 transition"
+                                      >
+                                        <Minus className="h-3 w-3" />
+                                      </button>
+                                      <span className="w-8 text-center text-xs font-bold text-[var(--foreground)]">
+                                        {qty}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          cartSet(store.id, p.id, qty + 1);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-90 transition"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </button>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCartOpen(true);
+                                      }}
+                                      style={
+                                        {
+                                          color: "var(--primary)",
+                                          "--hover-bg":
+                                            "color-mix(in srgb, var(--primary) 10%, transparent)",
+                                        } as React.CSSProperties
+                                      }
+                                      className="h-full px-5 text-[10px] font-bold uppercase tracking-widest hover:bg-[var(--hover-bg)] transition active:scale-98"
+                                    >
+                                      Ver Carrito
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cartAdd(store.id, p.id);
+                                      setCartOpen(true);
+                                    }}
+                                    style={
+                                      {
+                                        color: "var(--primary)",
+                                        "--hover-bg":
+                                          "color-mix(in srgb, var(--primary) 10%, transparent)",
+                                      } as React.CSSProperties
+                                    }
+                                    className="h-full px-6 hover:bg-[var(--hover-bg)] transition text-[10px] font-bold uppercase tracking-widest flex items-center justify-center"
+                                  >
+                                    Añadir al Carrito
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                        {showAd && (isAdPos || isLastNoAd) && (
+                          <DiziNativeAdCard
+                            layout="lookbook"
+                            primaryColor={primaryColor}
+                            slug={store.slug}
+                          />
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : cfg.layout === "editorial" ? (
+              /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
+              <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+                {filtered.map((p) => (
+                  <article
+                    key={p.id}
                     className={cn(
-                      "flex flex-col gap-6 md:gap-16 py-10 md:py-16 border-b last:border-b-0 scroll-mt-24 items-stretch",
-                      index % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
+                      "flex gap-4 py-5 cursor-pointer group transition-all",
+                      cfg.cardShadow,
                     )}
                     onClick={() => setViewingProduct(p)}
                   >
-                  {/* 1. Large Fashion Aspect Ratio Image */}
-                  <div 
-                    style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                    className="relative w-full md:w-[45%] lg:w-[40%] aspect-[4/5] sm:aspect-[3/4] md:aspect-[3/4] overflow-hidden border shadow-xs shrink-0"
-                  >
-                    <img
-                      src={p.image || "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"}
-                      alt={p.name}
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
-                      loading="lazy"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
-                      }}
-                    />
-                    {p.isOnSale && (
-                      <span 
-                        style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)" }}
-                        className="absolute top-4 left-4 text-[9px] font-bold tracking-[0.2em] uppercase border px-3 py-1 shadow-xs"
-                      >
-                        Oferta
-                      </span>
-                    )}
-                  </div>
-
-                  {/* 2. Detailed Metadata Card */}
-                  <div className="space-y-6 text-left flex-1 flex flex-col justify-between py-2">
-                    <div className="space-y-4">
-                      <div className="flex items-baseline justify-between">
-                        <span 
-                          style={{ color: "var(--primary)" }}
-                          className="text-[9px] sm:text-[10px] font-black tracking-[0.2em] uppercase font-sans"
-                        >
-                          {parseCategoryName(store.categories.find((c) => c.id === p.categoryId)?.name || "").label || "Colección"}
+                    <div
+                      className="relative shrink-0 overflow-hidden bg-muted"
+                      style={{ width: "100px", height: "100px", borderRadius: cfg.imgRounded }}
+                    >
+                      <img
+                        src={
+                          p.image ||
+                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                        }
+                        alt={p.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                        }}
+                      />
+                      {p.isOnSale && (
+                        <span className="absolute top-1 left-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">
+                          SALE
                         </span>
-                        {/* Giant light serif index number */}
-                        <span 
-                          style={{ color: "var(--foreground)", opacity: 0.35 }}
-                          className="font-serif text-3xl sm:text-4xl font-light tracking-widest leading-none select-none"
-                        >
-                          {indexStr}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h3 
-                          style={{ color: "var(--foreground)" }}
-                          className="text-2xl sm:text-3xl font-serif font-light tracking-wide leading-tight"
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        <h3
+                          className={cn(
+                            "font-semibold text-sm leading-snug",
+                            cfg.headerStyle === "minimal"
+                              ? "tracking-widest uppercase text-xs font-light"
+                              : "",
+                          )}
                         >
                           {p.name}
                         </h3>
                         {p.description && (
-                          <p 
-                            style={{ color: "var(--foreground-muted)" }}
-                            className="text-xs sm:text-sm font-serif italic leading-relaxed"
-                          >
-                            {p.description.split(".")[0]}.
-                          </p>
-                        )}
-                        {p.description && p.description.includes(".") && (
-                          <p 
-                            style={{ color: "var(--foreground-muted)", opacity: 0.85 }}
-                            className="text-xs sm:text-sm leading-relaxed font-sans pt-1"
-                          >
-                            {p.description.split(".").slice(1).join(".")}
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                            {p.description}
                           </p>
                         )}
                       </div>
-                    </div>
-
-                    {/* 3. Pricing & Call to Action Row */}
-                    <div 
-                      style={{ borderTopColor: "var(--border)" }}
-                      className="pt-6 flex flex-wrap gap-4 items-center justify-between border-t mt-auto"
-                    >
-                      <div className="flex flex-col">
-                        <span 
-                          style={{ color: "var(--muted-foreground)" }}
-                          className="text-[8px] font-bold tracking-widest uppercase font-sans"
-                        >
-                          Precio
-                        </span>
+                      <div className="flex items-center justify-between mt-2">
                         <div className="flex items-baseline gap-2">
-                          <span 
-                            style={{ color: "var(--foreground)" }}
-                            className="text-xl sm:text-2xl font-serif font-normal"
-                          >
-                            {formatPrice(p.price)}
-                          </span>
-                          {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                            <span 
-                              style={{ color: "var(--muted-foreground)" }}
-                              className="text-xs line-through"
-                            >
-                              {formatPrice(p.originalPrice)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Dionelle-styled Counter & Checkout Block */}
-                      <div 
-                        style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
-                        className="flex items-center border h-11 shrink-0 select-none"
-                      >
-                        {qty > 0 ? (
-                          <>
-                            <div 
-                              style={{ borderRightColor: "var(--border)" }}
-                              className="flex items-center h-full px-2 border-r"
-                            >
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (qty === 1) {
-                                    cartRemove(store.id, p.id);
-                                  } else {
-                                    cartSet(store.id, p.id, qty - 1);
-                                  }
-                                }}
-                                className="w-8 h-8 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-90 transition"
-                              >
-                                <Minus className="h-3 w-3" />
-                              </button>
-                              <span className="w-8 text-center text-xs font-bold text-[var(--foreground)]">
-                                {qty}
+                          <span className="font-black text-primary">{formatPrice(p.price)}</span>
+                          {p.isOnSale &&
+                            p.originalPrice &&
+                            p.price &&
+                            p.originalPrice > p.price && (
+                              <span className="text-xs text-muted-foreground line-through">
+                                {formatPrice(p.originalPrice)}
                               </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cartSet(store.id, p.id, qty + 1);
-                                }}
-                                className="w-8 h-8 flex items-center justify-center text-[var(--foreground-muted)] hover:text-[var(--foreground)] active:scale-90 transition"
-                              >
-                                <Plus className="h-3 w-3" />
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCartOpen(true);
-                              }}
-                              style={{ color: "var(--primary)", "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)" } as React.CSSProperties}
-                              className="h-full px-5 text-[10px] font-bold uppercase tracking-widest hover:bg-[var(--hover-bg)] transition active:scale-98"
-                            >
-                              Ver Carrito
-                            </button>
-                          </>
-                        ) : (
+                            )}
+                        </div>
+                        <div className="flex gap-2">
                           <button
-                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              consultProduct(p.name);
+                            }}
+                            className="text-xs border px-3 py-1.5 hover:bg-accent transition flex items-center gap-1"
+                            style={{ borderRadius: cfg.cardRounded }}
+                          >
+                            <WhatsAppIcon className="h-3 w-3" /> Consultar
+                          </button>
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               cartAdd(store.id, p.id);
-                              setCartOpen(true);
                             }}
-                            style={{ color: "var(--primary)", "--hover-bg": "color-mix(in srgb, var(--primary) 10%, transparent)" } as React.CSSProperties}
-                            className="h-full px-6 hover:bg-[var(--hover-bg)] transition text-[10px] font-bold uppercase tracking-widest flex items-center justify-center"
+                            className="bg-primary text-primary-foreground px-3 py-1.5 flex items-center gap-1 text-xs font-bold hover:opacity-90 transition"
+                            style={{ borderRadius: cfg.cardRounded }}
                           >
-                            Añadir al Carrito
+                            <Plus className="h-3 w-3" /> Añadir
                           </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-                {showAd && (isAdPos || isLastNoAd) && (
-                  <DiziNativeAdCard 
-                    layout="lookbook"
-                    primaryColor={primaryColor}
-                    slug={store.slug}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
-            </div>
-          </div>
-        ) : cfg.layout === "editorial" ? (
-          /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
-          <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-            {filtered.map((p) => (
-              <article
-                key={p.id}
-                className={cn("flex gap-4 py-5 cursor-pointer group transition-all", cfg.cardShadow)}
-                onClick={() => setViewingProduct(p)}
-              >
-                <div className="relative shrink-0 overflow-hidden bg-muted" style={{ width: "100px", height: "100px", borderRadius: cfg.imgRounded }}>
-                  <img 
-                    src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} 
-                    alt={p.name} 
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                    }}
-                  />
-                  {p.isOnSale && (
-                    <span className="absolute top-1 left-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">SALE</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
-                  <div>
-                    <h3 className={cn("font-semibold text-sm leading-snug", cfg.headerStyle === "minimal" ? "tracking-widest uppercase text-xs font-light" : "")}>{p.name}</h3>
-                    {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
-                  </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-black text-primary">{formatPrice(p.price)}</span>
-                      {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                        <span className="text-xs text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="text-xs border px-3 py-1.5 hover:bg-accent transition flex items-center gap-1" style={{ borderRadius: cfg.cardRounded }}>
-                        <WhatsAppIcon className="h-3 w-3" /> Consultar
-                      </button>
-                      <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="bg-primary text-primary-foreground px-3 py-1.5 flex items-center gap-1 text-xs font-bold hover:opacity-90 transition" style={{ borderRadius: cfg.cardRounded }}>
-                        <Plus className="h-3 w-3" /> Añadir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : cfg.layout === "hero" ? (
-          /* ── HERO layout: first product is 2-col featured, rest are small grid */
-          <div className="space-y-3">
-            {filtered.length > 0 && (
-              <article
-                className={cn("relative overflow-hidden cursor-pointer group col-span-2", cfg.cardBorder ? "border" : "", cfg.cardShadow)}
-                style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)", borderColor: "var(--border)", aspectRatio: "16/7" }}
-                onClick={() => setViewingProduct(filtered[0])}
-              >
-                <img 
-                  src={filtered[0].image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} 
-                  alt={filtered[0].name} 
-                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
-                {filtered[0].isOnSale && <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">OFERTA</span>}
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <p className="text-white/60 text-xs uppercase tracking-widest mb-1">Destacado</p>
-                  <h3 className="text-white font-black text-xl mb-2">{filtered[0].name}</h3>
-                  <div className="flex items-center gap-4">
-                    <span className="text-white font-black text-2xl">{formatPrice(filtered[0].price)}</span>
-                    <div className="flex gap-2">
-                      <button onClick={(e)=>{e.stopPropagation();consultProduct(filtered[0].name);}} className="bg-white/20 backdrop-blur text-white text-xs px-3 py-2 font-bold hover:bg-white/30 transition flex items-center gap-1" style={{ borderRadius: cfg.cardRounded }}>
-                        <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
-                      </button>
-                      <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,filtered[0].id);}} className="bg-primary text-primary-foreground text-xs px-4 py-2 font-bold hover:opacity-90 transition flex items-center gap-1" style={{ borderRadius: cfg.cardRounded }}>
-                        <Plus className="h-3.5 w-3.5" /> Añadir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            )}
-            <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
-              {filtered.slice(1).map((p) => (
-                <article
-                  key={p.id}
-                  className={cn("overflow-hidden flex flex-col cursor-pointer transition-all group", cfg.cardBorder ? "border" : "", cfg.cardShadow)}
-                  style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                  onClick={() => setViewingProduct(p)}
-                >
-                  <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
-                    <img 
-                      src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} 
-                      alt={p.name} 
-                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                      loading="lazy" 
-                      style={{ borderRadius: cfg.imgRounded }} 
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                      }}
-                    />
-                    {p.isOnSale && <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">OFERTA</span>}
-                  </div>
-                  <div className="p-2.5 flex flex-col flex-1 gap-1.5">
-                    <h3 className="text-xs font-semibold line-clamp-2 flex-1">{p.name}</h3>
-                    <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
-                    <div className="flex gap-1.5">
-                      <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="flex-1 text-[10px] border py-1.5 hover:bg-accent transition flex items-center justify-center gap-0.5" style={{ borderRadius: cfg.cardRounded }}>
-                        <WhatsAppIcon className="h-3 w-3" /> Consultar
-                      </button>
-                      <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="bg-primary text-primary-foreground w-7 h-7 flex items-center justify-center hover:opacity-90 transition shrink-0" style={{ borderRadius: cfg.cardRounded }}>
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : cfg.layout === "magazine" ? (
-          /* ── MAGAZINE layout: fashion editorial alternating full/half width rows */
-          <div className="space-y-1">
-            {filtered.map((p, i) => {
-              const isFeature = i % 3 === 0; // every 3rd card is a full-width feature
-              if (isFeature) {
-                return (
-                  <article
-                    key={p.id}
-                    className="relative overflow-hidden cursor-pointer group w-full"
-                    style={{ aspectRatio: "21/9" }}
-                    onClick={() => setViewingProduct(p)}
-                  >
-                    <img
-                      src={p.image || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85"}
-                      alt={p.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85"; }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                    {p.isOnSale && <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1">SALE</span>}
-                    <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between">
-                      <div>
-                        <p className="text-white/40 text-[10px] uppercase tracking-[0.3em] mb-2">Editorial</p>
-                        <h3 className="text-white font-light text-2xl tracking-widest uppercase mb-1">{p.name}</h3>
-                        <span className="text-white font-black text-xl tracking-wider">{formatPrice(p.price)}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="border border-white/40 text-white text-[10px] tracking-widest uppercase px-4 py-2 hover:bg-white/10 transition backdrop-blur-sm">CONSULTAR</button>
-                        <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="bg-white text-black text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:bg-white/90 transition"><Plus className="h-3 w-3 inline" /></button>
+                        </div>
                       </div>
                     </div>
                   </article>
-                );
-              }
-              // Non-feature: rendered in pairs below
-              return null;
-            })}
-            {/* Render non-feature items in 2-col rows */}
-            {(() => {
-              const nonFeatures = filtered.filter((_, i) => i % 3 !== 0);
-              const pairs: typeof filtered[] = [];
-              for (let i = 0; i < nonFeatures.length; i += 2) pairs.push(nonFeatures.slice(i, i + 2));
-              return pairs.map((pair, pi) => (
-                <div key={pi} className="grid grid-cols-2 gap-1">
-                  {pair.map((p) => (
+                ))}
+              </div>
+            ) : cfg.layout === "hero" ? (
+              /* ── HERO layout: first product is 2-col featured, rest are small grid */
+              <div className="space-y-3">
+                {filtered.length > 0 && (
+                  <article
+                    className={cn(
+                      "relative overflow-hidden cursor-pointer group col-span-2",
+                      cfg.cardBorder ? "border" : "",
+                      cfg.cardShadow,
+                    )}
+                    style={{
+                      borderRadius: cfg.cardRounded,
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--border)",
+                      aspectRatio: "16/7",
+                    }}
+                    onClick={() => setViewingProduct(filtered[0])}
+                  >
+                    <img
+                      src={
+                        filtered[0].image ||
+                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                      }
+                      alt={filtered[0].name}
+                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                    {filtered[0].isOnSale && (
+                      <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        OFERTA
+                      </span>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <p className="text-white/60 text-xs uppercase tracking-widest mb-1">
+                        Destacado
+                      </p>
+                      <h3 className="text-white font-black text-xl mb-2">{filtered[0].name}</h3>
+                      <div className="flex items-center gap-4">
+                        <span className="text-white font-black text-2xl">
+                          {formatPrice(filtered[0].price)}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              consultProduct(filtered[0].name);
+                            }}
+                            className="bg-white/20 backdrop-blur text-white text-xs px-3 py-2 font-bold hover:bg-white/30 transition flex items-center gap-1"
+                            style={{ borderRadius: cfg.cardRounded }}
+                          >
+                            <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cartAdd(store.id, filtered[0].id);
+                            }}
+                            className="bg-primary text-primary-foreground text-xs px-4 py-2 font-bold hover:opacity-90 transition flex items-center gap-1"
+                            style={{ borderRadius: cfg.cardRounded }}
+                          >
+                            <Plus className="h-3.5 w-3.5" /> Añadir
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                )}
+                <div
+                  className={cn(
+                    "grid gap-3",
+                    isMockup
+                      ? "grid-cols-2"
+                      : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
+                  )}
+                >
+                  {filtered.slice(1).map((p) => (
                     <article
                       key={p.id}
-                      className="relative overflow-hidden cursor-pointer group"
-                      style={{ aspectRatio: "3/4" }}
+                      className={cn(
+                        "overflow-hidden flex flex-col cursor-pointer transition-all group",
+                        cfg.cardBorder ? "border" : "",
+                        cfg.cardShadow,
+                      )}
+                      style={{
+                        borderRadius: cfg.cardRounded,
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                      }}
                       onClick={() => setViewingProduct(p)}
                     >
-                      <img
-                        src={p.image || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80"}
-                        alt={p.name}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80"; }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                      {p.isOnSale && <span className="absolute top-3 left-3 text-[9px] font-bold tracking-widest uppercase border border-white/50 text-white px-2 py-0.5">SALE</span>}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white font-light text-sm tracking-widest uppercase line-clamp-1 mb-1">{p.name}</h3>
-                        <div className="flex items-center justify-between">
-                          <span className="text-white font-bold text-sm">{formatPrice(p.price)}</span>
-                          <div className="flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm"><WhatsAppIcon className="h-3 w-3" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-7 w-7 bg-white text-black flex items-center justify-center hover:bg-white/90 transition"><Plus className="h-3 w-3" /></button>
-                          </div>
+                      <div
+                        className="relative overflow-hidden bg-muted"
+                        style={{ aspectRatio: "1/1" }}
+                      >
+                        <img
+                          src={
+                            p.image ||
+                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                          }
+                          alt={p.name}
+                          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          style={{ borderRadius: cfg.imgRounded }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                          }}
+                        />
+                        {p.isOnSale && (
+                          <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                            OFERTA
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-2.5 flex flex-col flex-1 gap-1.5">
+                        <h3 className="text-xs font-semibold line-clamp-2 flex-1">{p.name}</h3>
+                        <span className="text-sm font-black text-primary">
+                          {formatPrice(p.price)}
+                        </span>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              consultProduct(p.name);
+                            }}
+                            className="flex-1 text-[10px] border py-1.5 hover:bg-accent transition flex items-center justify-center gap-0.5"
+                            style={{ borderRadius: cfg.cardRounded }}
+                          >
+                            <WhatsAppIcon className="h-3 w-3" /> Consultar
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cartAdd(store.id, p.id);
+                            }}
+                            className="bg-primary text-primary-foreground w-7 h-7 flex items-center justify-center hover:opacity-90 transition shrink-0"
+                            style={{ borderRadius: cfg.cardRounded }}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
                     </article>
                   ))}
                 </div>
-              ));
-            })()}
-          </div>
-        ) : cfg.layout === "tiles" ? (
-          /* ── TILES layout: alternating wide (full) + square pair — inspired by Apple editorial */
-          <div className="grid grid-cols-2 gap-2">
-            {filtered.map((p, i) => {
-              const isWide = i % 3 === 0;
-              const fallback = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
-              return (
-                <article
-                  key={p.id}
-                  className={cn("relative overflow-hidden cursor-pointer group", isWide ? "col-span-2" : "", cfg.cardShadow)}
-                  style={{
-                    aspectRatio: isWide ? "16/7" : "1/1",
-                    borderRadius: cfg.cardRounded,
-                    backgroundColor: "var(--card)",
-                  }}
-                  onClick={() => setViewingProduct(p)}
-                >
-                  <img
-                    src={p.image || fallback}
-                    alt={p.name}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
-                  />
-                  {/* Gradient overlay */}
-                  <div className={`absolute inset-0 ${isWide ? "bg-gradient-to-r from-black/70 via-black/30 to-transparent" : "bg-gradient-to-t from-black/75 via-black/10 to-transparent"}`} />
-                  {p.isOnSale && <span className="absolute top-3 left-3 text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">OFERTA</span>}
-                  {isWide ? (
-                    <div className="absolute bottom-0 left-0 p-5 right-0 flex items-end justify-between">
-                      <div>
-                        <h3 className={cn("text-white leading-tight mb-1", cfg.headerStyle === "minimal" ? "text-2xl font-light tracking-widest uppercase" : "text-2xl font-black")}>{p.name}</h3>
-                        <span className="text-white/80 font-black text-xl">{formatPrice(p.price)}</span>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-10 px-4 text-xs font-bold border border-white/50 text-white backdrop-blur-sm hover:bg-white/10 transition" style={{ borderRadius: cfg.cardRounded }}>
-                          <WhatsAppIcon className="h-3.5 w-3.5 inline mr-1" />Consultar
-                        </button>
-                        <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-10 px-4 text-xs font-bold text-black hover:opacity-90 transition" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}>
-                          <Plus className="h-3.5 w-3.5 inline" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h3 className="text-white text-xs font-bold line-clamp-1 mb-0.5">{p.name}</h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-white font-black text-sm">{formatPrice(p.price)}</span>
-                        <div className="flex gap-1">
-                                                     <button onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }} className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm" style={{ borderRadius: cfg.cardRounded }}><WhatsAppIcon className="h-3 w-3" /></button>
-                          <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}><Plus className="h-3 w-3 text-white" /></button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        ) : cfg.layout === "spotlight" ? (
-          /* ── SPOTLIGHT layout: 1 large featured + 2 stacked small — inspired by Farfetch / Mytheresa */
-          <div className="space-y-3">
-            {(() => {
-              const fallback = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
-              const groups: typeof filtered[] = [];
-              for (let i = 0; i < filtered.length; i += 3) groups.push(filtered.slice(i, i + 3));
-              return groups.map((group, gi) => (
-                <div key={gi} className={cn("grid grid-cols-2 gap-2", gi % 2 !== 0 ? "[&>*:first-child]:order-last" : "")}>
-                  {/* Large card */}
-                  {group[0] && (
-                    <article
-                      className={cn("relative overflow-hidden cursor-pointer group", cfg.cardShadow)}
-                      style={{ borderRadius: cfg.cardRounded, aspectRatio: "2/3" }}
-                      onClick={() => setViewingProduct(group[0])}
-                    >
-                      <img src={group[0].image || fallback} alt={group[0].name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" onError={(e) => { (e.target as HTMLImageElement).src = fallback; }} />
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.1) 70%)" }} />
-                      {group[0].isOnSale && <span className="absolute top-3 left-3 text-[9px] font-black bg-red-500 text-white px-2 py-0.5" style={{ borderRadius: cfg.cardRounded }}>OFERTA</span>}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <p className="text-white/50 text-[9px] uppercase tracking-[0.25em] mb-1">Destacado</p>
-                        <h3 className={cn("text-white leading-tight mb-2 line-clamp-2", cfg.headerStyle === "minimal" ? "text-sm font-light tracking-widest uppercase" : "text-sm font-black")}>{group[0].name}</h3>
-                        <div className="flex items-center justify-between">
-                          <span className="font-black text-base" style={{ color: "var(--primary)" }}>{formatPrice(group[0].price)}</span>
-                          <div className="flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); consultProduct(group[0].name); }} className="h-7 w-7 border border-white/30 text-white flex items-center justify-center hover:bg-white/10 backdrop-blur-sm" style={{ borderRadius: cfg.cardRounded }}><WhatsAppIcon className="h-3 w-3" /></button>
-                            <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, group[0].id); }} className="h-7 w-7 flex items-center justify-center hover:opacity-90" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}><Plus className="h-3 w-3 text-white" /></button>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  )}
-                  {/* 2 stacked small cards */}
-                  <div className="flex flex-col gap-2">
-                    {group.slice(1).map((p) => (
+              </div>
+            ) : cfg.layout === "magazine" ? (
+              /* ── MAGAZINE layout: fashion editorial alternating full/half width rows */
+              <div className="space-y-1">
+                {filtered.map((p, i) => {
+                  const isFeature = i % 3 === 0; // every 3rd card is a full-width feature
+                  if (isFeature) {
+                    return (
                       <article
                         key={p.id}
-                        className={cn("relative overflow-hidden cursor-pointer group flex-1", cfg.cardShadow)}
-                        style={{ borderRadius: cfg.cardRounded, minHeight: "100px" }}
+                        className="relative overflow-hidden cursor-pointer group w-full"
+                        style={{ aspectRatio: "21/9" }}
                         onClick={() => setViewingProduct(p)}
                       >
-                        <img src={p.image || fallback} alt={p.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600" onError={(e) => { (e.target as HTMLImageElement).src = fallback; }} />
-                        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 40%, transparent)" }} />
-                        {p.isOnSale && <span className="absolute top-2 left-2 text-[8px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">SALE</span>}
-                        <div className="absolute bottom-0 left-0 right-0 p-3">
-                          <h3 className="text-white text-xs font-bold line-clamp-1 mb-1">{p.name}</h3>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                            <button onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }} className="h-6 w-6 flex items-center justify-center hover:opacity-90" style={{ backgroundColor: "var(--primary)", borderRadius: cfg.cardRounded }}><Plus className="h-3 w-3 text-white" /></button>
-                          </div>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              ));
-            })()}
-          </div>
-        ) : cfg.layout === "diagonal" ? (
-          /* ── DIAGONAL layout: slanted clip-path cuts — Nike / streetwear editorial */
-          <div className={cn("grid gap-0", isMockup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
-            {filtered.map((p, i) => {
-              const fallback = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
-              const slantRight = "polygon(0 0, 100% 0, 100% 88%, 0 100%)";
-              const slantLeft  = "polygon(0 0, 100% 0, 100% 100%, 0 88%)";
-              return (
-                <article
-                  key={p.id}
-                  className="relative cursor-pointer group overflow-hidden"
-                  style={{ backgroundColor: "var(--card)" }}
-                  onClick={() => setViewingProduct(p)}
-                >
-                  {/* Slanted image */}
-                  <div
-                    className="relative overflow-hidden"
-                    style={{
-                      aspectRatio: "4/3",
-                      clipPath: i % 2 === 0 ? slantRight : slantLeft,
-                    }}
-                  >
-                    <img
-                      src={p.image || fallback}
-                      alt={p.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
-                    />
-                    {p.isOnSale && (
-                      <span className="absolute top-4 left-4 text-[10px] font-black tracking-widest uppercase px-3 py-1" style={{ backgroundColor: "var(--primary)", color: "#000" }}>
-                        OFERTA
-                      </span>
-                    )}
-                  </div>
-                  {/* Text — flows into the clipped gap */}
-                  <div className="px-5 pt-0 pb-5 -mt-4 relative z-10">
-                    {/* Category label */}
-                    <p className="text-[9px] uppercase tracking-[0.3em] font-bold mb-1" style={{ color: "var(--primary)" }}>
-                      {parseCategoryName(store.categories.find(c => c.id === p.categoryId)?.name || "").label}
-                    </p>
-                    <h3 className="font-black text-base uppercase tracking-widest line-clamp-1 mb-3" style={{ color: "var(--foreground)" }}>
-                      {p.name}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-black text-xl" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                          <span className="text-xs line-through ml-2 opacity-40">{formatPrice(p.originalPrice)}</span>
+                        <img
+                          src={
+                            p.image ||
+                            "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85"
+                          }
+                          alt={p.name}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                        {p.isOnSale && (
+                          <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1">
+                            SALE
+                          </span>
                         )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }}
-                          className="h-9 px-3 text-xs font-black uppercase tracking-widest border transition hover:opacity-70"
-                          style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
-                        >
-                          <WhatsAppIcon className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
-                          className="h-9 px-4 text-xs font-black uppercase tracking-widest transition hover:opacity-80"
-                          style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
-                        >
-                          <Plus className="h-3.5 w-3.5 inline" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : cfg.layout === "arch" ? (
-          /* ── ARCH layout: arched portrait frames — luxury cosmetics / Byredo / AESOP style */
-          <div className={cn("grid gap-4 px-2 pb-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
-            {filtered.map((p) => {
-              const fallback = "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80";
-              return (
-                <article
-                  key={p.id}
-                  className="flex flex-col items-center cursor-pointer group"
-                  onClick={() => setViewingProduct(p)}
-                >
-                  {/* Arched image frame */}
-                  <div
-                    className="relative overflow-hidden w-full group-hover:scale-[1.02] transition-transform duration-500"
-                    style={{
-                      aspectRatio: "3/4",
-                      borderRadius: "999px 999px 1rem 1rem", // arch top
-                      border: cfg.cardBorder ? `1px solid var(--border)` : "none",
-                      backgroundColor: "var(--card)",
-                    }}
-                  >
-                    <img
-                      src={p.image || fallback}
-                      alt={p.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
-                      onError={(e) => { (e.target as HTMLImageElement).src = fallback; }}
-                    />
-                    {/* Subtle vignette */}
-                    <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.2) 100%)" }} />
-                    {p.isOnSale && (
-                      <span className="absolute top-4 left-1/2 -translate-x-1/2 text-[9px] font-bold tracking-widest uppercase border text-white px-2 py-0.5 backdrop-blur-sm" style={{ borderColor: "white", borderRadius: "999px" }}>
-                        SALE
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Caption below arch */}
-                  <div className="w-full text-center pt-3 px-1 space-y-1">
-                    <h3
-                      className="text-xs font-light uppercase tracking-[0.2em] line-clamp-2"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      {p.name}
-                    </h3>
-                    <p className="text-xs font-black" style={{ color: "var(--primary)" }}>
-                      {formatPrice(p.price)}
-                    </p>
-                    <div className="flex justify-center pt-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); consultProduct(p.name); }}
-                        className="flex-1 py-1.5 text-[10px] uppercase tracking-widest border transition hover:opacity-70 font-medium"
-                        style={{ borderColor: "var(--border)", color: "var(--foreground)", borderRadius: "999px" }}
-                      >
-                        Consultar
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        ) : cfg.layout === "bite" ? (
-          /* ── BITE PREMIUM RESTAURANT LAYOUT ── */
-          <div className="space-y-8 select-none">
-            {/* 1. Cover Banner Carousel */}
-            {(() => {
-              const banners = activeBanners;
-              return (
-                <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl group/banner z-10">
-                  {banners.length > 0 ? (
-                    <>
-                      {/* Slides */}
-                      <div className="w-full h-full relative">
-                        {banners.map((slide, idx) => (
-                          <div
-                            key={idx}
-                            className={cn(
-                              "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-zinc-950",
-                              idx === currentBannerIndex
-                                ? "opacity-100 scale-100 z-10"
-                                : "opacity-0 scale-105 z-0 pointer-events-none"
-                            )}
-                          >
-                            {/* Blurred background */}
-                            <div 
-                              className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                              style={{ backgroundImage: `url(${slide})` }}
-                            />
-                            <img
-                              src={slide}
-                              alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                              className="w-full h-full object-contain relative z-10"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-20" />
+                        <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between">
+                          <div>
+                            <p className="text-white/40 text-[10px] uppercase tracking-[0.3em] mb-2">
+                              Editorial
+                            </p>
+                            <h3 className="text-white font-light text-2xl tracking-widest uppercase mb-1">
+                              {p.name}
+                            </h3>
+                            <span className="text-white font-black text-xl tracking-wider">
+                              {formatPrice(p.price)}
+                            </span>
                           </div>
-                        ))}
-                      </div>
-
-                      {/* Manual controls (Arrows) */}
-                      {banners.length > 1 && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
-                            }}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-800 text-white flex items-center justify-center hover:bg-zinc-800 transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
-                          >
-                            <ChevronLeft className="h-5 w-5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-                            }}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-800 text-white flex items-center justify-center hover:bg-zinc-800 transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
-                          >
-                            <ChevronRight className="h-5 w-5" />
-                          </button>
-                        </>
-                      )}
-
-                      {/* Indicator dots */}
-                      {banners.length > 1 && (
-                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-black/60 backdrop-blur-xs border border-zinc-800/60 px-2.5 py-1.5 rounded-full">
-                          {banners.map((_, idx) => (
+                          <div className="flex gap-2">
                             <button
-                              key={idx}
-                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setCurrentBannerIndex(idx);
+                                consultProduct(p.name);
                               }}
-                              className={cn(
-                                "h-1.5 rounded-full transition-all duration-300",
-                                idx === currentBannerIndex
-                                  ? "w-4 bg-[var(--primary)]"
-                                  : "w-1.5 bg-zinc-500 hover:bg-zinc-400"
-                              )}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div 
-                      className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black relative"
-                    >
-                      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ea580c_1px,transparent_1px)] [background-size:16px_16px]" />
-                      <div className="relative z-10">
-                        <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
-                          {store.name}
-                        </h2>
-                        <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-widest mt-1">
-                          {store.niche === "hamburgueseria"
-                            ? "Premium Burger Experience"
-                            : store.niche === "cafeteria"
-                            ? "Premium Coffee & Pastry"
-                            : "Premium Gourmet Experience"}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-
-
-            {/* 2. Spotlight Carousel (Featured Products) */}
-            {(() => {
-              if (activeCat !== "all" || query.trim() !== "") return null;
-              let isSaleOnly = false;
-              let isFallback = false;
-              let featuredProducts = productsWithImages.filter(
-                (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
-              );
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
-                isSaleOnly = featuredProducts.length > 0;
-              }
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.slice(0, 4);
-                isFallback = true;
-              }
-              // Respetar el filtro de precio activo (igual que el grid)
-              if (priceRange) {
-                featuredProducts = featuredProducts.filter(
-                  (p) => p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1]
-                );
-              }
-              if (featuredProducts.length === 0) return null;
-
-              const headerText = isSaleOnly
-                ? "Ofertas Especiales" 
-                : isFallback 
-                ? "Te Recomendamos" 
-                : "Destacados de la Casa";
-
-              return (
-                <div data-carousel className="space-y-4">
-                  <div className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300" style={{ borderColor: "var(--primary)" }}>
-                    <h3 className="text-sm sm:text-base font-black text-white tracking-widest flex items-center gap-2 uppercase">
-                      {/* Premium 4-point diamond SVG */}
-                      <svg 
-                        viewBox="0 0 24 24" 
-                        fill="currentColor" 
-                        className="h-4 w-4 text-[var(--primary)] animate-pulse" 
-                        style={{ filter: "drop-shadow(0 0 4px var(--primary))" }}
-                      >
-                        <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
-                      </svg>
-                      {headerText}
-                    </h3>
-                    {featuredProducts.length > 1 && (
-                      <>
-                        <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest animate-pulse md:hidden">Desliza →</span>
-                        <div className="hidden md:flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            aria-label="Anterior"
-                            onClick={(e) => {
-                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
-                              s?.scrollBy({ left: -320, behavior: "smooth" });
-                            }}
-                            className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="Siguiente"
-                            onClick={(e) => {
-                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
-                              s?.scrollBy({ left: 320, behavior: "smooth" });
-                            }}
-                            className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* TWO-DIV PATTERN to prevent shadow and scale clipping */}
-                  <div data-carousel-scroll className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
-                    <div className="flex gap-4 px-4 snap-x snap-mandatory w-max min-w-full">
-                      {featuredProducts.map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={() => setViewingProduct(p)}
-                          className="w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
-                        >
-                          <div className="space-y-3">
-                            {/* Image */}
-                            <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800">
-                              <img
-                                src={p.image || "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"}
-                                alt={p.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                loading="lazy"
-                              />
-                              <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
-                                Destacado
-                              </div>
-                            </div>
-                            {/* Info */}
-                            <div className="space-y-1 text-left px-1">
-                              <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
-                                {p.name}
-                              </h4>
-                              <p className="text-xs text-zinc-400 line-clamp-2 leading-4 min-h-8">
-                                {(p.description || "").replace(/#destacado/g, "").trim()}
-                              </p>
-                            </div>
-                          </div>
-                          {/* Buy section */}
-                          <div className="flex items-center justify-between pt-3 mt-3 border-t border-zinc-800/80 px-1">
-                            <div>
-                              <span className="text-base font-black text-[var(--primary)]">{formatPrice(p.price)}</span>
-                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                <span className="text-xs text-zinc-500 line-through block -mt-1">{formatPrice(p.originalPrice)}</span>
-                              )}
-                            </div>
+                              className="border border-white/40 text-white text-[10px] tracking-widest uppercase px-4 py-2 hover:bg-white/10 transition backdrop-blur-sm"
+                            >
+                              CONSULTAR
+                            </button>
                             <button
-                              type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 cartAdd(store.id, p.id);
-                                setCartOpen(true);
                               }}
-                              style={{
-                                borderColor: "var(--primary)",
-                                color: "var(--primary)"
-                              }}
-                              className="border bg-zinc-950/80 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 font-extrabold text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest uppercase rounded-full px-3 py-2 sm:px-5 sm:py-2.5 shadow-[0_0_10px_rgba(234,88,12,0.1)] hover:shadow-[0_0_15px_var(--primary)]/40 flex items-center gap-1"
+                              className="bg-white text-black text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:bg-white/90 transition"
                             >
-                              <Plus className="h-3.5 w-3.5" />
-                              Añadir
+                              <Plus className="h-3 w-3 inline" />
                             </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* 3. Navigation and Search Block (Search + Categories) */}
-            <div className="space-y-6">
-              {/* Search Bar at full width */}
-              {mode === "catalog" && (
-                <div className="relative w-full">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="¿Qué estás buscando hoy?"
-                    className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
-                  />
-                </div>
-              )}
-
-              {/* Inline Horizontal Category Selector */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
-                  Categorías
-                </h3>
-                
-                {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
-                <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">
-                  <div className="flex gap-2.5 px-4 w-max min-w-full">
-                    <button
-                      onClick={() => setActiveCat("all")}
-                      style={{
-                        borderColor: activeCat === "all" ? "var(--primary)" : "#27272a",
-                      }}
-                      className={cn(
-                        "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
-                        activeCat === "all"
-                          ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
-                          : "text-zinc-400 hover:text-white hover:bg-zinc-900/40"
-                      )}
-                    >
-                      <LayoutGrid className="h-4 w-4 shrink-0" style={{ color: activeCat === "all" ? "#fff" : "var(--primary)" }} />
-                      <span>Ver Todo</span>
-                    </button>
-
-                    {/* Ofertas */}
-                    {store.products.some(p => p.isOnSale) && (
-                      <button
-                        onClick={() => setActiveCat("sale")}
-                        style={{
-                          borderColor: activeCat === "sale" ? "var(--primary)" : "#27272a",
-                        }}
-                        className={cn(
-                          "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
-                          activeCat === "sale"
-                            ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
-                            : "text-zinc-400 hover:text-white hover:bg-zinc-900/40"
-                        )}
-                      >
-                        <Flame className="h-4 w-4 shrink-0 text-red-500" />
-                        <span>Ofertas</span>
-                      </button>
-                    )}
-
-                    {store.categories.map((c) => {
-                      const { label, iconKey } = parseCategoryName(c.name);
-                      const active = activeCat === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => setActiveCat(c.id)}
-                          style={{
-                            borderColor: active ? "var(--primary)" : "#27272a",
-                          }}
-                          className={cn(
-                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
-                            active
-                              ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
-                              : "text-zinc-400 hover:text-white hover:bg-zinc-900/40"
-                          )}
-                        >
-                          {iconKey ? (
-                            <CategoryIcon 
-                              iconKey={iconKey} 
-                              className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? "#fff" : "var(--primary)" }}
-                            />
-                          ) : (
-                            <Utensils 
-                              className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? "#fff" : "var(--primary)" }}
-                            />
-                          )}
-                          <span>{label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
- 
-             {/* 4. Product Grid */}
-            <div className="space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
-                {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
-              </h3>
-              {(() => {
-                const gridProducts = activeCat === "all"
-                  ? filtered.filter((p) => !(p.description?.includes("#destacado") || p.name?.includes("#destacado")))
-                  : filtered;
-                
-                if (gridProducts.length === 0) {
-                  return (
-                    <div className="text-center py-12 border border-zinc-800 rounded-3xl bg-zinc-900/10 text-xs text-zinc-500">
-                      No hay productos en esta categoría.
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
-                    {gridProducts.map((p, index) => {
-                      const showAd = store.plan === "semilla" && !isMockup;
-                      const isAdPos = index === 4;
-                      const isLastNoAd = index === gridProducts.length - 1 && gridProducts.length <= 4;
-                      
-                      return (
-                        <React.Fragment key={p.id}>
-                          <article
-                            key={p.id}
-                            className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-zinc-800 rounded-3xl bg-zinc-900/30 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg text-left"
-                            onClick={() => setViewingProduct(p)}
-                          >
-                            <div>
-                              {/* 1:1 image */}
-                              <div className="relative overflow-hidden bg-zinc-950 aspect-square rounded-2xl m-2 border border-zinc-800">
-                                <img
-                                  src={p.image || "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"}
-                                  alt={p.name}
-                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                  loading="lazy"
-                                />
-                                {p.isOnSale && (
-                                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
-                                    Oferta
-                                  </span>
-                                )}
-                              </div>
-                              {/* Info */}
-                              <div className="p-3 pt-1 space-y-1 text-left">
-                                <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-5 min-h-10">
-                                  {p.name}
-                                </h4>
-                                {p.description && (
-                                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-4 min-h-8">
-                                    {p.description}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Price & Action */}
-                            <div className="px-3.5 pb-4 pt-0 flex items-center justify-between mt-auto">
-                              <div className="flex flex-col text-left">
-                                <span className="text-sm font-black text-[var(--primary)]" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                                {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                  <span className="text-[10px] text-zinc-500 line-through -mt-1">{formatPrice(p.originalPrice)}</span>
-                                )}
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cartAdd(store.id, p.id);
-                                  setCartOpen(true);
-                                }}
-                                style={{
-                                  borderColor: "var(--primary)",
-                                  color: "var(--primary)"
-                                }}
-                                className="h-8 px-3 rounded-xl border bg-zinc-950/60 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-[0_2px_10px_rgba(0,0,0,0.3)] hover:shadow-[0_0_12px_var(--primary)]/30 active:scale-95 font-sans"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                Añadir
-                              </button>
-                            </div>
-                          </article>
-                          {showAd && (isAdPos || isLastNoAd) && (
-                            <DiziNativeAdCard 
-                              layout="bite" 
-                              primaryColor={primaryColor} 
-                              slug={store.slug}
-                              cardRounded={cfg.cardRounded}
-                              imgRounded={cfg.imgRounded}
-                              cardShadow={cfg.cardShadow}
-                              cardBorder={cfg.cardBorder}
-                            />
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        ) : cfg.layout === "nature" ? (() => {
-          const nicheTags = getNicheTaglines(store.niche);
-          return (
-            /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
-            <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
-            {/* Elegant botanical watermarks in background */}
-            <div className="absolute top-[8%] -left-8 w-24 h-24 opacity-[0.06] pointer-events-none select-none z-0" style={{ color: "var(--primary)" }}>
-              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-[15deg]">
-                <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
-              </svg>
-            </div>
-            <div className="absolute top-[48%] -right-12 w-32 h-32 opacity-[0.06] pointer-events-none select-none z-0" style={{ color: "var(--primary)" }}>
-              <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-45">
-                <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
-              </svg>
-            </div>
-
-            {/* 1. Fluid Nature Banner */}
-            {(() => {
-              const banners = activeBanners;
-              return (
-                <div className="relative w-full z-10">
-                  {/* Image container: taller and curves in dynamically */}
-                  <div 
-                    style={{ 
-                      borderColor: "var(--border)", 
-                      background: "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--card)) 0%, color-mix(in srgb, var(--primary) 2%, var(--card)) 100%)" 
-                    }}
-                    className="relative w-full h-[25vh] xs:h-[28vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
-                  >
-                    {banners.length > 0 ? (
-                      <>
-                        {/* Slides */}
-                        <div className="w-full h-full relative">
-                          {banners.map((slide, idx) => (
-                            <div
-                              key={idx}
-                              style={{ backgroundColor: "var(--background)" }}
-                              className={cn(
-                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
-                                idx === currentBannerIndex
-                                  ? "opacity-100 scale-100 z-10"
-                                  : "opacity-0 scale-105 z-0 pointer-events-none"
-                              )}
-                            >
-                              {/* Blurred background */}
-                              <div 
-                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                style={{ backgroundImage: `url(${slide})` }}
-                              />
-                              <img
-                                src={slide}
-                                alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                className="w-full h-full object-contain relative z-10"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Arrows */}
-                        {banners.length > 1 && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
-                              }}
-                              style={{ color: "var(--primary)" }}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
-                            >
-                              <ChevronLeft className="h-5 w-5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-                              }}
-                              style={{ color: "var(--primary)" }}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
-                            >
-                              <ChevronRight className="h-5 w-5" />
-                            </button>
-                          </>
-                        )}
-
-                        {/* Indicator dots */}
-                        {banners.length > 1 && (
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/30 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
-                            {banners.map((_, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCurrentBannerIndex(idx);
-                                }}
-                                className={cn(
-                                  "h-1.5 rounded-full transition-all duration-300",
-                                  idx === currentBannerIndex
-                                    ? "w-4 bg-white"
-                                    : "w-1.5 bg-white/50 hover:bg-white/80"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      /* Elegant nature placeholder banner */
-                      <div className="w-full h-full relative">
-                        {/* Elegant background colors with organic circles */}
-                        <div 
-                          style={{ 
-                            background: "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--background)) 0%, var(--background) 100%)" 
-                          }}
-                          className="absolute inset-0 opacity-80" 
-                        />
-                        <div 
-                          style={{ color: "var(--primary)", opacity: 0.1 }}
-                          className="absolute right-2 bottom-0 top-0 w-1/2 pointer-events-none flex items-center justify-center"
-                        >
-                          <svg viewBox="0 0 100 100" fill="currentColor" className="w-40 h-40">
-                            <path d="M50 0C55 25 80 45 100 50C80 55 55 80 50 100C45 80 20 55 0 50C20 45 45 25 50 0Z" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Overlapping editorial card details */}
-                  {(() => {
-                    const finalTagline = store.bannerTagline || nicheTags.tagline;
-                    const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
-                    return (
-                      <div 
-                        style={{ 
-                          backgroundColor: "color-mix(in srgb, var(--card) 95%, transparent)", 
-                          borderColor: "var(--border)" 
-                        }}
-                        className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
-                      >
-                        <div className="space-y-1.5">
-                          <span 
-                            style={{ color: "var(--muted-foreground)" }}
-                            className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
-                          >
-                            {finalTagline}
-                          </span>
-                          <h2 
-                            style={{ color: "var(--foreground)" }}
-                            className="text-xl sm:text-2xl font-serif font-normal leading-snug"
-                          >
-                            {store.bannerTitle || `Abraza la pureza de la naturaleza`}
-                          </h2>
-                          {store.bioDescription && (
-                            <p className="text-stone-500 text-xs line-clamp-2 leading-relaxed">
-                              {store.bioDescription}
-                            </p>
-                          )}
-                        </div>
-                        <div className="pt-3 flex gap-2 items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              document.getElementById("nature-coleccion")?.scrollIntoView({ behavior: "smooth" });
-                            }}
-                            style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
-                            className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
-                          >
-                            {nicheTags.buttonText}
-                          </button>
-                          {/* Decorative small organic element */}
-                          <span className="text-stone-400 text-xs italic flex items-center gap-1.5 font-serif">
-                            <Leaf 
-                              style={{ color: "color-mix(in srgb, var(--primary) 60%, transparent)" }}
-                              className="h-3.5 w-3.5" 
-                            /> {finalBottomTag}
-                          </span>
-                        </div>
-                      </div>
+                      </article>
                     );
-                  })()}
-                </div>
-              );
-            })()}
-
-            {/* 2. Spotlight Carousel (Featured Products) */}
-            {(() => {
-              if (activeCat !== "all" || query.trim() !== "") return null;
-              
-              let isFallback = false;
-              let isSaleOnly = false;
-              let featuredProducts = productsWithImages.filter(
-                (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
-              );
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
-                isSaleOnly = featuredProducts.length > 0;
-                isFallback = true;
-              }
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.slice(0, 4);
-                isFallback = true;
-              }
-              // Respetar el filtro de precio activo (igual que el grid)
-              if (priceRange) {
-                featuredProducts = featuredProducts.filter(
-                  (p) => p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1]
-                );
-              }
-              if (featuredProducts.length === 0) return null;
-
-              return (
-                <div data-carousel className="space-y-4 relative z-10">
-                  <div 
-                    style={{ borderColor: "var(--primary)" }}
-                    className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300"
-                  >
-                    <h3 
-                      style={{ color: "var(--foreground)" }}
-                      className="text-sm font-serif font-normal tracking-wider flex items-center gap-2 uppercase"
-                    >
-                      <Flower 
-                        style={{ color: "var(--primary)" }}
-                        className="h-4 w-4 animate-pulse" 
-                      />
-                      {isSaleOnly ? (store.niche === "floreria" ? "Ofertas Ecológicas" : "Ofertas Especiales") : isFallback ? "Recomendaciones" : nicheTags.featuredTitle}
-                    </h3>
-                    {featuredProducts.length > 1 && (
-                      <>
-                        <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">Desliza →</span>
-                        <div className="hidden md:flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            aria-label="Anterior"
-                            onClick={(e) => {
-                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
-                              s?.scrollBy({ left: -320, behavior: "smooth" });
-                            }}
-                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="Siguiente"
-                            onClick={(e) => {
-                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
-                              s?.scrollBy({ left: 320, behavior: "smooth" });
-                            }}
-                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Horizontal Scroll of Featured Products */}
-                  <div data-carousel-scroll className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
-                    <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
-                      {featuredProducts.map((p) => (
-                        <div
+                  }
+                  // Non-feature: rendered in pairs below
+                  return null;
+                })}
+                {/* Render non-feature items in 2-col rows */}
+                {(() => {
+                  const nonFeatures = filtered.filter((_, i) => i % 3 !== 0);
+                  const pairs: (typeof filtered)[] = [];
+                  for (let i = 0; i < nonFeatures.length; i += 2)
+                    pairs.push(nonFeatures.slice(i, i + 2));
+                  return pairs.map((pair, pi) => (
+                    <div key={pi} className="grid grid-cols-2 gap-1">
+                      {pair.map((p) => (
+                        <article
                           key={p.id}
+                          className="relative overflow-hidden cursor-pointer group"
+                          style={{ aspectRatio: "3/4" }}
                           onClick={() => setViewingProduct(p)}
-                          style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
-                          className="w-[210px] sm:w-[260px] lg:w-[290px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
                         >
-                          <div className="space-y-3">
-                            {/* Curved nature image card */}
-                            <div 
-                              style={{ 
-                                backgroundColor: "var(--muted)", 
-                                borderColor: "color-mix(in srgb, var(--border) 40%, transparent)" 
-                              }}
-                              className="relative aspect-square w-full overflow-hidden rounded-[2rem] border"
-                            >
-                              <img
-                                src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
-                                alt={p.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                loading="lazy"
-                              />
-                              <div 
-                                style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
-                                className="absolute bottom-3 left-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans"
-                              >
-                                {p.isOnSale ? "Eco-Oferta" : isFallback ? "Eco-Sugerencia" : "Destacado"}
-                              </div>
-                            </div>
-                            {/* Info */}
-                            <div className="space-y-1 text-left px-1">
-                              <span 
-                                style={{ color: "var(--muted-foreground)" }}
-                                className="text-[9px] font-bold uppercase tracking-wider font-sans block"
-                              >
-                                {nicheTags.productTagline}
-                              </span>
-                              <h4 
-                                style={{ color: "var(--foreground)" }}
-                                className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]"
-                              >
-                                {p.name}
-                              </h4>
-                              <p className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans">
-                                {(p.description || "").replace(/#destacado/g, "").trim()}
-                              </p>
-                            </div>
-                          </div>
-                          {/* Buy section */}
-                          <div 
-                            style={{ borderColor: "var(--border)" }}
-                            className="flex items-center justify-between pt-3 mt-3 border-t px-1 gap-1"
-                          >
-                            <div className="text-left min-w-0">
-                              <span className="text-sm font-semibold font-sans text-[var(--primary)] whitespace-nowrap truncate block">
+                          <img
+                            src={
+                              p.image ||
+                              "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80"
+                            }
+                            alt={p.name}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                          {p.isOnSale && (
+                            <span className="absolute top-3 left-3 text-[9px] font-bold tracking-widest uppercase border border-white/50 text-white px-2 py-0.5">
+                              SALE
+                            </span>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <h3 className="text-white font-light text-sm tracking-widest uppercase line-clamp-1 mb-1">
+                              {p.name}
+                            </h3>
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-bold text-sm">
                                 {formatPrice(p.price)}
                               </span>
-                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                <span className="text-[10px] text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">{formatPrice(p.originalPrice)}</span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Consult button */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  consultProduct(p.name);
-                                }}
-                                className="h-7 w-7 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
-                                title="Consultar por WhatsApp"
-                              >
-                                <WhatsAppIcon className="h-3.5 w-3.5" />
-                              </button>
-                              {/* Add button */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cartAdd(store.id, p.id);
-                                  setCartOpen(true);
-                                }}
-                                className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans shrink-0"
-                              >
-                                <Plus className="h-3 w-3" />
-                                Añadir
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* 3. Categories */}
-            <div id="nature-coleccion" className="space-y-6 font-sans relative z-10 scroll-mt-24">
-              {/* Category selector (Minimalist Editorial) */}
-              <div 
-                style={{ borderColor: "color-mix(in srgb, var(--border) 50%, transparent)" }}
-                className="space-y-3 border-b pb-2"
-              >
-                <h3 
-                  style={{ color: "var(--muted-foreground)" }}
-                  className="text-[10px] font-black uppercase tracking-[0.2em] text-left"
-                >
-                  {getNicheCategoryTitle(store.niche)}
-                </h3>
-                
-                <div className="overflow-x-auto scrollbar-none -mx-4 pt-1 sm:-mx-4">
-                  <div className="flex gap-4 px-4 w-max min-w-full">
-                    <button
-                      onClick={() => setActiveCat("all")}
-                      className={cn(
-                        "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
-                        activeCat === "all"
-                          ? "text-[var(--primary)] font-extrabold"
-                          : "text-stone-400 hover:text-stone-700"
-                      )}
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
-                      <span>Ver Todo</span>
-                      {activeCat === "all" && (
-                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
-                      )}
-                    </button>
-
-                    {store.products.some(p => p.isOnSale) && (
-                      <button
-                        onClick={() => setActiveCat("sale")}
-                        className={cn(
-                          "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
-                          activeCat === "sale"
-                            ? "text-[var(--primary)] font-extrabold"
-                            : "text-stone-400 hover:text-stone-700"
-                        )}
-                      >
-                        <Flame className="h-3.5 w-3.5 shrink-0 text-red-500" />
-                        <span>Eco-Ofertas</span>
-                        {activeCat === "sale" && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
-                        )}
-                      </button>
-                    )}
-
-                    {store.categories.map((c) => {
-                      const { label, iconKey } = parseCategoryName(c.name);
-                      const active = activeCat === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => setActiveCat(c.id)}
-                          className={cn(
-                            "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
-                            active
-                              ? "text-[var(--primary)] font-extrabold"
-                              : "text-stone-400 hover:text-stone-700"
-                          )}
-                        >
-                          {iconKey ? (
-                            <CategoryIcon iconKey={iconKey} className="h-3.5 w-3.5 shrink-0" />
-                          ) : (
-                            <Utensils className="h-3.5 w-3.5 shrink-0" />
-                          )}
-                          <span>{label}</span>
-                          {active && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Product Grid */}
-            <div className="space-y-4 relative z-10">
-              <h3 
-                style={{ color: "var(--muted-foreground)" }}
-                className="text-xs font-bold uppercase tracking-widest text-left"
-              >
-                {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
-              </h3>
-              {(() => {
-                const gridProducts = activeCat === "all"
-                  ? filtered.filter((p) => !(p.description?.includes("#destacado") || p.name?.includes("#destacado")))
-                  : filtered;
-                
-                if (gridProducts.length === 0) {
-                  return (
-                    <div 
-                      style={{ 
-                        borderColor: "var(--border)", 
-                        backgroundColor: "color-mix(in srgb, var(--card) 60%, transparent)" 
-                      }}
-                      className="text-center py-12 text-xs text-stone-400 border rounded-[2rem]"
-                    >
-                      No hay productos botánicos en esta categoría.
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
-                    {gridProducts.map((p, idx) => {
-                      const isEven = idx % 2 === 0;
-                      const showAd = store.plan === "semilla" && !isMockup;
-                      const isAdPos = idx === 4;
-                      const isLastNoAd = idx === gridProducts.length - 1 && gridProducts.length <= 4;
-                      
-                      return (
-                        <React.Fragment key={p.id}>
-                          <article
-                            key={p.id}
-                            style={{
-                              borderColor: "var(--border)",
-                              boxShadow: "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)"
-                            }}
-                            className={cn(
-                              "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none text-left",
-                              isEven ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1" : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1"
-                            )}
-                            onClick={() => setViewingProduct(p)}
-                          >
-                            <div>
-                              {/* framed image with margins - leaf shapes alternating */}
-                              <div 
-                                style={{ 
-                                  backgroundColor: "var(--muted)", 
-                                  borderColor: "color-mix(in srgb, var(--border) 30%, transparent)" 
-                                }}
-                                className={cn(
-                                  "relative overflow-hidden aspect-square m-2.5 border transition-all duration-500",
-                                  isEven ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]" : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]"
-                                )}
-                              >
-                                <img
-                                  src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
-                                  alt={p.name}
-                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                  loading="lazy"
-                                />
-                                {p.isOnSale && (
-                                  <span 
-                                    style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
-                                    className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans"
-                                  >
-                                    Oferta
-                                  </span>
-                                )}
-                              </div>
-                              {/* Info */}
-                              <div className="p-3.5 pt-1 space-y-1 text-left">
-                                <span 
-                                  style={{ color: "var(--muted-foreground)" }}
-                                  className="text-[8px] font-black uppercase tracking-widest block font-sans"
-                                >
-                                  {nicheTags.productTag}
-                                </span>
-                                <h4 
-                                  style={{ color: "var(--foreground)" }}
-                                  className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
-                                >
-                                  {p.name}
-                                </h4>
-                                {p.description && (
-                                  <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
-                                    {p.description}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Price & Actions */}
-                            <div className="px-3.5 pb-4 pt-0 mt-auto">
-                              {/* Price row */}
-                              <div className="flex flex-col text-left px-0.5 mb-2">
-                                <span className="text-sm font-semibold text-[var(--primary)] font-sans">{formatPrice(p.price)}</span>
-                                {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                  <span 
-                                    style={{ color: "var(--muted-foreground)" }}
-                                    className="text-[10px] line-through -mt-1 font-sans"
-                                  >
-                                    {formatPrice(p.originalPrice)}
-                                  </span>
-                                )}
-                              </div>
-                              {/* Buttons row */}
-                              <div className="flex items-center gap-1.5">
-                                {/* Consult */}
+                              <div className="flex gap-1">
                                 <button
-                                  type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     consultProduct(p.name);
                                   }}
-                                  className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
-                                  title="Consultar por WhatsApp"
+                                  className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm"
                                 >
-                                  <WhatsAppIcon className="h-3.5 w-3.5" />
+                                  <WhatsAppIcon className="h-3 w-3" />
                                 </button>
-                                {/* Add */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cartAdd(store.id, p.id);
+                                  }}
+                                  className="h-7 w-7 bg-white text-black flex items-center justify-center hover:bg-white/90 transition"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ));
+                })()}
+              </div>
+            ) : cfg.layout === "tiles" ? (
+              /* ── TILES layout: alternating wide (full) + square pair — inspired by Apple editorial */
+              <div className="grid grid-cols-2 gap-2">
+                {filtered.map((p, i) => {
+                  const isWide = i % 3 === 0;
+                  const fallback =
+                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
+                  return (
+                    <article
+                      key={p.id}
+                      className={cn(
+                        "relative overflow-hidden cursor-pointer group",
+                        isWide ? "col-span-2" : "",
+                        cfg.cardShadow,
+                      )}
+                      style={{
+                        aspectRatio: isWide ? "16/7" : "1/1",
+                        borderRadius: cfg.cardRounded,
+                        backgroundColor: "var(--card)",
+                      }}
+                      onClick={() => setViewingProduct(p)}
+                    >
+                      <img
+                        src={p.image || fallback}
+                        alt={p.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = fallback;
+                        }}
+                      />
+                      {/* Gradient overlay */}
+                      <div
+                        className={`absolute inset-0 ${isWide ? "bg-gradient-to-r from-black/70 via-black/30 to-transparent" : "bg-gradient-to-t from-black/75 via-black/10 to-transparent"}`}
+                      />
+                      {p.isOnSale && (
+                        <span className="absolute top-3 left-3 text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+                          OFERTA
+                        </span>
+                      )}
+                      {isWide ? (
+                        <div className="absolute bottom-0 left-0 p-5 right-0 flex items-end justify-between">
+                          <div>
+                            <h3
+                              className={cn(
+                                "text-white leading-tight mb-1",
+                                cfg.headerStyle === "minimal"
+                                  ? "text-2xl font-light tracking-widest uppercase"
+                                  : "text-2xl font-black",
+                              )}
+                            >
+                              {p.name}
+                            </h3>
+                            <span className="text-white/80 font-black text-xl">
+                              {formatPrice(p.price)}
+                            </span>
+                          </div>
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                consultProduct(p.name);
+                              }}
+                              className="h-10 px-4 text-xs font-bold border border-white/50 text-white backdrop-blur-sm hover:bg-white/10 transition"
+                              style={{ borderRadius: cfg.cardRounded }}
+                            >
+                              <WhatsAppIcon className="h-3.5 w-3.5 inline mr-1" />
+                              Consultar
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cartAdd(store.id, p.id);
+                              }}
+                              className="h-10 px-4 text-xs font-bold text-black hover:opacity-90 transition"
+                              style={{
+                                backgroundColor: "var(--primary)",
+                                borderRadius: cfg.cardRounded,
+                              }}
+                            >
+                              <Plus className="h-3.5 w-3.5 inline" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <h3 className="text-white text-xs font-bold line-clamp-1 mb-0.5">
+                            {p.name}
+                          </h3>
+                          <div className="flex items-center justify-between">
+                            <span className="text-white font-black text-sm">
+                              {formatPrice(p.price)}
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  consultProduct(p.name);
+                                }}
+                                className="h-7 w-7 border border-white/40 text-white flex items-center justify-center hover:bg-white/10 transition backdrop-blur-sm"
+                                style={{ borderRadius: cfg.cardRounded }}
+                              >
+                                <WhatsAppIcon className="h-3 w-3" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cartAdd(store.id, p.id);
+                                }}
+                                className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
+                                style={{
+                                  backgroundColor: "var(--primary)",
+                                  borderRadius: cfg.cardRounded,
+                                }}
+                              >
+                                <Plus className="h-3 w-3 text-white" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : cfg.layout === "spotlight" ? (
+              /* ── SPOTLIGHT layout: 1 large featured + 2 stacked small — inspired by Farfetch / Mytheresa */
+              <div className="space-y-3">
+                {(() => {
+                  const fallback =
+                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
+                  const groups: (typeof filtered)[] = [];
+                  for (let i = 0; i < filtered.length; i += 3)
+                    groups.push(filtered.slice(i, i + 3));
+                  return groups.map((group, gi) => (
+                    <div
+                      key={gi}
+                      className={cn(
+                        "grid grid-cols-2 gap-2",
+                        gi % 2 !== 0 ? "[&>*:first-child]:order-last" : "",
+                      )}
+                    >
+                      {/* Large card */}
+                      {group[0] && (
+                        <article
+                          className={cn(
+                            "relative overflow-hidden cursor-pointer group",
+                            cfg.cardShadow,
+                          )}
+                          style={{ borderRadius: cfg.cardRounded, aspectRatio: "2/3" }}
+                          onClick={() => setViewingProduct(group[0])}
+                        >
+                          <img
+                            src={group[0].image || fallback}
+                            alt={group[0].name}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = fallback;
+                            }}
+                          />
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              background:
+                                "linear-gradient(to top, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0.1) 70%)",
+                            }}
+                          />
+                          {group[0].isOnSale && (
+                            <span
+                              className="absolute top-3 left-3 text-[9px] font-black bg-red-500 text-white px-2 py-0.5"
+                              style={{ borderRadius: cfg.cardRounded }}
+                            >
+                              OFERTA
+                            </span>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 p-4">
+                            <p className="text-white/50 text-[9px] uppercase tracking-[0.25em] mb-1">
+                              Destacado
+                            </p>
+                            <h3
+                              className={cn(
+                                "text-white leading-tight mb-2 line-clamp-2",
+                                cfg.headerStyle === "minimal"
+                                  ? "text-sm font-light tracking-widest uppercase"
+                                  : "text-sm font-black",
+                              )}
+                            >
+                              {group[0].name}
+                            </h3>
+                            <div className="flex items-center justify-between">
+                              <span
+                                className="font-black text-base"
+                                style={{ color: "var(--primary)" }}
+                              >
+                                {formatPrice(group[0].price)}
+                              </span>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    consultProduct(group[0].name);
+                                  }}
+                                  className="h-7 w-7 border border-white/30 text-white flex items-center justify-center hover:bg-white/10 backdrop-blur-sm"
+                                  style={{ borderRadius: cfg.cardRounded }}
+                                >
+                                  <WhatsAppIcon className="h-3 w-3" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cartAdd(store.id, group[0].id);
+                                  }}
+                                  className="h-7 w-7 flex items-center justify-center hover:opacity-90"
+                                  style={{
+                                    backgroundColor: "var(--primary)",
+                                    borderRadius: cfg.cardRounded,
+                                  }}
+                                >
+                                  <Plus className="h-3 w-3 text-white" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      )}
+                      {/* 2 stacked small cards */}
+                      <div className="flex flex-col gap-2">
+                        {group.slice(1).map((p) => (
+                          <article
+                            key={p.id}
+                            className={cn(
+                              "relative overflow-hidden cursor-pointer group flex-1",
+                              cfg.cardShadow,
+                            )}
+                            style={{ borderRadius: cfg.cardRounded, minHeight: "100px" }}
+                            onClick={() => setViewingProduct(p)}
+                          >
+                            <img
+                              src={p.image || fallback}
+                              alt={p.name}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = fallback;
+                              }}
+                            />
+                            <div
+                              className="absolute inset-0"
+                              style={{
+                                background:
+                                  "linear-gradient(to top, rgba(0,0,0,0.75) 40%, transparent)",
+                              }}
+                            />
+                            {p.isOnSale && (
+                              <span className="absolute top-2 left-2 text-[8px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                                SALE
+                              </span>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <h3 className="text-white text-xs font-bold line-clamp-1 mb-1">
+                                {p.name}
+                              </h3>
+                              <div className="flex items-center justify-between">
+                                <span
+                                  className="text-xs font-black"
+                                  style={{ color: "var(--primary)" }}
+                                >
+                                  {formatPrice(p.price)}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    cartAdd(store.id, p.id);
+                                  }}
+                                  className="h-6 w-6 flex items-center justify-center hover:opacity-90"
+                                  style={{
+                                    backgroundColor: "var(--primary)",
+                                    borderRadius: cfg.cardRounded,
+                                  }}
+                                >
+                                  <Plus className="h-3 w-3 text-white" />
+                                </button>
+                              </div>
+                            </div>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            ) : cfg.layout === "diagonal" ? (
+              /* ── DIAGONAL layout: slanted clip-path cuts — Nike / streetwear editorial */
+              <div
+                className={cn(
+                  "grid gap-0",
+                  isMockup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
+                )}
+              >
+                {filtered.map((p, i) => {
+                  const fallback =
+                    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
+                  const slantRight = "polygon(0 0, 100% 0, 100% 88%, 0 100%)";
+                  const slantLeft = "polygon(0 0, 100% 0, 100% 100%, 0 88%)";
+                  return (
+                    <article
+                      key={p.id}
+                      className="relative cursor-pointer group overflow-hidden"
+                      style={{ backgroundColor: "var(--card)" }}
+                      onClick={() => setViewingProduct(p)}
+                    >
+                      {/* Slanted image */}
+                      <div
+                        className="relative overflow-hidden"
+                        style={{
+                          aspectRatio: "4/3",
+                          clipPath: i % 2 === 0 ? slantRight : slantLeft,
+                        }}
+                      >
+                        <img
+                          src={p.image || fallback}
+                          alt={p.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = fallback;
+                          }}
+                        />
+                        {p.isOnSale && (
+                          <span
+                            className="absolute top-4 left-4 text-[10px] font-black tracking-widest uppercase px-3 py-1"
+                            style={{ backgroundColor: "var(--primary)", color: "#000" }}
+                          >
+                            OFERTA
+                          </span>
+                        )}
+                      </div>
+                      {/* Text — flows into the clipped gap */}
+                      <div className="px-5 pt-0 pb-5 -mt-4 relative z-10">
+                        {/* Category label */}
+                        <p
+                          className="text-[9px] uppercase tracking-[0.3em] font-bold mb-1"
+                          style={{ color: "var(--primary)" }}
+                        >
+                          {
+                            parseCategoryName(
+                              store.categories.find((c) => c.id === p.categoryId)?.name || "",
+                            ).label
+                          }
+                        </p>
+                        <h3
+                          className="font-black text-base uppercase tracking-widest line-clamp-1 mb-3"
+                          style={{ color: "var(--foreground)" }}
+                        >
+                          {p.name}
+                        </h3>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span
+                              className="font-black text-xl"
+                              style={{ color: "var(--primary)" }}
+                            >
+                              {formatPrice(p.price)}
+                            </span>
+                            {p.isOnSale &&
+                              p.originalPrice &&
+                              p.price &&
+                              p.originalPrice > p.price && (
+                                <span className="text-xs line-through ml-2 opacity-40">
+                                  {formatPrice(p.originalPrice)}
+                                </span>
+                              )}
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                consultProduct(p.name);
+                              }}
+                              className="h-9 px-3 text-xs font-black uppercase tracking-widest border transition hover:opacity-70"
+                              style={{ borderColor: "var(--primary)", color: "var(--primary)" }}
+                            >
+                              <WhatsAppIcon className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cartAdd(store.id, p.id);
+                              }}
+                              className="h-9 px-4 text-xs font-black uppercase tracking-widest transition hover:opacity-80"
+                              style={{
+                                backgroundColor: "var(--primary)",
+                                color: "var(--primary-foreground)",
+                              }}
+                            >
+                              <Plus className="h-3.5 w-3.5 inline" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : cfg.layout === "arch" ? (
+              /* ── ARCH layout: arched portrait frames — luxury cosmetics / Byredo / AESOP style */
+              <div
+                className={cn(
+                  "grid gap-4 px-2 pb-4",
+                  isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3",
+                )}
+              >
+                {filtered.map((p) => {
+                  const fallback =
+                    "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80";
+                  return (
+                    <article
+                      key={p.id}
+                      className="flex flex-col items-center cursor-pointer group"
+                      onClick={() => setViewingProduct(p)}
+                    >
+                      {/* Arched image frame */}
+                      <div
+                        className="relative overflow-hidden w-full group-hover:scale-[1.02] transition-transform duration-500"
+                        style={{
+                          aspectRatio: "3/4",
+                          borderRadius: "999px 999px 1rem 1rem", // arch top
+                          border: cfg.cardBorder ? `1px solid var(--border)` : "none",
+                          backgroundColor: "var(--card)",
+                        }}
+                      >
+                        <img
+                          src={p.image || fallback}
+                          alt={p.name}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = fallback;
+                          }}
+                        />
+                        {/* Subtle vignette */}
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.2) 100%)",
+                          }}
+                        />
+                        {p.isOnSale && (
+                          <span
+                            className="absolute top-4 left-1/2 -translate-x-1/2 text-[9px] font-bold tracking-widest uppercase border text-white px-2 py-0.5 backdrop-blur-sm"
+                            style={{ borderColor: "white", borderRadius: "999px" }}
+                          >
+                            SALE
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Caption below arch */}
+                      <div className="w-full text-center pt-3 px-1 space-y-1">
+                        <h3
+                          className="text-xs font-light uppercase tracking-[0.2em] line-clamp-2"
+                          style={{ color: "var(--foreground)" }}
+                        >
+                          {p.name}
+                        </h3>
+                        <p className="text-xs font-black" style={{ color: "var(--primary)" }}>
+                          {formatPrice(p.price)}
+                        </p>
+                        <div className="flex justify-center pt-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              consultProduct(p.name);
+                            }}
+                            className="flex-1 py-1.5 text-[10px] uppercase tracking-widest border transition hover:opacity-70 font-medium"
+                            style={{
+                              borderColor: "var(--border)",
+                              color: "var(--foreground)",
+                              borderRadius: "999px",
+                            }}
+                          >
+                            Consultar
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : cfg.layout === "bite" ? (
+              /* ── BITE PREMIUM RESTAURANT LAYOUT ── */
+              <div className="space-y-8 select-none">
+                {/* 1. Cover Banner Carousel */}
+                {(() => {
+                  const banners = activeBanners;
+                  return (
+                    <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl group/banner z-10">
+                      {banners.length > 0 ? (
+                        <>
+                          {/* Slides */}
+                          <div className="w-full h-full relative">
+                            {banners.map((slide, idx) => (
+                              <div
+                                key={idx}
+                                className={cn(
+                                  "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-zinc-950",
+                                  idx === currentBannerIndex
+                                    ? "opacity-100 scale-100 z-10"
+                                    : "opacity-0 scale-105 z-0 pointer-events-none",
+                                )}
+                              >
+                                {/* Blurred background */}
+                                <div
+                                  className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
+                                  style={{ backgroundImage: `url(${slide})` }}
+                                />
+                                <img
+                                  src={slide}
+                                  alt={`${store.bannerTitle || store.name} ${idx + 1}`}
+                                  className="w-full h-full object-contain relative z-10"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-20" />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Manual controls (Arrows) */}
+                          {banners.length > 1 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCurrentBannerIndex(
+                                    (prev) => (prev - 1 + banners.length) % banners.length,
+                                  );
+                                }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-800 text-white flex items-center justify-center hover:bg-zinc-800 transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                              >
+                                <ChevronLeft className="h-5 w-5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-800 text-white flex items-center justify-center hover:bg-zinc-800 transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                              >
+                                <ChevronRight className="h-5 w-5" />
+                              </button>
+                            </>
+                          )}
+
+                          {/* Indicator dots */}
+                          {banners.length > 1 && (
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-black/60 backdrop-blur-xs border border-zinc-800/60 px-2.5 py-1.5 rounded-full">
+                              {banners.map((_, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurrentBannerIndex(idx);
+                                  }}
+                                  className={cn(
+                                    "h-1.5 rounded-full transition-all duration-300",
+                                    idx === currentBannerIndex
+                                      ? "w-4 bg-[var(--primary)]"
+                                      : "w-1.5 bg-zinc-500 hover:bg-zinc-400",
+                                  )}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black relative">
+                          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ea580c_1px,transparent_1px)] [background-size:16px_16px]" />
+                          <div className="relative z-10">
+                            <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
+                              {store.name}
+                            </h2>
+                            <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-widest mt-1">
+                              {store.niche === "hamburgueseria"
+                                ? "Premium Burger Experience"
+                                : store.niche === "cafeteria"
+                                  ? "Premium Coffee & Pastry"
+                                  : "Premium Gourmet Experience"}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* 2. Spotlight Carousel (Featured Products) */}
+                {(() => {
+                  if (activeCat !== "all" || query.trim() !== "") return null;
+                  let isSaleOnly = false;
+                  let isFallback = false;
+                  let featuredProducts = productsWithImages.filter(
+                    (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado"),
+                  );
+                  if (featuredProducts.length === 0) {
+                    featuredProducts = productsWithImages.filter((p) => p.isOnSale);
+                    isSaleOnly = featuredProducts.length > 0;
+                  }
+                  if (featuredProducts.length === 0) {
+                    featuredProducts = productsWithImages.slice(0, 4);
+                    isFallback = true;
+                  }
+                  // Respetar el filtro de precio activo (igual que el grid)
+                  if (priceRange) {
+                    featuredProducts = featuredProducts.filter(
+                      (p) =>
+                        p.price !== null &&
+                        p.price !== undefined &&
+                        p.price >= priceRange[0] &&
+                        p.price <= priceRange[1],
+                    );
+                  }
+                  if (featuredProducts.length === 0) return null;
+
+                  const headerText = isSaleOnly
+                    ? "Ofertas Especiales"
+                    : isFallback
+                      ? "Te Recomendamos"
+                      : "Destacados de la Casa";
+
+                  return (
+                    <div data-carousel className="space-y-4">
+                      <div
+                        className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300"
+                        style={{ borderColor: "var(--primary)" }}
+                      >
+                        <h3 className="text-sm sm:text-base font-black text-white tracking-widest flex items-center gap-2 uppercase">
+                          {/* Premium 4-point diamond SVG */}
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="h-4 w-4 text-[var(--primary)] animate-pulse"
+                            style={{ filter: "drop-shadow(0 0 4px var(--primary))" }}
+                          >
+                            <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9Z" />
+                          </svg>
+                          {headerText}
+                        </h3>
+                        {featuredProducts.length > 1 && (
+                          <>
+                            <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest animate-pulse md:hidden">
+                              Desliza →
+                            </span>
+                            <div className="hidden md:flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                aria-label="Anterior"
+                                onClick={(e) => {
+                                  const s = (
+                                    e.currentTarget.closest("[data-carousel]") as HTMLElement | null
+                                  )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                                  s?.scrollBy({ left: -320, behavior: "smooth" });
+                                }}
+                                className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Siguiente"
+                                onClick={(e) => {
+                                  const s = (
+                                    e.currentTarget.closest("[data-carousel]") as HTMLElement | null
+                                  )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                                  s?.scrollBy({ left: 320, behavior: "smooth" });
+                                }}
+                                className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* TWO-DIV PATTERN to prevent shadow and scale clipping */}
+                      <div
+                        data-carousel-scroll
+                        className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4"
+                      >
+                        <div className="flex gap-4 px-4 snap-x snap-mandatory w-max min-w-full">
+                          {featuredProducts.map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => setViewingProduct(p)}
+                              className="w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
+                            >
+                              <div className="space-y-3">
+                                {/* Image */}
+                                <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800">
+                                  <img
+                                    src={
+                                      p.image ||
+                                      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"
+                                    }
+                                    alt={p.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    loading="lazy"
+                                  />
+                                  <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
+                                    Destacado
+                                  </div>
+                                </div>
+                                {/* Info */}
+                                <div className="space-y-1 text-left px-1">
+                                  <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
+                                    {p.name}
+                                  </h4>
+                                  <p className="text-xs text-zinc-400 line-clamp-2 leading-4 min-h-8">
+                                    {(p.description || "").replace(/#destacado/g, "").trim()}
+                                  </p>
+                                </div>
+                              </div>
+                              {/* Buy section */}
+                              <div className="flex items-center justify-between pt-3 mt-3 border-t border-zinc-800/80 px-1">
+                                <div>
+                                  <span className="text-base font-black text-[var(--primary)]">
+                                    {formatPrice(p.price)}
+                                  </span>
+                                  {p.isOnSale &&
+                                    p.originalPrice &&
+                                    p.price &&
+                                    p.originalPrice > p.price && (
+                                      <span className="text-xs text-zinc-500 line-through block -mt-1">
+                                        {formatPrice(p.originalPrice)}
+                                      </span>
+                                    )}
+                                </div>
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -4422,332 +4860,1782 @@ export function PublicCatalog({
                                     cartAdd(store.id, p.id);
                                     setCartOpen(true);
                                   }}
-                                  className="flex-1 h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
+                                  style={{
+                                    borderColor: "var(--primary)",
+                                    color: "var(--primary)",
+                                  }}
+                                  className="border bg-zinc-950/80 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 font-extrabold text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest uppercase rounded-full px-3 py-2 sm:px-5 sm:py-2.5 shadow-[0_0_10px_rgba(234,88,12,0.1)] hover:shadow-[0_0_15px_var(--primary)]/40 flex items-center gap-1"
                                 >
-                                  <Plus className="h-3 w-3" />
+                                  <Plus className="h-3.5 w-3.5" />
                                   Añadir
                                 </button>
                               </div>
                             </div>
-                          </article>
-                          {showAd && (isAdPos || isLastNoAd) && (
-                            <DiziNativeAdCard 
-                              layout="nature" 
-                              primaryColor={primaryColor} 
-                              slug={store.slug}
-                              cardRounded={cfg.cardRounded}
-                              imgRounded={cfg.imgRounded}
-                              cardShadow={cfg.cardShadow}
-                              cardBorder={cfg.cardBorder}
-                            />
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-          );
-        })() : cfg.layout === "bloom" ? (
-          /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
-          <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
-            {store.niche === "floreria" && (
-              <>
-                {/* Elegant floating leafy watermarks in background */}
-                <div className="absolute top-[12%] -left-12 w-28 h-28 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block" style={{ color: "var(--primary)" }}>
-                  <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full rotate-45">
-                    <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
-                  </svg>
-                </div>
-                <div className="absolute top-[52%] -right-16 w-36 h-36 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block" style={{ color: "var(--primary)" }}>
-                  <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full -rotate-12">
-                    <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
-                  </svg>
-                </div>
-              </>
-            )}
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
-            {/* 1. Cover Banner Carousel */}
-            {(() => {
-              const banners = activeBanners;
-              const bStyle = store.niche === "floreria" ? "curved" : (store.bannerStyle || "framed");
-              return (
-                <div className={cn(
-                  "relative w-full aspect-[21/9] sm:aspect-[21/7] overflow-hidden group/banner z-10",
-                  bStyle === "direct"
-                    ? "rounded-none -mx-4 w-[calc(100%+2rem)] border-none shadow-none p-0"
-                    : bStyle === "curved"
-                      ? "rounded-[3.5rem_1.5rem_3.5rem_1.5rem] bg-[var(--card)] border border-[var(--border)] shadow-md p-1"
-                      : "rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-md p-1"
-                )}>
-                  <div className={cn(
-                    "w-full h-full rounded-[inherit] overflow-hidden relative",
-                    store.niche === "floreria" ? "bg-[#fdfaf8]" : "bg-[var(--card)]"
-                  )}>
-                    {banners.length > 0 ? (
-                      <>
-                        {/* Slides */}
-                                                 <div className="w-full h-full relative">
-                          {banners.map((slide, idx) => (
-                            <div
-                              key={idx}
+                {/* 3. Navigation and Search Block (Search + Categories) */}
+                <div className="space-y-6">
+                  {/* Search Bar at full width */}
+                  {mode === "catalog" && (
+                    <div className="relative w-full">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="¿Qué estás buscando hoy?"
+                        className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Inline Horizontal Category Selector */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
+                      Categorías
+                    </h3>
+
+                    {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
+                    <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">
+                      <div className="flex gap-2.5 px-4 w-max min-w-full">
+                        <button
+                          onClick={() => setActiveCat("all")}
+                          style={{
+                            borderColor: activeCat === "all" ? "var(--primary)" : "#27272a",
+                          }}
+                          className={cn(
+                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
+                            activeCat === "all"
+                              ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
+                              : "text-zinc-400 hover:text-white hover:bg-zinc-900/40",
+                          )}
+                        >
+                          <LayoutGrid
+                            className="h-4 w-4 shrink-0"
+                            style={{ color: activeCat === "all" ? "#fff" : "var(--primary)" }}
+                          />
+                          <span>Ver Todo</span>
+                        </button>
+
+                        {/* Ofertas */}
+                        {store.products.some((p) => p.isOnSale) && (
+                          <button
+                            onClick={() => setActiveCat("sale")}
+                            style={{
+                              borderColor: activeCat === "sale" ? "var(--primary)" : "#27272a",
+                            }}
+                            className={cn(
+                              "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
+                              activeCat === "sale"
+                                ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
+                                : "text-zinc-400 hover:text-white hover:bg-zinc-900/40",
+                            )}
+                          >
+                            <Flame className="h-4 w-4 shrink-0 text-red-500" />
+                            <span>Ofertas</span>
+                          </button>
+                        )}
+
+                        {store.categories.map((c) => {
+                          const { label, iconKey } = parseCategoryName(c.name);
+                          const active = activeCat === c.id;
+                          return (
+                            <button
+                              key={c.id}
+                              onClick={() => setActiveCat(c.id)}
+                              style={{
+                                borderColor: active ? "var(--primary)" : "#27272a",
+                              }}
                               className={cn(
-                                "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-[#fdfaf8]",
-                                idx === currentBannerIndex
-                                  ? "opacity-100 scale-100 z-10"
-                                  : "opacity-0 scale-105 z-0 pointer-events-none"
+                                "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
+                                active
+                                  ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
+                                  : "text-zinc-400 hover:text-white hover:bg-zinc-900/40",
                               )}
                             >
-                              {/* Blurred background */}
-                              <div 
-                                className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                style={{ backgroundImage: `url(${slide})` }}
+                              {iconKey ? (
+                                <CategoryIcon
+                                  iconKey={iconKey}
+                                  className="h-4 w-4 shrink-0"
+                                  style={{ color: active ? "#fff" : "var(--primary)" }}
+                                />
+                              ) : (
+                                <Utensils
+                                  className="h-4 w-4 shrink-0"
+                                  style={{ color: active ? "#fff" : "var(--primary)" }}
+                                />
+                              )}
+                              <span>{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Product Grid */}
+                <div className="space-y-4">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
+                    {activeCat === "all"
+                      ? "Nuestros Productos"
+                      : parseCategoryName(
+                          store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                        ).label}
+                  </h3>
+                  {(() => {
+                    const gridProducts =
+                      activeCat === "all"
+                        ? filtered.filter(
+                            (p) =>
+                              !(
+                                p.description?.includes("#destacado") ||
+                                p.name?.includes("#destacado")
+                              ),
+                          )
+                        : filtered;
+
+                    if (gridProducts.length === 0) {
+                      return (
+                        <div className="text-center py-12 border border-zinc-800 rounded-3xl bg-zinc-900/10 text-xs text-zinc-500">
+                          No hay productos en esta categoría.
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        className={cn(
+                          "grid gap-4",
+                          isMockup
+                            ? "grid-cols-2"
+                            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
+                        )}
+                      >
+                        {gridProducts.map((p, index) => {
+                          const showAd = store.plan === "semilla" && !isMockup;
+                          const isAdPos = index === 4;
+                          const isLastNoAd =
+                            index === gridProducts.length - 1 && gridProducts.length <= 4;
+
+                          return (
+                            <React.Fragment key={p.id}>
+                              <article
+                                key={p.id}
+                                className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-zinc-800 rounded-3xl bg-zinc-900/30 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg text-left"
+                                onClick={() => setViewingProduct(p)}
+                              >
+                                <div>
+                                  {/* 1:1 image */}
+                                  <div className="relative overflow-hidden bg-zinc-950 aspect-square rounded-2xl m-2 border border-zinc-800">
+                                    <img
+                                      src={
+                                        p.image ||
+                                        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"
+                                      }
+                                      alt={p.name}
+                                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      loading="lazy"
+                                    />
+                                    {p.isOnSale && (
+                                      <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
+                                        Oferta
+                                      </span>
+                                    )}
+                                  </div>
+                                  {/* Info */}
+                                  <div className="p-3 pt-1 space-y-1 text-left">
+                                    <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-5 min-h-10">
+                                      {p.name}
+                                    </h4>
+                                    {p.description && (
+                                      <p className="text-[11px] text-zinc-400 line-clamp-2 leading-4 min-h-8">
+                                        {p.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Price & Action */}
+                                <div className="px-3.5 pb-4 pt-0 flex items-center justify-between mt-auto">
+                                  <div className="flex flex-col text-left">
+                                    <span
+                                      className="text-sm font-black text-[var(--primary)]"
+                                      style={{ color: "var(--primary)" }}
+                                    >
+                                      {formatPrice(p.price)}
+                                    </span>
+                                    {p.isOnSale &&
+                                      p.originalPrice &&
+                                      p.price &&
+                                      p.originalPrice > p.price && (
+                                        <span className="text-[10px] text-zinc-500 line-through -mt-1">
+                                          {formatPrice(p.originalPrice)}
+                                        </span>
+                                      )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cartAdd(store.id, p.id);
+                                      setCartOpen(true);
+                                    }}
+                                    style={{
+                                      borderColor: "var(--primary)",
+                                      color: "var(--primary)",
+                                    }}
+                                    className="h-8 px-3 rounded-xl border bg-zinc-950/60 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-[0_2px_10px_rgba(0,0,0,0.3)] hover:shadow-[0_0_12px_var(--primary)]/30 active:scale-95 font-sans"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Añadir
+                                  </button>
+                                </div>
+                              </article>
+                              {showAd && (isAdPos || isLastNoAd) && (
+                                <DiziNativeAdCard
+                                  layout="bite"
+                                  primaryColor={primaryColor}
+                                  slug={store.slug}
+                                  cardRounded={cfg.cardRounded}
+                                  imgRounded={cfg.imgRounded}
+                                  cardShadow={cfg.cardShadow}
+                                  cardBorder={cfg.cardBorder}
+                                />
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : cfg.layout === "nature" ? (
+              (() => {
+                const nicheTags = getNicheTaglines(store.niche);
+                return (
+                  /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
+                  <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
+                    {/* Elegant botanical watermarks in background */}
+                    <div
+                      className="absolute top-[8%] -left-8 w-24 h-24 opacity-[0.06] pointer-events-none select-none z-0"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      <svg
+                        viewBox="0 0 100 100"
+                        fill="currentColor"
+                        className="w-full h-full rotate-[15deg]"
+                      >
+                        <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+                      </svg>
+                    </div>
+                    <div
+                      className="absolute top-[48%] -right-12 w-32 h-32 opacity-[0.06] pointer-events-none select-none z-0"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      <svg
+                        viewBox="0 0 100 100"
+                        fill="currentColor"
+                        className="w-full h-full -rotate-45"
+                      >
+                        <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+                      </svg>
+                    </div>
+
+                    {/* 1. Fluid Nature Banner */}
+                    {(() => {
+                      const banners = activeBanners;
+                      return (
+                        <div className="relative w-full z-10">
+                          {/* Image container: taller and curves in dynamically */}
+                          <div
+                            style={{
+                              borderColor: "var(--border)",
+                              background:
+                                "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--card)) 0%, color-mix(in srgb, var(--primary) 2%, var(--card)) 100%)",
+                            }}
+                            className="relative w-full h-[25vh] xs:h-[28vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
+                          >
+                            {banners.length > 0 ? (
+                              <>
+                                {/* Slides */}
+                                <div className="w-full h-full relative">
+                                  {banners.map((slide, idx) => (
+                                    <div
+                                      key={idx}
+                                      style={{ backgroundColor: "var(--background)" }}
+                                      className={cn(
+                                        "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
+                                        idx === currentBannerIndex
+                                          ? "opacity-100 scale-100 z-10"
+                                          : "opacity-0 scale-105 z-0 pointer-events-none",
+                                      )}
+                                    >
+                                      {/* Blurred background */}
+                                      <div
+                                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
+                                        style={{ backgroundImage: `url(${slide})` }}
+                                      />
+                                      <img
+                                        src={slide}
+                                        alt={`${store.bannerTitle || store.name} ${idx + 1}`}
+                                        className="w-full h-full object-contain relative z-10"
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Arrows */}
+                                {banners.length > 1 && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentBannerIndex(
+                                          (prev) => (prev - 1 + banners.length) % banners.length,
+                                        );
+                                      }}
+                                      style={{ color: "var(--primary)" }}
+                                      className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
+                                    >
+                                      <ChevronLeft className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentBannerIndex(
+                                          (prev) => (prev + 1) % banners.length,
+                                        );
+                                      }}
+                                      style={{ color: "var(--primary)" }}
+                                      className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
+                                    >
+                                      <ChevronRight className="h-5 w-5" />
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* Indicator dots */}
+                                {banners.length > 1 && (
+                                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/30 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
+                                    {banners.map((_, idx) => (
+                                      <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCurrentBannerIndex(idx);
+                                        }}
+                                        className={cn(
+                                          "h-1.5 rounded-full transition-all duration-300",
+                                          idx === currentBannerIndex
+                                            ? "w-4 bg-white"
+                                            : "w-1.5 bg-white/50 hover:bg-white/80",
+                                        )}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              /* Elegant nature placeholder banner */
+                              <div className="w-full h-full relative">
+                                {/* Elegant background colors with organic circles */}
+                                <div
+                                  style={{
+                                    background:
+                                      "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--background)) 0%, var(--background) 100%)",
+                                  }}
+                                  className="absolute inset-0 opacity-80"
+                                />
+                                <div
+                                  style={{ color: "var(--primary)", opacity: 0.1 }}
+                                  className="absolute right-2 bottom-0 top-0 w-1/2 pointer-events-none flex items-center justify-center"
+                                >
+                                  <svg
+                                    viewBox="0 0 100 100"
+                                    fill="currentColor"
+                                    className="w-40 h-40"
+                                  >
+                                    <path d="M50 0C55 25 80 45 100 50C80 55 55 80 50 100C45 80 20 55 0 50C20 45 45 25 50 0Z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Overlapping editorial card details */}
+                          {(() => {
+                            const finalTagline = store.bannerTagline || nicheTags.tagline;
+                            const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
+                            return (
+                              <div
+                                style={{
+                                  backgroundColor:
+                                    "color-mix(in srgb, var(--card) 95%, transparent)",
+                                  borderColor: "var(--border)",
+                                }}
+                                className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
+                              >
+                                <div className="space-y-1.5">
+                                  <span
+                                    style={{ color: "var(--muted-foreground)" }}
+                                    className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
+                                  >
+                                    {finalTagline}
+                                  </span>
+                                  <h2
+                                    style={{ color: "var(--foreground)" }}
+                                    className="text-xl sm:text-2xl font-serif font-normal leading-snug"
+                                  >
+                                    {store.bannerTitle || `Abraza la pureza de la naturaleza`}
+                                  </h2>
+                                  {store.bioDescription && (
+                                    <p className="text-stone-500 text-xs line-clamp-2 leading-relaxed">
+                                      {store.bioDescription}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="pt-3 flex gap-2 items-center justify-between">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      document
+                                        .getElementById("nature-coleccion")
+                                        ?.scrollIntoView({ behavior: "smooth" });
+                                    }}
+                                    style={{
+                                      backgroundColor: "var(--primary)",
+                                      color: "var(--primary-foreground)",
+                                    }}
+                                    className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                                  >
+                                    {nicheTags.buttonText}
+                                  </button>
+                                  {/* Decorative small organic element */}
+                                  <span className="text-stone-400 text-xs italic flex items-center gap-1.5 font-serif">
+                                    <Leaf
+                                      style={{
+                                        color:
+                                          "color-mix(in srgb, var(--primary) 60%, transparent)",
+                                      }}
+                                      className="h-3.5 w-3.5"
+                                    />{" "}
+                                    {finalBottomTag}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      );
+                    })()}
+
+                    {/* 2. Spotlight Carousel (Featured Products) */}
+                    {(() => {
+                      if (activeCat !== "all" || query.trim() !== "") return null;
+
+                      let isFallback = false;
+                      let isSaleOnly = false;
+                      let featuredProducts = productsWithImages.filter(
+                        (p) =>
+                          p.description?.includes("#destacado") || p.name?.includes("#destacado"),
+                      );
+                      if (featuredProducts.length === 0) {
+                        featuredProducts = productsWithImages.filter((p) => p.isOnSale);
+                        isSaleOnly = featuredProducts.length > 0;
+                        isFallback = true;
+                      }
+                      if (featuredProducts.length === 0) {
+                        featuredProducts = productsWithImages.slice(0, 4);
+                        isFallback = true;
+                      }
+                      // Respetar el filtro de precio activo (igual que el grid)
+                      if (priceRange) {
+                        featuredProducts = featuredProducts.filter(
+                          (p) =>
+                            p.price !== null &&
+                            p.price !== undefined &&
+                            p.price >= priceRange[0] &&
+                            p.price <= priceRange[1],
+                        );
+                      }
+                      if (featuredProducts.length === 0) return null;
+
+                      return (
+                        <div data-carousel className="space-y-4 relative z-10">
+                          <div
+                            style={{ borderColor: "var(--primary)" }}
+                            className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300"
+                          >
+                            <h3
+                              style={{ color: "var(--foreground)" }}
+                              className="text-sm font-serif font-normal tracking-wider flex items-center gap-2 uppercase"
+                            >
+                              <Flower
+                                style={{ color: "var(--primary)" }}
+                                className="h-4 w-4 animate-pulse"
                               />
-                              <img
-                                src={slide}
-                                alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                className="w-full h-full object-contain relative z-10"
+                              {isSaleOnly
+                                ? store.niche === "floreria"
+                                  ? "Ofertas Ecológicas"
+                                  : "Ofertas Especiales"
+                                : isFallback
+                                  ? "Recomendaciones"
+                                  : nicheTags.featuredTitle}
+                            </h3>
+                            {featuredProducts.length > 1 && (
+                              <>
+                                <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">
+                                  Desliza →
+                                </span>
+                                <div className="hidden md:flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    aria-label="Anterior"
+                                    onClick={(e) => {
+                                      const s = (
+                                        e.currentTarget.closest(
+                                          "[data-carousel]",
+                                        ) as HTMLElement | null
+                                      )?.querySelector(
+                                        "[data-carousel-scroll]",
+                                      ) as HTMLElement | null;
+                                      s?.scrollBy({ left: -320, behavior: "smooth" });
+                                    }}
+                                    className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                                  >
+                                    <ChevronLeft className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label="Siguiente"
+                                    onClick={(e) => {
+                                      const s = (
+                                        e.currentTarget.closest(
+                                          "[data-carousel]",
+                                        ) as HTMLElement | null
+                                      )?.querySelector(
+                                        "[data-carousel-scroll]",
+                                      ) as HTMLElement | null;
+                                      s?.scrollBy({ left: 320, behavior: "smooth" });
+                                    }}
+                                    className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                                  >
+                                    <ChevronRight className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Horizontal Scroll of Featured Products */}
+                          <div
+                            data-carousel-scroll
+                            className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4"
+                          >
+                            <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
+                              {featuredProducts.map((p) => (
+                                <div
+                                  key={p.id}
+                                  onClick={() => setViewingProduct(p)}
+                                  style={{
+                                    borderColor: "var(--border)",
+                                    backgroundColor: "var(--card)",
+                                  }}
+                                  className="w-[210px] sm:w-[260px] lg:w-[290px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
+                                >
+                                  <div className="space-y-3">
+                                    {/* Curved nature image card */}
+                                    <div
+                                      style={{
+                                        backgroundColor: "var(--muted)",
+                                        borderColor:
+                                          "color-mix(in srgb, var(--border) 40%, transparent)",
+                                      }}
+                                      className="relative aspect-square w-full overflow-hidden rounded-[2rem] border"
+                                    >
+                                      <img
+                                        src={
+                                          p.image ||
+                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
+                                        }
+                                        alt={p.name}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        loading="lazy"
+                                      />
+                                      <div
+                                        style={{
+                                          backgroundColor: "var(--primary)",
+                                          color: "var(--primary-foreground)",
+                                        }}
+                                        className="absolute bottom-3 left-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans"
+                                      >
+                                        {p.isOnSale
+                                          ? "Eco-Oferta"
+                                          : isFallback
+                                            ? "Eco-Sugerencia"
+                                            : "Destacado"}
+                                      </div>
+                                    </div>
+                                    {/* Info */}
+                                    <div className="space-y-1 text-left px-1">
+                                      <span
+                                        style={{ color: "var(--muted-foreground)" }}
+                                        className="text-[9px] font-bold uppercase tracking-wider font-sans block"
+                                      >
+                                        {nicheTags.productTagline}
+                                      </span>
+                                      <h4
+                                        style={{ color: "var(--foreground)" }}
+                                        className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]"
+                                      >
+                                        {p.name}
+                                      </h4>
+                                      <p className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans">
+                                        {(p.description || "").replace(/#destacado/g, "").trim()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  {/* Buy section */}
+                                  <div
+                                    style={{ borderColor: "var(--border)" }}
+                                    className="flex items-center justify-between pt-3 mt-3 border-t px-1 gap-1"
+                                  >
+                                    <div className="text-left min-w-0">
+                                      <span className="text-sm font-semibold font-sans text-[var(--primary)] whitespace-nowrap truncate block">
+                                        {formatPrice(p.price)}
+                                      </span>
+                                      {p.isOnSale &&
+                                        p.originalPrice &&
+                                        p.price &&
+                                        p.originalPrice > p.price && (
+                                          <span className="text-[10px] text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">
+                                            {formatPrice(p.originalPrice)}
+                                          </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      {/* Consult button */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          consultProduct(p.name);
+                                        }}
+                                        className="h-7 w-7 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                        title="Consultar por WhatsApp"
+                                      >
+                                        <WhatsAppIcon className="h-3.5 w-3.5" />
+                                      </button>
+                                      {/* Add button */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          cartAdd(store.id, p.id);
+                                          setCartOpen(true);
+                                        }}
+                                        className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans shrink-0"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                        Añadir
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* 3. Categories */}
+                    <div
+                      id="nature-coleccion"
+                      className="space-y-6 font-sans relative z-10 scroll-mt-24"
+                    >
+                      {/* Category selector (Minimalist Editorial) */}
+                      <div
+                        style={{
+                          borderColor: "color-mix(in srgb, var(--border) 50%, transparent)",
+                        }}
+                        className="space-y-3 border-b pb-2"
+                      >
+                        <h3
+                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-[10px] font-black uppercase tracking-[0.2em] text-left"
+                        >
+                          {getNicheCategoryTitle(store.niche)}
+                        </h3>
+
+                        <div className="overflow-x-auto scrollbar-none -mx-4 pt-1 sm:-mx-4">
+                          <div className="flex gap-4 px-4 w-max min-w-full">
+                            <button
+                              onClick={() => setActiveCat("all")}
+                              className={cn(
+                                "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
+                                activeCat === "all"
+                                  ? "text-[var(--primary)] font-extrabold"
+                                  : "text-stone-400 hover:text-stone-700",
+                              )}
+                            >
+                              <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
+                              <span>Ver Todo</span>
+                              {activeCat === "all" && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
+                              )}
+                            </button>
+
+                            {store.products.some((p) => p.isOnSale) && (
+                              <button
+                                onClick={() => setActiveCat("sale")}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
+                                  activeCat === "sale"
+                                    ? "text-[var(--primary)] font-extrabold"
+                                    : "text-stone-400 hover:text-stone-700",
+                                )}
+                              >
+                                <Flame className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                                <span>Eco-Ofertas</span>
+                                {activeCat === "sale" && (
+                                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
+                                )}
+                              </button>
+                            )}
+
+                            {store.categories.map((c) => {
+                              const { label, iconKey } = parseCategoryName(c.name);
+                              const active = activeCat === c.id;
+                              return (
+                                <button
+                                  key={c.id}
+                                  onClick={() => setActiveCat(c.id)}
+                                  className={cn(
+                                    "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
+                                    active
+                                      ? "text-[var(--primary)] font-extrabold"
+                                      : "text-stone-400 hover:text-stone-700",
+                                  )}
+                                >
+                                  {iconKey ? (
+                                    <CategoryIcon
+                                      iconKey={iconKey}
+                                      className="h-3.5 w-3.5 shrink-0"
+                                    />
+                                  ) : (
+                                    <Utensils className="h-3.5 w-3.5 shrink-0" />
+                                  )}
+                                  <span>{label}</span>
+                                  {active && (
+                                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--primary)] rounded-full animate-in fade-in zoom-in duration-300" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 4. Product Grid */}
+                    <div className="space-y-4 relative z-10">
+                      <h3
+                        style={{ color: "var(--muted-foreground)" }}
+                        className="text-xs font-bold uppercase tracking-widest text-left"
+                      >
+                        {activeCat === "all"
+                          ? "Nuestros Productos"
+                          : parseCategoryName(
+                              store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                            ).label}
+                      </h3>
+                      {(() => {
+                        const gridProducts =
+                          activeCat === "all"
+                            ? filtered.filter(
+                                (p) =>
+                                  !(
+                                    p.description?.includes("#destacado") ||
+                                    p.name?.includes("#destacado")
+                                  ),
+                              )
+                            : filtered;
+
+                        if (gridProducts.length === 0) {
+                          return (
+                            <div
+                              style={{
+                                borderColor: "var(--border)",
+                                backgroundColor: "color-mix(in srgb, var(--card) 60%, transparent)",
+                              }}
+                              className="text-center py-12 text-xs text-stone-400 border rounded-[2rem]"
+                            >
+                              No hay productos botánicos en esta categoría.
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div
+                            className={cn(
+                              "grid gap-4",
+                              isMockup
+                                ? "grid-cols-2"
+                                : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
+                            )}
+                          >
+                            {gridProducts.map((p, idx) => {
+                              const isEven = idx % 2 === 0;
+                              const showAd = store.plan === "semilla" && !isMockup;
+                              const isAdPos = idx === 4;
+                              const isLastNoAd =
+                                idx === gridProducts.length - 1 && gridProducts.length <= 4;
+
+                              return (
+                                <React.Fragment key={p.id}>
+                                  <article
+                                    key={p.id}
+                                    style={{
+                                      borderColor: "var(--border)",
+                                      boxShadow:
+                                        "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)",
+                                    }}
+                                    className={cn(
+                                      "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none text-left",
+                                      isEven
+                                        ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1"
+                                        : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1",
+                                    )}
+                                    onClick={() => setViewingProduct(p)}
+                                  >
+                                    <div>
+                                      {/* framed image with margins - leaf shapes alternating */}
+                                      <div
+                                        style={{
+                                          backgroundColor: "var(--muted)",
+                                          borderColor:
+                                            "color-mix(in srgb, var(--border) 30%, transparent)",
+                                        }}
+                                        className={cn(
+                                          "relative overflow-hidden aspect-square m-2.5 border transition-all duration-500",
+                                          isEven
+                                            ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]"
+                                            : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]",
+                                        )}
+                                      >
+                                        <img
+                                          src={
+                                            p.image ||
+                                            "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
+                                          }
+                                          alt={p.name}
+                                          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                          loading="lazy"
+                                        />
+                                        {p.isOnSale && (
+                                          <span
+                                            style={{
+                                              backgroundColor: "var(--primary)",
+                                              color: "var(--primary-foreground)",
+                                            }}
+                                            className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans"
+                                          >
+                                            Oferta
+                                          </span>
+                                        )}
+                                      </div>
+                                      {/* Info */}
+                                      <div className="p-3.5 pt-1 space-y-1 text-left">
+                                        <span
+                                          style={{ color: "var(--muted-foreground)" }}
+                                          className="text-[8px] font-black uppercase tracking-widest block font-sans"
+                                        >
+                                          {nicheTags.productTag}
+                                        </span>
+                                        <h4
+                                          style={{ color: "var(--foreground)" }}
+                                          className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
+                                        >
+                                          {p.name}
+                                        </h4>
+                                        {p.description && (
+                                          <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
+                                            {p.description}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Price & Actions */}
+                                    <div className="px-3.5 pb-4 pt-0 mt-auto">
+                                      {/* Price row */}
+                                      <div className="flex flex-col text-left px-0.5 mb-2">
+                                        <span className="text-sm font-semibold text-[var(--primary)] font-sans">
+                                          {formatPrice(p.price)}
+                                        </span>
+                                        {p.isOnSale &&
+                                          p.originalPrice &&
+                                          p.price &&
+                                          p.originalPrice > p.price && (
+                                            <span
+                                              style={{ color: "var(--muted-foreground)" }}
+                                              className="text-[10px] line-through -mt-1 font-sans"
+                                            >
+                                              {formatPrice(p.originalPrice)}
+                                            </span>
+                                          )}
+                                      </div>
+                                      {/* Buttons row */}
+                                      <div className="flex items-center gap-1.5">
+                                        {/* Consult */}
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            consultProduct(p.name);
+                                          }}
+                                          className="h-7.5 w-7.5 rounded-full border border-stone-200 bg-stone-50 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-sm"
+                                          title="Consultar por WhatsApp"
+                                        >
+                                          <WhatsAppIcon className="h-3.5 w-3.5" />
+                                        </button>
+                                        {/* Add */}
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            cartAdd(store.id, p.id);
+                                            setCartOpen(true);
+                                          }}
+                                          className="flex-1 h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
+                                        >
+                                          <Plus className="h-3 w-3" />
+                                          Añadir
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </article>
+                                  {showAd && (isAdPos || isLastNoAd) && (
+                                    <DiziNativeAdCard
+                                      layout="nature"
+                                      primaryColor={primaryColor}
+                                      slug={store.slug}
+                                      cardRounded={cfg.cardRounded}
+                                      imgRounded={cfg.imgRounded}
+                                      cardShadow={cfg.cardShadow}
+                                      cardBorder={cfg.cardBorder}
+                                    />
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                );
+              })()
+            ) : cfg.layout === "bloom" ? (
+              /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
+              <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
+                {store.niche === "floreria" && (
+                  <>
+                    {/* Elegant floating leafy watermarks in background */}
+                    <div
+                      className="absolute top-[12%] -left-12 w-28 h-28 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      <svg
+                        viewBox="0 0 100 100"
+                        fill="currentColor"
+                        className="w-full h-full rotate-45"
+                      >
+                        <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+                      </svg>
+                    </div>
+                    <div
+                      className="absolute top-[52%] -right-16 w-36 h-36 opacity-[0.04] pointer-events-none select-none z-0 hidden md:block"
+                      style={{ color: "var(--primary)" }}
+                    >
+                      <svg
+                        viewBox="0 0 100 100"
+                        fill="currentColor"
+                        className="w-full h-full -rotate-12"
+                      >
+                        <path d="M50 0C52 20 70 38 100 50C70 62 52 80 50 100C48 80 30 62 0 50C30 38 48 20 50 0Z" />
+                      </svg>
+                    </div>
+                  </>
+                )}
+
+                {/* 1. Cover Banner Carousel */}
+                {(() => {
+                  const banners = activeBanners;
+                  const bStyle =
+                    store.niche === "floreria" ? "curved" : store.bannerStyle || "framed";
+                  return (
+                    <div
+                      className={cn(
+                        "relative w-full aspect-[21/9] sm:aspect-[21/7] overflow-hidden group/banner z-10",
+                        bStyle === "direct"
+                          ? "rounded-none -mx-4 w-[calc(100%+2rem)] border-none shadow-none p-0"
+                          : bStyle === "curved"
+                            ? "rounded-[3.5rem_1.5rem_3.5rem_1.5rem] bg-[var(--card)] border border-[var(--border)] shadow-md p-1"
+                            : "rounded-3xl bg-[var(--card)] border border-[var(--border)] shadow-md p-1",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "w-full h-full rounded-[inherit] overflow-hidden relative",
+                          store.niche === "floreria" ? "bg-[#fdfaf8]" : "bg-[var(--card)]",
+                        )}
+                      >
+                        {banners.length > 0 ? (
+                          <>
+                            {/* Slides */}
+                            <div className="w-full h-full relative">
+                              {banners.map((slide, idx) => (
+                                <div
+                                  key={idx}
+                                  className={cn(
+                                    "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-[#fdfaf8]",
+                                    idx === currentBannerIndex
+                                      ? "opacity-100 scale-100 z-10"
+                                      : "opacity-0 scale-105 z-0 pointer-events-none",
+                                  )}
+                                >
+                                  {/* Blurred background */}
+                                  <div
+                                    className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
+                                    style={{ backgroundImage: `url(${slide})` }}
+                                  />
+                                  <img
+                                    src={slide}
+                                    alt={`${store.bannerTitle || store.name} ${idx + 1}`}
+                                    className="w-full h-full object-contain relative z-10"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-stone-900/35 via-transparent to-transparent z-20" />
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Manual controls (Arrows) */}
+                            {banners.length > 1 && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurrentBannerIndex(
+                                      (prev) => (prev - 1 + banners.length) % banners.length,
+                                    );
+                                  }}
+                                  className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/75 backdrop-blur-md text-stone-700 flex items-center justify-center hover:bg-white transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                                >
+                                  <ChevronLeft className="h-5 w-5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+                                  }}
+                                  className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/75 backdrop-blur-md text-stone-700 flex items-center justify-center hover:bg-white transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                                >
+                                  <ChevronRight className="h-5 w-5" />
+                                </button>
+                              </>
+                            )}
+
+                            {/* Indicator dots */}
+                            {banners.length > 1 && (
+                              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/40 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
+                                {banners.map((_, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCurrentBannerIndex(idx);
+                                    }}
+                                    className={cn(
+                                      "h-1.5 rounded-full transition-all duration-300",
+                                      idx === currentBannerIndex
+                                        ? "w-4 bg-white"
+                                        : "w-1.5 bg-white/50 hover:bg-white/80",
+                                    )}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div
+                            className={cn(
+                              "w-full h-full flex flex-col items-center justify-center p-6 text-center relative",
+                              store.niche === "floreria"
+                                ? "bg-gradient-to-br from-rose-50/50 via-rose-100/20 to-stone-50"
+                                : "bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-muted/20",
+                            )}
+                          >
+                            <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
+                            <div className="relative z-10">
+                              <h2
+                                style={{ color: store.textColor ? store.textColor : undefined }}
+                                className={cn(
+                                  "text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide",
+                                  isSerif ? "font-serif" : "font-sans font-bold",
+                                )}
+                              >
+                                {store.name}
+                              </h2>
+                              <p
+                                className="text-xs font-semibold uppercase tracking-widest mt-2 font-sans"
+                                style={{
+                                  color:
+                                    store.niche === "floreria"
+                                      ? "color-mix(in srgb, var(--primary) 80%, transparent)"
+                                      : "var(--primary)",
+                                }}
+                              >
+                                {store.niche === "floreria"
+                                  ? "Arreglos & Detalles Florales"
+                                  : "Catálogo Oficial"}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 2. Spotlight Carousel (Featured Products) */}
+                {(() => {
+                  if (activeCat !== "all" || query.trim() !== "") return null;
+
+                  let isFallback = false;
+                  let isSaleOnly = false;
+                  let featuredProducts = productsWithImages.filter(
+                    (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado"),
+                  );
+                  if (featuredProducts.length === 0) {
+                    featuredProducts = productsWithImages.filter((p) => p.isOnSale);
+                    isSaleOnly = featuredProducts.length > 0;
+                    isFallback = true;
+                  }
+                  if (featuredProducts.length === 0) {
+                    featuredProducts = productsWithImages.slice(0, 4);
+                    isFallback = true;
+                  }
+                  // Respetar el filtro de precio activo (igual que el grid)
+                  if (priceRange) {
+                    featuredProducts = featuredProducts.filter(
+                      (p) =>
+                        p.price !== null &&
+                        p.price !== undefined &&
+                        p.price >= priceRange[0] &&
+                        p.price <= priceRange[1],
+                    );
+                  }
+                  if (featuredProducts.length === 0) return null;
+
+                  return (
+                    <div data-carousel className="space-y-4 relative z-10">
+                      <div
+                        className={cn(
+                          "flex items-center justify-between border-l-2 pl-3 transition-colors duration-300",
+                          "",
+                        )}
+                      >
+                        <h3
+                          style={{ color: store.textColor ? store.textColor : undefined }}
+                          className={cn(
+                            "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
+                            isSerif ? "font-serif" : "font-sans font-bold",
+                          )}
+                        >
+                          {store.niche === "floreria" ? (
+                            <>
+                              <Flower
+                                className="h-4 w-4 animate-pulse"
+                                style={{ color: "var(--primary)" }}
                               />
-                              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/35 via-transparent to-transparent z-20" />
+                              {isSaleOnly
+                                ? "Ofertas Especiales"
+                                : isFallback
+                                  ? "Recomendados para ti"
+                                  : "Arreglos Destacados"}
+                            </>
+                          ) : (
+                            <>
+                              <Star className="h-4 w-4 text-[var(--primary)] animate-pulse" />
+                              {isSaleOnly
+                                ? "Ofertas Especiales"
+                                : isFallback
+                                  ? "Recomendados"
+                                  : "Productos Destacados"}
+                            </>
+                          )}
+                        </h3>
+                        {featuredProducts.length > 1 && (
+                          <>
+                            <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">
+                              Desliza →
+                            </span>
+                            <div className="hidden md:flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                aria-label="Anterior"
+                                onClick={(e) => {
+                                  const s = (
+                                    e.currentTarget.closest("[data-carousel]") as HTMLElement | null
+                                  )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                                  s?.scrollBy({ left: -320, behavior: "smooth" });
+                                }}
+                                className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="Siguiente"
+                                onClick={(e) => {
+                                  const s = (
+                                    e.currentTarget.closest("[data-carousel]") as HTMLElement | null
+                                  )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                                  s?.scrollBy({ left: 320, behavior: "smooth" });
+                                }}
+                                className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* TWO-DIV PATTERN to prevent shadow and scale clipping */}
+                      <div
+                        data-carousel-scroll
+                        className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4"
+                      >
+                        <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
+                          {featuredProducts.map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => setViewingProduct(p)}
+                              className={cn(featuredCardClass)}
+                            >
+                              <div className="space-y-3">
+                                {/* Curved image like flower petal / Standard rounded image */}
+                                <div
+                                  className={cn(
+                                    "relative aspect-square w-full overflow-hidden",
+                                    featuredImgClass,
+                                  )}
+                                >
+                                  <img
+                                    src={
+                                      p.image ||
+                                      "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
+                                    }
+                                    alt={p.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
+                                    loading="lazy"
+                                  />
+                                  {/* Floating Badge inside image container */}
+                                  <div
+                                    style={{
+                                      backgroundColor:
+                                        store.niche === "floreria" ? undefined : "var(--primary)",
+                                    }}
+                                    className={cn(
+                                      "absolute bottom-3 left-3 z-10 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans",
+                                      store.niche === "floreria" ? "bg-rose-500" : "",
+                                    )}
+                                  >
+                                    {p.isOnSale
+                                      ? "Oferta"
+                                      : isFallback
+                                        ? "Recomendado"
+                                        : "Destacado"}
+                                  </div>
+                                </div>
+                                {/* Info */}
+                                <div className="space-y-1 text-left px-1">
+                                  {store.niche === "floreria" && (
+                                    <span
+                                      className="text-[10px] italic font-serif block mb-0.5"
+                                      style={{
+                                        color:
+                                          "color-mix(in srgb, var(--primary) 70%, transparent)",
+                                      }}
+                                    >
+                                      {isFallback
+                                        ? "Arreglo Sugerido"
+                                        : "Sugerencia de la Florista"}
+                                    </span>
+                                  )}
+                                  <h4
+                                    style={{ color: store.textColor ? store.textColor : undefined }}
+                                    className={cn(
+                                      "font-semibold text-sm sm:text-base text-stone-800 transition-colors line-clamp-2 leading-snug min-h-[2.5rem]",
+                                      isSerif ? "font-serif" : "font-sans",
+                                      "group-hover:text-[var(--primary)]",
+                                    )}
+                                  >
+                                    {p.name}
+                                  </h4>
+                                  {(() => {
+                                    const cleanDesc = (p.description || "")
+                                      .replace(/#destacado/g, "")
+                                      .trim();
+                                    return (
+                                      <>
+                                        <p
+                                          style={{
+                                            color: store.textColor ? store.textColor : undefined,
+                                            opacity: store.textColor ? 0.8 : undefined,
+                                          }}
+                                          className="text-xs text-stone-500 line-clamp-2 leading-5 min-h-10 font-sans"
+                                        >
+                                          {cleanDesc}
+                                        </p>
+                                        {cleanDesc.length > 60 && (
+                                          <span
+                                            className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider font-sans opacity-80 group-hover:opacity-100 transition-opacity"
+                                            style={{ color: "var(--primary)" }}
+                                          >
+                                            Ver más
+                                            <ChevronRight className="h-3 w-3" />
+                                          </span>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                              {/* Buy section */}
+                              <div
+                                className={cn(
+                                  "flex items-center justify-between pt-3 mt-3 border-t px-1",
+                                  store.niche === "floreria"
+                                    ? "border-rose-100/30"
+                                    : "border-[var(--border)]",
+                                )}
+                              >
+                                <div className="text-left min-w-0">
+                                  <span
+                                    style={{
+                                      color:
+                                        store.niche === "floreria" ? undefined : "var(--primary)",
+                                    }}
+                                    className={cn(
+                                      "text-base font-semibold font-sans whitespace-nowrap truncate block",
+                                      store.niche === "floreria" ? "text-rose-600" : "",
+                                    )}
+                                  >
+                                    {formatPrice(p.price)}
+                                  </span>
+                                  {p.isOnSale &&
+                                    p.originalPrice &&
+                                    p.price &&
+                                    p.originalPrice > p.price && (
+                                      <span className="text-xs text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">
+                                        {formatPrice(p.originalPrice)}
+                                      </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {/* Consult button (Adapts to Brand Color) */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      consultProduct(p.name);
+                                    }}
+                                    style={{
+                                      borderColor:
+                                        store.niche === "floreria" ? undefined : "var(--primary)",
+                                      backgroundColor:
+                                        store.niche === "floreria" ? undefined : "transparent",
+                                      color:
+                                        store.niche === "floreria" ? undefined : "var(--primary)",
+                                    }}
+                                    className={cn(
+                                      "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
+                                      store.niche === "floreria"
+                                        ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                        : "hover:bg-[var(--primary)] hover:text-white",
+                                    )}
+                                    title="Consultar por WhatsApp"
+                                  >
+                                    <WhatsAppIcon className="h-4 w-4" />
+                                  </button>
+                                  {/* Add to Cart button */}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      cartAdd(store.id, p.id);
+                                      setCartOpen(true);
+                                    }}
+                                    style={{
+                                      backgroundColor: "var(--primary)",
+                                    }}
+                                    className="h-8 px-2.5 sm:px-4 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase shadow-sm active:scale-95 font-sans shrink-0"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                    Añadir
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
-                        {/* Manual controls (Arrows) */}
-                        {banners.length > 1 && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length);
-                              }}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/75 backdrop-blur-md text-stone-700 flex items-center justify-center hover:bg-white transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
-                            >
-                              <ChevronLeft className="h-5 w-5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-                              }}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/75 backdrop-blur-md text-stone-700 flex items-center justify-center hover:bg-white transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
-                            >
-                              <ChevronRight className="h-5 w-5" />
-                            </button>
-                          </>
-                        )}
-
-                        {/* Indicator dots */}
-                        {banners.length > 1 && (
-                          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/40 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
-                            {banners.map((_, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCurrentBannerIndex(idx);
-                                }}
-                                className={cn(
-                                  "h-1.5 rounded-full transition-all duration-300",
-                                  idx === currentBannerIndex
-                                    ? "w-4 bg-white"
-                                    : "w-1.5 bg-white/50 hover:bg-white/80"
-                                )}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div 
-                        className={cn(
-                          "w-full h-full flex flex-col items-center justify-center p-6 text-center relative",
-                          store.niche === "floreria"
-                            ? "bg-gradient-to-br from-rose-50/50 via-rose-100/20 to-stone-50"
-                            : "bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-muted/20"
-                        )}
-                      >
-                        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
-                        <div className="relative z-10">
-                          <h2 
-                            style={{ color: store.textColor ? store.textColor : undefined }}
-                            className={cn("text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide", isSerif ? "font-serif" : "font-sans font-bold")}
-                          >
-                            {store.name}
-                          </h2>
-                          <p className="text-xs font-semibold uppercase tracking-widest mt-2 font-sans"
+                {/* 3. Navigation and Search Block (Search + Categories) */}
+                <div className="space-y-6 font-sans relative z-10">
+                  {/* Search Bar & Filtros side-by-side */}
+                  {mode === "catalog" && (
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--primary)]" />
+                        <input
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          placeholder={
+                            store.niche === "floreria"
+                              ? "¿Buscas algún arreglo floral?"
+                              : "¿Qué buscas hoy?"
+                          }
                           style={{
-                            color: store.niche === "floreria"
-                              ? "color-mix(in srgb, var(--primary) 80%, transparent)"
-                              : "var(--primary)"
-                          }}>
-                            {store.niche === "floreria" ? "Arreglos & Detalles Florales" : "Catálogo Oficial"}
-                          </p>
-                        </div>
+                            backgroundColor: "var(--card)",
+                            borderColor: "var(--border)",
+                            color: "var(--foreground)",
+                          }}
+                          className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition placeholder-muted-foreground focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] shadow-sm"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsFilterOpen(true)}
+                        style={{
+                          backgroundColor: "var(--card)",
+                          borderColor: "var(--border)",
+                          color: "var(--foreground)",
+                        }}
+                        className="border px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0 md:hidden"
+                      >
+                        <SlidersHorizontal
+                          className="h-4 w-4"
+                          style={{ color: "var(--primary)" }}
+                        />
+                        <span>Filtros</span>
+                        {(() => {
+                          const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                          return cnt > 0 ? (
+                            <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
+                              {cnt}
+                            </span>
+                          ) : null;
+                        })()}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Inline Horizontal Category Selector — solo móvil: en desktop el sidebar ya cumple esta función */}
+                  <div className="space-y-3">
+                    <h3
+                      style={{
+                        color: store.textColor ? store.textColor : undefined,
+                        opacity: store.textColor ? 0.7 : undefined,
+                      }}
+                      className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left md:hidden"
+                    >
+                      Categorías
+                    </h3>
+
+                    {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
+                    <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3 md:hidden">
+                      <div className="flex md:flex-wrap gap-2.5 px-4 w-max md:w-full min-w-full md:min-w-0 md:justify-center">
+                        <button
+                          onClick={() => setActiveCat("all")}
+                          style={{
+                            borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
+                            backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--card)",
+                            color:
+                              activeCat === "all"
+                                ? "var(--primary-foreground)"
+                                : "var(--foreground)",
+                          }}
+                          className={cn(
+                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
+                            activeCat === "all"
+                              ? "shadow-sm scale-105 font-extrabold"
+                              : "hover:bg-primary/5",
+                          )}
+                        >
+                          <LayoutGrid
+                            className="h-4 w-4 shrink-0"
+                            style={{
+                              color:
+                                activeCat === "all"
+                                  ? "var(--primary-foreground)"
+                                  : "var(--primary)",
+                            }}
+                          />
+                          <span>Ver Todo</span>
+                        </button>
+
+                        {/* Ofertas */}
+                        {store.products.some((p) => p.isOnSale) && (
+                          <button
+                            onClick={() => setActiveCat("sale")}
+                            style={{
+                              borderColor:
+                                activeCat === "sale" ? "var(--primary)" : "var(--border)",
+                              backgroundColor:
+                                activeCat === "sale" ? "var(--primary)" : "var(--card)",
+                              color:
+                                activeCat === "sale"
+                                  ? "var(--primary-foreground)"
+                                  : "var(--foreground)",
+                            }}
+                            className={cn(
+                              "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
+                              activeCat === "sale"
+                                ? "shadow-sm scale-105 font-extrabold"
+                                : "hover:bg-primary/5",
+                            )}
+                          >
+                            <Flame
+                              className="h-4 w-4 shrink-0"
+                              style={{
+                                color:
+                                  activeCat === "sale" ? "var(--primary-foreground)" : "#ef4444",
+                              }}
+                            />
+                            <span>Ofertas</span>
+                          </button>
+                        )}
+
+                        {store.categories.map((c) => {
+                          const { label, iconKey } = parseCategoryName(c.name);
+                          const active = activeCat === c.id;
+                          return (
+                            <button
+                              key={c.id}
+                              onClick={() => setActiveCat(c.id)}
+                              style={{
+                                borderColor: active ? "var(--primary)" : "var(--border)",
+                                backgroundColor: active ? "var(--primary)" : "var(--card)",
+                                color: active ? "var(--primary-foreground)" : "var(--foreground)",
+                              }}
+                              className={cn(
+                                "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
+                                active
+                                  ? "shadow-sm scale-105 font-extrabold"
+                                  : "hover:bg-primary/5",
+                              )}
+                            >
+                              {iconKey ? (
+                                <CategoryIcon
+                                  iconKey={iconKey}
+                                  className="h-4 w-4 shrink-0"
+                                  style={{
+                                    color: active ? "var(--primary-foreground)" : "var(--primary)",
+                                  }}
+                                />
+                              ) : (
+                                <Utensils
+                                  className="h-4 w-4 shrink-0"
+                                  style={{
+                                    color: active ? "var(--primary-foreground)" : "var(--primary)",
+                                  }}
+                                />
+                              )}
+                              <span>{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Active filter tags */}
+                    {(activeCat !== "all" || priceRange) && (
+                      <div className="flex flex-wrap gap-1.5 justify-center">
+                        {activeCat !== "all" && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
+                            Cat:{" "}
+                            {activeCat === "sale"
+                              ? "Ofertas"
+                              : parseCategoryName(
+                                  store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                                ).label}
+                            <button
+                              onClick={() => setActiveCat("all")}
+                              className="ml-1 hover:opacity-60 transition"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        )}
+                        {priceRange && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
+                            Precio: S/ {priceRange[0]} - S/ {priceRange[1]}
+                            <button
+                              onClick={() => setPriceRange(null)}
+                              className="ml-1 hover:opacity-60 transition"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
-
-
                 </div>
-              );
-            })()}
 
-            {/* 2. Spotlight Carousel (Featured Products) */}
-            {(() => {
-              if (activeCat !== "all" || query.trim() !== "") return null;
-              
-              let isFallback = false;
-              let isSaleOnly = false;
-              let featuredProducts = productsWithImages.filter(
-                (p) => p.description?.includes("#destacado") || p.name?.includes("#destacado")
-              );
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.filter((p) => p.isOnSale);
-                isSaleOnly = featuredProducts.length > 0;
-                isFallback = true;
-              }
-              if (featuredProducts.length === 0) {
-                featuredProducts = productsWithImages.slice(0, 4);
-                isFallback = true;
-              }
-              // Respetar el filtro de precio activo (igual que el grid)
-              if (priceRange) {
-                featuredProducts = featuredProducts.filter(
-                  (p) => p.price !== null && p.price !== undefined && p.price >= priceRange[0] && p.price <= priceRange[1]
-                );
-              }
-              if (featuredProducts.length === 0) return null;
+                {/* 4. Product Grid */}
+                <div className="space-y-4 relative z-10">
+                  <h3
+                    style={{
+                      color: store.textColor ? store.textColor : undefined,
+                      opacity: store.textColor ? 0.7 : undefined,
+                    }}
+                    className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left"
+                  >
+                    {activeCat === "all"
+                      ? "Nuestros Productos"
+                      : parseCategoryName(
+                          store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                        ).label}
+                  </h3>
+                  {(() => {
+                    const gridProducts =
+                      activeCat === "all"
+                        ? filtered.filter(
+                            (p) =>
+                              !(
+                                p.description?.includes("#destacado") ||
+                                p.name?.includes("#destacado")
+                              ),
+                          )
+                        : filtered;
 
-              return (
-                <div data-carousel className="space-y-4 relative z-10">
-                  <div className={cn(
-                    "flex items-center justify-between border-l-2 pl-3 transition-colors duration-300",
-                    ""
-                  )}>
-                                         <h3 
-                      style={{ color: store.textColor ? store.textColor : undefined }}
-                      className={cn(
-                        "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
-                        isSerif ? "font-serif" : "font-sans font-bold"
-                      )}
-                    >
-                      {store.niche === "floreria" ? (
-                        <>
-                          <Flower className="h-4 w-4 animate-pulse" style={{ color: "var(--primary)" }} />
-                          {isSaleOnly ? "Ofertas Especiales" : isFallback ? "Recomendados para ti" : "Arreglos Destacados"}
-                        </>
-                      ) : (
-                        <>
-                          <Star className="h-4 w-4 text-[var(--primary)] animate-pulse" />
-                          {isSaleOnly ? "Ofertas Especiales" : isFallback ? "Recomendados" : "Productos Destacados"}
-                        </>
-                      )}
-                    </h3>
-                    {featuredProducts.length > 1 && (
-                      <>
-                        <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">Desliza →</span>
-                        <div className="hidden md:flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            aria-label="Anterior"
-                            onClick={(e) => {
-                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
-                              s?.scrollBy({ left: -320, behavior: "smooth" });
-                            }}
-                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            aria-label="Siguiente"
-                            onClick={(e) => {
-                              const s = (e.currentTarget.closest("[data-carousel]") as HTMLElement | null)?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
-                              s?.scrollBy({ left: 320, behavior: "smooth" });
-                            }}
-                            className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* TWO-DIV PATTERN to prevent shadow and scale clipping */}
-                  <div data-carousel-scroll className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4">
-                    <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
-                      {featuredProducts.map((p) => (
+                    if (gridProducts.length === 0) {
+                      return (
                         <div
-                          key={p.id}
-                          onClick={() => setViewingProduct(p)}
                           className={cn(
-                            featuredCardClass
+                            "text-center py-12 text-xs text-stone-400 shadow-xs",
+                            store.niche === "floreria"
+                              ? "border border-rose-100/50 rounded-[2rem] bg-white/50"
+                              : "border border-[var(--border)] rounded-3xl bg-[var(--card)]/50",
                           )}
                         >
-                          <div className="space-y-3">
-                            {/* Curved image like flower petal / Standard rounded image */}
-                            <div className={cn(
-                              "relative aspect-square w-full overflow-hidden",
-                              featuredImgClass
-                            )}>
-                              <img
-                                src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
-                                alt={p.name}
-                                className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
-                                loading="lazy"
-                              />
-                              {/* Floating Badge inside image container */}
-                              <div 
-                                style={{
-                                  backgroundColor: store.niche === "floreria" ? undefined : "var(--primary)",
-                                }}
-                                className={cn(
-                                  "absolute bottom-3 left-3 z-10 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans",
-                                  store.niche === "floreria" ? "bg-rose-500" : ""
-                                )}
+                          {store.niche === "floreria"
+                            ? "No hay arreglos florales en esta categoría."
+                            : "No hay productos en esta categoría."}
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        className={cn(
+                          "grid gap-4",
+                          isMockup
+                            ? "grid-cols-2"
+                            : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
+                        )}
+                      >
+                        {gridProducts.map((p, index) => {
+                          const showAd = store.plan === "semilla" && !isMockup;
+                          const isAdPos = index === 4;
+                          const isLastNoAd =
+                            index === gridProducts.length - 1 && gridProducts.length <= 4;
+
+                          return (
+                            <React.Fragment key={p.id}>
+                              <article
+                                key={p.id}
+                                className={cn(gridCardClass)}
+                                onClick={() => setViewingProduct(p)}
                               >
-                                {p.isOnSale 
-                                  ? "Oferta" 
-                                  : isFallback 
-                                    ? "Recomendado" 
-                                    : "Destacado"}
-                              </div>
-                            </div>
-                            {/* Info */}
-                            <div className="space-y-1 text-left px-1">
-                              {store.niche === "floreria" && (
-                                <span className="text-[10px] italic font-serif block mb-0.5" style={{ color: "color-mix(in srgb, var(--primary) 70%, transparent)" }}>
-                                  {isFallback ? "Arreglo Sugerido" : "Sugerencia de la Florista"}
-                                </span>
-                              )}
-                              <h4
-                                style={{ color: store.textColor ? store.textColor : undefined }}
-                                className={cn(
-                                  "font-semibold text-sm sm:text-base text-stone-800 transition-colors line-clamp-2 leading-snug min-h-[2.5rem]",
-                                  isSerif ? "font-serif" : "font-sans",
-                                  "group-hover:text-[var(--primary)]"
-                                )}
-                              >
-                                {p.name}
-                              </h4>
-                              {(() => {
-                                const cleanDesc = (p.description || "").replace(/#destacado/g, "").trim();
-                                return (
-                                  <>
-                                    <p
-                                      style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
-                                      className="text-xs text-stone-500 line-clamp-2 leading-5 min-h-10 font-sans"
+                                <div>
+                                  {/* Asymmetric or standard image wrapper */}
+                                  <div className={cn(gridImgClass)}>
+                                    <img
+                                      src={
+                                        p.image ||
+                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
+                                      }
+                                      alt={p.name}
+                                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      loading="lazy"
+                                    />
+                                    {p.isOnSale && (
+                                      <span
+                                        style={{
+                                          backgroundColor:
+                                            store.niche === "floreria"
+                                              ? undefined
+                                              : "var(--primary)",
+                                        }}
+                                        className={cn(
+                                          "absolute top-2.5 right-2.5 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10",
+                                          store.niche === "floreria" ? "bg-rose-500" : "",
+                                        )}
+                                      >
+                                        Oferta
+                                      </span>
+                                    )}
+                                  </div>
+                                  {/* Info */}
+                                  <div className="p-3 pt-1 space-y-1 text-left">
+                                    <h4
+                                      style={{
+                                        color: store.textColor ? store.textColor : undefined,
+                                      }}
+                                      className={cn(
+                                        "font-semibold text-sm text-stone-800 transition-colors line-clamp-2 leading-5 min-h-10",
+                                        store.niche === "floreria"
+                                          ? "font-serif group-hover:text-rose-600"
+                                          : "font-sans group-hover:text-[var(--primary)]",
+                                      )}
                                     >
-                                      {cleanDesc}
-                                    </p>
-                                    {cleanDesc.length > 60 && (
+                                      {p.name}
+                                    </h4>
+                                    {p.description && (
+                                      <p
+                                        style={{
+                                          color: store.textColor ? store.textColor : undefined,
+                                          opacity: store.textColor ? 0.8 : undefined,
+                                        }}
+                                        className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans"
+                                      >
+                                        {p.description}
+                                      </p>
+                                    )}
+                                    {p.description && p.description.trim().length > 50 && (
                                       <span
                                         className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider font-sans opacity-80 group-hover:opacity-100 transition-opacity"
                                         style={{ color: "var(--primary)" }}
@@ -4756,682 +6644,463 @@ export function PublicCatalog({
                                         <ChevronRight className="h-3 w-3" />
                                       </span>
                                     )}
-                                  </>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                          {/* Buy section */}
-                          <div className={cn(
-                            "flex items-center justify-between pt-3 mt-3 border-t px-1",
-                            store.niche === "floreria" ? "border-rose-100/30" : "border-[var(--border)]"
-                          )}>
-                            <div className="text-left min-w-0">
-                              <span 
-                                style={{
-                                  color: store.niche === "floreria" ? undefined : "var(--primary)",
-                                }}
-                                className={cn(
-                                  "text-base font-semibold font-sans whitespace-nowrap truncate block",
-                                  store.niche === "floreria" ? "text-rose-600" : ""
-                                )}
-                              >
-                                {formatPrice(p.price)}
-                              </span>
-                              {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                <span className="text-xs text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">{formatPrice(p.originalPrice)}</span>
+                                  </div>
+                                </div>
+
+                                {/* Price & Action */}
+                                <div className="px-3 pb-3.5 pt-0 mt-auto">
+                                  {/* Price — always full width, never truncated */}
+                                  <div className="flex flex-col text-left px-0.5 mb-2">
+                                    <span
+                                      className="text-sm font-semibold font-sans"
+                                      style={{ color: "var(--primary)" }}
+                                    >
+                                      {formatPrice(p.price)}
+                                    </span>
+                                    {p.isOnSale &&
+                                      p.originalPrice &&
+                                      p.price &&
+                                      p.originalPrice > p.price && (
+                                        <span className="text-[10px] text-stone-400 line-through -mt-0.5 font-sans">
+                                          {formatPrice(p.originalPrice)}
+                                        </span>
+                                      )}
+                                  </div>
+                                  {/* Buttons row */}
+                                  <div className="flex items-center gap-1.5">
+                                    {/* Consult button */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        consultProduct(p.name);
+                                      }}
+                                      style={{
+                                        borderColor:
+                                          store.niche === "floreria" ? undefined : "var(--primary)",
+                                        backgroundColor:
+                                          store.niche === "floreria" ? undefined : "transparent",
+                                        color:
+                                          store.niche === "floreria" ? undefined : "var(--primary)",
+                                      }}
+                                      className={cn(
+                                        "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
+                                        store.niche === "floreria"
+                                          ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                          : "hover:bg-[var(--primary)] hover:text-white",
+                                      )}
+                                      title="Consultar por WhatsApp"
+                                    >
+                                      <WhatsAppIcon className="h-4 w-4" />
+                                    </button>
+                                    {/* Add to Cart button */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        cartAdd(store.id, p.id);
+                                        setCartOpen(true);
+                                      }}
+                                      style={{
+                                        backgroundColor: "var(--primary)",
+                                      }}
+                                      className="flex-1 h-8 px-2.5 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans"
+                                    >
+                                      <Plus className="h-3.5 w-3.5" />
+                                      Añadir
+                                    </button>
+                                  </div>
+                                </div>
+                              </article>
+                              {showAd && (isAdPos || isLastNoAd) && (
+                                <DiziNativeAdCard
+                                  layout="bloom"
+                                  primaryColor={primaryColor}
+                                  slug={store.slug}
+                                  cardRounded={cfg.cardRounded}
+                                  imgRounded={cfg.imgRounded}
+                                  cardShadow={cfg.cardShadow}
+                                  cardBorder={cfg.cardBorder}
+                                />
                               )}
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Consult button (Adapts to Brand Color) */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  consultProduct(p.name);
-                                }}
-                                style={{
-                                  borderColor: store.niche === "floreria" ? undefined : "var(--primary)",
-                                  backgroundColor: store.niche === "floreria" ? undefined : "transparent",
-                                  color: store.niche === "floreria" ? undefined : "var(--primary)",
-                                }}
-                                className={cn(
-                                  "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
-                                  store.niche === "floreria"
-                                    ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
-                                    : "hover:bg-[var(--primary)] hover:text-white"
-                                )}
-                                title="Consultar por WhatsApp"
-                              >
-                                <WhatsAppIcon className="h-4 w-4" />
-                              </button>
-                              {/* Add to Cart button */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cartAdd(store.id, p.id);
-                                  setCartOpen(true);
-                                }}
-                                style={{
-                                  backgroundColor: "var(--primary)",
-                                }}
-                                className="h-8 px-2.5 sm:px-4 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase shadow-sm active:scale-95 font-sans shrink-0"
-                              >
-                                <Plus className="h-3 w-3" />
-                                Añadir
-                              </button>
-                            </div>
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : cfg.layout === "banner_grid" ? (
+              /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
+              <div className="space-y-4">
+                {/* Banner de portada */}
+                {(() => {
+                  const bStyle = store.bannerStyle || "framed";
+                  const borderVal =
+                    bStyle === "direct"
+                      ? "0px"
+                      : bStyle === "curved"
+                        ? "3.5rem 1.5rem 3.5rem 1.5rem"
+                        : "1.5rem"; // 24px rounded
+                  return activeBanners[0] ? (
+                    <div
+                      className={cn(
+                        "relative w-full overflow-hidden bg-zinc-950",
+                        bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : "",
+                      )}
+                      style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
+                    >
+                      {/* Blurred background */}
+                      <div
+                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
+                        style={{ backgroundImage: `url(${activeBanners[0]})` }}
+                      />
+                      <img
+                        src={activeBanners[0]}
+                        alt={store.name}
+                        className="absolute inset-0 w-full h-full object-contain"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+                      <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+                        <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
+                          {(store as any).bannerTitle || `Catálogo ${store.name}`}
+                        </p>
+                        <p className="text-white/70 text-xs mt-0.5">
+                          Toca un producto para más info
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Placeholder banner si no hay imagen */
+                    <div
+                      className={cn(
+                        "w-full flex flex-col items-center justify-center gap-2 py-8 px-4 text-center",
+                        bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : "",
+                      )}
+                      style={{
+                        borderRadius: borderVal,
+                        background: `linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, #fff) 100%)`,
+                      }}
+                    >
+                      <p className="text-white font-black text-2xl leading-tight">
+                        {(store as any).bannerTitle || `Catálogo ${store.name}`}
+                      </p>
+                      <p className="text-white/80 text-sm">Bienvenido · Toca cualquier producto</p>
+                    </div>
+                  );
+                })()}
+
+                {/* Grid de productos 2 columnas estilo app */}
+                <div className="grid grid-cols-2 gap-3">
+                  {filtered.map((p) => (
+                    <article
+                      key={p.id}
+                      className={cn(
+                        "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group",
+                        cfg.cardShadow,
+                      )}
+                      style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)" }}
+                      onClick={() => setViewingProduct(p)}
+                    >
+                      {/* Imagen cuadrada */}
+                      <div
+                        className="relative overflow-hidden bg-muted"
+                        style={{ aspectRatio: "1/1" }}
+                      >
+                        <img
+                          src={
+                            p.image ||
+                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                          }
+                          alt={p.name}
+                          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                          }}
+                        />
+                        {p.isOnSale && (
+                          <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                            OFERTA
+                          </span>
+                        )}
+                      </div>
+                      {/* Info */}
+                      <div className="p-2.5 flex flex-col gap-1 flex-1">
+                        <h3 className="text-xs font-semibold line-clamp-2 leading-snug flex-1">
+                          {p.name}
+                        </h3>
+                        <div className="flex items-center justify-between mt-1">
+                          <div>
+                            <span className="text-sm font-black text-primary">
+                              {formatPrice(p.price)}
+                            </span>
+                            {p.isOnSale &&
+                              p.originalPrice &&
+                              p.price &&
+                              p.originalPrice > p.price && (
+                                <span className="text-[10px] text-muted-foreground line-through ml-1">
+                                  {formatPrice(p.originalPrice)}
+                                </span>
+                              )}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cartAdd(store.id, p.id);
+                            }}
+                            className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* ── GRID layout: standard responsive grid */
+              <div
+                className={cn(
+                  "grid gap-3",
+                  isMockup
+                    ? "grid-cols-2"
+                    : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
+                )}
+              >
+                {filtered.map((p, index) => {
+                  const showAd = store.plan === "semilla" && !isMockup;
+                  const isAdPos = index === 4;
+                  const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+
+                  return (
+                    <React.Fragment key={p.id}>
+                      <article
+                        key={p.id}
+                        className={cn(
+                          "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group text-left",
+                          cfg.cardBorder ? "border" : "",
+                          cfg.cardShadow,
+                        )}
+                        style={{
+                          borderRadius: cfg.cardRounded,
+                          backgroundColor: "var(--card)",
+                          borderColor: cfg.cardBorder ? "var(--border)" : "transparent",
+                        }}
+                        onClick={() => setViewingProduct(p)}
+                      >
+                        <div
+                          className="relative overflow-hidden bg-muted"
+                          style={{ aspectRatio: "4/3" }}
+                        >
+                          <img
+                            src={
+                              p.image ||
+                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
+                            }
+                            alt={p.name}
+                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            style={{ borderRadius: cfg.imgRounded }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                            }}
+                          />
+                          {p.isOnSale && (
+                            <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+                              <Flame className="h-2.5 w-2.5" /> Oferta
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-3 flex flex-col flex-1 gap-2">
+                          <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">
+                            {p.name}
+                          </h3>
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="text-base font-black text-primary">
+                              {formatPrice(p.price)}
+                            </span>
+                            {p.isOnSale &&
+                              p.originalPrice &&
+                              p.price &&
+                              p.originalPrice > p.price && (
+                                <span className="text-[11px] text-muted-foreground line-through">
+                                  {formatPrice(p.originalPrice)}
+                                </span>
+                              )}
+                          </div>
+                          <div className="flex gap-2 pt-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                consultProduct(p.name);
+                              }}
+                              className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium py-2 hover:bg-accent transition border border-border bg-background"
+                              style={{ borderRadius: cfg.cardRounded }}
+                            >
+                              <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                cartAdd(store.id, p.id);
+                              }}
+                              className="inline-flex items-center justify-center bg-primary text-primary-foreground w-9 h-9 hover:bg-primary/90 transition shrink-0"
+                              style={{ borderRadius: cfg.cardRounded }}
+                              aria-label="Agregar al carrito"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* 3. Navigation and Search Block (Search + Categories) */}
-            <div className="space-y-6 font-sans relative z-10">
-              {/* Search Bar & Filtros side-by-side */}
-              {mode === "catalog" && (
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--primary)]" />
-                    <input
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder={store.niche === "floreria" ? "¿Buscas algún arreglo floral?" : "¿Qué buscas hoy?"}
-                      style={{
-                        backgroundColor: "var(--card)",
-                        borderColor: "var(--border)",
-                        color: "var(--foreground)",
-                      }}
-                      className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition placeholder-muted-foreground focus:ring-1 focus:ring-[var(--primary)] focus:border-[var(--primary)] shadow-sm"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsFilterOpen(true)}
-                    style={{
-                      backgroundColor: "var(--card)",
-                      borderColor: "var(--border)",
-                      color: "var(--foreground)",
-                    }}
-                    className="border px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0 md:hidden"
-                  >
-                    <SlidersHorizontal className="h-4 w-4" style={{ color: "var(--primary)" }} />
-                    <span>Filtros</span>
-                    {(() => {
-                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
-                      return cnt > 0 ? (
-                        <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
-                          {cnt}
-                        </span>
-                      ) : null;
-                    })()}
-                  </button>
-                </div>
-              )}
-
-              {/* Inline Horizontal Category Selector — solo móvil: en desktop el sidebar ya cumple esta función */}
-              <div className="space-y-3">
-                <h3
-                  style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.7 : undefined }}
-                  className="text-xs font-bold uppercase tracking-widest text-muted-foreground text-left md:hidden"
-                >
-                  Categorías
-                </h3>
-
-                {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
-                <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3 md:hidden">
-                  <div className="flex md:flex-wrap gap-2.5 px-4 w-max md:w-full min-w-full md:min-w-0 md:justify-center">
-                    <button
-                      onClick={() => setActiveCat("all")}
-                      style={{
-                        borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
-                        backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--card)",
-                        color: activeCat === "all" ? "var(--primary-foreground)" : "var(--foreground)",
-                      }}
-                      className={cn(
-                        "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
-                        activeCat === "all"
-                          ? "shadow-sm scale-105 font-extrabold"
-                          : "hover:bg-primary/5"
+                      </article>
+                      {showAd && (isAdPos || isLastNoAd) && (
+                        <DiziNativeAdCard
+                          layout="grid"
+                          primaryColor={primaryColor}
+                          slug={store.slug}
+                          cardRounded={cfg.cardRounded}
+                          imgRounded={cfg.imgRounded}
+                          cardShadow={cfg.cardShadow}
+                          cardBorder={cfg.cardBorder}
+                        />
                       )}
-                    >
-                      <LayoutGrid className="h-4 w-4 shrink-0" style={{ color: activeCat === "all" ? "var(--primary-foreground)" : "var(--primary)" }} />
-                      <span>Ver Todo</span>
-                    </button>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            )}
 
-                    {/* Ofertas */}
-                    {store.products.some(p => p.isOnSale) && (
-                      <button
-                        onClick={() => setActiveCat("sale")}
-                        style={{
-                          borderColor: activeCat === "sale" ? "var(--primary)" : "var(--border)",
-                          backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--card)",
-                          color: activeCat === "sale" ? "var(--primary-foreground)" : "var(--foreground)",
-                        }}
+            {mode === "bio" && (
+              <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {(() => {
+                  const buttonStyleId = store.bioButtonStyle || "pill-solid";
+                  const { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
+
+                  const customBg = store.bioButtonColor || store.brandColor || "#1f2937";
+                  const customText = store.bioButtonTextColor || "#ffffff";
+
+                  let bg = customBg;
+                  let borderColor = customBg;
+                  let color = customText;
+                  let extraClasses = "";
+
+                  if (type === "solid") {
+                    bg = customBg;
+                    borderColor = customBg;
+                    color = customText;
+                  } else if (type === "outline") {
+                    bg = "transparent";
+                    borderColor = customBg;
+                    color = store.bioButtonTextColor || customBg;
+                  } else if (type === "glass") {
+                    bg = finalIsDark ? "rgba(255, 255, 255, 0.08)" : "rgba(15, 23, 42, 0.06)";
+                    borderColor = finalIsDark
+                      ? "rgba(255, 255, 255, 0.15)"
+                      : "rgba(15, 23, 42, 0.12)";
+                    color = store.bioButtonTextColor || (finalIsDark ? "#ffffff" : "#0f172a");
+                    extraClasses = "backdrop-blur-md";
+                  }
+
+                  const hoverGlow = customBg.startsWith("linear") ? "#dc2743" : customBg;
+                  const isCustomColor = !!(store.bioButtonColor || store.bioButtonTextColor);
+                  const isMonochrome = type === "outline" || type === "glass" || isCustomColor;
+
+                  return (
+                    <Link
+                      to="/t/$slug"
+                      params={{ slug: store.slug }}
+                      className={cn(
+                        "relative w-full max-w-md mx-auto p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)] cursor-pointer",
+                        radiusClass,
+                        extraClasses,
+                        bioTypography === "serif"
+                          ? "font-serif-editorial font-bold"
+                          : bioTypography === "rounded"
+                            ? "font-sans-bloom"
+                            : bioTypography === "modern"
+                              ? "font-sans-vibe"
+                              : "",
+                      )}
+                      style={
+                        {
+                          background: bg,
+                          borderColor: borderColor,
+                          color: color,
+                          "--hover-glow": hoverGlow,
+                        } as React.CSSProperties
+                      }
+                    >
+                      <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
+
+                      <div
                         className={cn(
-                          "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
-                          activeCat === "sale"
-                            ? "shadow-sm scale-105 font-extrabold"
-                            : "hover:bg-primary/5"
+                          "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300",
+                          isMonochrome ? "bg-transparent" : "bg-white rounded-full shadow-inner",
                         )}
                       >
-                        <Flame className="h-4 w-4 shrink-0" style={{ color: activeCat === "sale" ? "var(--primary-foreground)" : "#ef4444" }} />
-                        <span>Ofertas</span>
-                      </button>
-                    )}
+                        <ShoppingBag
+                          className={cn("h-5 w-5", isMonochrome ? "" : "text-primary")}
+                        />
+                      </div>
+                      <span className="flex-1 text-center pr-3">Ver Catálogo Completo</span>
+                    </Link>
+                  );
+                })()}
 
-                    {store.categories.map((c) => {
-                      const { label, iconKey } = parseCategoryName(c.name);
-                      const active = activeCat === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => setActiveCat(c.id)}
-                          style={{
-                            borderColor: active ? "var(--primary)" : "var(--border)",
-                            backgroundColor: active ? "var(--primary)" : "var(--card)",
-                            color: active ? "var(--primary-foreground)" : "var(--foreground)",
-                          }}
-                          className={cn(
-                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider backdrop-blur-sm",
-                            active
-                              ? "shadow-sm scale-105 font-extrabold"
-                              : "hover:bg-primary/5"
-                          )}
-                        >
-                          {iconKey ? (
-                            <CategoryIcon 
-                              iconKey={iconKey} 
-                              className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
-                            />
-                          ) : (
-                            <Utensils 
-                              className="h-4 w-4 shrink-0" 
-                              style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
-                            />
-                          )}
-                          <span>{label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                {/* Módulo de Ubicación Geográfica */}
+                {store.showMap !== false && store.locationLat && store.locationLng && (
+                  <div
+                    id="location-section"
+                    className="pt-8 border-t space-y-4 scroll-mt-6"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <h3 className="text-xs font-black uppercase tracking-widest text-center text-muted-foreground flex items-center justify-center gap-2">
+                      <span className="h-px w-8 bg-muted-foreground/30"></span>
+                      <MapPin className="h-3.5 w-3.5 opacity-60" />
+                      Nuestra Ubicación
+                      <span className="h-px w-8 bg-muted-foreground/30"></span>
+                    </h3>
 
-                {/* Active filter tags */}
-                {(activeCat !== "all" || priceRange) && (
-                  <div className="flex flex-wrap gap-1.5 justify-center">
-                    {activeCat !== "all" && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
-                        Cat: {activeCat === "sale" ? "Ofertas" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
-                        <button onClick={() => setActiveCat("all")} className="ml-1 hover:opacity-60 transition">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    )}
-                    {priceRange && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
-                        Precio: S/ {priceRange[0]} - S/ {priceRange[1]}
-                        <button onClick={() => setPriceRange(null)} className="ml-1 hover:opacity-60 transition">
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    )}
+                    <div className="max-w-md mx-auto space-y-4">
+                      <div
+                        className="rounded-2xl overflow-hidden border shadow-sm h-[200px] w-full relative group transition-all duration-300 hover:shadow-lg"
+                        style={{ borderColor: "var(--border)" }}
+                      >
+                        <iframe
+                          title="Ubicación"
+                          src={`https://www.openstreetmap.org/export/embed.html?bbox=${store.locationLng - 0.003}%2C${store.locationLat - 0.0015}%2C${store.locationLng + 0.003}%2C${store.locationLat + 0.0015}&layer=mapnik&marker=${store.locationLat}%2C${store.locationLng}`}
+                          className="w-full h-full border-none filter grayscale-[25%] contrast-[105%] brightness-[97%] transition-all"
+                        />
+                      </div>
+
+                      {store.locationAddress && (
+                        <div className="space-y-2 text-center">
+                          <a
+                            href={`https://maps.google.com/?q=${store.locationLat},${store.locationLng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex py-2.5 px-4 rounded-xl border items-center justify-center gap-2 text-xs font-black uppercase tracking-wider transition-all hover:scale-[1.01] hover:bg-muted/40 shadow-sm bg-card text-foreground"
+                            style={{ borderColor: "var(--border)" }}
+                          >
+                            <MapPin className="h-3.5 w-3.5" />
+                            Ver en Google Maps
+                          </a>
+                          <p className="text-[11px] text-muted-foreground font-semibold px-4 leading-relaxed">
+                            {store.locationAddress}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* 4. Product Grid */}
-            <div className="space-y-4 relative z-10">
-              <h3 
-                style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.7 : undefined }}
-                className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left"
-              >
-                {activeCat === "all" ? "Nuestros Productos" : parseCategoryName(store.categories.find(c => c.id === activeCat)?.name ?? "").label}
-              </h3>
-              {(() => {
-                const gridProducts = activeCat === "all"
-                  ? filtered.filter((p) => !(p.description?.includes("#destacado") || p.name?.includes("#destacado")))
-                  : filtered;
-                
-                if (gridProducts.length === 0) {
-                  return (
-                    <div className={cn(
-                      "text-center py-12 text-xs text-stone-400 shadow-xs",
-                      store.niche === "floreria"
-                        ? "border border-rose-100/50 rounded-[2rem] bg-white/50"
-                        : "border border-[var(--border)] rounded-3xl bg-[var(--card)]/50"
-                    )}>
-                      {store.niche === "floreria" ? "No hay arreglos florales en esta categoría." : "No hay productos en esta categoría."}
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div className={cn("grid gap-4", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
-                    {gridProducts.map((p, index) => {
-                      const showAd = store.plan === "semilla" && !isMockup;
-                      const isAdPos = index === 4;
-                      const isLastNoAd = index === gridProducts.length - 1 && gridProducts.length <= 4;
-                      
-                      return (
-                        <React.Fragment key={p.id}>
-                          <article
-                            key={p.id}
-                            className={cn(
-                              gridCardClass
-                            )}
-                            onClick={() => setViewingProduct(p)}
-                          >
-                            <div>
-                              {/* Asymmetric or standard image wrapper */}
-                              <div className={cn(
-                                gridImgClass
-                              )}>
-                                <img
-                                  src={p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"}
-                                  alt={p.name}
-                                  className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                  loading="lazy"
-                                />
-                                {p.isOnSale && (
-                                  <span 
-                                    style={{
-                                      backgroundColor: store.niche === "floreria" ? undefined : "var(--primary)",
-                                    }}
-                                    className={cn(
-                                      "absolute top-2.5 right-2.5 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10",
-                                      store.niche === "floreria" ? "bg-rose-500" : ""
-                                    )}
-                                  >
-                                    Oferta
-                                  </span>
-                                )}
-                              </div>
-                              {/* Info */}
-                              <div className="p-3 pt-1 space-y-1 text-left">
-                                <h4
-                                  style={{ color: store.textColor ? store.textColor : undefined }}
-                                  className={cn(
-                                    "font-semibold text-sm text-stone-800 transition-colors line-clamp-2 leading-5 min-h-10",
-                                    store.niche === "floreria" ? "font-serif group-hover:text-rose-600" : "font-sans group-hover:text-[var(--primary)]"
-                                  )}
-                                >
-                                  {p.name}
-                                </h4>
-                                {p.description && (
-                                  <p
-                                    style={{ color: store.textColor ? store.textColor : undefined, opacity: store.textColor ? 0.8 : undefined }}
-                                    className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans"
-                                  >
-                                    {p.description}
-                                  </p>
-                                )}
-                                {p.description && p.description.trim().length > 50 && (
-                                  <span
-                                    className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider font-sans opacity-80 group-hover:opacity-100 transition-opacity"
-                                    style={{ color: "var(--primary)" }}
-                                  >
-                                    Ver más
-                                    <ChevronRight className="h-3 w-3" />
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Price & Action */}
-                            <div className="px-3 pb-3.5 pt-0 mt-auto">
-                              {/* Price — always full width, never truncated */}
-                              <div className="flex flex-col text-left px-0.5 mb-2">
-                                <span className="text-sm font-semibold font-sans" style={{ color: "var(--primary)" }}>{formatPrice(p.price)}</span>
-                                {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                                  <span className="text-[10px] text-stone-400 line-through -mt-0.5 font-sans">{formatPrice(p.originalPrice)}</span>
-                                )}
-                              </div>
-                              {/* Buttons row */}
-                              <div className="flex items-center gap-1.5">
-                                {/* Consult button */}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    consultProduct(p.name);
-                                  }}
-                                  style={{
-                                    borderColor: store.niche === "floreria" ? undefined : "var(--primary)",
-                                    backgroundColor: store.niche === "floreria" ? undefined : "transparent",
-                                    color: store.niche === "floreria" ? undefined : "var(--primary)",
-                                  }}
-                                  className={cn(
-                                    "h-8 w-8 rounded-full transition-all duration-300 flex items-center justify-center shrink-0 shadow-xs active:scale-95 border",
-                                    store.niche === "floreria"
-                                      ? "border-rose-100 bg-rose-50 text-rose-600 hover:bg-rose-500 hover:text-white"
-                                      : "hover:bg-[var(--primary)] hover:text-white"
-                                  )}
-                                  title="Consultar por WhatsApp"
-                                >
-                                  <WhatsAppIcon className="h-4 w-4" />
-                                </button>
-                                {/* Add to Cart button */}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cartAdd(store.id, p.id);
-                                    setCartOpen(true);
-                                  }}
-                                  style={{
-                                    backgroundColor: "var(--primary)",
-                                  }}
-                                  className="flex-1 h-8 px-2.5 rounded-full text-white hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-bold tracking-wider uppercase shadow-xs active:scale-95 font-sans"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                  Añadir
-                                </button>
-                              </div>
-                            </div>
-                          </article>
-                          {showAd && (isAdPos || isLastNoAd) && (
-                            <DiziNativeAdCard 
-                              layout="bloom" 
-                              primaryColor={primaryColor} 
-                              slug={store.slug}
-                              cardRounded={cfg.cardRounded}
-                              imgRounded={cfg.imgRounded}
-                              cardShadow={cfg.cardShadow}
-                              cardBorder={cfg.cardBorder}
-                            />
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        ) : cfg.layout === "banner_grid" ? (
-          /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
-          <div className="space-y-4">
-            {/* Banner de portada */}
-            {(() => {
-              const bStyle = store.bannerStyle || "framed";
-              const borderVal = bStyle === "direct"
-                ? "0px"
-                : bStyle === "curved"
-                  ? "3.5rem 1.5rem 3.5rem 1.5rem"
-                  : "1.5rem"; // 24px rounded
-              return activeBanners[0] ? (
-                <div 
-                  className={cn(
-                    "relative w-full overflow-hidden bg-zinc-950",
-                    bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : ""
-                  )} 
-                  style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
-                >
-                  {/* Blurred background */}
-                  <div 
-                    className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                    style={{ backgroundImage: `url(${activeBanners[0]})` }}
-                  />
-                  <img
-                    src={activeBanners[0]}
-                    alt={store.name}
-                    className="absolute inset-0 w-full h-full object-contain"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                    <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
-                      {(store as any).bannerTitle || `Catálogo ${store.name}`}
-                    </p>
-                    <p className="text-white/70 text-xs mt-0.5">Toca un producto para más info</p>
-                  </div>
-                </div>
-              ) : (
-                /* Placeholder banner si no hay imagen */
-                <div
-                  className={cn(
-                    "w-full flex flex-col items-center justify-center gap-2 py-8 px-4 text-center",
-                    bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : ""
-                  )}
-                  style={{ borderRadius: borderVal, background: `linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 60%, #fff) 100%)` }}
-                >
-                  <p className="text-white font-black text-2xl leading-tight">{(store as any).bannerTitle || `Catálogo ${store.name}`}</p>
-                  <p className="text-white/80 text-sm">Bienvenido · Toca cualquier producto</p>
-                </div>
-              );
-            })()}
-
-            {/* Grid de productos 2 columnas estilo app */}
-            <div className="grid grid-cols-2 gap-3">
-              {filtered.map((p) => (
-                <article
-                  key={p.id}
-                  className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group", cfg.cardShadow)}
-                  style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)" }}
-                  onClick={() => setViewingProduct(p)}
-                >
-                  {/* Imagen cuadrada */}
-                  <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "1/1" }}>
-                    <img
-                      src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"}
-                      alt={p.name}
-                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                      style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                      }}
-                    />
-                    {p.isOnSale && (
-                      <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">OFERTA</span>
-                    )}
-                  </div>
-                  {/* Info */}
-                  <div className="p-2.5 flex flex-col gap-1 flex-1">
-                    <h3 className="text-xs font-semibold line-clamp-2 leading-snug flex-1">{p.name}</h3>
-                    <div className="flex items-center justify-between mt-1">
-                      <div>
-                        <span className="text-sm font-black text-primary">{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                          <span className="text-[10px] text-muted-foreground line-through ml-1">{formatPrice(p.originalPrice)}</span>
-                        )}
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); cartAdd(store.id, p.id); }}
-                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* ── GRID layout: standard responsive grid */
-          <div className={cn("grid gap-3", isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4")}>
-            {filtered.map((p, index) => {
-              const showAd = store.plan === "semilla" && !isMockup;
-              const isAdPos = index === 4;
-              const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
-              
-              return (
-                <React.Fragment key={p.id}>
-                  <article
-                    key={p.id}
-                    className={cn("overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group text-left", cfg.cardBorder ? "border" : "", cfg.cardShadow)}
-                    style={{ borderRadius: cfg.cardRounded, backgroundColor: "var(--card)", borderColor: cfg.cardBorder ? "var(--border)" : "transparent" }}
-                    onClick={() => setViewingProduct(p)}
-                  >
-                    <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "4/3" }}>
-                      <img 
-                        src={p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"} 
-                        alt={p.name} 
-                        className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        loading="lazy" 
-                        style={{ borderRadius: cfg.imgRounded }} 
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
-                        }}
-                      />
-                      {p.isOnSale && <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow"><Flame className="h-2.5 w-2.5" /> Oferta</span>}
-                    </div>
-                    <div className="p-3 flex flex-col flex-1 gap-2">
-                      <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">{p.name}</h3>
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-base font-black text-primary">{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                          <span className="text-[11px] text-muted-foreground line-through">{formatPrice(p.originalPrice)}</span>
-                        )}
-                      </div>
-                      <div className="flex gap-2 pt-1">
-                        <button onClick={(e)=>{e.stopPropagation();consultProduct(p.name);}} className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium py-2 hover:bg-accent transition border border-border bg-background" style={{ borderRadius: cfg.cardRounded }}>
-                          <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
-                        </button>
-                        <button onClick={(e)=>{e.stopPropagation();cartAdd(store.id,p.id);}} className="inline-flex items-center justify-center bg-primary text-primary-foreground w-9 h-9 hover:bg-primary/90 transition shrink-0" style={{ borderRadius: cfg.cardRounded }} aria-label="Agregar al carrito">
-                          <Plus className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                  {showAd && (isAdPos || isLastNoAd) && (
-                    <DiziNativeAdCard 
-                      layout="grid" 
-                      primaryColor={primaryColor} 
-                      slug={store.slug}
-                      cardRounded={cfg.cardRounded}
-                      imgRounded={cfg.imgRounded}
-                      cardShadow={cfg.cardShadow}
-                      cardBorder={cfg.cardBorder}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        )}
-
-        {mode === "bio" && (
-          <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {(() => {
-              const buttonStyleId = store.bioButtonStyle || "pill-solid";
-              const { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
-
-              const customBg = store.bioButtonColor || store.brandColor || "#1f2937";
-              const customText = store.bioButtonTextColor || "#ffffff";
-
-              let bg = customBg;
-              let borderColor = customBg;
-              let color = customText;
-              let extraClasses = "";
-
-              if (type === "solid") {
-                bg = customBg;
-                borderColor = customBg;
-                color = customText;
-              } else if (type === "outline") {
-                bg = "transparent";
-                borderColor = customBg;
-                color = store.bioButtonTextColor || customBg;
-              } else if (type === "glass") {
-                bg = finalIsDark ? "rgba(255, 255, 255, 0.08)" : "rgba(15, 23, 42, 0.06)";
-                borderColor = finalIsDark ? "rgba(255, 255, 255, 0.15)" : "rgba(15, 23, 42, 0.12)";
-                color = store.bioButtonTextColor || (finalIsDark ? "#ffffff" : "#0f172a");
-                extraClasses = "backdrop-blur-md";
-              }
-
-              const hoverGlow = customBg.startsWith("linear") ? "#dc2743" : customBg;
-              const isCustomColor = !!(store.bioButtonColor || store.bioButtonTextColor);
-              const isMonochrome = type === "outline" || type === "glass" || isCustomColor;
-
-              return (
-                <Link
-                  to="/t/$slug"
-                  params={{ slug: store.slug }}
-                  className={cn(
-                    "relative w-full max-w-md mx-auto p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)] cursor-pointer",
-                    radiusClass,
-                    extraClasses,
-                    bioTypography === "serif" ? "font-serif-editorial font-bold" :
-                    bioTypography === "rounded" ? "font-sans-bloom" :
-                    bioTypography === "modern" ? "font-sans-vibe" :
-                    ""
-                  )}
-                  style={{
-                    background: bg,
-                    borderColor: borderColor,
-                    color: color,
-                    "--hover-glow": hoverGlow,
-                  } as React.CSSProperties}
-                >
-                  <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-premium-shimmer pointer-events-none" />
-                  
-                  <div className={cn(
-                    "h-9 w-9 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300",
-                    isMonochrome ? "bg-transparent" : "bg-white rounded-full shadow-inner"
-                  )}>
-                    <ShoppingBag className={cn(
-                      "h-5 w-5",
-                      isMonochrome ? "" : "text-primary"
-                    )} />
-                  </div>
-                  <span className="flex-1 text-center pr-3">Ver Catálogo Completo</span>
-                </Link>
-              );
-            })()}
-
-            {/* Módulo de Ubicación Geográfica */}
-            {store.showMap !== false && store.locationLat && store.locationLng && (
-              <div id="location-section" className="pt-8 border-t space-y-4 scroll-mt-6" style={{ borderColor: "var(--border)" }}>
-                <h3 className="text-xs font-black uppercase tracking-widest text-center text-muted-foreground flex items-center justify-center gap-2">
-                  <span className="h-px w-8 bg-muted-foreground/30"></span>
-                  <MapPin className="h-3.5 w-3.5 opacity-60" />
-                  Nuestra Ubicación
-                  <span className="h-px w-8 bg-muted-foreground/30"></span>
-                </h3>
-                
-                <div className="max-w-md mx-auto space-y-4">
-                  <div 
-                    className="rounded-2xl overflow-hidden border shadow-sm h-[200px] w-full relative group transition-all duration-300 hover:shadow-lg"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    <iframe
-                      title="Ubicación"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${store.locationLng-0.003}%2C${store.locationLat-0.0015}%2C${store.locationLng+0.003}%2C${store.locationLat+0.0015}&layer=mapnik&marker=${store.locationLat}%2C${store.locationLng}`}
-                      className="w-full h-full border-none filter grayscale-[25%] contrast-[105%] brightness-[97%] transition-all"
-                    />
-                  </div>
-                  
-                  {store.locationAddress && (
-                    <div className="space-y-2 text-center">
-                      <a
-                        href={`https://maps.google.com/?q=${store.locationLat},${store.locationLng}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex py-2.5 px-4 rounded-xl border items-center justify-center gap-2 text-xs font-black uppercase tracking-wider transition-all hover:scale-[1.01] hover:bg-muted/40 shadow-sm bg-card text-foreground"
-                        style={{ borderColor: "var(--border)" }}
-                      >
-                        <MapPin className="h-3.5 w-3.5" />
-                        Ver en Google Maps
-                      </a>
-                      <p className="text-[11px] text-muted-foreground font-semibold px-4 leading-relaxed">
-                        {store.locationAddress}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
             )}
-          </div>
-        )}
           </div>
         </div>
       </main>
@@ -5456,16 +7125,16 @@ export function PublicCatalog({
         if (!showBranding) return null;
 
         const isSemilla = store.plan === "semilla";
-        const refUrl = isSemilla 
-          ? "https://dizi.idenza.site" 
+        const refUrl = isSemilla
+          ? "https://dizi.idenza.site"
           : `https://dizi.idenza.site?ref=${store.slug}`;
 
         return (
-          <div 
+          <div
             className={cn(
-              "py-6 text-center flex flex-col items-center justify-center gap-1", 
-              !store.libroReclamacionesActivo && "border-t"
-            )} 
+              "py-6 text-center flex flex-col items-center justify-center gap-1",
+              !store.libroReclamacionesActivo && "border-t",
+            )}
             style={!store.libroReclamacionesActivo ? { borderColor: "var(--border)" } : undefined}
           >
             <a
@@ -5476,13 +7145,21 @@ export function PublicCatalog({
             >
               {isSemilla ? (
                 <>
-                  <span className="opacity-80 group-hover:opacity-100 transition-opacity">Crea tu catálogo gratis con</span>
-                  <span className="text-primary font-black tracking-tight group-hover:scale-105 transition-transform duration-300">Dizi</span>
+                  <span className="opacity-80 group-hover:opacity-100 transition-opacity">
+                    Crea tu catálogo gratis con
+                  </span>
+                  <span className="text-primary font-black tracking-tight group-hover:scale-105 transition-transform duration-300">
+                    Dizi
+                  </span>
                 </>
               ) : (
                 <>
-                  <span className="opacity-60 group-hover:opacity-100 transition-opacity">Creado con</span>
-                  <span className="text-primary/80 group-hover:text-primary font-bold tracking-tight">Dizi</span>
+                  <span className="opacity-60 group-hover:opacity-100 transition-opacity">
+                    Creado con
+                  </span>
+                  <span className="text-primary/80 group-hover:text-primary font-bold tracking-tight">
+                    Dizi
+                  </span>
                 </>
               )}
             </a>
@@ -5518,20 +7195,23 @@ export function PublicCatalog({
           }}
           className={cn(
             "z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition",
-            isMockup ? "absolute bottom-6 right-4" : "fixed bottom-8 right-4"
+            isMockup ? "absolute bottom-6 right-4" : "fixed bottom-8 right-4",
           )}
           style={{
             borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
             backgroundColor: "var(--primary)",
             color: "var(--primary-foreground)",
-            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
+            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
           }}
           aria-label={cartCount > 0 ? "Ver carrito" : "Soporte WhatsApp"}
         >
           {cartCount > 0 ? (
             <>
               <ShoppingBag className="h-6 w-6" />
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2" style={{ borderColor: "var(--primary)" }}>
+              <span
+                className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center border-2"
+                style={{ borderColor: "var(--primary)" }}
+              >
                 {cartCount}
               </span>
             </>
@@ -5546,7 +7226,13 @@ export function PublicCatalog({
         <SheetContent
           side="bottom"
           className="h-[80vh] rounded-t-3xl p-0 flex flex-col border-0"
-          style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
+          style={
+            {
+              backgroundColor: "var(--background)",
+              color: "var(--foreground)",
+              ...themeVars,
+            } as React.CSSProperties
+          }
         >
           <SheetTitle className="sr-only">Pedido</SheetTitle>
           <SheetDescription className="sr-only">
@@ -5561,7 +7247,7 @@ export function PublicCatalog({
             <span
               className={cn(
                 "flex-1 font-bold",
-                cfg.headerStyle === "minimal" ? "text-sm uppercase tracking-[0.2em]" : "text-base"
+                cfg.headerStyle === "minimal" ? "text-sm uppercase tracking-[0.2em]" : "text-base",
               )}
               style={{ color: "var(--foreground)" }}
             >
@@ -5594,11 +7280,17 @@ export function PublicCatalog({
                   alt={l.product.name}
                   className="h-12 w-12 object-cover shrink-0"
                   style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
-                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=200&q=70"; }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=200&q=70";
+                  }}
                 />
                 <div className="flex-1 min-w-0">
                   <p
-                    className={cn("text-sm font-bold truncate", cfg.headerStyle === "minimal" ? "tracking-wide uppercase text-xs" : "")}
+                    className={cn(
+                      "text-sm font-bold truncate",
+                      cfg.headerStyle === "minimal" ? "tracking-wide uppercase text-xs" : "",
+                    )}
                     style={{ color: "var(--foreground)" }}
                   >
                     {l.product.name}
@@ -5612,17 +7304,28 @@ export function PublicCatalog({
                   <button
                     onClick={() => cartSet(store.id, l.productId, l.qty - 1)}
                     className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
-                    style={{ border: `1px solid var(--border)`, color: "var(--foreground)", borderRadius: cfg.cardRounded }}
+                    style={{
+                      border: `1px solid var(--border)`,
+                      color: "var(--foreground)",
+                      borderRadius: cfg.cardRounded,
+                    }}
                   >
                     <Minus className="h-3 w-3" />
                   </button>
-                  <span className="w-6 text-center text-sm font-black" style={{ color: "var(--foreground)" }}>
+                  <span
+                    className="w-6 text-center text-sm font-black"
+                    style={{ color: "var(--foreground)" }}
+                  >
                     {l.qty}
                   </span>
                   <button
                     onClick={() => cartSet(store.id, l.productId, l.qty + 1)}
                     className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
-                    style={{ border: `1px solid var(--border)`, color: "var(--foreground)", borderRadius: cfg.cardRounded }}
+                    style={{
+                      border: `1px solid var(--border)`,
+                      color: "var(--foreground)",
+                      borderRadius: cfg.cardRounded,
+                    }}
                   >
                     <Plus className="h-3 w-3" />
                   </button>
@@ -5645,7 +7348,10 @@ export function PublicCatalog({
           >
             <div className="flex items-center justify-between">
               <span
-                className={cn("text-sm", cfg.headerStyle === "minimal" ? "uppercase tracking-widest text-xs" : "")}
+                className={cn(
+                  "text-sm",
+                  cfg.headerStyle === "minimal" ? "uppercase tracking-widest text-xs" : "",
+                )}
                 style={{ color: "var(--muted-foreground)" }}
               >
                 Total
@@ -5660,7 +7366,13 @@ export function PublicCatalog({
                 backgroundColor: "var(--primary)",
                 color: "var(--primary-foreground)",
                 borderRadius: cfg.cardRounded,
-                ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
+                ...(cfg.headerStyle === "minimal"
+                  ? {
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase" as const,
+                      fontSize: "11px",
+                    }
+                  : {}),
               }}
               onClick={sendOrder}
               disabled={cartLines.length === 0}
@@ -5669,7 +7381,7 @@ export function PublicCatalog({
               Enviar pedido por WhatsApp
             </button>
             {isInAppBrowser() && (
-              <div 
+              <div
                 className="text-[10px] text-amber-700 bg-amber-50/80 border border-amber-200 p-2.5 rounded-xl text-left leading-normal flex items-start gap-1.5 shadow-xs"
                 style={{
                   borderRadius: cfg.cardRounded,
@@ -5677,7 +7389,9 @@ export function PublicCatalog({
               >
                 <span className="text-xs shrink-0">⚠️</span>
                 <div>
-                  <strong>¿La redirección falla?</strong> Toca los <strong>3 puntos (...)</strong> arriba a la derecha y elige <strong>"Abrir en el navegador"</strong> para poder enviar tu pedido.
+                  <strong>¿La redirección falla?</strong> Toca los <strong>3 puntos (...)</strong>{" "}
+                  arriba a la derecha y elige <strong>"Abrir en el navegador"</strong> para poder
+                  enviar tu pedido.
                 </div>
               </div>
             )}
@@ -5694,16 +7408,27 @@ export function PublicCatalog({
         </SheetContent>
       </Sheet>
 
-
       {/* ── Filter Drawer ─────────────────────────────── */}
       <Drawer open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <DrawerContent
           className="max-h-[90vh] focus:outline-none"
-          style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
+          style={
+            {
+              backgroundColor: "var(--background)",
+              color: "var(--foreground)",
+              ...themeVars,
+            } as React.CSSProperties
+          }
         >
-          <DrawerHeader className="text-left border-b pb-4" style={{ borderColor: "var(--border)" }}>
+          <DrawerHeader
+            className="text-left border-b pb-4"
+            style={{ borderColor: "var(--border)" }}
+          >
             <div className="flex items-center justify-between">
-              <DrawerTitle className="text-base font-black uppercase tracking-wide" style={{ color: "var(--foreground)" }}>
+              <DrawerTitle
+                className="text-base font-black uppercase tracking-wide"
+                style={{ color: "var(--foreground)" }}
+              >
                 Filtros
               </DrawerTitle>
               <DrawerClose asChild>
@@ -5715,7 +7440,10 @@ export function PublicCatalog({
                 </button>
               </DrawerClose>
             </div>
-            <DrawerDescription className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
+            <DrawerDescription
+              className="text-xs mt-1"
+              style={{ color: "var(--muted-foreground)" }}
+            >
               Filtra los productos por categoría{hasPriceFilter ? " y precio" : ""}
             </DrawerDescription>
           </DrawerHeader>
@@ -5723,7 +7451,10 @@ export function PublicCatalog({
           <div className="overflow-y-auto flex-1 px-4 py-5 space-y-6">
             {/* ── Categorías ── */}
             <div className="space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>
+              <p
+                className="text-xs font-black uppercase tracking-widest"
+                style={{ color: "var(--muted-foreground)" }}
+              >
                 Categorías
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -5778,7 +7509,10 @@ export function PublicCatalog({
             {/* ── Precio ── */}
             {hasPriceFilter && (
               <div className="space-y-3">
-                <p className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--muted-foreground)" }}>
+                <p
+                  className="text-xs font-black uppercase tracking-widest"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   Precio
                 </p>
                 <PriceRangeSlider
@@ -5801,7 +7535,10 @@ export function PublicCatalog({
             {/* Restablecer */}
             {(activeCat !== "all" || priceRange) && (
               <button
-                onClick={() => { setActiveCat("all"); setPriceRange(null); }}
+                onClick={() => {
+                  setActiveCat("all");
+                  setPriceRange(null);
+                }}
                 className="w-full h-10 text-sm font-semibold border rounded-full transition hover:bg-muted"
                 style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
               >
@@ -5816,7 +7553,13 @@ export function PublicCatalog({
                   backgroundColor: "var(--primary)",
                   color: "var(--primary-foreground)",
                   borderRadius: cfg.cardRounded,
-                  ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
+                  ...(cfg.headerStyle === "minimal"
+                    ? {
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase" as const,
+                        fontSize: "11px",
+                      }
+                    : {}),
                 }}
               >
                 Ver {rawFiltered.length} {rawFiltered.length === 1 ? "producto" : "productos"}
@@ -5827,17 +7570,30 @@ export function PublicCatalog({
       </Drawer>
 
       {/* ── Product Detail Sheet ─────────────────────── */}
-      <Sheet open={!!viewingProduct} onOpenChange={(v) => { if (!v) setViewingProduct(null); }}>
+      <Sheet
+        open={!!viewingProduct}
+        onOpenChange={(v) => {
+          if (!v) setViewingProduct(null);
+        }}
+      >
         <SheetContent
           side="bottom"
           className="h-[92vh] rounded-t-3xl p-0 overflow-hidden flex flex-col border-0 md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:bottom-auto md:right-auto md:h-[70vh] md:max-w-3xl md:w-full md:rounded-3xl md:border md:shadow-2xl"
-          style={{ backgroundColor: "var(--background)", color: "var(--foreground)", ...themeVars } as React.CSSProperties}
+          style={
+            {
+              backgroundColor: "var(--background)",
+              color: "var(--foreground)",
+              ...themeVars,
+            } as React.CSSProperties
+          }
         >
           <SheetTitle className="sr-only">
             {viewingProduct ? viewingProduct.name : "Detalle de Producto"}
           </SheetTitle>
           <SheetDescription className="sr-only">
-            {viewingProduct && viewingProduct.description ? viewingProduct.description : "Detalle del producto seleccionado."}
+            {viewingProduct && viewingProduct.description
+              ? viewingProduct.description
+              : "Detalle del producto seleccionado."}
           </SheetDescription>
           {viewingProduct && (
             <div className="flex flex-col h-full md:flex-row md:overflow-hidden">
@@ -5845,12 +7601,17 @@ export function PublicCatalog({
               <div
                 className="relative shrink-0 bg-background overflow-hidden md:w-1/2 md:!h-full"
                 style={{
-                  height: cfg.layout === "editorial" ? "200px" : cfg.layout === "overlay" || cfg.layout === "magazine" ? "320px" : "260px",
+                  height:
+                    cfg.layout === "editorial"
+                      ? "200px"
+                      : cfg.layout === "overlay" || cfg.layout === "magazine"
+                        ? "320px"
+                        : "260px",
                   backgroundColor: "var(--background)",
                 }}
               >
                 {/* Close button (aspita) - Hidden on desktop since sheet renders one in top-right */}
-                <button 
+                <button
                   onClick={() => setViewingProduct(null)}
                   className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all md:hidden"
                   style={{ borderRadius: cfg.cardRounded }}
@@ -5859,15 +7620,24 @@ export function PublicCatalog({
                 </button>
 
                 <img
-                  src={productImages[viewingProduct.id] || viewingProduct.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"}
+                  src={
+                    productImages[viewingProduct.id] ||
+                    viewingProduct.image ||
+                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"
+                  }
                   alt={viewingProduct.name}
                   className="h-full w-full object-cover"
                   decoding="async"
-                  onError={(e) => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"; }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85";
+                  }}
                 />
 
                 {/* Dark overlay for dark themes */}
-                {effectiveIsDark && <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />}
+                {effectiveIsDark && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                )}
 
                 {/* Hardware-accelerated brightness reduction overlay instead of expensive CSS filter */}
                 {effectiveIsDark && (cfg.layout === "overlay" || cfg.layout === "magazine") && (
@@ -5875,26 +7645,39 @@ export function PublicCatalog({
                 )}
 
                 {/* Sale badge — style adapts to model */}
-                {viewingProduct.isOnSale && (
-                  cfg.layout === "magazine" ? (
-                    <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1 backdrop-blur">OFERTA</span>
+                {viewingProduct.isOnSale &&
+                  (cfg.layout === "magazine" ? (
+                    <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1 backdrop-blur">
+                      OFERTA
+                    </span>
                   ) : cfg.layout === "overlay" ? (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">OFERTA</span>
+                    <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                      OFERTA
+                    </span>
                   ) : (
                     <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
                       <Flame className="h-3 w-3" /> Oferta
                     </span>
-                  )
-                )}
+                  ))}
 
                 {/* For dark/magazine: show price on image */}
                 {(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
                   <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-                    <p className={cn("text-white font-black text-2xl", cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase" : "")}>
-                      {formatPrice(viewingProduct.price)}
-                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.price && viewingProduct.originalPrice > viewingProduct.price && (
-                        <span className="text-white/40 text-sm line-through ml-3 font-normal">{formatPrice(viewingProduct.originalPrice)}</span>
+                    <p
+                      className={cn(
+                        "text-white font-black text-2xl",
+                        cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase" : "",
                       )}
+                    >
+                      {formatPrice(viewingProduct.price)}
+                      {viewingProduct.isOnSale &&
+                        viewingProduct.originalPrice &&
+                        viewingProduct.price &&
+                        viewingProduct.originalPrice > viewingProduct.price && (
+                          <span className="text-white/40 text-sm line-through ml-3 font-normal">
+                            {formatPrice(viewingProduct.originalPrice)}
+                          </span>
+                        )}
                     </p>
                   </div>
                 )}
@@ -5911,9 +7694,11 @@ export function PublicCatalog({
                   <h2
                     className={cn(
                       "leading-tight",
-                      cfg.headerStyle === "bold" ? "text-2xl font-black" :
-                      cfg.headerStyle === "minimal" ? "text-lg font-light tracking-[0.2em] uppercase" :
-                      "text-xl font-bold"
+                      cfg.headerStyle === "bold"
+                        ? "text-2xl font-black"
+                        : cfg.headerStyle === "minimal"
+                          ? "text-lg font-light tracking-[0.2em] uppercase"
+                          : "text-xl font-bold",
                     )}
                     style={{ color: "var(--foreground)" }}
                   >
@@ -5921,16 +7706,25 @@ export function PublicCatalog({
                   </h2>
 
                   {/* Price — only show below image for non-dark overlay models */}
-                  {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
+                  {!(
+                    cfg.layout === "magazine" ||
+                    (effectiveIsDark && cfg.layout === "overlay")
+                  ) && (
                     <div className="flex items-baseline gap-3">
                       <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
                         {formatPrice(viewingProduct.price)}
                       </span>
-                      {viewingProduct.isOnSale && viewingProduct.originalPrice && viewingProduct.price && viewingProduct.originalPrice > viewingProduct.price && (
-                        <span className="text-sm line-through" style={{ color: "var(--muted-foreground)" }}>
-                          {formatPrice(viewingProduct.originalPrice)}
-                        </span>
-                      )}
+                      {viewingProduct.isOnSale &&
+                        viewingProduct.originalPrice &&
+                        viewingProduct.price &&
+                        viewingProduct.originalPrice > viewingProduct.price && (
+                          <span
+                            className="text-sm line-through"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            {formatPrice(viewingProduct.originalPrice)}
+                          </span>
+                        )}
                     </div>
                   )}
 
@@ -5940,7 +7734,9 @@ export function PublicCatalog({
                       <p
                         className={cn(
                           "text-xs font-bold mb-1",
-                          cfg.headerStyle === "minimal" ? "tracking-[0.3em] uppercase" : "tracking-widest uppercase"
+                          cfg.headerStyle === "minimal"
+                            ? "tracking-[0.3em] uppercase"
+                            : "tracking-widest uppercase",
                         )}
                         style={{ color: "var(--primary)" }}
                       >
@@ -5948,7 +7744,10 @@ export function PublicCatalog({
                       </p>
                       <p
                         className="text-sm leading-relaxed whitespace-pre-line"
-                        style={{ color: "var(--foreground)", opacity: effectiveIsDark ? 0.85 : 0.75 }}
+                        style={{
+                          color: "var(--foreground)",
+                          opacity: effectiveIsDark ? 0.85 : 0.75,
+                        }}
                       >
                         {viewingProduct.description}
                       </p>
@@ -5974,17 +7773,19 @@ export function PublicCatalog({
                       }}
                     >
                       {(() => {
-                        const cat = store.categories.find((c) => c.id === viewingProduct.categoryId);
+                        const cat = store.categories.find(
+                          (c) => c.id === viewingProduct.categoryId,
+                        );
                         if (!cat) return "";
                         const { label, iconKey } = parseCategoryName(cat.name);
                         return (
                           <>
-                            {(cfg.layout === "bite" || cfg.layout === "bloom" || cfg.layout === "nature") && iconKey && (
-                              <CategoryIcon 
-                                iconKey={iconKey} 
-                                className="h-3.5 w-3.5 shrink-0" 
-                              />
-                            )}
+                            {(cfg.layout === "bite" ||
+                              cfg.layout === "bloom" ||
+                              cfg.layout === "nature") &&
+                              iconKey && (
+                                <CategoryIcon iconKey={iconKey} className="h-3.5 w-3.5 shrink-0" />
+                              )}
                             <span>{label}</span>
                           </>
                         );
@@ -6005,9 +7806,14 @@ export function PublicCatalog({
                       borderColor: "var(--primary)",
                       color: "var(--primary)",
                       backgroundColor: "transparent",
-                      ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase", fontSize: "11px" } : {}),
+                      ...(cfg.headerStyle === "minimal"
+                        ? { letterSpacing: "0.15em", textTransform: "uppercase", fontSize: "11px" }
+                        : {}),
                     }}
-                    onClick={() => { consultProduct(viewingProduct.name, viewingProduct.id); setViewingProduct(null); }}
+                    onClick={() => {
+                      consultProduct(viewingProduct.name, viewingProduct.id);
+                      setViewingProduct(null);
+                    }}
                   >
                     <WhatsAppIcon className="h-4 w-4" />
                     Consultar
@@ -6018,9 +7824,19 @@ export function PublicCatalog({
                       borderRadius: cfg.cardRounded,
                       backgroundColor: "var(--primary)",
                       color: "var(--primary-foreground)",
-                      ...(cfg.headerStyle === "minimal" ? { letterSpacing: "0.15em", textTransform: "uppercase" as const, fontSize: "11px" } : {}),
+                      ...(cfg.headerStyle === "minimal"
+                        ? {
+                            letterSpacing: "0.15em",
+                            textTransform: "uppercase" as const,
+                            fontSize: "11px",
+                          }
+                        : {}),
                     }}
-                    onClick={() => { cartAdd(store.id, viewingProduct.id); setViewingProduct(null); setCartOpen(true); }}
+                    onClick={() => {
+                      cartAdd(store.id, viewingProduct.id);
+                      setViewingProduct(null);
+                      setCartOpen(true);
+                    }}
                   >
                     <Plus className="h-4 w-4" />
                     Añadir al carrito
@@ -6065,54 +7881,72 @@ export function PublicCatalog({
                 <Info className="h-5 w-5 text-amber-600 dark:text-amber-500" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">Envío bloqueado por TikTok/Instagram</h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Sigue estos sencillos pasos para completar tu pedido:</p>
+                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+                  Envío bloqueado por TikTok/Instagram
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Sigue estos sencillos pasos para completar tu pedido:
+                </p>
               </div>
             </div>
 
             {/* Visual Guide Steps */}
             <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 space-y-3.5 text-xs text-zinc-700 dark:text-zinc-300">
               <div className="flex items-start gap-2.5">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">1</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
+                  1
+                </span>
                 <div>
-                  Toca los <strong>tres puntos (...)</strong> en la esquina superior derecha de tu pantalla.
+                  Toca los <strong>tres puntos (...)</strong> en la esquina superior derecha de tu
+                  pantalla.
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">2</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
+                  2
+                </span>
                 <div>
-                  Selecciona la opción <strong>"Abrir en el navegador"</strong> (o <em>"Open in browser"</em>).
+                  Selecciona la opción <strong>"Abrir en el navegador"</strong> (o{" "}
+                  <em>"Open in browser"</em>).
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">3</span>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
+                  3
+                </span>
                 <div>
-                  ¡Listo! Tu catálogo se abrirá en Chrome/Safari y podrás presionar <strong>"Enviar pedido por WhatsApp"</strong> sin bloqueos.
+                  ¡Listo! Tu catálogo se abrirá en Chrome/Safari y podrás presionar{" "}
+                  <strong>"Enviar pedido por WhatsApp"</strong> sin bloqueos.
                 </div>
               </div>
             </div>
 
             {/* Copiar pedido banner */}
             <div className="space-y-2">
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-center">O copia el texto del pedido y envíalo manualmente:</p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-center">
+                O copia el texto del pedido y envíalo manualmente:
+              </p>
               <button
                 onClick={() => {
                   if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(pendingOrderMsg).then(() => {
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }).catch(() => {
-                      fallbackCopy(pendingOrderMsg);
-                    });
+                    navigator.clipboard
+                      .writeText(pendingOrderMsg)
+                      .then(() => {
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      })
+                      .catch(() => {
+                        fallbackCopy(pendingOrderMsg);
+                      });
                   } else {
                     fallbackCopy(pendingOrderMsg);
                   }
                 }}
                 className={cn(
                   "w-full h-11 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition",
-                  copied 
+                  copied
                     ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-900 dark:text-green-400"
-                    : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800",
                 )}
               >
                 {copied ? (
@@ -6182,9 +8016,13 @@ export function PublicCatalog({
                 </div>
               </div>
               <div className="space-y-1">
-                <h3 className="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">¡Pedido enviado a WhatsApp!</h3>
+                <h3 className="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">
+                  ¡Pedido enviado a WhatsApp!
+                </h3>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 px-2 leading-relaxed">
-                  Recuerda presionar el botón de <strong className="text-zinc-800 dark:text-zinc-200">"Enviar"</strong> en el chat de WhatsApp que se acaba de abrir para completar tu pedido.
+                  Recuerda presionar el botón de{" "}
+                  <strong className="text-zinc-800 dark:text-zinc-200">"Enviar"</strong> en el chat
+                  de WhatsApp que se acaba de abrir para completar tu pedido.
                 </p>
               </div>
             </div>
@@ -6206,23 +8044,27 @@ export function PublicCatalog({
 
             {/* Tarjeta del Loop Viral (Creación de Tiendas) - Solo para tiendas Semilla */}
             {store.plan === "semilla" && (
-              <div 
+              <div
                 style={{
                   borderColor: `${primaryColor}20`,
                   backgroundColor: `${primaryColor}06`,
                 }}
                 className="border rounded-2xl p-5 space-y-3.5 flex flex-col items-center text-center animate-in fade-in duration-300"
               >
-                <div 
+                <div
                   style={{ backgroundColor: `${primaryColor}15` }}
                   className="h-9 w-9 rounded-full flex items-center justify-center shrink-0"
                 >
                   <Sparkles style={{ color: primaryColor }} className="h-4 w-4" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">¿Quieres vender con un catálogo como este?</h4>
+                  <h4 className="font-extrabold text-xs text-zinc-800 dark:text-zinc-200">
+                    ¿Quieres vender con un catálogo como este?
+                  </h4>
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal px-2">
-                    Crea tu propia tienda gratis en <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en 2 minutos y automatiza tus pedidos por WhatsApp.
+                    Crea tu propia tienda gratis en{" "}
+                    <strong className="text-zinc-700 dark:text-zinc-300">Dizi</strong> en 2 minutos
+                    y automatiza tus pedidos por WhatsApp.
                   </p>
                 </div>
                 <button
@@ -6253,7 +8095,6 @@ export function PublicCatalog({
           </div>
         </div>
       )}
-
     </div>
   );
 }
@@ -6295,11 +8136,22 @@ interface TicketData {
 }
 
 /* Helper: campo de input con label */
-function LRField({ label, required, error, children }: { label: string; required?: boolean; error?: string; children: React.ReactNode }) {
+function LRField({
+  label,
+  required,
+  error,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1">
       <label className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
       {error && (
@@ -6341,31 +8193,31 @@ function LibroReclamacionesModal({
   cfg: ModelConfig;
 }) {
   // Sección B
-  const [nombre,       setNombre]       = useState("");
-  const [tipoDoc,      setTipoDoc]      = useState<"DNI"|"CE"|"Pasaporte"|"RUC">("DNI");
-  const [numDoc,       setNumDoc]       = useState("");
-  const [domicilio,    setDomicilio]    = useState("");
-  const [telefono,     setTelefono]     = useState("");
-  const [email,        setEmail]        = useState("");
-  const [esMenor,      setEsMenor]      = useState(false);
-  const [tutorNombre,  setTutorNombre]  = useState("");
-  const [tutorDoc,     setTutorDoc]     = useState("");
+  const [nombre, setNombre] = useState("");
+  const [tipoDoc, setTipoDoc] = useState<"DNI" | "CE" | "Pasaporte" | "RUC">("DNI");
+  const [numDoc, setNumDoc] = useState("");
+  const [domicilio, setDomicilio] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [email, setEmail] = useState("");
+  const [esMenor, setEsMenor] = useState(false);
+  const [tutorNombre, setTutorNombre] = useState("");
+  const [tutorDoc, setTutorDoc] = useState("");
   // Sección C
-  const [bienDesc,     setBienDesc]     = useState("");
-  const [bienMonto,    setBienMonto]    = useState("");
+  const [bienDesc, setBienDesc] = useState("");
+  const [bienMonto, setBienMonto] = useState("");
   // Sección D
-  const [tipo,         setTipo]         = useState<"queja"|"reclamo">("reclamo");
-  const [descripcion,  setDescripcion]  = useState("");
-  const [pedido,       setPedido]       = useState("");
+  const [tipo, setTipo] = useState<"queja" | "reclamo">("reclamo");
+  const [descripcion, setDescripcion] = useState("");
+  const [pedido, setPedido] = useState("");
   // Control
-  const [step,         setStep]         = useState<1|2|3>(1);
-  const [sending,      setSending]      = useState(false);
-  const [ticket,       setTicket]       = useState<TicketData | null>(null);
-  const [errorMsg,     setErrorMsg]     = useState("");
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [sending, setSending] = useState(false);
+  const [ticket, setTicket] = useState<TicketData | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const año = new Date().getFullYear();
   const numFormatted = ticket
-    ? `N° ${String(ticket.numeroCorrelativo).padStart(4,"0")}-${año}`
+    ? `N° ${String(ticket.numeroCorrelativo).padStart(4, "0")}-${año}`
     : "";
 
   // ── Validaciones de seguridad ────────────────────────────────
@@ -6376,7 +8228,7 @@ function LibroReclamacionesModal({
       if (t.length < 5) return "Ingresa tu nombre completo";
       if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/.test(t)) return "Solo letras, sin números ni símbolos";
       if (t.split(/\s+/).filter(Boolean).length < 2) return "Escribe nombre y apellido";
-      if (/(.)\1{3,}/.test(t.replace(/\s/g,""))) return "Nombre no válido";
+      if (/(.)\1{3,}/.test(t.replace(/\s/g, ""))) return "Nombre no válido";
       return "";
     },
     // Documento según tipo
@@ -6392,7 +8244,8 @@ function LibroReclamacionesModal({
       }
       if (tipo === "RUC") {
         if (!/^\d{11}$/.test(t)) return "El RUC debe tener exactamente 11 dígitos";
-        if (!/^(10|15|16|17|20)/.test(t)) return "RUC no válido (debe iniciar con 10, 15, 16, 17 o 20)";
+        if (!/^(10|15|16|17|20)/.test(t))
+          return "RUC no válido (debe iniciar con 10, 15, 16, 17 o 20)";
       }
       if (tipo === "Pasaporte") {
         if (!/^[a-zA-Z0-9]{6,12}$/.test(t)) return "Pasaporte: 6 a 12 caracteres alfanuméricos";
@@ -6425,17 +8278,22 @@ function LibroReclamacionesModal({
     },
   };
 
-  const errNombre   = val.nombre(nombre);
-  const errNumDoc   = val.numDoc(numDoc, tipoDoc);
+  const errNombre = val.nombre(nombre);
+  const errNumDoc = val.numDoc(numDoc, tipoDoc);
   const errTelefono = val.telefono(telefono);
-  const errEmail    = val.email(email);
+  const errEmail = val.email(email);
   const errTutorNombre = esMenor ? val.nombre(tutorNombre) : "";
-  const errTutorDoc    = esMenor ? val.numDoc(tutorDoc, "DNI") : "";
+  const errTutorDoc = esMenor ? val.numDoc(tutorDoc, "DNI") : "";
   const errDescripcion = val.texto(descripcion, 20, "la descripción");
-  const errPedido      = val.texto(pedido, 10, "el pedido");
+  const errPedido = val.texto(pedido, 10, "el pedido");
 
-  const canStep1 = !errNombre && !errNumDoc && !errTelefono && !errEmail &&
-    nombre.trim() && numDoc.trim() &&
+  const canStep1 =
+    !errNombre &&
+    !errNumDoc &&
+    !errTelefono &&
+    !errEmail &&
+    nombre.trim() &&
+    numDoc.trim() &&
     (!esMenor || (!errTutorNombre && !errTutorDoc && tutorNombre.trim() && tutorDoc.trim()));
   const canStep2 = !errDescripcion && !errPedido && descripcion.trim() && pedido.trim();
 
@@ -6446,46 +8304,46 @@ function LibroReclamacionesModal({
     try {
       const { supabase } = await import("@/lib/supabase");
       const { data, error: rpcError } = await supabase.rpc("insert_reclamacion", {
-        p_tenant_id:            store.id,
-        p_consumidor_nombre:    nombre.trim(),
-        p_consumidor_tipo_doc:  tipoDoc,
-        p_consumidor_num_doc:   numDoc.trim(),
+        p_tenant_id: store.id,
+        p_consumidor_nombre: nombre.trim(),
+        p_consumidor_tipo_doc: tipoDoc,
+        p_consumidor_num_doc: numDoc.trim(),
         p_consumidor_domicilio: domicilio.trim() || null,
-        p_consumidor_telefono:  telefono.trim() || null,
-        p_consumidor_email:     email.trim() || null,
-        p_es_menor_edad:        esMenor,
-        p_tutor_nombre:         tutorNombre.trim() || null,
-        p_tutor_num_doc:        tutorDoc.trim() || null,
-        p_bien_descripcion:     bienDesc.trim() || null,
-        p_bien_monto:           bienMonto ? parseFloat(bienMonto) : null,
-        p_tipo:                 tipo,
-        p_descripcion:          descripcion.trim(),
-        p_pedido_consumidor:    pedido.trim(),
+        p_consumidor_telefono: telefono.trim() || null,
+        p_consumidor_email: email.trim() || null,
+        p_es_menor_edad: esMenor,
+        p_tutor_nombre: tutorNombre.trim() || null,
+        p_tutor_num_doc: tutorDoc.trim() || null,
+        p_bien_descripcion: bienDesc.trim() || null,
+        p_bien_monto: bienMonto ? parseFloat(bienMonto) : null,
+        p_tipo: tipo,
+        p_descripcion: descripcion.trim(),
+        p_pedido_consumidor: pedido.trim(),
       });
       if (rpcError) throw rpcError;
       const row = Array.isArray(data) ? data[0] : data;
       setTicket({
-        id:                   row.id,
-        numeroCorrelativo:    row.numero_correlativo,
-        fecha:                row.fecha,
-        empresaNombre:        row.empresa_nombre ?? store.name,
-        empresaRuc:           row.empresa_ruc ?? "",
-        empresaDireccion:     row.empresa_direccion ?? "",
-        empresaUrl:           row.empresa_url ?? "",
-        consumidorNombre:     nombre.trim(),
-        consumidorTipoDoc:    tipoDoc,
-        consumidorNumDoc:     numDoc.trim(),
-        consumidorDomicilio:  domicilio.trim(),
-        consumidorTelefono:   telefono.trim(),
-        consumidorEmail:      email.trim(),
-        esMenorEdad:          esMenor,
-        tutorNombre:          tutorNombre.trim(),
-        tutorNumDoc:          tutorDoc.trim(),
-        bienDescripcion:      bienDesc.trim(),
-        bienMonto:            bienMonto,
+        id: row.id,
+        numeroCorrelativo: row.numero_correlativo,
+        fecha: row.fecha,
+        empresaNombre: row.empresa_nombre ?? store.name,
+        empresaRuc: row.empresa_ruc ?? "",
+        empresaDireccion: row.empresa_direccion ?? "",
+        empresaUrl: row.empresa_url ?? "",
+        consumidorNombre: nombre.trim(),
+        consumidorTipoDoc: tipoDoc,
+        consumidorNumDoc: numDoc.trim(),
+        consumidorDomicilio: domicilio.trim(),
+        consumidorTelefono: telefono.trim(),
+        consumidorEmail: email.trim(),
+        esMenorEdad: esMenor,
+        tutorNombre: tutorNombre.trim(),
+        tutorNumDoc: tutorDoc.trim(),
+        bienDescripcion: bienDesc.trim(),
+        bienMonto: bienMonto,
         tipo,
-        descripcion:          descripcion.trim(),
-        pedidoConsumidor:     pedido.trim(),
+        descripcion: descripcion.trim(),
+        pedidoConsumidor: pedido.trim(),
       });
     } catch (err) {
       console.error("[LibroReclamaciones]", err);
@@ -6497,8 +8355,11 @@ function LibroReclamacionesModal({
 
   const handlePrint = async () => {
     if (!ticket) return;
-    const num = `N° ${String(ticket.numeroCorrelativo).padStart(4,"0")}-${new Date().getFullYear()}`;
-    const fecha = new Date(ticket.fecha).toLocaleString("es-PE", { dateStyle:"long", timeStyle:"short" });
+    const num = `N° ${String(ticket.numeroCorrelativo).padStart(4, "0")}-${new Date().getFullYear()}`;
+    const fecha = new Date(ticket.fecha).toLocaleString("es-PE", {
+      dateStyle: "long",
+      timeStyle: "short",
+    });
 
     const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -6515,7 +8376,12 @@ function LibroReclamacionesModal({
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(7.5);
     doc.setFont("helvetica", "bold");
-    doc.text(`HOJA DE RECLAMACIÓN · ${ticket.tipo === "reclamo" ? "RECLAMO" : "QUEJA"}`, W / 2, 10, { align: "center" });
+    doc.text(
+      `HOJA DE RECLAMACIÓN · ${ticket.tipo === "reclamo" ? "RECLAMO" : "QUEJA"}`,
+      W / 2,
+      10,
+      { align: "center" },
+    );
 
     doc.setFontSize(26);
     doc.setFont("helvetica", "bold");
@@ -6558,9 +8424,9 @@ function LibroReclamacionesModal({
     // ── Sección A ──────────────────────────────────────────────
     section("A. DATOS DEL PROVEEDOR");
     line(ticket.empresaNombre, true);
-    if (ticket.empresaRuc)      line(`RUC: ${ticket.empresaRuc}`);
+    if (ticket.empresaRuc) line(`RUC: ${ticket.empresaRuc}`);
     if (ticket.empresaDireccion) line(ticket.empresaDireccion);
-    if (ticket.empresaUrl)      line(ticket.empresaUrl);
+    if (ticket.empresaUrl) line(ticket.empresaUrl);
     y += 3;
     hr();
 
@@ -6569,8 +8435,8 @@ function LibroReclamacionesModal({
     line(ticket.consumidorNombre, true);
     line(`${ticket.consumidorTipoDoc}: ${ticket.consumidorNumDoc}`);
     if (ticket.consumidorDomicilio) line(ticket.consumidorDomicilio);
-    if (ticket.consumidorTelefono)  line(`Tel: ${ticket.consumidorTelefono}`);
-    if (ticket.consumidorEmail)     line(`Email: ${ticket.consumidorEmail}`);
+    if (ticket.consumidorTelefono) line(`Tel: ${ticket.consumidorTelefono}`);
+    if (ticket.consumidorEmail) line(`Email: ${ticket.consumidorEmail}`);
     if (ticket.esMenorEdad) {
       line(`Tutor: ${ticket.tutorNombre}  —  Doc: ${ticket.tutorNumDoc}`);
     }
@@ -6581,7 +8447,7 @@ function LibroReclamacionesModal({
     if (ticket.bienDescripcion || ticket.bienMonto) {
       section("C. BIEN O SERVICIO");
       if (ticket.bienDescripcion) line(ticket.bienDescripcion);
-      if (ticket.bienMonto)       line(`Monto: S/ ${parseFloat(ticket.bienMonto).toFixed(2)}`, true);
+      if (ticket.bienMonto) line(`Monto: S/ ${parseFloat(ticket.bienMonto).toFixed(2)}`, true);
       y += 3;
       hr();
     }
@@ -6608,7 +8474,7 @@ function LibroReclamacionesModal({
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     let legalH = 8;
-    legalLines.forEach(l => {
+    legalLines.forEach((l) => {
       legalH += doc.splitTextToSize(l, contentW - 8).length * 4.5;
     });
 
@@ -6617,7 +8483,7 @@ function LibroReclamacionesModal({
     doc.roundedRect(margin, y, contentW, legalH, 3, 3, "FD");
     y += 5;
 
-    legalLines.forEach(l => {
+    legalLines.forEach((l) => {
       doc.setFontSize(7.5);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(71, 85, 105);
@@ -6640,22 +8506,22 @@ function LibroReclamacionesModal({
     <>
       <div
         className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-        style={{ backgroundColor:"rgba(0,0,0,0.65)", backdropFilter:"blur(4px)" }}
+        style={{ backgroundColor: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
       >
         <div
           className="w-full sm:max-w-xl rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col"
-          style={{ ...sBase, maxHeight:"95vh" }}
+          style={{ ...sBase, maxHeight: "95vh" }}
         >
           {/* ── HEADER ── */}
           <div
             className="flex items-center justify-between px-5 py-4 shrink-0"
-            style={{ borderBottom:"1px solid var(--border)" }}
+            style={{ borderBottom: "1px solid var(--border)" }}
           >
             <div className="flex items-center gap-2.5">
-              <ClipboardList className="h-5 w-5" style={{ color:"var(--primary)" }} />
+              <ClipboardList className="h-5 w-5" style={{ color: "var(--primary)" }} />
               <div>
                 <p className="font-black text-sm leading-none">Libro de Reclamaciones</p>
-                <p className="text-[10px] mt-0.5" style={{ color:"var(--muted-foreground)" }}>
+                <p className="text-[10px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
                   Ley N° 29571 · DS N° 101-2022-PCM
                 </p>
               </div>
@@ -6664,7 +8530,7 @@ function LibroReclamacionesModal({
               <button
                 onClick={onClose}
                 className="h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-60"
-                style={{ color:"var(--muted-foreground)" }}
+                style={{ color: "var(--muted-foreground)" }}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -6673,14 +8539,13 @@ function LibroReclamacionesModal({
 
           {/* ── BODY ── */}
           <div className="overflow-y-auto flex-1 px-5 py-5 space-y-5">
-
             {/* ════════ TICKET FINAL ════════ */}
             {ticket && (
               <div className="space-y-4">
                 <div className="text-center space-y-1">
                   <CheckCircle2 className="h-10 w-10 mx-auto text-emerald-500" />
                   <p className="font-black text-lg">Registrado correctamente</p>
-                  <p className="text-xs" style={{ color:"var(--muted-foreground)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     Guarda o imprime esta constancia — es tu comprobante legal.
                   </p>
                 </div>
@@ -6689,57 +8554,86 @@ function LibroReclamacionesModal({
                 <div
                   id="lr-ticket"
                   className="rounded-2xl border-2 overflow-hidden"
-                  style={{ borderColor:"var(--border)" }}
+                  style={{ borderColor: "var(--border)" }}
                 >
                   {/* Cabecera del ticket */}
-                  <div className="p-4 text-center text-white" style={{ backgroundColor:"var(--primary)" }}>
+                  <div
+                    className="p-4 text-center text-white"
+                    style={{ backgroundColor: "var(--primary)" }}
+                  >
                     <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
                       Hoja de Reclamación · {ticket.tipo === "reclamo" ? "RECLAMO" : "QUEJA"}
                     </p>
                     <p className="lr-num text-3xl font-black tracking-tight mt-1">{numFormatted}</p>
                     <p className="text-[11px] opacity-75 mt-1">
-                      {new Date(ticket.fecha).toLocaleString("es-PE", { dateStyle:"long", timeStyle:"short" })}
+                      {new Date(ticket.fecha).toLocaleString("es-PE", {
+                        dateStyle: "long",
+                        timeStyle: "short",
+                      })}
                     </p>
                   </div>
 
-                  <div className="p-4 space-y-3 text-sm" style={{ backgroundColor:"var(--card)" }}>
+                  <div className="p-4 space-y-3 text-sm" style={{ backgroundColor: "var(--card)" }}>
                     {/* Sección A: Proveedor */}
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                      <p
+                        className="text-[10px] font-black uppercase tracking-wider mb-1"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
                         A. Datos del Proveedor
                       </p>
                       <p className="font-bold">{ticket.empresaNombre}</p>
                       {ticket.empresaRuc && <p className="text-xs">RUC: {ticket.empresaRuc}</p>}
-                      {ticket.empresaDireccion && <p className="text-xs">{ticket.empresaDireccion}</p>}
+                      {ticket.empresaDireccion && (
+                        <p className="text-xs">{ticket.empresaDireccion}</p>
+                      )}
                       {ticket.empresaUrl && <p className="text-xs">{ticket.empresaUrl}</p>}
                     </div>
 
-                    <div className="border-t" style={{ borderColor:"var(--border)" }} />
+                    <div className="border-t" style={{ borderColor: "var(--border)" }} />
 
                     {/* Sección B: Consumidor */}
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                      <p
+                        className="text-[10px] font-black uppercase tracking-wider mb-1"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
                         B. Datos del Consumidor
                       </p>
                       <p className="font-bold">{ticket.consumidorNombre}</p>
-                      <p className="text-xs">{ticket.consumidorTipoDoc}: {ticket.consumidorNumDoc}</p>
-                      {ticket.consumidorDomicilio && <p className="text-xs">{ticket.consumidorDomicilio}</p>}
-                      {ticket.consumidorTelefono && <p className="text-xs">Tel: {ticket.consumidorTelefono}</p>}
-                      {ticket.consumidorEmail    && <p className="text-xs">Email: {ticket.consumidorEmail}</p>}
+                      <p className="text-xs">
+                        {ticket.consumidorTipoDoc}: {ticket.consumidorNumDoc}
+                      </p>
+                      {ticket.consumidorDomicilio && (
+                        <p className="text-xs">{ticket.consumidorDomicilio}</p>
+                      )}
+                      {ticket.consumidorTelefono && (
+                        <p className="text-xs">Tel: {ticket.consumidorTelefono}</p>
+                      )}
+                      {ticket.consumidorEmail && (
+                        <p className="text-xs">Email: {ticket.consumidorEmail}</p>
+                      )}
                       {ticket.esMenorEdad && (
-                        <p className="text-xs">Tutor: {ticket.tutorNombre} — Doc: {ticket.tutorNumDoc}</p>
+                        <p className="text-xs">
+                          Tutor: {ticket.tutorNombre} — Doc: {ticket.tutorNumDoc}
+                        </p>
                       )}
                     </div>
 
                     {/* Sección C: Bien/Servicio */}
                     {(ticket.bienDescripcion || ticket.bienMonto) && (
                       <>
-                        <div className="border-t" style={{ borderColor:"var(--border)" }} />
+                        <div className="border-t" style={{ borderColor: "var(--border)" }} />
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                          <p
+                            className="text-[10px] font-black uppercase tracking-wider mb-1"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
                             C. Bien o Servicio
                           </p>
-                          {ticket.bienDescripcion && <p className="text-xs">{ticket.bienDescripcion}</p>}
+                          {ticket.bienDescripcion && (
+                            <p className="text-xs">{ticket.bienDescripcion}</p>
+                          )}
                           {ticket.bienMonto && (
                             <p className="text-xs font-semibold">
                               Monto: S/ {parseFloat(ticket.bienMonto).toFixed(2)}
@@ -6749,17 +8643,23 @@ function LibroReclamacionesModal({
                       </>
                     )}
 
-                    <div className="border-t" style={{ borderColor:"var(--border)" }} />
+                    <div className="border-t" style={{ borderColor: "var(--border)" }} />
 
                     {/* Sección D: Reclamo */}
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider mb-1" style={{ color:"var(--muted-foreground)" }}>
+                      <p
+                        className="text-[10px] font-black uppercase tracking-wider mb-1"
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
                         D. Detalle — <span className="capitalize">{ticket.tipo}</span>
                       </p>
                       <p className="text-xs leading-relaxed">{ticket.descripcion}</p>
                       {ticket.pedidoConsumidor && (
                         <>
-                          <p className="text-[10px] font-bold mt-2" style={{ color:"var(--muted-foreground)" }}>
+                          <p
+                            className="text-[10px] font-bold mt-2"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
                             Pedido del consumidor:
                           </p>
                           <p className="text-xs leading-relaxed">{ticket.pedidoConsumidor}</p>
@@ -6767,30 +8667,31 @@ function LibroReclamacionesModal({
                       )}
                     </div>
 
-                    <div className="border-t" style={{ borderColor:"var(--border)" }} />
+                    <div className="border-t" style={{ borderColor: "var(--border)" }} />
 
                     {/* Texto legal obligatorio */}
                     <div
                       className="rounded-xl p-3 text-[10px] leading-relaxed space-y-1"
-                      style={{ backgroundColor:"var(--muted)", color:"var(--muted-foreground)" }}
+                      style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }}
                     >
                       <p>
                         <strong>Plazo de respuesta:</strong> El proveedor tiene un plazo máximo de{" "}
-                        <strong>15 días hábiles improrrogables</strong> para dar respuesta a su {ticket.tipo},
-                        conforme a la Ley N° 31435 y el DS N° 101-2022-PCM.
+                        <strong>15 días hábiles improrrogables</strong> para dar respuesta a su{" "}
+                        {ticket.tipo}, conforme a la Ley N° 31435 y el DS N° 101-2022-PCM.
                       </p>
                       <p>
-                        <strong>Código único:</strong> {numFormatted}. Este documento es constancia oficial
-                        de la presentación de su {ticket.tipo} al amparo de la Ley N° 29571 — Código de
-                        Protección y Defensa del Consumidor.
+                        <strong>Código único:</strong> {numFormatted}. Este documento es constancia
+                        oficial de la presentación de su {ticket.tipo} al amparo de la Ley N° 29571
+                        — Código de Protección y Defensa del Consumidor.
                       </p>
                       <p>
-                        Si el proveedor no responde dentro del plazo legal, puede presentar una denuncia
-                        ante <strong>INDECOPI</strong> (consumidor.gob.pe) citando el número de hoja indicado.
+                        Si el proveedor no responde dentro del plazo legal, puede presentar una
+                        denuncia ante <strong>INDECOPI</strong> (consumidor.gob.pe) citando el
+                        número de hoja indicado.
                       </p>
                       <p>
-                        <strong>Conserve este documento.</strong> El proveedor está obligado a conservar
-                        esta hoja por un mínimo de 2 años (Art. 9° DS N° 011-2011-PCM).
+                        <strong>Conserve este documento.</strong> El proveedor está obligado a
+                        conservar esta hoja por un mínimo de 2 años (Art. 9° DS N° 011-2011-PCM).
                       </p>
                     </div>
                   </div>
@@ -6800,17 +8701,17 @@ function LibroReclamacionesModal({
                 <button
                   onClick={handlePrint}
                   className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition hover:opacity-90 active:scale-95"
-                  style={{ backgroundColor:"var(--primary)", color:"#fff" }}
+                  style={{ backgroundColor: "var(--primary)", color: "#fff" }}
                 >
                   ⬇️ Descargar PDF
                 </button>
-                <p className="text-[10px] text-center" style={{ color:"var(--muted-foreground)" }}>
+                <p className="text-[10px] text-center" style={{ color: "var(--muted-foreground)" }}>
                   El PDF se descarga directamente — sin diálogos de impresión.
                 </p>
                 <button
                   onClick={onClose}
                   className="w-full py-2.5 rounded-xl text-sm font-medium transition hover:opacity-60"
-                  style={{ color:"var(--muted-foreground)" }}
+                  style={{ color: "var(--muted-foreground)" }}
                 >
                   Cerrar
                 </button>
@@ -6821,41 +8722,53 @@ function LibroReclamacionesModal({
             {!ticket && step === 1 && (
               <div className="space-y-4">
                 {/* Datos empresa */}
-                <div
-                  className="rounded-xl p-3 text-xs"
-                  style={{ backgroundColor:"var(--muted)" }}
-                >
-                  <p className="font-black text-sm" style={{ color:"var(--foreground)" }}>
+                <div className="rounded-xl p-3 text-xs" style={{ backgroundColor: "var(--muted)" }}>
+                  <p className="font-black text-sm" style={{ color: "var(--foreground)" }}>
                     {(store as any).empresaRazonSocial || store.name}
                   </p>
                   {(store as any).empresaRuc && (
-                    <p style={{ color:"var(--muted-foreground)" }}>RUC: {(store as any).empresaRuc}</p>
+                    <p style={{ color: "var(--muted-foreground)" }}>
+                      RUC: {(store as any).empresaRuc}
+                    </p>
                   )}
                   {(store as any).empresaDireccion && (
-                    <p style={{ color:"var(--muted-foreground)" }}>{(store as any).empresaDireccion}</p>
+                    <p style={{ color: "var(--muted-foreground)" }}>
+                      {(store as any).empresaDireccion}
+                    </p>
                   )}
                 </div>
 
                 {/* Marco legal */}
                 <div
                   className="rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed"
-                  style={{ borderColor:"var(--border)", color:"var(--muted-foreground)" }}
+                  style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
                 >
-                  Conforme a la <strong>Ley N° 29571</strong> (Código de Protección y Defensa del Consumidor)
-                  y el <strong>DS N° 101-2022-PCM</strong>, tienes derecho a presentar una queja o reclamo.
-                  Recibirás un número correlativo único como constancia legal.
-                  {" "}El proveedor tiene <strong>15 días hábiles</strong> para responderte.
+                  Conforme a la <strong>Ley N° 29571</strong> (Código de Protección y Defensa del
+                  Consumidor) y el <strong>DS N° 101-2022-PCM</strong>, tienes derecho a presentar
+                  una queja o reclamo. Recibirás un número correlativo único como constancia legal.{" "}
+                  El proveedor tiene <strong>15 días hábiles</strong> para responderte.
                 </div>
 
-                <p className="text-xs font-black uppercase tracking-wider" style={{ color:"var(--muted-foreground)" }}>
+                <p
+                  className="text-xs font-black uppercase tracking-wider"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   Sección B — Datos del Consumidor
                 </p>
 
-                <LRField label="Nombre completo" required error={nombre.trim().length > 2 ? errNombre : ""}>
+                <LRField
+                  label="Nombre completo"
+                  required
+                  error={nombre.trim().length > 2 ? errNombre : ""}
+                >
                   <LRInput
-                    value={nombre} onChange={e => setNombre(e.target.value)}
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
                     placeholder="Nombre y apellido completos"
-                    style={{ ...INPUT_STYLE, borderColor: nombre.trim().length > 2 && errNombre ? "#ef4444" : undefined }}
+                    style={{
+                      ...INPUT_STYLE,
+                      borderColor: nombre.trim().length > 2 && errNombre ? "#ef4444" : undefined,
+                    }}
                   />
                 </LRField>
 
@@ -6863,7 +8776,10 @@ function LibroReclamacionesModal({
                   <LRField label="Tipo de documento" required>
                     <select
                       value={tipoDoc}
-                      onChange={e => { setTipoDoc(e.target.value as any); setNumDoc(""); }}
+                      onChange={(e) => {
+                        setTipoDoc(e.target.value as any);
+                        setNumDoc("");
+                      }}
                       style={INPUT_STYLE}
                     >
                       <option value="DNI">DNI</option>
@@ -6872,43 +8788,79 @@ function LibroReclamacionesModal({
                       <option value="RUC">RUC</option>
                     </select>
                   </LRField>
-                  <LRField label="Número de documento" required error={numDoc.trim().length > 2 ? errNumDoc : ""}>
+                  <LRField
+                    label="Número de documento"
+                    required
+                    error={numDoc.trim().length > 2 ? errNumDoc : ""}
+                  >
                     <LRInput
                       value={numDoc}
-                      onChange={e => {
-                        const v = tipoDoc === "Pasaporte"
-                          ? e.target.value.replace(/[^a-zA-Z0-9]/g,"").slice(0,12)
-                          : e.target.value.replace(/\D/g,"").slice(0, tipoDoc === "RUC" ? 11 : tipoDoc === "DNI" ? 8 : 12);
+                      onChange={(e) => {
+                        const v =
+                          tipoDoc === "Pasaporte"
+                            ? e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12)
+                            : e.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, tipoDoc === "RUC" ? 11 : tipoDoc === "DNI" ? 8 : 12);
                         setNumDoc(v);
                       }}
-                      placeholder={tipoDoc === "DNI" ? "12345678" : tipoDoc === "RUC" ? "20123456789" : tipoDoc === "CE" ? "123456789" : "AB123456"}
+                      placeholder={
+                        tipoDoc === "DNI"
+                          ? "12345678"
+                          : tipoDoc === "RUC"
+                            ? "20123456789"
+                            : tipoDoc === "CE"
+                              ? "123456789"
+                              : "AB123456"
+                      }
                       inputMode={tipoDoc === "Pasaporte" ? "text" : "numeric"}
                       maxLength={tipoDoc === "DNI" ? 8 : tipoDoc === "RUC" ? 11 : 12}
-                      style={{ ...INPUT_STYLE, borderColor: numDoc.trim().length > 2 && errNumDoc ? "#ef4444" : undefined }}
+                      style={{
+                        ...INPUT_STYLE,
+                        borderColor: numDoc.trim().length > 2 && errNumDoc ? "#ef4444" : undefined,
+                      }}
                     />
                   </LRField>
                 </div>
 
                 <LRField label="Domicilio / Dirección">
                   <LRInput
-                    value={domicilio} onChange={e => setDomicilio(e.target.value)}
+                    value={domicilio}
+                    onChange={(e) => setDomicilio(e.target.value)}
                     placeholder="Av. o calle, ciudad (opcional)"
                   />
                 </LRField>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <LRField label="Teléfono de contacto" error={telefono.trim().length > 2 ? errTelefono : ""}>
+                  <LRField
+                    label="Teléfono de contacto"
+                    error={telefono.trim().length > 2 ? errTelefono : ""}
+                  >
                     <LRInput
-                      value={telefono} onChange={e => setTelefono(e.target.value.replace(/\D/g,"").slice(0,12))}
-                      placeholder="987654321" inputMode="numeric"
-                      style={{ ...INPUT_STYLE, borderColor: telefono.trim().length > 2 && errTelefono ? "#ef4444" : undefined }}
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                      placeholder="987654321"
+                      inputMode="numeric"
+                      style={{
+                        ...INPUT_STYLE,
+                        borderColor:
+                          telefono.trim().length > 2 && errTelefono ? "#ef4444" : undefined,
+                      }}
                     />
                   </LRField>
-                  <LRField label="Correo electrónico" error={email.trim().length > 4 ? errEmail : ""}>
+                  <LRField
+                    label="Correo electrónico"
+                    error={email.trim().length > 4 ? errEmail : ""}
+                  >
                     <LRInput
-                      value={email} onChange={e => setEmail(e.target.value)}
-                      placeholder="tu@correo.com" type="email"
-                      style={{ ...INPUT_STYLE, borderColor: email.trim().length > 4 && errEmail ? "#ef4444" : undefined }}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="tu@correo.com"
+                      type="email"
+                      style={{
+                        ...INPUT_STYLE,
+                        borderColor: email.trim().length > 4 && errEmail ? "#ef4444" : undefined,
+                      }}
                     />
                   </LRField>
                 </div>
@@ -6918,28 +8870,49 @@ function LibroReclamacionesModal({
                   <input
                     type="checkbox"
                     checked={esMenor}
-                    onChange={e => setEsMenor(e.target.checked)}
+                    onChange={(e) => setEsMenor(e.target.checked)}
                     className="h-4 w-4 rounded accent-primary"
                   />
                   Soy menor de edad (se requieren datos del tutor)
                 </label>
 
                 {esMenor && (
-                  <div className="grid grid-cols-2 gap-3 pl-1 border-l-2" style={{ borderColor:"var(--primary)" }}>
-                    <LRField label="Nombre del tutor" required error={tutorNombre.trim().length > 2 ? errTutorNombre : ""}>
+                  <div
+                    className="grid grid-cols-2 gap-3 pl-1 border-l-2"
+                    style={{ borderColor: "var(--primary)" }}
+                  >
+                    <LRField
+                      label="Nombre del tutor"
+                      required
+                      error={tutorNombre.trim().length > 2 ? errTutorNombre : ""}
+                    >
                       <LRInput
-                        value={tutorNombre} onChange={e => setTutorNombre(e.target.value)}
+                        value={tutorNombre}
+                        onChange={(e) => setTutorNombre(e.target.value)}
                         placeholder="Nombre del padre/madre/tutor"
-                        style={{ ...INPUT_STYLE, borderColor: tutorNombre.trim().length > 2 && errTutorNombre ? "#ef4444" : undefined }}
+                        style={{
+                          ...INPUT_STYLE,
+                          borderColor:
+                            tutorNombre.trim().length > 2 && errTutorNombre ? "#ef4444" : undefined,
+                        }}
                       />
                     </LRField>
-                    <LRField label="N° doc. tutor" required error={tutorDoc.trim().length > 2 ? errTutorDoc : ""}>
+                    <LRField
+                      label="N° doc. tutor"
+                      required
+                      error={tutorDoc.trim().length > 2 ? errTutorDoc : ""}
+                    >
                       <LRInput
-                        value={tutorDoc} onChange={e => setTutorDoc(e.target.value.replace(/\D/g,"").slice(0,8))}
+                        value={tutorDoc}
+                        onChange={(e) => setTutorDoc(e.target.value.replace(/\D/g, "").slice(0, 8))}
                         placeholder="DNI del tutor"
                         inputMode="numeric"
                         maxLength={8}
-                        style={{ ...INPUT_STYLE, borderColor: tutorDoc.trim().length > 2 && errTutorDoc ? "#ef4444" : undefined }}
+                        style={{
+                          ...INPUT_STYLE,
+                          borderColor:
+                            tutorDoc.trim().length > 2 && errTutorDoc ? "#ef4444" : undefined,
+                        }}
                       />
                     </LRField>
                   </div>
@@ -6947,18 +8920,18 @@ function LibroReclamacionesModal({
 
                 <div
                   className="rounded-xl p-3 text-[10px]"
-                  style={{ backgroundColor:"var(--muted)", color:"var(--muted-foreground)" }}
+                  style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }}
                 >
                   Los campos con <span className="text-red-500 font-bold">*</span> son obligatorios
-                  conforme al Anexo I del DS N° 101-2022-PCM. Los datos opcionales facilitan la respuesta
-                  del proveedor.
+                  conforme al Anexo I del DS N° 101-2022-PCM. Los datos opcionales facilitan la
+                  respuesta del proveedor.
                 </div>
 
                 <button
                   onClick={() => setStep(2)}
                   disabled={!canStep1}
                   className="w-full py-3 rounded-xl font-bold text-sm transition disabled:opacity-40"
-                  style={{ backgroundColor:"var(--primary)", color:"white" }}
+                  style={{ backgroundColor: "var(--primary)", color: "white" }}
                 >
                   Continuar →
                 </button>
@@ -6971,46 +8944,57 @@ function LibroReclamacionesModal({
                 <button
                   onClick={() => setStep(1)}
                   className="flex items-center gap-1.5 text-xs font-semibold transition hover:opacity-60"
-                  style={{ color:"var(--muted-foreground)" }}
+                  style={{ color: "var(--muted-foreground)" }}
                 >
                   ← Volver
                 </button>
 
-                <p className="text-xs font-black uppercase tracking-wider" style={{ color:"var(--muted-foreground)" }}>
+                <p
+                  className="text-xs font-black uppercase tracking-wider"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   Sección C — Bien o Servicio
                 </p>
 
                 <LRField label="Descripción del producto o servicio">
                   <LRInput
-                    value={bienDesc} onChange={e => setBienDesc(e.target.value)}
+                    value={bienDesc}
+                    onChange={(e) => setBienDesc(e.target.value)}
                     placeholder="Ej: Zapatillas talla 42, color negro"
                   />
                 </LRField>
 
                 <LRField label="Monto pagado (S/)">
                   <LRInput
-                    value={bienMonto} onChange={e => setBienMonto(e.target.value.replace(/[^0-9.]/g,""))}
-                    placeholder="0.00" inputMode="decimal"
+                    value={bienMonto}
+                    onChange={(e) => setBienMonto(e.target.value.replace(/[^0-9.]/g, ""))}
+                    placeholder="0.00"
+                    inputMode="decimal"
                   />
                 </LRField>
 
-                <div className="border-t" style={{ borderColor:"var(--border)" }} />
+                <div className="border-t" style={{ borderColor: "var(--border)" }} />
 
-                <p className="text-xs font-black uppercase tracking-wider" style={{ color:"var(--muted-foreground)" }}>
+                <p
+                  className="text-xs font-black uppercase tracking-wider"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   Sección D — Detalle del {tipo === "reclamo" ? "Reclamo" : "Queja"}
                 </p>
 
                 {/* Tipo */}
                 <LRField label="Tipo de registro" required>
                   <div className="grid grid-cols-2 gap-2">
-                    {(["reclamo","queja"] as const).map(t => (
+                    {(["reclamo", "queja"] as const).map((t) => (
                       <button
-                        key={t} type="button" onClick={() => setTipo(t)}
+                        key={t}
+                        type="button"
+                        onClick={() => setTipo(t)}
                         className="rounded-xl px-3 py-3 text-left text-sm transition border"
                         style={{
-                          borderColor: tipo===t ? "var(--primary)" : "var(--border)",
-                          backgroundColor: tipo===t ? "var(--primary)" : "var(--card)",
-                          color: tipo===t ? "white" : "var(--foreground)",
+                          borderColor: tipo === t ? "var(--primary)" : "var(--border)",
+                          backgroundColor: tipo === t ? "var(--primary)" : "var(--card)",
+                          color: tipo === t ? "white" : "var(--foreground)",
                         }}
                       >
                         <p className="font-black capitalize">{t}</p>
@@ -7022,60 +9006,83 @@ function LibroReclamacionesModal({
                       </button>
                     ))}
                   </div>
-                  <p className="text-[10px] mt-1" style={{ color:"var(--muted-foreground)" }}>
-                    Art. 3° DS N° 011-2011-PCM: el <em>reclamo</em> es disconformidad con el bien/servicio;
-                    la <em>queja</em> es malestar en la atención, sin disconformidad con el bien/servicio.
-                    Ninguno constituye denuncia administrativa.
+                  <p className="text-[10px] mt-1" style={{ color: "var(--muted-foreground)" }}>
+                    Art. 3° DS N° 011-2011-PCM: el <em>reclamo</em> es disconformidad con el
+                    bien/servicio; la <em>queja</em> es malestar en la atención, sin disconformidad
+                    con el bien/servicio. Ninguno constituye denuncia administrativa.
                   </p>
                 </LRField>
 
-                <LRField label="Descripción detallada" required error={descripcion.trim().length > 5 ? errDescripcion : ""}>
+                <LRField
+                  label="Descripción detallada"
+                  required
+                  error={descripcion.trim().length > 5 ? errDescripcion : ""}
+                >
                   <LRTextarea
-                    value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
                     placeholder="Describe con el mayor detalle posible lo ocurrido: qué pasó, cuándo, cómo..."
                     rows={4}
-                    style={{ ...INPUT_STYLE, resize:"vertical", minHeight:"80px", borderColor: descripcion.trim().length > 5 && errDescripcion ? "#ef4444" : undefined }}
+                    style={{
+                      ...INPUT_STYLE,
+                      resize: "vertical",
+                      minHeight: "80px",
+                      borderColor:
+                        descripcion.trim().length > 5 && errDescripcion ? "#ef4444" : undefined,
+                    }}
                   />
-                  <p className="text-[10px]" style={{ color:"var(--muted-foreground)" }}>
+                  <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
                     {descripcion.trim().length}/20 caracteres mínimo
                   </p>
                 </LRField>
 
-                <LRField label="¿Qué solicitas al proveedor?" required error={pedido.trim().length > 5 ? errPedido : ""}>
+                <LRField
+                  label="¿Qué solicitas al proveedor?"
+                  required
+                  error={pedido.trim().length > 5 ? errPedido : ""}
+                >
                   <LRTextarea
-                    value={pedido} onChange={e => setPedido(e.target.value)}
+                    value={pedido}
+                    onChange={(e) => setPedido(e.target.value)}
                     placeholder="Ej: Cambio del producto, devolución del dinero, disculpas formales..."
                     rows={3}
-                    style={{ ...INPUT_STYLE, resize:"vertical", minHeight:"80px", borderColor: pedido.trim().length > 5 && errPedido ? "#ef4444" : undefined }}
+                    style={{
+                      ...INPUT_STYLE,
+                      resize: "vertical",
+                      minHeight: "80px",
+                      borderColor: pedido.trim().length > 5 && errPedido ? "#ef4444" : undefined,
+                    }}
                   />
-                  <p className="text-[10px]" style={{ color:"var(--muted-foreground)" }}>
+                  <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
                     {pedido.trim().length}/10 caracteres mínimo
                   </p>
                 </LRField>
 
-                {errorMsg && (
-                  <p className="text-xs text-red-500 font-medium">{errorMsg}</p>
-                )}
+                {errorMsg && <p className="text-xs text-red-500 font-medium">{errorMsg}</p>}
 
                 <div
                   className="rounded-xl p-3 text-[10px] leading-relaxed"
-                  style={{ backgroundColor:"var(--muted)", color:"var(--muted-foreground)" }}
+                  style={{ backgroundColor: "var(--muted)", color: "var(--muted-foreground)" }}
                 >
                   Al enviar, declaras que la información es verídica. Tus datos serán usados
                   exclusivamente para gestionar tu {tipo}. El proveedor tiene{" "}
-                  <strong>15 días hábiles</strong> para responderte (Ley N° 31435). Si no
-                  recibes respuesta, puedes acudir a <strong>INDECOPI</strong> (consumidor.gob.pe).
+                  <strong>15 días hábiles</strong> para responderte (Ley N° 31435). Si no recibes
+                  respuesta, puedes acudir a <strong>INDECOPI</strong> (consumidor.gob.pe).
                 </div>
 
                 <button
                   onClick={handleSubmit}
                   disabled={sending || !canStep2}
                   className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-40"
-                  style={{ backgroundColor:"var(--primary)", color:"white" }}
+                  style={{ backgroundColor: "var(--primary)", color: "white" }}
                 >
-                  {sending
-                    ? <><Loader2 className="h-4 w-4 animate-spin" /> Registrando...</>
-                    : `Registrar ${tipo}`}
+                  {sending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Registrando...
+                    </>
+                  ) : (
+                    `Registrar ${tipo}`
+                  )}
                 </button>
               </div>
             )}
@@ -7085,19 +9092,19 @@ function LibroReclamacionesModal({
           {!ticket && (
             <div
               className="px-5 py-3 flex items-center justify-center gap-2 shrink-0"
-              style={{ borderTop:"1px solid var(--border)" }}
+              style={{ borderTop: "1px solid var(--border)" }}
             >
-              {[1,2].map(s => (
+              {[1, 2].map((s) => (
                 <div
                   key={s}
                   className="h-1.5 rounded-full transition-all duration-300"
                   style={{
-                    width: step===s ? "2rem" : "0.75rem",
-                    backgroundColor: step>=s ? "var(--primary)" : "var(--border)",
+                    width: step === s ? "2rem" : "0.75rem",
+                    backgroundColor: step >= s ? "var(--primary)" : "var(--border)",
                   }}
                 />
               ))}
-              <span className="text-[10px] ml-2" style={{ color:"var(--muted-foreground)" }}>
+              <span className="text-[10px] ml-2" style={{ color: "var(--muted-foreground)" }}>
                 Paso {step} de 2
               </span>
             </div>
@@ -7127,7 +9134,7 @@ function Chip({
         "px-4 py-1.5 text-xs font-semibold border whitespace-nowrap transition",
         active
           ? "bg-primary text-primary-foreground border-primary"
-          : "bg-background text-foreground border-border hover:bg-accent"
+          : "bg-background text-foreground border-border hover:bg-accent",
       )}
       style={{ borderRadius: cfg.cardRounded }}
     >
@@ -7140,7 +9147,12 @@ function Chip({
    Slider de rango de precio dual — min/max calculados de los productos reales
 ──────────────────────────────────────────────────────────────── */
 function PriceRangeSlider({
-  min, max, value, onChange, onReset, isDark,
+  min,
+  max,
+  value,
+  onChange,
+  onReset,
+  isDark,
 }: {
   min: number;
   max: number;
@@ -7162,16 +9174,14 @@ function PriceRangeSlider({
   };
 
   const mutedText = isDark ? "text-white/50" : "text-black/40";
-  const fgText   = isDark ? "text-white/80" : "text-black/70";
+  const fgText = isDark ? "text-white/80" : "text-black/70";
 
   return (
     <div className="space-y-1.5">
       <div className={`flex items-center justify-between text-xs font-medium ${fgText}`}>
         <span>Precio Máximo</span>
         <div className="flex items-center gap-2">
-          <span className="font-bold tabular-nums">
-            S/ {hi.toLocaleString()}
-          </span>
+          <span className="font-bold tabular-nums">S/ {hi.toLocaleString()}</span>
           {isFiltered && (
             <button
               onClick={onReset}
@@ -7186,7 +9196,9 @@ function PriceRangeSlider({
       {/* Track */}
       <div className="relative h-5 flex items-center">
         {/* Rail */}
-        <div className={`absolute w-full h-1.5 rounded-full ${isDark ? "bg-white/15" : "bg-black/10"}`} />
+        <div
+          className={`absolute w-full h-1.5 rounded-full ${isDark ? "bg-white/15" : "bg-black/10"}`}
+        />
         {/* Active range */}
         <div
           className="absolute h-1.5 rounded-full bg-primary"
@@ -7194,7 +9206,11 @@ function PriceRangeSlider({
         />
         {/* Thumb Hi */}
         <input
-          type="range" min={min} max={max} step={1} value={hi}
+          type="range"
+          min={min}
+          max={max}
+          step={1}
+          value={hi}
           onChange={handleHi}
           className="absolute w-full appearance-none bg-transparent cursor-pointer"
           style={{ zIndex: 4 }}

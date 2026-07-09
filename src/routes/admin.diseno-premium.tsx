@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Sparkles, Palette, Image, Utensils, Check, Flame, Coffee, AlertTriangle, Plus, BookOpen, LayoutGrid, Leaf, Grid, Columns, Sliders, ChevronDown, Eye, Lock } from "lucide-react";
+import { Sparkles, Palette, Image, Utensils, Check, Flame, Coffee, AlertTriangle, Plus, BookOpen, LayoutGrid, Leaf, Grid, Columns, Sliders, ChevronDown, Eye, Lock, Megaphone } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { Button } from "@/components/ui/button";
@@ -203,11 +203,21 @@ function DisenoPremiumPage() {
   const [bannerTagline, setBannerTagline] = useState((store as any).bannerTagline || "");
   const [bannerBottomTag, setBannerBottomTag] = useState((store as any).bannerBottomTag || "");
   const [isLoaded, setIsLoaded] = useState(false);
-  const [activeCustomizerTab, setActiveCustomizerTab] = useState<"estilo" | "colores" | "banners" | "ajustes">("estilo");
+  const [activeCustomizerTab, setActiveCustomizerTab] = useState<"estilo" | "colores" | "banners" | "ajustes" | "cintillo">("estilo");
   const [bannerStyle, setBannerStyle] = useState<"direct" | "framed" | "curved">("framed");
   const [catalogTypography, setCatalogTypography] = useState<"sans" | "serif" | "rounded" | "modern">("sans");
   const [cardStyle, setCardStyle] = useState<"standard" | "flat" | "shadow" | "curved">("standard");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const [promoBarEnabled, setPromoBarEnabled] = useState(store.promoBarEnabled || false);
+  const [promoBarText, setPromoBarText] = useState(store.promoBarText || "");
+  const [promoBarActionType, setPromoBarActionType] = useState<"none" | "product" | "category" | "url" | "coupon" | "cart">(
+    store.promoBarActionType || "none"
+  );
+  const [promoBarActionValue, setPromoBarActionValue] = useState(store.promoBarActionValue || "");
+  const [promoBarBgColor, setPromoBarBgColor] = useState(store.promoBarBgColor || "");
+  const [promoBarTextColor, setPromoBarTextColor] = useState(store.promoBarTextColor || "");
+  const [promoBarIsMarquee, setPromoBarIsMarquee] = useState(store.promoBarIsMarquee || false);
 
   const applyTemplateDefaults = (templateId: string, nicheId: string) => {
     if (templateId === "bloom" && nicheId === "floreria") {
@@ -263,6 +273,13 @@ function DisenoPremiumPage() {
       setBannerStyle((store as any).bannerStyle || "framed");
       setCatalogTypography((store as any).catalogTypography || "sans");
       setCardStyle((store as any).cardStyle || "standard");
+      setPromoBarEnabled(store.promoBarEnabled || false);
+      setPromoBarText(store.promoBarText || "");
+      setPromoBarActionType(store.promoBarActionType || "none");
+      setPromoBarActionValue(store.promoBarActionValue || "");
+      setPromoBarBgColor(store.promoBarBgColor || "");
+      setPromoBarTextColor(store.promoBarTextColor || "");
+      setPromoBarIsMarquee(store.promoBarIsMarquee || false);
       
       setIsLoaded(true);
     }
@@ -280,7 +297,14 @@ function DisenoPremiumPage() {
     store.niche !== premiumModel ||
     (store as any).bannerStyle !== bannerStyle ||
     (store as any).catalogTypography !== catalogTypography ||
-    (store as any).cardStyle !== cardStyle;
+    (store as any).cardStyle !== cardStyle ||
+    promoBarEnabled !== (store.promoBarEnabled || false) ||
+    promoBarText !== (store.promoBarText || "") ||
+    promoBarActionType !== (store.promoBarActionType || "none") ||
+    promoBarActionValue !== (store.promoBarActionValue || "") ||
+    promoBarBgColor !== (store.promoBarBgColor || "") ||
+    promoBarTextColor !== (store.promoBarTextColor || "") ||
+    promoBarIsMarquee !== (store.promoBarIsMarquee || false);
 
   const save = async () => {
     const toastId = toast.loading("Guardando diseño...");
@@ -299,12 +323,26 @@ function DisenoPremiumPage() {
         cardStyle: cardStyle || null,
         bannerTagline: bannerTagline || null,
         bannerBottomTag: bannerBottomTag || null,
+        promoBarEnabled,
+        promoBarText,
+        promoBarActionType,
+        promoBarActionValue,
+        promoBarBgColor: promoBarBgColor || null,
+        promoBarTextColor: promoBarTextColor || null,
+        promoBarIsMarquee,
       } as any);
 
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
       if (updatedStore) {
         const raw = (updatedStore as any).bannerImage ?? "";
         setBannerImages(raw ? (raw.includes("|||") ? raw.split("|||") : [raw]) : []);
+        setPromoBarEnabled(updatedStore.promoBarEnabled || false);
+        setPromoBarText(updatedStore.promoBarText || "");
+        setPromoBarActionType(updatedStore.promoBarActionType || "none");
+        setPromoBarActionValue(updatedStore.promoBarActionValue || "");
+        setPromoBarBgColor(updatedStore.promoBarBgColor || "");
+        setPromoBarTextColor(updatedStore.promoBarTextColor || "");
+        setPromoBarIsMarquee(updatedStore.promoBarIsMarquee || false);
       }
 
       toast.success("Diseño de diseñador aplicado con éxito", { id: toastId });
@@ -370,6 +408,13 @@ function DisenoPremiumPage() {
     cardStyle: cardStyle,
     bannerTagline: bannerTagline,
     bannerBottomTag: bannerBottomTag,
+    promoBarEnabled: promoBarEnabled,
+    promoBarText: promoBarText,
+    promoBarActionType: promoBarActionType,
+    promoBarActionValue: promoBarActionValue,
+    promoBarBgColor: promoBarBgColor,
+    promoBarTextColor: promoBarTextColor,
+    promoBarIsMarquee: promoBarIsMarquee,
   };
 
   const premiumModelNames: Record<string, string> = {
@@ -399,12 +444,13 @@ function DisenoPremiumPage() {
       </div>
 
       {/* ── Sub-navigation slider tabs ───────────────── */}
-      <div className="bg-zinc-100/80 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl p-1.5 w-full flex gap-1 shadow-sm border border-zinc-200/40 dark:border-zinc-800/40 mb-8 sticky top-14 z-30">
+      <div className="bg-zinc-100/80 dark:bg-zinc-900/60 backdrop-blur-md rounded-2xl p-1.5 w-full flex gap-1 shadow-sm border border-zinc-200/40 dark:border-zinc-800/40 mb-8 sticky top-14 z-30 overflow-x-auto scrollbar-none">
         {[
           { id: "estilo", label: "Estilo & Plantilla", icon: Sparkles },
           { id: "colores", label: "Paleta de Colores", icon: Palette },
           { id: "banners", label: "Portada & Banners", icon: Image },
           { id: "ajustes", label: "Ajustes de Diseño", icon: Sliders },
+          { id: "cintillo", label: "Cintillo de Anuncios", icon: Megaphone },
         ].map((tab) => {
           const Icon = tab.icon;
           const active = activeCustomizerTab === tab.id;
@@ -896,6 +942,244 @@ function DisenoPremiumPage() {
                   })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB 5: CINTILLO DE ANUNCIOS */}
+          {activeCustomizerTab === "cintillo" && (
+            <div className="rounded-3xl border border-zinc-200/85 bg-white p-6 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div
+                className="flex items-center gap-3 border-b pb-4"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0">
+                  <Megaphone className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-zinc-900 font-sans">Cintillo de Anuncios</h3>
+                  <p className="text-xs text-zinc-555">
+                    Muestra un aviso horizontal destacado en la parte superior de tu catálogo.
+                  </p>
+                </div>
+              </div>
+
+              {!(store.plan === "pro" || store.plan === "ilimitado") ? (
+                <div className="rounded-3xl border border-zinc-200 bg-zinc-50/50 p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-4.5 w-4.5 text-zinc-400" />
+                    <h4 className="font-extrabold text-xs text-zinc-955">
+                      Cintillo de Anuncios Bloqueado
+                    </h4>
+                  </div>
+                  <p className="text-[10px] text-zinc-555 leading-relaxed">
+                    Los cintillos promocionales personalizados con intenciones de clic (redirección a productos, categorías, cupones o enlaces) son exclusivos para las tiendas en el plan <strong>Pro</strong> e <strong>Ilimitado</strong>.
+                  </p>
+                  <a
+                    href="https://wa.me/51925176472?text=Hola,%20quiero%2520desbloquear%2520el%2520cintillo%2520de%2520anuncios"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-[10px] font-extrabold py-2 px-4 shadow w-fit transition-all active:scale-95 border-none cursor-pointer"
+                  >
+                    Mejorar Plan
+                  </a>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Activar cintillo */}
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-zinc-100">
+                    <div className="flex flex-col gap-0.5">
+                      <h4 className="font-bold text-xs text-zinc-800">Mostrar Cintillo en el Catálogo</h4>
+                      <p className="text-[10px] text-zinc-500">
+                        Habilita la visualización de la barra promocional.
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={promoBarEnabled}
+                        onChange={(e) => setPromoBarEnabled(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-600"></div>
+                    </label>
+                  </div>
+
+                  {promoBarEnabled && (
+                    <div className="space-y-5">
+                      {/* Texto del aviso */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                          Texto del Anuncio
+                        </label>
+                        <input
+                          type="text"
+                          value={promoBarText}
+                          onChange={(e) => setPromoBarText(e.target.value)}
+                          placeholder="Ej: 🚚 ¡Envío gratis por compras mayores a S/. 150!"
+                          className="flex h-10 w-full rounded-xl border border-input bg-transparent px-3.5 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-600"
+                        />
+                      </div>
+
+                      {/* Tipo de Acción */}
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                          Acción al hacer Clic
+                        </label>
+                        <select
+                          value={promoBarActionType}
+                          onChange={(e) => {
+                            setPromoBarActionType(e.target.value as any);
+                            setPromoBarActionValue("");
+                          }}
+                          className="flex h-10 w-full rounded-xl border border-zinc-250 bg-white px-3.5 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-600 cursor-pointer text-zinc-800"
+                        >
+                          <option value="none">Ninguna (Solo texto informativo)</option>
+                          <option value="product">Redirigir a un Producto</option>
+                          <option value="category">Filtrar por Categoría</option>
+                          <option value="url">Abrir Enlace Externo (URL)</option>
+                          <option value="coupon">Copiar Código de Cupón</option>
+                          <option value="cart">Abrir Carrito de Compras</option>
+                        </select>
+                      </div>
+
+                      {/* Valor de Acción Condicional */}
+                      {promoBarActionType === "product" && (
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                            Selecciona el Producto
+                          </label>
+                          <select
+                            value={promoBarActionValue}
+                            onChange={(e) => setPromoBarActionValue(e.target.value)}
+                            className="flex h-10 w-full rounded-xl border border-zinc-250 bg-white px-3.5 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-600 cursor-pointer text-zinc-800"
+                          >
+                            <option value="">-- Elige un producto --</option>
+                            {store.products?.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name} {p.price ? `(S/ ${p.price.toFixed(2)})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {promoBarActionType === "category" && (
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                            Selecciona la Categoría
+                          </label>
+                          <select
+                            value={promoBarActionValue}
+                            onChange={(e) => setPromoBarActionValue(e.target.value)}
+                            className="flex h-10 w-full rounded-xl border border-zinc-250 bg-white px-3.5 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-orange-600 cursor-pointer text-zinc-800"
+                          >
+                            <option value="">-- Elige una categoría --</option>
+                            {store.categories?.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {promoBarActionType === "coupon" && (
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                            Código del Cupón a Copiar
+                          </label>
+                          <input
+                            type="text"
+                            value={promoBarActionValue}
+                            onChange={(e) => setPromoBarActionValue(e.target.value)}
+                            placeholder="Ej: ENVIOFREE"
+                            className="flex h-10 w-full rounded-xl border border-input bg-transparent px-3.5 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-600 uppercase"
+                          />
+                        </div>
+                      )}
+
+                      {promoBarActionType === "url" && (
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                            Enlace de Destino (URL)
+                          </label>
+                          <input
+                            type="url"
+                            value={promoBarActionValue}
+                            onChange={(e) => setPromoBarActionValue(e.target.value)}
+                            placeholder="Ej: https://instagram.com/mi_marca"
+                            className="flex h-10 w-full rounded-xl border border-input bg-transparent px-3.5 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-600"
+                          />
+                        </div>
+                      )}
+
+                      {/* Colores de Fondo y Texto */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                            Color de Fondo
+                          </label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={promoBarBgColor || "#000000"}
+                              onChange={(e) => setPromoBarBgColor(e.target.value)}
+                              className="h-8 w-8 rounded-lg border border-zinc-200 cursor-pointer p-0"
+                            />
+                            <input
+                              type="text"
+                              value={promoBarBgColor || ""}
+                              onChange={(e) => setPromoBarBgColor(e.target.value)}
+                              placeholder="Color por defecto"
+                              className="flex-1 h-8 rounded-lg border border-input bg-transparent px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-600"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                            Color del Texto
+                          </label>
+                          <div className="flex gap-2 items-center">
+                            <input
+                              type="color"
+                              value={promoBarTextColor || "#ffffff"}
+                              onChange={(e) => setPromoBarTextColor(e.target.value)}
+                              className="h-8 w-8 rounded-lg border border-zinc-200 cursor-pointer p-0"
+                            />
+                            <input
+                              type="text"
+                              value={promoBarTextColor || ""}
+                              onChange={(e) => setPromoBarTextColor(e.target.value)}
+                              placeholder="Color por defecto"
+                              className="flex-1 h-8 rounded-lg border border-input bg-transparent px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-orange-600"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Marquee effect */}
+                      <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-50 border border-zinc-100">
+                        <div className="flex flex-col gap-0.5">
+                          <h4 className="font-bold text-xs text-zinc-800">Texto Desplazable (Marquee)</h4>
+                          <p className="text-[10px] text-zinc-500">
+                            Hace que el texto se mueva infinitamente de derecha a izquierda.
+                          </p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={promoBarIsMarquee}
+                            onChange={(e) => setPromoBarIsMarquee(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-600"></div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

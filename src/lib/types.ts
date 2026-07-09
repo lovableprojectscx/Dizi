@@ -10,19 +10,16 @@ export interface Plan {
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  semilla:      { id: "semilla",      name: "Semilla",      productLimit: 20,       price: 0    },
-  emprendedor:  { id: "emprendedor",  name: "Emprendedor",  productLimit: 50,       price: 9.9  },
-  pro:          { id: "pro",          name: "Pro",          productLimit: 200,      price: 14.9 },
-  ilimitado:    { id: "ilimitado",    name: "Ilimitado",    productLimit: Infinity, price: 34.9 },
+  semilla: { id: "semilla", name: "Semilla", productLimit: 20, price: 0 },
+  emprendedor: { id: "emprendedor", name: "Emprendedor", productLimit: 50, price: 9.9 },
+  pro: { id: "pro", name: "Pro", productLimit: 200, price: 14.9 },
+  ilimitado: { id: "ilimitado", name: "Ilimitado", productLimit: Infinity, price: 34.9 },
 };
 
-
-
-
 export const PLAN_DURATION_OPTIONS = [
-  { value: 1,  label: "1 mes" },
-  { value: 3,  label: "3 meses" },
-  { value: 6,  label: "6 meses" },
+  { value: 1, label: "1 mes" },
+  { value: 3, label: "3 meses" },
+  { value: 6, label: "6 meses" },
   { value: 12, label: "12 meses (1 ano)" },
 ] as const;
 
@@ -121,6 +118,13 @@ export interface Store {
   bioBgColor?: string | null;
   bannerTagline?: string | null;
   bannerBottomTag?: string | null;
+  promoBarEnabled?: boolean;
+  promoBarText?: string;
+  promoBarActionType?: "none" | "product" | "category" | "url" | "coupon" | "cart";
+  promoBarActionValue?: string;
+  promoBarBgColor?: string | null;
+  promoBarTextColor?: string | null;
+  promoBarIsMarquee?: boolean;
   categories: Category[];
   products: Product[];
 }
@@ -242,6 +246,11 @@ export function canUsePremiumBioFeatures(store: Store): boolean {
   return store.plan !== "semilla";
 }
 
+/** Retorna true si el plan de la tienda permite mostrar el cintillo de anuncios (Pro o Ilimitado) */
+export function planAllowsPromoBar(store: Store): boolean {
+  const plan = getEffectivePlan(store);
+  return plan === "pro" || plan === "ilimitado";
+}
 
 // ─── Especificaciones de imagen por layout ───────────────────────────────────
 
@@ -262,73 +271,97 @@ export interface ImageSpec {
 
 export const LAYOUT_IMAGE_SPECS: Record<string, ImageSpec> = {
   grid: {
-    ratio: "1/1", width: 1000, height: 1000,
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
     label: "Cuadrada 1:1",
     hint: "Este catalogo muestra productos en grilla cuadrada. Imagenes cuadradas se ven perfectas sin recorte.",
     tolerance: 0.15,
   },
   overlay: {
-    ratio: "3/4", width: 900, height: 1200,
+    ratio: "3/4",
+    width: 900,
+    height: 1200,
     label: "Vertical 3:4",
     hint: "Este catalogo usa tarjetas verticales estilo Instagram. Imagenes verticales llenan toda la tarjeta sin barras negras.",
     tolerance: 0.12,
   },
   editorial: {
-    ratio: "4/3", width: 1200, height: 900,
+    ratio: "4/3",
+    width: 1200,
+    height: 900,
     label: "Horizontal 4:3",
     hint: "El layout editorial muestra imagenes horizontales junto al texto del producto. Una imagen cuadrada o horizontal funciona bien.",
     tolerance: 0.15,
   },
   hero: {
-    ratio: "1/1", width: 1000, height: 1000,
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
     label: "Cuadrada 1:1",
     hint: "El primer producto usa un banner panoramico; el resto aparece en circulos. Imagenes cuadradas se centran bien en ambos.",
-    tolerance: 0.20,
+    tolerance: 0.2,
   },
   magazine: {
-    ratio: "21/9", width: 2100, height: 900,
+    ratio: "21/9",
+    width: 2100,
+    height: 900,
     label: "Panoramica 21:9",
     hint: "El primer producto ocupa un banner full-width cinematografico. Usa una imagen muy ancha para el efecto editorial completo.",
     tolerance: 0.15,
   },
   tiles: {
-    ratio: "2/3", width: 800, height: 1200,
+    ratio: "2/3",
+    width: 800,
+    height: 1200,
     label: "Vertical 2:3",
     hint: "Las tiles son columnas altas y angostas. Una imagen vertical hace que el producto se vea elegante y sin recortes.",
     tolerance: 0.12,
   },
   spotlight: {
-    ratio: "3/4", width: 900, height: 1200,
+    ratio: "3/4",
+    width: 900,
+    height: 1200,
     label: "Vertical 3:4",
     hint: "El spotlight resalta cada producto en grande. Imagenes verticales aprovechan todo el espacio disponible.",
     tolerance: 0.12,
   },
   diagonal: {
-    ratio: "1/1", width: 1000, height: 1000,
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
     label: "Cuadrada 1:1",
     hint: "El layout diagonal aplica recorte dinamico. Imagenes cuadradas dan el mejor resultado con esta transformacion.",
-    tolerance: 0.20,
+    tolerance: 0.2,
   },
   arch: {
-    ratio: "1/1", width: 1000, height: 1000,
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
     label: "Cuadrada 1:1",
     hint: "Las tarjetas con arco muestran la imagen en un marco especial. Imagenes cuadradas centradas funcionan perfecto.",
     tolerance: 0.15,
   },
   banner_grid: {
-    ratio: "16/7", width: 1600, height: 700,
+    ratio: "16/7",
+    width: 1600,
+    height: 700,
     label: "Panoramica 16:7",
     hint: "El primer producto aparece como banner ancho y el resto en grilla. Usa una imagen panoramica para el producto destacado.",
     tolerance: 0.15,
   },
   bite: {
-    ratio: "1/1", width: 1000, height: 1000,
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
     label: "Cuadrada 1:1",
     hint: "El diseño Bite Burger muestra tarjetas cuadradas de alta calidad en grilla. Las imágenes cuadradas se ven perfectas.",
     tolerance: 0.15,
   },
   bloom: {
-    ratio: "1/1", width: 1000, height: 1000,
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
     label: "Cuadrada 1:1",
     hint: "El diseño Bloom Floral muestra tarjetas cuadradas de alta calidad en grilla. Las imágenes cuadradas se ven perfectas.",
     tolerance: 0.15,
@@ -341,17 +374,38 @@ export function getImageSpec(store: Store): ImageSpec {
   const model = rawModel === "portada" ? "banner_grid" : rawModel;
   // Mapear modelo a layout
   const LAYOUT_MAP: Record<string, string> = {
-    minimalista: "grid", clasico: "grid", nature_mint: "grid",
-    vibrante: "overlay", eco: "hero",
-    pastel: "spotlight", boutique: "editorial", nocturno: "overlay",
-    neon: "grid", dark_fashion: "overlay", tropical: "grid",
-    corporativo: "grid", moderno: "grid", terroso: "grid",
-    marina: "grid", candy: "overlay", rose_gold: "overlay",
-    forest: "grid", sunset: "grid", ice: "grid", urban: "overlay",
-    elite: "grid", portada: "banner_grid", banner_grid: "banner_grid",
-    magazine: "magazine", tiles: "tiles", spotlight: "spotlight",
-    diagonal: "diagonal", arch: "arch", editorial: "editorial",
-    bite: "bite", bloom: "bloom",
+    minimalista: "grid",
+    clasico: "grid",
+    nature_mint: "grid",
+    vibrante: "overlay",
+    eco: "hero",
+    pastel: "spotlight",
+    boutique: "editorial",
+    nocturno: "overlay",
+    neon: "grid",
+    dark_fashion: "overlay",
+    tropical: "grid",
+    corporativo: "grid",
+    moderno: "grid",
+    terroso: "grid",
+    marina: "grid",
+    candy: "overlay",
+    rose_gold: "overlay",
+    forest: "grid",
+    sunset: "grid",
+    ice: "grid",
+    urban: "overlay",
+    elite: "grid",
+    portada: "banner_grid",
+    banner_grid: "banner_grid",
+    magazine: "magazine",
+    tiles: "tiles",
+    spotlight: "spotlight",
+    diagonal: "diagonal",
+    arch: "arch",
+    editorial: "editorial",
+    bite: "bite",
+    bloom: "bloom",
   };
   const layout = LAYOUT_MAP[model] || "grid";
   return LAYOUT_IMAGE_SPECS[layout] || LAYOUT_IMAGE_SPECS["grid"];
@@ -364,7 +418,7 @@ export function getImageSpec(store: Store): ImageSpec {
 export function checkImageRatio(
   naturalWidth: number,
   naturalHeight: number,
-  spec: ImageSpec
+  spec: ImageSpec,
 ): { status: "ok" | "warning"; message: string } {
   if (naturalWidth === 0 || naturalHeight === 0) return { status: "ok", message: "" };
   const [rW, rH] = spec.ratio.split("/").map(Number);

@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 export function StoreErrorComponent({ error, reset }: { error: any; reset: () => void }) {
   const router = useRouter();
   const errorMsg = error?.message || (typeof error === "string" ? error : "") || "";
-  const isTimeoutOrNetwork = 
-    errorMsg.includes("Timeout") || 
-    errorMsg.toLowerCase().includes("fetch") || 
+  const isTimeoutOrNetwork =
+    errorMsg.includes("Timeout") ||
+    errorMsg.toLowerCase().includes("fetch") ||
     errorMsg.toLowerCase().includes("network") ||
     !navigator.onLine;
 
@@ -19,7 +19,12 @@ export function StoreErrorComponent({ error, reset }: { error: any; reset: () =>
       <div className="max-w-md p-6 rounded-2xl border bg-card shadow-sm space-y-4">
         <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+            />
           </svg>
         </div>
         <div className="space-y-2">
@@ -27,7 +32,7 @@ export function StoreErrorComponent({ error, reset }: { error: any; reset: () =>
             {isTimeoutOrNetwork ? "Error de Conexión" : "No se pudo cargar la página"}
           </h1>
           <p className="text-xs text-muted-foreground leading-normal">
-            {isTimeoutOrNetwork 
+            {isTimeoutOrNetwork
               ? "Estamos teniendo problemas para conectarnos a la base de datos. Si estás usando Wi-Fi de Movistar o Claro, intenta desactivándolo y navegando con tus datos móviles (4G/5G)."
               : "Ocurrió un error inesperado al cargar la tienda. Por favor, intenta de nuevo."}
           </p>
@@ -62,8 +67,11 @@ export const Route = createFileRoute("/t/$slug")({
   head: ({ params, loaderData }) => {
     const store = loaderData?.store;
     const title = store ? `${store.name} · Catálogo Digital` : `Catálogo · ${params.slug}`;
-    const description = store ? `Mira nuestro catálogo: ${store.name}. Vende por WhatsApp.` : `Catálogo digital de ${params.slug}`;
-    const image = store?.bannerImage || store?.logo || "https://dizi.idenza.site/images/og-image.png";
+    const description = store
+      ? `Mira nuestro catálogo: ${store.name}. Vende por WhatsApp.`
+      : `Catálogo digital de ${params.slug}`;
+    const image =
+      store?.bannerImage || store?.logo || "https://dizi.idenza.site/images/og-image.png";
     return {
       meta: [
         { title },
@@ -85,12 +93,15 @@ export const Route = createFileRoute("/t/$slug")({
 // que no tienen el store de Zustand cargado todavía).
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")), 6000)
+    setTimeout(
+      () =>
+        reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")),
+      6000,
+    ),
   );
 
   const fetchPromise = (async (): Promise<Store | null> => {
-    const { data, error } = await supabase
-      .rpc("get_public_store", { store_slug: slug });
+    const { data, error } = await supabase.rpc("get_public_store", { store_slug: slug });
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
@@ -100,18 +111,21 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
 
     // Fallback: If product images are missing due to RPC bug, fetch them directly
     let productsWithImages = data.products || [];
-    if (productsWithImages.length > 0 && productsWithImages.every((p: any) => p.image === undefined || p.image === "")) {
+    if (
+      productsWithImages.length > 0 &&
+      productsWithImages.every((p: any) => p.image === undefined || p.image === "")
+    ) {
       const productIds = productsWithImages.map((p: any) => p.id);
       const { data: realProducts, error: pError } = await supabase
         .from("products")
         .select("id, image")
         .in("id", productIds);
-        
+
       if (!pError && realProducts) {
         const imageMap = new Map(realProducts.map((p: any) => [p.id, p.image]));
         productsWithImages = productsWithImages.map((p: any) => ({
           ...p,
-          image: imageMap.get(p.id) || ""
+          image: imageMap.get(p.id) || "",
         }));
       }
     }
@@ -161,7 +175,10 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       bioBanner: data.bio_banner ?? undefined,
       bioTheme: data.bio_theme ?? "default",
       bioTypography: data.bio_typography ?? "sans",
-      bioButtonStyle: data.bio_button_style === "rounded-full" ? "pill-solid" : (data.bio_button_style ?? "pill-solid"),
+      bioButtonStyle:
+        data.bio_button_style === "rounded-full"
+          ? "pill-solid"
+          : (data.bio_button_style ?? "pill-solid"),
       bioButtonColor: data.bio_button_color ?? undefined,
       bioButtonTextColor: data.bio_button_text_color ?? undefined,
       bioBgImage: data.bio_bg_image ?? undefined,
@@ -169,28 +186,37 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       bannerTagline: data.banner_tagline,
       bannerBottomTag: data.banner_bottom_tag,
       showDiziBranding: data.show_dizi_branding ?? true,
+      promoBarEnabled: data.promo_bar_enabled ?? false,
+      promoBarText: data.promo_bar_text ?? "",
+      promoBarActionType: data.promo_bar_action_type ?? "none",
+      promoBarActionValue: data.promo_bar_action_value ?? "",
+      promoBarBgColor: data.promo_bar_bg_color ?? undefined,
+      promoBarTextColor: data.promo_bar_text_color ?? undefined,
+      promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
-      products: (productsWithImages || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        categoryId: p.category_id,
-        image: p.image || "",
-        description: p.description,
-        isOnSale: p.is_on_sale,
-        originalPrice: p.original_price ? Number(p.original_price) : undefined,
-        visible: p.visible,
-        isSample: p.is_sample,
-        sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
-        createdAt: p.created_at,
-      })).sort((a, b) => {
-        if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
-          return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
-        }
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return dateB - dateA;
-      }),
+      products: (productsWithImages || [])
+        .map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          categoryId: p.category_id,
+          image: p.image || "",
+          description: p.description,
+          isOnSale: p.is_on_sale,
+          originalPrice: p.original_price ? Number(p.original_price) : undefined,
+          visible: p.visible,
+          isSample: p.is_sample,
+          sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+          createdAt: p.created_at,
+        }))
+        .sort((a, b) => {
+          if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
+            return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+          }
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        }),
     };
   })();
 

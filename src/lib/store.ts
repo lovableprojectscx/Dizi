@@ -1,6 +1,14 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Category, PlanId, Product, Store, Invite, SubscriptionStatus, PlanPromotion } from "./types";
+import type {
+  Category,
+  PlanId,
+  Product,
+  Store,
+  Invite,
+  SubscriptionStatus,
+  PlanPromotion,
+} from "./types";
 import { supabase, uploadBase64ToStorage } from "./supabase";
 import { toast } from "sonner";
 
@@ -38,7 +46,10 @@ const mapStoreFromDB = (row: any): Store => ({
   cancelledAt: row.cancelled_at ?? undefined,
   cancelReason: row.cancel_reason ?? undefined,
   planDurationMonths: row.plan_duration_months ?? undefined,
-  customPrice: row.custom_price !== null && row.custom_price !== undefined ? Number(row.custom_price) : undefined,
+  customPrice:
+    row.custom_price !== null && row.custom_price !== undefined
+      ? Number(row.custom_price)
+      : undefined,
   bioDescription: row.bio_description ?? undefined,
   locationLat: row.location_lat ? Number(row.location_lat) : undefined,
   locationLng: row.location_lng ? Number(row.location_lng) : undefined,
@@ -54,38 +65,51 @@ const mapStoreFromDB = (row: any): Store => ({
   bioTheme: row.bio_theme ?? "default",
   bioTypography: row.bio_typography ?? "sans",
   bioShowCatalogButton: row.bio_show_catalog_button ?? null,
-  bioButtonStyle: row.bio_button_style === "rounded-full" ? "pill-solid" : (row.bio_button_style ?? "pill-solid"),
+  bioButtonStyle:
+    row.bio_button_style === "rounded-full" ? "pill-solid" : (row.bio_button_style ?? "pill-solid"),
   bioButtonColor: row.bio_button_color ?? undefined,
   bioButtonTextColor: row.bio_button_text_color ?? undefined,
   bioBgImage: row.bio_bg_image ?? undefined,
   bioBgColor: row.bio_bg_color ?? undefined,
   bannerTagline: row.banner_tagline,
   bannerBottomTag: row.banner_bottom_tag,
+  promoBarEnabled: row.promo_bar_enabled ?? false,
+  promoBarText: row.promo_bar_text ?? "",
+  promoBarActionType: row.promo_bar_action_type ?? "none",
+  promoBarActionValue: row.promo_bar_action_value ?? "",
+  promoBarBgColor: row.promo_bar_bg_color ?? null,
+  promoBarTextColor: row.promo_bar_text_color ?? null,
+  promoBarIsMarquee: row.promo_bar_is_marquee ?? false,
   onboardingCompleted: row.onboarding_completed ?? false,
   categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
-  products: (row.products || []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price !== null && p.price !== undefined ? Number(p.price) : null,
-    categoryId: p.category_id,
-    image: p.image,
-    description: p.description,
-    isOnSale: p.is_on_sale,
-    originalPrice: p.original_price !== null && p.original_price !== undefined ? Number(p.original_price) : null,
-    visible: p.visible,
-    isSample: p.is_sample,
-    sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
-    createdAt: p.created_at,
-  })).sort((a, b) => {
-    if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
-      return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
-    }
-    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    const valA = isNaN(dateA) ? 0 : dateA;
-    const valB = isNaN(dateB) ? 0 : dateB;
-    return valB - valA; // newest first
-  }),
+  products: (row.products || [])
+    .map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price !== null && p.price !== undefined ? Number(p.price) : null,
+      categoryId: p.category_id,
+      image: p.image,
+      description: p.description,
+      isOnSale: p.is_on_sale,
+      originalPrice:
+        p.original_price !== null && p.original_price !== undefined
+          ? Number(p.original_price)
+          : null,
+      visible: p.visible,
+      isSample: p.is_sample,
+      sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+      createdAt: p.created_at,
+    }))
+    .sort((a, b) => {
+      if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
+        return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+      }
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const valA = isNaN(dateA) ? 0 : dateA;
+      const valB = isNaN(dateB) ? 0 : dateB;
+      return valB - valA; // newest first
+    }),
 });
 
 interface AppState {
@@ -108,7 +132,14 @@ interface AppState {
   swapProductsOrder: (storeId: string, index1: number, index2: number) => Promise<void>;
   upsertCategory: (storeId: string, cat: Category) => void;
   deleteCategory: (storeId: string, catId: string) => void;
-  setPlan: (storeId: string, plan: PlanId, durationMonths?: number, customPrice?: number, keepExpiration?: boolean, manualExpiration?: string) => Promise<void>;
+  setPlan: (
+    storeId: string,
+    plan: PlanId,
+    durationMonths?: number,
+    customPrice?: number,
+    keepExpiration?: boolean,
+    manualExpiration?: string,
+  ) => Promise<void>;
   setTrialPlan: (storeId: string, plan: PlanId, durationDays?: number) => Promise<void>;
   toggleStoreActive: (storeId: string) => void;
   startImpersonation: (storeId: string) => void;
@@ -127,7 +158,9 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 // Limpia claves de versiones anteriores del store para liberar localStorage
 if (typeof window !== "undefined") {
   ["dizi-catalogos-v1"].forEach((key) => {
-    try { localStorage.removeItem(key); } catch {}
+    try {
+      localStorage.removeItem(key);
+    } catch {}
   });
 }
 
@@ -185,41 +218,65 @@ export const useApp = create<AppState>()(
               parts.map(async (part: string, index: number) => {
                 if (part.startsWith("data:")) {
                   const uniqueId = Math.random().toString(36).slice(2, 6);
-                  return await uploadBase64ToStorage(part, `${id}/banners/banner_${index}_${uniqueId}.webp`);
+                  return await uploadBase64ToStorage(
+                    part,
+                    `${id}/banners/banner_${index}_${uniqueId}.webp`,
+                  );
                 }
                 return part;
-              })
+              }),
             );
             (updatedPatch as any).bannerImage = uploadedParts.filter(Boolean).join("|||");
           } catch (uploadErr) {
-            console.error("[updateStore] Banner upload failed, falling back to original", uploadErr);
+            console.error(
+              "[updateStore] Banner upload failed, falling back to original",
+              uploadErr,
+            );
           }
         }
 
         // Subir bioLogo si es base64
         if (patch.bioLogo && patch.bioLogo.startsWith("data:")) {
           try {
-            updatedPatch.bioLogo = await uploadBase64ToStorage(patch.bioLogo, `${id}/bio_logo.webp`);
+            updatedPatch.bioLogo = await uploadBase64ToStorage(
+              patch.bioLogo,
+              `${id}/bio_logo.webp`,
+            );
           } catch (uploadErr) {
-            console.error("[updateStore] Bio Logo upload failed, falling back to base64", uploadErr);
+            console.error(
+              "[updateStore] Bio Logo upload failed, falling back to base64",
+              uploadErr,
+            );
           }
         }
 
         // Subir bioBanner si es base64
         if (patch.bioBanner && patch.bioBanner.startsWith("data:")) {
           try {
-            updatedPatch.bioBanner = await uploadBase64ToStorage(patch.bioBanner, `${id}/bio_banner.webp`);
+            updatedPatch.bioBanner = await uploadBase64ToStorage(
+              patch.bioBanner,
+              `${id}/bio_banner.webp`,
+            );
           } catch (uploadErr) {
-            console.error("[updateStore] Bio Banner upload failed, falling back to base64", uploadErr);
+            console.error(
+              "[updateStore] Bio Banner upload failed, falling back to base64",
+              uploadErr,
+            );
           }
         }
 
         // Subir bioBgImage si es base64
         if (patch.bioBgImage && patch.bioBgImage.startsWith("data:")) {
           try {
-            updatedPatch.bioBgImage = await uploadBase64ToStorage(patch.bioBgImage, `${id}/bio_bg.webp`);
+            updatedPatch.bioBgImage = await uploadBase64ToStorage(
+              patch.bioBgImage,
+              `${id}/bio_bg.webp`,
+            );
           } catch (uploadErr) {
-            console.error("[updateStore] Bio Background Image upload failed, falling back to base64", uploadErr);
+            console.error(
+              "[updateStore] Bio Background Image upload failed, falling back to base64",
+              uploadErr,
+            );
           }
         }
 
@@ -231,53 +288,95 @@ export const useApp = create<AppState>()(
         if (updatedPatch.model !== undefined) dbPatch.model = updatedPatch.model;
         if (updatedPatch.niche !== undefined) dbPatch.niche = updatedPatch.niche;
         if (updatedPatch.brandColor !== undefined) dbPatch.brand_color = updatedPatch.brandColor;
-        if ((updatedPatch as any).bgColor !== undefined) dbPatch.bg_color = (updatedPatch as any).bgColor;
+        if ((updatedPatch as any).bgColor !== undefined)
+          dbPatch.bg_color = (updatedPatch as any).bgColor;
         if (updatedPatch.textColor !== undefined) dbPatch.text_color = updatedPatch.textColor;
-        if ((updatedPatch as any).bannerImage !== undefined) dbPatch.banner_image = (updatedPatch as any).bannerImage;
-        if ((updatedPatch as any).bannerTitle !== undefined) dbPatch.banner_title = (updatedPatch as any).bannerTitle;
+        if ((updatedPatch as any).bannerImage !== undefined)
+          dbPatch.banner_image = (updatedPatch as any).bannerImage;
+        if ((updatedPatch as any).bannerTitle !== undefined)
+          dbPatch.banner_title = (updatedPatch as any).bannerTitle;
         if (updatedPatch.bannerStyle !== undefined) dbPatch.banner_style = updatedPatch.bannerStyle;
-        if (updatedPatch.catalogTypography !== undefined) dbPatch.catalog_typography = updatedPatch.catalogTypography;
+        if (updatedPatch.catalogTypography !== undefined)
+          dbPatch.catalog_typography = updatedPatch.catalogTypography;
         if (updatedPatch.cardStyle !== undefined) dbPatch.card_style = updatedPatch.cardStyle;
         if (updatedPatch.active !== undefined) dbPatch.active = updatedPatch.active;
         if (updatedPatch.isPublished !== undefined) dbPatch.is_published = updatedPatch.isPublished;
-        if (updatedPatch.priceFilterEnabled !== undefined) dbPatch.price_filter_enabled = updatedPatch.priceFilterEnabled;
-        if (updatedPatch.libroReclamacionesActivo !== undefined) dbPatch.libro_reclamaciones_activo = updatedPatch.libroReclamacionesActivo;
+        if (updatedPatch.priceFilterEnabled !== undefined)
+          dbPatch.price_filter_enabled = updatedPatch.priceFilterEnabled;
+        if (updatedPatch.libroReclamacionesActivo !== undefined)
+          dbPatch.libro_reclamaciones_activo = updatedPatch.libroReclamacionesActivo;
         if (updatedPatch.empresaRuc !== undefined) dbPatch.empresa_ruc = updatedPatch.empresaRuc;
-        if (updatedPatch.empresaRazonSocial !== undefined) dbPatch.empresa_razon_social = updatedPatch.empresaRazonSocial;
-        if (updatedPatch.empresaDireccion !== undefined) dbPatch.empresa_direccion = updatedPatch.empresaDireccion;
-        if (updatedPatch.planExpiresAt !== undefined) dbPatch.plan_expires_at = updatedPatch.planExpiresAt;
-        if (updatedPatch.subscriptionStatus !== undefined) dbPatch.subscription_status = updatedPatch.subscriptionStatus;
+        if (updatedPatch.empresaRazonSocial !== undefined)
+          dbPatch.empresa_razon_social = updatedPatch.empresaRazonSocial;
+        if (updatedPatch.empresaDireccion !== undefined)
+          dbPatch.empresa_direccion = updatedPatch.empresaDireccion;
+        if (updatedPatch.planExpiresAt !== undefined)
+          dbPatch.plan_expires_at = updatedPatch.planExpiresAt;
+        if (updatedPatch.subscriptionStatus !== undefined)
+          dbPatch.subscription_status = updatedPatch.subscriptionStatus;
         if (updatedPatch.cancelledAt !== undefined) dbPatch.cancelled_at = updatedPatch.cancelledAt;
-        if (updatedPatch.cancelReason !== undefined) dbPatch.cancel_reason = updatedPatch.cancelReason;
-        if (updatedPatch.planDurationMonths !== undefined) dbPatch.plan_duration_months = updatedPatch.planDurationMonths;
+        if (updatedPatch.cancelReason !== undefined)
+          dbPatch.cancel_reason = updatedPatch.cancelReason;
+        if (updatedPatch.planDurationMonths !== undefined)
+          dbPatch.plan_duration_months = updatedPatch.planDurationMonths;
         if (updatedPatch.customPrice !== undefined) dbPatch.custom_price = updatedPatch.customPrice;
-        if (updatedPatch.bioDescription !== undefined) dbPatch.bio_description = updatedPatch.bioDescription;
+        if (updatedPatch.bioDescription !== undefined)
+          dbPatch.bio_description = updatedPatch.bioDescription;
         if (updatedPatch.locationLat !== undefined) dbPatch.location_lat = updatedPatch.locationLat;
         if (updatedPatch.locationLng !== undefined) dbPatch.location_lng = updatedPatch.locationLng;
-        if (updatedPatch.locationAddress !== undefined) dbPatch.location_address = updatedPatch.locationAddress;
+        if (updatedPatch.locationAddress !== undefined)
+          dbPatch.location_address = updatedPatch.locationAddress;
         if (updatedPatch.showMap !== undefined) dbPatch.show_map = updatedPatch.showMap;
-        if (updatedPatch.showDiziBranding !== undefined) dbPatch.show_dizi_branding = updatedPatch.showDiziBranding;
+        if (updatedPatch.showDiziBranding !== undefined)
+          dbPatch.show_dizi_branding = updatedPatch.showDiziBranding;
         if (updatedPatch.quickLinks !== undefined) dbPatch.quick_links = updatedPatch.quickLinks;
-        if (updatedPatch.bioLinksEnabled !== undefined) dbPatch.bio_links_enabled = updatedPatch.bioLinksEnabled;
+        if (updatedPatch.bioLinksEnabled !== undefined)
+          dbPatch.bio_links_enabled = updatedPatch.bioLinksEnabled;
         if (updatedPatch.bioLogo !== undefined) dbPatch.bio_logo = updatedPatch.bioLogo;
         if (updatedPatch.bioBanner !== undefined) dbPatch.bio_banner = updatedPatch.bioBanner;
         if (updatedPatch.bioTheme !== undefined) dbPatch.bio_theme = updatedPatch.bioTheme;
-        if (updatedPatch.bioTypography !== undefined) dbPatch.bio_typography = updatedPatch.bioTypography;
-        if (updatedPatch.bioShowCatalogButton !== undefined) dbPatch.bio_show_catalog_button = updatedPatch.bioShowCatalogButton;
-        if (updatedPatch.bioButtonStyle !== undefined) dbPatch.bio_button_style = updatedPatch.bioButtonStyle;
-        if (updatedPatch.bioButtonColor !== undefined) dbPatch.bio_button_color = updatedPatch.bioButtonColor;
-        if (updatedPatch.bioButtonTextColor !== undefined) dbPatch.bio_button_text_color = updatedPatch.bioButtonTextColor;
+        if (updatedPatch.bioTypography !== undefined)
+          dbPatch.bio_typography = updatedPatch.bioTypography;
+        if (updatedPatch.bioShowCatalogButton !== undefined)
+          dbPatch.bio_show_catalog_button = updatedPatch.bioShowCatalogButton;
+        if (updatedPatch.bioButtonStyle !== undefined)
+          dbPatch.bio_button_style = updatedPatch.bioButtonStyle;
+        if (updatedPatch.bioButtonColor !== undefined)
+          dbPatch.bio_button_color = updatedPatch.bioButtonColor;
+        if (updatedPatch.bioButtonTextColor !== undefined)
+          dbPatch.bio_button_text_color = updatedPatch.bioButtonTextColor;
         if (updatedPatch.bioBgImage !== undefined) dbPatch.bio_bg_image = updatedPatch.bioBgImage;
         if (updatedPatch.bioBgColor !== undefined) dbPatch.bio_bg_color = updatedPatch.bioBgColor;
-        if (updatedPatch.bannerTagline !== undefined) dbPatch.banner_tagline = updatedPatch.bannerTagline;
-        if (updatedPatch.bannerBottomTag !== undefined) dbPatch.banner_bottom_tag = updatedPatch.bannerBottomTag;
+        if (updatedPatch.bannerTagline !== undefined)
+          dbPatch.banner_tagline = updatedPatch.bannerTagline;
+        if (updatedPatch.bannerBottomTag !== undefined)
+          dbPatch.banner_bottom_tag = updatedPatch.bannerBottomTag;
         if (updatedPatch.referredBy !== undefined) dbPatch.referred_by = updatedPatch.referredBy;
-        if (updatedPatch.referralRewarded !== undefined) dbPatch.referral_rewarded = updatedPatch.referralRewarded;
-        if (updatedPatch.onboardingCompleted !== undefined) dbPatch.onboarding_completed = updatedPatch.onboardingCompleted;
+        if (updatedPatch.referralRewarded !== undefined)
+          dbPatch.referral_rewarded = updatedPatch.referralRewarded;
+        if (updatedPatch.onboardingCompleted !== undefined)
+          dbPatch.onboarding_completed = updatedPatch.onboardingCompleted;
+        if (updatedPatch.promoBarEnabled !== undefined)
+          dbPatch.promo_bar_enabled = updatedPatch.promoBarEnabled;
+        if (updatedPatch.promoBarText !== undefined)
+          dbPatch.promo_bar_text = updatedPatch.promoBarText;
+        if (updatedPatch.promoBarActionType !== undefined)
+          dbPatch.promo_bar_action_type = updatedPatch.promoBarActionType;
+        if (updatedPatch.promoBarActionValue !== undefined)
+          dbPatch.promo_bar_action_value = updatedPatch.promoBarActionValue;
+        if (updatedPatch.promoBarBgColor !== undefined)
+          dbPatch.promo_bar_bg_color = updatedPatch.promoBarBgColor;
+        if (updatedPatch.promoBarTextColor !== undefined)
+          dbPatch.promo_bar_text_color = updatedPatch.promoBarTextColor;
+        if (updatedPatch.promoBarIsMarquee !== undefined)
+          dbPatch.promo_bar_is_marquee = updatedPatch.promoBarIsMarquee;
 
         try {
           if (Object.keys(dbPatch).length > 0) {
-            const { error: updateError } = await supabase.from("stores").update(dbPatch).eq("id", id);
+            const { error: updateError } = await supabase
+              .from("stores")
+              .update(dbPatch)
+              .eq("id", id);
             if (updateError) throw updateError;
           }
 
@@ -323,9 +422,9 @@ export const useApp = create<AppState>()(
 
         if (store.categories.length > 1) {
           const extraCats = store.categories.slice(1);
-          const { error: catError } = await supabase.from("categories").insert(
-            extraCats.map((c) => ({ id: c.id, store_id: store.id, name: c.name }))
-          );
+          const { error: catError } = await supabase
+            .from("categories")
+            .insert(extraCats.map((c) => ({ id: c.id, store_id: store.id, name: c.name })));
           if (catError) console.error("[addStore] Extra categories error:", catError);
         }
 
@@ -343,7 +442,7 @@ export const useApp = create<AppState>()(
               is_on_sale: p.isOnSale,
               visible: p.visible,
               is_sample: p.isSample,
-            }))
+            })),
           );
           if (prodError) {
             console.error("[addStore] Product insert error:", prodError);
@@ -354,7 +453,15 @@ export const useApp = create<AppState>()(
         set((s) => ({ stores: [...s.stores, store] }));
       },
 
-      addInvite: async ({ token, plan, durationMonths, durationValue, durationUnit, customPrice, notes }) => {
+      addInvite: async ({
+        token,
+        plan,
+        durationMonths,
+        durationValue,
+        durationUnit,
+        customPrice,
+        notes,
+      }) => {
         const { error } = await supabase.from("invites").insert({
           token,
           plan,
@@ -374,10 +481,13 @@ export const useApp = create<AppState>()(
       markInviteUsed: async (token, storeId) => {
         if (storeId) {
           // Llamar al RPC seguro que valida y aplica el invite atómicamente en el servidor
-          const { data: inviteData, error: rpcError } = await supabase.rpc("activate_subscription_with_invite", {
-            p_store_id: storeId,
-            p_invite_token: token,
-          });
+          const { data: inviteData, error: rpcError } = await supabase.rpc(
+            "activate_subscription_with_invite",
+            {
+              p_store_id: storeId,
+              p_invite_token: token,
+            },
+          );
 
           if (rpcError) {
             console.error("[markInviteUsed] activate_subscription_with_invite error:", rpcError);
@@ -401,7 +511,10 @@ export const useApp = create<AppState>()(
 
             const subscriptionStatus = isTrial ? "trial" : "active";
             const planDurationMonths = dUnit === "months" ? dVal : 0;
-            const customPrice = invite.custom_price !== null && invite.custom_price !== undefined ? Number(invite.custom_price) : undefined;
+            const customPrice =
+              invite.custom_price !== null && invite.custom_price !== undefined
+                ? Number(invite.custom_price)
+                : undefined;
 
             // Actualizar estado local
             set((s) => ({
@@ -415,7 +528,7 @@ export const useApp = create<AppState>()(
                       planDurationMonths: planDurationMonths,
                       customPrice: customPrice,
                     }
-                  : st
+                  : st,
               ),
             }));
           }
@@ -441,7 +554,7 @@ export const useApp = create<AppState>()(
                     cancelReason: reason,
                     planExpiresAt: new Date().toISOString(),
                   }
-                : st
+                : st,
             ),
           }));
           toast.success("Suscripcion cancelada");
@@ -463,9 +576,10 @@ export const useApp = create<AppState>()(
           set((s) => ({
             stores: s.stores.map((st) => {
               if (st.id !== storeId) return st;
-              const base = st.planExpiresAt && new Date(st.planExpiresAt) > new Date()
-                ? new Date(st.planExpiresAt)
-                : new Date();
+              const base =
+                st.planExpiresAt && new Date(st.planExpiresAt) > new Date()
+                  ? new Date(st.planExpiresAt)
+                  : new Date();
               base.setMonth(base.getMonth() + monthsToAdd);
               return {
                 ...st,
@@ -523,7 +637,7 @@ export const useApp = create<AppState>()(
                     cancelledAt: undefined,
                     cancelReason: undefined,
                   }
-                : st
+                : st,
             ),
           }));
           toast.success(`Prueba de ${durationDays} días activada`);
@@ -546,34 +660,45 @@ export const useApp = create<AppState>()(
           }
         }
 
-        const cleanPrice = (product.price !== undefined && product.price !== null && product.price !== 0) ? product.price : null;
-        const cleanOriginalPrice = (product.originalPrice !== undefined && product.originalPrice !== null && product.originalPrice !== 0) ? product.originalPrice : null;
+        const cleanPrice =
+          product.price !== undefined && product.price !== null && product.price !== 0
+            ? product.price
+            : null;
+        const cleanOriginalPrice =
+          product.originalPrice !== undefined &&
+          product.originalPrice !== null &&
+          product.originalPrice !== 0
+            ? product.originalPrice
+            : null;
 
         const st = useApp.getState().stores.find((s) => s.id === storeId);
         const exists = st ? st.products.some((pr) => pr.id === prodId) : false;
-        
+
         let finalSortOrder = product.sortOrder;
         if (!exists && (finalSortOrder === undefined || finalSortOrder === null)) {
-          const maxOrder = st && st.products.length > 0
-            ? Math.max(...st.products.map(pr => pr.sortOrder ?? 0))
-            : 0;
+          const maxOrder =
+            st && st.products.length > 0
+              ? Math.max(...st.products.map((pr) => pr.sortOrder ?? 0))
+              : 0;
           finalSortOrder = maxOrder + 1;
         }
 
-        const p = { 
-          ...product, 
-          id: prodId, 
+        const p = {
+          ...product,
+          id: prodId,
           image: imageUrl,
           price: cleanPrice,
           originalPrice: cleanOriginalPrice,
           description: product.description || undefined,
           sortOrder: finalSortOrder !== undefined && finalSortOrder !== null ? finalSortOrder : 0,
-          createdAt: product.createdAt || new Date().toISOString()
+          createdAt: product.createdAt || new Date().toISOString(),
         };
 
         try {
           const isNewRealProduct = !exists && !p.isSample;
-          const hasOnlySamples = st ? (st.products.length > 0 && st.products.every((pr) => pr.isSample)) : false;
+          const hasOnlySamples = st
+            ? st.products.length > 0 && st.products.every((pr) => pr.isSample)
+            : false;
 
           if (isNewRealProduct && hasOnlySamples) {
             const { error: delErr } = await supabase
@@ -587,10 +712,17 @@ export const useApp = create<AppState>()(
           }
 
           const { error } = await supabase.from("products").upsert({
-            id: p.id, store_id: storeId, category_id: p.categoryId || null,
-            name: p.name, price: p.price, original_price: p.originalPrice,
-            image: p.image, description: p.description || null, is_on_sale: p.isOnSale,
-            visible: p.visible, is_sample: p.isSample,
+            id: p.id,
+            store_id: storeId,
+            category_id: p.categoryId || null,
+            name: p.name,
+            price: p.price,
+            original_price: p.originalPrice,
+            image: p.image,
+            description: p.description || null,
+            is_on_sale: p.isOnSale,
+            visible: p.visible,
+            is_sample: p.isSample,
             sort_order: p.sortOrder,
           });
 
@@ -601,10 +733,11 @@ export const useApp = create<AppState>()(
               if (st.id !== storeId) return st;
               const exists = st.products.some((pr) => pr.id === p.id);
               const isNewRealProduct = !exists && !p.isSample;
-              const hasOnlySamples = st.products.length > 0 && st.products.every((pr) => pr.isSample);
+              const hasOnlySamples =
+                st.products.length > 0 && st.products.every((pr) => pr.isSample);
               let currentProducts = st.products;
               if (isNewRealProduct && hasOnlySamples) currentProducts = [];
-              
+
               const updatedList = exists
                 ? currentProducts.map((pr) => (pr.id === p.id ? p : pr))
                 : [...currentProducts, p];
@@ -639,7 +772,7 @@ export const useApp = create<AppState>()(
             stores: s.stores.map((st) =>
               st.id === storeId
                 ? { ...st, products: st.products.filter((p) => p.id !== productId) }
-                : st
+                : st,
             ),
           }));
         } catch (error) {
@@ -650,13 +783,16 @@ export const useApp = create<AppState>()(
 
       toggleProductVisible: async (storeId, productId) => {
         const s = useApp.getState();
-        const store = s.stores.find(st => st.id === storeId);
-        const product = store?.products.find(p => p.id === productId);
+        const store = s.stores.find((st) => st.id === storeId);
+        const product = store?.products.find((p) => p.id === productId);
         if (!product) return;
 
         const newVisible = !product.visible;
         try {
-          const { error } = await supabase.from("products").update({ visible: newVisible }).eq("id", productId);
+          const { error } = await supabase
+            .from("products")
+            .update({ visible: newVisible })
+            .eq("id", productId);
           if (error) throw error;
 
           set((s) => ({
@@ -665,10 +801,10 @@ export const useApp = create<AppState>()(
                 ? {
                     ...st,
                     products: st.products.map((p) =>
-                      p.id === productId ? { ...p, visible: newVisible } : p
+                      p.id === productId ? { ...p, visible: newVisible } : p,
                     ),
                   }
-                : st
+                : st,
             ),
           }));
         } catch (error) {
@@ -682,7 +818,12 @@ export const useApp = create<AppState>()(
         if (!store) return;
 
         const updatedProducts = [...store.products];
-        if (index1 < 0 || index1 >= updatedProducts.length || index2 < 0 || index2 >= updatedProducts.length) {
+        if (
+          index1 < 0 ||
+          index1 >= updatedProducts.length ||
+          index2 < 0 ||
+          index2 >= updatedProducts.length
+        ) {
           return;
         }
 
@@ -694,14 +835,12 @@ export const useApp = create<AppState>()(
         // Asignar nuevos sortOrder basados en el nuevo índice (* 10)
         const reordered = updatedProducts.map((p, idx) => ({
           ...p,
-          sortOrder: idx * 10
+          sortOrder: idx * 10,
         }));
 
         // Actualizar el estado de Zustand de forma optimista
         set((s) => ({
-          stores: s.stores.map((st) =>
-            st.id === storeId ? { ...st, products: reordered } : st
-          )
+          stores: s.stores.map((st) => (st.id === storeId ? { ...st, products: reordered } : st)),
         }));
 
         // Registrar los IDs de los productos modificados y sus correspondientes tiendas
@@ -749,9 +888,14 @@ export const useApp = create<AppState>()(
           try {
             const { error } = await supabase.from("products").upsert(updates);
             if (error) throw error;
-            console.log(`[swapProductsOrder] Sincronizados ${updates.length} productos en base de datos.`);
+            console.log(
+              `[swapProductsOrder] Sincronizados ${updates.length} productos en base de datos.`,
+            );
           } catch (err) {
-            console.error("[swapProductsOrder] Error al guardar orden de productos en Supabase:", err);
+            console.error(
+              "[swapProductsOrder] Error al guardar orden de productos en Supabase:",
+              err,
+            );
             toast.error("Error al guardar el nuevo orden en el servidor.");
           }
         }, 1000);
@@ -762,7 +906,11 @@ export const useApp = create<AppState>()(
           const payload: any = { store_id: storeId, name: cat.name };
           if (cat.id) payload.id = cat.id;
 
-          const { data, error } = await supabase.from("categories").upsert(payload).select().single();
+          const { data, error } = await supabase
+            .from("categories")
+            .upsert(payload)
+            .select()
+            .single();
           if (error) throw error;
 
           const savedCat = { id: data.id, name: data.name };
@@ -795,7 +943,7 @@ export const useApp = create<AppState>()(
             stores: s.stores.map((st) =>
               st.id === storeId
                 ? { ...st, categories: st.categories.filter((c) => c.id !== catId) }
-                : st
+                : st,
             ),
           }));
           toast.success("Categoria eliminada");
@@ -805,10 +953,17 @@ export const useApp = create<AppState>()(
         }
       },
 
-      setPlan: async (storeId, plan, durationMonths, customPrice, keepExpiration = false, manualExpiration) => {
+      setPlan: async (
+        storeId,
+        plan,
+        durationMonths,
+        customPrice,
+        keepExpiration = false,
+        manualExpiration,
+      ) => {
         try {
           const months = plan === "semilla" ? null : (durationMonths ?? 1);
-          const cPrice = plan === "semilla" ? null : (customPrice !== undefined ? customPrice : null);
+          const cPrice = plan === "semilla" ? null : customPrice !== undefined ? customPrice : null;
 
           const { error } = await supabase.rpc("activate_subscription", {
             p_store_id: storeId,
@@ -820,18 +975,21 @@ export const useApp = create<AppState>()(
           });
           if (error) throw error;
 
-          const expiresAt = plan === "semilla" ? null : (() => {
-            if (keepExpiration) {
-              const currentStore = useApp.getState().stores.find(st => st.id === storeId);
-              return currentStore?.planExpiresAt || null;
-            }
-            if (manualExpiration) {
-              return manualExpiration;
-            }
-            const d = new Date();
-            d.setMonth(d.getMonth() + (durationMonths ?? 1));
-            return d.toISOString();
-          })();
+          const expiresAt =
+            plan === "semilla"
+              ? null
+              : (() => {
+                  if (keepExpiration) {
+                    const currentStore = useApp.getState().stores.find((st) => st.id === storeId);
+                    return currentStore?.planExpiresAt || null;
+                  }
+                  if (manualExpiration) {
+                    return manualExpiration;
+                  }
+                  const d = new Date();
+                  d.setMonth(d.getMonth() + (durationMonths ?? 1));
+                  return d.toISOString();
+                })();
 
           set((s) => ({
             stores: s.stores.map((st) =>
@@ -841,12 +999,22 @@ export const useApp = create<AppState>()(
                     plan,
                     planExpiresAt: expiresAt ?? undefined,
                     subscriptionStatus: plan === "semilla" ? "trial" : "active",
-                    planDurationMonths: plan === "semilla" ? undefined : (keepExpiration ? st.planDurationMonths : (durationMonths ?? 1)),
+                    planDurationMonths:
+                      plan === "semilla"
+                        ? undefined
+                        : keepExpiration
+                          ? st.planDurationMonths
+                          : (durationMonths ?? 1),
                     cancelledAt: undefined,
                     cancelReason: undefined,
-                    customPrice: plan === "semilla" ? undefined : (customPrice !== undefined ? customPrice : st.customPrice),
+                    customPrice:
+                      plan === "semilla"
+                        ? undefined
+                        : customPrice !== undefined
+                          ? customPrice
+                          : st.customPrice,
                   }
-                : st
+                : st,
             ),
           }));
           toast.success("Plan actualizado");
@@ -858,12 +1026,15 @@ export const useApp = create<AppState>()(
 
       toggleStoreActive: async (storeId) => {
         const s = useApp.getState();
-        const store = s.stores.find(st => st.id === storeId);
+        const store = s.stores.find((st) => st.id === storeId);
         if (!store) return;
 
         const newActive = !store.active;
         try {
-          const { error } = await supabase.from("stores").update({ active: newActive }).eq("id", storeId);
+          const { error } = await supabase
+            .from("stores")
+            .update({ active: newActive })
+            .eq("id", storeId);
           if (error) throw error;
 
           set((s) => ({
@@ -884,12 +1055,14 @@ export const useApp = create<AppState>()(
       incWhatsappClicks: async (storeId) => {
         set((s) => ({
           stores: s.stores.map((st) =>
-            st.id === storeId ? { ...st, whatsappClicks: st.whatsappClicks + 1 } : st
+            st.id === storeId ? { ...st, whatsappClicks: st.whatsappClicks + 1 } : st,
           ),
         }));
 
         try {
-          const { error } = await supabase.rpc("increment_whatsapp_clicks", { store_id_param: storeId });
+          const { error } = await supabase.rpc("increment_whatsapp_clicks", {
+            store_id_param: storeId,
+          });
           if (error) throw error;
         } catch (error) {
           console.error("[incWhatsappClicks] Error:", error);
@@ -899,7 +1072,7 @@ export const useApp = create<AppState>()(
       incViews: async (storeId) => {
         set((s) => ({
           stores: s.stores.map((st) =>
-            st.id === storeId ? { ...st, views: (st.views || 0) + 1 } : st
+            st.id === storeId ? { ...st, views: (st.views || 0) + 1 } : st,
           ),
         }));
 
@@ -918,10 +1091,13 @@ export const useApp = create<AppState>()(
         const merged = {
           plan_id: planId,
           regular_price: patch.regular_price ?? existing?.regular_price ?? 0,
-          promo_price: patch.promo_price !== undefined ? patch.promo_price : (existing?.promo_price ?? null),
+          promo_price:
+            patch.promo_price !== undefined ? patch.promo_price : (existing?.promo_price ?? null),
           promo_active: patch.promo_active ?? existing?.promo_active ?? false,
-          promo_label: patch.promo_label !== undefined ? patch.promo_label : (existing?.promo_label ?? null),
-          promo_until: patch.promo_until !== undefined ? patch.promo_until : (existing?.promo_until ?? null),
+          promo_label:
+            patch.promo_label !== undefined ? patch.promo_label : (existing?.promo_label ?? null),
+          promo_until:
+            patch.promo_until !== undefined ? patch.promo_until : (existing?.promo_until ?? null),
         };
 
         // Note: plan_prices table is deprecated, we only update local state if called.
@@ -937,13 +1113,17 @@ export const useApp = create<AppState>()(
     {
       name: "dizi-catalogos-v2",
       partialize: (state) => ({
-        // Guardamos las URLs reales (http) en local storage para carga instantánea, 
+        // Guardamos las URLs reales (http) en local storage para carga instantánea,
         // pero omitimos los base64 temporales si quedara alguno para no desbordar los 5MB
         stores: state.stores.map((st) => ({
           ...st,
           logo: st.logo?.startsWith("data:") ? undefined : st.logo,
           bannerImage: st.bannerImage
-            ? st.bannerImage.split("|||").map((img) => (img.startsWith("data:") ? "" : img)).filter(Boolean).join("|||") || undefined
+            ? st.bannerImage
+                .split("|||")
+                .map((img) => (img.startsWith("data:") ? "" : img))
+                .filter(Boolean)
+                .join("|||") || undefined
             : undefined,
           bioLogo: st.bioLogo?.startsWith("data:") ? undefined : st.bioLogo,
           bioBanner: st.bioBanner?.startsWith("data:") ? undefined : st.bioBanner,
@@ -956,11 +1136,14 @@ export const useApp = create<AppState>()(
         currentStoreId: state.currentStoreId,
         impersonatedBy: state.impersonatedBy,
       }),
-    }
-  )
+    },
+  ),
 );
 
-interface CartItem { productId: string; qty: number; }
+interface CartItem {
+  productId: string;
+  qty: number;
+}
 interface CartState {
   carts: Record<string, CartItem[]>;
   add: (storeId: string, productId: string) => void;
@@ -998,9 +1181,8 @@ export const useCart = create<CartState>()(
             [storeId]: (s.carts[storeId] ?? []).filter((i) => i.productId !== productId),
           },
         })),
-      clear: (storeId) =>
-        set((s) => ({ carts: { ...s.carts, [storeId]: [] } })),
+      clear: (storeId) => set((s) => ({ carts: { ...s.carts, [storeId]: [] } })),
     }),
-    { name: "dizi-carts-v1" }
-  )
+    { name: "dizi-carts-v1" },
+  ),
 );
