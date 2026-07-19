@@ -1,13 +1,31 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Store, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { signInWithEmail, getUserRole } from "@/lib/auth";
+import { signInWithEmail, getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useApp } from "@/lib/store";
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: async () => {
+    try {
+      const session = await getActiveSession();
+      if (session) {
+        const role = getUserRole(session.user);
+        throw redirect({ to: role === "super_admin" ? "/super/dashboard" : "/admin" });
+      }
+    } catch (err) {
+      if (err && typeof err === "object" && "to" in err) {
+        throw err;
+      }
+      const session = getSessionSync();
+      if (session) {
+        const role = getUserRole(session.user);
+        throw redirect({ to: role === "super_admin" ? "/super/dashboard" : "/admin" });
+      }
+    }
+  },
   head: () => ({
     meta: [
       { title: "Iniciar Sesión — Dizi" },
@@ -84,9 +102,12 @@ function LoginPage() {
 
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-background rounded-3xl border shadow-xl p-8 relative overflow-hidden">
-
           <div className="text-center mb-8 relative">
-            <img src="/images/Icono.png" alt="Dizi Icon" className="mx-auto h-16 w-16 object-contain mb-4" />
+            <img
+              src="/images/Icono.png"
+              alt="Dizi Icon"
+              className="mx-auto h-16 w-16 object-contain mb-4"
+            />
             <h1 className="text-2xl font-bold tracking-tight">Bienvenido de nuevo</h1>
             <p className="text-muted-foreground text-sm mt-2">
               Ingresa a tu panel de control y gestiona tu catalogo
@@ -109,7 +130,9 @@ function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Contrasena</label>
-                <a href="#" className="text-xs text-primary hover:underline">Olvide mi contrasena</a>
+                <a href="#" className="text-xs text-primary hover:underline">
+                  Olvide mi contrasena
+                </a>
               </div>
               <div className="relative">
                 <input

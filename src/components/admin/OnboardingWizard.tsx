@@ -26,7 +26,7 @@ import {
   ShoppingBag,
   FileImage,
   Copy,
-  Info
+  Info,
 } from "lucide-react";
 
 export function OnboardingWizard() {
@@ -40,7 +40,7 @@ export function OnboardingWizard() {
     if (!store) return 1;
     const hasBrand = !!(store.logo || store.bannerImage);
     const hasProducts = store.products && store.products.some((p) => !p.isSample);
-    
+
     // If they have logo/banner but no products, go straight to Step 3
     if (hasBrand && !hasProducts) {
       return 3;
@@ -113,7 +113,9 @@ export function OnboardingWizard() {
       toast.success("¡Información importada con éxito de Facebook!");
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "No se pudo obtener información de Facebook. Inténtalo de forma manual.");
+      toast.error(
+        err.message || "No se pudo obtener información de Facebook. Inténtalo de forma manual.",
+      );
     } finally {
       setLoading(false);
     }
@@ -242,7 +244,9 @@ export function OnboardingWizard() {
         onboardingCompleted: true,
       });
       setIsOpen(false);
-      toast.info("Asistente cerrado. Puedes configurar todo desde el panel de ajustes en cualquier momento.");
+      toast.info(
+        "Asistente cerrado. Puedes configurar todo desde el panel de ajustes en cualquier momento.",
+      );
     } catch (err) {
       setIsOpen(false);
     }
@@ -256,15 +260,18 @@ export function OnboardingWizard() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        // If they close the dialog, mark onboarding as completed to not annoy them
-        handleSkipAll();
-      }
-    }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          // If they close the dialog, mark onboarding as completed to not annoy them
+          handleSkipAll();
+        }
+      }}
+    >
       <DialogContent className="max-w-xl p-0 overflow-hidden bg-card border border-border/40 shadow-2xl rounded-2xl">
         {/* Header con gradiente premium */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 pb-4 border-b border-border/10">
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 pb-4 border-b border-border/10">
           <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-1">
             <Sparkles className="h-4 w-4" />
             Configuración Inicial
@@ -282,19 +289,23 @@ export function OnboardingWizard() {
 
           {/* Progreso Visual */}
           <div className="flex items-center gap-2 mt-4">
-            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
-            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
-            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 3 ? "bg-primary" : "bg-muted"}`} />
+            <div
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 1 ? "bg-primary" : "bg-muted"}`}
+            />
+            <div
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 2 ? "bg-primary" : "bg-muted"}`}
+            />
+            <div
+              className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 3 ? "bg-primary" : "bg-muted"}`}
+            />
           </div>
         </div>
 
         {/* Contenido dinámico del Paso */}
-        <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-          
+        <div className="p-5 sm:p-6 space-y-4 max-h-[60vh] overflow-y-auto">
           {/* STEP 1: IDENTITY */}
           {step === 1 && (
             <div className="space-y-5">
-              
               {/* Option A: Facebook Scraper */}
               <div className="space-y-2 p-4 bg-muted/30 border border-border/30 rounded-xl">
                 <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-primary">
@@ -302,9 +313,11 @@ export function OnboardingWizard() {
                   Importar desde Facebook (Recomendado)
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Ingresa el enlace de tu página de Facebook. Extraeremos automáticamente tu logo y el nombre de tu negocio.
+                  Ingresa el enlace de tu página de Facebook. Extraeremos automáticamente tu logo y
+                  el nombre de tu negocio.
                   <span className="block mt-1 font-semibold text-amber-600 dark:text-amber-500">
-                    Nota: Debido a políticas de privacidad de Facebook, la foto de portada (banner) debe subirse de forma manual.
+                    Nota: Debido a políticas de privacidad de Facebook, la foto de portada (banner)
+                    debe subirse de forma manual.
                   </span>
                 </p>
                 <div className="flex gap-2 mt-2">
@@ -320,11 +333,7 @@ export function OnboardingWizard() {
                     size="sm"
                     className="h-9 px-4 rounded-lg font-bold text-xs shrink-0"
                   >
-                    {loading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      "Conectar"
-                    )}
+                    {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Conectar"}
                   </Button>
                 </div>
                 {fbConnected && (
@@ -343,7 +352,12 @@ export function OnboardingWizard() {
               {/* Manual Input Fields */}
               <div className="space-y-4 pt-1">
                 <div className="space-y-1.5">
-                  <Label htmlFor="store-name" className="text-xs font-bold uppercase tracking-wider">Nombre del Negocio</Label>
+                  <Label
+                    htmlFor="store-name"
+                    className="text-xs font-bold uppercase tracking-wider"
+                  >
+                    Nombre del Negocio
+                  </Label>
                   <Input
                     id="store-name"
                     value={storeName}
@@ -353,19 +367,27 @@ export function OnboardingWizard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Logo Picker */}
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider block">Foto de Perfil (Logo)</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider block">
+                      Foto de Perfil (Logo)
+                    </Label>
                     <div className="flex flex-col items-center justify-center border-2 border-dashed border-border/50 hover:border-primary/30 transition-all rounded-xl p-3 bg-muted/10 h-28 relative group cursor-pointer">
                       {logoBase64 ? (
                         <div className="relative h-20 w-20 rounded-full overflow-hidden border border-border bg-white shadow-sm flex items-center justify-center">
-                          <img src={logoBase64} alt="Logo preview" className="h-full w-full object-cover" />
+                          <img
+                            src={logoBase64}
+                            alt="Logo preview"
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1 text-center">
                           <Upload className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground font-semibold">Subir Logo (1:1)</span>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            Subir Logo (1:1)
+                          </span>
                         </div>
                       )}
                       <input
@@ -379,16 +401,24 @@ export function OnboardingWizard() {
 
                   {/* Banner Picker */}
                   <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider block">Banner de Portada</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider block">
+                      Banner de Portada
+                    </Label>
                     <div className="flex flex-col items-center justify-center border-2 border-dashed border-border/50 hover:border-primary/30 transition-all rounded-xl p-3 bg-muted/10 h-28 relative group cursor-pointer">
                       {bannerBase64 ? (
                         <div className="relative h-20 w-full rounded-md overflow-hidden border border-border bg-white shadow-sm flex items-center justify-center">
-                          <img src={bannerBase64} alt="Banner preview" className="h-full w-full object-cover" />
+                          <img
+                            src={bannerBase64}
+                            alt="Banner preview"
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center gap-1 text-center">
                           <FileImage className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground font-semibold">Subir Portada (16:7)</span>
+                          <span className="text-[10px] text-muted-foreground font-semibold">
+                            Subir Portada (16:7)
+                          </span>
                         </div>
                       )}
                       <input
@@ -401,21 +431,21 @@ export function OnboardingWizard() {
                   </div>
                 </div>
               </div>
-
             </div>
           )}
 
           {/* STEP 2: BIO-LINK */}
           {step === 2 && (
             <div className="space-y-5">
-              
               {/* Informative description */}
               <div className="flex gap-3 p-4 bg-primary/5 border border-primary/10 rounded-xl">
                 <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <h4 className="text-xs font-bold text-foreground">¿Qué es el Bio-Link?</h4>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Es una página optimizada para móvil ideal para colocar en el enlace de tu biografía en Instagram, TikTok o WhatsApp. Reúne tu catálogo digital, tus otras redes y ubicación física en un solo lugar.
+                    Es una página optimizada para móvil ideal para colocar en el enlace de tu
+                    biografía en Instagram, TikTok o WhatsApp. Reúne tu catálogo digital, tus otras
+                    redes y ubicación física en un solo lugar.
                   </p>
                 </div>
               </div>
@@ -423,23 +453,27 @@ export function OnboardingWizard() {
               {/* Enabled toggle */}
               <div className="flex items-center justify-between p-4 bg-muted/20 border border-border/30 rounded-xl">
                 <div className="space-y-0.5">
-                  <Label htmlFor="bio-enabled" className="text-sm font-bold text-foreground">Habilitar Link en Bio</Label>
-                  <p className="text-xs text-muted-foreground">Activa tu página de redes sociales y enlaces</p>
+                  <Label htmlFor="bio-enabled" className="text-sm font-bold text-foreground">
+                    Habilitar Link en Bio
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Activa tu página de redes sociales y enlaces
+                  </p>
                 </div>
-                <Switch
-                  id="bio-enabled"
-                  checked={bioEnabled}
-                  onCheckedChange={setBioEnabled}
-                />
+                <Switch id="bio-enabled" checked={bioEnabled} onCheckedChange={setBioEnabled} />
               </div>
 
               {/* Sub-inputs when enabled */}
               {bioEnabled && (
                 <div className="space-y-4 p-4 border border-border/30 rounded-xl bg-card transition-all duration-300">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider block">Tu enlace público en redes</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider block">
+                      Tu enlace público en redes
+                    </Label>
                     <div className="flex items-center justify-between gap-3 bg-muted/30 border border-border/40 rounded-xl px-3 py-2.5">
-                      <span className="font-mono text-xs text-muted-foreground truncate select-all">{bioUrl}</span>
+                      <span className="font-mono text-xs text-muted-foreground truncate select-all">
+                        {bioUrl}
+                      </span>
                       <Button
                         type="button"
                         onClick={copyBioLink}
@@ -447,13 +481,22 @@ export function OnboardingWizard() {
                         size="icon"
                         className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary transition-colors shrink-0"
                       >
-                        {copiedLink ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                        {copiedLink ? (
+                          <Check className="h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="bio-desc" className="text-xs font-bold uppercase tracking-wider">Descripción Breve (Bio)</Label>
+                    <Label
+                      htmlFor="bio-desc"
+                      className="text-xs font-bold uppercase tracking-wider"
+                    >
+                      Descripción Breve (Bio)
+                    </Label>
                     <Input
                       id="bio-desc"
                       value={bioDescription}
@@ -464,17 +507,17 @@ export function OnboardingWizard() {
                   </div>
                 </div>
               )}
-
             </div>
           )}
 
           {/* STEP 3: FIRST PRODUCT */}
           {step === 3 && (
             <div className="space-y-5">
-              
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="prod-name" className="text-xs font-bold uppercase tracking-wider">Nombre del Producto</Label>
+                  <Label htmlFor="prod-name" className="text-xs font-bold uppercase tracking-wider">
+                    Nombre del Producto
+                  </Label>
                   <Input
                     id="prod-name"
                     value={productName}
@@ -484,10 +527,15 @@ export function OnboardingWizard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                   {/* Price input */}
-                  <div className="col-span-1 space-y-1.5">
-                    <Label htmlFor="prod-price" className="text-xs font-bold uppercase tracking-wider">Precio (S/.)</Label>
+                  <div className="col-span-1 sm:col-span-1 space-y-1.5">
+                    <Label
+                      htmlFor="prod-price"
+                      className="text-xs font-bold uppercase tracking-wider"
+                    >
+                      Precio (S/.)
+                    </Label>
                     <Input
                       id="prod-price"
                       type="number"
@@ -499,8 +547,10 @@ export function OnboardingWizard() {
                   </div>
 
                   {/* Image Picker */}
-                  <div className="col-span-2 space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider block">Foto del Producto</Label>
+                  <div className="col-span-1 sm:col-span-2 space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider block">
+                      Foto del Producto
+                    </Label>
                     <div className="flex items-center justify-center border-2 border-dashed border-border/50 hover:border-primary/30 transition-all rounded-xl px-4 h-10 bg-muted/10 relative group cursor-pointer">
                       {productImage ? (
                         <div className="flex items-center gap-2 text-xs text-foreground font-semibold">
@@ -525,35 +575,37 @@ export function OnboardingWizard() {
 
                 {productImage && (
                   <div className="flex items-center justify-center border border-border/30 rounded-xl p-3 bg-muted/20 h-44 overflow-hidden relative">
-                    <img src={productImage} alt="Product preview" className="h-full object-contain rounded-lg shadow-sm" />
+                    <img
+                      src={productImage}
+                      alt="Product preview"
+                      className="h-full object-contain rounded-lg shadow-sm"
+                    />
                   </div>
                 )}
               </div>
-
             </div>
           )}
-
         </div>
 
         {/* Footer con controles */}
-        <div className="bg-muted/30 border-t border-border/10 p-5 flex items-center justify-between gap-3">
+        <div className="bg-muted/30 border-t border-border/10 p-4 sm:p-5 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
           {/* Botón de saltar/cerrar */}
           <Button
             variant="ghost"
             onClick={handleSkipAll}
-            className="text-muted-foreground hover:text-foreground text-xs font-semibold px-3 h-9"
+            className="text-muted-foreground hover:text-foreground text-xs font-semibold px-3 h-9 w-full sm:w-auto text-center"
           >
             Saltar configuración
           </Button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             {/* Botón de retroceso */}
             {step > 1 && (
               <Button
                 variant="outline"
                 onClick={() => setStep((s) => (s - 1) as any)}
                 size="sm"
-                className="h-9 px-3 text-xs font-bold gap-1 rounded-lg border-border/60"
+                className="h-9 px-3 text-xs font-bold gap-1 rounded-lg border-border/60 flex-1 sm:flex-none justify-center"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Atrás
@@ -566,7 +618,7 @@ export function OnboardingWizard() {
                 onClick={saveStep1}
                 disabled={loading || !storeName.trim()}
                 size="sm"
-                className="h-9 px-4 text-xs font-bold gap-1 rounded-lg"
+                className="h-9 px-4 text-xs font-bold gap-1 rounded-lg flex-1 sm:flex-none justify-center"
               >
                 {loading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -584,7 +636,7 @@ export function OnboardingWizard() {
                 onClick={saveStep2}
                 disabled={loading}
                 size="sm"
-                className="h-9 px-4 text-xs font-bold gap-1 rounded-lg"
+                className="h-9 px-4 text-xs font-bold gap-1 rounded-lg flex-1 sm:flex-none justify-center"
               >
                 {loading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -602,14 +654,15 @@ export function OnboardingWizard() {
                 onClick={handleFinishOnboarding}
                 disabled={productLoading || !productName.trim() || !productImage}
                 size="sm"
-                className="h-9 px-4 text-xs font-bold gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="h-9 px-4 text-xs font-bold gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white flex-1 sm:flex-none justify-center"
               >
                 {productLoading ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <>
-                    <ShoppingBag className="h-3.5 w-3.5" />
-                    Crear Producto & Finalizar
+                    <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+                    <span className="hidden sm:inline">Crear Producto & Finalizar</span>
+                    <span className="sm:hidden">Finalizar</span>
                   </>
                 )}
               </Button>

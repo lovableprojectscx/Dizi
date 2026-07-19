@@ -1,21 +1,42 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import type { PlanId } from "@/lib/types";
+import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: async () => {
+    try {
+      const session = await getActiveSession();
+      if (session) {
+        const role = getUserRole(session.user);
+        throw redirect({ to: role === "super_admin" ? "/super/dashboard" : "/admin" });
+      }
+    } catch (err) {
+      if (err && typeof err === "object" && "to" in err) {
+        throw err;
+      }
+      const session = getSessionSync();
+      if (session) {
+        const role = getUserRole(session.user);
+        throw redirect({ to: role === "super_admin" ? "/super/dashboard" : "/admin" });
+      }
+    }
+  },
   head: () => ({
     meta: [
       { title: "Crear tu Catálogo Digital Gratis — Dizi" },
-      { name: "description", content: "Registra tu negocio en Dizi y crea tu catálogo digital gratis en 2 minutos. Empieza a vender por WhatsApp hoy mismo." },
+      {
+        name: "description",
+        content:
+          "Registra tu negocio en Dizi y crea tu catálogo digital gratis en 2 minutos. Empieza a vender por WhatsApp hoy mismo.",
+      },
       { name: "robots", content: "noindex, follow" },
     ],
-    links: [
-      { rel: "canonical", href: "https://dizi.idenza.site/register" },
-    ],
+    links: [{ rel: "canonical", href: "https://dizi.idenza.site/register" }],
   }),
   component: RegisterPage,
 });
@@ -33,28 +54,56 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   const textDark = dark ? "#fff" : "#111";
 
   const Header = () => (
-    <div className="flex items-center gap-1.5 px-2 py-1.5 shrink-0" style={{ backgroundColor: bg, borderBottom: `1px solid ${accent}33` }}>
-      <div className="h-3.5 w-3.5 rounded-full flex items-center justify-center text-[6px] font-black text-white shrink-0" style={{ backgroundColor: accent }}>D</div>
+    <div
+      className="flex items-center gap-1.5 px-2 py-1.5 shrink-0"
+      style={{ backgroundColor: bg, borderBottom: `1px solid ${accent}33` }}
+    >
+      <div
+        className="h-3.5 w-3.5 rounded-full flex items-center justify-center text-[6px] font-black text-white shrink-0"
+        style={{ backgroundColor: accent }}
+      >
+        D
+      </div>
       <div className="h-1 rounded-full w-8 flex-1" style={{ backgroundColor: muted }} />
-      <div className="h-3 rounded-full px-1.5 text-[4.5px] font-bold flex items-center" style={{ backgroundColor: accent, color: "#fff" }}>Contacto</div>
+      <div
+        className="h-3 rounded-full px-1.5 text-[4.5px] font-bold flex items-center"
+        style={{ backgroundColor: accent, color: "#fff" }}
+      >
+        Contacto
+      </div>
     </div>
   );
 
   // GRID: rejilla 2×3 con tarjetas
   if (m.layout === "grid") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="px-1.5 py-1 shrink-0">
-          <div className="h-2 rounded-full w-full" style={{ backgroundColor: dark ? "rgba(255,255,255,0.08)" : accent + "22" }} />
+          <div
+            className="h-2 rounded-full w-full"
+            style={{ backgroundColor: dark ? "rgba(255,255,255,0.08)" : accent + "22" }}
+          />
         </div>
         <div className="grid grid-cols-3 gap-1 px-1.5 pb-1.5 flex-1 overflow-hidden">
-          {[0,1,2,3,4,5].map((i) => (
-            <div key={i} className="rounded overflow-hidden flex flex-col" style={{ backgroundColor: card, border: `1px solid ${accent}33` }}>
-              <div style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}55` }} />
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="rounded overflow-hidden flex flex-col"
+              style={{ backgroundColor: card, border: `1px solid ${accent}33` }}
+            >
+              <div
+                style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}55` }}
+              />
               <div className="p-0.5 space-y-0.5">
                 <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-                <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent, opacity: 0.85 }} />
+                <div
+                  className="h-1 rounded-full w-1/2"
+                  style={{ backgroundColor: accent, opacity: 0.85 }}
+                />
               </div>
             </div>
           ))}
@@ -66,16 +115,42 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // OVERLAY: portrait 3:4 con texto sobre gradiente
   if (m.layout === "overlay") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="flex gap-1 px-1.5 py-1 flex-1 overflow-hidden">
-          {[0,1,2].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div key={i} className="flex-1 relative overflow-hidden rounded-lg">
-              <div className="absolute inset-0" style={{ background: i % 2 === 0 ? `linear-gradient(160deg, ${accent}dd, ${card}99)` : `linear-gradient(160deg, ${card}99, ${accent}cc)` }} />
-              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 40%, transparent 75%)" }} />
-              {i === 0 && <div className="absolute top-1 left-1 text-[4px] font-black px-1 rounded-full" style={{ backgroundColor: "#ef4444", color: "#fff" }}>OFERTA</div>}
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    i % 2 === 0
+                      ? `linear-gradient(160deg, ${accent}dd, ${card}99)`
+                      : `linear-gradient(160deg, ${card}99, ${accent}cc)`,
+                }}
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(to top, rgba(0,0,0,0.8) 40%, transparent 75%)",
+                }}
+              />
+              {i === 0 && (
+                <div
+                  className="absolute top-1 left-1 text-[4px] font-black px-1 rounded-full"
+                  style={{ backgroundColor: "#ef4444", color: "#fff" }}
+                >
+                  OFERTA
+                </div>
+              )}
               <div className="absolute bottom-0 left-0 right-0 p-1 space-y-0.5">
-                <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                <div
+                  className="h-0.5 rounded-full w-4/5"
+                  style={{ backgroundColor: "#fff", opacity: 0.85 }}
+                />
                 <div className="h-1 rounded-full w-2/5" style={{ backgroundColor: accent }} />
               </div>
             </div>
@@ -88,23 +163,51 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // HERO: banner + mini grid circular
   if (m.layout === "hero") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="px-1.5 pt-1 shrink-0">
           <div className="relative w-full overflow-hidden rounded-lg" style={{ height: "40px" }}>
-            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}ee, ${accent}55)` }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 35%, transparent)" }} />
+            <div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(135deg, ${accent}ee, ${accent}55)` }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 35%, transparent)" }}
+            />
             <div className="absolute bottom-1.5 left-2 space-y-0.5">
-              <div className="h-1 rounded-full w-12" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
-              <div className="h-1.5 rounded-full w-8" style={{ backgroundColor: "#fff", opacity: 0.6 }} />
+              <div
+                className="h-1 rounded-full w-12"
+                style={{ backgroundColor: "#fff", opacity: 0.9 }}
+              />
+              <div
+                className="h-1.5 rounded-full w-8"
+                style={{ backgroundColor: "#fff", opacity: 0.6 }}
+              />
             </div>
-            <div className="absolute bottom-1.5 right-2 h-2.5 px-1.5 rounded-full flex items-center text-[4px] font-bold" style={{ backgroundColor: accent, color: "#fff" }}>Añadir</div>
+            <div
+              className="absolute bottom-1.5 right-2 h-2.5 px-1.5 rounded-full flex items-center text-[4px] font-bold"
+              style={{ backgroundColor: accent, color: "#fff" }}
+            >
+              Añadir
+            </div>
           </div>
         </div>
         <div className="flex gap-1 px-1.5 py-1 flex-1">
-          {[0,1,2,3].map((i) => (
+          {[0, 1, 2, 3].map((i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-              <div className="w-full" style={{ aspectRatio: "1/1", borderRadius: "999px", background: i % 2 === 0 ? `${accent}cc` : `${accent}44`, border: `1.5px solid ${accent}66` }} />
+              <div
+                className="w-full"
+                style={{
+                  aspectRatio: "1/1",
+                  borderRadius: "999px",
+                  background: i % 2 === 0 ? `${accent}cc` : `${accent}44`,
+                  border: `1.5px solid ${accent}66`,
+                }}
+              />
               <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
             </div>
           ))}
@@ -116,17 +219,43 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // EDITORIAL: lista horizontal
   if (m.layout === "editorial") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="flex-1 overflow-hidden px-1.5 py-1 space-y-1">
-          {[0,1,2].map((i) => (
-            <div key={i} className="flex gap-1.5 items-center py-1" style={{ borderBottom: `1px solid ${accent}33` }}>
-              <div className="shrink-0 rounded overflow-hidden" style={{ width: "22px", height: "22px", background: i === 0 ? `linear-gradient(135deg, ${accent}, ${accent}55)` : `linear-gradient(135deg, ${accent}55, ${accent}22)` }} />
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="flex gap-1.5 items-center py-1"
+              style={{ borderBottom: `1px solid ${accent}33` }}
+            >
+              <div
+                className="shrink-0 rounded overflow-hidden"
+                style={{
+                  width: "22px",
+                  height: "22px",
+                  background:
+                    i === 0
+                      ? `linear-gradient(135deg, ${accent}, ${accent}55)`
+                      : `linear-gradient(135deg, ${accent}55, ${accent}22)`,
+                }}
+              />
               <div className="flex-1 space-y-0.5">
-                <div className="h-1 rounded-full" style={{ width: i === 0 ? "80%" : i === 1 ? "65%" : "72%", backgroundColor: muted }} />
+                <div
+                  className="h-1 rounded-full"
+                  style={{
+                    width: i === 0 ? "80%" : i === 1 ? "65%" : "72%",
+                    backgroundColor: muted,
+                  }}
+                />
                 <div className="h-0.5 rounded-full w-full" style={{ backgroundColor: mutedSoft }} />
               </div>
-              <div className="shrink-0 h-1.5 rounded-full w-6" style={{ backgroundColor: accent, opacity: 0.85 }} />
+              <div
+                className="shrink-0 h-1.5 rounded-full w-6"
+                style={{ backgroundColor: accent, opacity: 0.85 }}
+              />
             </div>
           ))}
         </div>
@@ -137,24 +266,61 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // TILES: 1 banner ancho + 2 cuadros
   if (m.layout === "tiles") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="px-1.5 pt-1 space-y-1 flex-1 overflow-hidden">
           <div className="relative overflow-hidden w-full rounded-lg" style={{ height: "36px" }}>
-            <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${accent}ee, ${accent}55)` }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 30%, transparent)" }} />
-            <div className="absolute top-1 right-1 h-3 px-1 flex items-center rounded text-[4px] font-bold" style={{ backgroundColor: accent, color: dark ? "#000" : "#fff", opacity: 0.9 }}>NUEVO</div>
+            <div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(120deg, ${accent}ee, ${accent}55)` }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 30%, transparent)" }}
+            />
+            <div
+              className="absolute top-1 right-1 h-3 px-1 flex items-center rounded text-[4px] font-bold"
+              style={{ backgroundColor: accent, color: dark ? "#000" : "#fff", opacity: 0.9 }}
+            >
+              NUEVO
+            </div>
             <div className="absolute bottom-1 left-2 space-y-0.5">
-              <div className="h-1 rounded-full w-14" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div
+                className="h-1 rounded-full w-14"
+                style={{ backgroundColor: "#fff", opacity: 0.9 }}
+              />
             </div>
           </div>
           <div className="flex gap-1 flex-1 pb-1">
-            {[0,1].map((i) => (
-              <div key={i} className="flex-1 relative overflow-hidden rounded-lg" style={{ minHeight: "32px" }}>
-                <div className="absolute inset-0" style={{ background: i === 0 ? `linear-gradient(145deg, ${accent}cc, ${accent}66)` : `linear-gradient(145deg, ${accent}77, ${accent}dd)` }} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 35%, transparent)" }} />
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                className="flex-1 relative overflow-hidden rounded-lg"
+                style={{ minHeight: "32px" }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      i === 0
+                        ? `linear-gradient(145deg, ${accent}cc, ${accent}66)`
+                        : `linear-gradient(145deg, ${accent}77, ${accent}dd)`,
+                  }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: "linear-gradient(to top, rgba(0,0,0,0.65) 35%, transparent)",
+                  }}
+                />
                 <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                  <div
+                    className="h-0.5 rounded-full w-3/4"
+                    style={{ backgroundColor: "#fff", opacity: 0.85 }}
+                  />
                 </div>
               </div>
             ))}
@@ -167,26 +333,67 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // SPOTLIGHT: 1 grande izquierda + 2 apilados derecha
   if (m.layout === "spotlight") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="flex gap-1 px-1.5 pb-1.5 pt-1 flex-1 overflow-hidden">
           <div className="flex-1 relative overflow-hidden rounded-xl">
-            <div className="absolute inset-0" style={{ background: `linear-gradient(150deg, ${accent}dd, ${accent}66)` }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 28%, rgba(0,0,0,0.05) 70%)" }} />
-            <div className="absolute top-1.5 left-1.5 text-[4px] font-bold tracking-widest uppercase" style={{ color: accent }}>Destacado</div>
+            <div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(150deg, ${accent}dd, ${accent}66)` }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "linear-gradient(to top, rgba(0,0,0,0.8) 28%, rgba(0,0,0,0.05) 70%)",
+              }}
+            />
+            <div
+              className="absolute top-1.5 left-1.5 text-[4px] font-bold tracking-widest uppercase"
+              style={{ color: accent }}
+            >
+              Destacado
+            </div>
             <div className="absolute bottom-0 left-0 right-0 p-1.5 space-y-0.5">
-              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: "#fff", opacity: 0.55 }} />
-              <div className="h-1 rounded-full w-3/5" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
-              <div className="h-2 rounded-full w-8 mt-0.5" style={{ backgroundColor: accent, opacity: 0.85 }} />
+              <div
+                className="h-0.5 rounded-full w-4/5"
+                style={{ backgroundColor: "#fff", opacity: 0.55 }}
+              />
+              <div
+                className="h-1 rounded-full w-3/5"
+                style={{ backgroundColor: "#fff", opacity: 0.9 }}
+              />
+              <div
+                className="h-2 rounded-full w-8 mt-0.5"
+                style={{ backgroundColor: accent, opacity: 0.85 }}
+              />
             </div>
           </div>
           <div className="flex-1 flex flex-col gap-1">
-            {[0,1].map((i) => (
+            {[0, 1].map((i) => (
               <div key={i} className="flex-1 relative overflow-hidden rounded-lg">
-                <div className="absolute inset-0" style={{ background: i === 0 ? `linear-gradient(120deg, ${accent}99, ${accent}55)` : `linear-gradient(120deg, ${accent}cc, ${accent}88)` }} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 38%, transparent)" }} />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      i === 0
+                        ? `linear-gradient(120deg, ${accent}99, ${accent}55)`
+                        : `linear-gradient(120deg, ${accent}cc, ${accent}88)`,
+                  }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: "linear-gradient(to top, rgba(0,0,0,0.7) 38%, transparent)",
+                  }}
+                />
                 <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                  <div
+                    className="h-0.5 rounded-full w-3/4"
+                    style={{ backgroundColor: "#fff", opacity: 0.85 }}
+                  />
                 </div>
               </div>
             ))}
@@ -199,21 +406,49 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // DIAGONAL: cortes estilo Nike
   if (m.layout === "diagonal") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="flex-1 overflow-hidden">
-          {[0,1].map((i) => (
+          {[0, 1].map((i) => (
             <div key={i} className="flex" style={{ height: "40%" }}>
-              <div className="flex-1 relative overflow-hidden" style={{
-                clipPath: i % 2 === 0 ? "polygon(0 0, 100% 0, 100% 80%, 0 100%)" : "polygon(0 0, 100% 0, 100% 100%, 0 80%)",
-                background: i === 0 ? `linear-gradient(120deg, ${accent}dd, ${accent}66)` : `linear-gradient(120deg, ${accent}99, ${accent}cc)`,
-              }}>
-                <div className="absolute top-1 left-1.5 text-[4px] font-black px-1 py-0.5 tracking-widest" style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}>{i === 0 ? "NEW" : "SALE"}</div>
+              <div
+                className="flex-1 relative overflow-hidden"
+                style={{
+                  clipPath:
+                    i % 2 === 0
+                      ? "polygon(0 0, 100% 0, 100% 80%, 0 100%)"
+                      : "polygon(0 0, 100% 0, 100% 100%, 0 80%)",
+                  background:
+                    i === 0
+                      ? `linear-gradient(120deg, ${accent}dd, ${accent}66)`
+                      : `linear-gradient(120deg, ${accent}99, ${accent}cc)`,
+                }}
+              >
+                <div
+                  className="absolute top-1 left-1.5 text-[4px] font-black px-1 py-0.5 tracking-widest"
+                  style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}
+                >
+                  {i === 0 ? "NEW" : "SALE"}
+                </div>
               </div>
-              <div className="w-2/5 px-1.5 py-1 flex flex-col justify-center gap-0.5" style={{ backgroundColor: card }}>
+              <div
+                className="w-2/5 px-1.5 py-1 flex flex-col justify-center gap-0.5"
+                style={{ backgroundColor: card }}
+              >
                 <div className="h-0.5 rounded-full w-full" style={{ backgroundColor: muted }} />
-                <div className="h-1.5 rounded-full w-3/4" style={{ backgroundColor: accent, opacity: 0.85 }} />
-                <div className="h-2 rounded w-10 flex items-center justify-center text-[4px] font-black" style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}>AÑADIR</div>
+                <div
+                  className="h-1.5 rounded-full w-3/4"
+                  style={{ backgroundColor: accent, opacity: 0.85 }}
+                />
+                <div
+                  className="h-2 rounded w-10 flex items-center justify-center text-[4px] font-black"
+                  style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}
+                >
+                  AÑADIR
+                </div>
               </div>
             </div>
           ))}
@@ -225,22 +460,41 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // ARCH: marcos en arco
   if (m.layout === "arch") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="flex gap-1.5 px-2 py-1.5 flex-1 overflow-hidden items-start">
-          {[0,1,2].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-              <div className="relative overflow-hidden w-full" style={{
-                aspectRatio: "3/4",
-                borderRadius: "999px 999px 6px 6px",
-                background: i === 0 ? `linear-gradient(160deg, ${accent}cc, ${accent}55)` : i === 1 ? `linear-gradient(160deg, ${accent}55, ${accent}88)` : `linear-gradient(160deg, ${accent}88, ${accent}cc)`,
-                border: `1px solid ${accent}55`,
-                opacity: i === 0 ? 1 : 0.7,
-              }}>
-                <div className="absolute top-0 left-0 right-0 h-1/3" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)" }} />
+              <div
+                className="relative overflow-hidden w-full"
+                style={{
+                  aspectRatio: "3/4",
+                  borderRadius: "999px 999px 6px 6px",
+                  background:
+                    i === 0
+                      ? `linear-gradient(160deg, ${accent}cc, ${accent}55)`
+                      : i === 1
+                        ? `linear-gradient(160deg, ${accent}55, ${accent}88)`
+                        : `linear-gradient(160deg, ${accent}88, ${accent}cc)`,
+                  border: `1px solid ${accent}55`,
+                  opacity: i === 0 ? 1 : 0.7,
+                }}
+              >
+                <div
+                  className="absolute top-0 left-0 right-0 h-1/3"
+                  style={{
+                    background: "linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)",
+                  }}
+                />
               </div>
               <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-              <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent, opacity: 0.85 }} />
+              <div
+                className="h-1 rounded-full w-1/2"
+                style={{ backgroundColor: accent, opacity: 0.85 }}
+              />
             </div>
           ))}
         </div>
@@ -251,24 +505,61 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // MAGAZINE: full-width banner + pares 3:4
   if (m.layout === "magazine") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="flex-1 overflow-hidden space-y-0.5 pt-1">
           <div className="relative overflow-hidden mx-0" style={{ height: "30px" }}>
-            <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}44)` }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }} />
+            <div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}44)` }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }}
+            />
             <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
-              <div className="h-1 rounded-sm w-16" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
-              <div className="h-2.5 px-1 flex items-center text-[4px] font-bold" style={{ border: "0.5px solid rgba(255,255,255,0.5)", color: "#fff" }}>VER</div>
+              <div
+                className="h-1 rounded-sm w-16"
+                style={{ backgroundColor: "#fff", opacity: 0.9 }}
+              />
+              <div
+                className="h-2.5 px-1 flex items-center text-[4px] font-bold"
+                style={{ border: "0.5px solid rgba(255,255,255,0.5)", color: "#fff" }}
+              >
+                VER
+              </div>
             </div>
           </div>
           <div className="flex gap-0.5 flex-1 pb-1">
-            {[0,1].map((i) => (
-              <div key={i} className="flex-1 relative overflow-hidden" style={{ minHeight: "44px" }}>
-                <div className="absolute inset-0" style={{ background: i === 0 ? `linear-gradient(160deg, ${accent}99, ${accent}55)` : `linear-gradient(160deg, ${accent}dd, ${accent}88)` }} />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 40%, transparent)" }} />
+            {[0, 1].map((i) => (
+              <div
+                key={i}
+                className="flex-1 relative overflow-hidden"
+                style={{ minHeight: "44px" }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      i === 0
+                        ? `linear-gradient(160deg, ${accent}99, ${accent}55)`
+                        : `linear-gradient(160deg, ${accent}dd, ${accent}88)`,
+                  }}
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: "linear-gradient(to top, rgba(0,0,0,0.7) 40%, transparent)",
+                  }}
+                />
                 <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div className="h-0.5 rounded-sm w-3/4 mb-0.5" style={{ backgroundColor: "#fff", opacity: 0.85 }} />
+                  <div
+                    className="h-0.5 rounded-sm w-3/4 mb-0.5"
+                    style={{ backgroundColor: "#fff", opacity: 0.85 }}
+                  />
                 </div>
               </div>
             ))}
@@ -281,24 +572,54 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
   // BANNER_GRID: banner + grid 2 col
   if (m.layout === "banner_grid") {
     return (
-      <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
         <Header />
         <div className="px-1.5 pt-1 pb-0.5 shrink-0">
-          <div className="relative w-full overflow-hidden rounded-lg mb-1" style={{ height: "32px" }}>
-            <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}66)` }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 40%, transparent)" }} />
+          <div
+            className="relative w-full overflow-hidden rounded-lg mb-1"
+            style={{ height: "32px" }}
+          >
+            <div
+              className="absolute inset-0"
+              style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}66)` }}
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 40%, transparent)" }}
+            />
             <div className="absolute bottom-1.5 left-2 space-y-0.5">
-              <div className="h-1 rounded-full w-12" style={{ backgroundColor: "#fff", opacity: 0.9 }} />
+              <div
+                className="h-1 rounded-full w-12"
+                style={{ backgroundColor: "#fff", opacity: 0.9 }}
+              />
             </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-1 px-1.5 pb-1.5 flex-1">
-          {[0,1,2,3].map((i) => (
-            <div key={i} className="overflow-hidden flex flex-col rounded" style={{ backgroundColor: card }}>
-              <div style={{ aspectRatio: "1/1", background: i % 2 === 0 ? `linear-gradient(135deg, ${accent}bb, ${accent}44)` : `linear-gradient(135deg, ${accent}44, ${accent}bb)` }} />
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="overflow-hidden flex flex-col rounded"
+              style={{ backgroundColor: card }}
+            >
+              <div
+                style={{
+                  aspectRatio: "1/1",
+                  background:
+                    i % 2 === 0
+                      ? `linear-gradient(135deg, ${accent}bb, ${accent}44)`
+                      : `linear-gradient(135deg, ${accent}44, ${accent}bb)`,
+                }}
+              />
               <div className="p-0.5 space-y-0.5">
                 <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-                <div className="h-1 rounded-full w-2/5" style={{ backgroundColor: accent, opacity: 0.9 }} />
+                <div
+                  className="h-1 rounded-full w-2/5"
+                  style={{ backgroundColor: accent, opacity: 0.9 }}
+                />
               </div>
             </div>
           ))}
@@ -309,14 +630,26 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
 
   // Fallback grid
   return (
-    <div className="w-full overflow-hidden flex flex-col" style={{ backgroundColor: bg, height: "100px" }}>
+    <div
+      className="w-full overflow-hidden flex flex-col"
+      style={{ backgroundColor: bg, height: "100px" }}
+    >
       <Header />
       <div className="grid grid-cols-3 gap-1 px-1.5 pb-1.5 pt-1 flex-1 overflow-hidden">
-        {[0,1,2,3,4,5].map((i) => (
-          <div key={i} className="rounded overflow-hidden flex flex-col" style={{ backgroundColor: card, border: `1px solid ${accent}33`, padding: "3px" }}>
-            <div style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}44` }} />
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="rounded overflow-hidden flex flex-col"
+            style={{ backgroundColor: card, border: `1px solid ${accent}33`, padding: "3px" }}
+          >
+            <div
+              style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}44` }}
+            />
             <div className="h-0.5 rounded-full w-4/5 mt-0.5" style={{ backgroundColor: muted }} />
-            <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent, opacity: 0.85 }} />
+            <div
+              className="h-1 rounded-full w-1/2"
+              style={{ backgroundColor: accent, opacity: 0.85 }}
+            />
           </div>
         ))}
       </div>
@@ -350,14 +683,14 @@ function RegisterPage() {
   const [inviteLoading, setInviteLoading] = useState(false);
 
   const BRAND_COLORS = [
-    { id: "coral",   name: "Coral (Dizi)",   hex: "#FF823A" },
-    { id: "menta",   name: "Menta",          hex: "#7bc740" },
-    { id: "lavanda", name: "Lavanda",        hex: "#BC84EE" },
-    { id: "indigo",  name: "Indigo",         hex: "#1E293B" },
-    { id: "rose",    name: "Rosa",           hex: "#ec4899" },
-    { id: "sky",     name: "Cielo",          hex: "#0ea5e9" },
-    { id: "amber",   name: "Ambar",          hex: "#f59e0b" },
-    { id: "teal",    name: "Teal",           hex: "#14b8a6" },
+    { id: "coral", name: "Coral (Dizi)", hex: "#FF823A" },
+    { id: "menta", name: "Menta", hex: "#7bc740" },
+    { id: "lavanda", name: "Lavanda", hex: "#BC84EE" },
+    { id: "indigo", name: "Indigo", hex: "#1E293B" },
+    { id: "rose", name: "Rosa", hex: "#ec4899" },
+    { id: "sky", name: "Cielo", hex: "#0ea5e9" },
+    { id: "amber", name: "Ambar", hex: "#f59e0b" },
+    { id: "teal", name: "Teal", hex: "#14b8a6" },
   ];
 
   // Form states
@@ -373,65 +706,196 @@ function RegisterPage() {
   useEffect(() => {
     if (!inviteToken) return;
     setInviteLoading(true);
-    supabase
-      .rpc("check_invite", { p_token: inviteToken })
-      .then(({ data, error }) => {
-        const inviteArray = data as any[];
-        if (error || !inviteArray || inviteArray.length === 0) {
-          console.warn("[register] Invite no encontrado, expirado o ya usado:", error?.message);
-        } else {
-          const invite = inviteArray[0];
-          setInvitePlan(invite.plan as PlanId);
-          setInviteDurationMonths(invite.duration_months ?? 1);
-          setInviteDurationValue(invite.duration_value ?? null);
-          setInviteDurationUnit(invite.duration_unit as "days" | "months" ?? null);
-          setInviteCustomPrice(invite.custom_price !== null && invite.custom_price !== undefined ? Number(invite.custom_price) : null);
-        }
-        setInviteLoading(false);
-      });
+    supabase.rpc("check_invite", { p_token: inviteToken }).then(({ data, error }) => {
+      const inviteArray = data as any[];
+      if (error || !inviteArray || inviteArray.length === 0) {
+        console.warn("[register] Invite no encontrado, expirado o ya usado:", error?.message);
+      } else {
+        const invite = inviteArray[0];
+        setInvitePlan(invite.plan as PlanId);
+        setInviteDurationMonths(invite.duration_months ?? 1);
+        setInviteDurationValue(invite.duration_value ?? null);
+        setInviteDurationUnit((invite.duration_unit as "days" | "months") ?? null);
+        setInviteCustomPrice(
+          invite.custom_price !== null && invite.custom_price !== undefined
+            ? Number(invite.custom_price)
+            : null,
+        );
+      }
+      setInviteLoading(false);
+    });
   }, [inviteToken]);
 
   const plan: PlanId = invitePlan ?? "semilla";
-  const isTrial = invitePlan !== null && (inviteDurationMonths === 0 || inviteDurationUnit === "days");
+  const isTrial =
+    invitePlan !== null && (inviteDurationMonths === 0 || inviteDurationUnit === "days");
   const isPremium = plan !== "semilla";
 
   const niches = [
-    { id: "general",   name: "General" },
-    { id: "comida",    name: "Gastronomia & Fast Food" },
+    { id: "general", name: "General" },
+    { id: "comida", name: "Gastronomia & Fast Food" },
     { id: "bisuteria", name: "Bisuteria & Accesorios" },
-    { id: "ropa",      name: "Boutique & Moda" },
-    { id: "tech",      name: "Tech & Electronica" },
+    { id: "ropa", name: "Boutique & Moda" },
+    { id: "tech", name: "Tech & Electronica" },
     { id: "servicios", name: "Servicios Profesionales" },
   ];
 
   // Modelos sincronizados exactamente con admin.diseno.tsx
   const ALL_MODELS = [
     // Semilla (0)
-    { id: "minimalista",  layout: "grid",       name: "Minimalista",        desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",         planLevel: 0, niches: ["general","ropa","bisuteria","floreria"], p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false } },
-    { id: "clasico",      layout: "grid",       name: "Clásico Cálido",     desc: "Tipografía serif y tonos terrosos. Artesanías.",          planLevel: 0, niches: ["general","servicios","comida","floreria"], p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false } },
-    { id: "vibrante",     layout: "overlay",    name: "Vibrante",           desc: "Cards portrait con texto sobre gradiente. Instagram.",   planLevel: 0, niches: ["comida","ropa","general"],                p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false } },
-    { id: "eco",          layout: "hero",       name: "Eco Hero",           desc: "Banner hero panorámico + galería circular.",             planLevel: 0, niches: ["servicios","general","floreria"],         p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false } },
+    {
+      id: "minimalista",
+      layout: "grid",
+      name: "Minimalista",
+      desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",
+      planLevel: 0,
+      niches: ["general", "ropa", "bisuteria", "floreria"],
+      p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false },
+    },
+    {
+      id: "clasico",
+      layout: "grid",
+      name: "Clásico Cálido",
+      desc: "Tipografía serif y tonos terrosos. Artesanías.",
+      planLevel: 0,
+      niches: ["general", "servicios", "comida", "floreria"],
+      p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false },
+    },
+    {
+      id: "vibrante",
+      layout: "overlay",
+      name: "Vibrante",
+      desc: "Cards portrait con texto sobre gradiente. Instagram.",
+      planLevel: 0,
+      niches: ["comida", "ropa", "general"],
+      p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false },
+    },
+    {
+      id: "eco",
+      layout: "hero",
+      name: "Eco Hero",
+      desc: "Banner hero panorámico + galería circular.",
+      planLevel: 0,
+      niches: ["servicios", "general", "floreria"],
+      p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false },
+    },
     // Emprendedor (1)
-    { id: "nature_mint",  layout: "grid",       name: "Nature Mint",        desc: "Verde teal fresco. Salud, bienestar y cafés.",           planLevel: 1, niches: ["servicios","general","floreria"],         p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false } },
+    {
+      id: "nature_mint",
+      layout: "grid",
+      name: "Nature Mint",
+      desc: "Verde teal fresco. Salud, bienestar y cafés.",
+      planLevel: 1,
+      niches: ["servicios", "general", "floreria"],
+      p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false },
+    },
     // Pro (2)
-    { id: "nocturno",     layout: "overlay",    name: "Nocturno",           desc: "Dark mode de alto impacto con overlay oscuro.",          planLevel: 2, niches: ["tech","ropa"],                           p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true  } },
-    { id: "elite",        layout: "hero",       name: "Elite ✦",            desc: "Banner cinematográfico. Identidad visual fuerte.",       planLevel: 2, niches: ["general","ropa","tech"],                 p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false } },
-    { id: "boutique",     layout: "spotlight",  name: "Boutique",           desc: "1 producto estrella grande + 2 apilados. Farfetch.",     planLevel: 2, niches: ["ropa","bisuteria"],                      p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false } },
-    { id: "corporativo",  layout: "editorial",  name: "Corporativo Azul",   desc: "Lista horizontal profesional. Servicios.",               planLevel: 2, niches: ["servicios"],                             p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false } },
-    { id: "aurora",       layout: "tiles",      name: "Aurora Glass",       desc: "Tiles glassmorphism con degradado cósmico.",             planLevel: 2, niches: ["tech","bisuteria"],                      p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true  } },
+    {
+      id: "nocturno",
+      layout: "overlay",
+      name: "Nocturno",
+      desc: "Dark mode de alto impacto con overlay oscuro.",
+      planLevel: 2,
+      niches: ["tech", "ropa"],
+      p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true },
+    },
+    {
+      id: "elite",
+      layout: "hero",
+      name: "Elite ✦",
+      desc: "Banner cinematográfico. Identidad visual fuerte.",
+      planLevel: 2,
+      niches: ["general", "ropa", "tech"],
+      p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false },
+    },
+    {
+      id: "boutique",
+      layout: "spotlight",
+      name: "Boutique",
+      desc: "1 producto estrella grande + 2 apilados. Farfetch.",
+      planLevel: 2,
+      niches: ["ropa", "bisuteria"],
+      p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false },
+    },
+    {
+      id: "corporativo",
+      layout: "editorial",
+      name: "Corporativo Azul",
+      desc: "Lista horizontal profesional. Servicios.",
+      planLevel: 2,
+      niches: ["servicios"],
+      p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false },
+    },
+    {
+      id: "aurora",
+      layout: "tiles",
+      name: "Aurora Glass",
+      desc: "Tiles glassmorphism con degradado cósmico.",
+      planLevel: 2,
+      niches: ["tech", "bisuteria"],
+      p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true },
+    },
     // Ilimitado (3)
-    { id: "dark_fashion", layout: "magazine",   name: "Dark Fashion",       desc: "Revista editorial oscura. Banners full-width.",          planLevel: 3, niches: ["ropa"],                                  p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true  } },
-    { id: "slash",        layout: "diagonal",   name: "Slash Diagonal",     desc: "Cortes diagonales de alto impacto. Estilo Nike.",        planLevel: 3, niches: ["ropa","tech"],                           p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true  } },
-    { id: "arch_studio",  layout: "arch",       name: "Arch Studio",        desc: "Marcos en arco. Tipografía ligera y elegante.",          planLevel: 3, niches: ["servicios","general","floreria"],        p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false } },
-    { id: "portada",      layout: "banner_grid",name: "Portada con Banner",  desc: "Banner personalizable + catálogo en grid 2 columnas.",   planLevel: 3, niches: ["general","floreria","comida"],            p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false } },
-    { id: "sunset_glow",  layout: "overlay",    name: "Sunset Glow",        desc: "Degradado atardecer con cards portrait flotantes.",      planLevel: 3, niches: ["ropa","bisuteria","floreria"],           p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true  } },
-    { id: "forest_deep",  layout: "grid",       name: "Forest Deep",        desc: "Bosque oscuro. Fotográfico y orgánico.",                 planLevel: 3, niches: ["servicios","general"],                   p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true  } },
+    {
+      id: "dark_fashion",
+      layout: "magazine",
+      name: "Dark Fashion",
+      desc: "Revista editorial oscura. Banners full-width.",
+      planLevel: 3,
+      niches: ["ropa"],
+      p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true },
+    },
+    {
+      id: "slash",
+      layout: "diagonal",
+      name: "Slash Diagonal",
+      desc: "Cortes diagonales de alto impacto. Estilo Nike.",
+      planLevel: 3,
+      niches: ["ropa", "tech"],
+      p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true },
+    },
+    {
+      id: "arch_studio",
+      layout: "arch",
+      name: "Arch Studio",
+      desc: "Marcos en arco. Tipografía ligera y elegante.",
+      planLevel: 3,
+      niches: ["servicios", "general", "floreria"],
+      p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false },
+    },
+    {
+      id: "portada",
+      layout: "banner_grid",
+      name: "Portada con Banner",
+      desc: "Banner personalizable + catálogo en grid 2 columnas.",
+      planLevel: 3,
+      niches: ["general", "floreria", "comida"],
+      p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false },
+    },
+    {
+      id: "sunset_glow",
+      layout: "overlay",
+      name: "Sunset Glow",
+      desc: "Degradado atardecer con cards portrait flotantes.",
+      planLevel: 3,
+      niches: ["ropa", "bisuteria", "floreria"],
+      p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true },
+    },
+    {
+      id: "forest_deep",
+      layout: "grid",
+      name: "Forest Deep",
+      desc: "Bosque oscuro. Fotográfico y orgánico.",
+      planLevel: 3,
+      niches: ["servicios", "general"],
+      p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true },
+    },
   ];
 
   const planLevelMap: Record<PlanId, number> = { semilla: 0, emprendedor: 1, pro: 2, ilimitado: 3 };
   const userPlanLevel = planLevelMap[plan];
 
-  const models = ALL_MODELS.map(m => ({
+  const models = ALL_MODELS.map((m) => ({
     ...m,
     locked: m.planLevel > userPlanLevel,
     recommended: m.niches.includes(selectedNiche),
@@ -439,9 +903,16 @@ function RegisterPage() {
 
   useEffect(() => {
     // Al cambiar nicho, seleccionar el primer modelo disponible para ese nicho y plan
-    const first = ALL_MODELS.find(m => m.niches.includes(selectedNiche) && m.planLevel <= userPlanLevel);
+    const first = ALL_MODELS.find(
+      (m) => m.niches.includes(selectedNiche) && m.planLevel <= userPlanLevel,
+    );
     if (first) setSelectedModel(first.id);
-    else setSelectedModel(userPlanLevel === 0 ? "minimalista" : ALL_MODELS.find(m => m.planLevel <= userPlanLevel)?.id ?? "minimalista");
+    else
+      setSelectedModel(
+        userPlanLevel === 0
+          ? "minimalista"
+          : (ALL_MODELS.find((m) => m.planLevel <= userPlanLevel)?.id ?? "minimalista"),
+      );
   }, [selectedNiche, plan]);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -452,7 +923,10 @@ function RegisterPage() {
       setLoading(true);
       try {
         const { data: existingStore } = await supabase
-          .from("stores").select("id").eq("slug", storeLink).single();
+          .from("stores")
+          .select("id")
+          .eq("slug", storeLink)
+          .single();
 
         if (existingStore) {
           const { toast } = await import("sonner");
@@ -465,20 +939,24 @@ function RegisterPage() {
           email: email.trim(),
           password: password,
           options: {
-            data: { full_name: storeName, role: "store_owner" }
-          }
+            data: { full_name: storeName, role: "store_owner" },
+          },
         });
 
         let userId = authData.user?.id;
 
         if (authError) {
           if (authError.message?.includes("already registered") || authError.status === 422) {
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-              email: email.trim(),
-              password: password,
-            });
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword(
+              {
+                email: email.trim(),
+                password: password,
+              },
+            );
             if (signInError) {
-              throw new Error("Este correo ya esta registrado. Por favor, inicia sesion con tu contrasena.");
+              throw new Error(
+                "Este correo ya esta registrado. Por favor, inicia sesion con tu contrasena.",
+              );
             }
             userId = signInData.user?.id;
           } else {
@@ -488,13 +966,16 @@ function RegisterPage() {
 
         if (!userId) throw new Error("No se pudo obtener el ID del usuario.");
 
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const {
+          data: { session: currentSession },
+        } = await supabase.auth.getSession();
         if (!currentSession) {
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email: email.trim(),
             password: password,
           });
-          if (signInError) throw new Error("Cuenta creada pero no se pudo iniciar sesion automaticamente.");
+          if (signInError)
+            throw new Error("Cuenta creada pero no se pudo iniciar sesion automaticamente.");
         }
 
         const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
@@ -536,16 +1017,18 @@ function RegisterPage() {
           ownerId: userId,
           niche: selectedNiche,
           planExpiresAt,
-          subscriptionStatus: (plan === "semilla")
-            ? "trial"
-            : (inviteDurationUnit === "days" || isTrial)
+          subscriptionStatus:
+            plan === "semilla"
               ? "trial"
-              : "active",
-          planDurationMonths: (plan === "semilla")
-            ? undefined
-            : (inviteDurationUnit === "days" || isTrial)
-              ? 0
-              : (inviteDurationValue ?? inviteDurationMonths),
+              : inviteDurationUnit === "days" || isTrial
+                ? "trial"
+                : "active",
+          planDurationMonths:
+            plan === "semilla"
+              ? undefined
+              : inviteDurationUnit === "days" || isTrial
+                ? 0
+                : (inviteDurationValue ?? inviteDurationMonths),
           customPrice: inviteCustomPrice !== null ? inviteCustomPrice : undefined,
           referredBy: refToken || undefined,
           categories: [{ id: newCategoryId, name: "Principal" }],
@@ -587,12 +1070,19 @@ function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-[#fffaf7] via-background to-background" translate="no">
+    <div
+      className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-[#fffaf7] via-background to-background"
+      translate="no"
+    >
       {isTrial && showBanner && (
         <div className="w-full bg-slate-950 text-white text-xs py-2 px-8 flex items-center justify-center gap-2 relative z-50 text-center animate-in slide-in-from-top duration-300">
           <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
-            <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">Prueba Gratis</span>
-            <strong className="text-white font-extrabold">15 días de Plan Emprendedor Gratis:</strong>
+            <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">
+              Prueba Gratis
+            </span>
+            <strong className="text-white font-extrabold">
+              15 días de Plan Emprendedor Gratis:
+            </strong>
             <span className="text-slate-300">activado mediante tu enlace de invitación.</span>
           </span>
           <button
@@ -608,22 +1098,31 @@ function RegisterPage() {
 
       {/* Animated Background Mesh Gradients */}
       <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[50%] rounded-full bg-primary/10 blur-[120px] animate-morph pointer-events-none" />
-      <div className="absolute bottom-[10%] right-[-15%] w-[55%] h-[50%] rounded-full bg-lavender/10 blur-[120px] animate-morph pointer-events-none" style={{ animationDelay: '-4s' }} />
-      
+      <div
+        className="absolute bottom-[10%] right-[-15%] w-[55%] h-[50%] rounded-full bg-lavender/10 blur-[120px] animate-morph pointer-events-none"
+        style={{ animationDelay: "-4s" }}
+      />
+
       {/* Light Grid Overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
       {/* Header minimalista */}
       <div className="relative z-10 flex items-center justify-between px-5 pt-5 pb-2">
-        <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 hover:-translate-x-0.5">
+        <Link
+          to="/"
+          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 hover:-translate-x-0.5"
+        >
           <ArrowLeft className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold">Inicio</span>
         </Link>
-        <img src="/images/Icono.png" alt="Dizi" className="h-8 w-8 object-contain transition-transform hover:rotate-12 duration-300" />
+        <img
+          src="/images/Icono.png"
+          alt="Dizi"
+          className="h-8 w-8 object-contain transition-transform hover:rotate-12 duration-300"
+        />
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col items-center px-4 pt-4 pb-8 gap-6">
-
         {/* Banners de invite */}
         {inviteLoading && (
           <div className="w-full max-w-sm rounded-2xl bg-muted/60 backdrop-blur-md text-muted-foreground text-xs font-semibold text-center py-2.5 px-4 border shadow-sm">
@@ -633,15 +1132,18 @@ function RegisterPage() {
         {!inviteLoading && invitePlan && (
           <div className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-primary/20">
             {(() => {
-              const priceText = inviteCustomPrice !== null ? ` (Precio especial: S/ ${inviteCustomPrice.toFixed(2)})` : "";
+              const priceText =
+                inviteCustomPrice !== null
+                  ? ` (Precio especial: S/ ${inviteCustomPrice.toFixed(2)})`
+                  : "";
               if (inviteDurationUnit === "days" && inviteDurationValue) {
                 return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} días${priceText}`;
               } else if (inviteDurationUnit === "months" && inviteDurationValue) {
-                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} ${inviteDurationValue === 1 ? 'mes' : 'meses'}${priceText}`;
+                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} ${inviteDurationValue === 1 ? "mes" : "meses"}${priceText}`;
               } else if (isTrial) {
                 return `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}${priceText}`;
               } else {
-                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? 'mes' : 'meses'}${priceText}`;
+                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? "mes" : "meses"}${priceText}`;
               }
             })()}
           </div>
@@ -657,23 +1159,29 @@ function RegisterPage() {
           <h1 className="text-3xl font-black tracking-tight text-foreground">
             Crea tu <span className="text-primary">catálogo</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1 font-bold uppercase tracking-widest">gratis en 3 pasos</p>
+          <p className="text-xs text-muted-foreground mt-1 font-bold uppercase tracking-widest">
+            gratis en 3 pasos
+          </p>
         </div>
 
         {/* Stepper visual */}
         <div className="flex items-center justify-between w-full max-w-sm px-2 relative">
-          {[1,2,3].map((s) => (
+          {[1, 2, 3].map((s) => (
             <div key={s} className="flex-1 flex flex-col items-center gap-1.5 relative z-10">
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black transition-all duration-300 border ${
-                step === s 
-                  ? "bg-gradient-to-br from-primary to-[#ff7043] text-white border-transparent shadow-lg shadow-primary/20 scale-110 ring-4 ring-primary/10" 
-                  : step > s 
-                    ? "bg-emerald-50 text-emerald-600 border-emerald-200/60" 
-                    : "bg-white text-muted-foreground border-slate-200 shadow-sm"
-              }`}>
+              <div
+                className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black transition-all duration-300 border ${
+                  step === s
+                    ? "bg-gradient-to-br from-primary to-[#ff7043] text-white border-transparent shadow-lg shadow-primary/20 scale-110 ring-4 ring-primary/10"
+                    : step > s
+                      ? "bg-emerald-50 text-emerald-600 border-emerald-200/60"
+                      : "bg-white text-muted-foreground border-slate-200 shadow-sm"
+                }`}
+              >
                 {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
               </div>
-              <span className={`text-[10px] font-black tracking-wider uppercase transition-colors ${step === s ? "text-primary" : "text-muted-foreground"}`}>
+              <span
+                className={`text-[10px] font-black tracking-wider uppercase transition-colors ${step === s ? "text-primary" : "text-muted-foreground"}`}
+              >
                 {s === 1 ? "Negocio" : s === 2 ? "Diseño" : "Cuenta"}
               </span>
             </div>
@@ -685,12 +1193,13 @@ function RegisterPage() {
         {/* Card del formulario */}
         <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10 overflow-hidden">
           <form onSubmit={handleRegister} className="space-y-4 relative">
-
             {/* PASO 1 — Datos del negocio */}
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Nombre de tu Negocio</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Nombre de tu Negocio
+                  </label>
                   <input
                     type="text"
                     value={storeName}
@@ -701,9 +1210,13 @@ function RegisterPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">WhatsApp de Ventas</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    WhatsApp de Ventas
+                  </label>
                   <div className="flex rounded-xl border border-slate-200 bg-white/50 focus-within:bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all overflow-hidden">
-                    <span className="flex items-center px-4 bg-slate-50 text-slate-500 text-sm border-r border-slate-200 font-bold">+51</span>
+                    <span className="flex items-center px-4 bg-slate-50 text-slate-500 text-sm border-r border-slate-200 font-bold">
+                      +51
+                    </span>
                     <input
                       type="tel"
                       value={storePhone}
@@ -718,20 +1231,29 @@ function RegisterPage() {
                   </div>
                 </div>
 
-                <button type="submit" className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer">
+                <button
+                  type="submit"
+                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer"
+                >
                   Siguiente paso
                 </button>
                 <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
-                  <p className="text-[11px] font-semibold text-slate-400 text-center">¿Necesitas ayuda con tu configuración?</p>
+                  <p className="text-[11px] font-semibold text-slate-400 text-center">
+                    ¿Necesitas ayuda con tu configuración?
+                  </p>
                   <a
                     href="https://wa.me/51925176472?text=Hola%2C%20necesito%20ayuda%20para%20configurar%20mi%20tienda%20en%20Dizi"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
                   >
-                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-emerald-600" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z"/>
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-3.5 h-3.5 fill-emerald-600"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z" />
                     </svg>
                     Escríbenos por WhatsApp
                   </a>
@@ -746,48 +1268,62 @@ function RegisterPage() {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex justify-between">
                     <span>Modelo de Catálogo</span>
                     {userPlanLevel === 0 && (
-                      <span className="text-[10px] text-muted-foreground font-normal normal-case">4 disponibles en Semilla</span>
+                      <span className="text-[10px] text-muted-foreground font-normal normal-case">
+                        4 disponibles en Semilla
+                      </span>
                     )}
                   </label>
                   <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
                     {/* Recomendados para el nicho */}
-                    {models.filter(m => m.recommended && !m.locked).length > 0 && (
+                    {models.filter((m) => m.recommended && !m.locked).length > 0 && (
                       <>
                         <div className="col-span-2 flex items-center gap-1.5 px-0.5">
                           <Star className="w-3 h-3 text-primary fill-primary" />
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">Sugeridos para tu negocio</p>
+                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">
+                            Sugeridos para tu negocio
+                          </p>
                         </div>
-                        {models.filter(m => m.recommended && !m.locked).map((m) => (
-                          <div
-                            key={m.id + "_rec"}
-                            onClick={() => setSelectedModel(m.id)}
-                            className={`relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden group ${
-                              selectedModel === m.id
-                                ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
-                                : "border-slate-100 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5"
-                            }`}
-                          >
-                            {/* Thumbnail layout-fiel */}
-                            <div className="relative">
-                              <ModelLayoutPreview model={m} />
-                              {selectedModel === m.id && (
-                                <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
-                                  <CheckCircle2 className="w-3 h-3" />
+                        {models
+                          .filter((m) => m.recommended && !m.locked)
+                          .map((m) => (
+                            <div
+                              key={m.id + "_rec"}
+                              onClick={() => setSelectedModel(m.id)}
+                              className={`relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden group ${
+                                selectedModel === m.id
+                                  ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
+                                  : "border-slate-100 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5"
+                              }`}
+                            >
+                              {/* Thumbnail layout-fiel */}
+                              <div className="relative">
+                                <ModelLayoutPreview model={m} />
+                                {selectedModel === m.id && (
+                                  <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                  </div>
+                                )}
+                                <div className="absolute top-2 left-2 z-10">
+                                  <span className="bg-primary text-white text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full">
+                                    Ideal
+                                  </span>
                                 </div>
-                              )}
-                              <div className="absolute top-2 left-2 z-10">
-                                <span className="bg-primary text-white text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full">Ideal</span>
+                              </div>
+                              {/* Footer */}
+                              <div className="p-2 bg-white border-t border-slate-100">
+                                <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">
+                                  {m.name}
+                                </div>
+                                <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">
+                                  {m.desc}
+                                </div>
                               </div>
                             </div>
-                            {/* Footer */}
-                            <div className="p-2 bg-white border-t border-slate-100">
-                              <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">{m.name}</div>
-                              <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">{m.desc}</div>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
                         <div className="col-span-2">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-0.5 pt-2 pb-1">Todos los modelos</p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-0.5 pt-2 pb-1">
+                            Todos los modelos
+                          </p>
                         </div>
                       </>
                     )}
@@ -812,7 +1348,9 @@ function RegisterPage() {
                             <div className="h-7 w-7 rounded-full bg-white/90 shadow flex items-center justify-center">
                               <Lock className="h-3.5 w-3.5 text-slate-500" />
                             </div>
-                            <span className="text-[7px] font-extrabold uppercase tracking-widest text-slate-500">Premium</span>
+                            <span className="text-[7px] font-extrabold uppercase tracking-widest text-slate-500">
+                              Premium
+                            </span>
                           </div>
                         )}
                         {/* Checkmark */}
@@ -825,8 +1363,12 @@ function RegisterPage() {
                         <ModelLayoutPreview model={m} />
                         {/* Footer */}
                         <div className="p-2 bg-white border-t border-slate-100">
-                          <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">{m.name}</div>
-                          <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">{m.desc}</div>
+                          <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">
+                            {m.name}
+                          </div>
+                          <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">
+                            {m.desc}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -836,7 +1378,9 @@ function RegisterPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center justify-between">
                     <span>Color de tu Marca</span>
-                    <span className="text-[10px] text-muted-foreground font-normal normal-case">(Opcional)</span>
+                    <span className="text-[10px] text-muted-foreground font-normal normal-case">
+                      (Opcional)
+                    </span>
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {BRAND_COLORS.map((color) => (
@@ -848,17 +1392,26 @@ function RegisterPage() {
                         className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer ${brandColor === color.hex ? "border-slate-800 scale-110 shadow-lg" : "border-transparent hover:scale-105 shadow-sm hover:border-slate-300"}`}
                         style={{ backgroundColor: color.hex }}
                       >
-                        {brandColor === color.hex && <CheckCircle2 className="w-4 h-4 text-white drop-shadow" />}
+                        {brandColor === color.hex && (
+                          <CheckCircle2 className="w-4 h-4 text-white drop-shadow" />
+                        )}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div className="flex gap-2 pt-1">
-                  <button type="button" onClick={() => setStep(1)} className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer"
+                  >
                     <ArrowLeft className="w-4 h-4 text-slate-600" />
                   </button>
-                  <button type="submit" className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 cursor-pointer">
+                  <button
+                    type="submit"
+                    className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 cursor-pointer"
+                  >
                     Siguiente paso
                   </button>
                 </div>
@@ -869,13 +1422,14 @@ function RegisterPage() {
             {step === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-xs text-primary font-bold">
-                  {isTrial 
+                  {isTrial
                     ? `¡Ya casi listo! Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (Prueba de 15 días) gratis al crear tu cuenta.`
-                    : `¡Ya casi listo! Crea tu cuenta para guardar tu catálogo ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla"} (Gratuito).`
-                  }
+                    : `¡Ya casi listo! Crea tu cuenta para guardar tu catálogo ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla"} (Gratuito).`}
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Link de tu Catálogo</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Link de tu Catálogo
+                  </label>
                   <div className="flex rounded-xl border border-slate-200 bg-white/50 focus-within:bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all overflow-hidden">
                     <span className="flex items-center px-4 bg-slate-50 text-slate-400 text-sm border-r border-slate-200 font-bold whitespace-nowrap">
                       dizi.idenza.site/t/
@@ -883,7 +1437,15 @@ function RegisterPage() {
                     <input
                       type="text"
                       value={storeLink}
-                      onChange={(e) => setStoreLink(e.target.value.toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
+                      onChange={(e) =>
+                        setStoreLink(
+                          e.target.value
+                            .toLowerCase()
+                            .trim()
+                            .replace(/\s+/g, "-")
+                            .replace(/[^a-z0-9-]/g, ""),
+                        )
+                      }
                       className="flex h-12 w-full bg-transparent px-4 text-sm focus:outline-none"
                       placeholder="floreria-maria"
                       required
@@ -891,7 +1453,9 @@ function RegisterPage() {
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Correo Electrónico</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Correo Electrónico
+                  </label>
                   <input
                     type="email"
                     value={email}
@@ -902,7 +1466,9 @@ function RegisterPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">Contraseña</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Contraseña
+                  </label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -918,22 +1484,36 @@ function RegisterPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                     >
-                      {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4.5 w-4.5" />
+                      ) : (
+                        <Eye className="h-4.5 w-4.5" />
+                      )}
                     </button>
                   </div>
                 </div>
                 <div className="flex gap-2 pt-1">
-                  <button type="button" onClick={() => setStep(2)} className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer"
+                  >
                     <ArrowLeft className="w-4 h-4 text-slate-600" />
                   </button>
-                  <button type="submit" disabled={loading} className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
+                  >
                     {loading ? (
                       <>
                         <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                         Creando catálogo...
                       </>
                     ) : (
-                      <>Lanzar mi Catálogo <Rocket className="w-4 h-4" /></>
+                      <>
+                        Lanzar mi Catálogo <Rocket className="w-4 h-4" />
+                      </>
                     )}
                   </button>
                 </div>
@@ -960,28 +1540,346 @@ function RegisterPage() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  name: "Florería", desc: "Arreglos florales", href: "https://dizi.idenza.site/bio/floreria-demo",
-                  icon: <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fg1" cx="50%" cy="30%" r="60%"><stop offset="0%" stopColor="#ff9de2"/><stop offset="100%" stopColor="#e040a0"/></radialGradient><radialGradient id="fg2" cx="50%" cy="30%" r="60%"><stop offset="0%" stopColor="#ffb3ec"/><stop offset="100%" stopColor="#c2185b"/></radialGradient><radialGradient id="fg3" cx="50%" cy="30%" r="60%"><stop offset="0%" stopColor="#ffe0f0"/><stop offset="100%" stopColor="#f06292"/></radialGradient><linearGradient id="fstem" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#81c784"/><stop offset="100%" stopColor="#2e7d32"/></linearGradient></defs><ellipse cx="24" cy="20" rx="5" ry="7" fill="url(#fg1)" opacity="0.95"/><ellipse cx="14" cy="18" rx="4.5" ry="6.5" fill="url(#fg2)" opacity="0.9" transform="rotate(-30 14 18)"/><ellipse cx="34" cy="18" rx="4.5" ry="6.5" fill="url(#fg2)" opacity="0.9" transform="rotate(30 34 18)"/><ellipse cx="10" cy="26" rx="4" ry="6" fill="url(#fg3)" opacity="0.85" transform="rotate(-55 10 26)"/><ellipse cx="38" cy="26" rx="4" ry="6" fill="url(#fg3)" opacity="0.85" transform="rotate(55 38 26)"/><circle cx="24" cy="22" r="5" fill="url(#fg1)"/><circle cx="24" cy="22" r="3" fill="#fff9" opacity="0.6"/><path d="M24 30 Q22 36 21 42" stroke="url(#fstem)" strokeWidth="2.5" strokeLinecap="round" fill="none"/><ellipse cx="19" cy="37" rx="4" ry="2.5" fill="#66bb6a" opacity="0.85" transform="rotate(-30 19 37)"/></svg>
+                  name: "Florería",
+                  desc: "Arreglos florales",
+                  href: "https://dizi.idenza.site/bio/floreria-demo",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="fg1" cx="50%" cy="30%" r="60%">
+                          <stop offset="0%" stopColor="#ff9de2" />
+                          <stop offset="100%" stopColor="#e040a0" />
+                        </radialGradient>
+                        <radialGradient id="fg2" cx="50%" cy="30%" r="60%">
+                          <stop offset="0%" stopColor="#ffb3ec" />
+                          <stop offset="100%" stopColor="#c2185b" />
+                        </radialGradient>
+                        <radialGradient id="fg3" cx="50%" cy="30%" r="60%">
+                          <stop offset="0%" stopColor="#ffe0f0" />
+                          <stop offset="100%" stopColor="#f06292" />
+                        </radialGradient>
+                        <linearGradient id="fstem" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#81c784" />
+                          <stop offset="100%" stopColor="#2e7d32" />
+                        </linearGradient>
+                      </defs>
+                      <ellipse cx="24" cy="20" rx="5" ry="7" fill="url(#fg1)" opacity="0.95" />
+                      <ellipse
+                        cx="14"
+                        cy="18"
+                        rx="4.5"
+                        ry="6.5"
+                        fill="url(#fg2)"
+                        opacity="0.9"
+                        transform="rotate(-30 14 18)"
+                      />
+                      <ellipse
+                        cx="34"
+                        cy="18"
+                        rx="4.5"
+                        ry="6.5"
+                        fill="url(#fg2)"
+                        opacity="0.9"
+                        transform="rotate(30 34 18)"
+                      />
+                      <ellipse
+                        cx="10"
+                        cy="26"
+                        rx="4"
+                        ry="6"
+                        fill="url(#fg3)"
+                        opacity="0.85"
+                        transform="rotate(-55 10 26)"
+                      />
+                      <ellipse
+                        cx="38"
+                        cy="26"
+                        rx="4"
+                        ry="6"
+                        fill="url(#fg3)"
+                        opacity="0.85"
+                        transform="rotate(55 38 26)"
+                      />
+                      <circle cx="24" cy="22" r="5" fill="url(#fg1)" />
+                      <circle cx="24" cy="22" r="3" fill="#fff9" opacity="0.6" />
+                      <path
+                        d="M24 30 Q22 36 21 42"
+                        stroke="url(#fstem)"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                      <ellipse
+                        cx="19"
+                        cy="37"
+                        rx="4"
+                        ry="2.5"
+                        fill="#66bb6a"
+                        opacity="0.85"
+                        transform="rotate(-30 19 37)"
+                      />
+                    </svg>
+                  ),
                 },
                 {
-                  name: "WeHome Peru", desc: "Decoración & Hogar", href: "https://dizi.idenza.site/bio/wehomeperu",
-                  icon: <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="vpot" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#d7ccc8"/><stop offset="100%" stopColor="#8d6e63"/></linearGradient><linearGradient id="vleaf" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#a1887f"/><stop offset="100%" stopColor="#5d4037"/></linearGradient></defs><path d="M24,28 Q18,18 20,8" stroke="#5d4037" strokeWidth="2" strokeLinecap="round" fill="none"/><ellipse cx="17" cy="14" rx="4" ry="2" fill="url(#vleaf)" transform="rotate(-30 17 14)"/><ellipse cx="23" cy="11" rx="4" ry="2" fill="url(#vleaf)" transform="rotate(30 23 11)"/><ellipse cx="19" cy="8" rx="3.5" ry="1.8" fill="url(#vleaf)" transform="rotate(-15 19 8)"/><path d="M16,24 L32,24 Q36,32 34,39 Q32,42 24,42 Q16,42 14,39 Q12,32 16,24" fill="url(#vpot)" filter="drop-shadow(0 3px 4px rgba(0,0,0,0.15))"/><ellipse cx="24" cy="24" rx="8" ry="2" fill="#b0bec5"/></svg>
+                  name: "WeHome Peru",
+                  desc: "Decoración & Hogar",
+                  href: "https://dizi.idenza.site/bio/wehomeperu",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="vpot" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#d7ccc8" />
+                          <stop offset="100%" stopColor="#8d6e63" />
+                        </linearGradient>
+                        <linearGradient id="vleaf" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#a1887f" />
+                          <stop offset="100%" stopColor="#5d4037" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M24,28 Q18,18 20,8"
+                        stroke="#5d4037"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        fill="none"
+                      />
+                      <ellipse
+                        cx="17"
+                        cy="14"
+                        rx="4"
+                        ry="2"
+                        fill="url(#vleaf)"
+                        transform="rotate(-30 17 14)"
+                      />
+                      <ellipse
+                        cx="23"
+                        cy="11"
+                        rx="4"
+                        ry="2"
+                        fill="url(#vleaf)"
+                        transform="rotate(30 23 11)"
+                      />
+                      <ellipse
+                        cx="19"
+                        cy="8"
+                        rx="3.5"
+                        ry="1.8"
+                        fill="url(#vleaf)"
+                        transform="rotate(-15 19 8)"
+                      />
+                      <path
+                        d="M16,24 L32,24 Q36,32 34,39 Q32,42 24,42 Q16,42 14,39 Q12,32 16,24"
+                        fill="url(#vpot)"
+                        filter="drop-shadow(0 3px 4px rgba(0,0,0,0.15))"
+                      />
+                      <ellipse cx="24" cy="24" rx="8" ry="2" fill="#b0bec5" />
+                    </svg>
+                  ),
                 },
                 {
-                  name: "Restaurante", desc: "Menú digital", href: "https://dizi.idenza.site/bio/restaurante-demo",
-                  icon: <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="rplate" cx="50%" cy="40%" r="55%"><stop offset="0%" stopColor="#f5f5f5"/><stop offset="100%" stopColor="#bdbdbd"/></radialGradient><radialGradient id="rfood" cx="50%" cy="40%" r="60%"><stop offset="0%" stopColor="#ffcc80"/><stop offset="100%" stopColor="#ef6c00"/></radialGradient><linearGradient id="rfork" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#e0e0e0"/><stop offset="100%" stopColor="#9e9e9e"/></linearGradient></defs><ellipse cx="24" cy="26" rx="16" ry="14" fill="url(#rplate)" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"/><ellipse cx="24" cy="25" rx="11" ry="9.5" fill="url(#rfood)"/><ellipse cx="21" cy="22" rx="3.5" ry="2.5" fill="#fff3e0" opacity="0.6"/><rect x="8" y="10" width="2.5" height="20" rx="1.25" fill="url(#rfork)"/><rect x="7" y="10" width="1.2" height="8" rx="0.6" fill="url(#rfork)"/><rect x="10" y="10" width="1.2" height="8" rx="0.6" fill="url(#rfork)"/><rect x="37" y="10" width="2.5" height="20" rx="1.25" fill="url(#rfork)"/><path d="M37 10 Q40 14 38.5 18" stroke="#9e9e9e" strokeWidth="1.5" fill="none"/></svg>
+                  name: "Restaurante",
+                  desc: "Menú digital",
+                  href: "https://dizi.idenza.site/bio/restaurante-demo",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <radialGradient id="rplate" cx="50%" cy="40%" r="55%">
+                          <stop offset="0%" stopColor="#f5f5f5" />
+                          <stop offset="100%" stopColor="#bdbdbd" />
+                        </radialGradient>
+                        <radialGradient id="rfood" cx="50%" cy="40%" r="60%">
+                          <stop offset="0%" stopColor="#ffcc80" />
+                          <stop offset="100%" stopColor="#ef6c00" />
+                        </radialGradient>
+                        <linearGradient id="rfork" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#e0e0e0" />
+                          <stop offset="100%" stopColor="#9e9e9e" />
+                        </linearGradient>
+                      </defs>
+                      <ellipse
+                        cx="24"
+                        cy="26"
+                        rx="16"
+                        ry="14"
+                        fill="url(#rplate)"
+                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
+                      />
+                      <ellipse cx="24" cy="25" rx="11" ry="9.5" fill="url(#rfood)" />
+                      <ellipse cx="21" cy="22" rx="3.5" ry="2.5" fill="#fff3e0" opacity="0.6" />
+                      <rect x="8" y="10" width="2.5" height="20" rx="1.25" fill="url(#rfork)" />
+                      <rect x="7" y="10" width="1.2" height="8" rx="0.6" fill="url(#rfork)" />
+                      <rect x="10" y="10" width="1.2" height="8" rx="0.6" fill="url(#rfork)" />
+                      <rect x="37" y="10" width="2.5" height="20" rx="1.25" fill="url(#rfork)" />
+                      <path
+                        d="M37 10 Q40 14 38.5 18"
+                        stroke="#9e9e9e"
+                        strokeWidth="1.5"
+                        fill="none"
+                      />
+                    </svg>
+                  ),
                 },
                 {
-                  name: "Ortopédicos", desc: "Productos y precios", href: "https://dizi.idenza.site/bio/ortopedicos-demo",
-                  icon: <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="cross1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ef5350"/><stop offset="100%" stopColor="#b71c1c"/></linearGradient><linearGradient id="bag1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#e3f2fd"/><stop offset="100%" stopColor="#90caf9"/></linearGradient></defs><rect x="8" y="18" width="32" height="22" rx="4" fill="url(#bag1)" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"/><path d="M17 18 Q17 10 24 10 Q31 10 31 18" stroke="#64b5f6" strokeWidth="2.5" fill="none" strokeLinecap="round"/><rect x="20" y="24" width="8" height="2.5" rx="1.25" fill="url(#cross1)"/><rect x="22.75" y="21.25" width="2.5" height="8" rx="1.25" fill="url(#cross1)"/></svg>
+                  name: "Ortopédicos",
+                  desc: "Productos y precios",
+                  href: "https://dizi.idenza.site/bio/ortopedicos-demo",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="cross1" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#ef5350" />
+                          <stop offset="100%" stopColor="#b71c1c" />
+                        </linearGradient>
+                        <linearGradient id="bag1" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#e3f2fd" />
+                          <stop offset="100%" stopColor="#90caf9" />
+                        </linearGradient>
+                      </defs>
+                      <rect
+                        x="8"
+                        y="18"
+                        width="32"
+                        height="22"
+                        rx="4"
+                        fill="url(#bag1)"
+                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
+                      />
+                      <path
+                        d="M17 18 Q17 10 24 10 Q31 10 31 18"
+                        stroke="#64b5f6"
+                        strokeWidth="2.5"
+                        fill="none"
+                        strokeLinecap="round"
+                      />
+                      <rect x="20" y="24" width="8" height="2.5" rx="1.25" fill="url(#cross1)" />
+                      <rect
+                        x="22.75"
+                        y="21.25"
+                        width="2.5"
+                        height="8"
+                        rx="1.25"
+                        fill="url(#cross1)"
+                      />
+                    </svg>
+                  ),
                 },
                 {
-                  name: "GigaTech", desc: "Celulares & Tecnología", href: "https://dizi.idenza.site/bio/celulares-demo",
-                  icon: <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="phoneGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#00E5FF"/><stop offset="100%" stopColor="#00838F"/></linearGradient><linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#1e293b"/><stop offset="100%" stopColor="#0f172a"/></linearGradient></defs><rect x="14" y="4" width="20" height="40" rx="4" fill="url(#phoneGrad)" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"/><rect x="16" y="6" width="16" height="34" rx="2.5" fill="url(#screenGrad)"/><rect x="21" y="7" width="6" height="1.5" rx="0.75" fill="#00E5FF" opacity="0.6"/><circle cx="24" cy="22" r="2.5" fill="#00E5FF" opacity="0.8"/><path d="M20 28 L28 28" stroke="#00E5FF" strokeWidth="1.2" strokeLinecap="round" opacity="0.7"/><path d="M21 32 L27 32" stroke="#00E5FF" strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/><rect x="22.5" y="37" width="3" height="0.8" rx="0.4" fill="#ffffff" opacity="0.7"/></svg>
+                  name: "GigaTech",
+                  desc: "Celulares & Tecnología",
+                  href: "https://dizi.idenza.site/bio/celulares-demo",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="phoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#00E5FF" />
+                          <stop offset="100%" stopColor="#00838F" />
+                        </linearGradient>
+                        <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1e293b" />
+                          <stop offset="100%" stopColor="#0f172a" />
+                        </linearGradient>
+                      </defs>
+                      <rect
+                        x="14"
+                        y="4"
+                        width="20"
+                        height="40"
+                        rx="4"
+                        fill="url(#phoneGrad)"
+                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
+                      />
+                      <rect x="16" y="6" width="16" height="34" rx="2.5" fill="url(#screenGrad)" />
+                      <rect
+                        x="21"
+                        y="7"
+                        width="6"
+                        height="1.5"
+                        rx="0.75"
+                        fill="#00E5FF"
+                        opacity="0.6"
+                      />
+                      <circle cx="24" cy="22" r="2.5" fill="#00E5FF" opacity="0.8" />
+                      <path
+                        d="M20 28 L28 28"
+                        stroke="#00E5FF"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        opacity="0.7"
+                      />
+                      <path
+                        d="M21 32 L27 32"
+                        stroke="#00E5FF"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        opacity="0.5"
+                      />
+                      <rect
+                        x="22.5"
+                        y="37"
+                        width="3"
+                        height="0.8"
+                        rx="0.4"
+                        fill="#ffffff"
+                        opacity="0.7"
+                      />
+                    </svg>
+                  ),
                 },
                 {
-                  name: "Kickz Premium", desc: "Zapatillas Urbanas", href: "https://dizi.idenza.site/bio/zapatillas-demo",
-                  icon: <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shoeGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ff416c"/><stop offset="100%" stopColor="#ff4b2b"/></linearGradient><linearGradient id="soleGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#ffffff"/><stop offset="100%" stopColor="#e2e8f0"/></linearGradient></defs><path d="M10 26 L14 18 Q18 14 26 19 L38 21 Q40 21.5 41 23 L42 27 L38 29 L12 29 Z" fill="url(#shoeGrad)" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"/><path d="M10 28 L40 28 C41 28 42 29 41 31 L38 33 C37 33.5 12 33.5 10 32 Z" fill="url(#soleGrad)"/><path d="M20 18 L26 22 L32 21" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.9"/><line x1="22" y1="16" x2="25" y2="19" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round"/><line x1="24" y1="14" x2="27" y2="17" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                  name: "Kickz Premium",
+                  desc: "Zapatillas Urbanas",
+                  href: "https://dizi.idenza.site/bio/zapatillas-demo",
+                  icon: (
+                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="shoeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#ff416c" />
+                          <stop offset="100%" stopColor="#ff4b2b" />
+                        </linearGradient>
+                        <linearGradient id="soleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#ffffff" />
+                          <stop offset="100%" stopColor="#e2e8f0" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M10 26 L14 18 Q18 14 26 19 L38 21 Q40 21.5 41 23 L42 27 L38 29 L12 29 Z"
+                        fill="url(#shoeGrad)"
+                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
+                      />
+                      <path
+                        d="M10 28 L40 28 C41 28 42 29 41 31 L38 33 C37 33.5 12 33.5 10 32 Z"
+                        fill="url(#soleGrad)"
+                      />
+                      <path
+                        d="M20 18 L26 22 L32 21"
+                        stroke="#ffffff"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                        opacity="0.9"
+                      />
+                      <line
+                        x1="22"
+                        y1="16"
+                        x2="25"
+                        y2="19"
+                        stroke="#ffffff"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
+                      <line
+                        x1="24"
+                        y1="14"
+                        x2="27"
+                        y2="17"
+                        stroke="#ffffff"
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  ),
                 },
               ].map((ex) => (
                 <a
@@ -991,17 +1889,22 @@ function RegisterPage() {
                   rel="noreferrer"
                   className="flex items-center gap-2.5 rounded-2xl border border-white/60 bg-white/40 backdrop-blur-md hover:bg-white hover:border-primary/30 hover:shadow-lg transition-all duration-300 px-3.5 py-3 group"
                 >
-                  <div className="w-10 h-10 shrink-0 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">{ex.icon}</div>
+                  <div className="w-10 h-10 shrink-0 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                    {ex.icon}
+                  </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-black leading-tight text-slate-800 truncate group-hover:text-primary transition-colors">{ex.name}</div>
-                    <div className="text-[10px] font-medium text-slate-500 truncate mt-0.5">{ex.desc}</div>
+                    <div className="text-xs font-black leading-tight text-slate-800 truncate group-hover:text-primary transition-colors">
+                      {ex.name}
+                    </div>
+                    <div className="text-[10px] font-medium text-slate-500 truncate mt-0.5">
+                      {ex.desc}
+                    </div>
                   </div>
                 </a>
               ))}
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

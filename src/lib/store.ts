@@ -409,12 +409,20 @@ export const useApp = create<AppState>()(
           throw rpcError;
         }
 
-        if (store.referredBy) {
-          const { error: refError } = await supabase
+        // Guardar campos iniciales que no son insertados por el RPC initialize_store
+        const initialUpdates: any = {};
+        if (store.brandColor) initialUpdates.brand_color = store.brandColor;
+        if (store.niche) initialUpdates.niche = store.niche;
+        if (store.referredBy) initialUpdates.referred_by = store.referredBy;
+
+        if (Object.keys(initialUpdates).length > 0) {
+          const { error: updateError } = await supabase
             .from("stores")
-            .update({ referred_by: store.referredBy })
+            .update(initialUpdates)
             .eq("id", store.id);
-          if (refError) console.error("[addStore] Referral tracking update error:", refError);
+          if (updateError) {
+            console.error("[addStore] Error al guardar brandColor/niche/referredBy:", updateError);
+          }
         }
 
         // No es necesario actualizar las columnas de facturación directamente desde el cliente
