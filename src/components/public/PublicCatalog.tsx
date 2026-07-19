@@ -7627,7 +7627,7 @@ export function PublicCatalog({
                     "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"
                   }
                   alt=""
-                  className="absolute inset-0 h-full w-full object-cover blur-md opacity-35 select-none pointer-events-none scale-105"
+                  className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-90 select-none pointer-events-none scale-110"
                   aria-hidden="true"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
