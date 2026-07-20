@@ -12,7 +12,17 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { Home, Package, Settings, Star, Palette, LogOut, ClipboardList, Link2, Sparkles } from "lucide-react";
+import {
+  Home,
+  Package,
+  Settings,
+  Star,
+  Palette,
+  LogOut,
+  ClipboardList,
+  Link2,
+  Sparkles,
+} from "lucide-react";
 
 export function AdminSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -45,11 +55,13 @@ export function AdminSidebar() {
           <img src="/images/Logo.png" alt="Dizi" className="h-8 w-auto object-contain" />
         </Link>
       </SidebarHeader>
-      
+
       <SidebarContent>
         {/* Grupo 1: Mi Tienda */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75">Mi tienda</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75">
+            Mi tienda
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {section1.map((it) => {
@@ -71,7 +83,9 @@ export function AdminSidebar() {
 
         {/* Grupo 2: Canales y Apariencia */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75">Canales y Apariencia</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75">
+            Canales y Apariencia
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {section2.map((it) => {
@@ -93,7 +107,9 @@ export function AdminSidebar() {
 
         {/* Grupo 3: Ajustes y Cuenta */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75">Ajustes y Cuenta</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/75">
+            Ajustes y Cuenta
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {section3.map((it) => {
@@ -109,10 +125,10 @@ export function AdminSidebar() {
                   </SidebarMenuItem>
                 );
               })}
-              
+
               {/* Cerrar Sesión */}
               <SidebarMenuItem>
-                <SidebarMenuButton 
+                <SidebarMenuButton
                   onClick={async () => {
                     await signOut();
                     window.location.href = "/login";

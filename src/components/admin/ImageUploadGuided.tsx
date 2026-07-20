@@ -58,9 +58,9 @@ export function ImageUploadGuided({
     if (isSocialPageUrl) {
       setImportWarning(
         "⚠️ Has pegado el enlace de la página de la publicación/foto de Facebook/Instagram y no la imagen directamente.\n\n" +
-        "Para solucionarlo:\n" +
-        "• En Computadora: Haz clic derecho sobre la foto en Facebook/Instagram, selecciona 'Copiar dirección de imagen' y pega ese enlace aquí.\n" +
-        "• En Celular: Mantén presionada la foto, selecciona 'Descargar imagen' y súbela como archivo en la zona de arriba."
+          "Para solucionarlo:\n" +
+          "• En Computadora: Haz clic derecho sobre la foto en Facebook/Instagram, selecciona 'Copiar dirección de imagen' y pega ese enlace aquí.\n" +
+          "• En Celular: Mantén presionada la foto, selecciona 'Descargar imagen' y súbela como archivo en la zona de arriba.",
       );
       return;
     }
@@ -88,11 +88,11 @@ export function ImageUploadGuided({
       console.warn("[convertImageUrlToWebP] Failed to convert URL:", err);
       if (isVolatileUrl) {
         setImportWarning(
-          "⚠️ Este enlace pertenece a una red social (Facebook/Instagram/WhatsApp). Los enlaces de estas plataformas expiran automáticamente y la imagen dejará de verse pronto. Te recomendamos descargar la imagen a tu dispositivo y subirla directamente aquí."
+          "⚠️ Este enlace pertenece a una red social (Facebook/Instagram/WhatsApp). Los enlaces de estas plataformas expiran automáticamente y la imagen dejará de verse pronto. Te recomendamos descargar la imagen a tu dispositivo y subirla directamente aquí.",
         );
       } else {
         setImportWarning(
-          "⚠️ No pudimos optimizar esta imagen para guardarla de forma permanente debido a restricciones de seguridad del sitio de origen (CORS). El enlace se guardará, pero si la web original elimina la imagen, dejará de verse."
+          "⚠️ No pudimos optimizar esta imagen para guardarla de forma permanente debido a restricciones de seguridad del sitio de origen (CORS). El enlace se guardará, pero si la web original elimina la imagen, dejará de verse.",
         );
       }
     } finally {
@@ -110,7 +110,7 @@ export function ImageUploadGuided({
       setRatioStatus(result.status);
       setRatioMessage(result.message);
     },
-    [spec]
+    [spec],
   );
 
   const handleFile = async (file: File) => {
@@ -141,7 +141,9 @@ export function ImageUploadGuided({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">{label}</Label>
+        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+          {label}
+        </Label>
         <button
           type="button"
           onClick={() => setShowHint(!showHint)}
@@ -165,25 +167,39 @@ export function ImageUploadGuided({
                   height: `${Math.min(52, 52 * (rH / Math.max(rW, rH)))}px`,
                 }}
               >
-                <span className="text-[9px] font-bold text-primary">{rW}:{rH}</span>
+                <span className="text-[9px] font-bold text-primary">
+                  {rW}:{rH}
+                </span>
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-xs text-primary">{spec.label} — {spec.width} x {spec.height} px</p>
+              <p className="font-semibold text-xs text-primary">
+                {spec.label} — {spec.width} x {spec.height} px
+              </p>
               <p className="text-[11px] text-muted-foreground mt-0.5">{spec.hint}</p>
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground border-t pt-2 mt-1">
-            Tolerancia: hasta un {Math.round(spec.tolerance * 100)}% de diferencia se acepta sin aviso.
-            Herramienta recomendada:{" "}
-            <a href="https://squoosh.app" target="_blank" rel="noreferrer" className="text-primary underline">squoosh.app</a>
+            Tolerancia: hasta un {Math.round(spec.tolerance * 100)}% de diferencia se acepta sin
+            aviso. Herramienta recomendada:{" "}
+            <a
+              href="https://squoosh.app"
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline"
+            >
+              squoosh.app
+            </a>
           </p>
         </div>
       )}
 
       {/* ── Area de drop con preview proporcional ── */}
       <div
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
+        }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => {
           e.preventDefault();
@@ -193,9 +209,11 @@ export function ImageUploadGuided({
         }}
         className={cn(
           "relative border border-dashed rounded-xl overflow-hidden transition-all flex flex-col items-center justify-center bg-slate-50/50 dark:bg-slate-900/5 hover:bg-slate-100/50 dark:hover:bg-slate-900/10",
-          drag ? "border-primary bg-primary/5 scale-[1.01]" : "border-slate-200 dark:border-slate-800",
+          drag
+            ? "border-primary bg-primary/5 scale-[1.01]"
+            : "border-slate-200 dark:border-slate-800",
           converting || importing ? "opacity-70" : "",
-          hasImage ? "w-full" : "w-full h-32 sm:h-auto sm:aspect-square"
+          hasImage ? "w-full" : "w-full h-32 sm:h-auto sm:aspect-square",
         )}
         style={hasImage ? { aspectRatio: `${rW} / ${rH}` } : undefined}
       >
@@ -221,8 +239,12 @@ export function ImageUploadGuided({
           <div className="flex flex-col items-center gap-1.5 text-muted-foreground px-4 text-center">
             <UploadCloud className="w-6 h-6 text-muted-foreground/60" />
             <div className="space-y-0.5">
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Seleccionar imagen</p>
-              <p className="text-[10px] text-muted-foreground">Formatos JPG, PNG, WebP (máx. 10MB)</p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Seleccionar imagen
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                Formatos JPG, PNG, WebP (máx. 10MB)
+              </p>
             </div>
           </div>
         )}
@@ -277,7 +299,9 @@ export function ImageUploadGuided({
         ) : (
           <div className="space-y-1.5 border-t border-border/20 pt-2 mt-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Enlace de imagen</span>
+              <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                Enlace de imagen
+              </span>
               <button
                 type="button"
                 onClick={() => setShowUrlInput(false)}
@@ -289,7 +313,7 @@ export function ImageUploadGuided({
             <div className="relative flex items-center">
               <Input
                 placeholder="O pega una URL de imagen..."
-                value={isDataUrl ? "" : (value || "")}
+                value={isDataUrl ? "" : value || ""}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 className="text-xs pr-8"
                 disabled={importing || converting}

@@ -1,0 +1,32 @@
+name: CI Dizi
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run static analysis (lint)
+        run: npm run lint
+
+      - name: Run unit tests with Vitest
+        run: npx vitest run --coverage
+
+      - name: Verify Quality Gate (Coverage)
+        run: node scripts/check-coverage.js --min 80

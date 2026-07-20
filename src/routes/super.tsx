@@ -1,4 +1,11 @@
-import { createFileRoute, Outlet, Link, redirect, useRouterState, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  redirect,
+  useRouterState,
+  useNavigate,
+} from "@tanstack/react-router";
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +19,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Store as StoreIcon, ShieldCheck, LogOut, BadgePercent, Users } from "lucide-react";
+import {
+  LayoutDashboard,
+  Store as StoreIcon,
+  ShieldCheck,
+  LogOut,
+  BadgePercent,
+  Users,
+} from "lucide-react";
 import { getActiveSession, getSessionSync, getUserRole, signOut } from "@/lib/auth";
 
 export const Route = createFileRoute("/super")({
@@ -31,7 +45,10 @@ export const Route = createFileRoute("/super")({
       if (err && typeof err === "object" && "to" in err) {
         throw err;
       }
-      console.warn("[super beforeLoad] Falló la verificación de sesión en red, usando almacenamiento local:", err);
+      console.warn(
+        "[super beforeLoad] Falló la verificación de sesión en red, usando almacenamiento local:",
+        err,
+      );
       const session = getSessionSync();
       const role = getUserRole(session?.user ?? null);
       if (!session || role !== "super_admin") {
@@ -95,7 +112,10 @@ function SuperLayout() {
                   ))}
                   {/* Logout */}
                   <SidebarMenuItem>
-                    <SidebarMenuButton onClick={handleLogout} className="text-destructive hover:text-destructive">
+                    <SidebarMenuButton
+                      onClick={handleLogout}
+                      className="text-destructive hover:text-destructive"
+                    >
                       <LogOut className="h-4 w-4" />
                       <span>Cerrar Sesion</span>
                     </SidebarMenuButton>
@@ -129,4 +149,3 @@ function SuperLayout() {
 }
 
 export const _r = redirect;
-

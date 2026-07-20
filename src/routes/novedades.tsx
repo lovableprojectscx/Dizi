@@ -19,16 +19,22 @@ export const Route = createFileRoute("/novedades")({
       { title: "Novedades y FAQ — Dizi | Catálogos Digitales Perú" },
       {
         name: "description",
-        content: "Últimas actualizaciones de Dizi y preguntas frecuentes. Conoce las nuevas funciones de la plataforma de catálogos digitales para MYPEs peruanas.",
+        content:
+          "Últimas actualizaciones de Dizi y preguntas frecuentes. Conoce las nuevas funciones de la plataforma de catálogos digitales para MYPEs peruanas.",
       },
-      { name: "keywords", content: "novedades Dizi, FAQ catálogo digital, actualizaciones plataforma, preguntas frecuentes Dizi" },
+      {
+        name: "keywords",
+        content:
+          "novedades Dizi, FAQ catálogo digital, actualizaciones plataforma, preguntas frecuentes Dizi",
+      },
       { property: "og:title", content: "Novedades y FAQ — Dizi | Catálogos Digitales Perú" },
-      { property: "og:description", content: "Últimas actualizaciones y preguntas frecuentes sobre la plataforma Dizi." },
+      {
+        property: "og:description",
+        content: "Últimas actualizaciones y preguntas frecuentes sobre la plataforma Dizi.",
+      },
       { property: "og:url", content: "https://dizi.idenza.site/novedades" },
     ],
-    links: [
-      { rel: "canonical", href: "https://dizi.idenza.site/novedades" },
-    ],
+    links: [{ rel: "canonical", href: "https://dizi.idenza.site/novedades" }],
   }),
   component: NovedadesPage,
 });
@@ -300,24 +306,35 @@ const FAQ = [
    Tipos y helpers visuales
 ───────────────────────────────────────────────────────── */
 const TYPE_CONFIG = {
-  nuevo:  { label: "Nuevo",   color: "bg-blue-100 text-blue-700",   icon: Star },
-  mejora: { label: "Mejora",  color: "bg-emerald-100 text-emerald-700", icon: Zap },
-  fix:    { label: "Fix",     color: "bg-amber-100 text-amber-700", icon: Wrench },
+  nuevo: { label: "Nuevo", color: "bg-blue-100 text-blue-700", icon: Star },
+  mejora: { label: "Mejora", color: "bg-emerald-100 text-emerald-700", icon: Zap },
+  fix: { label: "Fix", color: "bg-amber-100 text-amber-700", icon: Wrench },
 };
 
-function NewsCard({ noticia, defaultOpen = false }: { noticia: typeof NOTICIAS[0]; defaultOpen?: boolean }) {
+function NewsCard({
+  noticia,
+  defaultOpen = false,
+}: {
+  noticia: (typeof NOTICIAS)[0];
+  defaultOpen?: boolean;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   const cfg = TYPE_CONFIG[noticia.type];
   const Icon = cfg.icon;
 
   return (
-    <div className={`rounded-2xl border bg-card transition-all duration-200 ${open ? "shadow-md" : "hover:shadow-sm"}`}>
+    <div
+      className={`rounded-2xl border bg-card transition-all duration-200 ${open ? "shadow-md" : "hover:shadow-sm"}`}
+    >
       <button
         className="w-full text-left p-5 flex items-start gap-4"
         onClick={() => setOpen(!open)}
       >
         {/* Icono tipo */}
-        <div className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center ${cfg.color.replace("text-", "bg-").replace("-700", "-100").replace("bg-bg-", "bg-")}`} style={{backgroundColor: undefined}}>
+        <div
+          className={`shrink-0 h-9 w-9 rounded-xl flex items-center justify-center ${cfg.color.replace("text-", "bg-").replace("-700", "-100").replace("bg-bg-", "bg-")}`}
+          style={{ backgroundColor: undefined }}
+        >
           <Icon className={`h-4 w-4 ${cfg.color.split(" ")[1]}`} />
         </div>
 
@@ -327,7 +344,8 @@ function NewsCard({ noticia, defaultOpen = false }: { noticia: typeof NOTICIAS[0
               {cfg.label}
             </span>
             <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Calendar className="h-3 w-3" />{noticia.date}
+              <Calendar className="h-3 w-3" />
+              {noticia.date}
             </span>
           </div>
           <h3 className="font-bold text-base text-foreground leading-snug">{noticia.title}</h3>
@@ -352,10 +370,12 @@ function NewsCard({ noticia, defaultOpen = false }: { noticia: typeof NOTICIAS[0
   );
 }
 
-function FaqItem({ item, idx }: { item: typeof FAQ[0]; idx: number }) {
+function FaqItem({ item, idx }: { item: (typeof FAQ)[0]; idx: number }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={`rounded-xl border transition-all duration-200 ${open ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card hover:border-primary/20"}`}>
+    <div
+      className={`rounded-xl border transition-all duration-200 ${open ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-card hover:border-primary/20"}`}
+    >
       <button
         className="w-full text-left px-5 py-4 flex items-center gap-3"
         onClick={() => setOpen(!open)}
@@ -383,33 +403,30 @@ function FaqItem({ item, idx }: { item: typeof FAQ[0]; idx: number }) {
 function NovedadesPage() {
   const [filter, setFilter] = useState<"todo" | "nuevo" | "mejora" | "fix">("todo");
 
-  const filtered = filter === "todo"
-    ? NOTICIAS
-    : NOTICIAS.filter((n) => n.type === filter);
+  const filtered = filter === "todo" ? NOTICIAS : NOTICIAS.filter((n) => n.type === filter);
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Navbar */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
         <div className="container mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
             <ArrowLeft className="h-4 w-4" />
             Volver al inicio
           </Link>
           <div className="flex items-center">
             <img src="/images/Logo.png" alt="Dizi" className="h-10 w-auto object-contain" />
           </div>
-          <Link
-            to="/login"
-            className="text-sm font-medium text-primary hover:underline"
-          >
+          <Link to="/login" className="text-sm font-medium text-primary hover:underline">
             Iniciar Sesión
           </Link>
         </div>
       </header>
 
       <main className="container mx-auto max-w-4xl px-4 py-12 space-y-16">
-
         {/* ── HERO ───────────────────────────────────── */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-primary text-primary-foreground text-xs font-semibold uppercase tracking-wide mb-2">
@@ -439,7 +456,12 @@ function NovedadesPage() {
           {/* Filtros */}
           <div className="flex flex-wrap gap-2 mb-5">
             {(["todo", "nuevo", "mejora", "fix"] as const).map((f) => {
-              const labels = { todo: "Todas", nuevo: "Nuevas funciones", mejora: "Mejoras", fix: "Correcciones" };
+              const labels = {
+                todo: "Todas",
+                nuevo: "Nuevas funciones",
+                mejora: "Mejoras",
+                fix: "Correcciones",
+              };
               const active = filter === f;
               return (
                 <button
@@ -482,7 +504,9 @@ function NovedadesPage() {
             </div>
             <div>
               <h2 className="text-xl font-black tracking-tight">Preguntas Frecuentes</h2>
-              <p className="text-xs text-muted-foreground">Todo lo que necesitas saber antes de empezar</p>
+              <p className="text-xs text-muted-foreground">
+                Todo lo que necesitas saber antes de empezar
+              </p>
             </div>
           </div>
 
@@ -517,7 +541,6 @@ function NovedadesPage() {
             </Link>
           </div>
         </section>
-
       </main>
 
       {/* Footer */}

@@ -60,12 +60,10 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     // Reemplazar la extensión en la ruta por la correspondiente al formato real
     const cleanPath = path.replace(/\.[a-zA-Z0-9]+$/, `.${ext}`);
 
-    const { data, error } = await supabase.storage
-      .from("images")
-      .upload(cleanPath, blob, {
-        contentType: mime,
-        upsert: true,
-      });
+    const { data, error } = await supabase.storage.from("images").upload(cleanPath, blob, {
+      contentType: mime,
+      upsert: true,
+    });
 
     if (error) throw error;
 
@@ -76,4 +74,3 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     throw error;
   }
 }
-

@@ -1,11 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
-import {
-  Outlet,
-  Link,
-  createRootRouteWithContext,
-  useRouter,
-} from "@tanstack/react-router";
+import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useApp } from "@/lib/store";
@@ -80,15 +75,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Dizi — Catálogos Digitales para MYPEs Peruanas" },
-      { name: "description", content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp. La plataforma de catálogos web para MYPEs del Perú. Sin descargas, 100% móvil." },
-      { name: "keywords", content: "catálogo digital, catálogo online, vender por WhatsApp, MYPE Perú, tienda virtual, catálogo web, digitalizar negocio" },
+      {
+        name: "description",
+        content:
+          "Crea tu catálogo digital en 2 minutos y vende por WhatsApp. La plataforma de catálogos web para MYPEs del Perú. Sin descargas, 100% móvil.",
+      },
+      {
+        name: "keywords",
+        content:
+          "catálogo digital, catálogo online, vender por WhatsApp, MYPE Perú, tienda virtual, catálogo web, digitalizar negocio",
+      },
       { name: "author", content: "Dizi" },
       { name: "robots", content: "index, follow" },
       // Open Graph
       { property: "og:type", content: "website" },
       { property: "og:url", content: SITE_URL },
       { property: "og:title", content: "Dizi — Catálogos Digitales para MYPEs Peruanas" },
-      { property: "og:description", content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp. Sin descargas, 100% móvil." },
+      {
+        property: "og:description",
+        content:
+          "Crea tu catálogo digital en 2 minutos y vende por WhatsApp. Sin descargas, 100% móvil.",
+      },
       { property: "og:image", content: `${SITE_URL}/images/og-image.png` },
       { property: "og:locale", content: "es_PE" },
       { property: "og:site_name", content: "Dizi" },
@@ -96,7 +103,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@DiziPeru" },
       { name: "twitter:title", content: "Dizi — Catálogos Digitales para MYPEs Peruanas" },
-      { name: "twitter:description", content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp." },
+      {
+        name: "twitter:description",
+        content: "Crea tu catálogo digital en 2 minutos y vende por WhatsApp.",
+      },
       { name: "twitter:image", content: `${SITE_URL}/images/og-image.png` },
     ],
     links: [

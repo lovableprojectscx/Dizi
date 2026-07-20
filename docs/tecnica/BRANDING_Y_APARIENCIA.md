@@ -9,13 +9,13 @@
 
 El modelo de datos es correcto: **cada asset tiene una única fuente de verdad** en la tabla `stores`. Lo que está fragmentado es la **UI de edición**, repartida en 4 pantallas:
 
-| Elemento | Campo BD | Dónde se edita | Dónde se muestra |
-|---|---|---|---|
-| **Logo del negocio** | `logo` | **Solo Configuración** ([admin.configuracion.tsx](../../src/routes/admin.configuracion.tsx)) | Header del catálogo público, PDF export, OG image (fallback), Bio-Link (fallback) |
-| **Banner de portada** | `banner_image`, `banner_title`, `banner_style` | **Diseño Estándar** (tab "Portada & Banners", solo plantillas `elite`/`portada`) **y también Diseño Premium** (carrusel multi-banner) | Portada del catálogo público + OG image de WhatsApp/Facebook |
-| **Foto de perfil Bio** | `bio_logo` | Link en Bio (con botón "Usar logo de mi tienda") | Página `/bio/:slug` |
-| **Portada Bio** | `bio_banner` | Link en Bio (con botón de sincronizar con banner) | Página `/bio/:slug` |
-| Colores / tipografía / estilo de tarjeta | `brand_color`, `bg_color`, `text_color`, etc. | Diseño Estándar y Diseño Premium | Catálogo público |
+| Elemento                                 | Campo BD                                       | Dónde se edita                                                                                                                        | Dónde se muestra                                                                  |
+| ---------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **Logo del negocio**                     | `logo`                                         | **Solo Configuración** ([admin.configuracion.tsx](../../src/routes/admin.configuracion.tsx))                                          | Header del catálogo público, PDF export, OG image (fallback), Bio-Link (fallback) |
+| **Banner de portada**                    | `banner_image`, `banner_title`, `banner_style` | **Diseño Estándar** (tab "Portada & Banners", solo plantillas `elite`/`portada`) **y también Diseño Premium** (carrusel multi-banner) | Portada del catálogo público + OG image de WhatsApp/Facebook                      |
+| **Foto de perfil Bio**                   | `bio_logo`                                     | Link en Bio (con botón "Usar logo de mi tienda")                                                                                      | Página `/bio/:slug`                                                               |
+| **Portada Bio**                          | `bio_banner`                                   | Link en Bio (con botón de sincronizar con banner)                                                                                     | Página `/bio/:slug`                                                               |
+| Colores / tipografía / estilo de tarjeta | `brand_color`, `bg_color`, `text_color`, etc.  | Diseño Estándar y Diseño Premium                                                                                                      | Catálogo público                                                                  |
 
 ### Reglas de visibilidad que afectan lo que el cliente ve
 
@@ -53,7 +53,7 @@ Causas probables del "no se actualiza", en orden de frecuencia esperada:
 
 **Lo que sí es incoherente:**
 
-- **I-1. El logo es invisible desde Diseño.** Todo lo visual del catálogo vive en Diseño *excepto* el logo del header. Es la fuente directa de tickets como el de ayer.
+- **I-1. El logo es invisible desde Diseño.** Todo lo visual del catálogo vive en Diseño _excepto_ el logo del header. Es la fuente directa de tickets como el de ayer.
 - **I-2. El banner se edita en dos páginas** (Diseño Estándar y Diseño Premium) con comportamientos distintos (imagen única vs. carrusel) escribiendo los mismos campos. Duplicación de código y de concepto.
 - **I-3. Guardado silenciosamente inútil.** El editor permite guardar personalizaciones que el plan/plantilla nunca mostrará en público, sin avisar.
 - **I-4. Naming ambiguo.** El sidebar dice "Diseño Estándar" y "Diseño Premium" bajo el grupo "Canales y Apariencia"; el cliente dice "apariencia" y no sabe a cuál entrar.
@@ -66,7 +66,7 @@ Causas probables del "no se actualiza", en orden de frecuencia esperada:
 
 ### Fase A — Quick wins (bajo riesgo, ~1 día)
 
-1. **Uploader de logo dentro de Diseño** (Estándar y Premium): un bloque "Logo del negocio" en la pestaña *Estilo* o *Ajustes* que lee/escribe el mismo `store.logo`. Sin campo nuevo, sin migración. Resuelve I-1 directamente.
+1. **Uploader de logo dentro de Diseño** (Estándar y Premium): un bloque "Logo del negocio" en la pestaña _Estilo_ o _Ajustes_ que lee/escribe el mismo `store.logo`. Sin campo nuevo, sin migración. Resuelve I-1 directamente.
 2. **Enlaces cruzados:** en Configuración, junto al logo, un texto "¿Buscas la imagen de portada? Está en **Diseño → Portada & Banners**" (y viceversa).
 3. **Aviso de visibilidad (resuelve I-3):** si `plan === 'semilla'` o la plantilla activa no soporta banner, mostrar un aviso persistente en el editor: "Guardaremos tu banner, pero tu plan/plantilla actual no lo muestra en el catálogo público". Lo mismo cuando `shouldUseSemillaModel()` es true (plan vencido).
 4. **Tooltip/preview de "Guardar pendiente":** al subir logo en Configuración, marcar visualmente el botón Guardar (badge "cambios sin guardar") para eliminar la causa #2 del diagnóstico.

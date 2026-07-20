@@ -23,21 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { 
-  Calendar, 
-  RefreshCw, 
-  XCircle, 
-  PlusCircle, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Clock, 
-  Power, 
+  Calendar,
+  RefreshCw,
+  XCircle,
+  PlusCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Power,
   Info,
   DollarSign,
   Trash2,
@@ -45,7 +40,7 @@ import {
   Gift,
   ShieldCheck,
   SlidersHorizontal,
-  LogIn
+  LogIn,
 } from "lucide-react";
 import type { Store, PlanId, SubscriptionStatus } from "@/lib/types";
 import { PLANS, PLAN_DURATION_OPTIONS, daysUntilExpiry, formatDate } from "@/lib/types";
@@ -54,11 +49,16 @@ import { PLANS, PLAN_DURATION_OPTIONS, daysUntilExpiry, formatDate } from "@/lib
 
 function statusLabel(status: SubscriptionStatus | undefined): string {
   switch (status) {
-    case "active":    return "Activa";
-    case "expired":   return "Vencida";
-    case "cancelled": return "Cancelada";
-    case "trial":     return "Prueba / Trial";
-    default:          return "Sin estado";
+    case "active":
+      return "Activa";
+    case "expired":
+      return "Vencida";
+    case "cancelled":
+      return "Cancelada";
+    case "trial":
+      return "Prueba / Trial";
+    default:
+      return "Sin estado";
   }
 }
 
@@ -68,27 +68,39 @@ function StatusBadge({ store }: { store: Store }) {
 
   if (store.subscriptionStatus === "cancelled") {
     return (
-      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] font-bold">
+      <Badge
+        variant="outline"
+        className="bg-red-50 text-red-700 border-red-200 text-[10px] font-bold"
+      >
         Cancelada
       </Badge>
     );
   }
   if (isExpired) {
     return (
-      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] font-bold">
+      <Badge
+        variant="outline"
+        className="bg-red-50 text-red-700 border-red-200 text-[10px] font-bold"
+      >
         Vencida
       </Badge>
     );
   }
   if (store.subscriptionStatus === "trial") {
     return (
-      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-bold">
+      <Badge
+        variant="outline"
+        className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-bold"
+      >
         Prueba
       </Badge>
     );
   }
   return (
-    <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold">
+    <Badge
+      variant="outline"
+      className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold"
+    >
       Activa
     </Badge>
   );
@@ -166,7 +178,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
     if (changePlanOpen) {
       const isCustomPriceStored = store.customPrice !== undefined && store.customPrice !== null;
       setChangeCustomPriceEnabled(isCustomPriceStored);
-      setChangeCustomPriceVal(store.customPrice?.toString() ?? PLANS[changePlanPlan].price.toString());
+      setChangeCustomPriceVal(
+        store.customPrice?.toString() ?? PLANS[changePlanPlan].price.toString(),
+      );
     }
   }, [changePlanOpen, changePlanPlan, store.customPrice]);
 
@@ -192,7 +206,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
         renewPlan,
         renewDuration,
         customPriceEnabled && customPriceVal !== "" ? Number(customPriceVal) : undefined,
-        false // keepExpiration = false
+        false, // keepExpiration = false
       );
       setRenewOpen(false);
     } finally {
@@ -207,8 +221,10 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
         store.id,
         changePlanPlan,
         undefined,
-        changeCustomPriceEnabled && changeCustomPriceVal !== "" ? Number(changeCustomPriceVal) : undefined,
-        true // keepExpiration = true
+        changeCustomPriceEnabled && changeCustomPriceVal !== ""
+          ? Number(changeCustomPriceVal)
+          : undefined,
+        true, // keepExpiration = true
       );
       setChangePlanOpen(false);
     } finally {
@@ -230,7 +246,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
         undefined,
         store.customPrice ?? undefined,
         false, // keepExpiration = false
-        isoDate // manualExpiration
+        isoDate, // manualExpiration
       );
       setManualDateOpen(false);
     } finally {
@@ -266,7 +282,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
     }
     setDeleteLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user || !user.email) {
         throw new Error("No se pudo identificar la sesión del Superadmin.");
       }
@@ -300,10 +318,10 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
 
       const suffix = Math.random().toString(36).slice(2, 6);
       const newSlug = `${baseSlug}-inactivo-${suffix}`;
-      
+
       await updateStore(store.id, {
         active: false,
-        slug: newSlug
+        slug: newSlug,
       });
 
       toast.success("Tienda pausada y URL liberada con éxito.");
@@ -323,9 +341,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
     }
     const country = store.countryCode || "51";
     const fullPhone = phone.startsWith(country) ? phone : `${country}${phone}`;
-    
+
     const text = `Hola *${store.name}*, te saludamos de *Dizi*. 👋\n\nNotamos que tu catálogo digital no registra visitas ni actividad reciente y se encuentra en nuestro *plan Semilla* gratuito.\n\nPara garantizar el uso eficiente del sistema y liberar enlaces que no se usan, nuestro sistema suspenderá la tienda y liberará el enlace */t/${store.slug}* para que otros comercios puedan utilizarlo en los próximos días.\n\nSi deseas mantener activo tu catálogo y conservar tu enlace, por favor responde a este mensaje o actualiza tu plan ingresando a tu panel de administración. ¡Estamos para ayudarte! 🚀`;
-    
+
     const url = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(text)}`;
     window.open(url, "_blank");
   };
@@ -340,22 +358,34 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
     <>
       <Tabs defaultValue="info" className="w-full">
         <TabsList className="grid w-full grid-cols-4 h-10 mb-5 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-lg">
-          <TabsTrigger value="info" className="text-xs font-bold py-1.5">Estado</TabsTrigger>
-          <TabsTrigger value="planes" className="text-xs font-bold py-1.5">Planes</TabsTrigger>
-          <TabsTrigger value="soporte" className="text-xs font-bold py-1.5">Soporte</TabsTrigger>
-          <TabsTrigger value="danger" className="text-xs font-bold text-red-500 py-1.5 data-[state=active]:text-red-600 dark:data-[state=active]:text-red-400">Peligro</TabsTrigger>
+          <TabsTrigger value="info" className="text-xs font-bold py-1.5">
+            Estado
+          </TabsTrigger>
+          <TabsTrigger value="planes" className="text-xs font-bold py-1.5">
+            Planes
+          </TabsTrigger>
+          <TabsTrigger value="soporte" className="text-xs font-bold py-1.5">
+            Soporte
+          </TabsTrigger>
+          <TabsTrigger
+            value="danger"
+            className="text-xs font-bold text-red-500 py-1.5 data-[state=active]:text-red-600 dark:data-[state=active]:text-red-400"
+          >
+            Peligro
+          </TabsTrigger>
         </TabsList>
-        
+
         {/* ── TAB 1: ESTADO Y DATOS ── */}
         <TabsContent value="info" className="space-y-4 pt-1 outline-none">
-          
           {/* Card: Suscripción actual */}
           <div className="bg-white dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-3.5">
             <div className="flex justify-between items-center">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">Plan y Vencimiento</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                Plan y Vencimiento
+              </span>
               <StatusBadge store={store} />
             </div>
-            
+
             <div>
               <h4 className="text-lg font-black text-foreground tracking-tight">
                 Plan {PLANS[store.plan].name}
@@ -372,9 +402,14 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 <div className="flex items-center gap-2 text-xs text-muted-foreground font-semibold">
                   <Calendar className="w-4 h-4 text-primary shrink-0" />
                   {days !== null && days >= 0 ? (
-                    <span>Vence el <strong>{formatDate(store.planExpiresAt)}</strong> ({days === 0 ? "hoy" : `en ${days} día${days !== 1 ? "s" : ""}`})</span>
+                    <span>
+                      Vence el <strong>{formatDate(store.planExpiresAt)}</strong> (
+                      {days === 0 ? "hoy" : `en ${days} día${days !== 1 ? "s" : ""}`})
+                    </span>
                   ) : (
-                    <span className="text-red-600 dark:text-red-400">Venció el <strong>{formatDate(store.planExpiresAt)}</strong></span>
+                    <span className="text-red-600 dark:text-red-400">
+                      Venció el <strong>{formatDate(store.planExpiresAt)}</strong>
+                    </span>
                   )}
                 </div>
               ) : (
@@ -389,8 +424,10 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           {/* Card: Referidos e Info comercial */}
           {store.referredBy && (
             <div className="bg-white dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-3">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">Referidos y Recompensas</span>
-              
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
+                Referidos y Recompensas
+              </span>
+
               <div className="space-y-1">
                 <p className="text-xs text-purple-600 dark:text-purple-400 flex items-center gap-1.5 font-bold">
                   <Info className="w-3.5 h-3.5 shrink-0" />
@@ -414,12 +451,18 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           {/* Card: Cancelación activa */}
           {store.cancelledAt && (
             <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 space-y-2">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-red-600 dark:text-red-400 block">Suscripción Cancelada</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-red-600 dark:text-red-400 block">
+                Suscripción Cancelada
+              </span>
               <p className="text-xs text-red-700 dark:text-red-400 flex items-start gap-1.5">
                 <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>
                   Cancelada el {formatDate(store.cancelledAt)}
-                  {store.cancelReason && <span className="block text-[10px] font-normal italic mt-1 text-muted-foreground">Motivo: {store.cancelReason}</span>}
+                  {store.cancelReason && (
+                    <span className="block text-[10px] font-normal italic mt-1 text-muted-foreground">
+                      Motivo: {store.cancelReason}
+                    </span>
+                  )}
                 </span>
               </p>
             </div>
@@ -430,7 +473,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
             <div className="space-y-0.5">
               <span className="text-xs font-bold block text-foreground">Acceso de Tienda</span>
               <span className="text-[10px] text-muted-foreground block leading-tight">
-                {store.active ? "Catálogo y administración visibles en la web." : "Tienda suspendida para visitantes y admin."}
+                {store.active
+                  ? "Catálogo y administración visibles en la web."
+                  : "Tienda suspendida para visitantes y admin."}
               </span>
             </div>
             <Button
@@ -438,7 +483,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               variant={store.active ? "outline" : "destructive"}
               className="h-8.5 text-xs gap-1.5 font-bold shrink-0 shadow-sm"
               onClick={() => {
-                const confirmMsg = store.active 
+                const confirmMsg = store.active
                   ? "¿Estás seguro de suspender esta tienda? El catálogo público mostrará un error y el cliente no podrá acceder al administrador."
                   : "¿Deseas reactivar esta tienda?";
                 if (confirm(confirmMsg)) {
@@ -450,27 +495,27 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               {store.active ? "Suspender" : "Activar"}
             </Button>
           </div>
-
         </TabsContent>
 
         {/* ── TAB 2: SUSCRIPCIÓN Y PLANES ── */}
         <TabsContent value="planes" className="space-y-4 pt-1 outline-none">
-          
           <div className="bg-white dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-3">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">Gestión de Contratos</span>
-            
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
+              Gestión de Contratos
+            </span>
+
             <div className="flex flex-col gap-2">
               <Button
                 size="sm"
                 variant="default"
                 className="w-full h-10 text-xs gap-2 font-bold justify-start px-4"
-                onClick={() => { 
-                  setRenewPlan(store.plan); 
-                  setRenewDuration(store.planDurationMonths ?? 1); 
-                  setRenewOpen(true); 
+                onClick={() => {
+                  setRenewPlan(store.plan);
+                  setRenewDuration(store.planDurationMonths ?? 1);
+                  setRenewOpen(true);
                 }}
               >
-                <RefreshCw className="w-4 h-4" /> 
+                <RefreshCw className="w-4 h-4" />
                 Renovar Contrato (Reiniciar Fecha)
               </Button>
 
@@ -494,7 +539,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                   className="w-full h-10 text-xs gap-2 border-zinc-200 dark:border-zinc-800 bg-background text-foreground font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 justify-start px-4"
                   onClick={() => setExtendOpen(true)}
                 >
-                  <PlusCircle className="w-4 h-4 text-emerald-500" /> 
+                  <PlusCircle className="w-4 h-4 text-emerald-500" />
                   Extender Contrato (+ Meses)
                 </Button>
               )}
@@ -505,7 +550,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                   variant="outline"
                   className="w-full h-10 text-xs gap-2 border-zinc-200 dark:border-zinc-800 bg-background text-foreground font-bold hover:bg-zinc-50 dark:hover:bg-zinc-800 justify-start px-4"
                   onClick={() => {
-                    setManualDateVal(store.planExpiresAt ? store.planExpiresAt.substring(0, 16) : "");
+                    setManualDateVal(
+                      store.planExpiresAt ? store.planExpiresAt.substring(0, 16) : "",
+                    );
                     setManualDateOpen(true);
                   }}
                 >
@@ -518,11 +565,14 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
 
           {/* Trials rápidos */}
           <div className="bg-white dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-3">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">Periodos de Prueba (Sandbox)</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
+              Periodos de Prueba (Sandbox)
+            </span>
             <p className="text-[10px] text-muted-foreground leading-tight">
-              Permite habilitar de manera inmediata una prueba trial de 15 días sobre un plan comercial.
+              Permite habilitar de manera inmediata una prueba trial de 15 días sobre un plan
+              comercial.
             </p>
-            
+
             <div className="grid grid-cols-2 gap-2">
               <Button
                 size="sm"
@@ -532,7 +582,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 disabled={trialLoading}
               >
                 <Clock className="w-3.5 h-3.5 text-blue-500" />
-                {trialLoading && selectedTrialPlan === "emprendedor" ? "Asignando..." : "Trial Emprendedor"}
+                {trialLoading && selectedTrialPlan === "emprendedor"
+                  ? "Asignando..."
+                  : "Trial Emprendedor"}
               </Button>
 
               <Button
@@ -547,15 +599,15 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               </Button>
             </div>
           </div>
-
         </TabsContent>
 
         {/* ── TAB 3: SOPORTE Y HERRAMIENTAS ── */}
         <TabsContent value="soporte" className="space-y-4 pt-1 outline-none">
-          
           <div className="bg-white dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800/80 shadow-sm space-y-3">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">Herramientas de Asistencia</span>
-            
+            <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
+              Herramientas de Asistencia
+            </span>
+
             <div className="flex flex-col gap-2">
               <Button
                 size="sm"
@@ -578,15 +630,15 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               </Button>
             </div>
           </div>
-
         </TabsContent>
 
         {/* ── TAB 4: ZONA DE PELIGRO ── */}
         <TabsContent value="danger" className="space-y-4 pt-1 outline-none">
-          
           <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-4 space-y-4">
             <div>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-red-600 dark:text-red-400 block">Acciones Críticas</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-red-600 dark:text-red-400 block">
+                Acciones Críticas
+              </span>
               <p className="text-[10px] text-red-600/80 mt-0.5 leading-tight">
                 Acciones administrativas de alto riesgo. Preste atención antes de confirmar.
               </p>
@@ -633,7 +685,6 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               </Button>
             </div>
           </div>
-
         </TabsContent>
       </Tabs>
 
@@ -643,7 +694,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           <DialogHeader>
             <DialogTitle>Renovar Contrato</DialogTitle>
             <DialogDescription>
-              Establece un nuevo período de suscripción activa desde hoy para <strong>{store.name}</strong>.
+              Establece un nuevo período de suscripción activa desde hoy para{" "}
+              <strong>{store.name}</strong>.
             </DialogDescription>
           </DialogHeader>
 
@@ -680,7 +732,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                       >
                         <div>{o.label}</div>
                         <div className="text-xs text-muted-foreground font-normal">
-                          Vence: {(() => {
+                          Vence:{" "}
+                          {(() => {
                             const d = new Date();
                             d.setMonth(d.getMonth() + o.value);
                             return formatDate(d.toISOString());
@@ -704,8 +757,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                       }}
                       className="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
                     />
-                    <label 
-                      htmlFor="renew-custom-price-checkbox" 
+                    <label
+                      htmlFor="renew-custom-price-checkbox"
                       className="text-sm font-semibold select-none cursor-pointer"
                     >
                       Tarifa Especial de Cobro (S/)
@@ -725,7 +778,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                         placeholder="0.00"
                       />
                       <p className="text-[10px] text-muted-foreground">
-                        Esta tarifa reemplazará los cálculos de renovación estándar para este comercio.
+                        Esta tarifa reemplazará los cálculos de renovación estándar para este
+                        comercio.
                       </p>
                     </div>
                   )}
@@ -735,21 +789,29 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
 
             {renewPlan !== "semilla" && (
               <div className="rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Precio total estimado:</span>{" "}
-                S/ {((customPriceEnabled && customPriceVal !== "" ? Number(customPriceVal) : PLANS[renewPlan].price) * renewDuration).toFixed(2)}
+                <span className="font-medium text-foreground">Precio total estimado:</span> S/{" "}
+                {(
+                  (customPriceEnabled && customPriceVal !== ""
+                    ? Number(customPriceVal)
+                    : PLANS[renewPlan].price) * renewDuration
+                ).toFixed(2)}
               </div>
             )}
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRenewOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setRenewOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleRenew} disabled={renewLoading}>
               {renewLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Guardando...
                 </span>
-              ) : "Confirmar Renovación"}
+              ) : (
+                "Confirmar Renovación"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -761,7 +823,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           <DialogHeader>
             <DialogTitle>Cambiar Plan (Sin alterar fecha)</DialogTitle>
             <DialogDescription>
-              Modifica la categoría del plan actual para <strong>{store.name}</strong> sin alterar su fecha de vencimiento.
+              Modifica la categoría del plan actual para <strong>{store.name}</strong> sin alterar
+              su fecha de vencimiento.
             </DialogDescription>
           </DialogHeader>
 
@@ -783,8 +846,14 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
             {changePlanPlan !== "semilla" && (
               <>
                 <div className="bg-zinc-50 dark:bg-zinc-950/20 border rounded-lg p-3 text-xs text-muted-foreground">
-                  <p className="font-semibold text-foreground mb-1">Fecha de vencimiento conservada:</p>
-                  <p>{store.planExpiresAt ? formatDate(store.planExpiresAt) : "Sin fecha límite establecida"}</p>
+                  <p className="font-semibold text-foreground mb-1">
+                    Fecha de vencimiento conservada:
+                  </p>
+                  <p>
+                    {store.planExpiresAt
+                      ? formatDate(store.planExpiresAt)
+                      : "Sin fecha límite establecida"}
+                  </p>
                 </div>
 
                 <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-2" />
@@ -800,8 +869,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                       }}
                       className="rounded border-input text-primary focus:ring-primary h-4 w-4 cursor-pointer"
                     />
-                    <label 
-                      htmlFor="change-custom-price-checkbox" 
+                    <label
+                      htmlFor="change-custom-price-checkbox"
                       className="text-sm font-semibold select-none cursor-pointer"
                     >
                       Tarifa Especial de Cobro (S/)
@@ -828,14 +897,18 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setChangePlanOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setChangePlanOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleChangePlan} disabled={changePlanLoading}>
               {changePlanLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Guardando...
                 </span>
-              ) : "Confirmar Cambio"}
+              ) : (
+                "Confirmar Cambio"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -847,7 +920,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           <DialogHeader>
             <DialogTitle>Ajustar Vencimiento Manual</DialogTitle>
             <DialogDescription>
-              Establece una fecha y hora exacta de vencimiento para la tienda <strong>{store.name}</strong>.
+              Establece una fecha y hora exacta de vencimiento para la tienda{" "}
+              <strong>{store.name}</strong>.
             </DialogDescription>
           </DialogHeader>
 
@@ -869,14 +943,18 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setManualDateOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setManualDateOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleManualDate} disabled={manualDateLoading}>
               {manualDateLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Guardando...
                 </span>
-              ) : "Actualizar Fecha"}
+              ) : (
+                "Actualizar Fecha"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -908,10 +986,12 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 >
                   <div>+ {o.label}</div>
                   <div className="text-xs text-muted-foreground font-normal">
-                    Nueva fecha: {(() => {
-                      const base = store.planExpiresAt && new Date(store.planExpiresAt) > new Date()
-                        ? new Date(store.planExpiresAt)
-                        : new Date();
+                    Nueva fecha:{" "}
+                    {(() => {
+                      const base =
+                        store.planExpiresAt && new Date(store.planExpiresAt) > new Date()
+                          ? new Date(store.planExpiresAt)
+                          : new Date();
                       base.setMonth(base.getMonth() + o.value);
                       return formatDate(base.toISOString());
                     })()}
@@ -922,14 +1002,18 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setExtendOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setExtendOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleExtend} disabled={extendLoading}>
               {extendLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Extendiendo...
                 </span>
-              ) : "Extender Plan"}
+              ) : (
+                "Extender Plan"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -941,8 +1025,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar suscripción</AlertDialogTitle>
             <AlertDialogDescription>
-              La tienda <strong>{store.name}</strong> volverá al plan Semilla (gratis) de forma inmediata.
-              Esta acción puede revertirse renovando el plan.
+              La tienda <strong>{store.name}</strong> volverá al plan Semilla (gratis) de forma
+              inmediata. Esta acción puede revertirse renovando el plan.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -979,7 +1063,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               Eliminar Tienda Permanentemente
             </DialogTitle>
             <DialogDescription>
-              Esta acción es <strong>irreversible</strong> y eliminará la tienda <strong>{store.name}</strong> de forma definitiva, incluyendo todos sus productos, categorías y configuraciones, liberando el enlace <code>/t/{store.slug}</code>.
+              Esta acción es <strong>irreversible</strong> y eliminará la tienda{" "}
+              <strong>{store.name}</strong> de forma definitiva, incluyendo todos sus productos,
+              categorías y configuraciones, liberando el enlace <code>/t/{store.slug}</code>.
             </DialogDescription>
           </DialogHeader>
 
@@ -1000,10 +1086,18 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setDeleteOpen(false); setDeletePassword(""); }}>Cancelar</Button>
-            <Button 
-              onClick={handleDeleteStore} 
-              disabled={deleteLoading || !deletePassword} 
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteOpen(false);
+                setDeletePassword("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteStore}
+              disabled={deleteLoading || !deletePassword}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold text-xs h-9 px-4"
             >
               {deleteLoading ? (
@@ -1011,7 +1105,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Eliminando...
                 </span>
-              ) : "Eliminar Permanentemente"}
+              ) : (
+                "Eliminar Permanentemente"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1026,20 +1122,28 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               Liberar URL y Pausar Tienda
             </DialogTitle>
             <DialogDescription>
-              Esta acción suspenderá temporalmente el acceso a la tienda <strong>{store.name}</strong> y cambiará su enlace de <code>/t/{store.slug}</code> a uno inactivo, liberando el nombre original de forma inmediata para otros comercios.
+              Esta acción suspenderá temporalmente el acceso a la tienda{" "}
+              <strong>{store.name}</strong> y cambiará su enlace de <code>/t/{store.slug}</code> a
+              uno inactivo, liberando el nombre original de forma inmediata para otros comercios.
             </DialogDescription>
           </DialogHeader>
 
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/50 rounded-lg p-3 text-xs text-amber-800 dark:text-amber-300 space-y-1">
             <p className="font-bold">¿Qué sucede con los datos del comercio?</p>
-            <p>Los productos, categorías, imágenes y configuraciones NO se eliminarán. Permanecerán guardados de forma segura. Si el cliente regresa, podrás reactivar su cuenta y asignarle un nuevo enlace.</p>
+            <p>
+              Los productos, categorías, imágenes y configuraciones NO se eliminarán. Permanecerán
+              guardados de forma segura. Si el cliente regresa, podrás reactivar su cuenta y
+              asignarle un nuevo enlace.
+            </p>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPauseOpen(false)}>Cancelar</Button>
-            <Button 
-              onClick={handlePauseAndReleaseURL} 
-              disabled={pauseLoading} 
+            <Button variant="outline" onClick={() => setPauseOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePauseAndReleaseURL}
+              disabled={pauseLoading}
               className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4"
             >
               {pauseLoading ? (
@@ -1047,7 +1151,9 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   Procesando...
                 </span>
-              ) : "Sí, Liberar Enlace"}
+              ) : (
+                "Sí, Liberar Enlace"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

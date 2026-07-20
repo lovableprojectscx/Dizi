@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Documento Exportado</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #333333;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        font-size: 24pt;
+        color: #1e3a8a;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 8px;
+        margin-top: 30px;
+      }
+      h2 {
+        font-size: 18pt;
+        color: #2563eb;
+        margin-top: 25px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 5px;
+      }
+      h3 {
+        font-size: 14pt;
+        color: #1d4ed8;
+        margin-top: 20px;
+      }
+      p,
+      li {
+        font-size: 11pt;
+        margin-bottom: 10px;
+      }
+      ul {
+        margin-left: 20px;
+        margin-bottom: 15px;
+      }
+      li {
+        margin-bottom: 5px;
+      }
+      strong {
+        color: #111827;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 10.5pt;
+      }
+      th {
+        background-color: #f3f4f6;
+        color: #111827;
+        font-weight: bold;
+        border: 1px solid #d1d5db;
+        padding: 10px;
+        text-align: left;
+      }
+      td {
+        border: 1px solid #d1d5db;
+        padding: 8px 10px;
+      }
+      tr:nth-child(even) {
+        background-color: #f9fafb;
+      }
+      code {
+        font-family: Consolas, Monaco, monospace;
+        background-color: #f3f4f6;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 9.5pt;
+        color: #0f172a;
+      }
+      pre {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 15px 0;
+      }
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        font-size: 9pt;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid #e5e7eb;
+        margin: 30px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Reporte Detallado de Cobertura y Suite de Pruebas — DIZI</h1>
+    <p>
+      Este documento detalla exhaustivamente cada una de las pruebas automatizadas (unitarias,
+      integración y de sistema E2E) implementadas en el proyecto <strong>Dizi</strong>, describiendo
+      las funciones que analizan, los escenarios que simulan y las aserciones que realizan.
+    </p>
+    <hr />
+    <h2>📊 Resumen Ejecutivo de Pruebas</h2>
+    <p>
+      * <strong>Framework de Pruebas:</strong> <strong>Vitest v4.1.10</strong> (nativo de Vite) y
+      <strong>Playwright</strong> (para E2E). *
+      <strong>Total de Archivos de Pruebas (Suites):</strong> 6 suites ejecutadas en Vitest + 1
+      suite E2E en Playwright. * <strong>Total de Casos de Prueba Unitarios e Integración:</strong>
+      <strong>66 casos</strong> (100% exitosos). *
+      <strong>Total de Escenarios de Sistema E2E:</strong>
+      <strong>5 escenarios</strong> (Playwright). *
+      <strong>Tiempo de Ejecución total de la suite de consola:</strong>
+      <strong>576 milisegundos</strong>.
+    </p>
+    <hr />
+    <h2>🧪 1. Detalle por Suite de Pruebas (Archivos de Código)</h2>
+    <p>
+      A continuación, se detalla qué evalúa cada uno de los archivos de prueba creados en la carpeta
+      `src/lib/__tests__/` y `tests/`:
+    </p>
+    <h3>📂 Suite A: `types.test.ts` (41 casos de prueba)</h3>
+    Este archivo contiene la lógica de negocio central sobre las suscripciones del comerciante, las
+    degradaciones de planes y los formatos de plantillas. *
+    <strong>Archivo de código probado:</strong> <strong>src/lib/types.ts</strong> *
+    <strong>Casos que verifica:</strong> * <strong>`daysSinceExpiry` (4 casos):</strong> * Retorna
+    `null` si la tienda no tiene fecha de vencimiento configurada. * Retorna `0` si el vencimiento
+    coincide exactamente con el día de hoy. * Retorna la cantidad exacta de días transcurridos desde
+    que venció (ej: 3 días de vencido). * Retorna un número negativo si la suscripción aún está
+    vigente (ej: -3 días para expirar). * <strong>`daysUntilExpiry` (3 casos):</strong> * Retorna
+    `null` si no hay fecha de expiración. * Retorna la cantidad exacta de días restantes hasta el
+    vencimiento (número positivo). * Retorna número negativo si la suscripción ya caducó. *
+    <strong>`getEffectivePlan` (5 casos):</strong> * Mantiene el plan `"semilla"` si era el plan
+    base. * Mantiene el plan original si no tiene expiración. * <strong>CP-06:</strong> Conserva el
+    plan original de pago si expira hoy (está dentro del periodo de gracia de 3 días). *
+    <strong>CP-07:</strong> Conserva el plan original si venció hace 3 días (último día de gracia).
+    * <strong>CP-08:</strong> Cambia el plan efectivo a `"semilla"` si venció hace 4 días (gracia
+    expirada). * <strong>`getEffectiveProductLimit` (3 casos):</strong> * Retorna el límite semilla
+    (20 productos) para plan semilla. * Retorna el límite original (ej. 200 productos para Pro) si
+    el plan está vigente. * Aplica el límite semilla (20) si el plan ya expiró y superó el periodo
+    de gracia. * <strong>`isSubscriptionExpired` (4 casos):</strong> * Retorna `false` para tiendas
+    en plan semilla. * Retorna `false` si no tiene fecha de expiración. * Retorna `false` si la
+    expiración es a futuro. * Retorna `true` si la expiración es en el pasado. *
+    <strong>`modelGraceDaysLeft` (4 casos):</strong> * Retorna `null` si es semilla. * Retorna
+    `null` si el plan de pago está vigente. * Retorna los días restantes de gracia para mantener la
+    plantilla visual (máximo 15 días tras vencer). * Retorna `0` si el vencimiento superó los 15
+    días. * <strong>`shouldUseSemillaModel` (2 casos):</strong> * Retorna `false` si está dentro de
+    la gracia de 15 días del modelo. * Retorna `true` si ya pasaron los 15 días y se debe forzar el
+    modelo semilla. * <strong>`getEffectiveModel` (2 casos):</strong> * Retorna `"minimalista"`
+    (modelo semilla) si la gracia del modelo ya expiró. * Retorna el modelo premium configurado (ej:
+    `"boutique"`) si aún está dentro de los 15 días de gracia. *
+    <strong>`isPlanActive` (4 casos):</strong> * Retorna `true` para semilla. * Retorna `false` si
+    no tiene fecha de expiración y no es semilla. * Retorna `true` si la expiración es futura. *
+    Retorna `false` si la expiración es pasada. * <strong>`getBioLinksLimit` (2 casos):</strong> *
+    Devuelve `3` enlaces rápidos como límite si la tienda está bajo plan semilla. * Devuelve
+    `Infinity` si está en un plan premium activo. *
+    <strong>`canUsePremiumBioFeatures` (2 casos):</strong> * Devuelve `false` para plan semilla. *
+    Devuelve `true` para planes premium. * <strong>`getImageSpec` (3 casos):</strong> * Mapea el
+    modelo `"minimalista"` al layout `"grid"` (escala cuadrada 1:1). * Mapea el modelo `"vibrante"`
+    al layout `"overlay"` (escala vertical 3:4). * Mapea el modelo `"portada"` al layout
+    `"banner_grid"` (escala panorámica 16:7). * <strong>`checkImageRatio` (3 casos):</strong>
+    * Retorna `status: "ok"` si las dimensiones de la imagen coinciden con la relación recomendada.
+    * Retorna `status: "warning"` avisando de recorte en los lados si es demasiado ancha. * Retorna
+    `status: "warning"` avisando de recorte arriba/abajo si es demasiado alta.
+    <hr />
+    <h3>📂 Suite B: `whatsapp.test.ts` (5 casos de prueba)</h3>
+    Verifica el formateo de precios en la moneda nacional (Soles) y la correcta codificación del
+    mensaje de WhatsApp del checkout. * <strong>Archivo de código probado:</strong>
+    <strong>src/lib/whatsapp.ts</strong> * <strong>Casos que verifica:</strong> *
+    <strong>`formatPrice` (4 casos):</strong> * <strong>CP-01:</strong> Formatea montos positivos de
+    manera correcta (ej. `25.5` -&gt; `"S/ 25.50"`). * <strong>CP-02:</strong> Retorna `"A
+    consultar"` si el precio es `0`. * <strong>CP-03:</strong> Retorna `"A consultar"` si el precio
+    es `null` o `undefined`. * <strong>CP-04:</strong> Redondea centavos adecuadamente con dos
+    decimales (ej. `0.005` -&gt; `"S/ 0.01"`). * <strong>`buildWaUrl` (1 caso):</strong> *
+    <strong>CP-05:</strong> Limpia caracteres no numéricos del teléfono (remueve espacios y guiones)
+    y codifica los caracteres especiales del mensaje para la API de WhatsApp (ej. `¿` y `?` a
+    entidades URL).
+    <hr />
+    <h3>📂 Suite C: `image-utils.test.ts` (6 casos de prueba)</h3>
+    Comprueba el comportamiento del procesador de imágenes en el cliente (que reduce la carga en el
+    servidor convirtiendo a WebP antes de subir). * <strong>Archivo de código probado:</strong>
+    <strong>src/lib/image-utils.ts</strong> * <strong>Casos que verifica:</strong> *
+    <strong>`convertImageToWebP` (4 casos):</strong> * Convierte un archivo de imagen válido al
+    formato base64 WebP respetando el tamaño si no excede los límites. * Redimensiona
+    proporcionalmente el ancho a un máximo de 2048px si la imagen original es más ancha (ej: 3000px
+    -&gt; 2048px). * Redimensiona proporcionalmente el alto a un máximo de 2048px si la imagen
+    original es más alta. * Lanza un error controlado si el archivo de imagen está dañado o no se
+    puede procesar. * <strong>`convertImageUrlToWebP` (2 casos):</strong>
+    * Devuelve inmediatamente la URL si ya es una data URL (base64) evitando reprocesamientos. *
+    Descarga una imagen remota vía CORS anónimo y la transforma en data URL WebP.
+    <hr />
+    <h3>📂 Suite D: `error-capture.test.ts` (4 casos de prueba)</h3>
+    Monitorea la captura de excepciones globales y promesas rechazadas para el diagnóstico del
+    sistema. * <strong>Archivo de código probado:</strong>
+    <strong>src/lib/error-capture.ts</strong> * <strong>Casos que verifica:</strong>
+    * Retorna `undefined` si no se ha capturado ningún error. * Captura y consume un error global
+    (`errorListener`) limpiándolo del buffer tras leerlo para evitar fugas de memoria. * Captura y
+    consume un rechazo de promesa no controlado (`unhandledrejection`). * Descarta el error
+    automáticamente si se intenta consumir después de 5 segundos de haber ocurrido (TTL - Time to
+    Live).
+    <hr />
+    <h3>📂 Suite E: `utils.test.ts` (3 casos de prueba)</h3>
+    Prueba la función utilitaria `cn` para la mezcla condicional de clases CSS. *
+    <strong>Archivo de código probado:</strong> <strong>src/lib/utils.ts</strong> *
+    <strong>Casos que verifica:</strong>
+    * Combina nombres de clases CSS normales. * Ignora elementos vacíos, nulos, indefinidos o
+    booleanos falsos. * Resuelve conflictos de clases de Tailwind CSS usando `twMerge` (ej: si pasas
+    `p-4 p-8` conserva la de mayor precedencia `p-8`).
+    <hr />
+    <h3>📂 Suite F: `error-page.test.ts` (2 casos de prueba)</h3>
+    Verifica el renderizador estático de HTML para caídas del servidor. *
+    <strong>Archivo de código probado:</strong> <strong>src/lib/error-page.ts</strong> *
+    <strong>Casos que verifica:</strong>
+    * Retorna un documento HTML bien formado (`&lt;!doctype html&gt;`, `&lt;html&gt;`,
+    `&lt;body&gt;`). * Muestra el mensaje informativo en inglés y el código Javascript para recargar
+    la página.
+    <hr />
+    <h3>📂 Suite G: `security.test.ts` (5 casos de prueba de Integración)</h3>
+    Valida la capa de seguridad y RPCs del backend (Supabase) simulando la respuesta del servidor. *
+    <strong>Archivo de código probado:</strong>
+    <strong>tests/integration/security.test.ts</strong> * <strong>Casos que verifica:</strong> *
+    <strong>CP-12 (RLS):</strong> Garantiza que un tenant no pueda consultar las filas de productos
+    que pertenecen a otra tienda (aislamiento de datos). *
+    <strong>CP-11 (check_invite):</strong> Valida que la llamada al RPC con un token usado retorne
+    un array vacío. * <strong>CP-10 (check_invite):</strong> Valida que al enviar un token activo y
+    no usado, el RPC devuelva la configuración del plan. *
+    <strong>CP-13 (Trigger de Privilegios):</strong> Emula que si un atacante intenta inyectar el
+    rol `super_admin` durante el registro, el disparador lo degrade inmediatamente a `store_owner`.
+    * <strong>CP-14 (Tienda despublicada):</strong> Valida que la consulta a una tienda que no está
+    marcada como activa retorne un error controlado de "tienda no publicada".
+    <hr />
+    <h2>🎭 2. Pruebas de Sistema / E2E (Playwright)</h2>
+    <p>
+      Estas pruebas simulan la experiencia real del usuario en el navegador web de manera
+      automatizada: * <strong>Archivo de especificaciones:</strong>
+      <strong>tests/e2e/catalogo.spec.ts</strong> * <strong>Escenarios definidos:</strong> *
+      <strong>`E2E-01` (Publicación de Catálogo):</strong> Loguea al dueño, activa la casilla de
+      publicación, guarda y comprueba que al navegar a la ruta pública `/t/:slug` se rendericen las
+      tarjetas de producto y los precios en soles. *
+      <strong>`E2E-02` (Registro de invitación):</strong> Simula el flujo del formulario de registro
+      ingresando un código de invitación válido (éxito) y uno vencido (bloqueo por alerta). *
+      <strong>`E2E-03` (Pedido por WhatsApp):</strong> Entra al catálogo, agrega dos productos al
+      carrito, abre el checkout, ingresa datos y simula el clic de envío a WhatsApp, verificando que
+      la URL destino contenga la estructura codificada con el celular del comercio. *
+      <strong>`E2E-04` (Libro de Reclamaciones):</strong> Simula a un consumidor abriendo el libro
+      en el catálogo (1 solo clic), llenando sus datos personales (wizard paso 1) y el reclamo (paso
+      2), enviando, y luego al administrador iniciando sesión para responder y resolver el reclamo
+      desde su panel. * <strong>`E2E-05` (Restricciones del Plan):</strong> Simula el inicio de
+      sesión de un comerciante en plan semilla (gratuito) y comprueba que las pestañas e inputs de
+      diseño premium aparezcan bloqueados (disabled) con una llamada a mejorar de plan.
+    </p>
+    <hr />
+    <h2>📈 3. Trazabilidad de Casos de Prueba (Matriz)</h2>
+    <p>
+      Esta tabla resume la trazabilidad de los requisitos analizados en las pruebas unitarias y de
+      integración:
+    </p>
+    <table>
+      <tr>
+        <th>Código de Caso</th>
+        <th>Módulo Evaluado</th>
+        <th>Tipo de Prueba</th>
+        <th>Requisito Relacionado</th>
+        <th>Resultado Esperado</th>
+      </tr>
+      <tr>
+        <td>:---:</td>
+        <td>:---</td>
+        <td>:---:</td>
+        <td>:---</td>
+        <td>:---</td>
+      </tr>
+      <tr>
+        <td><strong>CP-01</strong></td>
+        <td>`formatPrice`</td>
+        <td>Unitaria</td>
+        <td>RF-03 (Formateo precio)</td>
+        <td>Agrega prefijo `S/ ` y dos decimales (`S/ 25.50`).</td>
+      </tr>
+      <tr>
+        <td><strong>CP-02</strong></td>
+        <td>`formatPrice`</td>
+        <td>Unitaria</td>
+        <td>RF-03 (Formateo precio)</td>
+        <td>Si el precio es `0` muestra `"A consultar"`.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-03</strong></td>
+        <td>`formatPrice`</td>
+        <td>Unitaria</td>
+        <td>RF-03 (Formateo precio)</td>
+        <td>Si el precio es `null`/`undefined` muestra `"A consultar"`.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-04</strong></td>
+        <td>`formatPrice`</td>
+        <td>Unitaria</td>
+        <td>RF-03 (Formateo precio)</td>
+        <td>Redondea decimales al valor más cercano (`S/ 0.01`).</td>
+      </tr>
+      <tr>
+        <td><strong>CP-05</strong></td>
+        <td>`buildWaUrl`</td>
+        <td>Unitaria</td>
+        <td>RF-02 (Mensaje WhatsApp)</td>
+        <td>Genera enlace `wa.me` limpio con el texto codificado.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-06</strong></td>
+        <td>`getEffectivePlan`</td>
+        <td>Unitaria</td>
+        <td>RF-06 (Periodo de gracia)</td>
+        <td>El día de vencimiento se conserva el plan de pago.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-07</strong></td>
+        <td>`getEffectivePlan`</td>
+        <td>Unitaria</td>
+        <td>RF-06 (Periodo de gracia)</td>
+        <td>El día 3 de vencido aún se mantiene el plan de pago.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-08</strong></td>
+        <td>`getEffectivePlan`</td>
+        <td>Unitaria</td>
+        <td>RF-06 (Periodo de gracia)</td>
+        <td>El día 4 de vencido degrada efectivamente a `"semilla"`.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-09</strong></td>
+        <td>`getEffectiveProductLimit`</td>
+        <td>Unitaria</td>
+        <td>RF-05 (Límites de plan)</td>
+        <td>Aplica límite correspondiente al plan efectivo (20 o 200).</td>
+      </tr>
+      <tr>
+        <td><strong>CP-10</strong></td>
+        <td>`check_invite`</td>
+        <td>Integración</td>
+        <td>RF-04 (Registro por token)</td>
+        <td>Retorna datos del plan para tokens válidos.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-11</strong></td>
+        <td>`check_invite`</td>
+        <td>Integración</td>
+        <td>RF-04 (Registro por token)</td>
+        <td>Retorna array vacío para tokens ya usados o vencidos.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-12</strong></td>
+        <td>`stores` / `products`</td>
+        <td>Integración</td>
+        <td>RF-07 (Aislamiento RLS)</td>
+        <td>Consulta de Tienda A no puede leer filas de Tienda B.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-13</strong></td>
+        <td>Trigger sync</td>
+        <td>Integración</td>
+        <td>RF-08 (Mitigación roles)</td>
+        <td>Degrada rol `super_admin` inyectado a `store_owner`.</td>
+      </tr>
+      <tr>
+        <td><strong>CP-14</strong></td>
+        <td>`get_public_store`</td>
+        <td>Integración</td>
+        <td>RF-01 (Publicar catálogo)</td>
+        <td>Niega acceso a catálogos despublicados.</td>
+      </tr>
+    </table>
+  </body>
+</html>

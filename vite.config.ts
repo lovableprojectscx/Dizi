@@ -21,10 +21,10 @@ export default defineConfig(({ mode }) => {
         configureServer(server) {
           server.middlewares.use(async (req, res, next) => {
             const url = new URL(req.url || "", `http://${req.headers.host}`);
-            
+
             if (url.pathname.startsWith("/api/")) {
               const endpoint = url.pathname.replace(/^\/api\//, "").replace(/\/$/, "");
-              
+
               // Evitar ataques de directory traversal en local
               if (endpoint.includes("..") || endpoint.includes("/") || endpoint.includes("\\")) {
                 return next();

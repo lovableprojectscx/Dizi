@@ -8,12 +8,12 @@ Este documento detalla la lógica de negocio y las conexiones técnicas entre la
 
 Los planes están definidos en `src/lib/types.ts` bajo la constante `PLANS`:
 
-| Plan | Límite de productos | Precio actual (`PLANS[].price`) |
-|---|---|---|
-| **Semilla** | 7 | Gratis (0) |
-| **Emprendedor** | 50 | S/ 9.90/mes |
-| **Pro** | 200 | S/ 14.90/mes |
-| **Ilimitado** | Ilimitado | S/ 34.90/mes |
+| Plan            | Límite de productos | Precio actual (`PLANS[].price`) |
+| --------------- | ------------------- | ------------------------------- |
+| **Semilla**     | 7                   | Gratis (0)                      |
+| **Emprendedor** | 50                  | S/ 9.90/mes                     |
+| **Pro**         | 200                 | S/ 14.90/mes                    |
+| **Ilimitado**   | Ilimitado           | S/ 34.90/mes                    |
 
 > ⚠️ **Los precios S/ 9.90 (Emprendedor) y S/ 14.90 (Pro) son PROMOCIONALES de lanzamiento.** Están hardcodeados como precio único en `types.ts`, así que hoy no se distinguen de un "precio regular". Cambiarlos afecta a la vez a `admin.plan.tsx` y al panel del superadmin (`SubscriptionManager.tsx`). La **landing** (`index.tsx`) tiene los precios escritos a mano aparte y hay que editarla por separado. La evaluación para hacer la promo gestionable desde el área de super está en `ARQUITECTURA.md` § 20.
 >
@@ -26,11 +26,13 @@ Los planes están definidos en `src/lib/types.ts` bajo la constante `PLANS`:
 En la sección de Oferta de Lanzamiento del Plan Emprendedor (15 Días Gratis) existen dos botones con comportamientos distintos:
 
 ### A. Botón "Solicitar por WhatsApp" (Flujo Recomendado de Prueba)
-- **Destino**: `https://wa.me/...` con el mensaje predefinido: *"Hola, quiero probar Dizi y que me ayuden a configurar mi catálogo"*.
+
+- **Destino**: `https://wa.me/...` con el mensaje predefinido: _"Hola, quiero probar Dizi y que me ayuden a configurar mi catálogo"_.
 - **Propósito**: Conectar al usuario con el administrador. El administrador le dará soporte y le enviará un **enlace de invitación de prueba** generado desde el panel de superadmin.
 - **Resultado final**: El usuario se registra utilizando el enlace de invitación y obtiene la **prueba de 15 días gratis del Plan Emprendedor**.
 
 ### B. Botón "Registrarme solo" / Registro Directo
+
 - **Destino**: `/register` (sin parámetros en la URL).
 - **Propósito**: Permitir que los usuarios que deseen autogestionarse se registren de inmediato.
 - **Resultado final**: Al no contar con un token de invitación en la URL, el registro público **asigna por defecto el Plan Semilla (Gratuito)**.
@@ -41,6 +43,7 @@ En la sección de Oferta de Lanzamiento del Plan Emprendedor (15 Días Gratis) e
 ## 3. Generación de Invitaciones (`InviteGenerator.tsx`)
 
 El superadmin puede generar enlaces de invitación para cualquier plan y duración:
+
 - Se agregó la opción **"15 días (Prueba)"** con un valor de duración de **`0` meses**.
 - Se definió de forma local en el componente (`INVITE_DURATION_OPTIONS`) para evitar contaminar las opciones de renovación o extensión del panel general.
 - Al generar una invitación para el Plan Emprendedor, la opción de prueba de 15 días (`0` meses) viene seleccionada por defecto.
@@ -67,10 +70,13 @@ graph TD
 ## 5. Lógica del Store y Persistencia en Supabase (`store.ts`)
 
 ### A. Registro Público (Semilla)
+
 Al llamar a `addStore`, se ejecuta el procedimiento almacenado `initialize_store` de PostgreSQL. Como el plan es semilla, la base de datos establece por defecto `subscription_status = 'trial'` y `plan_expires_at = null` (no expira).
 
 ### B. Registro mediante Enlace de Invitación de Prueba (15 días)
+
 Cuando `duration_months` es `0`:
+
 1. En `register.tsx`, la tienda local se inicializa con `planExpiresAt` a 15 días en el futuro, `subscriptionStatus: "trial"` y `planDurationMonths: 0`.
 2. `addStore` ejecuta `initialize_store` y posteriormente realiza un `update` para guardar estos campos específicos de prueba en Supabase.
 3. Se invoca a `markInviteUsed(inviteToken, newStoreId)`.
@@ -92,11 +98,13 @@ const isTrial = store.subscriptionStatus === "trial" && store.plan !== "semilla"
 ```
 
 ### Dashboard (`admin.dashboard.tsx`)
+
 - Muestra el nombre del plan como **`Emprendedor (Prueba)`** si `isTrial` es verdadero.
-- La descripción de la tarjeta de Plan Actual muestra: *"Prueba: quedan X días"*.
+- La descripción de la tarjeta de Plan Actual muestra: _"Prueba: quedan X días"_.
 
 ### Mi Plan (`admin.plan.tsx`)
-- Muestra un banner ámbar premium (`bg-amber-50/60 border-amber-200`) con un icono de reloj (`Clock`) e indica: *"Período de prueba activo hasta [fecha] ([X] días restantes)"*.
+
+- Muestra un banner ámbar premium (`bg-amber-50/60 border-amber-200`) con un icono de reloj (`Clock`) e indica: _"Período de prueba activo hasta [fecha] ([X] días restantes)"_.
 
 ---
 
@@ -105,23 +113,30 @@ const isTrial = store.subscriptionStatus === "trial" && store.plan !== "semilla"
 El sistema implementa un programa de recompensas por referidos para fomentar el crecimiento orgánico de la plataforma. Tanto la tienda referente como la tienda referida reciben un beneficio (habitualmente 1 mes de suscripción gratuita) cuando la tienda referida adquiere un plan de pago.
 
 ### A. Estructura de Datos en Supabase
+
 Se agregó la columna `referred_by` a la tabla `stores` para registrar la procedencia del registro:
+
 - **Columna**: `referred_by` (tipo `text`, almacena el slug de la tienda que la recomendó).
 - **Actualización en el registro**: Dado que la creación inicial de tiendas se realiza a través de la función RPC `initialize_store`, por razones de compatibilidad con la firma del procedimiento almacenado, la persistencia de `referred_by` se realiza inmediatamente después mediante un `.update()` sobre el registro recién creado.
 
 ### B. Captura de la Recomendación en el Registro (`register.tsx`)
+
 1. El usuario accede al formulario de registro con un enlace estructurado como `/register?ref=SLUG_TIENDA_REFERENTE`.
 2. El componente detecta el parámetro de consulta `ref` de la URL mediante `URLSearchParams`.
 3. Al enviar el formulario, el valor de `ref` se pasa como propiedad `referredBy` en el payload de creación de la tienda.
 4. Si está presente, el store de Zustand ejecuta la inicialización de la tienda y a continuación actualiza la fila correspondiente en la tabla `stores` con el slug de procedencia.
 
 ### C. Panel del Comercio - Compartir Enlace (`admin.plan.tsx`)
+
 En la vista "Mi Plan", se muestra una tarjeta destacada con detalles sobre el Programa de Referidos:
+
 - **Generación dinámica del enlace**: El enlace personal de la tienda es `https://dizi.idenza.site/register?ref={store.slug}`.
 - **Copiar Enlace**: Botón con comportamiento interactivo que guarda el enlace en el portapapeles con fallback seguro.
 - **Compartir por WhatsApp**: Redirige a la API de WhatsApp con un mensaje predefinido para enviar a contactos de negocios, invitándolos a registrarse y explicándoles la promoción.
 
 ### D. Consola de Superadministrador (`SubscriptionManager.tsx`)
+
 Para una gestión simplificada y libre de errores de facturación, el superadmin puede ver claramente quién recomendó a cada comercio:
-- Si la tienda posee un valor en `referred_by`, se visualiza en color púrpura destacado el mensaje: *"Recomendado por: {store.referredBy}"* debajo de la información del plan.
+
+- Si la tienda posee un valor en `referred_by`, se visualiza en color púrpura destacado el mensaje: _"Recomendado por: {store.referredBy}"_ debajo de la información del plan.
 - Esto permite al administrador de soporte procesar manualmente la extensión gratuita de los meses de suscripción (mediante la acción "Renovar/Extender" del panel) a ambas tiendas una vez confirmado el pago del plan por el nuevo comercio.

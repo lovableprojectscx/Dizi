@@ -6,7 +6,11 @@ export const Route = createFileRoute("/privacidad")({
   head: () => ({
     meta: [
       { title: "Política de Privacidad — Dizi" },
-      { name: "description", content: "Conoce cómo Dizi recopila, usa y protege tus datos personales conforme a la Ley 29733 de Protección de Datos Personales del Perú." },
+      {
+        name: "description",
+        content:
+          "Conoce cómo Dizi recopila, usa y protege tus datos personales conforme a la Ley 29733 de Protección de Datos Personales del Perú.",
+      },
       { name: "robots", content: "index, follow" },
       { rel: "canonical", href: "https://dizi.idenza.site/privacidad" },
     ],
@@ -21,9 +25,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <span className="w-1 h-5 bg-primary rounded-full inline-block" />
         {title}
       </h2>
-      <div className="text-muted-foreground leading-relaxed space-y-2 pl-3">
-        {children}
-      </div>
+      <div className="text-muted-foreground leading-relaxed space-y-2 pl-3">{children}</div>
     </section>
   );
 }
@@ -61,8 +63,10 @@ function PrivacidadPage() {
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
             En <strong>Dizi</strong> nos tomamos en serio la protección de tus datos personales.
-            Esta política explica qué información recopilamos, cómo la usamos y cuáles son tus derechos,
-            conforme a la <strong>Ley N° 29733 — Ley de Protección de Datos Personales del Perú</strong> y su reglamento.
+            Esta política explica qué información recopilamos, cómo la usamos y cuáles son tus
+            derechos, conforme a la{" "}
+            <strong>Ley N° 29733 — Ley de Protección de Datos Personales del Perú</strong> y su
+            reglamento.
           </p>
         </div>
       </div>
@@ -70,7 +74,6 @@ function PrivacidadPage() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-10">
         <div className="bg-background rounded-2xl border shadow-sm p-6 md:p-8 space-y-2">
-
           <Section title="1. Responsable del tratamiento">
             <p>
               El responsable del tratamiento de tus datos personales es <strong>Idenza</strong>,
@@ -78,7 +81,10 @@ function PrivacidadPage() {
             </p>
             <p className="flex items-center gap-2 text-sm">
               <Mail className="w-4 h-4 text-primary shrink-0" />
-              Contacto: <a href="mailto:contacto@idenza.site" className="text-primary hover:underline">contacto@idenza.site</a>
+              Contacto:{" "}
+              <a href="mailto:contacto@idenza.site" className="text-primary hover:underline">
+                contacto@idenza.site
+              </a>
             </p>
             <p className="flex items-center gap-2 text-sm">
               <MapPin className="w-4 h-4 text-primary shrink-0" />
@@ -123,28 +129,29 @@ function PrivacidadPage() {
               ))}
             </ul>
             <p className="mt-3 text-sm font-medium text-foreground">
-              No vendemos, alquilamos ni compartimos tus datos personales con terceros con fines comerciales.
+              No vendemos, alquilamos ni compartimos tus datos personales con terceros con fines
+              comerciales.
             </p>
           </Section>
 
           <Section title="4. Almacenamiento y seguridad">
             <p>
-              Tus datos se almacenan en <strong>Supabase</strong>, plataforma de base de datos en la nube
-              con servidores en la región de América del Norte, que cumple con estándares
+              Tus datos se almacenan en <strong>Supabase</strong>, plataforma de base de datos en la
+              nube con servidores en la región de América del Norte, que cumple con estándares
               internacionales de seguridad (cifrado en tránsito y en reposo, autenticación segura).
             </p>
             <p>
-              Las imágenes de tu catálogo se guardan en <strong>Supabase Storage</strong>.
-              Aplicamos medidas técnicas y organizativas para proteger tus datos contra acceso
-              no autorizado, pérdida o alteración.
+              Las imágenes de tu catálogo se guardan en <strong>Supabase Storage</strong>. Aplicamos
+              medidas técnicas y organizativas para proteger tus datos contra acceso no autorizado,
+              pérdida o alteración.
             </p>
           </Section>
 
           <Section title="5. Conservación de datos">
             <p>
               Conservamos tus datos mientras tu cuenta esté activa en Dizi. Si cancelas tu cuenta,
-              tus datos serán eliminados en un plazo máximo de <strong>30 días</strong>,
-              salvo que la ley exija conservarlos por un período mayor.
+              tus datos serán eliminados en un plazo máximo de <strong>30 días</strong>, salvo que
+              la ley exija conservarlos por un período mayor.
             </p>
           </Section>
 
@@ -169,21 +176,24 @@ function PrivacidadPage() {
               <a href="mailto:contacto@idenza.site" className="text-primary hover:underline">
                 contacto@idenza.site
               </a>{" "}
-              indicando tu nombre, correo registrado y el derecho que deseas ejercer.
-              Responderemos en un plazo máximo de <strong>15 días hábiles</strong>.
+              indicando tu nombre, correo registrado y el derecho que deseas ejercer. Responderemos
+              en un plazo máximo de <strong>15 días hábiles</strong>.
             </p>
           </Section>
 
           <Section title="7. Cookies">
             <p>
               Dizi utiliza cookies técnicas esenciales para el funcionamiento de la plataforma
-              (autenticación de sesión, preferencias de usuario). No utilizamos cookies de
-              rastreo publicitario de terceros dentro de la plataforma.
+              (autenticación de sesión, preferencias de usuario). No utilizamos cookies de rastreo
+              publicitario de terceros dentro de la plataforma.
             </p>
           </Section>
 
           <Section title="8. Servicios de terceros">
-            <p>Para operar, Dizi utiliza los siguientes servicios de terceros que pueden procesar datos:</p>
+            <p>
+              Para operar, Dizi utiliza los siguientes servicios de terceros que pueden procesar
+              datos:
+            </p>
             <ul className="space-y-1 mt-2">
               {[
                 "Supabase — base de datos y autenticación (supabase.com)",
@@ -212,8 +222,8 @@ function PrivacidadPage() {
           <Section title="10. Cambios a esta política">
             <p>
               Podemos actualizar esta política en cualquier momento. Cuando lo hagamos,
-              actualizaremos la fecha en la parte superior. Si los cambios son significativos,
-              te notificaremos por correo electrónico.
+              actualizaremos la fecha en la parte superior. Si los cambios son significativos, te
+              notificaremos por correo electrónico.
             </p>
           </Section>
 
@@ -230,14 +240,15 @@ function PrivacidadPage() {
               Escribenos a contacto@idenza.site
             </a>
           </div>
-
         </div>
       </div>
 
       {/* Footer */}
       <div className="text-center py-6 text-xs text-muted-foreground border-t bg-background">
         © {new Date().getFullYear()} Dizi — Idenza · dizi.idenza.site ·{" "}
-        <Link to="/" className="hover:underline text-primary">Volver al inicio</Link>
+        <Link to="/" className="hover:underline text-primary">
+          Volver al inicio
+        </Link>
       </div>
     </div>
   );

@@ -30,7 +30,7 @@ function SuperLoginPage() {
 
       if (role !== "super_admin") {
         // Signed in but not a super admin — deny access
-        await import("@/lib/auth").then(m => m.signOut());
+        await import("@/lib/auth").then((m) => m.signOut());
         toast.error("Acceso denegado. No tienes permisos de Super Admin.");
         setLoading(false);
         return;

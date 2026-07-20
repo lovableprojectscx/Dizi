@@ -2,7 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { PLANS, type Product, getEffectivePlan, getEffectiveProductLimit, isSubscriptionExpired, getImageSpec } from "@/lib/types";
+import {
+  PLANS,
+  type Product,
+  getEffectivePlan,
+  getEffectiveProductLimit,
+  isSubscriptionExpired,
+  getImageSpec,
+} from "@/lib/types";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +52,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Pencil, Trash2, Plus, ImageIcon, Lock, Loader2, Tag, Check, LayoutGrid, X, Package, CupSoda, Pizza, IceCream, Cake, Utensils, Flower, Gift, Heart, Sprout, Leaf, Images, Sparkles, AlertCircle, ChevronLeft, ChevronRight, ArrowUp, ArrowDown, Shirt, Gem, Smartphone, Laptop, Headphones, Gamepad, Home, Lightbulb, Sofa, Dumbbell, Scissors, Camera, Coffee, Beer, Croissant } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  ImageIcon,
+  Lock,
+  Loader2,
+  Tag,
+  Check,
+  LayoutGrid,
+  X,
+  Package,
+  CupSoda,
+  Pizza,
+  IceCream,
+  Cake,
+  Utensils,
+  Flower,
+  Gift,
+  Heart,
+  Sprout,
+  Leaf,
+  Images,
+  Sparkles,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUp,
+  ArrowDown,
+  Shirt,
+  Gem,
+  Smartphone,
+  Laptop,
+  Headphones,
+  Gamepad,
+  Home,
+  Lightbulb,
+  Sofa,
+  Dumbbell,
+  Scissors,
+  Camera,
+  Coffee,
+  Beer,
+  Croissant,
+} from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
@@ -71,7 +122,7 @@ const parseCategoryName = (name: string) => {
   const [label, iconKey] = name.split("|");
   return {
     label: label ? label.trim() : "",
-    iconKey: iconKey ? iconKey.trim() : ""
+    iconKey: iconKey ? iconKey.trim() : "",
   };
 };
 
@@ -233,7 +284,8 @@ const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
   ],
 };
 
-const isPremiumModel = (model?: string) => model === "bite" || model === "bloom" || model === "nature";
+const isPremiumModel = (model?: string) =>
+  model === "bite" || model === "bloom" || model === "nature";
 
 const getNicheLabel = (model?: string) => {
   if (isPremiumModel(model)) return "Ícono para Categoría (Premium)";
@@ -333,8 +385,14 @@ function CategorySelect({
             }
           }}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); handleCreate(); }
-            if (e.key === "Escape") { setCreating(false); setNewName(""); }
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleCreate();
+            }
+            if (e.key === "Escape") {
+              setCreating(false);
+              setNewName("");
+            }
           }}
           className="h-9 text-sm"
         />
@@ -344,11 +402,18 @@ function CategorySelect({
           disabled={saving || !newName.trim()}
           className="h-9 w-9 shrink-0 rounded-md bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition"
         >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          {saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
         </button>
         <button
           type="button"
-          onClick={() => { setCreating(false); setNewName(""); }}
+          onClick={() => {
+            setCreating(false);
+            setNewName("");
+          }}
           className="h-9 px-2 shrink-0 rounded-md border text-xs text-muted-foreground hover:bg-muted transition"
         >
           ✕
@@ -365,9 +430,7 @@ function CategorySelect({
         </SelectTrigger>
         <SelectContent>
           {categories.length === 0 && (
-            <div className="px-3 py-2 text-xs text-muted-foreground">
-              Sin categorías aún
-            </div>
+            <div className="px-3 py-2 text-xs text-muted-foreground">Sin categorías aún</div>
           )}
           {categories.map((c) => {
             const { label, iconKey } = parseCategoryName(c.name);
@@ -375,7 +438,10 @@ function CategorySelect({
               <SelectItem key={c.id} value={c.id}>
                 <div className="flex items-center gap-2">
                   {isPremiumModel(storeModel) && iconKey && (
-                    <CategoryIcon iconKey={iconKey} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <CategoryIcon
+                      iconKey={iconKey}
+                      className="h-4 w-4 shrink-0 text-muted-foreground"
+                    />
                   )}
                   <span>{label}</span>
                 </div>
@@ -424,12 +490,12 @@ function ProductsPage() {
   const subscriptionExpired = isSubscriptionExpired(store);
   const imageSpec = getImageSpec(store);
 
-  const visibleProducts = store.products.filter(p => p.visible);
+  const visibleProducts = store.products.filter((p) => p.visible);
   const hiddenByExpiry = subscriptionExpired
     ? Math.max(0, visibleProducts.length - effectiveLimit)
     : 0;
 
-  const reachedLimit = store.products.filter(p => !p.isSample).length >= effectiveLimit;
+  const reachedLimit = store.products.filter((p) => !p.isSample).length >= effectiveLimit;
 
   // Tabs routing logic
   const [activeTab, setActiveTab] = useState(() => {
@@ -473,19 +539,20 @@ function ProductsPage() {
 
   const handleSingleProductOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      const hasChanges = 
-        editing.name.trim() !== "" || 
-        priceInput.trim() !== "" || 
-        editing.image !== "" || 
+      const hasChanges =
+        editing.name.trim() !== "" ||
+        priceInput.trim() !== "" ||
+        editing.image !== "" ||
         (editing.description || "").trim() !== "";
-      
+
       if (hasChanges) {
         showConfirm({
           title: "Cambios sin guardar",
-          description: "Tienes cambios sin guardar en este producto. ¿Deseas cerrar el formulario y perder los cambios?",
+          description:
+            "Tienes cambios sin guardar en este producto. ¿Deseas cerrar el formulario y perder los cambios?",
           actionText: "Descartar",
           cancelText: "Seguir editando",
-          onAction: () => setOpen(false)
+          onAction: () => setOpen(false),
         });
         return;
       }
@@ -521,7 +588,8 @@ function ProductsPage() {
     if (bulkDrafts.length > 0) {
       showConfirm({
         title: "Carga masiva activa",
-        description: "Tienes una carga masiva en progreso con fotos sin guardar. ¿Deseas continuar editando tu lista actual de fotos o prefieres descartarla y subir fotos nuevas?",
+        description:
+          "Tienes una carga masiva en progreso con fotos sin guardar. ¿Deseas continuar editando tu lista actual de fotos o prefieres descartarla y subir fotos nuevas?",
         actionText: "Continuar editando",
         cancelText: "Subir nuevas",
         onAction: () => {
@@ -529,7 +597,7 @@ function ProductsPage() {
         },
         onCancel: () => {
           fileInputRef.current?.click();
-        }
+        },
       });
       return;
     }
@@ -538,9 +606,7 @@ function ProductsPage() {
 
   const updateActiveDraft = (updates: Partial<BulkDraft>) => {
     if (!selectedDraftId) return;
-    setBulkDrafts((prev) =>
-      prev.map((d) => (d.id === selectedDraftId ? { ...d, ...updates } : d))
-    );
+    setBulkDrafts((prev) => prev.map((d) => (d.id === selectedDraftId ? { ...d, ...updates } : d)));
   };
 
   const removeDraft = (id: string) => {
@@ -609,7 +675,11 @@ function ProductsPage() {
     setDraftsProcessed(0);
 
     // Reset status to pending for all drafts
-    const updatedDrafts: BulkDraft[] = bulkDrafts.map((d) => ({ ...d, status: "pending", errorMessage: undefined }));
+    const updatedDrafts: BulkDraft[] = bulkDrafts.map((d) => ({
+      ...d,
+      status: "pending",
+      errorMessage: undefined,
+    }));
     setBulkDrafts(updatedDrafts);
 
     const concurrencyLimit = 4;
@@ -664,7 +734,9 @@ function ProductsPage() {
 
     const failedCount = updatedDrafts.filter((d) => d.status === "error").length;
     if (failedCount > 0) {
-      toast.warning(`Importación finalizada. ${failedCount} productos fallaron y siguen en la grilla.`);
+      toast.warning(
+        `Importación finalizada. ${failedCount} productos fallaron y siguen en la grilla.`,
+      );
     } else {
       toast.success("¡Todos los productos se importaron con éxito!");
       bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
@@ -712,7 +784,9 @@ function ProductsPage() {
       ...p,
       description: cleanDesc,
     });
-    setPriceInput(p.price === null || p.price === undefined || p.price === 0 ? "" : p.price.toString());
+    setPriceInput(
+      p.price === null || p.price === undefined || p.price === 0 ? "" : p.price.toString(),
+    );
     setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
     setIsFeatured(p.description?.includes("#destacado") || p.name?.includes("#destacado") || false);
     setOpen(true);
@@ -725,7 +799,10 @@ function ProductsPage() {
     const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
     const parsedOriginalPrice = cleanOriginalPrice === "" ? null : parseFloat(cleanOriginalPrice);
 
-    if ((parsedPrice !== null && isNaN(parsedPrice)) || (editing.isOnSale && parsedOriginalPrice !== null && isNaN(parsedOriginalPrice))) {
+    if (
+      (parsedPrice !== null && isNaN(parsedPrice)) ||
+      (editing.isOnSale && parsedOriginalPrice !== null && isNaN(parsedOriginalPrice))
+    ) {
       toast.error("Por favor ingresa un precio válido");
       return;
     }
@@ -840,7 +917,8 @@ function ProductsPage() {
                     Carga masiva en progreso
                   </h4>
                   <p className="text-xs text-amber-700/85 dark:text-amber-300/80 mt-0.5 leading-relaxed">
-                    Tienes <strong>{bulkDrafts.length} fotos</strong> configuradas sin guardar. Puedes continuar editándolas o descartarlas.
+                    Tienes <strong>{bulkDrafts.length} fotos</strong> configuradas sin guardar.
+                    Puedes continuar editándolas o descartarlas.
                   </p>
                 </div>
               </div>
@@ -852,14 +930,15 @@ function ProductsPage() {
                   onClick={() => {
                     showConfirm({
                       title: "Descartar borradores",
-                      description: "¿Estás seguro de que deseas descartar estos borradores de carga masiva? Se perderán todas las fotos y datos configurados.",
+                      description:
+                        "¿Estás seguro de que deseas descartar estos borradores de carga masiva? Se perderán todas las fotos y datos configurados.",
                       actionText: "Sí, descartar",
                       cancelText: "Cancelar",
                       onAction: () => {
                         bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
                         setBulkDrafts([]);
                         setSelectedDraftId(null);
-                      }
+                      },
                     });
                   }}
                 >
@@ -881,8 +960,9 @@ function ProductsPage() {
             <div>
               <h2 className="text-xl font-bold tracking-tight">Mis Productos</h2>
               <p className="text-sm text-muted-foreground">
-                {store.products.filter(p => !p.isSample).length} de{" "}
-                {effectiveLimit === Infinity ? "ilimitados" : effectiveLimit} (plan {effectivePlan.name})
+                {store.products.filter((p) => !p.isSample).length} de{" "}
+                {effectiveLimit === Infinity ? "ilimitados" : effectiveLimit} (plan{" "}
+                {effectivePlan.name})
                 {subscriptionExpired && effectivePlan.id !== plan.id && (
                   <span className="ml-1 text-amber-600 font-semibold">
                     — suscripción vencida, límite reducido
@@ -891,16 +971,24 @@ function ProductsPage() {
               </p>
             </div>
             <div className="flex gap-2 items-center flex-wrap">
-              <Button 
-                variant="outline" 
-                onClick={handleBulkButtonClick} 
+              <Button
+                variant="outline"
+                onClick={handleBulkButtonClick}
                 className="gap-1.5 font-bold text-xs h-9 sm:h-10 px-4 border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:border-primary"
               >
                 <Images className="h-4 w-4 text-primary shrink-0" />
                 Carga Rápida por Fotos
               </Button>
-              <Button onClick={openNew} disabled={reachedLimit} className="font-bold text-xs h-9 sm:h-10 px-4 gap-1.5">
-                {reachedLimit ? <Lock className="h-4 w-4 shrink-0" /> : <Plus className="h-4 w-4 shrink-0" />}
+              <Button
+                onClick={openNew}
+                disabled={reachedLimit}
+                className="font-bold text-xs h-9 sm:h-10 px-4 gap-1.5"
+              >
+                {reachedLimit ? (
+                  <Lock className="h-4 w-4 shrink-0" />
+                ) : (
+                  <Plus className="h-4 w-4 shrink-0" />
+                )}
                 Nuevo Producto
               </Button>
             </div>
@@ -911,16 +999,22 @@ function ProductsPage() {
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
               <div className="text-amber-500 mt-0.5 shrink-0">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                  />
                 </svg>
               </div>
               <div className="flex-1">
                 <p className="font-semibold text-amber-800 text-sm">
-                  {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto{hiddenByExpiry > 1 ? "s" : ""} en tu catálogo público
+                  {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto
+                  {hiddenByExpiry > 1 ? "s" : ""} en tu catálogo público
                 </p>
                 <p className="text-sm text-amber-700 mt-0.5">
-                  Tu suscripción venció. El plan Semilla permite hasta {effectiveLimit} productos visibles.
-                  Tus productos están guardados — renueva para mostrarlos todos de nuevo.
+                  Tu suscripción venció. El plan Semilla permite hasta {effectiveLimit} productos
+                  visibles. Tus productos están guardados — renueva para mostrarlos todos de nuevo.
                 </p>
                 <a
                   href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
@@ -964,12 +1058,18 @@ function ProductsPage() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span>{p.name}</span>
                         {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
-                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0"
+                          >
                             ⭐ Destacado
                           </Badge>
                         )}
                         {!p.visible && (
-                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:bg-amber-950/20 shrink-0">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] py-0 px-1.5 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:bg-amber-950/20 shrink-0"
+                          >
                             Borrador
                           </Badge>
                         )}
@@ -978,11 +1078,15 @@ function ProductsPage() {
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-bold">{formatPrice(p.price)}</span>
-                        {p.isOnSale && p.originalPrice && p.price !== null && p.price !== undefined && p.originalPrice > p.price && (
-                          <span className="text-[10px] text-muted-foreground line-through">
-                            {formatPrice(p.originalPrice)}
-                          </span>
-                        )}
+                        {p.isOnSale &&
+                          p.originalPrice &&
+                          p.price !== null &&
+                          p.price !== undefined &&
+                          p.originalPrice > p.price && (
+                            <span className="text-[10px] text-muted-foreground line-through">
+                              {formatPrice(p.originalPrice)}
+                            </span>
+                          )}
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -993,7 +1097,10 @@ function ProductsPage() {
                         return (
                           <div className="flex items-center gap-2">
                             {isPremiumModel(store.model) && iconKey && (
-                              <CategoryIcon iconKey={iconKey} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <CategoryIcon
+                                iconKey={iconKey}
+                                className="h-4 w-4 shrink-0 text-muted-foreground"
+                              />
                             )}
                             <span>{label}</span>
                           </div>
@@ -1042,7 +1149,7 @@ function ProductsPage() {
                             description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
                             actionText: "Eliminar",
                             cancelText: "Cancelar",
-                            onAction: () => del(store.id, p.id)
+                            onAction: () => del(store.id, p.id),
                           });
                         }}
                       >
@@ -1053,7 +1160,10 @@ function ProductsPage() {
                 ))}
                 {store.products.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+                    <TableCell
+                      colSpan={7}
+                      className="text-center text-sm text-muted-foreground py-8"
+                    >
                       Aún no tienes productos. Crea el primero.
                     </TableCell>
                   </TableRow>
@@ -1072,7 +1182,11 @@ function ProductsPage() {
             {store.products.map((p, idx) => (
               <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
                 {p.image ? (
-                  <img src={p.image} alt="" className="h-14 w-14 rounded-lg object-cover shrink-0" />
+                  <img
+                    src={p.image}
+                    alt=""
+                    className="h-14 w-14 rounded-lg object-cover shrink-0"
+                  />
                 ) : (
                   <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
                     <ImageIcon className="h-5 w-5 text-muted-foreground" />
@@ -1100,7 +1214,10 @@ function ProductsPage() {
                       return (
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {isPremiumModel(store.model) && iconKey && (
-                            <CategoryIcon iconKey={iconKey} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            <CategoryIcon
+                              iconKey={iconKey}
+                              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                            />
                           )}
                           <span>{label}</span>
                         </div>
@@ -1109,11 +1226,15 @@ function ProductsPage() {
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
-                    {p.isOnSale && p.originalPrice && p.price !== null && p.price !== undefined && p.originalPrice > p.price && (
-                      <span className="text-[11px] text-muted-foreground line-through">
-                        {formatPrice(p.originalPrice)}
-                      </span>
-                    )}
+                    {p.isOnSale &&
+                      p.originalPrice &&
+                      p.price !== null &&
+                      p.price !== undefined &&
+                      p.originalPrice > p.price && (
+                        <span className="text-[11px] text-muted-foreground line-through">
+                          {formatPrice(p.originalPrice)}
+                        </span>
+                      )}
                   </div>
                 </div>
                 <div className="flex flex-col items-center gap-2 shrink-0">
@@ -1143,7 +1264,12 @@ function ProductsPage() {
                         <ArrowDown className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => openEdit(p)}
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
@@ -1156,7 +1282,7 @@ function ProductsPage() {
                           description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
                           actionText: "Eliminar",
                           cancelText: "Cancelar",
-                          onAction: () => del(store.id, p.id)
+                          onAction: () => del(store.id, p.id),
                         });
                       }}
                     >
@@ -1178,17 +1304,28 @@ function ProductsPage() {
               </div>
               <div>
                 <h2 className="font-bold text-sm">Gestionar Categorías</h2>
-                <p className="text-[11px] text-muted-foreground">{store.categories.length} categorías registradas</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {store.categories.length} categorías registradas
+                </p>
               </div>
             </div>
 
-            <Dialog open={catDialogOpen} onOpenChange={(val) => { setCatDialogOpen(val); if (!val) { setNewCatName(""); setSelectedIconKey(""); } }}>
+            <Dialog
+              open={catDialogOpen}
+              onOpenChange={(val) => {
+                setCatDialogOpen(val);
+                if (!val) {
+                  setNewCatName("");
+                  setSelectedIconKey("");
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button className="font-bold gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto">
                   <Plus className="h-4 w-4" /> Nueva Categoría
                 </Button>
               </DialogTrigger>
-              <DialogContent 
+              <DialogContent
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => e.preventDefault()}
                 className="sm:max-w-[425px] max-h-[90dvh] flex flex-col"
@@ -1201,7 +1338,10 @@ function ProductsPage() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4 overflow-y-auto">
                   <div className="grid gap-2">
-                    <label htmlFor="cat-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    <label
+                      htmlFor="cat-name"
+                      className="text-xs font-bold uppercase tracking-widest text-muted-foreground"
+                    >
                       Nombre de la categoría
                     </label>
                     <Input
@@ -1245,14 +1385,20 @@ function ProductsPage() {
                                 "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all",
                                 active
                                   ? "bg-orange-500 border-orange-500 text-white shadow-md scale-105"
-                                  : "bg-secondary hover:bg-accent border-border text-muted-foreground"
+                                  : "bg-secondary hover:bg-accent border-border text-muted-foreground",
                               )}
                               title={item.label}
                             >
                               {item.key === "" ? (
                                 <X className="h-4 w-4 shrink-0" />
                               ) : (
-                                <CategoryIcon iconKey={item.key} className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-orange-500")} />
+                                <CategoryIcon
+                                  iconKey={item.key}
+                                  className={cn(
+                                    "h-4 w-4 shrink-0",
+                                    active ? "text-white" : "text-orange-500",
+                                  )}
+                                />
                               )}
                               <span className="text-[10px]">{item.label}</span>
                             </button>
@@ -1263,8 +1409,18 @@ function ProductsPage() {
                   )}
                 </div>
                 <DialogFooter className="flex-row gap-2 sm:justify-end">
-                  <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setCatDialogOpen(false)}>Cancelar</Button>
-                  <Button className="flex-1 sm:flex-none" onClick={handleAddCategoryTab} disabled={isAddingCat || !newCatName.trim()}>
+                  <Button
+                    variant="outline"
+                    className="flex-1 sm:flex-none"
+                    onClick={() => setCatDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    className="flex-1 sm:flex-none"
+                    onClick={handleAddCategoryTab}
+                    disabled={isAddingCat || !newCatName.trim()}
+                  >
                     {isAddingCat ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                     ) : (
@@ -1294,20 +1450,21 @@ function ProductsPage() {
                         return (
                           <>
                             {isPremiumModel(store.model) && iconKey && (
-                              <CategoryIcon iconKey={iconKey} className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <CategoryIcon
+                                iconKey={iconKey}
+                                className="h-4 w-4 shrink-0 text-muted-foreground"
+                              />
                             )}
                             <span>{label}</span>
                           </>
                         );
                       })()}
                     </div>
-                    <p className="text-xs text-muted-foreground">{count} producto{count !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {count} producto{count !== 1 ? "s" : ""}
+                    </p>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => startEditCategory(c)}
-                  >
+                  <Button size="icon" variant="ghost" onClick={() => startEditCategory(c)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
@@ -1315,7 +1472,9 @@ function ProductsPage() {
                     variant="ghost"
                     onClick={() => {
                       if (count > 0) {
-                        toast.error("Mueve o elimina los productos antes de eliminar esta categoría");
+                        toast.error(
+                          "Mueve o elimina los productos antes de eliminar esta categoría",
+                        );
                         return;
                       }
                       showConfirm({
@@ -1323,7 +1482,7 @@ function ProductsPage() {
                         description: `¿Estás seguro de que deseas eliminar la categoría "${getCleanCategoryName(c.name)}"? Esta acción no se puede deshacer.`,
                         actionText: "Eliminar",
                         cancelText: "Cancelar",
-                        onAction: () => deleteCategory(store.id, c.id)
+                        onAction: () => deleteCategory(store.id, c.id),
                       });
                     }}
                   >
@@ -1336,7 +1495,7 @@ function ProductsPage() {
 
           {/* Dialog Editar Categoría */}
           <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-            <DialogContent 
+            <DialogContent
               onPointerDownOutside={(e) => e.preventDefault()}
               onEscapeKeyDown={(e) => e.preventDefault()}
               className="sm:max-w-[425px] max-h-[90dvh] flex flex-col"
@@ -1349,7 +1508,10 @@ function ProductsPage() {
               </DialogHeader>
               <div className="grid gap-4 py-4 overflow-y-auto">
                 <div className="grid gap-2">
-                  <label htmlFor="edit-cat-name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  <label
+                    htmlFor="edit-cat-name"
+                    className="text-xs font-bold uppercase tracking-widest text-muted-foreground"
+                  >
                     Nombre de la categoría
                   </label>
                   <Input
@@ -1392,14 +1554,20 @@ function ProductsPage() {
                               "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold transition-all",
                               active
                                 ? "bg-orange-500 border-orange-500 text-white shadow-md scale-105"
-                                : "bg-secondary hover:bg-accent border-border text-muted-foreground"
+                                : "bg-secondary hover:bg-accent border-border text-muted-foreground",
                             )}
                             title={item.label}
                           >
                             {item.key === "" ? (
                               <X className="h-4 w-4 shrink-0" />
                             ) : (
-                              <CategoryIcon iconKey={item.key} className={cn("h-4 w-4 shrink-0", active ? "text-white" : "text-orange-500")} />
+                              <CategoryIcon
+                                iconKey={item.key}
+                                className={cn(
+                                  "h-4 w-4 shrink-0",
+                                  active ? "text-white" : "text-orange-500",
+                                )}
+                              />
                             )}
                             <span className="text-[10px]">{item.label}</span>
                           </button>
@@ -1410,8 +1578,18 @@ function ProductsPage() {
                 )}
               </div>
               <DialogFooter className="flex-row gap-2 sm:justify-end">
-                <Button variant="outline" className="flex-1 sm:flex-none" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
-                <Button className="flex-1 sm:flex-none" onClick={handleSaveEditCategoryTab} disabled={isEditingCat || !editCatName.trim()}>
+                <Button
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 sm:flex-none"
+                  onClick={handleSaveEditCategoryTab}
+                  disabled={isEditingCat || !editCatName.trim()}
+                >
                   {isEditingCat ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : (
@@ -1427,7 +1605,7 @@ function ProductsPage() {
 
       {/* Dialog formulario de producto */}
       <Dialog open={open} onOpenChange={handleSingleProductOpenChange}>
-        <DialogContent 
+        <DialogContent
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
           className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background"
@@ -1446,11 +1624,12 @@ function ProductsPage() {
 
           <div className="overflow-y-auto flex-1 p-5 md:p-6">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              
               {/* Columna Izquierda: Imagen y Multimedia (col-span 5) */}
               <div className="md:col-span-5 space-y-3.5">
                 <div className="space-y-0.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Imagen del Producto</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                    Imagen del Producto
+                  </h3>
                   <p className="text-[10px] text-muted-foreground/60 leading-normal hidden sm:block">
                     Formatos JPG, PNG, WebP de hasta 10MB.
                   </p>
@@ -1465,10 +1644,11 @@ function ProductsPage() {
 
               {/* Columna Derecha: Parámetros del Producto (col-span 7) */}
               <div className="md:col-span-7 space-y-4">
-                
                 {/* Nombre */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Nombre del producto</Label>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                    Nombre del producto
+                  </Label>
                   <Input
                     placeholder="Ej. iPhone 15 Pro Max 256GB"
                     className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
@@ -1493,8 +1673,12 @@ function ProductsPage() {
                 <div className="border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/10 p-4 rounded-xl space-y-3.5 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">¿Este producto está en oferta?</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Muestra un precio de oferta junto al original tachado.</p>
+                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">
+                        ¿Este producto está en oferta?
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Muestra un precio de oferta junto al original tachado.
+                      </p>
                     </div>
                     <Switch
                       checked={!!editing.isOnSale}
@@ -1506,8 +1690,12 @@ function ProductsPage() {
                   {isPremiumModel(store.model) && (
                     <div className="border-t border-slate-100 dark:border-slate-800/50 pt-3.5 flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-xs text-orange-600 dark:text-orange-500">¿Destacar producto (Premium)?</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Se mostrará en la sección destacada de tu catálogo.</p>
+                        <p className="font-semibold text-xs text-orange-600 dark:text-orange-500">
+                          ¿Destacar producto (Premium)?
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Se mostrará en la sección destacada de tu catálogo.
+                        </p>
                       </div>
                       <Switch
                         checked={isFeatured}
@@ -1522,9 +1710,13 @@ function ProductsPage() {
                 {editing.isOnSale ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Precio Original</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Precio Original
+                      </Label>
                       <div className="relative flex items-center mt-1">
-                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">S/</span>
+                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
+                          S/
+                        </span>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -1542,9 +1734,13 @@ function ProductsPage() {
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-primary">Precio Oferta</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-primary">
+                        Precio Oferta
+                      </Label>
                       <div className="relative flex items-center mt-1">
-                        <span className="absolute left-3 text-sm text-primary/70 font-semibold select-none">S/</span>
+                        <span className="absolute left-3 text-sm text-primary/70 font-semibold select-none">
+                          S/
+                        </span>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -1577,9 +1773,13 @@ function ProductsPage() {
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Precio</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Precio
+                      </Label>
                       <div className="relative flex items-center mt-1">
-                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">S/</span>
+                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
+                          S/
+                        </span>
                         <Input
                           type="text"
                           inputMode="decimal"
@@ -1613,7 +1813,9 @@ function ProductsPage() {
 
                 {/* Descripción */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Descripción (opcional)</Label>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                    Descripción (opcional)
+                  </Label>
                   <Textarea
                     rows={3}
                     placeholder="Ej. Especificaciones técnicas, colores, stock o detalles..."
@@ -1636,7 +1838,6 @@ function ProductsPage() {
                     }}
                   />
                 </div>
-
               </div>
             </div>
           </div>
@@ -1670,8 +1871,13 @@ function ProductsPage() {
       />
 
       {/* Dialog Carga Rápida / Upgrade */}
-      <Dialog open={bulkOpen} onOpenChange={(val) => { if (!uploadingDrafts) setBulkOpen(val); }}>
-        <DialogContent 
+      <Dialog
+        open={bulkOpen}
+        onOpenChange={(val) => {
+          if (!uploadingDrafts) setBulkOpen(val);
+        }}
+      >
+        <DialogContent
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
           className="max-w-4xl w-[95vw] md:w-[85vw] max-h-[95dvh] md:max-h-[85dvh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl border-primary/10"
@@ -1698,12 +1904,13 @@ function ProductsPage() {
               <div className="space-y-2 max-w-md">
                 <h3 className="text-lg font-bold text-foreground">Importando tu catálogo...</h3>
                 <p className="text-sm text-muted-foreground leading-normal">
-                  Optimizando fotos a WebP e ingresando el producto <strong>{draftsProcessed + 1}</strong> de <strong>{draftsTotal}</strong>
+                  Optimizando fotos a WebP e ingresando el producto{" "}
+                  <strong>{draftsProcessed + 1}</strong> de <strong>{draftsTotal}</strong>
                 </p>
               </div>
               {/* Progress bar */}
               <div className="w-full max-w-md bg-zinc-100 dark:bg-zinc-800 rounded-full h-2 overflow-hidden mt-4 shadow-inner">
-                <div 
+                <div
                   className="bg-primary h-2 rounded-full transition-all duration-300 shadow"
                   style={{ width: `${(draftsProcessed / draftsTotal) * 100}%` }}
                 />
@@ -1716,7 +1923,9 @@ function ProductsPage() {
             <div className="flex-1 overflow-y-auto md:overflow-hidden p-4 md:p-5 flex flex-col md:flex-row gap-4 md:gap-5 min-h-0">
               {/* Left Column: Progress Grid (Desktop only) */}
               <div className="hidden md:flex md:flex-col flex-1 min-h-0">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Fotos Seleccionadas</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  Fotos Seleccionadas
+                </h4>
                 <div className="flex-1 overflow-y-auto border rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 p-3 max-h-[35vh] md:max-h-full">
                   {bulkDrafts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center py-6 text-muted-foreground">
@@ -1734,11 +1943,11 @@ function ProductsPage() {
                             key={draft.id}
                             className={cn(
                               "group relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all active:scale-95 shadow-sm",
-                              isSelected 
-                                ? "ring-2 ring-primary border-primary ring-offset-2 dark:ring-offset-zinc-950" 
-                                : isPending 
-                                  ? "border-amber-400/80 bg-amber-50/30" 
-                                  : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400"
+                              isSelected
+                                ? "ring-2 ring-primary border-primary ring-offset-2 dark:ring-offset-zinc-950"
+                                : isPending
+                                  ? "border-amber-400/80 bg-amber-50/30"
+                                  : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400",
                             )}
                             onClick={() => setSelectedDraftId(draft.id)}
                           >
@@ -1747,7 +1956,7 @@ function ProductsPage() {
                               alt={draft.name}
                               className="h-full w-full object-cover select-none"
                             />
-                            
+
                             {/* Number indicator */}
                             <span className="absolute bottom-1 left-1.5 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-md font-bold backdrop-blur-sm">
                               #{idx + 1}
@@ -1770,7 +1979,10 @@ function ProductsPage() {
 
                             {draft.status === "error" && (
                               <div className="absolute inset-0 bg-red-500/20 backdrop-blur-sm flex items-center justify-center">
-                                <span className="bg-red-500 text-white rounded-full p-1 shadow-md" title={draft.errorMessage}>
+                                <span
+                                  className="bg-red-500 text-white rounded-full p-1 shadow-md"
+                                  title={draft.errorMessage}
+                                >
                                   <AlertCircle className="h-3 w-3 stroke-[3]" />
                                 </span>
                               </div>
@@ -1799,7 +2011,9 @@ function ProductsPage() {
 
               {/* Left Column: Progress Slider (Mobile only) */}
               <div className="block md:hidden shrink-0">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Fotos Seleccionadas</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                  Fotos Seleccionadas
+                </h4>
                 <div className="flex overflow-x-auto gap-3 py-2 px-1 border rounded-xl bg-zinc-50/50 dark:bg-zinc-900/50 scrollbar-none">
                   {bulkDrafts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center w-full py-4 text-muted-foreground text-center">
@@ -1815,11 +2029,11 @@ function ProductsPage() {
                           key={draft.id}
                           className={cn(
                             "relative w-16 h-16 shrink-0 aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all active:scale-95 shadow-sm",
-                            isSelected 
-                              ? "ring-2 ring-primary border-primary ring-offset-2 dark:ring-offset-zinc-950" 
-                              : isPending 
-                                ? "border-amber-400/80 bg-amber-50/30" 
-                                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400"
+                            isSelected
+                              ? "ring-2 ring-primary border-primary ring-offset-2 dark:ring-offset-zinc-950"
+                              : isPending
+                                ? "border-amber-400/80 bg-amber-50/30"
+                                : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400",
                           )}
                           onClick={() => setSelectedDraftId(draft.id)}
                         >
@@ -1828,7 +2042,7 @@ function ProductsPage() {
                             alt={draft.name}
                             className="h-full w-full object-cover select-none"
                           />
-                          
+
                           <span className="absolute bottom-0.5 left-1 bg-black/60 text-white text-[8px] px-1 py-0.2 rounded font-bold backdrop-blur-sm">
                             #{idx + 1}
                           </span>
@@ -1849,7 +2063,10 @@ function ProductsPage() {
 
                           {draft.status === "error" && (
                             <div className="absolute inset-0 bg-red-500/20 backdrop-blur-sm flex items-center justify-center">
-                              <span className="bg-red-500 text-white rounded-full p-0.5 shadow-md" title={draft.errorMessage}>
+                              <span
+                                className="bg-red-500 text-white rounded-full p-0.5 shadow-md"
+                                title={draft.errorMessage}
+                              >
                                 <AlertCircle className="h-2 w-2 stroke-[3]" />
                               </span>
                             </div>
@@ -1876,7 +2093,9 @@ function ProductsPage() {
 
               {/* Right Column: Bottom Sheet / Detail Editor */}
               <div className="w-full md:w-[350px] flex flex-col border-t-0 md:border-l border-zinc-100 dark:border-zinc-800 pt-1 md:pt-0 md:pl-5 shrink-0 min-h-0">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 hidden md:block">Detalle de Producto</h4>
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 hidden md:block">
+                  Detalle de Producto
+                </h4>
                 {activeDraft ? (
                   <div className="flex-1 flex flex-col justify-between min-h-0 space-y-3 md:space-y-4">
                     <div className="space-y-2.5 md:space-y-3 flex-1 overflow-y-auto pr-1">
@@ -1888,8 +2107,12 @@ function ProductsPage() {
                           className="h-12 w-12 rounded-lg object-cover border dark:border-zinc-800"
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold text-foreground truncate">{activeDraft.name || "Sin Nombre"}</p>
-                          <p className="text-[10px] text-muted-foreground font-mono truncate">{activeDraft.file.name}</p>
+                          <p className="text-xs font-bold text-foreground truncate">
+                            {activeDraft.name || "Sin Nombre"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground font-mono truncate">
+                            {activeDraft.file.name}
+                          </p>
                         </div>
                         <Button
                           type="button"
@@ -1929,7 +2152,9 @@ function ProductsPage() {
                         <div>
                           <Label className="text-xs flex items-center justify-between">
                             <span>Precio (S/)</span>
-                            <span className="text-[10px] text-muted-foreground font-normal">Opcional (A consultar)</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">
+                              Opcional (A consultar)
+                            </span>
                           </Label>
                           <Input
                             type="text"
@@ -2005,10 +2230,14 @@ function ProductsPage() {
                         variant="outline"
                         size="sm"
                         className="flex-1 text-xs gap-1.5 h-8.5 rounded-lg cursor-pointer"
-                        disabled={bulkDrafts.findIndex((d) => d.id === selectedDraftId) === bulkDrafts.length - 1}
+                        disabled={
+                          bulkDrafts.findIndex((d) => d.id === selectedDraftId) ===
+                          bulkDrafts.length - 1
+                        }
                         onClick={() => {
                           const idx = bulkDrafts.findIndex((d) => d.id === selectedDraftId);
-                          if (idx !== -1 && idx < bulkDrafts.length - 1) setSelectedDraftId(bulkDrafts[idx + 1].id);
+                          if (idx !== -1 && idx < bulkDrafts.length - 1)
+                            setSelectedDraftId(bulkDrafts[idx + 1].id);
                         }}
                       >
                         Siguiente <ChevronRight className="h-3.5 w-3.5" />
@@ -2018,7 +2247,9 @@ function ProductsPage() {
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed rounded-2xl bg-zinc-50/20">
                     <ImageIcon className="h-8 w-8 text-muted-foreground stroke-1 mb-2 animate-bounce" />
-                    <p className="text-xs text-muted-foreground">Selecciona una imagen de la grilla para configurar sus detalles.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Selecciona una imagen de la grilla para configurar sus detalles.
+                    </p>
                   </div>
                 )}
               </div>
@@ -2033,7 +2264,8 @@ function ProductsPage() {
                 onClick={() => {
                   showConfirm({
                     title: "Cancelar Carga Masiva",
-                    description: "¿Estás seguro de que deseas cancelar? Se descartarán todas las fotos y configuraciones de este borrador.",
+                    description:
+                      "¿Estás seguro de que deseas cancelar? Se descartarán todas las fotos y configuraciones de este borrador.",
                     actionText: "Sí, cancelar",
                     cancelText: "Volver a editar",
                     onAction: () => {
@@ -2041,7 +2273,7 @@ function ProductsPage() {
                       setBulkDrafts([]);
                       setSelectedDraftId(null);
                       setBulkOpen(false);
-                    }
+                    },
                   });
                 }}
               >
@@ -2058,9 +2290,7 @@ function ProductsPage() {
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Subiendo...
                 </>
               ) : (
-                <>
-                  Confirmar Importación ({bulkDrafts.length})
-                </>
+                <>Confirmar Importación ({bulkDrafts.length})</>
               )}
             </Button>
           </DialogFooter>
@@ -2068,10 +2298,10 @@ function ProductsPage() {
       </Dialog>
 
       {/* Diálogo de Confirmación Reutilizable (AlertDialog) */}
-      <AlertDialog 
-        open={!!confirmConfig?.open} 
+      <AlertDialog
+        open={!!confirmConfig?.open}
         onOpenChange={(val) => {
-          if (!val) setConfirmConfig(prev => prev ? { ...prev, open: false } : null);
+          if (!val) setConfirmConfig((prev) => (prev ? { ...prev, open: false } : null));
         }}
       >
         <AlertDialogContent className="max-w-[400px] w-[90vw] rounded-2xl border-none shadow-2xl bg-background p-6 text-slate-900 dark:text-zinc-50">
@@ -2084,7 +2314,7 @@ function ProductsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex flex-row gap-2 mt-4 sm:justify-end">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               className="flex-1 sm:flex-none text-xs h-9 rounded-xl border border-slate-200 dark:border-slate-800 font-semibold cursor-pointer"
               onClick={() => {
                 confirmConfig?.onCancel?.();
@@ -2093,7 +2323,7 @@ function ProductsPage() {
             >
               {confirmConfig?.cancelText || "Cancelar"}
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               className="flex-1 sm:flex-none text-xs h-9 rounded-xl font-bold bg-primary hover:opacity-90 text-white cursor-pointer"
               onClick={() => {
                 confirmConfig?.onAction();
@@ -2105,7 +2335,6 @@ function ProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

@@ -5,22 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { 
-  Calendar, 
-  Loader2, 
-  RefreshCw, 
-  Copy, 
-  Check, 
-  Link2, 
-  UserCheck, 
-  XCircle, 
+import {
+  Calendar,
+  Loader2,
+  RefreshCw,
+  Copy,
+  Check,
+  Link2,
+  UserCheck,
+  XCircle,
   CheckCircle,
   Clock,
   Search,
   SlidersHorizontal,
   FileText,
   Ban,
-  Percent
+  Percent,
 } from "lucide-react";
 import { InviteGenerator } from "@/components/InviteGenerator";
 import { supabase } from "@/lib/supabase";
@@ -33,23 +33,26 @@ function getInviteStatus(invite: Invite) {
   const now = new Date();
   const expiresAt = new Date(invite.expiresAt);
   if (invite.used) {
-    return { 
-      label: "Usado", 
-      color: "bg-zinc-100 text-zinc-700 border-zinc-200/60 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700/50", 
-      icon: UserCheck 
+    return {
+      label: "Usado",
+      color:
+        "bg-zinc-100 text-zinc-700 border-zinc-200/60 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700/50",
+      icon: UserCheck,
     };
   }
   if (expiresAt < now) {
-    return { 
-      label: "Expirado", 
-      color: "bg-red-50 text-red-700 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30", 
-      icon: XCircle 
+    return {
+      label: "Expirado",
+      color:
+        "bg-red-50 text-red-700 border-red-100 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30",
+      icon: XCircle,
     };
   }
-  return { 
-    label: "Activo", 
-    color: "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30", 
-    icon: CheckCircle 
+  return {
+    label: "Activo",
+    color:
+      "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30",
+    icon: CheckCircle,
   };
 }
 
@@ -57,9 +60,9 @@ function formatDuration(val?: number, unit?: string, fallbackMonths?: number) {
   const value = val ?? fallbackMonths ?? 1;
   const u = unit ?? "months";
   if (u === "days") {
-    return `${value} ${value === 1 ? 'Día' : 'Días'}`;
+    return `${value} ${value === 1 ? "Día" : "Días"}`;
   }
-  return `${value} ${value === 1 ? 'Mes' : 'Meses'}`;
+  return `${value} ${value === 1 ? "Mes" : "Meses"}`;
 }
 
 function SuperPromocionesPage() {
@@ -67,7 +70,9 @@ function SuperPromocionesPage() {
   const [loading, setLoading] = useState(false);
   const [filterPlan, setFilterPlan] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState<string>(globalThis.window ? new URLSearchParams(window.location.search).get("search") || "" : "");
+  const [searchQuery, setSearchQuery] = useState<string>(
+    globalThis.window ? new URLSearchParams(window.location.search).get("search") || "" : "",
+  );
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   const fetchInvites = async () => {
@@ -79,18 +84,23 @@ function SuperPromocionesPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       if (data) {
-        setInvites(data.map((row: any) => ({
-          token: row.token,
-          plan: row.plan as PlanId,
-          used: row.used,
-          createdAt: row.created_at,
-          expiresAt: row.expires_at,
-          durationMonths: row.duration_months,
-          durationValue: row.duration_value,
-          durationUnit: row.duration_unit,
-          customPrice: row.custom_price !== null && row.custom_price !== undefined ? Number(row.custom_price) : undefined,
-          notes: row.notes,
-        })));
+        setInvites(
+          data.map((row: any) => ({
+            token: row.token,
+            plan: row.plan as PlanId,
+            used: row.used,
+            createdAt: row.created_at,
+            expiresAt: row.expires_at,
+            durationMonths: row.duration_months,
+            durationValue: row.duration_value,
+            durationUnit: row.duration_unit,
+            customPrice:
+              row.custom_price !== null && row.custom_price !== undefined
+                ? Number(row.custom_price)
+                : undefined,
+            notes: row.notes,
+          })),
+        );
       }
     } catch (err: any) {
       console.error("[fetchInvites] Error:", err);
@@ -105,12 +115,14 @@ function SuperPromocionesPage() {
   }, []);
 
   const handleRevoke = async (token: string) => {
-    if (!confirm("¿Estás seguro de que deseas revocar este enlace? Se marcará como usado para que nadie más pueda registrarse con él.")) return;
+    if (
+      !confirm(
+        "¿Estás seguro de que deseas revocar este enlace? Se marcará como usado para que nadie más pueda registrarse con él.",
+      )
+    )
+      return;
     try {
-      const { error } = await supabase
-        .from("invites")
-        .update({ used: true })
-        .eq("token", token);
+      const { error } = await supabase.from("invites").update({ used: true }).eq("token", token);
       if (error) throw error;
       toast.success("Enlace revocado con éxito.");
       fetchInvites();
@@ -154,7 +166,8 @@ function SuperPromocionesPage() {
             Enlaces Promocionales y Descuentos
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Genera y administra links de invitación con duraciones y precios especiales para tus clientes.
+            Genera y administra links de invitación con duraciones y precios especiales para tus
+            clientes.
           </p>
         </div>
         <Button
@@ -243,7 +256,9 @@ function SuperPromocionesPage() {
             </div>
           ) : filteredInvites.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm">No se encontraron enlaces generados con los filtros aplicados.</p>
+              <p className="text-sm">
+                No se encontraron enlaces generados con los filtros aplicados.
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -253,20 +268,25 @@ function SuperPromocionesPage() {
                 const isSemilla = inv.plan === "semilla";
 
                 return (
-                  <div 
-                    key={inv.token} 
+                  <div
+                    key={inv.token}
                     className="p-4 md:p-6 hover:bg-muted/10 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     {/* Detalles del Plan & Link */}
                     <div className="space-y-2 flex-1 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Plan badge */}
-                        <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                          inv.plan === "ilimitado" ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30" :
-                          inv.plan === "pro" ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30" :
-                          inv.plan === "emprendedor" ? "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-900/30" :
-                          "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/40 dark:text-zinc-300 dark:border-zinc-700/40"
-                        }`}>
+                        <span
+                          className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                            inv.plan === "ilimitado"
+                              ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30"
+                              : inv.plan === "pro"
+                                ? "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30"
+                                : inv.plan === "emprendedor"
+                                  ? "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-900/30"
+                                  : "bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/40 dark:text-zinc-300 dark:border-zinc-700/40"
+                          }`}
+                        >
                           {inv.plan}
                         </span>
 
@@ -274,26 +294,33 @@ function SuperPromocionesPage() {
                         {!isSemilla && (
                           <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium bg-zinc-50 dark:bg-zinc-900 px-2 py-0.5 rounded border border-zinc-100 dark:border-zinc-800">
                             <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                            {formatDuration(inv.durationValue, inv.durationUnit, inv.durationMonths)}
+                            {formatDuration(
+                              inv.durationValue,
+                              inv.durationUnit,
+                              inv.durationMonths,
+                            )}
                           </span>
                         )}
 
                         {/* Precio */}
                         {!isSemilla && (
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
-                            inv.customPrice !== undefined 
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30" 
-                              : "bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800"
-                          }`}>
-                            {inv.customPrice !== undefined 
-                              ? `S/ ${inv.customPrice.toFixed(2)}` 
-                              : `Normal (S/ ${(PLANS[inv.plan]?.price ?? 0).toFixed(2)})`
-                            }
+                          <span
+                            className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                              inv.customPrice !== undefined
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30"
+                                : "bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800"
+                            }`}
+                          >
+                            {inv.customPrice !== undefined
+                              ? `S/ ${inv.customPrice.toFixed(2)}`
+                              : `Normal (S/ ${(PLANS[inv.plan]?.price ?? 0).toFixed(2)})`}
                           </span>
                         )}
 
                         {/* Status badge */}
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${status.color}`}>
+                        <span
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 ${status.color}`}
+                        >
                           <StatusIcon className="w-3 h-3" />
                           {status.label}
                         </span>
@@ -309,10 +336,11 @@ function SuperPromocionesPage() {
                           className="p-1 rounded hover:bg-muted border border-zinc-200/50 dark:border-zinc-800/50 transition-colors"
                           title="Copiar URL de registro"
                         >
-                          {copiedToken === inv.token 
-                            ? <Check className="w-3.5 h-3.5 text-emerald-500" />
-                            : <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                          }
+                          {copiedToken === inv.token ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                          )}
                         </button>
                       </div>
 
@@ -330,10 +358,21 @@ function SuperPromocionesPage() {
                       <div className="text-left md:text-right">
                         <p className="text-[11px] text-muted-foreground flex items-center md:justify-end gap-1">
                           <Clock className="w-3 h-3" />
-                          Creado: {new Date(inv.createdAt).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          Creado:{" "}
+                          {new Date(inv.createdAt).toLocaleDateString("es-PE", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                         <p className="text-[11px] text-muted-foreground">
-                          Expira: {new Date(inv.expiresAt).toLocaleDateString("es-PE", { day: "2-digit", month: "short" })}
+                          Expira:{" "}
+                          {new Date(inv.expiresAt).toLocaleDateString("es-PE", {
+                            day: "2-digit",
+                            month: "short",
+                          })}
                         </p>
                       </div>
 

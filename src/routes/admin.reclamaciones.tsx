@@ -6,8 +6,14 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  ClipboardList, ChevronDown, ChevronUp, Clock,
-  CheckCircle2, AlertCircle, Loader2, RefreshCw,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/reclamaciones")({
@@ -46,9 +52,9 @@ interface Reclamacion {
 
 /* ── Helpers ───────────────────────────────────────────────── */
 const ESTADO_CONFIG = {
-  pendiente:   { label: "Pendiente",   color: "bg-amber-100 text-amber-700",   icon: Clock },
-  en_revision: { label: "En revisión", color: "bg-blue-100 text-blue-700",     icon: AlertCircle },
-  resuelto:    { label: "Resuelto",    color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
+  pendiente: { label: "Pendiente", color: "bg-amber-100 text-amber-700", icon: Clock },
+  en_revision: { label: "En revisión", color: "bg-blue-100 text-blue-700", icon: AlertCircle },
+  resuelto: { label: "Resuelto", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle2 },
 };
 
 function diasHabiles(desde: string): number {
@@ -102,7 +108,9 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
   };
 
   return (
-    <div className={`rounded-xl border overflow-hidden transition-all ${open ? "shadow-md" : ""} ${vencido ? "border-red-200" : "border-border"}`}>
+    <div
+      className={`rounded-xl border overflow-hidden transition-all ${open ? "shadow-md" : ""} ${vencido ? "border-red-200" : "border-border"}`}
+    >
       {/* Cabecera */}
       <button
         className="w-full text-left px-4 py-3.5 flex flex-wrap items-center gap-3"
@@ -117,7 +125,9 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
         {/* Consumidor */}
         <div className="flex-1 min-w-[140px]">
           <p className="font-semibold text-sm truncate">{rec.consumidor_nombre}</p>
-          <p className="text-[10px] text-muted-foreground">{rec.consumidor_tipo_doc}: {rec.consumidor_num_doc}</p>
+          <p className="text-[10px] text-muted-foreground">
+            {rec.consumidor_tipo_doc}: {rec.consumidor_num_doc}
+          </p>
         </div>
 
         {/* Fecha */}
@@ -135,13 +145,19 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
           {!vencido && estado !== "resuelto" && (
             <span className="text-[10px] text-muted-foreground">{diasTranscurridos}/15 dh</span>
           )}
-          <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.color}`}>
+          <span
+            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${cfg.color}`}
+          >
             <Icon className="h-3 w-3" />
             {cfg.label}
           </span>
         </div>
 
-        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />}
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+        )}
       </button>
 
       {/* Detalle expandible */}
@@ -151,12 +167,16 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             {/* Sección B */}
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">B. Consumidor</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                B. Consumidor
+              </p>
               <p className="font-bold">{rec.consumidor_nombre}</p>
-              <p className="text-muted-foreground text-xs">{rec.consumidor_tipo_doc}: {rec.consumidor_num_doc}</p>
+              <p className="text-muted-foreground text-xs">
+                {rec.consumidor_tipo_doc}: {rec.consumidor_num_doc}
+              </p>
               {rec.consumidor_domicilio && <p className="text-xs">{rec.consumidor_domicilio}</p>}
-              {rec.consumidor_telefono  && <p className="text-xs">📞 {rec.consumidor_telefono}</p>}
-              {rec.consumidor_email     && <p className="text-xs">✉️ {rec.consumidor_email}</p>}
+              {rec.consumidor_telefono && <p className="text-xs">📞 {rec.consumidor_telefono}</p>}
+              {rec.consumidor_email && <p className="text-xs">✉️ {rec.consumidor_email}</p>}
               {rec.es_menor_edad && (
                 <p className="text-xs text-amber-700 font-semibold">
                   Menor de edad — Tutor: {rec.tutor_nombre} ({rec.tutor_num_doc})
@@ -166,10 +186,14 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
 
             {/* Sección C */}
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">C. Bien o Servicio</p>
-              {rec.bien_descripcion
-                ? <p className="text-xs">{rec.bien_descripcion}</p>
-                : <p className="text-xs text-muted-foreground">No especificado</p>}
+              <p className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                C. Bien o Servicio
+              </p>
+              {rec.bien_descripcion ? (
+                <p className="text-xs">{rec.bien_descripcion}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">No especificado</p>
+              )}
               {rec.bien_monto && (
                 <p className="text-xs font-semibold">S/ {rec.bien_monto.toFixed(2)}</p>
               )}
@@ -186,7 +210,9 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
             </div>
             {rec.pedido_consumidor && (
               <>
-                <p className="text-[10px] font-bold text-muted-foreground">Pedido del consumidor:</p>
+                <p className="text-[10px] font-bold text-muted-foreground">
+                  Pedido del consumidor:
+                </p>
                 <div className="rounded-lg bg-background border p-3 text-sm leading-relaxed">
                   {rec.pedido_consumidor}
                 </div>
@@ -197,15 +223,15 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
           {/* Aviso legal de plazo */}
           {vencido && (
             <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2.5 text-xs text-red-700 font-medium">
-              ⚠️ Han transcurrido <strong>{diasTranscurridos} días hábiles</strong> desde la presentación.
-              El plazo legal de 15 días hábiles (Ley N° 31435 / DS N° 101-2022-PCM) ha vencido.
-              Responde de inmediato para evitar una denuncia ante INDECOPI.
+              ⚠️ Han transcurrido <strong>{diasTranscurridos} días hábiles</strong> desde la
+              presentación. El plazo legal de 15 días hábiles (Ley N° 31435 / DS N° 101-2022-PCM) ha
+              vencido. Responde de inmediato para evitar una denuncia ante INDECOPI.
             </div>
           )}
           {!vencido && estado !== "resuelto" && (
             <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-xs text-amber-700">
-              ⏱ Tiempo transcurrido: <strong>{diasTranscurridos} de 15 días hábiles</strong>.
-              Plazo legal conforme al DS N° 101-2022-PCM.
+              ⏱ Tiempo transcurrido: <strong>{diasTranscurridos} de 15 días hábiles</strong>. Plazo
+              legal conforme al DS N° 101-2022-PCM.
             </div>
           )}
 
@@ -213,7 +239,7 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
           <div className="space-y-2 pt-2 border-t">
             <p className="text-xs font-bold">Registrar respuesta / actualizar estado</p>
             <div className="flex gap-2 flex-wrap">
-              {(["pendiente","en_revision","resuelto"] as const).map(e => (
+              {(["pendiente", "en_revision", "resuelto"] as const).map((e) => (
                 <button
                   key={e}
                   onClick={() => setEstado(e)}
@@ -229,19 +255,21 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
             </div>
             <textarea
               value={respuesta}
-              onChange={e => setRespuesta(e.target.value)}
+              onChange={(e) => setRespuesta(e.target.value)}
               placeholder="Escribe aquí la respuesta al consumidor (obligatoria al resolver)..."
               rows={3}
               className="w-full rounded-xl border px-3 py-2.5 text-sm resize-none outline-none focus:ring-2 focus:ring-primary bg-background"
             />
             <div className="flex items-center gap-3">
-              <Button
-                size="sm"
-                onClick={handleGuardar}
-                disabled={saving}
-                className="font-bold"
-              >
-                {saving ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />Guardando</> : "Guardar"}
+              <Button size="sm" onClick={handleGuardar} disabled={saving} className="font-bold">
+                {saving ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                    Guardando
+                  </>
+                ) : (
+                  "Guardar"
+                )}
               </Button>
               <p className="text-[10px] text-muted-foreground">
                 La respuesta queda registrada con fecha y hora en el sistema.
@@ -256,13 +284,15 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
 
 /* ── Página principal ──────────────────────────────────────── */
 function ReclamacionesPage() {
-  const id    = useApp(s => s.currentStoreId);
-  const store = useApp(s => s.stores.find(st => st.id === id));
+  const id = useApp((s) => s.currentStoreId);
+  const store = useApp((s) => s.stores.find((st) => st.id === id));
 
   const [reclamaciones, setReclamaciones] = useState<Reclamacion[]>([]);
-  const [loading, setLoading]             = useState(true);
-  const [filtroEstado, setFiltroEstado]   = useState<"todos"|"pendiente"|"en_revision"|"resuelto">("todos");
-  const [filtroTipo, setFiltroTipo]       = useState<"todos"|"queja"|"reclamo">("todos");
+  const [loading, setLoading] = useState(true);
+  const [filtroEstado, setFiltroEstado] = useState<
+    "todos" | "pendiente" | "en_revision" | "resuelto"
+  >("todos");
+  const [filtroTipo, setFiltroTipo] = useState<"todos" | "queja" | "reclamo">("todos");
 
   const fetchReclamaciones = useCallback(async () => {
     if (!id) return;
@@ -276,18 +306,22 @@ function ReclamacionesPage() {
     setLoading(false);
   }, [id]);
 
-  useEffect(() => { fetchReclamaciones(); }, [fetchReclamaciones]);
+  useEffect(() => {
+    fetchReclamaciones();
+  }, [fetchReclamaciones]);
 
   if (!store) return null;
 
   const filtered = reclamaciones
-    .filter(r => filtroEstado === "todos" || r.estado === filtroEstado)
-    .filter(r => filtroTipo   === "todos" || r.tipo   === filtroTipo);
+    .filter((r) => filtroEstado === "todos" || r.estado === filtroEstado)
+    .filter((r) => filtroTipo === "todos" || r.tipo === filtroTipo);
 
-  const pendientes   = reclamaciones.filter(r => r.estado === "pendiente").length;
-  const enRevision   = reclamaciones.filter(r => r.estado === "en_revision").length;
-  const resueltos    = reclamaciones.filter(r => r.estado === "resuelto").length;
-  const vencidos     = reclamaciones.filter(r => diasHabiles(r.fecha) > 15 && r.estado !== "resuelto").length;
+  const pendientes = reclamaciones.filter((r) => r.estado === "pendiente").length;
+  const enRevision = reclamaciones.filter((r) => r.estado === "en_revision").length;
+  const resueltos = reclamaciones.filter((r) => r.estado === "resuelto").length;
+  const vencidos = reclamaciones.filter(
+    (r) => diasHabiles(r.fecha) > 15 && r.estado !== "resuelto",
+  ).length;
 
   if (!store.libroReclamacionesActivo) {
     return (
@@ -299,9 +333,12 @@ function ReclamacionesPage() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800 space-y-2">
           <p className="font-bold">El Libro de Reclamaciones no está activo en tu catálogo.</p>
           <p>
-            Ve a <a href="/admin/configuracion" className="underline font-semibold">Configuración</a> y activa el
-            Libro de Reclamaciones para comenzar a recibir y gestionar quejas y reclamos de tus clientes,
-            cumpliendo con la Ley N° 29571 y el DS N° 101-2022-PCM.
+            Ve a{" "}
+            <a href="/admin/configuracion" className="underline font-semibold">
+              Configuración
+            </a>{" "}
+            y activa el Libro de Reclamaciones para comenzar a recibir y gestionar quejas y reclamos
+            de tus clientes, cumpliendo con la Ley N° 29571 y el DS N° 101-2022-PCM.
           </p>
         </div>
       </div>
@@ -330,11 +367,11 @@ function ReclamacionesPage() {
       {/* KPIs */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total",       value: reclamaciones.length, color: "text-foreground" },
-          { label: "Pendientes",  value: pendientes,           color: "text-amber-600" },
-          { label: "En revisión", value: enRevision,           color: "text-blue-600" },
-          { label: "Resueltos",   value: resueltos,            color: "text-emerald-600" },
-        ].map(k => (
+          { label: "Total", value: reclamaciones.length, color: "text-foreground" },
+          { label: "Pendientes", value: pendientes, color: "text-amber-600" },
+          { label: "En revisión", value: enRevision, color: "text-blue-600" },
+          { label: "Resueltos", value: resueltos, color: "text-emerald-600" },
+        ].map((k) => (
           <div key={k.label} className="rounded-xl border bg-card p-3 text-center">
             <p className={`text-2xl font-black ${k.color}`}>{k.value}</p>
             <p className="text-xs text-muted-foreground">{k.label}</p>
@@ -346,23 +383,35 @@ function ReclamacionesPage() {
       {vencidos > 0 && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 font-semibold flex items-center gap-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          {vencidos} reclamación{vencidos > 1 ? "es" : ""} con plazo legal vencido (más de 15 días hábiles sin respuesta).
-          Responde a la brevedad para evitar denuncias ante INDECOPI.
+          {vencidos} reclamación{vencidos > 1 ? "es" : ""} con plazo legal vencido (más de 15 días
+          hábiles sin respuesta). Responde a la brevedad para evitar denuncias ante INDECOPI.
         </div>
       )}
 
       {/* Marco legal */}
       <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground space-y-1">
         <p className="font-bold text-foreground">Obligaciones legales del proveedor</p>
-        <p>· Plazo máximo de respuesta: <strong>15 días hábiles improrrogables</strong> (Ley N° 31435 / DS N° 101-2022-PCM).</p>
-        <p>· Conservar las hojas de reclamación por un mínimo de <strong>2 años</strong> (Art. 9° DS N° 011-2011-PCM).</p>
-        <p>· Remitir las hojas a INDECOPI cuando sea requerido, en el plazo indicado en el requerimiento.</p>
-        <p>· El incumplimiento constituye infracción sancionable con multa de hasta 450 UIT (Art. 158° Ley N° 29571).</p>
+        <p>
+          · Plazo máximo de respuesta: <strong>15 días hábiles improrrogables</strong> (Ley N° 31435
+          / DS N° 101-2022-PCM).
+        </p>
+        <p>
+          · Conservar las hojas de reclamación por un mínimo de <strong>2 años</strong> (Art. 9° DS
+          N° 011-2011-PCM).
+        </p>
+        <p>
+          · Remitir las hojas a INDECOPI cuando sea requerido, en el plazo indicado en el
+          requerimiento.
+        </p>
+        <p>
+          · El incumplimiento constituye infracción sancionable con multa de hasta 450 UIT (Art.
+          158° Ley N° 29571).
+        </p>
       </div>
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2">
-        {(["todos","pendiente","en_revision","resuelto"] as const).map(f => (
+        {(["todos", "pendiente", "en_revision", "resuelto"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFiltroEstado(f)}
@@ -375,13 +424,13 @@ function ReclamacionesPage() {
             {f === "todos" ? "Todos" : ESTADO_CONFIG[f].label}
             {f !== "todos" && (
               <span className="ml-1 opacity-60">
-                ({reclamaciones.filter(r => r.estado === f).length})
+                ({reclamaciones.filter((r) => r.estado === f).length})
               </span>
             )}
           </button>
         ))}
         <div className="w-px bg-border mx-1" />
-        {(["todos","reclamo","queja"] as const).map(f => (
+        {(["todos", "reclamo", "queja"] as const).map((f) => (
           <button
             key={f}
             onClick={() => setFiltroTipo(f)}
@@ -405,11 +454,17 @@ function ReclamacionesPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <ClipboardList className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">No hay reclamaciones {filtroEstado !== "todos" ? `con estado "${ESTADO_CONFIG[filtroEstado].label}"` : "registradas"}.</p>
+          <p className="text-sm">
+            No hay reclamaciones{" "}
+            {filtroEstado !== "todos"
+              ? `con estado "${ESTADO_CONFIG[filtroEstado].label}"`
+              : "registradas"}
+            .
+          </p>
         </div>
       ) : (
         <div className="space-y-2.5">
-          {filtered.map(r => (
+          {filtered.map((r) => (
             <ReclamacionRow key={r.id} rec={r} onUpdate={fetchReclamaciones} />
           ))}
         </div>
@@ -418,7 +473,8 @@ function ReclamacionesPage() {
       {/* Nota de archivo */}
       {resueltos > 0 && (
         <p className="text-[10px] text-muted-foreground text-center">
-          Los registros resueltos deben conservarse por mínimo 2 años conforme al Art. 9° del DS N° 011-2011-PCM.
+          Los registros resueltos deben conservarse por mínimo 2 años conforme al Art. 9° del DS N°
+          011-2011-PCM.
         </p>
       )}
     </div>

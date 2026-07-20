@@ -1,14 +1,30 @@
-import { createFileRoute, Outlet, Link, redirect, useRouterState, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  redirect,
+  useRouterState,
+  useRouter,
+} from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { LogOut, Eye, Home, Package, Tag, Settings, ClipboardList, Link2, AlertTriangle } from "lucide-react";
+import {
+  LogOut,
+  Eye,
+  Home,
+  Package,
+  Tag,
+  Settings,
+  ClipboardList,
+  Link2,
+  AlertTriangle,
+} from "lucide-react";
 import { getActiveSession, getSessionSync, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { OnboardingWizard } from "@/components/admin/OnboardingWizard";
-
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
@@ -22,7 +38,10 @@ export const Route = createFileRoute("/admin")({
       if (err && typeof err === "object" && "to" in err) {
         throw err;
       }
-      console.warn("[admin beforeLoad] Falló la verificación de sesión en red, usando almacenamiento local:", err);
+      console.warn(
+        "[admin beforeLoad] Falló la verificación de sesión en red, usando almacenamiento local:",
+        err,
+      );
       const session = getSessionSync();
       if (!session) {
         throw redirect({ to: "/login" });
@@ -49,13 +68,19 @@ function AdminLayout() {
             <>
               <div className="mx-auto w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                  />
                 </svg>
               </div>
               <div className="space-y-1">
                 <h2 className="text-xl font-bold">Error de Conexión</h2>
                 <p className="text-sm text-muted-foreground leading-normal">
-                  No se pudo conectar con el servidor. Si estás usando Wi-Fi de Movistar o Claro, intenta desactivándolo y navegando con tus datos móviles (4G/5G).
+                  No se pudo conectar con el servidor. Si estás usando Wi-Fi de Movistar o Claro,
+                  intenta desactivándolo y navegando con tus datos móviles (4G/5G).
                 </p>
               </div>
               <Button
@@ -98,10 +123,19 @@ function AdminLayout() {
               <span className="flex items-center gap-1.5 sm:gap-2 leading-tight flex-1 min-w-0">
                 <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span className="line-clamp-2 sm:truncate">
-                  Viendo como <strong className="font-bold">{store?.name}</strong> <span className="opacity-75 whitespace-nowrap">(modo soporte)</span>
+                  Viendo como <strong className="font-bold">{store?.name}</strong>{" "}
+                  <span className="opacity-75 whitespace-nowrap">(modo soporte)</span>
                 </span>
               </span>
-              <Button size="sm" variant="outline" onClick={() => { stop(); }} asChild className="h-7 sm:h-8 px-2 sm:px-3 text-xs shrink-0 border-amber-300 hover:bg-amber-200 hover:text-amber-900 bg-amber-50">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  stop();
+                }}
+                asChild
+                className="h-7 sm:h-8 px-2 sm:px-3 text-xs shrink-0 border-amber-300 hover:bg-amber-200 hover:text-amber-900 bg-amber-50"
+              >
                 <Link to="/super/tiendas">
                   <LogOut className="h-3 w-3 sm:mr-1.5" />
                   <span className="hidden sm:inline">Salir</span>
@@ -115,14 +149,27 @@ function AdminLayout() {
               <span className="flex items-start gap-2 leading-tight flex-1">
                 <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="font-bold text-red-800">Tu catálogo digital está actualmente suspendido</p>
+                  <p className="font-bold text-red-800">
+                    Tu catálogo digital está actualmente suspendido
+                  </p>
                   <p className="text-xs text-red-700">
-                    Tu tienda ha sido pausada temporalmente debido a inactividad en tu plan Semilla. Tu enlace original ha sido liberado, y actualmente tu catálogo está accesible bajo el enlace de soporte temporal <code>/t/{store.slug}</code>.
+                    Tu tienda ha sido pausada temporalmente debido a inactividad en tu plan Semilla.
+                    Tu enlace original ha sido liberado, y actualmente tu catálogo está accesible
+                    bajo el enlace de soporte temporal <code>/t/{store.slug}</code>.
                   </p>
                 </div>
               </span>
-              <Button size="sm" variant="destructive" asChild className="h-8 font-bold text-xs shrink-0 bg-red-600 hover:bg-red-700 text-white self-start sm:self-center">
-                <a href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, mi catálogo de la tienda "${store.name}" fue suspendido por inactividad. Quisiera reactivarlo.`)}`} target="_blank" rel="noopener noreferrer">
+              <Button
+                size="sm"
+                variant="destructive"
+                asChild
+                className="h-8 font-bold text-xs shrink-0 bg-red-600 hover:bg-red-700 text-white self-start sm:self-center"
+              >
+                <a
+                  href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, mi catálogo de la tienda "${store.name}" fue suspendido por inactividad. Quisiera reactivarlo.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Contactar a Soporte
                 </a>
               </Button>
@@ -161,13 +208,15 @@ function MobileNavItem({ to, icon: Icon, label }: { to: string; icon: any; label
       to={to}
       className={cn(
         "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-        active ? "text-primary" : "text-muted-foreground"
+        active ? "text-primary" : "text-muted-foreground",
       )}
     >
-      <div className={cn(
-        "flex items-center justify-center h-8 w-14 rounded-full transition-all duration-200",
-        active ? "bg-primary/10" : ""
-      )}>
+      <div
+        className={cn(
+          "flex items-center justify-center h-8 w-14 rounded-full transition-all duration-200",
+          active ? "bg-primary/10" : "",
+        )}
+      >
         <Icon className="h-5 w-5" />
       </div>
       <span className={cn("text-[10px] font-medium", active ? "font-bold" : "")}>{label}</span>

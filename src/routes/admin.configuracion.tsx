@@ -35,7 +35,7 @@ const COUNTRIES = [
   { code: "54", name: "Argentina" },
   { code: "56", name: "Chile" },
   { code: "57", name: "Colombia" },
-  { code: "1",  name: "EE. UU. / Canadá" },
+  { code: "1", name: "EE. UU. / Canadá" },
   { code: "34", name: "España" },
 ];
 
@@ -52,7 +52,7 @@ function ConfigPage() {
   const [number, setNumber] = useState(
     store?.phone.startsWith(store?.countryCode || "")
       ? store?.phone.slice((store?.countryCode || "").length)
-      : store?.phone || ""
+      : store?.phone || "",
   );
   const [logo, setLogo] = useState(store?.logo ?? "");
   const [slug, setSlug] = useState(store?.slug || "");
@@ -80,7 +80,7 @@ function ConfigPage() {
       setNumber(
         store.phone.startsWith(store.countryCode || "")
           ? store.phone.slice((store.countryCode || "").length)
-          : store.phone || ""
+          : store.phone || "",
       );
       setLogo(store.logo ?? "");
       setSlug(store.slug || "");
@@ -100,7 +100,10 @@ function ConfigPage() {
   const bioUrl = `${window.location.origin}/bio/${store.slug}`;
 
   const handleSlugChange = (value: string) => {
-    const clean = value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const clean = value
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
     setSlug(clean);
     if (slugCheckTimer) clearTimeout(slugCheckTimer);
     if (!clean || clean.length < 3) {
@@ -164,7 +167,7 @@ function ConfigPage() {
         empresaDireccion: empresaDireccion.trim() || undefined,
         showDiziBranding: showDiziBranding,
       });
-      
+
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
       if (updatedStore) {
         setLogo(updatedStore.logo ?? "");
@@ -211,12 +214,16 @@ function ConfigPage() {
         <CardContent className="p-5 sm:p-6 space-y-5">
           <div className="flex items-center gap-2 border-b pb-3 border-border/30">
             <Globe className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">Dirección Web de la Tienda</h2>
+            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
+              Dirección Web de la Tienda
+            </h2>
           </div>
 
           {/* Input del Slug */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Link de tu Tienda (Slug)</Label>
+            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              Link de tu Tienda (Slug)
+            </Label>
             <div className="flex max-w-md rounded-lg border border-input shadow-none focus-within:ring-1 focus-within:ring-primary bg-background overflow-hidden h-10 transition-shadow">
               <span className="flex items-center px-3 bg-muted/30 text-muted-foreground/80 text-xs border-r shrink-0 font-medium select-none">
                 dizi.idenza.site/t/
@@ -243,9 +250,13 @@ function ConfigPage() {
                 </span>
               )}
             </div>
-            {slugStatus === "taken" && <p className="text-xs text-destructive">Ese link ya está en uso, elige otro.</p>}
+            {slugStatus === "taken" && (
+              <p className="text-xs text-destructive">Ese link ya está en uso, elige otro.</p>
+            )}
             {slugStatus === "invalid" && (
-              <p className="text-xs text-destructive">Mínimo 3 caracteres (letras, números y guiones).</p>
+              <p className="text-xs text-destructive">
+                Mínimo 3 caracteres (letras, números y guiones).
+              </p>
             )}
             {slugStatus === "available" && slug !== store.slug && (
               <p className="text-xs text-emerald-600 font-medium">¡Link disponible!</p>
@@ -254,14 +265,15 @@ function ConfigPage() {
 
           {/* Enlaces de Compartir Visuales (No inputs!) */}
           <div className="grid gap-4 pt-1 sm:grid-cols-2">
-            
             {/* Catalogo Directo */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Catálogo Digital
               </span>
               <div className="flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 shadow-none">
-                <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">{catalogUrl}</span>
+                <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">
+                  {catalogUrl}
+                </span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     type="button"
@@ -271,9 +283,19 @@ function ConfigPage() {
                     className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
                     title="Copiar link"
                   >
-                    {copiedCatalog ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedCatalog ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </Button>
-                  <a href={catalogUrl} target="_blank" rel="noopener noreferrer" className="h-7 w-7 rounded-md hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0" title="Ver catálogo">
+                  <a
+                    href={catalogUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-7 w-7 rounded-md hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+                    title="Ver catálogo"
+                  >
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 </div>
@@ -299,7 +321,9 @@ function ConfigPage() {
               <div
                 className={`flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 shadow-none ${!store.bioLinksEnabled ? "opacity-50 select-none pointer-events-none" : ""}`}
               >
-                <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">{bioUrl}</span>
+                <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">
+                  {bioUrl}
+                </span>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     type="button"
@@ -310,7 +334,11 @@ function ConfigPage() {
                     className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
                     title="Copiar link"
                   >
-                    {copiedBio ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copiedBio ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </Button>
                   <a
                     href={bioUrl}
@@ -324,7 +352,6 @@ function ConfigPage() {
                 </div>
               </div>
             </div>
-            
           </div>
         </CardContent>
       </Card>
@@ -334,13 +361,22 @@ function ConfigPage() {
         <CardContent className="p-5 sm:p-6 space-y-6">
           <div className="flex items-center gap-2 border-b pb-3 border-border/30">
             <Store className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">Identidad de tu Negocio</h2>
+            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
+              Identidad de tu Negocio
+            </h2>
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Nombre comercial</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Mi Tienda" className="h-10" />
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Nombre comercial
+              </Label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Mi Tienda"
+                className="h-10"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
@@ -394,7 +430,11 @@ function ConfigPage() {
               {logo && (
                 <button
                   type="button"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogo(""); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setLogo("");
+                  }}
                   className="absolute -top-1 -right-1 h-5 w-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md z-20 text-[10px] font-bold"
                   title="Remover imagen"
                 >
@@ -405,7 +445,8 @@ function ConfigPage() {
             <div className="flex-1 text-center sm:text-left space-y-1">
               <p className="text-sm font-semibold">Logo del Negocio</p>
               <p className="text-xs text-muted-foreground">
-                Haz clic en el círculo para subir tu logotipo. Recomendado cuadrado de 500x500px. JPG, PNG o WEBP. Máx. 10MB.
+                Haz clic en el círculo para subir tu logotipo. Recomendado cuadrado de 500x500px.
+                JPG, PNG o WEBP. Máx. 10MB.
               </p>
             </div>
           </div>
@@ -417,7 +458,9 @@ function ConfigPage() {
         <CardContent className="p-5 sm:p-6 space-y-6">
           <div className="flex items-center gap-2 border-b pb-3 border-border/30">
             <Sliders className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">Opciones y Cumplimiento</h2>
+            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
+              Opciones y Cumplimiento
+            </h2>
           </div>
 
           {/* Filtro de precios */}
@@ -445,13 +488,14 @@ function ConfigPage() {
           {(() => {
             const effectivePlan = store ? getEffectivePlan(store) : "semilla";
             const isSemilla = effectivePlan === "semilla";
-            
+
             return (
               <div className="pt-4 border-t border-border/30 flex items-center justify-between">
                 <div className="space-y-0.5 max-w-[80%]">
                   <p className="text-sm font-semibold">Firma de Dizi en WhatsApp</p>
                   <p className="text-xs text-muted-foreground">
-                    Añade un enlace discreto de Dizi al final de los mensajes enviados por tus clientes (incluye tu enlace de afiliado en planes pagos).
+                    Añade un enlace discreto de Dizi al final de los mensajes enviados por tus
+                    clientes (incluye tu enlace de afiliado en planes pagos).
                   </p>
                   {isSemilla && (
                     <p className="text-[10px] text-amber-600 font-medium mt-1">
@@ -465,7 +509,7 @@ function ConfigPage() {
                   disabled={isSemilla}
                   aria-checked={isSemilla ? true : showDiziBranding}
                   onClick={() => setShowDiziBranding(!showDiziBranding)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${isSemilla ? "opacity-50 cursor-not-allowed bg-primary" : (showDiziBranding ? "bg-primary" : "bg-input")}`}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${isSemilla ? "opacity-50 cursor-not-allowed bg-primary" : showDiziBranding ? "bg-primary" : "bg-input"}`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${isSemilla || showDiziBranding ? "translate-x-5" : "translate-x-0"}`}
@@ -499,7 +543,7 @@ function ConfigPage() {
                 />
               </button>
             </div>
-            
+
             {libroActivo && (
               <div className="rounded-xl border border-primary/10 bg-primary/[0.01] p-4 space-y-3.5 mt-2">
                 <p className="text-xs font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
@@ -507,10 +551,14 @@ function ConfigPage() {
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">RUC *</Label>
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      RUC *
+                    </Label>
                     <Input
                       value={empresaRuc}
-                      onChange={(e) => setEmpresaRuc(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                      onChange={(e) =>
+                        setEmpresaRuc(e.target.value.replace(/\D/g, "").slice(0, 11))
+                      }
                       placeholder="20123456789"
                       inputMode="numeric"
                       maxLength={11}
@@ -518,13 +566,27 @@ function ConfigPage() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Razón Social / Nombre Legal *</Label>
-                    <Input value={empresaRazonSocial} onChange={(e) => setEmpresaRazonSocial(e.target.value)} placeholder="Mi Empresa S.A.C." className="h-10" />
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      Razón Social / Nombre Legal *
+                    </Label>
+                    <Input
+                      value={empresaRazonSocial}
+                      onChange={(e) => setEmpresaRazonSocial(e.target.value)}
+                      placeholder="Mi Empresa S.A.C."
+                      className="h-10"
+                    />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Dirección Fiscal / Establecimiento *</Label>
-                  <Input value={empresaDireccion} onChange={(e) => setEmpresaDireccion(e.target.value)} placeholder="Av. Principal 123, Lima" className="h-10" />
+                  <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Dirección Fiscal / Establecimiento *
+                  </Label>
+                  <Input
+                    value={empresaDireccion}
+                    onChange={(e) => setEmpresaDireccion(e.target.value)}
+                    placeholder="Av. Principal 123, Lima"
+                    className="h-10"
+                  />
                 </div>
               </div>
             )}
@@ -536,7 +598,12 @@ function ConfigPage() {
       <div className="pt-2 flex justify-end">
         <Button
           onClick={save}
-          disabled={saving || slugStatus === "taken" || slugStatus === "checking" || slugStatus === "invalid"}
+          disabled={
+            saving ||
+            slugStatus === "taken" ||
+            slugStatus === "checking" ||
+            slugStatus === "invalid"
+          }
           className="w-full sm:w-auto px-10 h-11 font-bold shadow-lg shadow-primary/20 text-sm rounded-lg"
         >
           {saving ? (

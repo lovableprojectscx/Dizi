@@ -6,8 +6,8 @@
  * usando el canvas del browser — sin dependencias externas.
  */
 
-const MAX_DIMENSION = 2048; // px máximo en cualquier lado (incrementado para mayor nitidez)
-const WEBP_QUALITY  = 0.92; // 0-1: 0.92 = calidad visual premium, evita artefactos y mantiene textos nítidos
+const MAX_DIMENSION = 1200; // px máximo en cualquier lado (reducido para optimizar tamaño y ancho de banda)
+const WEBP_QUALITY = 0.92; // 0-1: 0.92 = calidad visual premium, evita artefactos y mantiene textos nítidos
 
 let _isWebpSupported: boolean | null = null;
 
@@ -144,4 +144,26 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
   });
 }
 
-
+/**
+ * Optimiza una URL de imagen para reducir el consumo de ancho de banda y cached egress.
+ * Si es una URL de Supabase (o cualquier imagen externa), la enruta a través del servicio gratuito de optimización e imágenes images.weserv.nl.
+ */
+export function getOptimizedImageUrl(url: string | null | undefined, width: number = 600): string {
+  if (!url) return "";
+  
+  // Si ya es un base64 Data URL, o si es un SVG local, o si es una ruta local, no lo tocamos.
+  if (
+    url.startsWith("data:") || 
+    url.includes(".svg") || 
+    url.startsWith("/") || 
+    url.startsWith("./")
+  ) {
+    return url;
+  }
+  
+  // Limpiar espacios en blanco
+  const cleanUrl = url.trim();
+  
+  // Enrutar por weserv.nl para redimensionar y convertir a webp en la caché de Cloudflare
+  return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=${width}&output=webp`;
+}

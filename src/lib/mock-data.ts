@@ -1,7 +1,6 @@
 import type { Store } from "./types";
 
-const img = (q: string) =>
-  `https://images.unsplash.com/${q}?auto=format&fit=crop&w=600&q=70`;
+const img = (q: string) => `https://images.unsplash.com/${q}?auto=format&fit=crop&w=600&q=70`;
 
 export const initialStores: Store[] = [
   {

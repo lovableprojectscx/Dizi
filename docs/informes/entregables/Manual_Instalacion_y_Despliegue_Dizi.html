@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Documento Exportado</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #333333;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        font-size: 24pt;
+        color: #1e3a8a;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 8px;
+        margin-top: 30px;
+      }
+      h2 {
+        font-size: 18pt;
+        color: #2563eb;
+        margin-top: 25px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 5px;
+      }
+      h3 {
+        font-size: 14pt;
+        color: #1d4ed8;
+        margin-top: 20px;
+      }
+      p,
+      li {
+        font-size: 11pt;
+        margin-bottom: 10px;
+      }
+      ul {
+        margin-left: 20px;
+        margin-bottom: 15px;
+      }
+      li {
+        margin-bottom: 5px;
+      }
+      strong {
+        color: #111827;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 10.5pt;
+      }
+      th {
+        background-color: #f3f4f6;
+        color: #111827;
+        font-weight: bold;
+        border: 1px solid #d1d5db;
+        padding: 10px;
+        text-align: left;
+      }
+      td {
+        border: 1px solid #d1d5db;
+        padding: 8px 10px;
+      }
+      tr:nth-child(even) {
+        background-color: #f9fafb;
+      }
+      code {
+        font-family: Consolas, Monaco, monospace;
+        background-color: #f3f4f6;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 9.5pt;
+        color: #0f172a;
+      }
+      pre {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 15px 0;
+      }
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        font-size: 9pt;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid #e5e7eb;
+        margin: 30px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Anexo E: Manual de Usuario y Manual Técnico de Instalación y Despliegue — DIZI</h1>
+    <p>
+      Este documento constituye el <strong>Manual Técnico de Instalación</strong> y el
+      <strong>Manual de Usuario</strong> del sistema <strong>Dizi</strong>, sirviendo como guía
+      definitiva para administradores de sistemas, desarrolladores y usuarios finales.
+    </p>
+    <hr />
+    <h1>PARTE I: MANUAL TÉCNICO DE INSTALACIÓN Y DESPLIEGUE</h1>
+    <p>
+      Este manual detalla los pasos para configurar, levantar de forma local y desplegar en
+      producción el sistema Dizi.
+    </p>
+    <h2>1. Prerrequisitos del Sistema</h2>
+    Antes de comenzar la instalación, asegúrate de tener instalados los siguientes componentes en tu
+    máquina de desarrollo: * <strong>Node.js:</strong> Versión v20.19.0 o superior (recomendado
+    v22). * <strong>Bun:</strong> (Opcional, pero recomendado por velocidad de ejecución) versión
+    v1.3.10 o superior. * <strong>Supabase CLI:</strong> Para la base de datos local y gestión de
+    migraciones. * <strong>Git:</strong> Para clonar y gestionar versiones del repositorio.
+    <hr />
+    <h2>2. Configuración y Ejecución Local</h2>
+    <h3>Paso 1: Clonar el Repositorio</h3>
+    Abre tu terminal y clona el código fuente oficial del proyecto:
+    <pre><code>git clone https://github.com/lovableprojectscx/Dizi.git
+cd catalog-connect-main
+</code></pre>
+    <h3>Paso 2: Instalar Dependencias</h3>
+    Instala los paquetes necesarios definidos en el `package.json` utilizando npm o bun:
+    <pre><code>npm install
+<h1>O si prefieres usar bun:</h1>
+bun install
+</code></pre>
+    <h3>Paso 3: Configurar las Variables de Entorno</h3>
+    Crea un archivo llamado `.env` en la raíz del proyecto y define las claves de conexión de
+    Supabase:
+    <pre><code>VITE_SUPABASE_URL=https://tu-proyecto-supabase.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-clave-anonima-publica
+</code></pre>
+    <p>
+      *(Nota: Para desarrollo local con Supabase CLI, estas variables se imprimen en consola al
+      iniciar el servicio).*
+    </p>
+    <h3>Paso 4: Inicializar la Base de Datos Local</h3>
+    Asegúrate de tener Docker corriendo en tu sistema y ejecuta:
+    <pre><code><h1>Iniciar la instancia local de Supabase</h1>
+supabase start
+</code></pre>
+    <p>
+      Este comando levantará los contenedores de Postgres, Auth, Storage y API REST locales, y
+      aplicará automáticamente las <strong>32 migraciones</strong> presentes en la carpeta
+      `supabase/migrations/`.
+    </p>
+    <h3>Paso 5: Ejecutar el Servidor de Desarrollo</h3>
+    Inicia el entorno local de desarrollo con Vite:
+    <pre><code>npm run dev
+<h1>O con bun:</h1>
+bun run dev
+</code></pre>
+    <p>La aplicación estará disponible de forma local en: `http://localhost:5173`.</p>
+    <hr />
+    <h2>3. Ejecución de la Suite de Pruebas</h2>
+    <p>
+      Para garantizar que el sistema funciona correctamente tras la instalación, ejecuta las suites
+      de pruebas automatizadas:
+    </p>
+    <h3>Pruebas Unitarias y de Integración (Vitest)</h3>
+    <pre><code><h1>Ejecutar todas las pruebas una sola vez</h1>
+npm run test
+
+<h1>Ejecutar en modo escucha (watch mode) ante cambios</h1>
+npm run test:watch
+</code></pre>
+    <h3>Pruebas de Interfaz de Usuario / Sistema (Playwright)</h3>
+    Asegúrate de que el servidor de desarrollo esté corriendo en local y ejecuta:
+    <pre><code><h1>Instalar los navegadores de Playwright la primera vez</h1>
+npx playwright install
+
+<h1>Ejecutar las pruebas E2E</h1>
+npx playwright test
+</code></pre>
+    <hr />
+    <h2>4. Despliegue en Producción</h2>
+    <h3>Frontend (Vercel)</h3>
+    La aplicación está configurada para integrarse y desplegarse automáticamente en Vercel. 1.
+    Conecta tu repositorio de GitHub a tu cuenta de Vercel. 2. Configura las variables de entorno en
+    el panel de configuración de Vercel (`VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`). 3. El
+    archivo `vercel.json` de la raíz del proyecto aplicará automáticamente las reglas de redirección
+    (Rewrites) necesarias para el SEO dinámico de las rutas `/t/:slug` y `/bio/:slug`.
+    <h3>Backend (Supabase Cloud)</h3>
+    Si deseas pasar de local a la nube de Supabase: 1. Crea un nuevo proyecto en Supabase Cloud. 2.
+    Ejecuta el comando de envío de base de datos desde tu consola local:
+    <pre><code>   supabase db push
+   </code></pre>
+    <p>
+      3. Esto aplicará de forma secuencial y limpia el esquema y las funciones del Libro de
+      Reclamaciones e invitaciones en la base de datos cloud.
+    </p>
+    <hr />
+    <hr />
+    <h1>PARTE II: MANUAL DE USUARIO (OPERACIÓN DEL SISTEMA)</h1>
+    <p>
+      Esta sección explica el flujo operativo de Dizi desde las perspectivas del Comerciante y del
+      Consumidor Final.
+    </p>
+    <h2>1. Flujo de Registro y Creación de Tienda</h2>
+    Para crear una tienda en Dizi, el sistema requiere un token de invitación para controlar el uso
+    del SaaS: 1. El usuario debe ingresar a la URL de registro provista de su token:
+    `/register?token=TOKEN_VALIO`. 2. Completa los campos: <strong>Nombre de Tienda</strong>,
+    <strong>Slug</strong> (identificador de URL), <strong>Correo Electrónico</strong> y
+    <strong>Contraseña</strong>. 3. Haz clic en "Crear Tienda". Al procesar el token, la tienda se
+    creará bajo el plan asignado a la invitación (ej: Plan Pro o Semilla).
+    <hr />
+    <h2>2. Panel de Administración del Comerciante (`/admin`)</h2>
+    <p>
+      Una vez registrado, el comerciante accede al panel donde tiene las siguientes opciones: *
+      <strong>Dashboard:</strong> Muestra las estadísticas en tiempo real de visitas al catálogo
+      público, visitas al Bio-Link y la cantidad de productos activos. *
+      <strong>Productos:</strong> Permite añadir nuevos artículos, subir su fotografía, definir la
+      descripción, categoría y precio. * *Límites:* Si estás en el plan Semilla gratuito, la
+      plataforma te limitará a un máximo de 20 productos activos simultáneamente. *
+      <strong>Diseño del Catálogo:</strong> Permite cambiar la tipografía de la tienda y la paleta
+      de colores de marca. Los usuarios con planes activos pueden seleccionar temas Premium
+      adaptados a su rubro (como el tema "Bite" para restaurantes o "Bloom" para florerías). *
+      <strong>Configuración del Negocio:</strong> Permite actualizar el logotipo, banner de portada,
+      dirección física y, fundamentalmente, el <strong>número de WhatsApp</strong> del comercio
+      donde se recibirán los pedidos. * <strong>Libro de Reclamaciones:</strong> Panel de auditoría
+      de las quejas o reclamos interpuestos por clientes de forma pública. Desde aquí se escribe y
+      firma la respuesta formal de la empresa.
+    </p>
+    <hr />
+    <h2>3. Experiencia del Cliente / Consumidor Final</h2>
+    <h3>Compra en el Catálogo Público (`/t/:slug`)</h3>
+    1. El cliente entra al enlace de la tienda (ej: `dizi.pe/t/pasteleria-diana`). 2. Navega por las
+    categorías y agrega los productos deseados al carrito mediante el botón
+    <strong>"Añadir"</strong>. 3. Al terminar, abre el carrito, completa sus datos (Nombre,
+    Teléfono, Tipo de Entrega: Delivery o Recojo, Dirección y Notas). 4. Hace clic en
+    <strong>"Enviar Pedido por WhatsApp"</strong>. El sistema le redireccionará automáticamente a la
+    aplicación de WhatsApp del comerciante con el mensaje pre-escrito y detallado con su pedido.
+    <h3>Registro de Reclamos</h3>
+    1. En el pie de página del catálogo público, el cliente hace clic en
+    <strong>"Libro de Reclamaciones"</strong>. 2. Completa el formulario estructurado paso a paso: *
+    <strong>Paso 1:</strong> Datos Personales del consumidor (Nombre, DNI, Domicilio, Email). *
+    <strong>Paso 2:</strong> Detalles del Bien Contratado (Producto o Servicio) y descripción del
+    Reclamo (insatisfacción con el producto) o Queja (malestar por la atención). 3. Envía el
+    formulario. El sistema le generará inmediatamente un ticket digital de reclamo con su número
+    correlativo único e inalterable (ej. `N° 0001-2026`) conforme a la ley peruana.
+  </body>
+</html>

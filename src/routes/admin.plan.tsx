@@ -53,7 +53,7 @@ const features: Record<PlanId, string[]> = {
 function PlanPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id));
-  
+
   if (!store) return null;
 
   const used = store.products.length;
@@ -78,8 +78,8 @@ function PlanPage() {
           <div>
             <p className="font-semibold text-destructive text-sm">Tu suscripcion ha vencido</p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Tu plan vencio el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Ahora tienes las funciones del plan Semilla.
-              Para renovar, contacta con soporte.
+              Tu plan vencio el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Ahora
+              tienes las funciones del plan Semilla. Para renovar, contacta con soporte.
             </p>
             <a
               href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
@@ -101,7 +101,8 @@ function PlanPage() {
               Tu suscripcion vence en {days === 0 ? "hoy" : `${days} dia${days !== 1 ? "s" : ""}`}
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Vence el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Contacta con soporte para renovar.
+              Vence el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Contacta con
+              soporte para renovar.
             </p>
             <a
               href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
@@ -115,8 +116,11 @@ function PlanPage() {
         </div>
       )}
 
-      {isPaid && !isExpired && !isExpiringSoon && store.planExpiresAt && (
-        store.subscriptionStatus === "trial" ? (
+      {isPaid &&
+        !isExpired &&
+        !isExpiringSoon &&
+        store.planExpiresAt &&
+        (store.subscriptionStatus === "trial" ? (
           <div className="rounded-xl border bg-amber-50/60 border-amber-200 p-3.5 flex items-center gap-3">
             <Clock className="w-5 h-5 text-amber-600 shrink-0 animate-pulse" />
             <div className="flex items-center gap-2">
@@ -138,8 +142,7 @@ function PlanPage() {
               </span>
             </div>
           </div>
-        )
-      )}
+        ))}
 
       <Card>
         <CardContent className="p-5 space-y-3">
@@ -147,9 +150,7 @@ function PlanPage() {
             <span>Uso de productos</span>
             <span className="font-semibold">
               {used} /{" "}
-              {PLANS[store.plan].productLimit === Infinity
-                ? "∞"
-                : PLANS[store.plan].productLimit}
+              {PLANS[store.plan].productLimit === Infinity ? "∞" : PLANS[store.plan].productLimit}
             </span>
           </div>
           <div className="h-2 rounded-full bg-secondary overflow-hidden">
@@ -173,10 +174,7 @@ function PlanPage() {
           return (
             <Card
               key={p}
-              className={cn(
-                "relative",
-                isCurrent && "border-primary ring-2 ring-primary/30"
-              )}
+              className={cn("relative", isCurrent && "border-primary ring-2 ring-primary/30")}
             >
               {isCurrent && (
                 <span className="absolute -top-2 left-4 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1">
@@ -188,7 +186,9 @@ function PlanPage() {
                   <h3 className="text-lg font-bold">{PLANS[p].name}</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black">S/ {PLANS[p].price.toFixed(2)}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">/mes</span>
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">
+                      /mes
+                    </span>
                   </div>
                 </div>
                 <p className="text-xs font-medium text-muted-foreground">
@@ -232,11 +232,18 @@ function PlanPage() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             <div className="md:col-span-8 space-y-2">
               <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs shrink-0">🎉</span>
-                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">Gana meses gratis con nuestro Programa de Referidos</h3>
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs shrink-0">
+                  🎉
+                </span>
+                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+                  Gana meses gratis con nuestro Programa de Referidos
+                </h3>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Comparte Dizi con otros negocios y emprendedores. Por cada tienda recomendada que adquiera cualquier plan de pago, <strong>ambos recibirán 1 mes gratis adicional</strong> de suscripción de forma automática.
+                Comparte Dizi con otros negocios y emprendedores. Por cada tienda recomendada que
+                adquiera cualquier plan de pago,{" "}
+                <strong>ambos recibirán 1 mes gratis adicional</strong> de suscripción de forma
+                automática.
               </p>
               <div className="pt-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 <div className="bg-background border rounded-xl px-3.5 h-10 flex items-center text-xs font-mono text-muted-foreground select-all truncate flex-1 min-w-0">

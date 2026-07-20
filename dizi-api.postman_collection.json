@@ -1,0 +1,102 @@
+{
+  "info": {
+    "name": "Dizi API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET SEO Dynamic Metadata - Valido",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/seo?slug=admin-general-dizi-notienda0000",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "seo"],
+          "query": [
+            {
+              "key": "slug",
+              "value": "admin-general-dizi-notienda0000"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200 or 500 (db offline)', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 500]);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET SEO Dynamic Metadata - Sin Slug",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/seo",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "seo"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});",
+              "pm.test('Response body contains Missing slug', function () {",
+              "    pm.expect(pm.response.text()).to.include('Missing slug');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Scrape Facebook - Sin URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/scrape-fb",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "3000",
+          "path": ["api", "scrape-fb"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 400', function () {",
+              "    pm.expect(pm.response.code).to.eql(400);",
+              "});",
+              "pm.test('Response contains error', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.error).to.include('Falta la URL');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

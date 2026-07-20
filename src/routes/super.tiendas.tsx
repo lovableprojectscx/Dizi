@@ -29,19 +29,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  LogIn, 
-  Search, 
-  ExternalLink, 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  LogIn,
+  Search,
+  ExternalLink,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
   ClipboardList,
   SlidersHorizontal,
   Store as StoreIcon,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -108,27 +108,31 @@ function ExpiryBadge({ store }: { store: ReturnType<typeof useApp.getState>["sto
   if (days !== null && days <= 7) {
     return (
       <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-semibold bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10">
-        <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> {days}d — {formatDate(store.planExpiresAt)}
+        <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" /> {days}d —{" "}
+        {formatDate(store.planExpiresAt)}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400">
-      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> {formatDate(store.planExpiresAt)}
+      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />{" "}
+      {formatDate(store.planExpiresAt)}
     </span>
   );
 }
 
 function isStoreInactiveCandidate(store: any): boolean {
   if (!store.active) return false;
-  
+
   const isSemilla = store.plan === "semilla";
   const daysExpired = daysSinceExpiry(store);
   const isExpiredLongTime = daysExpired !== null && daysExpired > 15;
-  
+
   if (!isSemilla && !isExpiredLongTime) return false;
 
-  const createdDaysAgo = Math.ceil((Date.now() - new Date(store.createdAt).getTime()) / (1000 * 60 * 60 * 24));
+  const createdDaysAgo = Math.ceil(
+    (Date.now() - new Date(store.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+  );
   if (createdDaysAgo <= 15) return false;
 
   const views = store.views || 0;
@@ -142,7 +146,7 @@ function TenantsPage() {
   const stores = useApp((s) => s.stores);
   const startImpersonation = useApp((s) => s.startImpersonation);
   const navigate = useNavigate();
-  
+
   const [q, setQ] = useState("");
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -172,7 +176,7 @@ function TenantsPage() {
     if (selectedStatus !== "all") {
       const days = daysUntilExpiry(s);
       const isExpired = s.plan !== "semilla" && days !== null && days < 0;
-      
+
       if (selectedStatus === "active") {
         matchesStatus = s.active && !isExpired;
       } else if (selectedStatus === "suspended") {
@@ -190,7 +194,8 @@ function TenantsPage() {
     // Claim Book filter
     let matchesLibro = true;
     if (selectedLibro !== "all") {
-      matchesLibro = selectedLibro === "con_libro" ? !!s.libroReclamacionesActivo : !s.libroReclamacionesActivo;
+      matchesLibro =
+        selectedLibro === "con_libro" ? !!s.libroReclamacionesActivo : !s.libroReclamacionesActivo;
     }
 
     return matchesSearch && matchesPlan && matchesStatus && matchesNiche && matchesLibro;
@@ -222,12 +227,11 @@ function TenantsPage() {
 
   const inactiveStores = stores.filter(isStoreInactiveCandidate);
 
-  const storesActiveCount = stores.filter(s => s.active).length;
-  const storesSuspendedCount = stores.filter(s => !s.active).length;
+  const storesActiveCount = stores.filter((s) => s.active).length;
+  const storesSuspendedCount = stores.filter((s) => !s.active).length;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto p-4 md:p-6">
-      
       {/* ── Encabezado & Stats ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -236,7 +240,8 @@ function TenantsPage() {
             Tiendas Registradas
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Administra los accesos de soporte técnico, facturación y estados de todos los comercios de Dizi.
+            Administra los accesos de soporte técnico, facturación y estados de todos los comercios
+            de Dizi.
           </p>
         </div>
       </div>
@@ -244,7 +249,9 @@ function TenantsPage() {
       {/* Grid de Stats Rápido */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-background rounded-xl p-4 border border-zinc-200/60 dark:border-zinc-800 shadow-sm">
-          <span className="text-[10px] uppercase font-bold text-muted-foreground block">Total Tiendas</span>
+          <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+            Total Tiendas
+          </span>
           <span className="text-2xl font-black text-foreground">{stores.length}</span>
         </div>
         <div className="bg-background rounded-xl p-4 border border-zinc-200/60 dark:border-zinc-800 shadow-sm">
@@ -257,7 +264,9 @@ function TenantsPage() {
         </div>
         <div className="bg-background rounded-xl p-4 border border-zinc-200/60 dark:border-zinc-800 shadow-sm">
           <span className="text-[10px] uppercase font-bold text-blue-600 block">Libro Recl.</span>
-          <span className="text-2xl font-black text-blue-700">{stores.filter(s => s.libroReclamacionesActivo).length}</span>
+          <span className="text-2xl font-black text-blue-700">
+            {stores.filter((s) => s.libroReclamacionesActivo).length}
+          </span>
         </div>
       </div>
 
@@ -319,7 +328,9 @@ function TenantsPage() {
         {showFilters && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-zinc-100 dark:border-zinc-800 animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Giro o Nicho</label>
+              <label className="text-[10px] uppercase font-bold text-muted-foreground">
+                Giro o Nicho
+              </label>
               <Select value={selectedNiche} onValueChange={setSelectedNiche}>
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue placeholder="Nichos" />
@@ -338,7 +349,9 @@ function TenantsPage() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Libro de Reclamaciones</label>
+              <label className="text-[10px] uppercase font-bold text-muted-foreground">
+                Libro de Reclamaciones
+              </label>
               <Select value={selectedLibro} onValueChange={setSelectedLibro}>
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue placeholder="Libro" />
@@ -353,7 +366,10 @@ function TenantsPage() {
           </div>
         )}
 
-        {(selectedPlan !== "all" || selectedStatus !== "all" || selectedNiche !== "all" || selectedLibro !== "all") && (
+        {(selectedPlan !== "all" ||
+          selectedStatus !== "all" ||
+          selectedNiche !== "all" ||
+          selectedLibro !== "all") && (
           <div className="flex justify-end pt-1">
             <Button
               variant="ghost"
@@ -377,12 +393,13 @@ function TenantsPage() {
         <div className="rounded-xl border border-amber-200 bg-amber-500/5 p-4 space-y-2.5 shadow-sm">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-bold text-sm">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            {urgentStores.length} suscripción{urgentStores.length > 1 ? "es" : ""} vence{urgentStores.length > 1 ? "n" : ""} pronto (próximos 7 días)
+            {urgentStores.length} suscripción{urgentStores.length > 1 ? "es" : ""} vence
+            {urgentStores.length > 1 ? "n" : ""} pronto (próximos 7 días)
           </div>
           <div className="flex flex-wrap gap-2">
             {urgentStores.map((s) => (
-              <span 
-                key={s.id} 
+              <span
+                key={s.id}
                 className="text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 rounded-full border border-amber-200/50 px-2.5 py-1 font-semibold"
               >
                 {s.name} — {daysUntilExpiry(s) === 0 ? "hoy" : `${daysUntilExpiry(s)}d`}
@@ -396,12 +413,14 @@ function TenantsPage() {
         <div className="rounded-xl border border-amber-200 bg-amber-500/5 p-4 space-y-2.5 shadow-sm">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-bold text-sm">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            {inactiveStores.length} tienda{inactiveStores.length > 1 ? "s" : ""} registra{inactiveStores.length > 1 ? "n" : ""} inactividad de 15+ días (candidatas a suspender/liberar URL)
+            {inactiveStores.length} tienda{inactiveStores.length > 1 ? "s" : ""} registra
+            {inactiveStores.length > 1 ? "n" : ""} inactividad de 15+ días (candidatas a
+            suspender/liberar URL)
           </div>
           <div className="flex flex-wrap gap-2">
             {inactiveStores.map((s) => (
-              <span 
-                key={s.id} 
+              <span
+                key={s.id}
                 className="text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 rounded-full border border-amber-200/50 px-2.5 py-1 font-semibold"
               >
                 {s.name} ({s.views || 0} vis.)
@@ -432,7 +451,11 @@ function TenantsPage() {
                   <TableCell className="py-4 pl-6">
                     <div className="flex items-center gap-3">
                       {s.logo ? (
-                        <img src={s.logo} alt="" className="h-9 w-9 rounded-full object-cover border" />
+                        <img
+                          src={s.logo}
+                          alt=""
+                          className="h-9 w-9 rounded-full object-cover border"
+                        />
                       ) : (
                         <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary/10 to-primary/20 text-primary flex items-center justify-center text-xs font-black border">
                           {s.name.substring(0, 2).toUpperCase()}
@@ -442,13 +465,20 @@ function TenantsPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <p className="font-bold text-sm text-foreground">{s.name}</p>
                           {s.libroReclamacionesActivo && (
-                            <span title="Libro de reclamaciones activo" className="inline-flex items-center gap-0.5 text-[9px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/30">
+                            <span
+                              title="Libro de reclamaciones activo"
+                              className="inline-flex items-center gap-0.5 text-[9px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/30"
+                            >
                               <ClipboardList className="h-2.5 w-2.5" /> Libro
                             </span>
                           )}
                           {isStoreInactiveCandidate(s) && (
-                            <span title="Tienda inactiva sin visitas por más de 15 días" className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30">
-                              <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> Inactiva (15d+)
+                            <span
+                              title="Tienda inactiva sin visitas por más de 15 días"
+                              className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
+                            >
+                              <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> Inactiva
+                              (15d+)
                             </span>
                           )}
                         </div>
@@ -463,7 +493,7 @@ function TenantsPage() {
                       </div>
                     </div>
                   </TableCell>
-                  
+
                   <TableCell>
                     <PlanBadge plan={s.plan} />
                   </TableCell>
@@ -487,7 +517,11 @@ function TenantsPage() {
                   </TableCell>
 
                   <TableCell className="text-xs text-muted-foreground font-medium">
-                    {new Date(s.createdAt).toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" })}
+                    {new Date(s.createdAt).toLocaleDateString("es-PE", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
                   </TableCell>
 
                   <TableCell className="text-right pr-6">
@@ -500,9 +534,9 @@ function TenantsPage() {
                       >
                         Gestionar
                       </Button>
-                      
-                      <Button 
-                        size="sm" 
+
+                      <Button
+                        size="sm"
                         className="h-8 text-xs font-bold gap-1 shadow-sm"
                         onClick={() => impersonate(s.id)}
                       >
@@ -514,7 +548,7 @@ function TenantsPage() {
                 </TableRow>
               </React.Fragment>
             ))}
-            
+
             {sorted.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
@@ -529,7 +563,10 @@ function TenantsPage() {
       {/* ── Mobile View Card List ── */}
       <div className="md:hidden space-y-4">
         {sorted.map((s) => (
-          <div key={s.id} className="bg-card border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 flex flex-col gap-4 shadow-sm">
+          <div
+            key={s.id}
+            className="bg-card border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 flex flex-col gap-4 shadow-sm"
+          >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 {s.logo ? (
@@ -543,7 +580,10 @@ function TenantsPage() {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-bold text-sm text-foreground leading-tight">{s.name}</p>
                     {isStoreInactiveCandidate(s) && (
-                      <span title="Tienda inactiva" className="inline-flex items-center gap-0.5 text-[8px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30">
+                      <span
+                        title="Tienda inactiva"
+                        className="inline-flex items-center gap-0.5 text-[8px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
+                      >
                         Inactiva (15d+)
                       </span>
                     )}
@@ -571,12 +611,20 @@ function TenantsPage() {
 
             <div className="grid grid-cols-2 gap-2 text-sm bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-lg border border-zinc-100 dark:border-zinc-900">
               <div>
-                <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">Plan</span>
-                <div className="mt-1"><PlanBadge plan={s.plan} /></div>
+                <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">
+                  Plan
+                </span>
+                <div className="mt-1">
+                  <PlanBadge plan={s.plan} />
+                </div>
               </div>
               <div>
-                <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">Vencimiento</span>
-                <div className="mt-1"><ExpiryBadge store={s} /></div>
+                <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">
+                  Vencimiento
+                </span>
+                <div className="mt-1">
+                  <ExpiryBadge store={s} />
+                </div>
               </div>
             </div>
 
@@ -591,8 +639,8 @@ function TenantsPage() {
                 Gestionar Tienda
               </Button>
 
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 className="w-full h-9 font-bold gap-1.5 shadow-sm"
                 onClick={() => impersonate(s.id)}
               >
@@ -602,7 +650,7 @@ function TenantsPage() {
             </div>
           </div>
         ))}
-        
+
         {sorted.length === 0 && (
           <div className="text-center text-sm text-muted-foreground py-12 border rounded-xl bg-card">
             No se encontraron tiendas con los criterios de búsqueda.
@@ -629,7 +677,6 @@ function TenantsPage() {
           )}
         </SheetContent>
       </Sheet>
-
     </div>
   );
 }

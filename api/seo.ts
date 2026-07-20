@@ -4,7 +4,9 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Faltan variables de entorno de Supabase (VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY).");
+  throw new Error(
+    "Faltan variables de entorno de Supabase (VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY).",
+  );
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -62,7 +64,9 @@ export default async function handler(req: any, res: any) {
   try {
     // 2. Fetch original index.html from static build
     const host = req.headers.host || "dizi.idenza.site";
-    const protocol = req.headers["x-forwarded-proto"] || (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
+    const protocol =
+      req.headers["x-forwarded-proto"] ||
+      (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
     const indexUrl = `${protocol}://${host}/index.html`;
 
     const htmlRes = await fetch(indexUrl);
@@ -73,13 +77,34 @@ export default async function handler(req: any, res: any) {
 
     // 3. Inject dynamic tags using robust regex
     html = html.replace(/<title>.*?<\/title>/gi, `<title>${escTitle}</title>`);
-    html = html.replace(/<meta name="description" content=".*?"\s*\/?>/gi, `<meta name="description" content="${escDescription}" />`);
-    html = html.replace(/<meta property="og:title" content=".*?"\s*\/?>/gi, `<meta property="og:title" content="${escTitle}" />`);
-    html = html.replace(/<meta property="og:description" content=".*?"\s*\/?>/gi, `<meta property="og:description" content="${escDescription}" />`);
-    html = html.replace(/<meta property="og:image" content=".*?"\s*\/?>/gi, `<meta property="og:image" content="${escImage}" />`);
-    html = html.replace(/<meta name="twitter:title" content=".*?"\s*\/?>/gi, `<meta name="twitter:title" content="${escTitle}" />`);
-    html = html.replace(/<meta name="twitter:description" content=".*?"\s*\/?>/gi, `<meta name="twitter:description" content="${escDescription}" />`);
-    html = html.replace(/<meta name="twitter:image" content=".*?"\s*\/?>/gi, `<meta name="twitter:image" content="${escImage}" />`);
+    html = html.replace(
+      /<meta name="description" content=".*?"\s*\/?>/gi,
+      `<meta name="description" content="${escDescription}" />`,
+    );
+    html = html.replace(
+      /<meta property="og:title" content=".*?"\s*\/?>/gi,
+      `<meta property="og:title" content="${escTitle}" />`,
+    );
+    html = html.replace(
+      /<meta property="og:description" content=".*?"\s*\/?>/gi,
+      `<meta property="og:description" content="${escDescription}" />`,
+    );
+    html = html.replace(
+      /<meta property="og:image" content=".*?"\s*\/?>/gi,
+      `<meta property="og:image" content="${escImage}" />`,
+    );
+    html = html.replace(
+      /<meta name="twitter:title" content=".*?"\s*\/?>/gi,
+      `<meta name="twitter:title" content="${escTitle}" />`,
+    );
+    html = html.replace(
+      /<meta name="twitter:description" content=".*?"\s*\/?>/gi,
+      `<meta name="twitter:description" content="${escDescription}" />`,
+    );
+    html = html.replace(
+      /<meta name="twitter:image" content=".*?"\s*\/?>/gi,
+      `<meta name="twitter:image" content="${escImage}" />`,
+    );
 
     // 4. Return HTML
     res.setHeader("Content-Type", "text/html; charset=utf-8");

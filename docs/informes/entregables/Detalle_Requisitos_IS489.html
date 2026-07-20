@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Documento Exportado</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #333333;
+        line-height: 1.6;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h1 {
+        font-size: 24pt;
+        color: #1e3a8a;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 8px;
+        margin-top: 30px;
+      }
+      h2 {
+        font-size: 18pt;
+        color: #2563eb;
+        margin-top: 25px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 5px;
+      }
+      h3 {
+        font-size: 14pt;
+        color: #1d4ed8;
+        margin-top: 20px;
+      }
+      p,
+      li {
+        font-size: 11pt;
+        margin-bottom: 10px;
+      }
+      ul {
+        margin-left: 20px;
+        margin-bottom: 15px;
+      }
+      li {
+        margin-bottom: 5px;
+      }
+      strong {
+        color: #111827;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 10.5pt;
+      }
+      th {
+        background-color: #f3f4f6;
+        color: #111827;
+        font-weight: bold;
+        border: 1px solid #d1d5db;
+        padding: 10px;
+        text-align: left;
+      }
+      td {
+        border: 1px solid #d1d5db;
+        padding: 8px 10px;
+      }
+      tr:nth-child(even) {
+        background-color: #f9fafb;
+      }
+      code {
+        font-family: Consolas, Monaco, monospace;
+        background-color: #f3f4f6;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-size: 9.5pt;
+        color: #0f172a;
+      }
+      pre {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 15px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 15px 0;
+      }
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        font-size: 9pt;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid #e5e7eb;
+        margin: 30px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Especificación Detallada de Requisitos Funcionales (Format Given-When-Then)</h1>
+    <p>
+      Esta sección expande la tabla de requisitos funcionales del
+      <strong>Informe Final de Dizi</strong>, proporcionando descripciones detalladas, actores y
+      criterios de aceptación estructurados en formato <strong>Given-When-Then (Gherkin)</strong>.
+      Esto asegura consistencia con el enfoque _spec-driven_ y la metodología Scrum descrita en el
+      informe.
+    </p>
+    <hr />
+    <h3><strong>RF-01: Publicar catálogo público por slug</strong></h3>
+    <ul>
+      <li>
+        <strong>Descripción:</strong> El sistema debe permitir a cualquier visitante acceder a la
+        tienda del comerciante a través de un identificador amigable o URL única (ejemplo:
+        `dizi.idenza.site/t/mi-tienda`), renderizando dinámicamente los productos, las categorías y
+        la configuración estética del comerciante sin requerir autenticación.
+      </li>
+      <li><strong>Actor:</strong> Visitante Público / Cliente.</li>
+      <li>
+        <strong>Precondición:</strong> El comerciante ha configurado su catálogo y lo ha marcado
+        como publicado (`is_published = true`).
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Acceso exitoso al catálogo):</strong></li>
+      <li>
+        <strong>Dado</strong> que un comerciante tiene una tienda registrada con el slug
+        `"pasteleria-diana"` y está publicada.
+      </li>
+      <li><strong>Cuando</strong> un cliente accede a la URL `/t/pasteleria-diana`.</li>
+      <li>
+        <strong>Entonces</strong> el sistema debe consultar a Supabase por el slug y mostrar los
+        productos activos, sus respectivas categorías, el logo de la marca y la paleta de colores
+        configurada.
+      </li>
+      <li><strong>Escenario 2 (Acceso a catálogo despublicado):</strong></li>
+      <li>
+        <strong>Dado</strong> que una tienda tiene configurado el estado de publicación como
+        desactivo (`is_published = false`).
+      </li>
+      <li><strong>Cuando</strong> un visitante ingresa a su URL pública `/t/pasteleria-diana`.</li>
+      <li>
+        <strong>Entonces</strong> el sistema debe redireccionar a una vista de error 404 o mostrar
+        un mensaje indicando que el catálogo se encuentra temporalmente desactivo.
+      </li>
+      <hr />
+      <h3><strong>RF-02: Generación del enlace y mensaje de WhatsApp</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Permite procesar el carrito de compras del usuario y construir
+        automáticamente una URL codificada (`wa.me`) con el desglose del pedido (productos,
+        cantidades, total y notas de entrega), normalizando el teléfono del comercio.
+      </li>
+      <li><strong>Actor:</strong> Visitante Público / Comprador.</li>
+      <li>
+        <strong>Precondición:</strong> El comprador tiene productos seleccionados en su carrito de
+        compras.
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Mensaje de pedido codificado):</strong></li>
+      <li>
+        <strong>Dado</strong> que un comprador tiene en su carrito: 1x "Torta de Chocolate (S/
+        45.00)" y 2x "Cupcake Red Velvet (S/ 12.00)".
+      </li>
+      <li>
+        <strong>Cuando</strong> llena sus datos personales (nombre: "Juan Pérez") y hace clic en
+        "Pedir por WhatsApp".
+      </li>
+      <li>
+        <strong>Entonces</strong> el sistema debe construir la URL de WhatsApp codificando los
+        caracteres especiales y espacios (ej: `Juan%20P%C3%A9rez`) para evitar enlaces rotos.
+      </li>
+      <li><strong>Escenario 2 (Normalización del número telefónico):</strong></li>
+      <li>
+        <strong>Dado</strong> que el comerciante configuró su teléfono con guiones y código de país
+        (ej: `+51 988-777-666`).
+      </li>
+      <li><strong>Cuando</strong> el cliente envía su pedido.</li>
+      <li>
+        <strong>Entonces</strong> el sistema debe limpiar la cadena eliminando símbolos y espacios,
+        obteniendo exactamente `51988777666` para generar la URL `https://wa.me/51988777666`.
+      </li>
+      <hr />
+      <h3><strong>RF-03: Formateo de precios en Soles peruanos</strong></h3>
+      <li>
+        <strong>Descripción:</strong> La plataforma debe formatear todos los precios de los
+        productos mostrándolos con el prefijo `"S/"` y forzando dos decimales. En caso de que un
+        producto no tenga un precio establecido, se debe mostrar la leyenda `"A consultar"`.
+      </li>
+      <li><strong>Actor:</strong> Visitante Público / Administrador.</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Precios con decimales):</strong></li>
+      <li>
+        <strong>Dado</strong> que un producto tiene registrado el precio de `15.5` en la base de
+        datos.
+      </li>
+      <li><strong>Cuando</strong> se visualiza la tarjeta del producto en el catálogo.</li>
+      <li><strong>Entonces</strong> el precio debe formatearse exactamente como `"S/ 15.50"`.</li>
+      <li><strong>Escenario 2 (Producto sin precio definido):</strong></li>
+      <li>
+        <strong>Dado</strong> que un producto tiene el precio en valor nulo (`null`), indefinido
+        (`undefined`) o `0`.
+      </li>
+      <li><strong>Cuando</strong> se despliega en el catálogo público.</li>
+      <li>
+        <strong>Entonces</strong> la tarjeta de producto debe mostrar la etiqueta `"A consultar"`.
+      </li>
+      <hr />
+      <h3><strong>RF-04: Registro por invitaciones válidas</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Para controlar el crecimiento orgánico y evitar abusos, la
+        creación de nuevas tiendas debe estar restringida al uso de un token de invitación generado
+        por el superadmin. Este token debe estar vigente, no haber sido usado previamente y estar
+        asignado a un plan específico.
+      </li>
+      <li><strong>Actor:</strong> Comerciante Nuevo.</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Token válido):</strong></li>
+      <li>
+        <strong>Dado</strong> que un usuario ingresa al registro `/register?token=TOKEN_PRO_ACTIVO`
+        y el token es válido y no ha caducado.
+      </li>
+      <li><strong>Cuando</strong> el comerciante llena sus datos y confirma el registro.</li>
+      <li>
+        <strong>Entonces</strong> el sistema debe dar de alta la tienda, asociar su cuenta al Plan
+        Pro y marcar el token en base de datos como usado (`used = true`).
+      </li>
+      <li><strong>Escenario 2 (Token vencido o usado):</strong></li>
+      <li>
+        <strong>Dado</strong> que un usuario accede con `/register?token=TOKEN_EXPIRADO_O_USADO`.
+      </li>
+      <li><strong>Cuando</strong> se valida el token mediante la RPC `check_invite`.</li>
+      <li>
+        <strong>Entonces</strong> el sistema debe bloquear el registro, ocultar el formulario y
+        alertar al usuario con el mensaje `"Invitación inválida o expirada"`.
+      </li>
+      <hr />
+      <h3><strong>RF-05: Restricción de límites según el plan contratado</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Cada plan de Dizi tiene restricciones específicas sobre la
+        cantidad máxima de productos que un comerciante puede tener visibles en su catálogo. El
+        sistema debe bloquear la adición o activación de productos una vez alcanzado este umbral.
+      </li>
+      <li><strong>Actor:</strong> Dueño de la Tienda (Administrador).</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Superación de límite de productos):</strong></li>
+      <li>
+        <strong>Dado</strong> que un comerciante se encuentra en el plan `"semilla"` (límite de 20
+        productos) y ya tiene 20 productos registrados y activos.
+      </li>
+      <li>
+        <strong>Cuando</strong> intenta agregar un producto número 21 o marcar un producto inactivo
+        como activo.
+      </li>
+      <li>
+        <strong>Entonces</strong> el sistema debe denegar la operación en el formulario, mostrando
+        una advertencia que le invite a adquirir un plan superior (Upgrade).
+      </li>
+      <hr />
+      <h3><strong>RF-06: Degradación automática y periodo de gracia</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Si la fecha de vencimiento de la suscripción de un comerciante
+        expira, el sistema no debe cortar su servicio de inmediato. Se deben aplicar dos periodos de
+        gracia diferenciados antes de aplicar degradaciones visuales o de límites.
+      </li>
+      <li><strong>Actor:</strong> Sistema / Comerciante.</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Periodo de gracia de funciones - 3 días):</strong></li>
+      <li>
+        <strong>Dado</strong> que la suscripción de un comerciante en el plan Pro expiró hace 2 días
+        (dentro del límite de `GRACE_DAYS = 3`).
+      </li>
+      <li>
+        <strong>Cuando</strong> el comerciante accede a su panel de administración o sus clientes
+        entran al catálogo.
+      </li>
+      <li>
+        <strong>Entonces</strong> la tienda debe seguir funcionando con todas las características
+        del plan Pro contratado.
+      </li>
+      <li><strong>Escenario 2 (Expiración de gracia y degradación a Semilla):</strong></li>
+      <li>
+        <strong>Dado</strong> que la suscripción expiró hace 4 días (superando el periodo de
+        gracia).
+      </li>
+      <li>
+        <strong>Cuando</strong> el sistema evalúa el plan efectivo mediante `getEffectivePlan`.
+      </li>
+      <li>
+        <strong>Entonces</strong> el plan efectivo debe cambiar automáticamente a `"semilla"`,
+        ocultando los productos sobrantes (manteniendo solo los primeros 20) y mostrando la etiqueta
+        `"Modo Limitado"` en la tienda.
+      </li>
+      <li><strong>Escenario 3 (Gracia de diseño visual - 15 días):</strong></li>
+      <li>
+        <strong>Dado</strong> que el plan Pro expiró hace 10 días (superando los 3 días de funciones
+        pero dentro del límite de `MODEL_GRACE_DAYS = 15`).
+      </li>
+      <li><strong>Cuando</strong> el cliente carga el catálogo público.</li>
+      <li>
+        <strong>Entonces</strong> el catálogo debe seguir utilizando el modelo de diseño premium
+        (ej. `"boutique"`) pero aplicando los límites de productos del plan semilla. A los 16 días,
+        el diseño debe revertirse obligatoriamente al modelo `"minimalista"` de Semilla.
+      </li>
+      <hr />
+      <h3><strong>RF-07: Aislamiento de datos multi-tenant (RLS)</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Al ser un software SaaS multi-tienda, es crítico asegurar que
+        ningún comerciante pueda acceder, modificar o eliminar la información (productos,
+        configuraciones, reclamaciones) perteneciente a otro comercio.
+      </li>
+      <li><strong>Actor:</strong> Sistema / Administrador.</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Acceso no autorizado bloqueado por RLS):</strong></li>
+      <li>
+        <strong>Dado</strong> que el comerciante A ha iniciado sesión con sus credenciales y tiene
+        su propio `owner_id`.
+      </li>
+      <li>
+        <strong>Cuando</strong> el comerciante A intenta enviar una petición HTTP directa para leer
+        los productos del comercio B (modificando parámetros en el navegador o consola).
+      </li>
+      <li>
+        <strong>Entonces</strong> las políticas de fila de PostgreSQL (Row Level Security) deben
+        filtrar la consulta devolviendo 0 registros, garantizando el aislamiento absoluto de los
+        datos.
+      </li>
+      <hr />
+      <h3><strong>RF-08: Prevención de escalación de privilegios</strong></h3>
+      <li>
+        <strong>Descripción:</strong> La asignación de roles en la plataforma se gestiona en la
+        tabla de usuarios de Supabase. El sistema debe evitar que un usuario manipule los metadatos
+        públicos de su registro para autoasignarse el rol de superadministrador.
+      </li>
+      <li><strong>Actor:</strong> Sistema / Atacante.</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Degradación de rol en registro manipulado):</strong></li>
+      <li>
+        <strong>Dado</strong> que un atacante intercepta la llamada de registro de usuario y envía
+        el campo `role` con el valor `"super_admin"`.
+      </li>
+      <li>
+        <strong>Cuando</strong> la base de datos procesa el insert e inicia el disparador
+        `trg_user_sync_role`.
+      </li>
+      <li>
+        <strong>Entonces</strong> el trigger debe sobrescribir forzosamente el rol asignándole
+        `"store_owner"`, bloqueando el intento de acceso privilegiado al panel de control global.
+      </li>
+      <hr />
+      <h3><strong>RF-09: Gestión del Libro de Reclamaciones</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Cada tienda debe poder habilitar un Libro de Reclamaciones
+        público e interactivo en su catálogo. Los consumidores deben poder registrar quejas o
+        reclamos en un formulario paso a paso (Anexo I de INDECOPI) y obtener un ticket digital de
+        confirmación. El comerciante debe poder visualizar y responder los reclamos en un plazo
+        máximo de 15 días hábiles.
+      </li>
+      <li><strong>Actor:</strong> Visitante Público / Propietario de Tienda.</li>
+      <li>
+        <strong>Precondición:</strong> El comerciante completó su configuración de RUC, Razón Social
+        e inició la activación del libro en su panel.
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Registro de reclamo exitoso):</strong></li>
+      <li>
+        <strong>Dado</strong> que un cliente entra a una tienda con Libro de Reclamaciones activo.
+      </li>
+      <li>
+        <strong>Cuando</strong> hace clic en el enlace del pie de página, completa sus datos y
+        describe su queja.
+      </li>
+      <li>
+        <strong>Entonces</strong> el sistema debe almacenar el reclamo, generar un correlativo único
+        inalterable de establecimiento (ej. `N° 0001-2026`) y desplegar el ticket digital con opción
+        a impresión.
+      </li>
+      <li><strong>Escenario 2 (Auditoría del comerciante):</strong></li>
+      <li>
+        <strong>Dado</strong> que un comerciante tiene reclamos pendientes en su panel de
+        administración `/admin/reclamaciones`.
+      </li>
+      <li>
+        <strong>Cuando</strong> abre un caso, escribe la respuesta formal de la empresa y guarda.
+      </li>
+      <li>
+        <strong>Entonces</strong> el estado del caso debe actualizarse a `"resuelto"`, registrando
+        automáticamente la fecha y hora de la respuesta.
+      </li>
+      <hr />
+      <h3><strong>RF-10: Configuración y personalización del Bio-Link</strong></h3>
+      <li>
+        <strong>Descripción:</strong> Permite al comerciante crear una página de enlaces múltiples
+        (Bio-Link) optimizada para redes sociales, con la posibilidad de añadir un mapa de
+        ubicación, fondos y tipografías condicionados al nivel de su plan.
+      </li>
+      <li><strong>Actor:</strong> Dueño de la Tienda.</li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li><strong>Escenario 1 (Restricción de enlaces en plan gratuito):</strong></li>
+      <li>
+        <strong>Dado</strong> que la tienda está en el plan Semilla (límite de 3 enlaces
+        personalizados en Bio-Link).
+      </li>
+      <li>
+        <strong>Cuando</strong> el dueño intenta guardar un cuarto enlace rápido en su panel de
+        edición.
+      </li>
+      <li>
+        <strong>Entonces</strong> el sistema debe bloquear el botón de guardar y mostrar una alerta
+        solicitándole mejorar su plan para configurar enlaces ilimitados.
+      </li>
+      <li><strong>Escenario 2 (Personalización en plan premium):</strong></li>
+      <li><strong>Dado</strong> que la tienda tiene una suscripción premium activa (plan Pro).</li>
+      <li>
+        <strong>Cuando</strong> el dueño selecciona una tipografía de estilo moderno, un color de
+        fondo degradado personalizado y añade su mapa de ubicación geográfica (Leaflet).
+      </li>
+      <li>
+        <strong>Entonces</strong> el sistema debe guardar los datos y renderizar el Bio-Link público
+        reflejando todas las características visuales elegidas.
+      </li>
+      <hr />
+      <h1>Especificación Detallada de Requisitos No Funcionales (ISO/IEC 25010)</h1>
+      <p>
+        Esta sección expande las características de calidad del producto de software
+        <strong>Dizi</strong> según el estándar internacional de calidad
+        <strong>ISO/IEC 25010</strong>, detallando las restricciones técnicas, métricas y criterios
+        de aceptación arquitectónicos del sistema.
+      </p>
+      <hr />
+      <h3><strong>RNF-01: Seguridad (Confidencialidad, Integridad y Aislamiento)</strong></h3>
+      <li><strong>Subcaracterística ISO 25010:</strong> Confidencialidad y Responsabilidad.</li>
+      <li>
+        <strong>Descripción:</strong> La plataforma debe garantizar el aislamiento completo de datos
+        en un entorno multi-inquilino (multi-tenant). Además, debe mitigar riesgos de inyección de
+        código y forzar el uso de canales cifrados de comunicación.
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li>
+        <strong>Aislamiento a nivel de fila (RLS):</strong> Toda consulta a tablas críticas
+        (`stores`, `products`, `reclamaciones`) debe estar filtrada en PostgreSQL mediante políticas
+        RLS basadas en el `auth.uid()` del usuario autenticado. Ningún usuario puede invocar APIs
+        REST que expongan datos de terceros.
+      </li>
+      <li>
+        <strong>Transporte Seguro (HSTS):</strong> El servidor de producción debe denegar conexiones
+        no cifradas (HTTP) y forzar la redirección automática a HTTPS aplicando la cabecera HSTS
+        (`Strict-Transport-Security`) con una directiva de duración mínima de 1 año
+        (`max-age=31536000`).
+      </li>
+      <li>
+        <strong>Políticas de Seguridad de Contenido (CSP):</strong> Se debe inyectar la cabecera
+        `Content-Security-Policy` para restringir la carga de scripts únicamente desde dominios
+        autorizados (Supabase, Leaflet, Google Fonts), mitigando ataques de Cross-Site Scripting
+        (XSS).
+      </li>
+      <hr />
+      <h3><strong>RNF-02: Rendimiento y Eficiencia Temporal</strong></h3>
+      <li>
+        <strong>Subcaracterística ISO 25010:</strong> Comportamiento temporal y Utilización de
+        recursos.
+      </li>
+      <li>
+        <strong>Descripción:</strong> Dado que el catálogo digital es una herramienta de ventas
+        directa, la velocidad de carga es crucial para la retención del cliente. Las vistas públicas
+        deben estar optimizadas para redes móviles.
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li>
+        <strong>Tiempo de respuesta en 4G:</strong> El catálogo público (`/t/:slug`) debe cargar
+        completamente (Time to Interactive - TTI) en menos de <strong>2.0 segundos</strong> sobre
+        una conexión de red móvil 4G estándar (simulado a 1.5 Mbps de descarga) con un retardo RTT
+        promedio de 100ms.
+      </li>
+      <li>
+        <strong>Optimización de imágenes en cliente:</strong> El sistema no debe delegar el
+        redimensionamiento de imágenes al servidor. El módulo de carga en el admin
+        (`image-utils.ts`) debe convertir y comprimir localmente las imágenes a formato WebP
+        (reduciendo las dimensiones proporcionales a un máximo de 2048px) antes de iniciar la
+        petición de subida (Upload), ahorrando hasta un 80% de consumo de ancho de banda.
+      </li>
+      <li>
+        <strong>Peso del Bundle:</strong> El empaquetado del cliente (`npm run build`) debe realizar
+        code-splitting y compresión gzip de manera que el bloque de código inicial JavaScript
+        (index) transferido al navegador no supere los 600 kB.
+      </li>
+      <hr />
+      <h3><strong>RNF-03: Usabilidad y Compatibilidad (Enfoque Mobile-First)</strong></h3>
+      <li>
+        <strong>Subcaracterística ISO 25010:</strong> Estética de la interfaz de usuario y
+        Accesibilidad.
+      </li>
+      <li>
+        <strong>Descripción:</strong> La interfaz del catálogo público debe estar optimizada para el
+        consumo móvil inmediato, ya que la mayor parte de su tráfico proviene de enlaces compartidos
+        en redes sociales (Instagram, TikTok) y chats de mensajería (WhatsApp).
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li>
+        <strong>Diseño Mobile-First Responsivo:</strong> Todas las interfaces públicas deben
+        adaptarse fluidamente a pantallas táctiles desde los <strong>360px de ancho</strong> hasta
+        monitores de escritorio de alta resolución. No se permite desborde horizontal (scroll
+        horizontal) en la visualización del catálogo.
+      </li>
+      <li>
+        <strong>Objetivos táctiles ergonómicos:</strong> Todos los elementos interactivos del móvil
+        (botones de compra, pestañas de categorías, botones de redes sociales) deben tener un área
+        mínima de contacto físico de <strong>44 x 44 píxeles</strong> (según las guías humanas de
+        iOS/Android) para evitar errores de selección.
+      </li>
+      <li>
+        <strong>Consistencia visual (Shadcn/ui):</strong> Se debe utilizar la paleta de variables
+        semánticas HSL y componentes unificados de Shadcn para asegurar que el cambio de temas
+        estéticos no afecte la legibilidad del texto en modo oscuro o claro.
+      </li>
+      <hr />
+      <h3><strong>RNF-04: Mantenibilidad y Capacidad de Prueba</strong></h3>
+      <li>
+        <strong>Subcaracterística ISO 25010:</strong> Modularidad, Analizabilidad y Capacidad de ser
+        probado.
+      </li>
+      <li>
+        <strong>Descripción:</strong> Para facilitar el crecimiento del software y la integración de
+        nuevos desarrolladores al proyecto, la base de código debe ser autodocumentada, fuertemente
+        tipada y extensible.
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li>
+        <strong>Tipado Estricto (TypeScript):</strong> La compilación no debe permitir el uso de
+        `any` en funciones críticas de negocio. Todo modelo de datos debe derivarse de la interfaz
+        `Store` o `Product` extendida de la base de datos de Supabase.
+      </li>
+      <li>
+        <strong>Compuerta de Calidad (Quality Gate):</strong> El pipeline de integración continua
+        (`ci.yml`) debe validar automáticamente mediante `eslint` que no existan advertencias de
+        formateo (Prettier) y bloquear cualquier integración a la rama principal si la cobertura de
+        las pruebas unitarias es menor al <strong>80%</strong> (validado por
+        `scripts/check-coverage.js`).
+      </li>
+      <hr />
+      <h3><strong>RNF-05: Fiabilidad y Tolerancia a Fallos</strong></h3>
+      <li>
+        <strong>Subcaracterística ISO 25010:</strong> Tolerancia a fallos y Capacidad de
+        recuperación.
+      </li>
+      <li>
+        <strong>Descripción:</strong> El sistema debe ser capaz de mitigar errores inesperados en
+        tiempo de ejecución (fallos de conexión con Supabase, API de WhatsApp caída, imágenes rotas)
+        y mantener el servicio operativo en la medida de lo posible (Degradación Graciosa).
+      </li>
+      <li><strong>Criterios de Aceptación:</strong></li>
+      <li>
+        <strong>Captura de excepciones global:</strong> Los eventos globales de error (`error` y
+        `unhandledrejection`) deben ser interceptados por el módulo `error-capture.ts` para ser
+        almacenados en un buffer de memoria con un tiempo de vida (TTL) de 5 segundos, previniendo
+        que la consola del navegador se sature de errores repetitivos.
+      </li>
+      <li>
+        <strong>Página de contingencia amigable:</strong> Si ocurre un error fatal que impida montar
+        el árbol de React en el navegador, el sistema debe capturar el crash y desplegar la
+        plantilla HTML estática de `error-page.ts`. Esta página debe mostrar un diseño estético con
+        un botón intuitivo de recarga (`location.reload()`), evitando mostrar la pantalla en blanco
+        al consumidor final.
+      </li>
+    </ul>
+  </body>
+</html>

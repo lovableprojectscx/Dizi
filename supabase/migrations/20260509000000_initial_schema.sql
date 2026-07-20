@@ -1,6 +1,6 @@
 -- 1. Tabla de Tiendas
 create table stores (
-  id uuid default gen_random_uuid() primary key,
+  id text default gen_random_uuid()::text primary key,
   slug text unique not null,
   name text not null,
   phone text,
@@ -16,17 +16,17 @@ create table stores (
 
 -- 2. Tabla de Categorías
 create table categories (
-  id uuid default gen_random_uuid() primary key,
-  store_id uuid references stores(id) on delete cascade not null,
+  id text default gen_random_uuid()::text primary key,
+  store_id text references stores(id) on delete cascade not null,
   name text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- 3. Tabla de Productos
 create table products (
-  id uuid default gen_random_uuid() primary key,
-  store_id uuid references stores(id) on delete cascade not null,
-  category_id uuid references categories(id) on delete set null,
+  id text default gen_random_uuid()::text primary key,
+  store_id text references stores(id) on delete cascade not null,
+  category_id text references categories(id) on delete set null,
   name text not null,
   price numeric not null,
   original_price numeric,

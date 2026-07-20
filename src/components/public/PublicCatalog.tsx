@@ -102,6 +102,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { getOptimizedImageUrl } from "@/lib/image-utils";
 
 const EMPTY_CART: any[] = [];
 
@@ -1860,7 +1861,7 @@ export function PublicCatalog({
           )}
         >
           {thumbnailUrl ? (
-            <img src={thumbnailUrl} alt={label} className="h-full w-full object-cover" />
+            <img src={getOptimizedImageUrl(thumbnailUrl, 100)} alt={label} className="h-full w-full object-cover" />
           ) : iconName && iconName !== "" ? (
             getCustomLucideIcon(iconName)
           ) : isMonochrome ? (
@@ -2389,7 +2390,7 @@ export function PublicCatalog({
             <div className="flex items-center gap-2.5 min-w-0">
               {store.logo ? (
                 <img
-                  src={store.logo}
+                  src={getOptimizedImageUrl(store.logo, 200)}
                   alt={store.name}
                   className="h-8 w-8 object-cover shrink-0"
                   style={{ borderRadius: cfg.imgRounded }}
@@ -2536,7 +2537,7 @@ export function PublicCatalog({
           <div className="relative w-full h-[35vw] max-h-[220px] bg-muted overflow-hidden">
             {store.bioBanner || activeBanners[0] ? (
               <img
-                src={store.bioBanner || activeBanners[0]}
+                src={getOptimizedImageUrl(store.bioBanner || activeBanners[0], 1200)}
                 alt={store.name}
                 className="w-full h-full object-cover animate-in fade-in duration-550"
               />
@@ -2563,7 +2564,7 @@ export function PublicCatalog({
             <div className="inline-block relative">
               {store.bioLogo || store.logo ? (
                 <img
-                  src={store.bioLogo || store.logo || undefined}
+                  src={getOptimizedImageUrl(store.bioLogo || store.logo || undefined, 300)}
                   alt={store.name}
                   className={cn(
                     "rounded-full object-cover border shadow-lg animate-in fade-in duration-300 bg-white",
@@ -2810,12 +2811,12 @@ export function PublicCatalog({
           {/* Blurred background image to avoid letterboxes, while keeping main banner fully visible */}
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-xl opacity-60 scale-105"
-            style={{ backgroundImage: `url(${activeBanners[0]})` }}
+            style={{ backgroundImage: `url(${getOptimizedImageUrl(activeBanners[0], 200)})` }}
           />
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
 
           <img
-            src={activeBanners[0]}
+            src={getOptimizedImageUrl(activeBanners[0], 1200)}
             alt={store.bannerTitle || store.name}
             className="absolute inset-0 w-full h-full object-contain animate-in fade-in duration-1000"
           />
@@ -3125,10 +3126,11 @@ export function PublicCatalog({
                                     style={{ aspectRatio: "1/1" }}
                                   >
                                     <img
-                                      src={
+                                      src={getOptimizedImageUrl(
                                         p.image ||
-                                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                                      }
+                                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                                        400
+                                      )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
@@ -3239,10 +3241,11 @@ export function PublicCatalog({
                     onClick={() => setViewingProduct(p)}
                   >
                     <img
-                      src={
+                      src={getOptimizedImageUrl(
                         p.image ||
-                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                      }
+                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                        400
+                      )}
                       alt={p.name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
                       loading="lazy"
@@ -3312,7 +3315,7 @@ export function PublicCatalog({
                     {activeBanners.length > 0 && (
                       <div className="absolute inset-0 w-full h-full">
                         <img
-                          src={activeBanners[0]}
+                          src={getOptimizedImageUrl(activeBanners[0], 1200)}
                           alt={store.name}
                           className="w-full h-full object-cover"
                         />
@@ -3329,7 +3332,7 @@ export function PublicCatalog({
                     >
                       {store.logo && (
                         <img
-                          src={store.logo}
+                          src={getOptimizedImageUrl(store.logo, 200)}
                           alt="Logo"
                           className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-full border border-white/20 mx-auto mb-1 shadow-md"
                         />
@@ -3533,10 +3536,11 @@ export function PublicCatalog({
                             className="relative w-full md:w-[45%] lg:w-[40%] aspect-[4/5] sm:aspect-[3/4] md:aspect-[3/4] overflow-hidden border shadow-xs shrink-0"
                           >
                             <img
-                              src={
+                              src={getOptimizedImageUrl(
                                 p.image ||
-                                "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80"
-                              }
+                                "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80",
+                                600
+                              )}
                               alt={p.name}
                               className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
                               loading="lazy"
@@ -3752,10 +3756,11 @@ export function PublicCatalog({
                       style={{ width: "100px", height: "100px", borderRadius: cfg.imgRounded }}
                     >
                       <img
-                        src={
+                        src={getOptimizedImageUrl(
                           p.image ||
-                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                        }
+                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                          200
+                        )}
                         alt={p.name}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
@@ -3846,10 +3851,11 @@ export function PublicCatalog({
                     onClick={() => setViewingProduct(filtered[0])}
                   >
                     <img
-                      src={
+                      src={getOptimizedImageUrl(
                         filtered[0].image ||
-                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                      }
+                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                        800
+                      )}
                       alt={filtered[0].name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                       onError={(e) => {
@@ -3910,7 +3916,7 @@ export function PublicCatalog({
                     <article
                       key={p.id}
                       className={cn(
-                        "overflow-hidden flex flex-col cursor-pointer transition-all group",
+                        "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group",
                         cfg.cardBorder ? "border" : "",
                         cfg.cardShadow,
                       )}
@@ -3926,10 +3932,11 @@ export function PublicCatalog({
                         style={{ aspectRatio: "1/1" }}
                       >
                         <img
-                          src={
+                          src={getOptimizedImageUrl(
                             p.image ||
-                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                          }
+                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                            400
+                          )}
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
@@ -3991,10 +3998,11 @@ export function PublicCatalog({
                         onClick={() => setViewingProduct(p)}
                       >
                         <img
-                          src={
+                          src={getOptimizedImageUrl(
                             p.image ||
-                            "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85"
-                          }
+                              "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85",
+                            1200
+                          )}
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           onError={(e) => {
@@ -4063,10 +4071,11 @@ export function PublicCatalog({
                           onClick={() => setViewingProduct(p)}
                         >
                           <img
-                            src={
+                            src={getOptimizedImageUrl(
                               p.image ||
-                              "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80"
-                            }
+                                "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80",
+                              600,
+                            )}
                             alt={p.name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             onError={(e) => {
@@ -4139,7 +4148,7 @@ export function PublicCatalog({
                       onClick={() => setViewingProduct(p)}
                     >
                       <img
-                        src={p.image || fallback}
+                        src={getOptimizedImageUrl(p.image || fallback, isWide ? 800 : 400)}
                         alt={p.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         onError={(e) => {
@@ -4268,7 +4277,7 @@ export function PublicCatalog({
                           onClick={() => setViewingProduct(group[0])}
                         >
                           <img
-                            src={group[0].image || fallback}
+                            src={getOptimizedImageUrl(group[0].image || fallback, 500)}
                             alt={group[0].name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             onError={(e) => {
@@ -4353,7 +4362,7 @@ export function PublicCatalog({
                             onClick={() => setViewingProduct(p)}
                           >
                             <img
-                              src={p.image || fallback}
+                              src={getOptimizedImageUrl(p.image || fallback, 300)}
                               alt={p.name}
                               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600"
                               onError={(e) => {
@@ -4434,7 +4443,7 @@ export function PublicCatalog({
                         }}
                       >
                         <img
-                          src={p.image || fallback}
+                          src={getOptimizedImageUrl(p.image || fallback, 800)}
                           alt={p.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           onError={(e) => {
@@ -4545,7 +4554,7 @@ export function PublicCatalog({
                         }}
                       >
                         <img
-                          src={p.image || fallback}
+                          src={getOptimizedImageUrl(p.image || fallback, 400)}
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
@@ -4628,10 +4637,10 @@ export function PublicCatalog({
                                 {/* Blurred background */}
                                 <div
                                   className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                  style={{ backgroundImage: `url(${slide})` }}
+                                  style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
                                 />
                                 <img
-                                  src={slide}
+                                  src={getOptimizedImageUrl(slide, 1200)}
                                   alt={`${store.bannerTitle || store.name} ${idx + 1}`}
                                   className="w-full h-full object-contain relative z-10"
                                 />
@@ -4816,10 +4825,11 @@ export function PublicCatalog({
                                 {/* Image */}
                                 <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800">
                                   <img
-                                    src={
+                                    src={getOptimizedImageUrl(
                                       p.image ||
-                                      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"
-                                    }
+                                        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+                                      500,
+                                    )}
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     loading="lazy"
@@ -5033,10 +5043,11 @@ export function PublicCatalog({
                                   {/* 1:1 image */}
                                   <div className="relative overflow-hidden bg-zinc-950 aspect-square rounded-2xl m-2 border border-zinc-800">
                                     <img
-                                      src={
+                                      src={getOptimizedImageUrl(
                                         p.image ||
-                                        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80"
-                                      }
+                                          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+                                        500,
+                                      )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
@@ -5179,10 +5190,10 @@ export function PublicCatalog({
                                       {/* Blurred background */}
                                       <div
                                         className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                        style={{ backgroundImage: `url(${slide})` }}
+                                        style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
                                       />
                                       <img
-                                        src={slide}
+                                        src={getOptimizedImageUrl(slide, 1200)}
                                         alt={`${store.bannerTitle || store.name} ${idx + 1}`}
                                         className="w-full h-full object-contain relative z-10"
                                       />
@@ -5464,10 +5475,11 @@ export function PublicCatalog({
                                       className="relative aspect-square w-full overflow-hidden rounded-[2rem] border"
                                     >
                                       <img
-                                        src={
+                                        src={getOptimizedImageUrl(
                                           p.image ||
-                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
-                                        }
+                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                          400
+                                        )}
                                         alt={p.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                         loading="lazy"
@@ -5735,10 +5747,11 @@ export function PublicCatalog({
                                         )}
                                       >
                                         <img
-                                          src={
+                                          src={getOptimizedImageUrl(
                                             p.image ||
-                                            "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
-                                          }
+                                            "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                            400
+                                          )}
                                           alt={p.name}
                                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                                           loading="lazy"
@@ -5919,10 +5932,10 @@ export function PublicCatalog({
                                   {/* Blurred background */}
                                   <div
                                     className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                    style={{ backgroundImage: `url(${slide})` }}
+                                    style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
                                   />
                                   <img
-                                    src={slide}
+                                    src={getOptimizedImageUrl(slide, 1200)}
                                     alt={`${store.bannerTitle || store.name} ${idx + 1}`}
                                     className="w-full h-full object-contain relative z-10"
                                   />
@@ -6101,8 +6114,12 @@ export function PublicCatalog({
                                 aria-label="Anterior"
                                 onClick={(e) => {
                                   const s = (
-                                    e.currentTarget.closest("[data-carousel]") as HTMLElement | null
-                                  )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                                    e.currentTarget.closest(
+                                      "[data-carousel]",
+                                    ) as HTMLElement | null
+                                  )?.querySelector(
+                                    "[data-carousel-scroll]",
+                                  ) as HTMLElement | null;
                                   s?.scrollBy({ left: -320, behavior: "smooth" });
                                 }}
                                 className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
@@ -6114,8 +6131,12 @@ export function PublicCatalog({
                                 aria-label="Siguiente"
                                 onClick={(e) => {
                                   const s = (
-                                    e.currentTarget.closest("[data-carousel]") as HTMLElement | null
-                                  )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
+                                    e.currentTarget.closest(
+                                      "[data-carousel]",
+                                    ) as HTMLElement | null
+                                  )?.querySelector(
+                                    "[data-carousel-scroll]",
+                                  ) as HTMLElement | null;
                                   s?.scrollBy({ left: 320, behavior: "smooth" });
                                 }}
                                 className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
@@ -6148,10 +6169,11 @@ export function PublicCatalog({
                                   )}
                                 >
                                   <img
-                                    src={
+                                    src={getOptimizedImageUrl(
                                       p.image ||
-                                      "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
-                                    }
+                                      "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                      400
+                                    )}
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
                                     loading="lazy"
@@ -6584,10 +6606,11 @@ export function PublicCatalog({
                                   {/* Asymmetric or standard image wrapper */}
                                   <div className={cn(gridImgClass)}>
                                     <img
-                                      src={
+                                      src={getOptimizedImageUrl(
                                         p.image ||
-                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80"
-                                      }
+                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                        400
+                                      )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
@@ -6754,10 +6777,10 @@ export function PublicCatalog({
                       {/* Blurred background */}
                       <div
                         className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                        style={{ backgroundImage: `url(${activeBanners[0]})` }}
+                        style={{ backgroundImage: `url(${getOptimizedImageUrl(activeBanners[0], 200)})` }}
                       />
                       <img
-                        src={activeBanners[0]}
+                        src={getOptimizedImageUrl(activeBanners[0], 1200)}
                         alt={store.name}
                         className="absolute inset-0 w-full h-full object-contain"
                       />
@@ -6809,10 +6832,11 @@ export function PublicCatalog({
                         style={{ aspectRatio: "1/1" }}
                       >
                         <img
-                          src={
+                          src={getOptimizedImageUrl(
                             p.image ||
-                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                          }
+                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                            400
+                          )}
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
@@ -6898,10 +6922,11 @@ export function PublicCatalog({
                           style={{ aspectRatio: "4/3" }}
                         >
                           <img
-                            src={
+                            src={getOptimizedImageUrl(
                               p.image ||
-                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80"
-                            }
+                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                              400
+                            )}
                             alt={p.name}
                             className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
@@ -7276,7 +7301,7 @@ export function PublicCatalog({
                 }}
               >
                 <img
-                  src={l.product.image}
+                  src={getOptimizedImageUrl(l.product.image, 200)}
                   alt={l.product.name}
                   className="h-12 w-12 object-cover shrink-0"
                   style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
@@ -7621,11 +7646,12 @@ export function PublicCatalog({
 
                 {/* Blurred background backdrop to fill the container nicely without cropping the main product */}
                 <img
-                  src={
+                  src={getOptimizedImageUrl(
                     productImages[viewingProduct.id] ||
                     viewingProduct.image ||
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"
-                  }
+                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85",
+                    200
+                  )}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-90 select-none pointer-events-none scale-110"
                   aria-hidden="true"
@@ -7636,11 +7662,12 @@ export function PublicCatalog({
                 />
 
                 <img
-                  src={
+                  src={getOptimizedImageUrl(
                     productImages[viewingProduct.id] ||
                     viewingProduct.image ||
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85"
-                  }
+                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85",
+                    800
+                  )}
                   alt={viewingProduct.name}
                   className="relative z-10 h-full w-full object-contain"
                   decoding="async"

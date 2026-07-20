@@ -7,9 +7,9 @@ import type { PlanId } from "@/lib/types";
 
 const PLAN_OPTIONS: { value: PlanId; label: string }[] = [
   { value: "emprendedor", label: "Emprendedor (S/ 9.90)" },
-  { value: "pro",         label: "Pro (S/ 14.90)" },
-  { value: "ilimitado",   label: "Ilimitado (S/ 34.90)" },
-  { value: "semilla",     label: "Semilla (Gratis)" },
+  { value: "pro", label: "Pro (S/ 14.90)" },
+  { value: "ilimitado", label: "Ilimitado (S/ 34.90)" },
+  { value: "semilla", label: "Semilla (Gratis)" },
 ];
 
 interface GeneratedLink {
@@ -119,7 +119,9 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
           >
             {PLAN_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -164,8 +166,8 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
               disabled={selectedPlan === "semilla"}
               className="rounded border-input text-primary focus:ring-primary h-4 w-4 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             />
-            <label 
-              htmlFor="custom-price-checkbox" 
+            <label
+              htmlFor="custom-price-checkbox"
               className={`text-sm font-medium select-none cursor-pointer ${selectedPlan === "semilla" ? "text-muted-foreground opacity-50" : "text-foreground"}`}
             >
               Personalizar (S/)
@@ -228,11 +230,32 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
         El link expira en <strong>30 días</strong> si no se usa.
         {selectedPlan !== "semilla" && (
           <>
-            {" "}El plan <strong>{PLAN_OPTIONS.find(o => o.value === selectedPlan)?.label.split(" (")[0]}</strong> durará{" "}
+            {" "}
+            El plan{" "}
             <strong>
-              {durationValue} {durationUnit === "months" ? (durationValue === 1 ? "mes" : "meses") : (durationValue === 1 ? "día" : "días")}
+              {PLAN_OPTIONS.find((o) => o.value === selectedPlan)?.label.split(" (")[0]}
             </strong>{" "}
-            desde que el cliente se registre{isCustomPrice ? <> con un precio especial de <strong>S/ {customPrice.toFixed(2)}</strong></> : ""}.
+            durará{" "}
+            <strong>
+              {durationValue}{" "}
+              {durationUnit === "months"
+                ? durationValue === 1
+                  ? "mes"
+                  : "meses"
+                : durationValue === 1
+                  ? "día"
+                  : "días"}
+            </strong>{" "}
+            desde que el cliente se registre
+            {isCustomPrice ? (
+              <>
+                {" "}
+                con un precio especial de <strong>S/ {customPrice.toFixed(2)}</strong>
+              </>
+            ) : (
+              ""
+            )}
+            .
           </>
         )}
       </p>
@@ -248,19 +271,26 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
               className="flex flex-col sm:flex-row sm:items-center gap-2 bg-background rounded-lg border p-3 text-sm shadow-sm"
             >
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                  link.plan === "ilimitado" ? "bg-purple-100 text-purple-700" :
-                  link.plan === "pro" ? "bg-blue-100 text-blue-700" :
-                  link.plan === "emprendedor" ? "bg-orange-100 text-orange-700" :
-                  "bg-gray-100 text-gray-600"
-                }`}>
+                <span
+                  className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                    link.plan === "ilimitado"
+                      ? "bg-purple-100 text-purple-700"
+                      : link.plan === "pro"
+                        ? "bg-blue-100 text-blue-700"
+                        : link.plan === "emprendedor"
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-gray-100 text-gray-600"
+                  }`}
+                >
                   {link.plan}
                 </span>
 
                 {link.plan !== "semilla" && (
                   <span className="text-[10px] text-muted-foreground shrink-0 flex items-center gap-1">
                     <Calendar className="w-2.5 h-2.5 text-primary" />
-                    <strong>{link.durationValue} {link.durationUnit === "months" ? "mes(es)" : "día(s)"}</strong>
+                    <strong>
+                      {link.durationValue} {link.durationUnit === "months" ? "mes(es)" : "día(s)"}
+                    </strong>
                     {link.customPrice !== undefined && (
                       <span className="text-emerald-600 font-bold ml-1">
                         S/ {Number(link.customPrice).toFixed(2)}
@@ -285,10 +315,11 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
                   className="p-1.5 rounded hover:bg-muted border border-transparent hover:border-input transition-all"
                   title="Copiar link"
                 >
-                  {copiedToken === link.token
-                    ? <Check className="w-3.5 h-3.5 text-emerald-500" />
-                    : <Copy className="w-3.5 h-3.5 text-muted-foreground" />
-                  }
+                  {copiedToken === link.token ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
                 </button>
               </div>
             </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
 
@@ -47,85 +47,85 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
-  --color-coral: #FF823A;
-  --color-menta: #DCFD8B;
-  --color-lavanda: #BC84EE;
-  --color-indigo: #1E293B;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --color-coral: #ff823a;
+  --color-menta: #dcfd8b;
+  --color-lavanda: #bc84ee;
+  --color-indigo: #1e293b;
 }
 
 :root {
   --radius: 0.75rem;
-  --background: #FFFFFF;
-  --foreground: #1E293B;
-  --card: #FFFFFF;
-  --card-foreground: #1E293B;
-  --popover: #FFFFFF;
-  --popover-foreground: #1E293B;
-  --primary: #FF823A;
-  --primary-foreground: #FFFFFF;
-  --brand: #FF823A;
-  --brand-foreground: #FFFFFF;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #1E293B;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #BC84EE;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --whatsapp: #25D366;
-  --whatsapp-foreground: #FFFFFF;
-  --sale: #FF823A;
-  --sale-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #FF823A;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1E293B;
-  --sidebar-primary: #FF823A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
-  --sidebar-accent-foreground: #1E293B;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #FF823A;
+  --background: #ffffff;
+  --foreground: #1e293b;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+  --primary: #ff823a;
+  --primary-foreground: #ffffff;
+  --brand: #ff823a;
+  --brand-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #bc84ee;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --whatsapp: #25d366;
+  --whatsapp-foreground: #ffffff;
+  --sale: #ff823a;
+  --sale-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #ff823a;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1e293b;
+  --sidebar-primary: #ff823a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #1e293b;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #ff823a;
 }
 
 .dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
-  --primary: #FF823A;
-  --primary-foreground: #FFFFFF;
-  --brand: #FF823A;
-  --brand-foreground: #FFFFFF;
-  --secondary: #1E293B;
-  --secondary-foreground: #0F172A;
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #1e293b;
+  --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: #ff823a;
+  --primary-foreground: #ffffff;
+  --brand: #ff823a;
+  --brand-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #0f172a;
   --muted: #334155;
-  --muted-foreground: #94A3B8;
-  --accent: #BC84EE;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
-  --whatsapp: #25D366;
-  --whatsapp-foreground: #FFFFFF;
-  --sale: #FF823A;
-  --sale-foreground: #FFFFFF;
+  --muted-foreground: #94a3b8;
+  --accent: #bc84ee;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --whatsapp: #25d366;
+  --whatsapp-foreground: #ffffff;
+  --sale: #ff823a;
+  --sale-foreground: #ffffff;
   --border: #334155;
   --input: #334155;
-  --ring: #FF823A;
-  --sidebar: #0F172A;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #FF823A;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F8FAFC;
+  --ring: #ff823a;
+  --sidebar: #0f172a;
+  --sidebar-foreground: #f8fafc;
+  --sidebar-primary: #ff823a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #334155;
-  --sidebar-ring: #FF823A;
+  --sidebar-ring: #ff823a;
 }
 
 @layer base {
@@ -139,8 +139,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
   }
 
@@ -151,23 +156,42 @@
 
 /* Redesign custom animations */
 @keyframes infinite-scroll-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(1.5deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1.5deg);
+  }
 }
 
 @keyframes float-reverse {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(12px) rotate(-1.5deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(12px) rotate(-1.5deg);
+  }
 }
 
 @keyframes morph {
-  0%, 100% { border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%; }
-  50% { border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%; }
+  0%,
+  100% {
+    border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  }
+  50% {
+    border-radius: 70% 30% 52% 48% / 60% 40% 60% 40%;
+  }
 }
 
 .animate-infinite-scroll {
@@ -193,9 +217,15 @@
 }
 
 @keyframes soccer-spin {
-  0% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(180deg); }
-  100% { transform: translateY(0) rotate(360deg); }
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(180deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
 }
 
 .animate-soccer-ball {
@@ -216,44 +246,43 @@
 }
 
 /* ── Bio-Link Typography System ── */
-.typography-sans, 
+.typography-sans,
 .typography-sans * {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
 }
 
-.typography-serif, 
+.typography-serif,
 .typography-serif * {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif !important;
 }
-.typography-serif h1, 
-.typography-serif h2, 
-.typography-serif h3, 
-.typography-serif h1 *, 
-.typography-serif h2 *, 
-.typography-serif h3 *, 
-.typography-serif .font-serif-editorial, 
+.typography-serif h1,
+.typography-serif h2,
+.typography-serif h3,
+.typography-serif h1 *,
+.typography-serif h2 *,
+.typography-serif h3 *,
+.typography-serif .font-serif-editorial,
 .typography-serif .font-serif-editorial * {
-  font-family: 'Playfair Display', Georgia, serif !important;
+  font-family: "Playfair Display", Georgia, serif !important;
 }
 
-.typography-rounded, 
+.typography-rounded,
 .typography-rounded * {
-  font-family: 'Quicksand', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: "Quicksand", ui-sans-serif, system-ui, sans-serif !important;
 }
 
-.typography-modern, 
+.typography-modern,
 .typography-modern * {
-  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif !important;
+  font-family: "Outfit", ui-sans-serif, system-ui, sans-serif !important;
 }
 
 /* Helper classes */
 .font-serif-editorial {
-  font-family: 'Playfair Display', Georgia, serif !important;
+  font-family: "Playfair Display", Georgia, serif !important;
 }
 .font-sans-bloom {
-  font-family: 'Quicksand', sans-serif !important;
+  font-family: "Quicksand", sans-serif !important;
 }
 .font-sans-vibe {
-  font-family: 'Outfit', sans-serif !important;
+  font-family: "Outfit", sans-serif !important;
 }
-
