@@ -40,4 +40,4 @@ $$;
 GRANT EXECUTE ON FUNCTION public.check_invite(TEXT) TO public, anon, authenticated;
 
 -- ─── 2. ELIMINACIÓN DE LA POLÍTICA DE SELECCIÓN PÚBLICA EN invites ───────────
-DROP POLICY IF EXISTS "invites_public_select" ON public.invites;
+DROP POLICY IF EXISTS "Lectura pública de invites" ON public.invites;
