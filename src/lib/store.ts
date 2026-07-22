@@ -793,6 +793,24 @@ export const useApp = create<AppState>()(
 
       deleteProduct: async (storeId, productId) => {
         try {
+          // Obtener el producto del estado antes de eliminarlo
+          const store = get().stores.find((st) => st.id === storeId);
+          const product = store?.products.find((p) => p.id === productId);
+
+          // Eliminar la imagen física del storage si existe
+          if (product && product.image && product.image.includes("/public/images/")) {
+            try {
+              const parts = product.image.split("/public/images/");
+              if (parts.length > 1) {
+                const imagePath = decodeURIComponent(parts[1].split("?")[0]);
+                console.log(`[deleteProduct] Eliminando imagen del storage: ${imagePath}`);
+                await supabase.storage.from("images").remove([imagePath]);
+              }
+            } catch (err) {
+              console.error("[deleteProduct] Falló la eliminación de la imagen en storage:", err);
+            }
+          }
+
           const { error } = await supabase.from("products").delete().eq("id", productId);
           if (error) throw error;
 

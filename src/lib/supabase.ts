@@ -63,6 +63,7 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     const { data, error } = await supabase.storage.from("images").upload(cleanPath, blob, {
       contentType: mime,
       upsert: true,
+      cacheControl: "31536000",
     });
 
     if (error) throw error;
