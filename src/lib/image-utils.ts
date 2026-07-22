@@ -151,12 +151,13 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
 export function getOptimizedImageUrl(url: string | null | undefined, width: number = 600): string {
   if (!url) return "";
   
-  // Si ya es un base64 Data URL, o si es un SVG local, o si es una ruta local, no lo tocamos.
+  // Si ya es un base64 Data URL, o SVG local, o ruta local, o URL oficial de Supabase Storage, no la proxyamos por weserv.nl
   if (
     url.startsWith("data:") || 
     url.includes(".svg") || 
     url.startsWith("/") || 
-    url.startsWith("./")
+    url.startsWith("./") ||
+    url.includes("supabase.co/storage")
   ) {
     return url;
   }
