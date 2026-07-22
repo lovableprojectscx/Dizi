@@ -144,153 +144,143 @@ export async function urlToBase64(
   maxDim = 400,
   isCircle = false,
 ): Promise<string | null> {
-  try {
-    let blob: Blob | null = null;
-    let useBlobUrl = false;
+  if (!url) return null;
 
-    // 1. Intentar descargar mediante el cliente de Supabase si aplica
-    const storageMatch = url.match(/\/storage\/v1\/object\/(public|sign)\/([^/]+)\/(.+)$/);
-    if (storageMatch) {
-      const bucket = storageMatch[2];
-      let path = storageMatch[3];
-      const qIndex = path.indexOf("?");
-      if (qIndex !== -1) {
-        path = path.substring(0, qIndex);
-      }
-      try {
-        const { data, error } = await supabase.storage.from(bucket).download(path);
-        if (!error && data) {
-          blob = data;
-          useBlobUrl = true;
-        }
-      } catch (e) {
-        console.warn("[PDF Supabase Download Exception]", e);
-      }
-    }
+  // Timeout estricto de 2.5s por imagen para no congelar la generación del PDF con catálogos grandes
+  const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
 
-    // 2. Si no es de Supabase o falló la descarga por SDK, intentar fetch tradicional (sin y con cache buster)
-    if (!blob) {
-      try {
-        const res = await fetch(url, { mode: "cors" });
-        if (res.ok) {
-          blob = await res.blob();
-          useBlobUrl = true;
+  const processImage = async (): Promise<string | null> => {
+    try {
+      let blob: Blob | null = null;
+      let useBlobUrl = false;
+
+      // 1. Si es de Supabase Storage, descargar con el SDK
+      const storageMatch = url.match(/\/storage\/v1\/object\/(public|sign)\/([^/]+)\/(.+)$/);
+      if (storageMatch) {
+        const bucket = storageMatch[2];
+        let path = storageMatch[3];
+        const qIndex = path.indexOf("?");
+        if (qIndex !== -1) {
+          path = path.substring(0, qIndex);
         }
-      } catch (e) {
         try {
-          const separator = url.includes("?") ? "&" : "?";
-          const cacheBusterUrl = `${url}${separator}t_pdf=${Date.now()}`;
-          const res = await fetch(cacheBusterUrl, { mode: "cors" });
+          const { data, error } = await supabase.storage.from(bucket).download(path);
+          if (!error && data) {
+            blob = data;
+            useBlobUrl = true;
+          } else {
+            // Si Supabase Storage devolvió error (ej. 404 Not Found), abortar inmediatamente sin reintentos
+            return null;
+          }
+        } catch {
+          return null;
+        }
+      }
+
+      // 2. Si no es de Supabase, intentar fetch tradicional
+      if (!blob) {
+        try {
+          const res = await fetch(url, { mode: "cors" });
           if (res.ok) {
             blob = await res.blob();
             useBlobUrl = true;
+          } else {
+            return null;
           }
-        } catch (e2) {
-          console.warn("[PDF Fetch Failed]", e2);
+        } catch {
+          return null;
         }
       }
-    }
 
-    // 3. Cargar en objeto Image para procesar en canvas
-    const img = new Image();
-    if (useBlobUrl && blob) {
-      const blobUrl = URL.createObjectURL(blob);
-      try {
+      // 3. Cargar en objeto Image para procesar en canvas
+      const img = new Image();
+      if (useBlobUrl && blob) {
+        const blobUrl = URL.createObjectURL(blob);
+        try {
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = blobUrl;
+          });
+        } finally {
+          URL.revokeObjectURL(blobUrl);
+        }
+      } else {
+        img.crossOrigin = "anonymous";
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
-          img.src = blobUrl;
+          img.src = url;
         });
-      } finally {
-        URL.revokeObjectURL(blobUrl);
       }
-    } else {
-      // FALLBACK DIRECTO: Si los métodos de descarga directa fallaron (por CORS, headers, CDN),
-      // intentamos cargar la imagen directamente con crossOrigin = anonymous.
-      img.crossOrigin = "anonymous";
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = url;
-      });
-    }
 
-    // Calcular dimensiones del canvas final respetando el aspect ratio objetivo
-    let canvasWidth = maxDim;
-    let canvasHeight = maxDim;
+      // Calcular dimensiones del canvas final respetando el aspect ratio objetivo
+      let canvasWidth = maxDim;
+      let canvasHeight = maxDim;
 
-    if (targetAspectRatio) {
-      if (targetAspectRatio > 1) {
-        // Ancho es mayor que alto (ej. Rústico)
-        canvasWidth = maxDim;
-        canvasHeight = Math.round(maxDim / targetAspectRatio);
+      if (targetAspectRatio) {
+        if (targetAspectRatio > 1) {
+          canvasWidth = maxDim;
+          canvasHeight = Math.round(maxDim / targetAspectRatio);
+        } else {
+          canvasHeight = maxDim;
+          canvasWidth = Math.round(maxDim * targetAspectRatio);
+        }
       } else {
-        // Alto es mayor que ancho
-        canvasHeight = maxDim;
-        canvasWidth = Math.round(maxDim * targetAspectRatio);
+        if (img.width > img.height) {
+          canvasHeight = Math.round((img.height * maxDim) / img.width);
+          canvasWidth = maxDim;
+        } else {
+          canvasWidth = Math.round((img.width * maxDim) / img.height);
+          canvasHeight = maxDim;
+        }
       }
-    } else {
-      // Mantener aspect ratio original
-      if (img.width > img.height) {
-        canvasHeight = Math.round((img.height * maxDim) / img.width);
-        canvasWidth = maxDim;
+
+      let sourceX = 0;
+      let sourceY = 0;
+      let sourceWidth = img.width;
+      let sourceHeight = img.height;
+
+      if (targetAspectRatio) {
+        const imgAspectRatio = img.width / img.height;
+        if (imgAspectRatio > targetAspectRatio) {
+          sourceWidth = img.height * targetAspectRatio;
+          sourceX = (img.width - sourceWidth) / 2;
+        } else {
+          sourceHeight = img.width / targetAspectRatio;
+          sourceY = (img.height - sourceHeight) / 2;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+
+      if (isCircle) {
+        ctx.beginPath();
+        ctx.arc(canvasWidth / 2, canvasHeight / 2, canvasWidth / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
       } else {
-        canvasWidth = Math.round((img.width * maxDim) / img.height);
-        canvasHeight = maxDim;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       }
+
+      ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvasWidth, canvasHeight);
+
+      const compressedBase64 = isCircle
+        ? canvas.toDataURL("image/png")
+        : canvas.toDataURL("image/jpeg", 0.75);
+
+      return compressedBase64;
+    } catch {
+      return null;
     }
+  };
 
-    // Calcular de qué parte de la imagen origen cortar (cropping en el centro al estilo 'object-fit: cover')
-    let sourceX = 0;
-    let sourceY = 0;
-    let sourceWidth = img.width;
-    let sourceHeight = img.height;
-
-    if (targetAspectRatio) {
-      const imgAspectRatio = img.width / img.height;
-      if (imgAspectRatio > targetAspectRatio) {
-        // La imagen origen es más ancha de lo requerido, cortamos a los lados
-        sourceWidth = img.height * targetAspectRatio;
-        sourceX = (img.width - sourceWidth) / 2;
-      } else {
-        // La imagen origen es más alta de lo requerido, cortamos arriba y abajo
-        sourceHeight = img.width / targetAspectRatio;
-        sourceY = (img.height - sourceHeight) / 2;
-      }
-    }
-
-    // Dibujar en canvas
-    const canvas = document.createElement("canvas");
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-
-    if (isCircle) {
-      // Recorte circular
-      ctx.beginPath();
-      ctx.arc(canvasWidth / 2, canvasHeight / 2, canvasWidth / 2, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-    } else {
-      // Fondo blanco por si la imagen tiene transparencia (ej. PNG/WebP transparentes)
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    }
-
-    // Dibujar recortado y centrado
-    ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvasWidth, canvasHeight);
-
-    // Exportar. Si es círculo, exportamos como PNG para conservar transparencia en las esquinas
-    const compressedBase64 = isCircle
-      ? canvas.toDataURL("image/png")
-      : canvas.toDataURL("image/jpeg", 0.75); // 75% calidad para JPEGs
-
-    return compressedBase64;
-  } catch (err) {
-    console.error("[PDF Image Compress Error]", err);
-    return null;
-  }
+  return Promise.race([processImage(), timeoutPromise]);
 }
 
 /** Sanitiza texto para evitar problemas con jsPDF */
