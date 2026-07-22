@@ -118,7 +118,8 @@ interface AppState {
   impersonatedBy: string | null;
   fetchError: string | null;
   promotions: PlanPromotion[];
-  fetchData: () => Promise<void>;
+  lastFetched: number | null;
+  fetchData: (force?: boolean) => Promise<void>;
   setCurrentStore: (id: string | null) => void;
   updateStore: (id: string, patch: Partial<Store>) => Promise<void>;
   addStore: (store: Store) => void;
@@ -166,14 +167,28 @@ if (typeof window !== "undefined") {
 
 export const useApp = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       stores: [],
       currentStoreId: null,
       impersonatedBy: null,
       fetchError: null,
       promotions: [],
+      lastFetched: null,
 
-      fetchData: async () => {
+      fetchData: async (force = false) => {
+        const state = get();
+        
+        // Cache de 5 minutos para evitar consultas masivas innecesarias a la base de datos en cada navegación
+        if (
+          !force &&
+          state.stores.length > 0 &&
+          state.lastFetched &&
+          Date.now() - state.lastFetched < 5 * 60 * 1000
+        ) {
+          console.log("[fetchData] Usando datos de tiendas desde el cache local.");
+          return;
+        }
+
         set({ fetchError: null });
         try {
           const { data, error } = await supabase
@@ -187,7 +202,12 @@ export const useApp = create<AppState>()(
 
           if (data) {
             const dbStores = data.map((row) => mapStoreFromDB(row));
-            set({ stores: dbStores, promotions: dbPromotions, fetchError: null });
+            set({
+              stores: dbStores,
+              promotions: dbPromotions,
+              fetchError: null,
+              lastFetched: Date.now(),
+            });
           }
         } catch (err: any) {
           console.error("[fetchData] Supabase error:", err);

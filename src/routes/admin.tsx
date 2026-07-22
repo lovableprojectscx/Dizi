@@ -55,6 +55,7 @@ function AdminLayout() {
   const storeId = useApp((s) => s.currentStoreId);
   const stores = useApp((s) => s.stores);
   const fetchError = useApp((s) => s.fetchError);
+  const fetchData = useApp((s) => s.fetchData);
   const impersonating = useApp((s) => s.impersonatedBy);
   const stop = useApp((s) => s.stopImpersonation);
   const setStore = useApp((s) => s.setCurrentStore);
@@ -84,7 +85,8 @@ function AdminLayout() {
                 </p>
               </div>
               <Button
-                onClick={() => {
+                onClick={async () => {
+                  await fetchData(true);
                   router.invalidate();
                 }}
                 className="mt-2 font-bold h-10 px-6"

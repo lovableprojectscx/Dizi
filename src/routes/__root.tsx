@@ -47,7 +47,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => {
+            onClick={async () => {
+              try {
+                await useApp.getState().fetchData(true);
+              } catch {}
               router.invalidate();
               reset();
             }}
