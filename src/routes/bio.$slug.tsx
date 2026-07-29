@@ -44,7 +44,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
     setTimeout(
       () =>
         reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")),
-      6000,
+      12000,
     ),
   );
 
