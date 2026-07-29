@@ -148,23 +148,8 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
  * Optimiza una URL de imagen para reducir el consumo de ancho de banda y cached egress.
  * Si es una URL de Supabase (o cualquier imagen externa), la enruta a través del servicio gratuito de optimización e imágenes images.weserv.nl.
  */
-export function getOptimizedImageUrl(url: string | null | undefined, width: number = 600): string {
+export function getOptimizedImageUrl(url: string | null | undefined, _width: number = 600): string {
   if (!url) return "";
-  
-  // Si ya es un base64 Data URL, o SVG local, o ruta local, o URL oficial de Supabase Storage, no la proxyamos por weserv.nl
-  if (
-    url.startsWith("data:") || 
-    url.includes(".svg") || 
-    url.startsWith("/") || 
-    url.startsWith("./") ||
-    url.includes("supabase.co/storage")
-  ) {
-    return url;
-  }
-  
-  // Limpiar espacios en blanco
   const cleanUrl = url.trim();
-  
-  // Enrutar por weserv.nl para redimensionar y convertir a webp en la caché de Cloudflare
-  return `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&w=${width}&output=webp`;
+  return cleanUrl;
 }
