@@ -60,15 +60,25 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     // Reemplazar la extensión en la ruta por la correspondiente al formato real
     const cleanPath = path.replace(/\.[a-zA-Z0-9]+$/, `.${ext}`);
 
-    const { data, error } = await supabase.storage.from("images").upload(cleanPath, blob, {
+    let res = await supabase.storage.from("images").upload(cleanPath, blob, {
       contentType: mime,
       upsert: true,
       cacheControl: "31536000",
     });
 
-    if (error) throw error;
+    // Reintento automático en caso de micro-corte de red móvil
+    if (res.error) {
+      console.warn("[uploadBase64ToStorage] Reintentando subida de imagen por parpadeo de red...", res.error);
+      res = await supabase.storage.from("images").upload(cleanPath, blob, {
+        contentType: mime,
+        upsert: true,
+        cacheControl: "31536000",
+      });
+    }
 
-    const { data: urlData } = supabase.storage.from("images").getPublicUrl(data.path);
+    if (res.error) throw res.error;
+
+    const { data: urlData } = supabase.storage.from("images").getPublicUrl(res.data.path);
     return `${urlData.publicUrl}?t=${Date.now()}`;
   } catch (error) {
     console.error("[uploadBase64ToStorage] Error uploading image:", error);
