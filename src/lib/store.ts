@@ -684,7 +684,11 @@ export const useApp = create<AppState>()(
           try {
             imageUrl = await uploadBase64ToStorage(imageUrl, `${storeId}/products/${prodId}.webp`);
           } catch (uploadErr) {
-            console.error("[upsertProduct] Image upload failed, falling back to base64", uploadErr);
+            console.error("[upsertProduct] Image upload failed:", uploadErr);
+            // Si la subida al Storage falla y el base64 es grande, abortar para evitar rechazos por Payload Too Large en PostgREST
+            if (imageUrl.length > 200000) {
+              throw new Error("No se pudo subir la imagen del producto al servidor. Verifica tu conexión a internet.");
+            }
           }
         }
 

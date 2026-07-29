@@ -7,10 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Faltan las credenciales de Supabase en .env");
 }
 
-// Timeout de 10 segundos para todas las peticiones a Supabase (evita bloqueos infinitos por ISP/DNS)
+// Timeout de 30 segundos para peticiones a Supabase (permite subida de imágenes en conexiones móviles)
 const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
   const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 10000);
+  const id = setTimeout(() => controller.abort(), 30000);
   return fetch(url, { ...options, signal: controller.signal })
     .then((res) => {
       clearTimeout(id);
