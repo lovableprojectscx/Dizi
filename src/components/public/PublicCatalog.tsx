@@ -106,6 +106,50 @@ import { getOptimizedImageUrl } from "@/lib/image-utils";
 
 const EMPTY_CART: any[] = [];
 
+function InfiniteScrollSentinel({
+  hasMore,
+  onLoadMore,
+  currentCount,
+  totalCount,
+}: {
+  hasMore: boolean;
+  onLoadMore: () => void;
+  currentCount: number;
+  totalCount: number;
+}) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { rootMargin: "400px" }
+    );
+
+    const el = sentinelRef.current;
+    if (el) observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore]);
+
+  if (!hasMore) return null;
+
+  return (
+    <div
+      ref={sentinelRef}
+      className="col-span-full w-full py-8 flex flex-col items-center justify-center gap-2 select-none"
+    >
+      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground bg-background/90 backdrop-blur px-4 py-2 rounded-full border shadow-sm">
+        <Loader2 className="h-4 w-4 animate-spin text-primary" />
+        <span>Cargando productos ({currentCount} de {totalCount})...</span>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────────────────────
    Model → CSS variables + structural config
 ───────────────────────────────────────────────────────── */
@@ -2096,9 +2140,22 @@ export function PublicCatalog({
     modelId,
   ]);
 
+  const [visibleLimit, setVisibleLimit] = useState(24);
+
+  // Reiniciar el límite visible a 24 al cambiar cualquier filtro, búsqueda o categoría
+  useEffect(() => {
+    setVisibleLimit(24);
+  }, [activeCat, query, priceRange, selectedDiet, sortBy]);
+
   const filtered = useMemo(() => {
-    return rawFiltered;
-  }, [rawFiltered]);
+    return rawFiltered.slice(0, visibleLimit);
+  }, [rawFiltered, visibleLimit]);
+
+  const hasMoreProducts = visibleLimit < rawFiltered.length;
+
+  const loadMoreProducts = useCallback(() => {
+    setVisibleLimit((prev) => prev + 24);
+  }, []);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -7000,6 +7057,14 @@ export function PublicCatalog({
                 })}
               </div>
             )}
+
+            {/* Sentinel de Carga Progresiva (Infinite Scroll) */}
+            <InfiniteScrollSentinel
+              hasMore={hasMoreProducts}
+              onLoadMore={loadMoreProducts}
+              currentCount={filtered.length}
+              totalCount={rawFiltered.length}
+            />
 
             {mode === "bio" && (
               <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
