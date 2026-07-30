@@ -619,13 +619,13 @@ function DisenoUnificadoPage() {
               <div>
                 <h3 className="font-extrabold text-base text-zinc-900">Módulos & Funcionalidades del Catálogo</h3>
                 <p className="text-xs text-zinc-550 mt-0.5">
-                  Los módulos añaden capacidades interactivas. Los candados indican el plan requerido para desbloquear la función.
+                  Haz clic en los botones de acción para gestionar cada función o desbloquear los módulos con un plan superior.
                 </p>
               </div>
 
               <div className="space-y-3">
                 {/* 1. Marca de Agua Dizi */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-zinc-200 flex items-center justify-center shrink-0">
                       <Megaphone className="h-4.5 w-4.5 text-zinc-700" />
@@ -633,23 +633,27 @@ function DisenoUnificadoPage() {
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Marca de Agua Dizi</h4>
                       <p className="text-[11px] text-zinc-550">
-                        {currentPlanLevel === 0 ? "Visible en Plan Semilla (Genera visibilidad viral)" : "Oculta automáticamente en tu plan activo"}
+                        {currentPlanLevel === 0 ? "Visible al pie en Plan Semilla" : "Oculta automáticamente en tu plan activo"}
                       </p>
                     </div>
                   </div>
-                  {currentPlanLevel === 0 ? (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-bold">
-                      Visible (Semilla)
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Oculta
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel === 0 ? (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-semibold">
+                          Quitar Marca de Agua
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                        ✓ Oculta (Marca Propia)
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 {/* 2. Banners en Portada */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                       <Image className="h-4.5 w-4.5 text-blue-600" />
@@ -657,103 +661,134 @@ function DisenoUnificadoPage() {
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Banners en Portada</h4>
                       <p className="text-[11px] text-zinc-550">
-                        Capacidad de portadas: {currentPlanLevel === 0 ? "1 Banner" : currentPlanLevel === 1 ? "1 Banner" : currentPlanLevel === 2 ? "Hasta 3 Banners" : "Hasta 5 Banners"}
+                        Capacidad actual: {currentPlanLevel < 2 ? "1 Banner principal" : currentPlanLevel === 2 ? "Hasta 3 Banners en carrusel" : "Hasta 5 Banners en carrusel"}
                       </p>
                     </div>
                   </div>
-                  {hasMultipleBanners && (
-                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[9px] font-bold">
-                      Múltiples Activos
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <Link to="/admin/configuracion">
+                      <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                        Gestionar Banners
+                      </Button>
+                    </Link>
+                    {currentPlanLevel < 2 && (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                          Ampliar
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
-                {/* 3. Buscador de Productos */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                {/* 3. Buscador Inteligente */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
                       <Search className="h-4.5 w-4.5 text-indigo-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Buscador Inteligente</h4>
-                      <p className="text-[11px] text-zinc-550">Permite a los visitantes filtrar productos en tiempo real</p>
+                      <p className="text-[11px] text-zinc-550">Filtro en tiempo real para encontrar artículos al instante</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 1 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Emprendedor+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 1 ? (
+                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                        ✓ Activo
+                      </Badge>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
                 {/* 4. Catálogo en PDF */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                       <FileText className="h-4.5 w-4.5 text-emerald-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Exportar Catálogo en PDF</h4>
-                      <p className="text-[11px] text-zinc-550">Genera un PDF interactivo con enlaces a WhatsApp</p>
+                      <p className="text-[11px] text-zinc-550">Genera un PDF interactivo con enlaces hacia tu WhatsApp</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 1 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Emprendedor+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 1 ? (
+                      <Link to="/admin/productos">
+                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                          Exportar en Productos
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
                 {/* 5. Estadísticas de Visitas */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
                       <BarChart3 className="h-4.5 w-4.5 text-purple-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Estadísticas de Visitas</h4>
-                      <p className="text-[11px] text-zinc-550">Contador de métricas y rendimiento en tiempo real</p>
+                      <p className="text-[11px] text-zinc-550">Métricas de tráfico y clics en tiempo real</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 2 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Plan Pro+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 2 ? (
+                      <Link to="/admin/dashboard">
+                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                          Ver Estadísticas
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-purple-200 text-purple-700 hover:bg-purple-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
                 {/* 6. Filtro de Etiquetas */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                       <Tag className="h-4.5 w-4.5 text-amber-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Filtro Táctil de Etiquetas</h4>
-                      <p className="text-[11px] text-zinc-550">Filtra etiquetas como vegano, picante, más vendido o sin gluten</p>
+                      <p className="text-[11px] text-zinc-550">Etiquetas interactivas (vegano, picante, más vendido, sin gluten)</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 2 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado (Módulo 4)
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Plan Pro+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 2 ? (
+                      <Link to="/admin/productos">
+                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                          Asignar Etiquetas
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-amber-300 text-amber-800 hover:bg-amber-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
