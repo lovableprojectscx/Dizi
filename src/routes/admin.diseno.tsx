@@ -22,11 +22,14 @@ import {
   Moon,
   Sun,
   Maximize2,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
@@ -147,6 +150,7 @@ function DisenoUnificadoPage() {
   // Estado principal de navegación entre las 3 secciones
   const [activeSection, setActiveSection] = useState<"estructura" | "tema" | "modulos">("estructura");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 1. Estructura seleccionada (mapeando modelos legados como boutique a spotlight)
@@ -666,13 +670,13 @@ function DisenoUnificadoPage() {
               <div>
                 <h3 className="font-extrabold text-base text-zinc-900">Módulos & Funcionalidades del Catálogo</h3>
                 <p className="text-xs text-zinc-550 mt-0.5">
-                  Los módulos añaden capacidades interactivas. Los candados indican el plan requerido para desbloquear la función.
+                  Haz clic en los botones de acción para gestionar cada función o desbloquear los módulos con un plan superior.
                 </p>
               </div>
 
               <div className="space-y-3">
                 {/* 1. Marca de Agua Dizi */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-zinc-200 flex items-center justify-center shrink-0">
                       <Megaphone className="h-4.5 w-4.5 text-zinc-700" />
@@ -680,23 +684,27 @@ function DisenoUnificadoPage() {
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Marca de Agua Dizi</h4>
                       <p className="text-[11px] text-zinc-550">
-                        {currentPlanLevel === 0 ? "Visible en Plan Semilla (Genera visibilidad viral)" : "Oculta automáticamente en tu plan activo"}
+                        {currentPlanLevel === 0 ? "Visible al pie en Plan Semilla" : "Oculta automáticamente en tu plan activo"}
                       </p>
                     </div>
                   </div>
-                  {currentPlanLevel === 0 ? (
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-bold">
-                      Visible (Semilla)
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Oculta
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel === 0 ? (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 font-semibold">
+                          Quitar Marca de Agua
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                        ✓ Oculta (Marca Propia)
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 {/* 2. Banners en Portada */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
                       <Image className="h-4.5 w-4.5 text-blue-600" />
@@ -704,103 +712,134 @@ function DisenoUnificadoPage() {
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Banners en Portada</h4>
                       <p className="text-[11px] text-zinc-550">
-                        Capacidad de portadas: {currentPlanLevel === 0 ? "1 Banner" : currentPlanLevel === 1 ? "1 Banner" : currentPlanLevel === 2 ? "Hasta 3 Banners" : "Hasta 5 Banners"}
+                        Capacidad actual: {currentPlanLevel < 2 ? "1 Banner principal" : currentPlanLevel === 2 ? "Hasta 3 Banners en carrusel" : "Hasta 5 Banners en carrusel"}
                       </p>
                     </div>
                   </div>
-                  {hasMultipleBanners && (
-                    <Badge className="bg-purple-100 text-purple-800 border-purple-200 text-[9px] font-bold">
-                      Múltiples Activos
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <Link to="/admin/configuracion">
+                      <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                        Gestionar Banners
+                      </Button>
+                    </Link>
+                    {currentPlanLevel < 2 && (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                          Ampliar
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
-                {/* 3. Buscador de Productos */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                {/* 3. Buscador Inteligente */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
                       <Search className="h-4.5 w-4.5 text-indigo-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Buscador Inteligente</h4>
-                      <p className="text-[11px] text-zinc-550">Permite a los visitantes filtrar productos en tiempo real</p>
+                      <p className="text-[11px] text-zinc-550">Filtro en tiempo real para encontrar artículos al instante</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 1 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Emprendedor+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 1 ? (
+                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                        ✓ Activo
+                      </Badge>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
                 {/* 4. Catálogo en PDF */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
                       <FileText className="h-4.5 w-4.5 text-emerald-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Exportar Catálogo en PDF</h4>
-                      <p className="text-[11px] text-zinc-550">Genera un PDF interactivo con enlaces a WhatsApp</p>
+                      <p className="text-[11px] text-zinc-550">Genera un PDF interactivo con enlaces hacia tu WhatsApp</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 1 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Emprendedor+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 1 ? (
+                      <Link to="/admin/productos">
+                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                          Exportar en Productos
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
                 {/* 5. Estadísticas de Visitas */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
                       <BarChart3 className="h-4.5 w-4.5 text-purple-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Estadísticas de Visitas</h4>
-                      <p className="text-[11px] text-zinc-550">Contador de métricas y rendimiento en tiempo real</p>
+                      <p className="text-[11px] text-zinc-550">Métricas de tráfico y clics en tiempo real</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 2 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Plan Pro+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 2 ? (
+                      <Link to="/admin/dashboard">
+                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                          Ver Estadísticas
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-purple-200 text-purple-700 hover:bg-purple-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
 
                 {/* 6. Filtro de Etiquetas */}
-                <div className="flex items-center justify-between p-4 rounded-2xl border bg-zinc-50/50">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
                       <Tag className="h-4.5 w-4.5 text-amber-600" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Filtro Táctil de Etiquetas</h4>
-                      <p className="text-[11px] text-zinc-550">Filtra etiquetas como vegano, picante, más vendido o sin gluten</p>
+                      <p className="text-[11px] text-zinc-550">Etiquetas interactivas (vegano, picante, más vendido, sin gluten)</p>
                     </div>
                   </div>
-                  {currentPlanLevel >= 2 ? (
-                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[9px] font-bold">
-                      Habilitado (Módulo 4)
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-zinc-200 text-zinc-700 border-none text-[9px] font-bold flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Plan Pro+
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {currentPlanLevel >= 2 ? (
+                      <Link to="/admin/productos">
+                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
+                          Asignar Etiquetas
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="outline" className="text-xs h-8 border-amber-300 text-amber-800 hover:bg-amber-50 font-semibold gap-1">
+                          <Lock className="h-3 w-3" /> Desbloquear
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -834,6 +873,81 @@ function DisenoUnificadoPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Previsualización Expandida con Conmutador Móvil / Escritorio */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent
+          className={cn(
+            "p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-3xl flex flex-col transition-all duration-300",
+            previewDevice === "mobile"
+              ? "max-w-2xl w-[95vw] h-[92vh]"
+              : "max-w-6xl w-[95vw] h-[92vh]"
+          )}
+        >
+          <DialogHeader className="p-3.5 bg-zinc-900 border-b border-zinc-800 flex flex-row items-center justify-between pr-12">
+            <DialogTitle className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              Vista Previa Expandida
+            </DialogTitle>
+
+            <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("mobile")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  previewDevice === "mobile"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-zinc-400 hover:text-white"
+                )}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Móvil
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("desktop")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  previewDevice === "desktop"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-zinc-400 hover:text-white"
+                )}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+                Escritorio (PC)
+              </button>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 w-full h-full overflow-y-auto bg-zinc-900 flex justify-center p-4">
+            {previewDevice === "mobile" ? (
+              <div className="w-[375px] h-[680px] sm:w-[390px] sm:h-[750px] bg-white rounded-[40px] border-[8px] border-zinc-800 shadow-2xl overflow-hidden relative my-auto shrink-0">
+                <div className="absolute top-0 inset-x-0 h-5 bg-zinc-800 rounded-b-2xl w-28 mx-auto z-30 pointer-events-none" />
+                <div className="w-full h-full overflow-y-auto">
+                  <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-full bg-white rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col">
+                <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center gap-3 shrink-0">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                  <div className="flex-1 bg-zinc-900 text-zinc-400 text-xs py-1 px-3 rounded-md font-mono flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-emerald-400" /> https://dizi.pe/{store.slug}
+                  </div>
+                </div>
+                <div className="flex-1 w-full overflow-y-auto">
+                  <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
