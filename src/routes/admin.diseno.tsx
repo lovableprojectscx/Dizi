@@ -27,6 +27,7 @@ import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
@@ -783,6 +784,23 @@ function DisenoUnificadoPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Previsualización Expandida */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-3xl flex flex-col">
+          <DialogHeader className="p-4 bg-zinc-900 border-b border-zinc-800 flex flex-row items-center justify-between">
+            <DialogTitle className="text-white text-sm font-bold flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              Vista Previa Expandida del Catálogo
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full overflow-y-auto bg-zinc-900 flex justify-center p-4">
+            <div className="w-full max-w-sm sm:max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 my-auto min-h-[600px]">
+              <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
