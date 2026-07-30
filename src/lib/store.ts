@@ -30,6 +30,11 @@ const mapStoreFromDB = (row: any): Store => ({
   niche: row.niche ?? "general",
   catalogTypography: row.catalog_typography ?? "sans",
   cardStyle: row.card_style ?? "standard",
+  cardBg: row.card_bg ?? null,
+  accentColor: row.accent_color ?? null,
+  borderRadius: row.border_radius ?? null,
+  imgShape: row.img_shape ?? null,
+  isDark: row.is_dark ?? false,
   ownerId: row.owner_id,
   active: row.active,
   isPublished: row.is_published,
@@ -390,6 +395,11 @@ export const useApp = create<AppState>()(
           dbPatch.promo_bar_text_color = updatedPatch.promoBarTextColor;
         if (updatedPatch.promoBarIsMarquee !== undefined)
           dbPatch.promo_bar_is_marquee = updatedPatch.promoBarIsMarquee;
+        if (updatedPatch.cardBg !== undefined) dbPatch.card_bg = updatedPatch.cardBg;
+        if (updatedPatch.accentColor !== undefined) dbPatch.accent_color = updatedPatch.accentColor;
+        if (updatedPatch.borderRadius !== undefined) dbPatch.border_radius = updatedPatch.borderRadius;
+        if (updatedPatch.imgShape !== undefined) dbPatch.img_shape = updatedPatch.imgShape;
+        if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
 
         try {
           if (Object.keys(dbPatch).length > 0) {

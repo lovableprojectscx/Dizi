@@ -74,6 +74,11 @@ export interface Store {
   bannerStyle?: "direct" | "framed" | "curved" | null;
   catalogTypography?: "sans" | "serif" | "rounded" | "modern" | null;
   cardStyle?: "standard" | "flat" | "shadow" | "curved" | null;
+  cardBg?: string | null;
+  accentColor?: string | null;
+  borderRadius?: string | null;
+  imgShape?: "square" | "rounded" | "circle" | null;
+  isDark?: boolean | null;
   plan: PlanId;
   active: boolean;
   createdAt: string;

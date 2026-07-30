@@ -30,4 +30,10 @@ export default defineConfig({
     { name: "chromium-escritorio", use: { ...devices["Desktop Chrome"] } },
     { name: "movil-android", use: { ...devices["Pixel 7"] } },
   ],
+  webServer: {
+    command: "npm run dev",
+    url: "http://localhost:5173",
+    reuseExistingServer: false,
+    timeout: 120_000,
+  },
 });

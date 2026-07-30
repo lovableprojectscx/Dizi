@@ -182,7 +182,7 @@ describe("CatalogPdfExport - urlToBase64 unit tests", () => {
     expect(base64).toContain("data:image/jpeg;base64,mockedData");
   });
 
-  it("debe hacer fallback a crossOrigin=anonymous si el fetch falla por CORS u otro error", async () => {
+  it("debe retornar null si el fetch falla por CORS u otro error de red", async () => {
     const mockFetch = vi.mocked(globalThis.fetch);
     mockFetch.mockRejectedValue(new TypeError("Failed to fetch"));
 
@@ -190,7 +190,7 @@ describe("CatalogPdfExport - urlToBase64 unit tests", () => {
     const base64 = await urlToBase64(externalUrl);
 
     expect(mockFetch).toHaveBeenCalled();
-    expect(base64).toContain("data:image/jpeg;base64,mockedData");
+    expect(base64).toBeNull();
   });
 
   it("debe aplicar recorte circular y exportar a PNG si isCircle es true", async () => {

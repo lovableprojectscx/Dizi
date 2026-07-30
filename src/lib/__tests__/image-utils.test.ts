@@ -98,7 +98,7 @@ describe("Pruebas unitarias de image-utils.ts", () => {
     expect(drawingCanvas.height).toBe(800);
   });
 
-  it("debe redimensionar la imagen proporcionalmente si el ancho supera MAX_DIMENSION (2048)", async () => {
+  it("debe redimensionar la imagen proporcionalmente si el ancho supera MAX_DIMENSION (1080)", async () => {
     mockWidth = 3000;
     mockHeight = 1500;
     shouldFail = false;
@@ -108,12 +108,12 @@ describe("Pruebas unitarias de image-utils.ts", () => {
 
     const drawingCanvas = createdCanvases.find((c) => c.width > 0);
     expect(drawingCanvas).toBeDefined();
-    // 3000 -> 2048, alto = 1500 * 2048 / 3000 = 1024
-    expect(drawingCanvas.width).toBe(2048);
-    expect(drawingCanvas.height).toBe(1024);
+    // 3000 -> 1080, alto = 1500 * 1080 / 3000 = 540
+    expect(drawingCanvas.width).toBe(1080);
+    expect(drawingCanvas.height).toBe(540);
   });
 
-  it("debe redimensionar la imagen proporcionalmente si el alto supera MAX_DIMENSION (2048)", async () => {
+  it("debe redimensionar la imagen proporcionalmente si el alto supera MAX_DIMENSION (1080)", async () => {
     mockWidth = 1500;
     mockHeight = 3000;
     shouldFail = false;
@@ -123,9 +123,9 @@ describe("Pruebas unitarias de image-utils.ts", () => {
 
     const drawingCanvas = createdCanvases.find((c) => c.width > 0);
     expect(drawingCanvas).toBeDefined();
-    // 3000 -> 2048, ancho = 1500 * 2048 / 3000 = 1024
-    expect(drawingCanvas.height).toBe(2048);
-    expect(drawingCanvas.width).toBe(1024);
+    // 3000 -> 1080, ancho = 1500 * 1080 / 3000 = 540
+    expect(drawingCanvas.height).toBe(1080);
+    expect(drawingCanvas.width).toBe(540);
   });
 
   it("debe fallar si la imagen no se puede cargar", async () => {

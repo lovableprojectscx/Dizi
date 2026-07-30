@@ -47,3 +47,7 @@ AUTOMATIZAR PDF/
 docs/
 *.docx
 *.pptx
+
+# Evidencia de pruebas (se regenera en cada corrida)
+playwright-report/
+test-results/

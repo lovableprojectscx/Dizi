@@ -1,3 +1,4 @@
+import { resolveRenderModel } from "@/lib/design-catalog";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -1491,32 +1492,49 @@ export function PublicCatalog({
   const modelDaysLeft = modelGraceDaysLeft(store);
 
   /* ── Theme setup ─────────────────────────────────── */
-  const rawModelId = getEffectiveModel(store);
+  const rawModelId = resolveRenderModel(getEffectiveModel(store));
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
   const isPremiumModel =
-    modelId === "bloom" || modelId === "nature" || modelId === "bite" || modelId === "lookbook";
+    modelId === "bloom" ||
+    modelId === "bloom_general" ||
+    modelId === "bloom_floral" ||
+    modelId === "nature" ||
+    modelId === "bite" ||
+    modelId === "lookbook";
 
-  // Premium General visual configuration variables
-  const isSerif =
-    (isPremiumModel && (store.niche === "floreria" || modelId === "nature")) ||
-    (!isPremiumModel && store.catalogTypography === "serif");
-  const finalTypographyClass =
+  // Precedencia: la elección explícita del cliente siempre prevalece sobre el valor por defecto de la plantilla
+  const mapTypographyClass = (typ?: string | null) => {
+    switch (typ) {
+      case "serif":
+        return "typography-serif";
+      case "rounded":
+        return "typography-rounded";
+      case "modern":
+        return "typography-modern";
+      case "sans":
+        return "typography-sans";
+      default:
+        return null;
+    }
+  };
+
+  const defaultTypographyClass =
     isPremiumModel && (store.niche === "floreria" || modelId === "nature")
       ? "typography-serif"
-      : store.catalogTypography === "serif"
-        ? "typography-serif"
-        : store.catalogTypography === "rounded"
-          ? "typography-rounded"
-          : store.catalogTypography === "modern"
-            ? "typography-modern"
-            : "typography-sans";
+      : "typography-sans";
 
-  const cStyle =
-    isPremiumModel && store.niche === "floreria" ? "curved" : store.cardStyle || "standard";
+  const finalTypographyClass =
+    mapTypographyClass(store.catalogTypography) ?? defaultTypographyClass;
 
-  const isFloristBloom = isPremiumModel && store.niche === "floreria";
+  const isSerif = finalTypographyClass === "typography-serif";
+
+  const defaultCardStyle = isPremiumModel && store.niche === "floreria" ? "curved" : "standard";
+  const cStyle = store.cardStyle || defaultCardStyle;
+
+  const isCurvedStyle = cStyle === "curved";
+  const isFloristBloom = isCurvedStyle;
 
   const featuredCardStyle: React.CSSProperties = isFloristBloom
     ? {
@@ -1546,47 +1564,39 @@ export function PublicCatalog({
       }
     : {};
 
-  const featuredCardClass = isFloristBloom
+  const featuredCardClass = isCurvedStyle
     ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem_1rem_2.5rem_1rem] border hover:bg-[var(--card)] shadow-md hover:shadow-xl"
     : cStyle === "flat"
       ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-none hover:shadow-none"
       : cStyle === "shadow"
         ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] hover:opacity-95 shadow-md hover:shadow-xl"
-        : cStyle === "curved"
-          ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-[2.25rem_0.5rem_2.25rem_0.5rem] border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md"
-          : "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
+        : "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
 
   const featuredImgClass = cn(
     "relative aspect-square w-full overflow-hidden",
-    isPremiumModel && store.niche === "floreria"
+    isCurvedStyle
       ? "rounded-t-[7rem] rounded-b-[1.5rem] border"
       : cStyle === "shadow"
         ? "rounded-xl bg-muted border-none"
-        : cStyle === "curved"
-          ? "rounded-[1.75rem_0.375rem_1.75rem_0.375rem] bg-muted border border-[var(--border)]"
-          : "rounded-xl bg-muted border border-[var(--border)]",
+        : "rounded-xl bg-muted border border-[var(--border)]",
   );
 
   const gridCardClass =
-    isPremiumModel && store.niche === "floreria"
+    isCurvedStyle
       ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-[2.5rem_0.5rem_2.5rem_0.5rem] hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
       : cStyle === "flat"
         ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
         : cStyle === "shadow"
           ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border-none rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
-          : cStyle === "curved"
-            ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-[2.25rem_0.5rem_2.25rem_0.5rem] bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md"
-            : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
+          : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
 
   const gridImgClass = cn(
     "relative overflow-hidden aspect-square m-2",
-    isPremiumModel && store.niche === "floreria"
+    isCurvedStyle
       ? "rounded-[2rem_0.5rem_2rem_0.5rem] border"
       : cStyle === "shadow"
         ? "bg-muted rounded-xl border-none"
-        : cStyle === "curved"
-          ? "bg-muted rounded-[1.75rem_0.375rem_1.75rem_0.375rem] border border-[var(--border)]"
-          : "bg-muted rounded-xl border border-[var(--border)]",
+        : "bg-muted rounded-xl border border-[var(--border)]",
   );
 
   // Calculate luminance of a hex color (0 = black, 1 = white)
@@ -5953,8 +5963,8 @@ export function PublicCatalog({
                 {/* 1. Cover Banner Carousel */}
                 {(() => {
                   const banners = activeBanners;
-                  const bStyle =
-                    store.niche === "floreria" ? "curved" : store.bannerStyle || "framed";
+                  const defaultBannerStyle = store.niche === "floreria" ? "curved" : "framed";
+                  const bStyle = store.bannerStyle || defaultBannerStyle;
                   return (
                     <div
                       className={cn(
