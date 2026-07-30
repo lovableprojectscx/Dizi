@@ -914,17 +914,17 @@ function CategoryIcon({
 const scanProductBadges = (
   name: string,
   description?: string,
+  tags?: string[],
 ): { emoji: string; label: string }[] => {
   const text = `${name} ${description || ""}`.toLowerCase();
+  const tagList = Array.isArray(tags) ? tags.map((t) => t.toLowerCase()) : [];
+  const hasTag = (id: string, label: string, keywords: string[]) => {
+    if (tagList.includes(id.toLowerCase()) || tagList.includes(label.toLowerCase())) return true;
+    return keywords.some((kw) => text.includes(kw.toLowerCase()));
+  };
   const badges: { emoji: string; label: string }[] = [];
 
-  if (
-    text.includes("picante") ||
-    text.includes("chile") ||
-    text.includes("aji") ||
-    text.includes("hot") ||
-    text.includes("spicy")
-  ) {
+  if (hasTag("spicy", "Picante", ["picante", "chile", "aji", "hot", "spicy"])) {
     badges.push({ emoji: "🌶️", label: "Picante" });
   }
   if (
@@ -2164,6 +2164,18 @@ export function PublicCatalog({
     modelId,
   ]);
 
+  const availableTags = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of productsWithImages) {
+      if (Array.isArray(p.tags)) {
+        for (const t of p.tags) {
+          if (t) set.add(t);
+        }
+      }
+    }
+    return Array.from(set);
+  }, [productsWithImages]);
+
   const [visibleLimit, setVisibleLimit] = useState(24);
 
   // Reiniciar el límite visible a 24 al cambiar cualquier filtro, búsqueda o categoría
@@ -2561,7 +2573,7 @@ export function PublicCatalog({
                     <SlidersHorizontal className="h-4 w-4" />
                     <span>Filtros</span>
                     {(() => {
-                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0) + (selectedDiet !== "all" ? 1 : 0);
                       return cnt > 0 ? (
                         <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
                           {cnt}
@@ -2572,7 +2584,7 @@ export function PublicCatalog({
                 </div>
 
                 {/* Active filter tags */}
-                {(activeCat !== "all" || priceRange) && (
+                {(activeCat !== "all" || priceRange || selectedDiet !== "all") && (
                   <div className="flex flex-wrap gap-1.5">
                     {activeCat !== "all" && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
@@ -2587,6 +2599,17 @@ export function PublicCatalog({
                         )}
                         <button
                           onClick={() => setActiveCat("all")}
+                          className="ml-1 hover:opacity-60 transition"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                    {selectedDiet !== "all" && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        🏷️ {PRODUCT_TAGS.find((t) => t.id === selectedDiet)?.label || selectedDiet}
+                        <button
+                          onClick={() => setSelectedDiet("all")}
                           className="ml-1 hover:opacity-60 transition"
                         >
                           <X className="h-3 w-3" />
@@ -3061,29 +3084,56 @@ export function PublicCatalog({
                 </div>
               </div>
 
-              {/* Filtro de Precio */}
-              {hasPriceFilter && (
+              {/* Filtro de Etiquetas Táctiles */}
+              {availableTags.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-border">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left">
-                    Filtrar por Precio
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left flex items-center justify-between">
+                    <span>Etiquetas Táctiles</span>
                   </h3>
-                  <PriceRangeSlider
-                    min={priceMin}
-                    max={priceMax}
-                    value={priceRange ?? [priceMin, priceMax]}
-                    onChange={setPriceRange}
-                    onReset={() => setPriceRange(null)}
-                    isDark={effectiveIsDark}
-                  />
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => setSelectedDiet("all")}
+                      className={cn(
+                        "px-2.5 py-1 rounded-full text-xs font-bold transition border",
+                        selectedDiet === "all"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-secondary text-secondary-foreground border-border hover:bg-accent"
+                      )}
+                    >
+                      Todas
+                    </button>
+                    {availableTags.map((tagId) => {
+                      const tagDef = PRODUCT_TAGS.find((t) => t.id === tagId);
+                      const displayLabel = tagDef ? tagDef.label : tagId;
+                      const active =
+                        selectedDiet.toLowerCase() === tagId.toLowerCase() ||
+                        selectedDiet.toLowerCase() === displayLabel.toLowerCase();
+                      return (
+                        <button
+                          key={tagId}
+                          onClick={() => setSelectedDiet(active ? "all" : tagId)}
+                          className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-bold transition border",
+                            active
+                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                              : "bg-secondary text-secondary-foreground border-border hover:bg-accent"
+                          )}
+                        >
+                          {displayLabel}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
               {/* Limpiar Filtros */}
-              {(activeCat !== "all" || priceRange) && (
+              {(activeCat !== "all" || priceRange || selectedDiet !== "all") && (
                 <button
                   onClick={() => {
                     setActiveCat("all");
                     setPriceRange(null);
+                    setSelectedDiet("all");
                   }}
                   className="w-full text-center py-2 border border-border hover:bg-muted text-xs font-bold rounded-lg transition"
                   style={{ color: "var(--muted-foreground)" }}
