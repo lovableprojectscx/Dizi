@@ -43,3 +43,7 @@ scratch/
 AUTOMATIZAR PDF/
 ~$*.docx
 
+# Documentacion de negocio/tecnica -> vive en "INFORMACION NECESARIA" (fuera del repo)
+docs/
+*.docx
+*.pptx

@@ -22,6 +22,7 @@ import {
   ClipboardList,
   Link2,
   Sparkles,
+  LifeBuoy,
 } from "lucide-react";
 
 export function AdminSidebar() {
@@ -46,6 +47,7 @@ export function AdminSidebar() {
       ? [{ title: "Reclamaciones", url: "/admin/reclamaciones", icon: ClipboardList }]
       : []),
     { title: "Mi Plan", url: "/admin/plan", icon: Star },
+    { title: "Ayuda", url: "/ayuda", icon: LifeBuoy },
   ];
 
   return (

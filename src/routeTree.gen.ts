@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerminosRouteImport } from './routes/terminos'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as NovedadesRouteImport } from './routes/novedades'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as AyudaRouteImport } from './routes/ayuda'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
@@ -35,6 +37,11 @@ import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
 
+const TerminosRoute = TerminosRouteImport.update({
+  id: '/terminos',
+  path: '/terminos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
   path: '/super',
@@ -58,6 +65,11 @@ const NovedadesRoute = NovedadesRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AyudaRoute = AyudaRouteImport.update({
+  id: '/ayuda',
+  path: '/ayuda',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -164,11 +176,13 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/ayuda': typeof AyudaRoute
   '/login': typeof LoginRoute
   '/novedades': typeof NovedadesRoute
   '/privacidad': typeof PrivacidadRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
+  '/terminos': typeof TerminosRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -190,10 +204,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/ayuda': typeof AyudaRoute
   '/login': typeof LoginRoute
   '/novedades': typeof NovedadesRoute
   '/privacidad': typeof PrivacidadRoute
   '/register': typeof RegisterRoute
+  '/terminos': typeof TerminosRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -217,11 +233,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/ayuda': typeof AyudaRoute
   '/login': typeof LoginRoute
   '/novedades': typeof NovedadesRoute
   '/privacidad': typeof PrivacidadRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
+  '/terminos': typeof TerminosRoute
   '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -246,11 +264,13 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/ayuda'
     | '/login'
     | '/novedades'
     | '/privacidad'
     | '/register'
     | '/super'
+    | '/terminos'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
@@ -272,10 +292,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/ayuda'
     | '/login'
     | '/novedades'
     | '/privacidad'
     | '/register'
+    | '/terminos'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
@@ -298,11 +320,13 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/ayuda'
     | '/login'
     | '/novedades'
     | '/privacidad'
     | '/register'
     | '/super'
+    | '/terminos'
     | '/admin/categorias'
     | '/admin/configuracion'
     | '/admin/dashboard'
@@ -326,17 +350,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AyudaRoute: typeof AyudaRoute
   LoginRoute: typeof LoginRoute
   NovedadesRoute: typeof NovedadesRoute
   PrivacidadRoute: typeof PrivacidadRoute
   RegisterRoute: typeof RegisterRoute
   SuperRoute: typeof SuperRouteWithChildren
+  TerminosRoute: typeof TerminosRoute
   BioSlugRoute: typeof BioSlugRoute
   TSlugRoute: typeof TSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terminos': {
+      id: '/terminos'
+      path: '/terminos'
+      fullPath: '/terminos'
+      preLoaderRoute: typeof TerminosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/super': {
       id: '/super'
       path: '/super'
@@ -370,6 +403,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ayuda': {
+      id: '/ayuda'
+      path: '/ayuda'
+      fullPath: '/ayuda'
+      preLoaderRoute: typeof AyudaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -566,11 +606,13 @@ const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  AyudaRoute: AyudaRoute,
   LoginRoute: LoginRoute,
   NovedadesRoute: NovedadesRoute,
   PrivacidadRoute: PrivacidadRoute,
   RegisterRoute: RegisterRoute,
   SuperRoute: SuperRouteWithChildren,
+  TerminosRoute: TerminosRoute,
   BioSlugRoute: BioSlugRoute,
   TSlugRoute: TSlugRoute,
 }

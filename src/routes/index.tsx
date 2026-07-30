@@ -1103,9 +1103,15 @@ function LandingPage() {
           <div className="flex items-center justify-center mb-4">
             <img src="/images/Logo.png" alt="Dizi" className="h-9 w-auto object-contain" />
           </div>
-          <div className="flex items-center justify-center gap-6 text-sm mb-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm mb-3">
+            <Link to="/ayuda" className="hover:text-foreground transition-colors">
+              Ayuda
+            </Link>
             <Link to="/novedades" className="hover:text-foreground transition-colors">
               Novedades &amp; FAQ
+            </Link>
+            <Link to="/terminos" className="hover:text-foreground transition-colors">
+              Términos
             </Link>
             <Link to="/privacidad" className="hover:text-foreground transition-colors">
               Privacidad
