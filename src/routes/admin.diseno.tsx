@@ -22,6 +22,8 @@ import {
   Moon,
   Sun,
   Maximize2,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -148,6 +150,7 @@ function DisenoUnificadoPage() {
   // Estado principal de navegación entre las 3 secciones
   const [activeSection, setActiveSection] = useState<"estructura" | "tema" | "modulos">("estructura");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<"mobile" | "desktop">("mobile");
   const [isLoaded, setIsLoaded] = useState(false);
 
   // 1. Estructura seleccionada (mapeando modelos legados como boutique a spotlight)
@@ -785,19 +788,77 @@ function DisenoUnificadoPage() {
         </div>
       </div>
 
-      {/* Modal de Previsualización Expandida */}
+      {/* Modal de Previsualización Expandida con Conmutador Móvil / Escritorio */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[90vh] p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-3xl flex flex-col">
-          <DialogHeader className="p-4 bg-zinc-900 border-b border-zinc-800 flex flex-row items-center justify-between">
-            <DialogTitle className="text-white text-sm font-bold flex items-center gap-2">
+        <DialogContent
+          className={cn(
+            "p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-3xl flex flex-col transition-all duration-300",
+            previewDevice === "mobile"
+              ? "max-w-2xl w-[95vw] h-[92vh]"
+              : "max-w-6xl w-[95vw] h-[92vh]"
+          )}
+        >
+          <DialogHeader className="p-3.5 bg-zinc-900 border-b border-zinc-800 flex flex-row items-center justify-between pr-12">
+            <DialogTitle className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              Vista Previa Expandida del Catálogo
+              Vista Previa Expandida
             </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 w-full h-full overflow-y-auto bg-zinc-900 flex justify-center p-4">
-            <div className="w-full max-w-sm sm:max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl border border-zinc-800 my-auto min-h-[600px]">
-              <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+
+            <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("mobile")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  previewDevice === "mobile"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-zinc-400 hover:text-white"
+                )}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+                Móvil
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("desktop")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  previewDevice === "desktop"
+                    ? "bg-primary text-white shadow-md"
+                    : "text-zinc-400 hover:text-white"
+                )}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+                Escritorio (PC)
+              </button>
             </div>
+          </DialogHeader>
+
+          <div className="flex-1 w-full h-full overflow-y-auto bg-zinc-900 flex justify-center p-4">
+            {previewDevice === "mobile" ? (
+              <div className="w-[375px] h-[680px] sm:w-[390px] sm:h-[750px] bg-white rounded-[40px] border-[8px] border-zinc-800 shadow-2xl overflow-hidden relative my-auto shrink-0">
+                <div className="absolute top-0 inset-x-0 h-5 bg-zinc-800 rounded-b-2xl w-28 mx-auto z-30 pointer-events-none" />
+                <div className="w-full h-full overflow-y-auto">
+                  <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+                </div>
+              </div>
+            ) : (
+              <div className="w-full h-full bg-white rounded-2xl border border-zinc-800 shadow-2xl overflow-hidden flex flex-col">
+                <div className="bg-zinc-800 px-4 py-2 border-b border-zinc-700 flex items-center gap-3 shrink-0">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                  </div>
+                  <div className="flex-1 bg-zinc-900 text-zinc-400 text-xs py-1 px-3 rounded-md font-mono flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-emerald-400" /> https://dizi.pe/{store.slug}
+                  </div>
+                </div>
+                <div className="flex-1 w-full overflow-y-auto">
+                  <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
