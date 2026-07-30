@@ -927,94 +927,37 @@ const scanProductBadges = (
   if (hasTag("spicy", "Picante", ["picante", "chile", "aji", "hot", "spicy"])) {
     badges.push({ emoji: "🌶️", label: "Picante" });
   }
-  if (
-    text.includes("vegano") ||
-    text.includes("vegan") ||
-    text.includes("vegetariano") ||
-    text.includes("vegetarian")
-  ) {
+  if (hasTag("vegan", "Vegano", ["vegano", "vegan", "vegetariano", "vegetarian"])) {
     badges.push({ emoji: "🌱", label: "Vegano" });
   }
-  if (
-    text.includes("sin gluten") ||
-    text.includes("gluten-free") ||
-    text.includes("gluten free") ||
-    text.includes("celiaco")
-  ) {
+  if (hasTag("gluten", "Sin Gluten", ["sin gluten", "gluten-free", "gluten free", "celiaco"])) {
     badges.push({ emoji: "🌾", label: "Sin Gluten" });
   }
-
-  if (text.includes("algodón") || text.includes("algodon") || text.includes("cotton")) {
+  if (hasTag("cotton", "Algodón", ["algodón", "algodon", "cotton"])) {
     badges.push({ emoji: "🧵", label: "Algodón" });
   }
-  if (
-    text.includes("invierno") ||
-    text.includes("winter") ||
-    text.includes("frío") ||
-    text.includes("frio")
-  ) {
+  if (hasTag("winter", "Invierno", ["invierno", "winter", "frío", "frio"])) {
     badges.push({ emoji: "❄️", label: "Invierno" });
   }
-  if (
-    text.includes("verano") ||
-    text.includes("summer") ||
-    text.includes("playa") ||
-    text.includes("calor")
-  ) {
+  if (hasTag("summer", "Verano", ["verano", "summer", "playa", "calor"])) {
     badges.push({ emoji: "☀️", label: "Verano" });
   }
-
-  if (
-    text.includes("cumpleaños") ||
-    text.includes("cumple") ||
-    text.includes("birthday") ||
-    text.includes("aniversario")
-  ) {
+  if (hasTag("birthday", "Cumpleaños", ["cumpleaños", "cumple", "birthday"])) {
     badges.push({ emoji: "🎂", label: "Cumpleaños" });
   }
-  if (
-    text.includes("amor") ||
-    text.includes("love") ||
-    text.includes("romántico") ||
-    text.includes("romantico") ||
-    text.includes("pareja") ||
-    text.includes("novia") ||
-    text.includes("novio")
-  ) {
+  if (hasTag("love", "Amor", ["amor", "love", "romántico", "romantico", "aniversario", "pareja", "novia", "novio"])) {
     badges.push({ emoji: "❤️", label: "Amor" });
   }
-  if (
-    text.includes("condolencias") ||
-    text.includes("pesame") ||
-    text.includes("luto") ||
-    text.includes("condolence")
-  ) {
+  if (hasTag("condolences", "Pésame", ["condolencias", "pesame", "luto", "condolence"])) {
     badges.push({ emoji: "🕊️", label: "Pésame" });
   }
-
-  if (
-    text.includes("express") ||
-    text.includes("rápido") ||
-    text.includes("rapido") ||
-    text.includes("fast") ||
-    text.includes("corto")
-  ) {
+  if (hasTag("express", "Express", ["express", "rápido", "rapido", "fast", "corto"])) {
     badges.push({ emoji: "⚡", label: "Express" });
   }
-  if (
-    text.includes("orgánico") ||
-    text.includes("organico") ||
-    text.includes("organic") ||
-    text.includes("natural")
-  ) {
+  if (hasTag("organic", "Orgánico", ["orgánico", "organico", "organic", "natural"])) {
     badges.push({ emoji: "🌿", label: "Orgánico" });
   }
-  if (
-    text.includes("relajante") ||
-    text.includes("relax") ||
-    text.includes("antiestrés") ||
-    text.includes("antiestres")
-  ) {
+  if (hasTag("relax", "Relajante", ["relajante", "relax", "antiestrés", "antiestres"])) {
     badges.push({ emoji: "💆", label: "Relajante" });
   }
 
