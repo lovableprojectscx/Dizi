@@ -2900,7 +2900,10 @@ export function PublicCatalog({
               </div>
               <button
                 onClick={() => setIsFilterOpen(true)}
-                className="relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition md:hidden"
+                className={cn(
+                  "relative shrink-0 items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition",
+                  isMockup ? "flex" : "flex md:hidden"
+                )}
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 <span>Filtros</span>
@@ -2960,11 +2963,11 @@ export function PublicCatalog({
         <div
           className={cn(
             "w-full",
-            mode === "catalog" && "flex flex-col md:flex-row gap-8 items-start",
+            mode === "catalog" && (isMockup ? "flex flex-col gap-4" : "flex flex-col md:flex-row gap-8 items-start"),
           )}
         >
-          {/* SIDEBAR DE FILTROS (Desktop) */}
-          {mode === "catalog" && (
+          {/* SIDEBAR DE FILTROS (Desktop - solo cuando no es mockup de movil) */}
+          {mode === "catalog" && !isMockup && (
             <aside className="hidden md:block w-[240px] shrink-0 space-y-6 self-start sticky top-[120px] bg-card p-5 border rounded-2xl">
               {/* Categorías */}
               <div className="space-y-3">
