@@ -14,8 +14,9 @@ export interface StoreMigrationResult {
 
 /**
  * Script de Migración del Módulo 5 (Idempotente y Reversible).
+ * Utiliza exactamente `resolveStructureId()` de design-catalog.ts para garantizar una única fuente de verdad.
  * - Respalda `model` y `niche` en `legacy_model` y `legacy_niche`.
- * - Convierte el modelo heredado a una de las 15 estructuras unificadas usando `resolveStructureId`.
+ * - Convierte el modelo heredado a una de las 15 estructuras unificadas.
  * - Convierte `banner_image` con separadores `|||` en arreglo de banners.
  */
 export async function runStoreDataMigration(options: MigrationOptions = {}): Promise<StoreMigrationResult[]> {
@@ -42,7 +43,7 @@ export async function runStoreDataMigration(options: MigrationOptions = {}): Pro
     const legacyModel = store.legacy_model || store.model || "clasico";
     const legacyNiche = store.legacy_niche || store.niche || "gastronomia";
 
-    // Resolver la estructura unificada correspondiente
+    // Resolver la estructura unificada correspondiente (Única fuente de verdad)
     const targetStructureId = resolveStructureId(legacyModel, legacyNiche);
 
     // Banners: si banner_image contiene |||, convertir a array
