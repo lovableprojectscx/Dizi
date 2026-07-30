@@ -37,8 +37,7 @@ export function AdminSidebar() {
 
   const section2 = [
     { title: "Link en Bio", url: "/admin/link-bio", icon: Link2 },
-    { title: "Diseño Estándar", url: "/admin/diseno", icon: Palette },
-    { title: "Diseño Premium", url: "/admin/diseno-premium", icon: Sparkles },
+    { title: "Diseño", url: "/admin/diseno", icon: Palette },
   ];
 
   const section3 = [

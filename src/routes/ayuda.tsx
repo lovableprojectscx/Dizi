@@ -353,49 +353,43 @@ function AyudaPage() {
 
           {/* 4 */}
           <Chapter {...CHAPTERS[3]} open={open === "diseno"} onToggle={() => toggle("diseno")}>
-            <h3>Diseño Estándar y Diseño Premium</h3>
+            <h3>El Panel Unificado de Diseño</h3>
             <p>
-              <strong>Diseño Estándar</strong> es donde eliges el modelo del catálogo y los colores
-              de tu marca. <strong>Diseño Premium</strong> son plantillas armadas para un rubro
-              concreto (florería, hamburguesería) y están disponibles según tu plan.
+              En la pantalla <strong>Diseño</strong> de tu panel encuentras 15 estructuras visuales y todas las opciones para personalizar la apariencia de tu catálogo en un solo lugar, divididas en tres pestañas principales:
             </p>
 
-            <h3>Qué modelos tengo disponibles</h3>
-            <p>Los modelos se desbloquean por plan, y cada plan incluye todos los de abajo:</p>
-            <ul className="space-y-1 my-2">
-              {[
-                ["Semilla", "Minimalista, Clásico"],
-                ["Emprendedor", "+ Nature Mint, Vibrante, Eco"],
-                ["Pro", "+ Nocturno, Elite, Boutique, Corporativo, Aurora"],
-                ["Ilimitado", "+ Dark Fashion, Slash, Arch Studio, Portada con Banner, Sunset Glow, Forest Deep"],
-              ].map(([plan, mods]) => (
-                <li key={plan} className="flex gap-2 text-sm">
-                  <span className="text-primary font-bold shrink-0">•</span>
-                  <span>
-                    <strong>{plan}:</strong> {mods}
-                  </span>
-                </li>
-              ))}
+            <ul className="space-y-2 my-3">
+              <li className="flex gap-2 text-sm">
+                <span className="text-primary font-bold shrink-0">•</span>
+                <span>
+                  <strong>1. Estructura:</strong> Elige entre 15 diseños visuales únicos (Grilla, Overlay, Hero, Spotlight, Editorial, Tiles, Magazine, Diagonal, Arch, Bloom, Bite, Nature, Lookbook, etc.). Todos los diseños están abiertos para que elijas la estructura que mejor se adapte a tu marca.
+                </span>
+              </li>
+              <li className="flex gap-2 text-sm">
+                <span className="text-primary font-bold shrink-0">•</span>
+                <span>
+                  <strong>2. Tema & Colores:</strong> Puedes aplicar uno de los 7 presets cromáticos (Claro, Cálido, Menta, Bosque, Nocturno, Atardecer, Vibrante) o ajustar individualmente el color primario de marca, fondo de catálogo, fondo de tarjetas, esquinas, tipografía, modo oscuro y los textos de portada (Título, Subtítulo y Etiqueta Inferior del banner).
+                </span>
+              </li>
+              <li className="flex gap-2 text-sm">
+                <span className="text-primary font-bold shrink-0">•</span>
+                <span>
+                  <strong>3. Módulos & Funcionalidades:</strong> Administra funciones avanzadas como la marca de agua, portadas múltiples en carrusel, buscador en tiempo real, exportación a PDF, estadísticas y el filtro táctil de etiquetas. Cada módulo cuenta con botones de acción rápida o enlaces para ampliar tu plan si la función lo requiere.
+                </span>
+              </li>
             </ul>
 
-            <h3>Previsualizar antes de guardar</h3>
+            <h3>Previsualizador en Vivo y Selector de Dispositivo</h3>
             <p>
-              En el celular, la barra flotante de abajo tiene dos botones:{" "}
-              <strong>Previsualizar</strong> te abre tu catálogo dentro de un teléfono simulado para
-              que veas cómo queda de verdad, y <strong>Guardar cambios</strong> lo aplica. Nada se
-              publica hasta que guardas.
+              El panel incluye una vista previa en tiempo real. Al pulsar el botón <strong>↗ Expandir</strong> (o en el botón flotante de tu celular), se abrirá una ventana interactiva con el conmutador <strong>[ 📱 Móvil ]</strong> y <strong>[ 💻 Escritorio (PC) ]</strong> para que compruebes cómo verán tu catálogo tanto tus clientes que navegan desde su Smartphone como desde una computadora.
             </p>
 
-            <h3>La portada</h3>
-            <p>
-              El panel para subir la imagen de portada aparece solo si eliges el modelo{" "}
-              <strong>Elite</strong> o <strong>Portada con Banner</strong>. Si no lo ves, es porque
-              el modelo que tienes activo no usa portada.
-            </p>
+            <Tip>
+              Recuerda pulsar siempre <strong>Guardar cambios</strong> en la esquina superior para publicar las modificaciones en tu catálogo en vivo.
+            </Tip>
 
             <Warn>
-              Si cambiaste algo en Diseño y no lo ves en tu catálogo, lo más probable es que{" "}
-              <strong>no pulsaste Guardar cambios</strong>. Es el error más común.
+              Si cambiaste algo en Diseño y no lo ves en tu catálogo público, verifica que hayas pulsado <strong>Guardar cambios</strong>.
             </Warn>
           </Chapter>
 
