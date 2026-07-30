@@ -939,7 +939,7 @@ function LandingPage() {
                 features={[
                   "Hasta 20 productos",
                   "Hasta 3 enlaces rápidos (Bio)",
-                  "2 modelos de diseño clásicos",
+                  "15 estructuras de diseño unificadas",
                   "Múltiples categorías",
                   "Link personalizado",
                   "Carrito a WhatsApp",
@@ -954,7 +954,7 @@ function LandingPage() {
                 desc="Tiendas de ropa, accesorios o repuestos."
                 features={[
                   "Hasta 50 productos",
-                  "5 modelos de diseño en total",
+                  "15 estructuras + 7 presets de tema",
                   "Configuración asistida (Cupos limitados)",
                   "Buscador inteligente de productos",
                   "Descarga de Catálogo en PDF",
@@ -972,8 +972,8 @@ function LandingPage() {
                 desc="Minimarkets y tiendas con stock variado."
                 features={[
                   "Hasta 200 productos",
-                  "Todos los modelos + 7 Diseños Elite",
-                  "Diseños Premium por Nichos (Bloom / Bite)",
+                  "15 estructuras + Controles finos de tema",
+                  "Filtro táctil de etiquetas e insignias",
                   "Configuración asistida (Cupos limitados)",
                   "Carrusel de Banners (hasta 3 portadas)",
                   "Botonera Dual (WhatsApp + Carrito)",
@@ -991,8 +991,8 @@ function LandingPage() {
                 desc="Negocios con alta rotación y ventas constantes."
                 features={[
                   "Productos ilimitados",
-                  "Todos los modelos + 7 Diseños Elite",
-                  "Diseños Premium por Nichos (Bloom / Bite)",
+                  "15 estructuras + Acceso completo a módulos",
+                  "Filtro táctil de etiquetas e insignias",
                   "Carga rápida por fotos (Borradores masivos)",
                   "Carrusel de Banners (hasta 5 portadas)",
                   "Soporte prioritario 24/7",

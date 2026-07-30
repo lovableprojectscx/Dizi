@@ -24,7 +24,18 @@ const mapStoreFromDB = (row: any): Store => ({
   brandColor: row.brand_color,
   bgColor: row.bg_color,
   textColor: row.text_color,
-  bannerImage: row.banner_image,
+  banners: Array.isArray(row.banners) && row.banners.length > 0
+    ? row.banners
+    : typeof row.banner_image === "string" && row.banner_image.includes("|||")
+      ? row.banner_image.split("|||").map((b: string) => b.trim()).filter(Boolean)
+      : row.banner_image
+        ? [row.banner_image]
+        : [],
+  bannerImage: typeof row.banner_image === "string" && row.banner_image.includes("|||")
+    ? row.banner_image
+    : Array.isArray(row.banners) && row.banners.length > 0
+      ? row.banners.join("|||")
+      : row.banner_image,
   bannerTitle: row.banner_title,
   bannerStyle: row.banner_style ?? "direct",
   niche: row.niche ?? "general",
@@ -317,8 +328,12 @@ export const useApp = create<AppState>()(
         if ((updatedPatch as any).bgColor !== undefined)
           dbPatch.bg_color = (updatedPatch as any).bgColor;
         if (updatedPatch.textColor !== undefined) dbPatch.text_color = updatedPatch.textColor;
-        if ((updatedPatch as any).bannerImage !== undefined)
+        if ((updatedPatch as any).bannerImage !== undefined) {
           dbPatch.banner_image = (updatedPatch as any).bannerImage;
+          const parts = ((updatedPatch as any).bannerImage || "").split("|||").map((b: string) => b.trim()).filter(Boolean);
+          dbPatch.banners = parts;
+        }
+        if (updatedPatch.banners !== undefined) dbPatch.banners = updatedPatch.banners;
         if ((updatedPatch as any).bannerTitle !== undefined)
           dbPatch.banner_title = (updatedPatch as any).bannerTitle;
         if (updatedPatch.bannerStyle !== undefined) dbPatch.banner_style = updatedPatch.bannerStyle;

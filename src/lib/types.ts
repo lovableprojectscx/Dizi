@@ -124,6 +124,7 @@ export interface Store {
   bioBgColor?: string | null;
   bannerTagline?: string | null;
   bannerBottomTag?: string | null;
+  banners?: string[];
   promoBarEnabled?: boolean;
   promoBarText?: string;
   promoBarActionType?: "none" | "product" | "category" | "url" | "coupon" | "cart";
