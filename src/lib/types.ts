@@ -47,6 +47,7 @@ export interface Product {
   visible: boolean;
   isSample?: boolean;
   sortOrder?: number;
+  tags?: string[];
   createdAt?: string;
 }
 

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef } from "react";
+import { PRODUCT_TAGS } from "@/lib/tags";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
@@ -1837,6 +1838,45 @@ function ProductsPage() {
                       }
                     }}
                   />
+                </div>
+
+                {/* Etiquetas de Producto */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                    <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Etiquetas táctiles del producto
+                  </Label>
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+                    {PRODUCT_TAGS.map((tagDef) => {
+                      const currentTags = editing.tags || [];
+                      const active = currentTags.includes(tagDef.id) || currentTags.includes(tagDef.label);
+                      return (
+                        <button
+                          key={tagDef.id}
+                          type="button"
+                          onClick={() => {
+                            let next: string[];
+                            if (active) {
+                              next = currentTags.filter((t) => t !== tagDef.id && t !== tagDef.label);
+                            } else {
+                              next = [...currentTags, tagDef.id];
+                            }
+                            setEditing({ ...editing, tags: next });
+                          }}
+                          className={cn(
+                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all border",
+                            active
+                              ? "bg-primary text-white border-primary shadow-xs"
+                              : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300"
+                          )}
+                        >
+                          {tagDef.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Selecciona las etiquetas que facilitan el filtrado táctil directo de este producto en el catálogo.
+                  </p>
                 </div>
               </div>
             </div>

@@ -103,6 +103,7 @@ const mapStoreFromDB = (row: any): Store => ({
       visible: p.visible,
       isSample: p.is_sample,
       sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+      tags: Array.isArray(p.tags) ? p.tags : [],
       createdAt: p.created_at,
     }))
     .sort((a, b) => {
@@ -766,6 +767,7 @@ export const useApp = create<AppState>()(
             visible: p.visible,
             is_sample: p.isSample,
             sort_order: p.sortOrder,
+            tags: p.tags || [],
           });
 
           if (error) throw error;

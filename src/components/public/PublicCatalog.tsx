@@ -1,4 +1,5 @@
 import { resolveRenderModel } from "@/lib/design-catalog";
+import { PRODUCT_TAGS } from "@/lib/tags";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -1954,7 +1955,20 @@ export function PublicCatalog({
 
     // Apply diet / classification filter
     if (selectedDiet !== "all") {
-      if (modelId === "bite") {
+      const tagMatches = result.filter(
+        (p) =>
+          Array.isArray(p.tags) &&
+          p.tags.some((t) => {
+            const tLower = t.toLowerCase();
+            const dietLower = selectedDiet.toLowerCase();
+            if (tLower === dietLower) return true;
+            const tagDef = PRODUCT_TAGS.find((def) => def.id === dietLower);
+            return tagDef ? tagDef.label.toLowerCase() === tLower || tagDef.keywords.includes(tLower) : false;
+          })
+      );
+      if (tagMatches.length > 0) {
+        result = tagMatches;
+      } else if (modelId === "bite") {
         if (selectedDiet === "spicy") {
           result = result.filter(
             (p) =>
@@ -9352,12 +9366,7 @@ function PriceRangeSlider({
         }
         input[type=range].appearance-none::-moz-range-thumb {
           width: 18px; height: 18px;
-          border-radius: 50%;
-          background: var(--primary, #4f46e5);
-          border: 2px solid white;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-          cursor: pointer;
-        }
+       }
       `}</style>
     </div>
   );
