@@ -1513,7 +1513,7 @@ export function PublicCatalog({
     : cStyle === "flat"
       ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-none hover:shadow-none"
       : cStyle === "shadow"
-        ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] hover:opacity-95 shadow-md hover:shadow-xl"
+        ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] shadow-xl shadow-black/25 hover:shadow-2xl"
         : "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
 
   const featuredImgClass = cn(
@@ -1527,12 +1527,12 @@ export function PublicCatalog({
 
   const gridCardClass =
     isCurvedStyle
-      ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-[2.5rem_0.5rem_2.5rem_0.5rem] hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
+      ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-[2.5rem_0.5rem_2.5rem_0.5rem] bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
       : cStyle === "flat"
-        ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
+        ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)] hover:scale-[1.02] shadow-none hover:shadow-none"
         : cStyle === "shadow"
-          ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border-none rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-md hover:shadow-xl"
-          : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)]/75 hover:bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
+          ? "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border-none rounded-2xl bg-[var(--card)] hover:scale-[1.02] shadow-xl shadow-black/25 hover:shadow-2xl"
+          : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
 
   const gridImgClass = cn(
     "relative overflow-hidden aspect-square m-2",
@@ -2225,15 +2225,12 @@ export function PublicCatalog({
   return (
     <div
       className={cn(
-        "min-h-screen w-full overflow-x-hidden bg-background text-foreground transition-colors duration-300",
+        "min-h-screen w-full overflow-x-hidden transition-colors duration-300",
+        finalTypographyClass,
         finalIsDark ? "dark" : "",
         modelId === "glam" && "theme-glam",
         modelId === "bloom" && "theme-bloom",
         modelId === "vibe" && "theme-vibe",
-        isBioMode && bioTypography === "sans" && "typography-sans",
-        isBioMode && bioTypography === "serif" && "typography-serif",
-        isBioMode && bioTypography === "rounded" && "typography-rounded",
-        isBioMode && bioTypography === "modern" && "typography-modern",
       )}
       style={isBioMode && bioTheme !== "default" ? bioThemeVars : themeVars}
       translate="no"
