@@ -1,7 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const DEFAULT_SUPABASE_URL = "https://wxpizbnuuaiculzfuhof.supabase.co";
+const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4cGl6Ym51dWFpY3VsemZ1aG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjM3MzMsImV4cCI6MjA5Mzg5OTczM30.azLkp485_RtvtgkUAOesk9BOwgqJiO7QLrM1sxI5-5A";
+
+const envUrl = import.meta.env.VITE_SUPABASE_URL;
+const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Si envUrl contiene la referencia antigua 'zkqz', forzar el uso del proyecto activo de producción 'wxpizbnuuaiculzfuhof'
+const supabaseUrl = (envUrl && !envUrl.includes("zkqz")) ? envUrl : DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = (envKey && !envKey.includes("zkqz")) ? envKey : DEFAULT_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Faltan las credenciales de Supabase en .env");
