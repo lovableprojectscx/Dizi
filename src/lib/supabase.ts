@@ -6,9 +6,10 @@ const DEFAULT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3Mi
 const envUrl = import.meta.env.VITE_SUPABASE_URL;
 const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Si envUrl contiene la referencia antigua 'zkqz', forzar el uso del proyecto activo de producción 'wxpizbnuuaiculzfuhof'
-const supabaseUrl = (envUrl && !envUrl.includes("zkqz")) ? envUrl : DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = (envKey && !envKey.includes("zkqz")) ? envKey : DEFAULT_SUPABASE_ANON_KEY;
+// Garantizar que la URL y la Anon Key provengan obligatoriamente del mismo proyecto activo de producción 'wxpizbnuuaiculzfuhof'
+const isValidActiveUrl = envUrl && envUrl.includes("wxpizbnuuaiculzfuhof");
+const supabaseUrl = isValidActiveUrl ? envUrl : DEFAULT_SUPABASE_URL;
+const supabaseAnonKey = isValidActiveUrl ? (envKey || DEFAULT_SUPABASE_ANON_KEY) : DEFAULT_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Faltan las credenciales de Supabase en .env");
