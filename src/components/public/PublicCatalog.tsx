@@ -2969,7 +2969,10 @@ export function PublicCatalog({
         >
           {/* SIDEBAR DE FILTROS (Desktop - solo cuando no es mockup de movil) */}
           {mode === "catalog" && !isMockup && (
-            <aside className="hidden md:block w-[240px] shrink-0 space-y-6 self-start sticky top-[120px] bg-card p-5 border rounded-2xl">
+            <aside
+              style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+              className="hidden md:block w-[240px] shrink-0 space-y-6 self-start sticky top-[120px] p-5 border rounded-2xl"
+            >
               {/* Categorías */}
               <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left">
