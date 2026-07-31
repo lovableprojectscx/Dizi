@@ -1568,12 +1568,15 @@ export function PublicCatalog({
   const primaryColor = store.brandColor || (cfg.vars as any)["--primary"] || "#4f46e5";
   const primaryTextColor = getContrastColor(primaryColor);
 
-  // If user set a custom bgColor, apply it (standard models can have their background customized)
+  // If user set a custom bgColor or explicit isDark, apply it
   const rawBg = (store as any).bgColor as string | undefined;
   const customBg = rawBg || undefined;
-  const effectiveIsDark = customBg
-    ? hexLuminance(customBg) < 0.18 // threshold: < 18% luminance = dark bg
-    : cfg.isDark;
+  const explicitIsDark = typeof (store as any).isDark === "boolean" ? (store as any).isDark : undefined;
+  const effectiveIsDark = explicitIsDark !== undefined
+    ? explicitIsDark
+    : customBg
+      ? hexLuminance(customBg) < 0.35
+      : cfg.isDark;
 
   // Blend hex color with white — pure JS, no color-mix (max browser compat)
   const blendWithWhite = (hex: string, amount: number): string => {
@@ -1589,10 +1592,9 @@ export function PublicCatalog({
     return `#${blend(r)}${blend(g)}${blend(b)}`;
   };
 
-  // Derive card background from custom bg — slightly lighter for contrast
-  const effectiveCardBg = customBg
-    ? blendWithWhite(customBg, effectiveIsDark ? 0.12 : 0.08)
-    : undefined;
+  // Derive card background from custom bg — slightly lighter for contrast or explicit cardBg
+  const explicitCardBg = (store as any).cardBg || undefined;
+  const effectiveCardBg = explicitCardBg || (customBg ? blendWithWhite(customBg, effectiveIsDark ? 0.12 : 0.08) : undefined);
 
   // Gradient backgrounds for locked models that have a special identity
   const MODEL_GRADIENTS: Record<string, string> = {
@@ -1609,24 +1611,26 @@ export function PublicCatalog({
   // All foreground vars recalculated from effectiveIsDark so any model+bg combo stays readable
   const themeVars: React.CSSProperties = {
     ...cfg.vars,
-    "--foreground": store.textColor || (effectiveIsDark ? "#f0f0f0" : "#111111"),
+    "--foreground": store.textColor || (effectiveIsDark ? "#f4f4f5" : "#18181b"),
+    "--card-foreground": store.textColor || (effectiveIsDark ? "#f4f4f5" : "#18181b"),
     "--foreground-muted": store.textColor
       ? `color-mix(in srgb, ${store.textColor} 70%, transparent)`
       : effectiveIsDark
-        ? "#a0a0a0"
-        : "#6b7280",
+        ? "#a1a1aa"
+        : "#52525b",
     "--muted-foreground": store.textColor
       ? `color-mix(in srgb, ${store.textColor} 60%, transparent)`
       : effectiveIsDark
-        ? "#94a3b8"
-        : "#64748b",
+        ? "#a1a1aa"
+        : "#71717a",
     "--muted": effectiveIsDark ? "#1e293b" : "#f1f5f9",
     "--secondary": effectiveIsDark ? "#1e2535" : "#f8fafc",
-    "--border": effectiveIsDark ? "#334155" : "#e2e8f0",
+    "--border": (store as any).accentColor || (effectiveIsDark ? "#334155" : "#e2e8f0"),
     ...(store.brandColor ? { "--primary": store.brandColor } : {}),
     "--primary-foreground": primaryTextColor,
-    ...(customBg ? { "--background": customBg } : {}),
-    ...(effectiveCardBg ? { "--card": effectiveCardBg } : {}),
+    ...(customBg ? { "--background": customBg } : { "--background": effectiveIsDark ? "#0c0a09" : "#ffffff" }),
+    ...(effectiveCardBg ? { "--card": effectiveCardBg } : { "--card": effectiveIsDark ? "#1c1917" : "#ffffff" }),
+    ...((store as any).borderRadius ? { "--radius": (store as any).borderRadius } : {}),
     // Gradient for locked models — sets the actual background-image CSS property
     ...(modelGradient ? { backgroundImage: modelGradient } : { backgroundImage: "none" }),
   } as React.CSSProperties;
