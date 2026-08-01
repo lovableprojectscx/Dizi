@@ -503,9 +503,16 @@ function DisenoUnificadoPage() {
                       </div>
 
                       {struct.suggestedNiche && (
-                        <div className="pt-2 border-t border-zinc-100 flex items-center gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                          <Tag className="h-3 w-3" />
-                          <span>{struct.suggestedNiche}</span>
+                        <div className="pt-2 border-t border-zinc-100 flex items-center justify-between gap-1 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                          <div className="flex items-center gap-1">
+                            <Tag className="h-3 w-3" />
+                            <span>{struct.suggestedNiche}</span>
+                          </div>
+                          {struct.supportsCategoryIcons && (
+                            <span className="text-[9px] font-extrabold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 tracking-normal normal-case">
+                              ✨ Soporta Íconos
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>

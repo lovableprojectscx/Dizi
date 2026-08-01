@@ -118,12 +118,18 @@ const empty = (): Product => ({
   image: "",
 });
 
-const parseCategoryName = (name: string) => {
-  if (!name) return { label: "", iconKey: "" };
-  const [label, iconKey] = name.split("|");
+const parseCategoryName = (name: string, icon?: string) => {
+  if (!name) return { label: "", iconKey: icon || "" };
+  if (name.includes("|")) {
+    const [label, iconKey] = name.split("|");
+    return {
+      label: label ? label.trim() : "",
+      iconKey: icon ? icon.trim() : (iconKey ? iconKey.trim() : ""),
+    };
+  }
   return {
-    label: label ? label.trim() : "",
-    iconKey: iconKey ? iconKey.trim() : "",
+    label: name.trim(),
+    iconKey: icon ? icon.trim() : "",
   };
 };
 
@@ -1447,7 +1453,7 @@ function ProductsPage() {
                   <div className="flex-1">
                     <div className="font-medium text-sm sm:text-base flex items-center gap-2">
                       {(() => {
-                        const { label, iconKey } = parseCategoryName(c.name);
+                        const { label, iconKey } = parseCategoryName(c.name, c.icon);
                         return (
                           <>
                             {isPremiumModel(store.model) && iconKey && (

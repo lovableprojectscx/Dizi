@@ -743,12 +743,18 @@ const getQuickLinkBranding = (label: string, url: string) => {
   };
 };
 
-const parseCategoryName = (name: string) => {
-  if (!name) return { label: "", iconKey: "" };
-  const [label, iconKey] = name.split("|");
+const parseCategoryName = (name: string, icon?: string) => {
+  if (!name) return { label: "", iconKey: icon || "" };
+  if (name.includes("|")) {
+    const [label, iconKey] = name.split("|");
+    return {
+      label: label ? label.trim() : "",
+      iconKey: icon ? icon.trim() : (iconKey ? iconKey.trim() : ""),
+    };
+  }
   return {
-    label: label ? label.trim() : "",
-    iconKey: iconKey ? iconKey.trim() : "",
+    label: name.trim(),
+    iconKey: icon ? icon.trim() : "",
   };
 };
 
@@ -3049,7 +3055,7 @@ export function PublicCatalog({
                   )}
 
                   {store.categories.map((c) => {
-                    const { label } = parseCategoryName(c.name);
+                    const { label } = parseCategoryName(c.name, c.icon);
                     const count = productsWithImages.filter((p) => p.categoryId === c.id).length;
                     return (
                       <button
@@ -3189,7 +3195,7 @@ export function PublicCatalog({
                     )}
 
                     {store.categories.map((c) => {
-                      const { label } = parseCategoryName(c.name);
+                      const { label } = parseCategoryName(c.name, c.icon);
                       const active = activeCat === c.id;
                       return (
                         <button
@@ -3593,7 +3599,7 @@ export function PublicCatalog({
                                 Todos
                               </button>
                               {store.categories.map((c) => {
-                                const { label } = parseCategoryName(c.name);
+                                const { label } = parseCategoryName(c.name, c.icon);
                                 const active = activeCat === c.id;
                                 return (
                                   <button
@@ -5130,7 +5136,7 @@ export function PublicCatalog({
                         )}
 
                         {store.categories.map((c) => {
-                          const { label, iconKey } = parseCategoryName(c.name);
+                          const { label, iconKey } = parseCategoryName(c.name, c.icon);
                           const active = activeCat === c.id;
                           return (
                             <button
@@ -5820,7 +5826,7 @@ export function PublicCatalog({
                             )}
 
                             {store.categories.map((c) => {
-                              const { label, iconKey } = parseCategoryName(c.name);
+                              const { label, iconKey } = parseCategoryName(c.name, c.icon);
                               const active = activeCat === c.id;
                               return (
                                 <button
@@ -6651,7 +6657,7 @@ export function PublicCatalog({
                         )}
 
                         {store.categories.map((c) => {
-                          const { label, iconKey } = parseCategoryName(c.name);
+                          const { label, iconKey } = parseCategoryName(c.name, c.icon);
                           const active = activeCat === c.id;
                           return (
                             <button
@@ -7715,7 +7721,7 @@ export function PublicCatalog({
                       borderColor: activeCat === c.id ? "var(--primary)" : "var(--border)",
                     }}
                   >
-                    {parseCategoryName(c.name).label}
+                    {parseCategoryName(c.name, c.icon).label}
                   </button>
                 ))}
               </div>

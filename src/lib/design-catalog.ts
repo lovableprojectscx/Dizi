@@ -35,6 +35,7 @@ export interface StructureDef {
   defaultTheme: StructureThemeDefaults;
   supportedModules: string[];
   suggestedNiche?: string;
+  supportsCategoryIcons?: boolean;
 }
 
 export const DESIGN_STRUCTURES: StructureDef[] = [
@@ -157,6 +158,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     },
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
     suggestedNiche: "Tecnología / Accesorios",
+    supportsCategoryIcons: true,
   },
   {
     id: "magazine",
@@ -258,6 +260,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     },
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
     suggestedNiche: "Multipropósito Premium",
+    supportsCategoryIcons: true,
   },
   {
     id: "bloom_floral",
@@ -279,6 +282,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     },
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
     suggestedNiche: "Florería / Regalos",
+    supportsCategoryIcons: true,
   },
   {
     id: "bite",
@@ -300,6 +304,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     },
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
     suggestedNiche: "Gastronomía / Restobar",
+    supportsCategoryIcons: true,
   },
   {
     id: "nature",
@@ -321,6 +326,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     },
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
     suggestedNiche: "Salud / Orgánico",
+    supportsCategoryIcons: true,
   },
   {
     id: "lookbook",
