@@ -9,7 +9,6 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
-  Store,
   FileDown,
   Menu,
   X,
@@ -21,6 +20,11 @@ import {
   ChevronDown,
   Check,
   Flame,
+  Zap,
+  Globe,
+  TrendingUp,
+  Award,
+  Star,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -52,7 +56,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeTabNiche, setActiveTabNiche] = useState<string>("all");
+  const [activeNiche, setActiveNiche] = useState<string>("all");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const toggleFaq = (index: number) => {
@@ -64,94 +68,118 @@ function LandingPage() {
       id: "bite",
       name: "Bite Gastronómico",
       niche: "Gastronomía / Restobar",
-      desc: "Carrusel de categorías táctiles, badges de dieta y pedidos inmediatos.",
+      desc: "Navegación por categorías de comida, badges de sugerencias del chef y pedidos directos a cocina.",
       badge: "Más Popular",
-      textColor: "text-red-600 dark:text-red-400",
-      borderColor: "border-red-200 dark:border-red-900/40",
       category: "gastronomia",
+      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80",
+      accent: "border-orange-500/30 text-orange-600 dark:text-orange-400 bg-orange-500/10",
+      demoSlug: "bite-demo",
     },
     {
       id: "bloom_floral",
       name: "Bloom Floral",
       niche: "Florerías / Regalos",
-      desc: "Estética romántica de esquinas suaves y detalles curvos botánicos.",
-      badge: "Romántico",
-      textColor: "text-rose-600 dark:text-rose-400",
-      borderColor: "border-rose-200 dark:border-rose-900/40",
+      desc: "Estética delicada con detalles botánicos, esquinas suaves y tipografía elegante para florerías y detalles.",
+      badge: "Edición Especial",
       category: "boutique",
+      image: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80",
+      accent: "border-pink-500/30 text-pink-600 dark:text-pink-400 bg-pink-500/10",
+      demoSlug: "bloom-demo",
     },
     {
       id: "nature",
       name: "Nature Orgánico",
       niche: "Salud / Cosmética / Eco",
-      desc: "Verde salvia refrescante con tipografía serif y tarjetas en diagonal.",
+      desc: "Paleta verde salvia refrescante con tarjetas limpias en diagonal para cosmética artesanal y productos naturales.",
       badge: "Ecológico",
-      textColor: "text-emerald-600 dark:text-emerald-400",
-      borderColor: "border-emerald-200 dark:border-emerald-900/40",
       category: "eco",
+      image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80",
+      accent: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
+      demoSlug: "nature-demo",
     },
     {
       id: "overlay",
       name: "Overlay Visual",
       niche: "Moda / Calzado",
-      desc: "Tarjetas 3:4 verticales con texto luminoso superpuesto estilo ZARA.",
+      desc: "Formato 3:4 vertical inspirado en catálogos ZARA con tipografía superpuesta sobre fotografías de alta resolución.",
       badge: "Tendencia",
-      textColor: "text-amber-600 dark:text-amber-400",
-      borderColor: "border-amber-200 dark:border-amber-900/40",
       category: "boutique",
+      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80",
+      accent: "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10",
+      demoSlug: "overlay-demo",
     },
     {
       id: "editorial",
       name: "Estilo Editorial",
       niche: "Corporativo / Luxe",
-      desc: "Lista horizontal minimalista Net-a-Porter con imágenes y descripciones.",
-      badge: "Lujo",
-      textColor: "text-slate-700 dark:text-slate-300",
-      borderColor: "border-slate-200 dark:border-slate-800",
+      desc: "Lista horizontal minimalista Net-a-Porter con descripciones detalladas para marcas exclusivas y artículos de lujo.",
+      badge: "Nivel Pro",
       category: "luxe",
+      image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80",
+      accent: "border-slate-500/30 text-slate-700 dark:text-slate-300 bg-slate-500/10",
+      demoSlug: "editorial-demo",
     },
     {
       id: "tiles",
       name: "Mosaico Tiles",
       niche: "Tecnología / Accesorios",
-      desc: "Bloques asimétricos interconectados inspirados en tiendas Apple.",
+      desc: "Diseño asimétrico interactivo en cuadrícula estilo Apple Store para tecnología, gadgets y accesorios.",
       badge: "Moderno",
-      textColor: "text-purple-600 dark:text-purple-400",
-      borderColor: "border-purple-200 dark:border-purple-900/40",
       category: "tech",
+      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+      accent: "border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10",
+      demoSlug: "tiles-demo",
     },
   ];
 
   const filteredModels =
-    activeTabNiche === "all"
+    activeNiche === "all"
       ? showcaseModels
-      : showcaseModels.filter((m) => m.category === activeTabNiche);
+      : showcaseModels.filter((m) => m.category === activeNiche);
 
   const faqs = [
     {
       q: "¿Cómo reciben mis clientes los pedidos en WhatsApp?",
-      a: "Tus clientes navegan por tu catálogo web, agregan los productos que desean a su carrito y al presionar 'Enviar Pedido', el sistema abre su aplicación de WhatsApp con la lista detallada del pedido formateada con nombres, cantidades y precio total.",
+      a: "Tus clientes exploran tu catálogo web, eligen sus productos, agregan cantidades a su carrito y presionan 'Enviar Pedido'. La plataforma abre instantáneamente su app de WhatsApp con la lista de compra formateada, datos de entrega y total a pagar.",
     },
     {
-      q: "¿Cobran alguna comisión por mis ventas?",
-      a: "¡Cero comisiones! A diferencia de plataformas como Rappi o PedidosYa, en Dizi todas las ventas y pagos se realizan directamente entre tú y tu cliente. No cobramos comisiones por transacción.",
+      q: "¿Cobran comisiones por las ventas realizadas?",
+      a: "No. A diferencia de las plataformas de delivery tradicionales que cobran hasta un 30% por transacción, en Dizi tus ventas son 100% tuyas. Todo el dinero ingresa directamente a tu cuenta bancaria o Yape/Plin.",
     },
     {
-      q: "¿Mis clientes tienen que descargar alguna aplicación?",
-      a: "No. Tu catálogo funciona como una página web ultra-rápida y ligera. Tus clientes simplemente hacen clic en tu enlace público y el catálogo se abre al instante en el navegador de su teléfono.",
+      q: "¿Mis clientes deben descargar alguna aplicación?",
+      a: "Ninguna. Tu catálogo funciona como un sitio web ultrarrápido optimizado para teléfonos móviles. Se accede mediante un enlace web único que puedes colocar en tu bio de Instagram, TikTok o Facebook.",
     },
     {
-      q: "¿Puedo exportar mi catálogo en formato PDF?",
-      a: "Sí. Los planes pagados incluyen el módulo de Exportador PDF Vectorial. Con un solo clic se genera un documento profesional con el diseño y colores de tu tienda, listo para enviar o imprimir.",
+      q: "¿Puedo exportar mi catálogo en PDF para clientes mayoristas?",
+      a: "Sí. Todos los planes de pago incluyen el módulo de Exportación PDF Vectorial. Con un solo clic se genera un catálogo imprimible con tu logotipo, información de contacto y lista de precios oficial.",
     },
     {
-      q: "¿Cómo funciona el período de prueba gratuito de 15 días?",
-      a: "Al registrarte comienzas inmediatamente con 15 días de acceso total al Plan Pro sin pagar nada ni ingresar tarjeta de crédito. Al finalizar los 15 días puedes elegir continuar con un plan pagado o quedarte con el Plan Semilla Gratuito.",
+      q: "¿Cómo funciona la prueba gratuita de 15 días?",
+      a: "Al registrarte inicias inmediatamente un período de prueba de 15 días con acceso completo a las funciones del Plan Pro, sin necesidad de ingresar tarjeta de crédito. Al finalizar la prueba puedes elegir el plan que mejor se adapte a tu negocio.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground">
+      {/* ── 0. BARRA SUPERIOR PROMACIONAL (RIBBON BAR) ── */}
+      <div className="bg-gradient-to-r from-zinc-900 via-primary to-zinc-900 text-white text-[11px] font-bold py-2 px-4 text-center flex items-center justify-center gap-2 border-b border-white/10 shadow-xs">
+        <span className="bg-white/20 text-white px-2 py-0.5 rounded-full uppercase tracking-wider text-[9px] font-black shrink-0">
+          PROMO MUNDIAL DIZI
+        </span>
+        <span className="truncate">
+          ¡Consigue tu Plan Emprendedor a solo <strong>S/. 9.90 / mes</strong> con diseño gratis!
+        </span>
+        <a
+          href="https://wa.me/51925176472?text=Hola%2C%20quiero%20la%20Promo%20Mundial%20de%20Dizi"
+          target="_blank"
+          rel="noreferrer"
+          className="hidden sm:inline-flex items-center gap-1 underline hover:text-amber-300 transition-colors shrink-0 ml-2"
+        >
+          Reclamar por WhatsApp <ChevronRight className="h-3.5 w-3.5" />
+        </a>
+      </div>
+
       {/* ── 1. HEADER / NAVBAR DE NAVEGACIÓN ── */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 backdrop-blur-md transition-all">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
@@ -172,7 +200,7 @@ function LandingPage() {
               Diseños (15)
             </a>
             <a href="#modulos" className="hover:text-primary transition-colors">
-              Funciones
+              Módulos Pro
             </a>
             <a href="#precios" className="hover:text-primary transition-colors">
               Planes & Precios
@@ -224,14 +252,14 @@ function LandingPage() {
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Modelos de Diseño (15)
+              Diseños Premium (15)
             </a>
             <a
               href="#modulos"
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Módulos Avanzados
+              Módulos Pro
             </a>
             <a
               href="#precios"
@@ -263,7 +291,7 @@ function LandingPage() {
         )}
       </header>
 
-      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (SEO OPTIMIZADO) ── */}
+      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (DISPOSITIVO Y BADGES PROFESIONALES) ── */}
       <section className="relative overflow-hidden pt-12 sm:pt-20 pb-16 sm:pb-28 bg-gradient-to-b from-primary/[0.04] via-background to-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -285,8 +313,8 @@ function LandingPage() {
 
               {/* Subtítulo Descriptivo */}
               <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                Digitaliza tu negocio sin comisiones. Tus clientes exploran productos en una experiencia
-                móvil ultra-rápida, arman su carrito y te envían el pedido directo a tu teléfono.
+                Digitaliza tu negocio sin comisiones por venta. Transforma tus productos en una tienda interactiva
+                móvil con carrito de compras, exportador PDF y pedidos directos a tu teléfono.
               </p>
 
               {/* Botones Primarios de Acción */}
@@ -297,7 +325,7 @@ function LandingPage() {
                   className="w-full sm:w-auto h-13 px-8 rounded-2xl font-black text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 gap-2"
                 >
                   <Link to="/register">
-                    🚀 Crear Mi Catálogo Gratis
+                    Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
 
@@ -308,7 +336,7 @@ function LandingPage() {
                   className="w-full sm:w-auto h-13 px-7 rounded-2xl font-bold text-sm border-border/80 hover:bg-muted gap-2 shadow-xs"
                 >
                   <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
-                    <Smartphone className="h-4 w-4 text-primary" /> Probar Demo en Vivo
+                    <Smartphone className="h-4 w-4 text-primary" /> Ver Tienda de Ejemplo
                     <ExternalLink className="h-3.5 w-3.5 opacity-60" />
                   </a>
                 </Button>
@@ -331,7 +359,7 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* LADO DERECHO: MOCKUP INTERACTIVO DE TELÉFONO */}
+            {/* LADO DERECHO: MOCKUP INTERACTIVO DE TELÉFONO CON MARCO PROFESIONAL */}
             <div className="lg:col-span-5 flex justify-center lg:justify-end">
               <div className="relative w-full max-w-[320px] sm:max-w-[360px] aspect-[9/18] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden group">
                 {/* Altavoz y Cámara de iPhone */}
@@ -360,13 +388,13 @@ function LandingPage() {
                   {/* Pestañas de Categoría */}
                   <div className="flex gap-1.5 py-2 overflow-x-auto no-scrollbar">
                     <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-primary text-primary-foreground shrink-0">
-                      ☕ Cafetería
+                      Cafetería
                     </span>
                     <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
-                      🥐 Panadería
+                      Panadería
                     </span>
                     <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
-                      🍰 Postres
+                      Postres
                     </span>
                   </div>
 
@@ -416,18 +444,18 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 3. SECCIÓN EL PROBLEMA vs LA SOLUCIÓN DIZI ── */}
+      {/* ── 3. SECCIÓN MÓDULO COMPARATIVO (TRADICIONAL VS DIZI) ── */}
       <section id="beneficios" className="py-16 sm:py-24 bg-card border-y border-border/40">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              La Evolución del Comercio Digital
+              Eficiencia Comercial Digital
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Deja atrás el caos de vender con fotos sueltas
+              La diferencia entre vender por fotos o con una Tienda Web
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Dizi transforma la manera en que tus clientes eligen tus productos y te envían sus pedidos.
+              Optimiza el tiempo de atención de tu equipo y brinda una experiencia fluida a tus compradores.
             </p>
           </div>
 
@@ -436,25 +464,25 @@ function LandingPage() {
             <div className="p-6 sm:p-8 rounded-3xl bg-red-500/[0.02] border border-red-500/20 space-y-5 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider">
-                  <XCircle className="h-4 w-4" /> Métodos Tradicionales Rígidos
+                  <XCircle className="h-4 w-4" /> Venta por Chat Convencional
                 </div>
-                <h3 className="text-xl font-bold text-foreground">El caos de vender por chat o PDFs</h3>
-                <ul className="space-y-3 pt-2 text-xs sm:text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2.5">
+                <h3 className="text-xl font-bold text-foreground">El desgaste del proceso manual</h3>
+                <ul className="space-y-3.5 pt-2 text-xs sm:text-sm text-muted-foreground">
+                  <li className="flex items-start gap-3">
                     <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                    <span>Fotos sueltas enviadas por chat que saturan la memoria del cliente.</span>
+                    <span>Envío recurrente de imágenes sueltas que llenan la memoria de tus clientes.</span>
                   </li>
-                  <li className="flex items-start gap-2.5">
+                  <li className="flex items-start gap-3">
                     <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                    <span>PDFs pesados creados en Canva que tardan en abrir y se desactualizan rápido.</span>
+                    <span>PDFs pesados en Canva que no se adaptan correctamente a pantallas pequeñas.</span>
                   </li>
-                  <li className="flex items-start gap-2.5">
+                  <li className="flex items-start gap-3">
                     <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                    <span>Comisiones de hasta 30% cobradas por aplicaciones de delivery.</span>
+                    <span>Pérdida de márgenes por comisiones de hasta 30% en aplicaciones de delivery.</span>
                   </li>
-                  <li className="flex items-start gap-2.5">
+                  <li className="flex items-start gap-3">
                     <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                    <span>Preguntas repetitivas por precios y disponibilidad en cada mensaje.</span>
+                    <span>Tiempo invertido en responder precios y detalles de productos uno por uno.</span>
                   </li>
                 </ul>
               </div>
@@ -464,25 +492,25 @@ function LandingPage() {
             <div className="p-6 sm:p-8 rounded-3xl bg-emerald-500/[0.02] border border-emerald-500/30 space-y-5 flex flex-col justify-between relative overflow-hidden group shadow-sm">
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                  <CheckCircle2 className="h-4 w-4" /> La Experiencia Dizi
+                  <CheckCircle2 className="h-4 w-4" /> Plataforma Digital Dizi
                 </div>
-                <h3 className="text-xl font-bold text-foreground">Tu catálogo web rápido, limpio y sin comisiones</h3>
-                <ul className="space-y-3 pt-2 text-xs sm:text-sm text-foreground/90 font-medium">
-                  <li className="flex items-start gap-2.5">
+                <h3 className="text-xl font-bold text-foreground">Experiencia web automatizada y limpia</h3>
+                <ul className="space-y-3.5 pt-2 text-xs sm:text-sm text-foreground/90 font-medium">
+                  <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>Enlace único y profesional para tu bio de Instagram, TikTok o Facebook.</span>
+                    <span>Enlace web único para tu perfil de Instagram, TikTok o código QR físico.</span>
                   </li>
-                  <li className="flex items-start gap-2.5">
+                  <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>Carrito de compras que suma automáticamente y envía el pedido a tu WhatsApp.</span>
+                    <span>Carrito interactivo que calcula el total y envía el pedido listo a WhatsApp.</span>
                   </li>
-                  <li className="flex items-start gap-2.5">
+                  <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>100% libre de comisiones por venta. Todo el dinero va a tu cuenta.</span>
+                    <span>0% comisiones por transacción. Cobras directo por Yape, Plin o transferencia.</span>
                   </li>
-                  <li className="flex items-start gap-2.5">
+                  <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>Exportación instantánea en PDF vectorial para clientes corporativos.</span>
+                    <span>Descarga instantánea de catálogo PDF profesional para ventas al por mayor.</span>
                   </li>
                 </ul>
               </div>
@@ -491,111 +519,127 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 4. SHOWCASE INTERACTIVO DE LAS 15 ESTRUCTURAS DE DISEÑO ── */}
+      {/* ── 4. SHOWCASE DE LAS 15 ESTRUCTURAS DE DISEÑO CON FOTOS REALES Y TARJETAS VISUALES ── */}
       <section id="modelos" className="py-16 sm:py-28 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-10 sm:mb-14">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Personalización Total sin Código
+              Diseño de Interfaz adaptable
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              15 Estructuras de Diseño para cada Rubro
+              15 Estructuras de Diseño para cada Tipo de Negocio
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Elige el estilo que mejor representa la personalidad de tu marca. Cambia colores, tipografía y módulos con un solo clic.
+              Explora las plantillas prediseñadas para tu rubro. Personaliza colores de acento, fondos y tipografías en segundos.
             </p>
 
             {/* Selector de Pestañas de Rubro */}
-            <div className="flex items-center justify-center gap-1.5 pt-4 flex-wrap">
+            <div className="flex items-center justify-center gap-2 pt-4 flex-wrap">
               <button
-                onClick={() => setActiveTabNiche("all")}
+                onClick={() => setActiveNiche("all")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeTabNiche === "all"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  activeNiche === "all"
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
                 Todos los Diseños (15)
               </button>
               <button
-                onClick={() => setActiveTabNiche("gastronomia")}
+                onClick={() => setActiveNiche("gastronomia")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeTabNiche === "gastronomia"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  activeNiche === "gastronomia"
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
-                🍔 Gastronomía
+                Gastronomía
               </button>
               <button
-                onClick={() => setActiveTabNiche("boutique")}
+                onClick={() => setActiveNiche("boutique")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeTabNiche === "boutique"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  activeNiche === "boutique"
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
-                🌸 Moda & Boutique
+                Moda & Boutique
               </button>
               <button
-                onClick={() => setActiveTabNiche("eco")}
+                onClick={() => setActiveNiche("eco")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeTabNiche === "eco"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  activeNiche === "eco"
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
-                🌿 Orgánico & Eco
+                Orgánico & Eco
               </button>
               <button
-                onClick={() => setActiveTabNiche("tech")}
+                onClick={() => setActiveNiche("tech")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all",
-                  activeTabNiche === "tech"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  activeNiche === "tech"
+                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
-                🧱 Tecnología
+                Tecnología
               </button>
             </div>
           </div>
 
-          {/* Grilla de Tarjetas de Modelo */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Grilla de Tarjetas Visuales con Imágenes y Listones */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredModels.map((model) => (
               <div
                 key={model.id}
-                className={cn(
-                  "p-6 rounded-3xl border bg-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between space-y-4",
-                  model.borderColor,
-                )}
+                className="group rounded-3xl border border-border/60 bg-card overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col justify-between"
               >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className={cn("text-xs font-black uppercase tracking-wider", model.textColor)}>
-                      {model.niche}
-                    </span>
-                    <span className="text-[9.5px] font-extrabold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                      {model.badge}
-                    </span>
+                <div>
+                  {/* Vista Previa Visual (Fotografía con Listón Ribbon) */}
+                  <div className="relative h-48 w-full overflow-hidden bg-muted">
+                    <img
+                      src={model.image}
+                      alt={model.name}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+
+                    {/* Listón Ribbon Posicionado */}
+                    <div className="absolute top-3 right-3">
+                      <span className={cn("text-[9.5px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-md backdrop-blur-md", model.accent)}>
+                        {model.badge}
+                      </span>
+                    </div>
+
+                    <div className="absolute bottom-3 left-4 right-4">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                        {model.niche}
+                      </span>
+                      <h3 className="text-lg font-bold text-white leading-tight">{model.name}</h3>
+                    </div>
                   </div>
 
-                  <h3 className="text-lg font-bold text-foreground">{model.name}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{model.desc}</p>
+                  {/* Descripción y Contenido */}
+                  <div className="p-5 space-y-2">
+                    <p className="text-xs text-muted-foreground leading-relaxed">{model.desc}</p>
+                  </div>
                 </div>
 
-                <div className="pt-2 border-t border-border/40 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    ✨ 100% Semántico & Adaptable
+                {/* Acciones */}
+                <div className="px-5 pb-5 pt-2 border-t border-border/30 flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Semántico & Móvil
                   </span>
-                  <Button asChild size="sm" variant="ghost" className="h-8 rounded-lg text-xs font-bold gap-1 text-primary hover:bg-primary/10">
+                  <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold gap-1 text-primary border-primary/20 hover:bg-primary/10">
                     <Link to="/register">
-                      Probar <ChevronRight className="h-3.5 w-3.5" />
+                      Probar Modelo <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
                 </div>
@@ -605,19 +649,54 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. MÓDULOS & FUNCIONALIDADES AVANZADAS ── */}
+      {/* ── 5. SECCIÓN TARJETA PROMO MUNDIAL DESTACADA (RIBBON CARD) ── */}
+      <section className="py-12 bg-background">
+        <div className="container mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-primary/30 p-8 sm:p-10 shadow-2xl text-white">
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="space-y-3 text-center md:text-left">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-xs uppercase tracking-wider border border-emerald-500/30">
+                  <Award className="h-4 w-4" /> Campaña Especial Dizi
+                </div>
+                <h3 className="text-2xl sm:text-4xl font-extrabold text-white">
+                  ¡Llévate tu Plan Emprendedor a S/. 9.90!
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
+                  Incluye la configuración inicial y el diseño personalizado de tu tienda sin costo adicional realizado por nuestro equipo.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
+                <a
+                  href="https://wa.me/51925176472?text=Hola%2C%20quiero%20la%20Promo%20Mundial%20de%20Dizi"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-extrabold px-6 py-3.5 rounded-2xl transition-all shadow-lg shadow-[#25D366]/30"
+                >
+                  <MessageCircle className="h-4 w-4 fill-white" />
+                  Solicitar por WhatsApp
+                </a>
+                <Button asChild variant="outline" className="h-11 px-6 rounded-2xl font-bold text-xs border-white/20 text-white hover:bg-white/10">
+                  <Link to="/register">Crear Cuenta Solo</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 6. MÓDULOS & FUNCIONALIDADES ENTERPRISE ── */}
       <section id="modulos" className="py-16 sm:py-24 bg-muted/30 border-y border-border/40">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Módulos Integrados de Plataforma
+              Funcionalidades de Plataforma
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Todo lo que necesitas para potenciar tus ventas
+              Herramientas diseñadas para acelerar tus conversiones
             </h2>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Herramientas diseñadas para maximizar la conversión de tus clientes desde su primer clic.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -627,7 +706,7 @@ function LandingPage() {
               </div>
               <h3 className="font-bold text-sm text-foreground">Cintillo Promocional</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Anuncia envíos gratis, ofertas relámpago o cupones de descuento con animación Marquesina.
+                Destaca avisos de envío gratis o promociones relámpago con animación Marquesina.
               </p>
             </div>
 
@@ -637,7 +716,7 @@ function LandingPage() {
               </div>
               <h3 className="font-bold text-sm text-foreground">Banners Multi-Imagen</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Carrusel deslizante automático de hasta 5 banners promocionales para destacar campañas.
+                Carrusel de hasta 5 portadas en la cabecera para resaltar campañas o colecciones de temporada.
               </p>
             </div>
 
@@ -647,7 +726,7 @@ function LandingPage() {
               </div>
               <h3 className="font-bold text-sm text-foreground">Exportador Catálogo PDF</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Genera en 1 clic un PDF vectorial con el logo y colores de tu negocio para clientes mayoristas.
+                Genera en 1 clic un PDF vectorial con el logo y colores de tu tienda para compras mayoristas.
               </p>
             </div>
 
@@ -657,25 +736,25 @@ function LandingPage() {
               </div>
               <h3 className="font-bold text-sm text-foreground">Protección In-App Browser</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Detección inteligente para navegadores de TikTok e Instagram garantizando la llegada del pedido a WhatsApp.
+                Garantiza que los clics desde los navegadores de TikTok e Instagram redirijan sin errores a WhatsApp.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 6. PLANES & PRECIOS TRANSPARENTES ── */}
+      {/* ── 7. PLANES & PRECIOS TRANSPARENTES CON RIBBON ── */}
       <section id="precios" className="py-16 sm:py-28 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-12 sm:mb-16">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Suscripción Transparente
+              Suscripciones Transparentes
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Planes diseñados para cada etapa de tu negocio
+              Planes a la medida de tu crecimiento
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground">
-              Comienza gratis hoy. Puedes cambiar o cancelar tu plan en cualquier momento sin penalizaciones.
+              Comienza gratis hoy. Cancela o cambia de plan en cualquier momento sin compromisos.
             </p>
           </div>
 
@@ -748,10 +827,10 @@ function LandingPage() {
               </Button>
             </div>
 
-            {/* PLAN PRO (MÁS POPULAR) */}
+            {/* PLAN PRO (MÁS POPULAR CON LISTÓN RIBBON) */}
             <div className="p-6 rounded-3xl border-2 border-primary bg-primary/[0.02] flex flex-col justify-between space-y-6 relative shadow-xl shadow-primary/10">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-extrabold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full">
-                Más Popular ⭐
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-extrabold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
+                MÁS POPULAR ⭐
               </div>
               <div className="space-y-4 pt-1">
                 <span className="text-xs font-bold text-primary uppercase tracking-widest">
@@ -802,7 +881,7 @@ function LandingPage() {
                 <ul className="space-y-2.5 text-xs text-foreground pt-2">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Productos Ilimitados ($\infty$)</span>
+                    <span>Productos Ilimitados</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -826,7 +905,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 7. PREGUNTAS FRECUENTES (FAQ CON SEO SCHEMA) ── */}
+      {/* ── 8. PREGUNTAS FRECUENTES (FAQ ACORDEÓN ELEGANTE) ── */}
       <section className="py-16 sm:py-24 bg-card border-t border-border/40">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6">
           <div className="text-center space-y-3 mb-10 sm:mb-14">
@@ -867,7 +946,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 8. BANNER FINAL CTA ── */}
+      {/* ── 9. BANNER FINAL CTA ── */}
       <section className="py-16 sm:py-20 bg-gradient-to-r from-primary via-orange-600 to-amber-600 text-white text-center">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6 space-y-6">
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
@@ -880,17 +959,17 @@ function LandingPage() {
             <Button
               asChild
               size="lg"
-              className="h-13 px-9 rounded-2xl font-black text-sm bg-white text-primary hover:bg-white/90 shadow-2xl transition-all hover:scale-105"
+              className="h-13 px-9 rounded-2xl font-black text-sm bg-white text-primary hover:bg-white/90 shadow-2xl transition-all hover:scale-105 gap-2"
             >
               <Link to="/register">
-                🚀 Crear Mi Catálogo Gratis
+                Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* ── 9. FOOTER INSTITUCIONAL ── */}
+      {/* ── 10. FOOTER INSTITUCIONAL ── */}
       <footer className="border-t border-border/40 bg-background py-12 text-xs text-muted-foreground">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 space-y-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -922,7 +1001,7 @@ function LandingPage() {
           </div>
 
           <div className="border-t border-border/40 pt-6 text-center text-[10px] text-muted-foreground">
-            © {new Date().getFullYear()} Dizi · Todos los derechos reservados. Hecho con ❤️ para emprendedores peruanos.
+            © {new Date().getFullYear()} Dizi · Todos los derechos reservados. Hecho para emprendedores peruanos por Idenza.
           </div>
         </div>
       </footer>
