@@ -750,13 +750,13 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Emprendedor</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 29</span>
+                  <span className="text-3xl font-black text-foreground">S/ 9.90</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Hasta 100 Productos</span>
+                    <span>Hasta 50 Productos</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -789,13 +789,13 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Plan Pro</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 49</span>
+                  <span className="text-3xl font-black text-foreground">S/ 14.90</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1 font-medium">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Hasta 500 Productos</span>
+                    <span>Hasta 200 Productos</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -824,7 +824,7 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Plan Ilimitado</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 79</span>
+                  <span className="text-3xl font-black text-foreground">S/ 34.90</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
