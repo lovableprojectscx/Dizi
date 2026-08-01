@@ -906,7 +906,7 @@ function DisenoUnificadoPage() {
             </div>
 
             {/* Frame de Teléfono Simulado */}
-            <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[24px] border border-zinc-800 bg-white shadow-inner">
+            <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[24px] border border-zinc-800 bg-zinc-950 shadow-inner">
               <PublicCatalog store={previewStore as any} mode="catalog" isMockup={true} />
             </div>
           </div>

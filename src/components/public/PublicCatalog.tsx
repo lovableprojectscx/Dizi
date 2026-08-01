@@ -2243,14 +2243,18 @@ export function PublicCatalog({
   return (
     <div
       className={cn(
-        "min-h-screen w-full overflow-x-hidden transition-colors duration-300",
+        "min-h-screen w-full overflow-x-hidden transition-colors duration-300 bg-background text-foreground",
         finalTypographyClass,
         finalIsDark ? "dark" : "",
         modelId === "glam" && "theme-glam",
         modelId === "bloom" && "theme-bloom",
         modelId === "vibe" && "theme-vibe",
       )}
-      style={isBioMode && bioTheme !== "default" ? bioThemeVars : themeVars}
+      style={{
+        backgroundColor: "var(--background)",
+        color: "var(--foreground)",
+        ...(isBioMode && bioTheme !== "default" ? bioThemeVars : themeVars),
+      }}
       translate="no"
     >
       <style>{`
