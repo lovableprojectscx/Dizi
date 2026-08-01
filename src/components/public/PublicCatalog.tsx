@@ -4752,7 +4752,10 @@ export function PublicCatalog({
                 {(() => {
                   const banners = activeBanners;
                   return (
-                    <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl group/banner z-10">
+                    <div
+                      style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                      className="relative w-full aspect-[21/9] sm:aspect-[21/7] rounded-3xl overflow-hidden border shadow-2xl group/banner z-10"
+                    >
                       {banners.length > 0 ? (
                         <>
                           {/* Slides */}
@@ -4760,8 +4763,9 @@ export function PublicCatalog({
                             {banners.map((slide, idx) => (
                               <div
                                 key={idx}
+                                style={{ backgroundColor: "var(--card)" }}
                                 className={cn(
-                                  "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-zinc-950",
+                                  "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
                                   idx === currentBannerIndex
                                     ? "opacity-100 scale-100 z-10"
                                     : "opacity-0 scale-105 z-0 pointer-events-none",
@@ -4793,7 +4797,12 @@ export function PublicCatalog({
                                     (prev) => (prev - 1 + banners.length) % banners.length,
                                   );
                                 }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-800 text-white flex items-center justify-center hover:bg-zinc-800 transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
                               >
                                 <ChevronLeft className="h-5 w-5" />
                               </button>
@@ -4803,7 +4812,12 @@ export function PublicCatalog({
                                   e.stopPropagation();
                                   setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
                                 }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-zinc-900/80 backdrop-blur-md border border-zinc-800 text-white flex items-center justify-center hover:bg-zinc-800 transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
                               >
                                 <ChevronRight className="h-5 w-5" />
                               </button>
@@ -4812,7 +4826,10 @@ export function PublicCatalog({
 
                           {/* Indicator dots */}
                           {banners.length > 1 && (
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-black/60 backdrop-blur-xs border border-zinc-800/60 px-2.5 py-1.5 rounded-full">
+                            <div
+                              style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                              className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 backdrop-blur-xs border px-2.5 py-1.5 rounded-full"
+                            >
                               {banners.map((_, idx) => (
                                 <button
                                   key={idx}
@@ -4825,7 +4842,7 @@ export function PublicCatalog({
                                     "h-1.5 rounded-full transition-all duration-300",
                                     idx === currentBannerIndex
                                       ? "w-4 bg-[var(--primary)]"
-                                      : "w-1.5 bg-zinc-500 hover:bg-zinc-400",
+                                      : "w-1.5 opacity-40 hover:opacity-80 bg-[var(--foreground)]",
                                   )}
                                 />
                               ))}
@@ -4997,7 +5014,7 @@ export function PublicCatalog({
                                 </div>
                               </div>
                               {/* Buy section */}
-                              <div className="flex items-center justify-between pt-3 mt-3 border-t border-zinc-800/80 px-1">
+                              <div style={{ borderColor: "var(--border)" }} className="flex items-center justify-between pt-3 mt-3 border-t px-1">
                                 <div>
                                   <span className="text-base font-black text-[var(--primary)]">
                                     {formatPrice(p.price)}
@@ -5006,7 +5023,7 @@ export function PublicCatalog({
                                     p.originalPrice &&
                                     p.price &&
                                     p.originalPrice > p.price && (
-                                      <span className="text-xs text-zinc-500 line-through block -mt-1">
+                                      <span style={{ color: "var(--muted-foreground)" }} className="text-xs line-through block -mt-1">
                                         {formatPrice(p.originalPrice)}
                                       </span>
                                     )}
@@ -5019,10 +5036,11 @@ export function PublicCatalog({
                                     setCartOpen(true);
                                   }}
                                   style={{
+                                    backgroundColor: "var(--card)",
                                     borderColor: "var(--primary)",
                                     color: "var(--primary)",
                                   }}
-                                  className="border bg-zinc-950/80 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 font-extrabold text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest uppercase rounded-full px-3 py-2 sm:px-5 sm:py-2.5 shadow-[0_0_10px_rgba(234,88,12,0.1)] hover:shadow-[0_0_15px_var(--primary)]/40 flex items-center gap-1"
+                                  className="border hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 font-extrabold text-[9px] sm:text-[10px] tracking-wider sm:tracking-widest uppercase rounded-full px-3 py-2 sm:px-5 sm:py-2.5 shadow-xs hover:shadow-[0_0_15px_var(--primary)]/40 flex items-center gap-1"
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                   Añadir
@@ -5041,19 +5059,24 @@ export function PublicCatalog({
                   {/* Search Bar at full width */}
                   {mode === "catalog" && (
                     <div className="relative w-full">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                      <Search style={{ color: "var(--muted-foreground)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" />
                       <input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="¿Qué estás buscando hoy?"
-                        className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+                        style={{
+                          backgroundColor: "var(--card)",
+                          borderColor: "var(--border)",
+                          color: "var(--foreground)",
+                        }}
+                        className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition border placeholder:text-muted-foreground focus:ring-[var(--primary)] focus:border-[var(--primary)]"
                       />
                     </div>
                   )}
 
                   {/* Inline Horizontal Category Selector */}
                   <div className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
+                    <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
                       Categorías
                     </h3>
 
@@ -5063,18 +5086,18 @@ export function PublicCatalog({
                         <button
                           onClick={() => setActiveCat("all")}
                           style={{
-                            borderColor: activeCat === "all" ? "var(--primary)" : "#27272a",
+                            backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--card)",
+                            borderColor: activeCat === "all" ? "var(--primary)" : "var(--border)",
+                            color: activeCat === "all" ? "var(--primary-foreground)" : "var(--muted-foreground)",
                           }}
                           className={cn(
-                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
-                            activeCat === "all"
-                              ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
-                              : "text-zinc-400 hover:text-white hover:bg-zinc-900/40",
+                            "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider backdrop-blur-sm",
+                            activeCat === "all" && "shadow-lg scale-105",
                           )}
                         >
                           <LayoutGrid
                             className="h-4 w-4 shrink-0"
-                            style={{ color: activeCat === "all" ? "#fff" : "var(--primary)" }}
+                            style={{ color: activeCat === "all" ? "var(--primary-foreground)" : "var(--primary)" }}
                           />
                           <span>Ver Todo</span>
                         </button>
@@ -5084,13 +5107,13 @@ export function PublicCatalog({
                           <button
                             onClick={() => setActiveCat("sale")}
                             style={{
-                              borderColor: activeCat === "sale" ? "var(--primary)" : "#27272a",
+                              backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--card)",
+                              borderColor: activeCat === "sale" ? "var(--primary)" : "var(--border)",
+                              color: activeCat === "sale" ? "var(--primary-foreground)" : "var(--muted-foreground)",
                             }}
                             className={cn(
-                              "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
-                              activeCat === "sale"
-                                ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
-                                : "text-zinc-400 hover:text-white hover:bg-zinc-900/40",
+                              "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider backdrop-blur-sm",
+                              activeCat === "sale" && "shadow-lg scale-105",
                             )}
                           >
                             <Flame className="h-4 w-4 shrink-0 text-red-500" />
@@ -5106,25 +5129,25 @@ export function PublicCatalog({
                               key={c.id}
                               onClick={() => setActiveCat(c.id)}
                               style={{
-                                borderColor: active ? "var(--primary)" : "#27272a",
+                                backgroundColor: active ? "var(--primary)" : "var(--card)",
+                                borderColor: active ? "var(--primary)" : "var(--border)",
+                                color: active ? "var(--primary-foreground)" : "var(--muted-foreground)",
                               }}
                               className={cn(
-                                "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider bg-zinc-950/40 backdrop-blur-sm",
-                                active
-                                  ? "bg-zinc-900/90 text-white shadow-lg shadow-[var(--primary)]/10 scale-105"
-                                  : "text-zinc-400 hover:text-white hover:bg-zinc-900/40",
+                                "flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border transition-all duration-300 shrink-0 text-xs font-extrabold uppercase tracking-wider backdrop-blur-sm",
+                                active && "shadow-lg scale-105",
                               )}
                             >
                               {iconKey ? (
                                 <CategoryIcon
                                   iconKey={iconKey}
                                   className="h-4 w-4 shrink-0"
-                                  style={{ color: active ? "#fff" : "var(--primary)" }}
+                                  style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
                                 />
                               ) : (
                                 <Utensils
                                   className="h-4 w-4 shrink-0"
-                                  style={{ color: active ? "#fff" : "var(--primary)" }}
+                                  style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
                                 />
                               )}
                               <span>{label}</span>
@@ -5138,7 +5161,7 @@ export function PublicCatalog({
 
                 {/* 4. Product Grid */}
                 <div className="space-y-4">
-                  <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 text-left">
+                  <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
                     {activeCat === "all"
                       ? "Nuestros Productos"
                       : parseCategoryName(
@@ -5159,7 +5182,7 @@ export function PublicCatalog({
 
                     if (gridProducts.length === 0) {
                       return (
-                        <div className="text-center py-12 border border-zinc-800 rounded-3xl bg-zinc-900/10 text-xs text-zinc-500">
+                        <div style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--muted-foreground)" }} className="text-center py-12 border rounded-3xl text-xs">
                           No hay productos en esta categoría.
                         </div>
                       );
@@ -5184,12 +5207,17 @@ export function PublicCatalog({
                             <React.Fragment key={p.id}>
                               <article
                                 key={p.id}
-                                className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-zinc-800 rounded-3xl bg-zinc-900/30 hover:bg-zinc-900 hover:scale-[1.02] shadow-lg text-left"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--card-foreground)",
+                                }}
+                                className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-3xl hover:scale-[1.02] shadow-lg text-left"
                                 onClick={() => setViewingProduct(p)}
                               >
                                 <div>
                                   {/* 1:1 image */}
-                                  <div className="relative overflow-hidden bg-zinc-950 aspect-square rounded-2xl m-2 border border-zinc-800">
+                                  <div style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }} className="relative overflow-hidden aspect-square rounded-2xl m-2 border">
                                     <img
                                       src={getOptimizedImageUrl(
                                         p.image ||
@@ -5208,11 +5236,11 @@ export function PublicCatalog({
                                   </div>
                                   {/* Info */}
                                   <div className="p-3 pt-1 space-y-1 text-left">
-                                    <h4 className="font-extrabold text-sm text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-5 min-h-10">
+                                    <h4 style={{ color: "var(--card-foreground)" }} className="font-extrabold text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-5 min-h-10">
                                       {p.name}
                                     </h4>
                                     {p.description && (
-                                      <p className="text-[11px] text-zinc-400 line-clamp-2 leading-4 min-h-8">
+                                      <p style={{ color: "var(--muted-foreground)" }} className="text-[11px] line-clamp-2 leading-4 min-h-8">
                                         {p.description}
                                       </p>
                                     )}
@@ -5232,7 +5260,7 @@ export function PublicCatalog({
                                       p.originalPrice &&
                                       p.price &&
                                       p.originalPrice > p.price && (
-                                        <span className="text-[10px] text-zinc-500 line-through -mt-1">
+                                        <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through -mt-1">
                                           {formatPrice(p.originalPrice)}
                                         </span>
                                       )}
@@ -5245,10 +5273,11 @@ export function PublicCatalog({
                                       setCartOpen(true);
                                     }}
                                     style={{
+                                      backgroundColor: "var(--card)",
                                       borderColor: "var(--primary)",
                                       color: "var(--primary)",
                                     }}
-                                    className="h-8 px-3 rounded-xl border bg-zinc-950/60 hover:bg-[var(--primary)] hover:text-white transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-[0_2px_10px_rgba(0,0,0,0.3)] hover:shadow-[0_0_12px_var(--primary)]/30 active:scale-95 font-sans"
+                                    className="h-8 px-3 rounded-xl border hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center gap-1 text-[10px] font-black tracking-wider uppercase shadow-xs hover:shadow-[0_0_12px_var(--primary)]/30 active:scale-95 font-sans"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                     Añadir
