@@ -262,28 +262,44 @@ function DisenoUnificadoPage() {
     }
   };
 
-  const onBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Multi-banner support (up to 5 banners based on plan)
+  const bannerList = bannerImage ? bannerImage.split("|||").filter(Boolean) : [];
+  const maxAllowedBanners = store.plan === "semilla" ? 0 : store.plan === "emprendedor" ? 1 : store.plan === "pro" ? 3 : 5;
+
+  const handleAddBanner = async (file: File, indexToReplace?: number) => {
     if (file.size > 10 * 1024 * 1024) {
       toast.error("La imagen es muy pesada (máximo 10 MB)");
       return;
     }
     try {
       const webpDataUrl = await convertImageToWebP(file);
-      setBannerImage(webpDataUrl);
-      toast.info("Imagen de portada cargada. Haz clic en Guardar cambios.");
+      const currentList = [...bannerList];
+      if (typeof indexToReplace === "number" && indexToReplace < currentList.length) {
+        currentList[indexToReplace] = webpDataUrl;
+      } else {
+        if (maxAllowedBanners > 0 && currentList.length >= maxAllowedBanners) {
+          toast.error(`Tu plan actual (${store.plan.toUpperCase()}) permite un máximo de ${maxAllowedBanners} banner(s).`);
+          return;
+        }
+        currentList.push(webpDataUrl);
+      }
+      setBannerImage(currentList.join("|||"));
+      toast.info("Banner actualizado. Haz clic en Guardar cambios.");
     } catch {
       toast.error("No se pudo procesar la imagen del banner.");
     }
+  };
+
+  const handleRemoveBanner = (index: number) => {
+    const currentList = bannerList.filter((_, i) => i !== index);
+    setBannerImage(currentList.join("|||"));
+    toast.info("Banner eliminado. Haz clic en Guardar cambios.");
   };
 
   // Guardar configuración unificada
   const save = async () => {
     const toastId = toast.loading("Guardando diseño...");
     try {
-      const finalBannerImage = hasMultipleBanners ? originalBannerImage : bannerImage || null;
-
       await update(store.id, {
         model: selectedStructure as any,
         brandColor: brandColor || null,
@@ -296,11 +312,11 @@ function DisenoUnificadoPage() {
         isDark: isDark,
         catalogTypography: typography || null,
         cardStyle: cardStyle || null,
-        bannerImage: finalBannerImage,
+        bannerImage: bannerImage || null,
         bannerTitle: bannerTitle || null,
         bannerTagline: bannerTagline || null,
         bannerBottomTag: bannerBottomTag || null,
-        bannerStyle: bannerStyle || (store as any).bannerStyle || "framed",
+        bannerStyle: bannerStyle || null,
         promoBarEnabled,
         promoBarText,
         promoBarActionType,
@@ -331,7 +347,7 @@ function DisenoUnificadoPage() {
     isDark: isDark,
     catalogTypography: typography,
     cardStyle: cardStyle,
-    bannerImage: hasMultipleBanners ? originalBannerImage : bannerImage,
+    bannerImage: bannerImage,
     bannerTitle: bannerTitle,
     bannerTagline: bannerTagline,
     bannerBottomTag: bannerBottomTag,
@@ -895,7 +911,7 @@ function DisenoUnificadoPage() {
                   </div>
                 </div>
 
-                {/* 2. Banners en Portada */}
+                {/* 2. Banners en Portada (Hasta 5 Banners según Plan) */}
                 <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -906,58 +922,98 @@ function DisenoUnificadoPage() {
                         <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
                           Banners en Portada
                           <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[9px] font-extrabold py-0.5">
-                            {currentPlanLevel < 2 ? "1 Banner" : currentPlanLevel === 2 ? "Carrusel 3 Banners" : "Carrusel 5 Banners"}
+                            {store.plan === "semilla"
+                              ? "0 Banners (Plan Semilla)"
+                              : store.plan === "emprendedor"
+                                ? "1 Banner Max"
+                                : store.plan === "pro"
+                                  ? "Carrusel 3 Banners"
+                                  : "Carrusel 5 Banners"}
                           </Badge>
                         </h4>
                         <p className="text-[11px] text-zinc-550">
-                          Sube o cambia la imagen principal de la cabecera de tu catálogo.
+                          {maxAllowedBanners === 0
+                            ? "El Plan Semilla no incluye imágenes personalizadas en portada. Actualiza a Emprendedor (1 banner) o Pro/Ilimitado (hasta 5 en carrusel)."
+                            : `Gestiona hasta ${maxAllowedBanners} banner(s) para la portada de tu catálogo. (${bannerList.length}/${maxAllowedBanners} subidos)`}
                         </p>
                       </div>
                     </div>
+
                     <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={onBannerUpload}
-                          className="hidden"
-                        />
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-bold text-zinc-700 shadow-xs transition">
-                          <Upload className="h-3.5 w-3.5 text-primary" />
-                          Subir Banner
-                        </span>
-                      </label>
-                      {currentPlanLevel < 2 && (
+                      {maxAllowedBanners > 0 && bannerList.length < maxAllowedBanners && (
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleAddBanner(file);
+                            }}
+                            className="hidden"
+                          />
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-bold text-zinc-700 shadow-xs transition">
+                            <Upload className="h-3.5 w-3.5 text-primary" />
+                            + Agregar Banner ({bannerList.length + 1}/{maxAllowedBanners})
+                          </span>
+                        </label>
+                      )}
+                      {currentPlanLevel < 3 && (
                         <Link to="/admin/plan">
                           <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
-                            Ampliar
+                            Ampliar Plan
                           </Button>
                         </Link>
                       )}
                     </div>
                   </div>
 
-                  {bannerImage && (
-                    <div className="pt-3 border-t border-zinc-200/80 flex items-center gap-4">
-                      <div className="relative aspect-[16/7] w-36 rounded-xl overflow-hidden border bg-zinc-100 shrink-0">
-                        <img
-                          src={bannerImage.split("|||")[0]}
-                          alt="Banner actual"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-xs font-bold text-zinc-800">Imagen de Portada Cargada</p>
-                        <p className="text-[10px] text-zinc-500">
-                          Formato WebP optimizado · Haz clic en Guardar cambios para aplicar.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setBannerImage("")}
-                          className="text-[10px] text-red-600 hover:text-red-700 font-bold flex items-center gap-1 pt-1"
-                        >
-                          <Trash2 className="h-3 w-3" /> Eliminar Imagen
-                        </button>
+                  {/* Banner Gallery Grid */}
+                  {bannerList.length > 0 && (
+                    <div className="pt-3 border-t border-zinc-200/80 space-y-2">
+                      <p className="text-xs font-bold text-zinc-800">
+                        Imágenes Cargadas ({bannerList.length} de {maxAllowedBanners})
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {bannerList.map((url, idx) => (
+                          <div
+                            key={idx}
+                            className="relative rounded-2xl border border-zinc-200 bg-white p-2.5 space-y-2 group shadow-xs hover:border-primary/40 transition"
+                          >
+                            <div className="relative aspect-[16/7] w-full rounded-xl overflow-hidden bg-zinc-100 border border-zinc-100">
+                              <img
+                                src={url}
+                                alt={`Banner ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold">
+                                Banner #{idx + 1}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-1">
+                              <label className="cursor-pointer text-[10px] text-zinc-600 font-bold hover:text-primary transition flex items-center gap-1">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleAddBanner(file, idx);
+                                  }}
+                                  className="hidden"
+                                />
+                                <Upload className="h-3 w-3" /> Reemplazar
+                              </label>
+
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveBanner(idx)}
+                                className="text-[10px] text-red-600 hover:text-red-700 font-bold flex items-center gap-1"
+                              >
+                                <Trash2 className="h-3 w-3" /> Eliminar
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
