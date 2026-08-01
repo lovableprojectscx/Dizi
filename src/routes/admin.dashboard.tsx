@@ -103,17 +103,19 @@ function Dashboard() {
   const activeUrl = shareTab === "catalog" ? catalogUrl : bioUrl;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-10">
-      {/* Header Minimalista */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
+    <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto pb-10">
+      {/* Header Responsive */}
+      <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-3 sm:pb-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">{store.name}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-foreground line-clamp-1">
+            {store.name}
+          </h1>
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
             Panel de administración de tu catálogo
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-center">
-          <span className="text-[10px] font-bold bg-primary/5 text-primary px-3 py-1 rounded-full border border-primary/10 tracking-wider uppercase">
+        <div className="shrink-0">
+          <span className="text-[9px] sm:text-[10px] font-extrabold bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20 tracking-wider uppercase">
             Plan {plan.name}
           </span>
         </div>
@@ -122,14 +124,14 @@ function Dashboard() {
       {/* Banner de estado inicial minimalista */}
       {store.products.length === 0 && (
         <Card className="border border-primary/20 bg-primary/[0.02] shadow-none rounded-xl">
-          <CardContent className="p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Sparkles className="h-5 w-5" />
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                <Sparkles className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               </div>
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm font-semibold text-foreground">Tu catálogo está listo</h3>
+              <div className="space-y-0.5 text-center sm:text-left">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Tu catálogo está listo</h3>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -145,14 +147,14 @@ function Dashboard() {
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
                   Comienza agregando tus primeros productos.
                 </p>
               </div>
             </div>
-            <Button asChild size="sm" className="rounded-lg font-bold text-xs h-9">
+            <Button asChild size="sm" className="rounded-lg font-bold text-xs h-8 sm:h-9 w-full sm:w-auto">
               <Link to="/admin/productos">
-                <Plus className="h-4 w-4 mr-1.5" /> Agregar primer producto
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Agregar primer producto
               </Link>
             </Button>
           </CardContent>
@@ -160,63 +162,62 @@ function Dashboard() {
       )}
 
       {/* ── SECCIÓN 1: COMPARTE TU TIENDA (Widget Integrado con QR) ── */}
-      <Card className="border border-border/50 rounded-xl bg-card shadow-sm overflow-hidden">
-        <div className="p-5 sm:p-6">
-          <div className="flex items-center gap-2 border-b pb-3 border-border/30 mb-5">
+      <Card className="border border-border/50 rounded-2xl bg-card shadow-sm overflow-hidden">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-2 border-b pb-2.5 sm:pb-3 border-border/30 mb-4 sm:mb-5">
             <Share2 className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
+            <h2 className="text-xs sm:text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
               Comparte tu Negocio
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-stretch">
             {/* LADO IZQUIERDO: Selector de Pestaña y Enlace */}
-            <div className="md:col-span-2 space-y-4">
-              {/* Selector tipo Pestaña */}
-              <div className="inline-flex p-0.5 bg-muted rounded-lg border border-border/10">
+            <div className="md:col-span-2 space-y-3.5 sm:space-y-4 flex flex-col justify-between">
+              {/* Selector tipo Pestaña adaptado a móvil */}
+              <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl border border-border/20 gap-1 w-full">
                 <button
                   onClick={() => setShareTab("catalog")}
                   className={cn(
-                    "px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5",
+                    "px-2 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5",
                     shareTab === "catalog"
-                      ? "bg-background text-foreground shadow-sm"
+                      ? "bg-background text-foreground shadow-xs font-extrabold"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Store className="h-3.5 w-3.5" />
-                  Catálogo de Productos
+                  <Store className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Catálogo Digital</span>
                 </button>
                 <button
                   onClick={() => setShareTab("bio")}
                   className={cn(
-                    "px-4 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5",
+                    "px-2 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5",
                     shareTab === "bio"
-                      ? "bg-background text-foreground shadow-sm"
+                      ? "bg-background text-foreground shadow-xs font-extrabold"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Link2 className="h-3.5 w-3.5" />
-                  Link en Bio (Redes)
+                  <Link2 className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Link en Bio</span>
                 </button>
               </div>
 
               {/* Contenido Dinámico según pestaña */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {shareTab === "catalog" ? (
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">
+                  <div className="space-y-0.5">
+                    <p className="text-xs sm:text-sm font-semibold text-foreground">
                       Dirección de tu Tienda Online
                     </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
                       Esta es la dirección pública de tu catálogo en línea. Compártela con tus
-                      clientes para que puedan explorar productos y enviarte pedidos directamente a
-                      tu WhatsApp.
+                      clientes para recibir pedidos directos a tu WhatsApp.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground">
+                      <p className="text-xs sm:text-sm font-semibold text-foreground">
                         Tu Página Unificada de Redes
                       </p>
                       <span
@@ -230,10 +231,8 @@ function Dashboard() {
                         {store.bioLinksEnabled ? "Activo" : "Inactivo"}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Una página optimizada para móvil ideal para colocar en la bio de tu Instagram,
-                      TikTok o Facebook, que reúne tu catálogo, tus redes sociales y ubicación
-                      física.
+                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                      Página unificada ideal para tu bio de Instagram o TikTok.
                     </p>
                   </div>
                 )}
@@ -241,22 +240,23 @@ function Dashboard() {
                 {/* Caja de Enlace Integrada */}
                 <div
                   className={cn(
-                    "flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 max-w-lg",
+                    "flex items-center justify-between gap-2 bg-muted/30 hover:bg-muted/40 transition-colors rounded-xl px-3 py-2 border border-border/40 w-full",
                     shareTab === "bio" &&
                       !store.bioLinksEnabled &&
                       "opacity-50 select-none pointer-events-none",
                   )}
                 >
-                  <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">
+                  <span className="truncate select-all font-mono text-[11px] sm:text-xs font-semibold text-foreground/90 flex-1">
                     {activeUrl}
                   </span>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       type="button"
                       onClick={() => copyText(activeUrl)}
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      title="Copiar enlace"
                     >
                       {copiedLink ? (
                         <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -268,7 +268,8 @@ function Dashboard() {
                       href={activeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-7 w-7 rounded-md hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      className="h-7 w-7 rounded-lg hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      title="Abrir enlace"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
@@ -277,9 +278,9 @@ function Dashboard() {
               </div>
 
               {/* Botones de acción dinámicos de pie */}
-              <div className="pt-2 flex items-center gap-2 flex-wrap">
+              <div className="pt-1 flex items-center gap-2 flex-wrap">
                 {shareTab === "catalog" ? (
-                  <div className="[&>button]:h-9 [&>button]:rounded-lg [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/60 [&>button]:bg-transparent [&>button]:hover:bg-muted">
+                  <div className="[&>button]:h-8 [&>button]:sm:h-9 [&>button]:rounded-lg [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/60 [&>button]:bg-transparent [&>button]:hover:bg-muted">
                     <CatalogPdfExportButton store={store} variant="admin" />
                   </div>
                 ) : (
@@ -287,7 +288,7 @@ function Dashboard() {
                     asChild
                     size="sm"
                     variant="outline"
-                    className="h-9 rounded-lg gap-1.5 font-bold text-xs shadow-none border-border/60"
+                    className="h-8 sm:h-9 rounded-lg gap-1.5 font-bold text-xs shadow-none border-border/60"
                   >
                     <Link to="/admin/link-bio">
                       <Settings className="h-3.5 w-3.5 text-primary" />
@@ -298,32 +299,34 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* LADO DERECHO: Código QR Integrado */}
-            <div className="flex flex-col items-center justify-center p-4 bg-muted/10 border border-border/30 rounded-xl space-y-3.5">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Código QR del Negocio
-              </span>
+            {/* LADO DERECHO: Código QR Integrado (Compacto en móvil) */}
+            <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center p-3 sm:p-4 bg-muted/20 border border-border/30 rounded-xl gap-3">
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Código QR
+                </span>
 
-              {activeQr ? (
-                <div className="p-2 bg-white rounded-lg border border-border/10 shadow-sm relative group overflow-hidden">
-                  <img
-                    src={activeQr}
-                    alt={`Código QR ${shareTab === "catalog" ? "catálogo" : "Bio-Link"}`}
-                    className="h-28 w-28 sm:h-32 sm:w-32 rounded-md object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="h-28 w-28 sm:h-32 sm:w-32 rounded-md bg-muted flex items-center justify-center border-2 border-dashed border-muted-foreground/10 text-xs text-muted-foreground text-center p-2">
-                  QR no disponible
-                </div>
-              )}
+                {activeQr ? (
+                  <div className="p-1.5 bg-white rounded-xl border border-border/10 shadow-xs relative group overflow-hidden shrink-0">
+                    <img
+                      src={activeQr}
+                      alt={`Código QR ${shareTab === "catalog" ? "catálogo" : "Bio-Link"}`}
+                      className="h-20 w-20 sm:h-28 sm:w-28 rounded-lg object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-20 w-20 sm:h-28 sm:w-28 rounded-lg bg-muted flex items-center justify-center border border-dashed border-muted-foreground/20 text-[10px] text-muted-foreground text-center p-1">
+                    QR no disponible
+                  </div>
+                )}
+              </div>
 
               <Button
                 onClick={() => downloadQrCode(shareTab)}
                 disabled={shareTab === "bio" && !store.bioLinksEnabled}
                 size="sm"
                 variant="default"
-                className="rounded-lg gap-1.5 font-bold h-8 px-4 text-xs shadow-none disabled:opacity-40"
+                className="rounded-lg gap-1.5 font-bold h-8 px-3 text-xs shadow-none disabled:opacity-40 shrink-0 self-center"
               >
                 <Download className="h-3 w-3" /> Descargar QR
               </Button>
@@ -333,7 +336,7 @@ function Dashboard() {
       </Card>
 
       {/* ── SECCIÓN 2: GRID DE MÉTRICAS & DASHBOARD ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
           icon={<Package className="h-4 w-4 text-blue-500" />}
           label="Productos activos"
@@ -350,7 +353,7 @@ function Dashboard() {
         />
         <MetricCard
           icon={<Eye className="h-4 w-4 text-purple-500" />}
-          label="Visitas al catálogo"
+          label="Visitas catálogo"
           value={String(store.views || 0)}
           trend="Visualizaciones"
           tooltipText="Número total de veces que tus clientes han ingresado a ver tu catálogo."
@@ -395,15 +398,15 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "border border-border/50 shadow-sm hover:shadow-md/5 transition-all duration-300 rounded-xl overflow-hidden relative group bg-card",
+        "border border-border/50 shadow-xs hover:shadow-sm transition-all duration-300 rounded-xl overflow-hidden relative group bg-card",
         className,
       )}
     >
-      <CardContent className="p-4 flex flex-col justify-between h-full min-h-[110px]">
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+      <CardContent className="p-3 sm:p-4 flex flex-col justify-between h-full min-h-[95px] sm:min-h-[110px]">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 min-w-0">
+              <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
                 {label}
               </span>
               {tooltipText && (
@@ -411,7 +414,7 @@ function MetricCard({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      className="text-muted-foreground/30 hover:text-muted-foreground transition-colors cursor-help"
+                      className="text-muted-foreground/30 hover:text-muted-foreground transition-colors cursor-help shrink-0"
                     >
                       <HelpCircle className="h-3 w-3" />
                     </button>
@@ -424,11 +427,11 @@ function MetricCard({
               {icon}
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-light tracking-tight text-foreground">
+          <div className="text-xl sm:text-3xl font-normal tracking-tight text-foreground truncate">
             {value}
           </div>
         </div>
-        {trend && <p className="text-[10px] text-muted-foreground font-medium pt-1">{trend}</p>}
+        {trend && <p className="text-[9px] sm:text-[10px] text-muted-foreground font-medium pt-0.5 truncate">{trend}</p>}
       </CardContent>
     </Card>
   );
