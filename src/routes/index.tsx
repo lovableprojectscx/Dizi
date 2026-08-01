@@ -21,27 +21,30 @@ import {
   Check,
   Flame,
   Zap,
+  BookOpen,
+  Link2,
+  TrendingUp,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dizi — Plataforma N°1 de Catálogos Digitales para MYPEs | Vende por WhatsApp" },
+      { title: "Dizi — Tu negocio, ordenado y presentable en un solo link | Catálogos Digitales Perú" },
       {
         name: "description",
         content:
-          "Crea tu catálogo digital web interactivo en 2 minutos y vende por WhatsApp sin comisiones. 15 modelos de diseño profesional. Prueba 15 días gratis.",
+          "Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ 9.90. Prueba 15 días gratis.",
       },
       {
         name: "keywords",
         content:
-          "catálogo digital, catálogo web, vender por WhatsApp, catálogo gratis, MYPE Perú, tienda virtual, catálogo PDF, link en bio",
+          "catálogo digital, catálogo web, vender por WhatsApp, Dizi, catálogo gratis, MYPE Perú, tienda virtual, catálogo PDF, link en bio, libro de reclamaciones",
       },
-      { property: "og:title", content: "Dizi — Catálogos Digitales Interactivos para MYPEs" },
+      { property: "og:title", content: "Dizi — Tu negocio, ordenado y presentable en un solo link" },
       {
         property: "og:description",
         content:
-          "Crea tu catálogo web en 2 minutos. Tus clientes exploran productos y te envían pedidos armados directo a tu WhatsApp.",
+          "Tú ya sabes vender. Dizi solo hace que se note. Crea tu catálogo web en 2 minutos y recibe pedidos organizados por WhatsApp sin comisiones.",
       },
       { property: "og:image", content: "https://dizi.idenza.site/images/dizi-logo-principal-color.png" },
     ],
@@ -64,7 +67,7 @@ function LandingPage() {
       id: "bite",
       name: "Bite Gastronómico",
       niche: "Gastronomía / Restobar",
-      desc: "Categorías táctiles, especialidades de cocina y pedidos directos por WhatsApp.",
+      desc: "Categorías táctiles, especialidades de cocina y pedidos directos a tu WhatsApp.",
       badge: "Popular",
       category: "gastronomia",
       image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80",
@@ -130,29 +133,29 @@ function LandingPage() {
   const faqs = [
     {
       q: "¿Cómo reciben mis clientes los pedidos en WhatsApp?",
-      a: "Tus clientes agregan sus productos al carrito y presionan 'Enviar Pedido'. Dizi abre automáticamente su app de WhatsApp con la lista de compra detallada y el total en Soles.",
+      a: "Tus clientes exploran tu catálogo web, agregan los productos que desean a su carrito y presionan 'Enviar Pedido'. Dizi abre instantáneamente su app de WhatsApp con la lista de compra detallada, precios y total a pagar.",
     },
     {
       q: "¿Cobran comisiones por venta?",
-      a: "Cero comisiones. Todo el dinero de tus ventas ingresa directamente a tu cuenta bancaria o Yape/Plin sin intermediarios.",
+      a: "Cero comisiones. Todo el dinero de tus ventas ingresa directamente a tu cuenta bancaria o Yape/Plin sin intermediarios ni retenciones.",
     },
     {
       q: "¿Mis clientes tienen que descargar alguna app?",
-      a: "No. Tu catálogo es una página web ultrarrápida. Tus clientes acceden mediante un enlace único desde Instagram, TikTok o Facebook.",
+      a: "No. Tu catálogo es una página web ultrarrápida que abre al instante en el celular del cliente a través de tu enlace personalizado.",
     },
     {
-      q: "¿Puedo exportar mi catálogo en PDF?",
-      a: "Sí. Todos los planes pagados generan en 1 clic un PDF vectorial con tu logotipo y lista de precios oficial para clientes mayoristas.",
+      q: "¿Puedo exportar mi catálogo en PDF para ventas mayoristas?",
+      a: "Sí. Todos los planes de pago incluyen el módulo de Exportación PDF Vectorial. Con un solo clic generas un catálogo profesional imprimible con tu logotipo.",
     },
     {
-      q: "¿Cómo funciona la prueba gratis de 15 días?",
-      a: "Al registrarte inicias con 15 días completos del Plan Pro gratis, sin ingresar tarjeta de crédito.",
+      q: "¿Cómo funciona el Libro de Reclamaciones Digital?",
+      a: "Dizi integra el formulario legal conforme a la normativa INDECOPI del Perú. Tus clientes pueden registrar reclamos o quejas y tú los gestionas desde tu panel administrativo.",
     },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground pb-16 md:pb-0">
-      {/* ── 1. HEADER / NAVBAR DE NAVEGACIÓN ── */}
+      {/* ── 1. HEADER / NAVBAR CON IDENTIDAD DE MARCA ── */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 backdrop-blur-md transition-all">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
@@ -164,15 +167,15 @@ function LandingPage() {
           </Link>
 
           {/* Navegación Desktop */}
-          <nav className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <nav className="hidden md:flex items-center gap-8 text-xs font-bold uppercase tracking-wider text-muted-foreground font-sans">
             <a href="#beneficios" className="hover:text-primary transition-colors">
               Beneficios
             </a>
             <a href="#modelos" className="hover:text-primary transition-colors">
               Diseños (15)
             </a>
-            <a href="#modulos" className="hover:text-primary transition-colors">
-              Módulos Pro
+            <a href="#pasos" className="hover:text-primary transition-colors">
+              Cómo Funciona
             </a>
             <a href="#precios" className="hover:text-primary transition-colors">
               Planes & Precios
@@ -186,13 +189,13 @@ function LandingPage() {
             <Button
               variant="ghost"
               asChild
-              className="hidden md:flex font-bold text-xs rounded-xl h-10 px-4 text-foreground hover:bg-muted"
+              className="hidden md:flex font-bold text-xs rounded-xl h-10 px-4 text-foreground hover:bg-muted font-sans"
             >
               <Link to="/login">Iniciar Sesión</Link>
             </Button>
             <Button
               asChild
-              className="hidden md:flex font-extrabold text-xs rounded-xl h-10 px-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95"
+              className="hidden md:flex font-extrabold text-xs rounded-xl h-10 px-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95 font-sans"
             >
               <Link to="/register">
                 Crear Catálogo Gratis <ArrowRight className="ml-1.5 h-4 w-4" />
@@ -210,9 +213,9 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Menú Desplegable Móvil con Animación */}
+        {/* Menú Desplegable Móvil */}
         {menuOpen && (
-          <div className="md:hidden border-t border-border/40 bg-background/98 backdrop-blur-xl px-4 py-5 space-y-3 animate-in fade-in slide-in-from-top duration-200 shadow-xl">
+          <div className="md:hidden border-t border-border/40 bg-background/98 backdrop-blur-xl px-4 py-5 space-y-3 animate-in fade-in slide-in-from-top duration-200 shadow-xl font-sans">
             <a
               href="#beneficios"
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
@@ -225,14 +228,14 @@ function LandingPage() {
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Diseños Premium (15)
+              Diseños (15)
             </a>
             <a
-              href="#modulos"
+              href="#pasos"
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Módulos Pro
+              Cómo Funciona
             </a>
             <a
               href="#precios"
@@ -264,37 +267,37 @@ function LandingPage() {
         )}
       </header>
 
-      {/* ── 2. SECCIÓN HERO MÓVIL Y DESKTOP OPTIMIZADA (SIN SIMULADOR EN MÓVIL PANTALLA PEQUEÑA) ── */}
-      <section className="relative overflow-hidden pt-8 sm:pt-16 pb-12 sm:pb-24 bg-gradient-to-b from-primary/[0.04] via-background to-background border-b border-border/30">
+      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (ESENCIA DE MARCA OFICIAL) ── */}
+      <section className="relative overflow-hidden pt-8 sm:pt-16 pb-12 sm:pb-20 bg-gradient-to-b from-primary/[0.04] via-background to-background border-b border-border/30">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-            {/* LADO IZQUIERDO: TEXTOS SEO & ACCIONES */}
+            {/* LADO IZQUIERDO: ESENCIA DE MARCA */}
             <div className="lg:col-span-7 space-y-5 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
-              {/* Badge Principal */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider shadow-xs">
+              {/* Badge Oficial */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider shadow-xs font-sans">
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>Catálogos Digitales Web para MYPEs</span>
+                <span>Catálogo Web · Link en Bio · Pedidos por WhatsApp</span>
               </div>
 
-              {/* Título SEO Directo */}
+              {/* Título Principal SEO + Frase de Marca */}
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.12]">
-                Crea tu Catálogo Web y Vende por{" "}
+                Tu negocio, ordenado y presentable en{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
-                  WhatsApp en 2 Minutos
+                  un solo link
                 </span>
               </h1>
 
-              {/* Subtítulo Conciso (SEO & GEO) */}
+              {/* Subtítulo de Marca Empoderador */}
               <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                Digitaliza tus productos en una tienda interactiva sin comisiones. Tus clientes arman su carrito y te envían el pedido directo a tu WhatsApp.
+                Tú ya sabes vender. Dizi solo hace que se note. Transforma las consultas de tus redes sociales en pedidos organizados directo a tu WhatsApp. Sin comisiones.
               </p>
 
-              {/* Botones de Acción Móvil & Desktop */}
+              {/* Botones de Acción */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto h-12 sm:h-13 px-8 rounded-2xl font-black text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 gap-2"
+                  className="w-full sm:w-auto h-12 sm:h-13 px-8 rounded-2xl font-black text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
                 >
                   <Link to="/register">
                     Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
@@ -305,7 +308,7 @@ function LandingPage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto h-12 sm:h-13 px-7 rounded-2xl font-bold text-xs sm:text-sm border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs"
+                  className="w-full sm:w-auto h-12 sm:h-13 px-7 rounded-2xl font-bold text-xs sm:text-sm border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs font-sans"
                 >
                   <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
                     <Smartphone className="h-4 w-4 text-primary" /> Ver Tienda de Ejemplo
@@ -314,15 +317,15 @@ function LandingPage() {
                 </Button>
               </div>
 
-              {/* 3 Tarjetas de Beneficios Rápidos (Optimizadas para Móviles y PC) */}
+              {/* 3 Tarjetas de Beneficios Clave */}
               <div className="pt-4 grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card border border-border/50 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
                   <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
                     <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div>
-                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">2 Minutos</p>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Configuración</p>
+                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">En 2 Minutos</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Listo sin código</p>
                   </div>
                 </div>
 
@@ -342,13 +345,13 @@ function LandingPage() {
                   </div>
                   <div>
                     <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">15 Días Free</p>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Prueba Pro</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Prueba Plan Pro</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* LADO DERECHO: SIMULADOR DE MÓVIL DENSE (SOLO VISIBLE EN PANTALLAS MD+) */}
+            {/* LADO DERECHO: SIMULADOR DE MÓVIL DENSE */}
             <div className="hidden lg:flex lg:col-span-5 justify-end">
               <div className="relative w-full max-w-[340px] h-[550px] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
                 {/* Altavoz y Cámara de iPhone */}
@@ -469,63 +472,102 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 3. COMPARACIÓN DIRECTA TRADICIONAL VS DIZI ── */}
-      <section id="beneficios" className="py-12 sm:py-20 bg-card border-b border-border/40">
+      {/* ── 3. FLUJO DE 3 PASOS SIMPLES DE LA MARCA ── */}
+      <section id="pasos" className="py-12 sm:py-20 bg-muted/20 border-b border-border/40">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-12">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-10">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Comparación de Método
+              Simplicidad Radical
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Venta por Chat vs Catálogo Web Dizi
+              Cómo funciona Dizi en 3 pasos
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-            <div className="p-5 sm:p-8 rounded-3xl bg-red-500/[0.02] border border-red-500/20 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider">
-                <XCircle className="h-4 w-4" /> Venta Tradicional por Fotos / PDFs
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-3xl bg-card border border-border/60 space-y-3 text-center sm:text-left relative overflow-hidden">
+              <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm">
+                1
               </div>
-              <ul className="space-y-3 text-xs sm:text-sm text-muted-foreground pt-1">
-                <li className="flex items-start gap-2.5">
-                  <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                  <span>Fotos sueltas enviadas por chat que saturan el celular del cliente.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                  <span>PDFs pesados en Canva desactualizados y lentos de cargar en móvil.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                  <span>Comisiones de hasta 30% en plataformas de delivery.</span>
-                </li>
-              </ul>
+              <h3 className="font-bold text-base text-foreground">Sube tus productos</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Registra tus productos con fotografía, precio y descripción desde tu teléfono celular en minutos.
+              </p>
             </div>
 
-            <div className="p-5 sm:p-8 rounded-3xl bg-emerald-500/[0.02] border border-emerald-500/30 space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
-                <CheckCircle2 className="h-4 w-4" /> Plataforma Web Dizi
+            <div className="p-6 rounded-3xl bg-card border border-border/60 space-y-3 text-center sm:text-left relative overflow-hidden">
+              <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm">
+                2
               </div>
-              <ul className="space-y-3 text-xs sm:text-sm text-foreground/90 font-medium pt-1">
-                <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                  <span>Enlace web único para tu bio de Instagram, TikTok o código QR.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                  <span>Carrito interactivo que calcula el total y envía el pedido a WhatsApp.</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
-                  <span>0% comisiones por venta. Cobras directo a tu Yape, Plin o cuenta bancaria.</span>
-                </li>
-              </ul>
+              <h3 className="font-bold text-base text-foreground">Comparte tu link único</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Coloca el enlace de tu catálogo en tu bio de Instagram, TikTok o Facebook y compártelo por WhatsApp.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-card border border-border/60 space-y-3 text-center sm:text-left relative overflow-hidden">
+              <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm">
+                3
+              </div>
+              <h3 className="font-bold text-base text-foreground">Recibe pedidos en WhatsApp</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Tus clientes eligen en tu tienda web y te envían el pedido armado y listo para responder por WhatsApp.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── 4. SHOWCASE DE 15 DISEÑOS CON TARJETAS VISUALES ── */}
+      {/* ── 4. LOS 3 COMPONENTES ÚNICOS EN UNA SOLA HERRAMIENTA ── */}
+      <section id="beneficios" className="py-12 sm:py-20 bg-card border-b border-border/40">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-10">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary">
+              Todo en Una Sola Herramienta
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+              Catálogo Web + Link en Bio + Libro de Reclamaciones
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú desde S/ 9.90 / mes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-3xl bg-background border border-border/60 space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Catálogo Web Interactivo</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                15 estructuras de diseño profesional adaptables a tu rubro con carrito de compras integrado.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-background border border-border/60 space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <Link2 className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Página Link en Bio</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Reúne tu catálogo, tus redes sociales y botones de contacto directo en una sola dirección web.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-3xl bg-background border border-border/60 space-y-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold text-base text-foreground">Libro de Reclamaciones Digital</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Cumple con la normativa INDECOPI del Perú sin pagar sistemas adicionales ni hojas impresas.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. SHOWCASE DE 15 DISEÑOS CON TARJETAS VISUALES ── */}
       <section id="modelos" className="py-12 sm:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-10">
@@ -540,7 +582,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("all")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "all"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -551,7 +593,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("gastronomia")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "gastronomia"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -562,7 +604,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("boutique")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "boutique"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -573,7 +615,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("eco")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "eco"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -584,7 +626,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("tech")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "tech"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -610,12 +652,12 @@ function LandingPage() {
                       loading="lazy"
                     />
                     <div className="absolute top-3 right-3">
-                      <span className={cn("text-[9.5px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-md backdrop-blur-md", model.accent)}>
+                      <span className={cn("text-[9.5px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-md backdrop-blur-md font-sans", model.accent)}>
                         {model.badge}
                       </span>
                     </div>
                     <div className="absolute bottom-3 left-4 right-4">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/80 font-sans">
                         {model.niche}
                       </span>
                       <h3 className="text-lg font-bold text-white leading-tight">{model.name}</h3>
@@ -627,10 +669,10 @@ function LandingPage() {
                 </div>
 
                 <div className="px-4 pb-4 pt-2 border-t border-border/30 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans">
                     Semántico & Móvil
                   </span>
-                  <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10 active:scale-95">
+                  <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10 active:scale-95 font-sans">
                     <Link to="/register">
                       Probar Modelo <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
@@ -642,75 +684,22 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. MÓDULOS DE FUNCIONALIDAD ── */}
-      <section id="modulos" className="py-12 sm:py-24 bg-muted/30 border-y border-border/40">
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Módulos Pro
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Herramientas Integradas de Plataforma
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
-              <div className="h-9 w-9 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
-                <Flame className="h-4.5 w-4.5" />
-              </div>
-              <h3 className="font-bold text-sm text-foreground">Cintillo Promocional</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Anuncia envíos gratis u ofertas relámpago con animación Marquesina.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
-              <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-                <Layers className="h-4.5 w-4.5" />
-              </div>
-              <h3 className="font-bold text-sm text-foreground">Banners Multi-Imagen</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Carrusel deslizante de hasta 5 portadas promocionales en cabecera.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
-              <div className="h-9 w-9 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
-                <FileDown className="h-4.5 w-4.5" />
-              </div>
-              <h3 className="font-bold text-sm text-foreground">Exportador Catálogo PDF</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Genera en 1 clic un PDF vectorial con el logo y lista de precios oficial.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
-              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                <ShieldCheck className="h-4.5 w-4.5" />
-              </div>
-              <h3 className="font-bold text-sm text-foreground">Protección In-App Browser</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Garantiza el flujo correcto del pedido desde TikTok e Instagram hacia WhatsApp.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 6. PLANES & PRECIOS (SIN EMOJIS, ALTO CONTRASATE) ── */}
+      {/* ── 6. PLANES & PRECIOS REALES OFICIALES ── */}
       <section id="precios" className="py-12 sm:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Precios Claros
+            <span className="text-xs font-bold uppercase tracking-widest text-primary font-sans">
+              Precios Oficiales
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              Planes Transparentes sin Sorpresas
+              Planes Transparentes en Soles
             </h2>
+            <p className="text-sm text-muted-foreground">
+              Las 15 estructuras de diseño están incluidas en todos los planes. Eliges según tus productos y marca.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch font-sans">
             {/* PLAN SEMILLA */}
             <div className="p-6 rounded-3xl border border-border/60 bg-card flex flex-col justify-between space-y-6">
               <div className="space-y-4">
@@ -729,7 +718,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Plantilla Minimalista</span>
+                    <span>Las 15 Estructuras de Diseño</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -760,10 +749,6 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Todas las 15 Estructuras</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
                     <span>Exportación Catálogo PDF</span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -777,7 +762,7 @@ function LandingPage() {
               </Button>
             </div>
 
-            {/* PLAN PRO (MÁS POPULAR SIN EMOJIS) */}
+            {/* PLAN PRO */}
             <div className="p-6 rounded-3xl border-2 border-primary bg-primary/[0.02] flex flex-col justify-between space-y-6 relative shadow-xl shadow-primary/10">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-extrabold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md flex items-center gap-1">
                 <Sparkles className="h-3 w-3" />
@@ -787,7 +772,7 @@ function LandingPage() {
                 <span className="text-xs font-bold text-primary uppercase tracking-widest">
                   Recomendado
                 </span>
-                <h3 className="text-xl font-bold text-foreground">Plan Pro</h3>
+                <h3 className="text-xl font-bold text-foreground">Catálogo Pro</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-foreground">S/ 14.90</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
@@ -807,7 +792,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Estadísticas Clics & Visitas</span>
+                    <span>Estadísticas de Clics</span>
                   </li>
                 </ul>
               </div>
@@ -822,7 +807,7 @@ function LandingPage() {
                 <span className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">
                   Empresarial
                 </span>
-                <h3 className="text-xl font-bold text-foreground">Plan Ilimitado</h3>
+                <h3 className="text-xl font-bold text-foreground">Ilimitado</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-foreground">S/ 34.90</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
@@ -838,7 +823,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Atributos de Marca Pro</span>
+                    <span>Soporte Prioritario 24/7</span>
                   </li>
                 </ul>
               </div>
@@ -854,7 +839,7 @@ function LandingPage() {
       <section className="py-12 sm:py-24 bg-card border-t border-border/40">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6">
           <div className="text-center space-y-2 mb-8 sm:mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">
+            <span className="text-xs font-bold uppercase tracking-widest text-primary font-sans">
               Resolviendo tus Dudas
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
@@ -862,7 +847,7 @@ function LandingPage() {
             </h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 font-sans">
             {faqs.map((faq, idx) => (
               <div
                 key={idx}
@@ -891,12 +876,15 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 8. BANNER FINAL CTA ── */}
-      <section className="py-12 sm:py-20 bg-gradient-to-r from-primary via-orange-600 to-amber-600 text-white text-center">
-        <div className="container mx-auto max-w-4xl px-4 sm:px-6 space-y-5">
+      {/* ── 8. BANNER FINAL CTA (FRASE EMPODERADORA DE MARCA) ── */}
+      <section className="py-12 sm:py-20 bg-gradient-to-r from-primary via-orange-600 to-amber-600 text-white text-center font-sans">
+        <div className="container mx-auto max-w-4xl px-4 sm:px-6 space-y-4">
           <h2 className="text-2xl sm:text-5xl font-black tracking-tight">
-            ¿Listo para digitalizar tu catálogo hoy?
+            Tú ya sabes vender. Dizi solo hace que se note.
           </h2>
+          <p className="text-xs sm:text-base opacity-90 max-w-xl mx-auto font-medium">
+            Regístrate gratis en 2 minutos y convierte tu perfil en una vitrina profesional sin comisiones.
+          </p>
           <div className="pt-2">
             <Button
               asChild
@@ -912,7 +900,7 @@ function LandingPage() {
       </section>
 
       {/* ── 9. FOOTER INSTITUCIONAL ── */}
-      <footer className="border-t border-border/40 bg-background py-10 text-xs text-muted-foreground">
+      <footer className="border-t border-border/40 bg-background py-10 text-xs text-muted-foreground font-sans">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 space-y-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-col items-center md:items-start gap-2">
@@ -949,14 +937,14 @@ function LandingPage() {
       </footer>
 
       {/* ── 10. BARRA FLOTANTE FIJA PARA MÓVILES (STICKY BOTTOM CTA) ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 p-3 flex items-center justify-between gap-3 shadow-2xl">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 p-3 flex items-center justify-between gap-3 shadow-2xl font-sans">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Dizi Catálogos</span>
           <span className="text-[11px] font-extrabold text-foreground">15 Días Gratis</span>
         </div>
         <Button asChild className="h-10 px-5 rounded-xl text-xs font-extrabold bg-primary text-primary-foreground shadow-lg shadow-primary/25 active:scale-95">
           <Link to="/register">
-            Crear Catálogo Gratis <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            Crear Gratis <ArrowRight className="ml-1 h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>
