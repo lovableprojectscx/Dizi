@@ -4175,7 +4175,11 @@ export function PublicCatalog({
                                 e.stopPropagation();
                                 cartAdd(store.id, p.id);
                               }}
-                              className="bg-white text-black text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:bg-white/90 transition"
+                              style={{
+                                backgroundColor: "var(--primary)",
+                                color: "var(--primary-foreground)",
+                              }}
+                              className="text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:opacity-90 transition"
                             >
                               <Plus className="h-3 w-3 inline" />
                             </button>
@@ -4244,7 +4248,11 @@ export function PublicCatalog({
                                     e.stopPropagation();
                                     cartAdd(store.id, p.id);
                                   }}
-                                  className="h-7 w-7 bg-white text-black flex items-center justify-center hover:bg-white/90 transition"
+                                  style={{
+                                    backgroundColor: "var(--primary)",
+                                    color: "var(--primary-foreground)",
+                                  }}
+                                  className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
@@ -4369,10 +4377,11 @@ export function PublicCatalog({
                                 className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
                                 style={{
                                   backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
                                   borderRadius: cfg.cardRounded,
                                 }}
                               >
-                                <Plus className="h-3 w-3 text-white" />
+                                <Plus className="h-3 w-3" />
                               </button>
                             </div>
                           </div>
@@ -4472,10 +4481,11 @@ export function PublicCatalog({
                                   className="h-7 w-7 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
+                                    color: "var(--primary-foreground)",
                                     borderRadius: cfg.cardRounded,
                                   }}
                                 >
-                                  <Plus className="h-3 w-3 text-white" />
+                                  <Plus className="h-3 w-3" />
                                 </button>
                               </div>
                             </div>
@@ -7046,7 +7056,11 @@ export function PublicCatalog({
                               e.stopPropagation();
                               cartAdd(store.id, p.id);
                             }}
-                            className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                            style={{
+                              backgroundColor: "var(--primary)",
+                              color: "var(--primary-foreground)",
+                            }}
+                            className="h-7 w-7 rounded-full flex items-center justify-center hover:opacity-90 transition shrink-0"
                           >
                             <Plus className="h-3.5 w-3.5" />
                           </button>
@@ -8087,11 +8101,22 @@ export function PublicCatalog({
       {/* ── In-App Browser Help Modal (TikTok/Instagram) ── */}
       {showInAppHelpModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200">
+          <div
+            style={{
+              backgroundColor: "var(--card)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
+            }}
+            className="border rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200"
+          >
             {/* Close button */}
             <button
               onClick={() => setShowInAppHelpModal(false)}
-              className="absolute top-4 right-4 h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center justify-center transition"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--foreground) 8%, transparent)",
+                color: "var(--foreground)",
+              }}
+              className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-80"
             >
               <X className="h-4 w-4" />
             </button>
@@ -8102,17 +8127,24 @@ export function PublicCatalog({
                 <Info className="h-5 w-5 text-amber-600 dark:text-amber-500" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base text-zinc-900 dark:text-zinc-100">
+                <h3 style={{ color: "var(--card-foreground)" }} className="font-extrabold text-base">
                   Envío bloqueado por TikTok/Instagram
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
                   Sigue estos sencillos pasos para completar tu pedido:
                 </p>
               </div>
             </div>
 
             {/* Visual Guide Steps */}
-            <div className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 rounded-2xl p-4 space-y-3.5 text-xs text-zinc-700 dark:text-zinc-300">
+            <div
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--foreground) 4%, transparent)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)",
+              }}
+              className="border rounded-2xl p-4 space-y-3.5 text-xs"
+            >
               <div className="flex items-start gap-2.5">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
                   1
@@ -8144,7 +8176,7 @@ export function PublicCatalog({
 
             {/* Copiar pedido banner */}
             <div className="space-y-2">
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-center">
+              <p style={{ color: "var(--muted-foreground)" }} className="text-[10px] font-bold uppercase tracking-wider text-center">
                 O copia el texto del pedido y envíalo manualmente:
               </p>
               <button
@@ -8163,12 +8195,12 @@ export function PublicCatalog({
                     fallbackCopy(pendingOrderMsg);
                   }
                 }}
-                className={cn(
-                  "w-full h-11 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition",
-                  copied
-                    ? "bg-green-50 border-green-200 text-green-700 dark:bg-green-950/20 dark:border-green-900 dark:text-green-400"
-                    : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800",
-                )}
+                style={{
+                  backgroundColor: copied ? "color-mix(in srgb, #16a34a 12%, transparent)" : "var(--card)",
+                  borderColor: copied ? "#16a34a" : "var(--border)",
+                  color: copied ? "#16a34a" : "var(--foreground)",
+                }}
+                className="w-full h-11 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition"
               >
                 {copied ? (
                   <>
@@ -8177,7 +8209,7 @@ export function PublicCatalog({
                   </>
                 ) : (
                   <>
-                    <ClipboardList className="h-4 w-4 text-zinc-500" />
+                    <ClipboardList className="h-4 w-4 opacity-70" />
                     Copiar texto del pedido
                   </>
                 )}
@@ -8188,7 +8220,11 @@ export function PublicCatalog({
             <div className="flex gap-2.5 pt-2">
               <button
                 onClick={() => setShowInAppHelpModal(false)}
-                className="flex-1 h-12 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold transition text-zinc-700 dark:text-zinc-300"
+                style={{
+                  borderColor: "var(--border)",
+                  color: "var(--foreground)",
+                }}
+                className="flex-1 h-12 rounded-2xl border text-xs font-bold transition hover:bg-accent"
               >
                 Cerrar
               </button>
@@ -8218,11 +8254,22 @@ export function PublicCatalog({
       {/* ── Success and Viral Loop Modal ── */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200">
+          <div
+            style={{
+              backgroundColor: "var(--card)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
+            }}
+            className="border rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 relative animate-in zoom-in-95 duration-200"
+          >
             {/* Close button */}
             <button
               onClick={() => setShowSuccessModal(false)}
-              className="absolute top-4 right-4 h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center justify-center transition"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--foreground) 8%, transparent)",
+                color: "var(--foreground)",
+              }}
+              className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-80"
             >
               <X className="h-4 w-4" />
             </button>
@@ -8237,12 +8284,12 @@ export function PublicCatalog({
                 </div>
               </div>
               <div className="space-y-1">
-                <h3 className="font-extrabold text-lg text-zinc-900 dark:text-zinc-100">
+                <h3 style={{ color: "var(--card-foreground)" }} className="font-extrabold text-lg">
                   ¡Pedido enviado a WhatsApp!
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 px-2 leading-relaxed">
+                <p style={{ color: "var(--muted-foreground)" }} className="text-xs px-2 leading-relaxed">
                   Recuerda presionar el botón de{" "}
-                  <strong className="text-zinc-800 dark:text-zinc-200">"Enviar"</strong> en el chat
+                  <strong style={{ color: "var(--foreground)" }}>"Enviar"</strong> en el chat
                   de WhatsApp que se acaba de abrir para completar tu pedido.
                 </p>
               </div>
