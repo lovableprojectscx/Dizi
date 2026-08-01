@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { convertImageToWebP } from "@/lib/image-utils";
 import {
   Lock,
   Check,
@@ -24,6 +25,8 @@ import {
   Maximize2,
   Smartphone,
   Monitor,
+  Upload,
+  Trash2,
 } from "lucide-react";
 import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -877,32 +880,71 @@ function DisenoUnificadoPage() {
                 </div>
 
                 {/* 2. Banners en Portada */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                      <Image className="h-4.5 w-4.5 text-blue-600" />
+                <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                        <Image className="h-4.5 w-4.5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                          Banners en Portada
+                          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[9px] font-extrabold py-0.5">
+                            {currentPlanLevel < 2 ? "1 Banner" : currentPlanLevel === 2 ? "Carrusel 3 Banners" : "Carrusel 5 Banners"}
+                          </Badge>
+                        </h4>
+                        <p className="text-[11px] text-zinc-550">
+                          Sube o cambia la imagen principal de la cabecera de tu catálogo.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-zinc-900">Banners en Portada</h4>
-                      <p className="text-[11px] text-zinc-550">
-                        Capacidad actual: {currentPlanLevel < 2 ? "1 Banner principal" : currentPlanLevel === 2 ? "Hasta 3 Banners en carrusel" : "Hasta 5 Banners en carrusel"}
-                      </p>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={onBannerUpload}
+                          className="hidden"
+                        />
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-bold text-zinc-700 shadow-xs transition">
+                          <Upload className="h-3.5 w-3.5 text-primary" />
+                          Subir Banner
+                        </span>
+                      </label>
+                      {currentPlanLevel < 2 && (
+                        <Link to="/admin/plan">
+                          <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                            Ampliar
+                          </Button>
+                        </Link>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
-                    <Link to="/admin/configuracion">
-                      <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
-                        Gestionar Banners
-                      </Button>
-                    </Link>
-                    {currentPlanLevel < 2 && (
-                      <Link to="/admin/plan">
-                        <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
-                          Ampliar
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
+
+                  {bannerImage && (
+                    <div className="pt-3 border-t border-zinc-200/80 flex items-center gap-4">
+                      <div className="relative aspect-[16/7] w-36 rounded-xl overflow-hidden border bg-zinc-100 shrink-0">
+                        <img
+                          src={bannerImage.split("|||")[0]}
+                          alt="Banner actual"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs font-bold text-zinc-800">Imagen de Portada Cargada</p>
+                        <p className="text-[10px] text-zinc-500">
+                          Formato WebP optimizado · Haz clic en Guardar cambios para aplicar.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setBannerImage("")}
+                          className="text-[10px] text-red-600 hover:text-red-700 font-bold flex items-center gap-1 pt-1"
+                        >
+                          <Trash2 className="h-3 w-3" /> Eliminar Imagen
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. Buscador Inteligente */}
