@@ -4057,9 +4057,8 @@ export function PublicCatalog({
                             OFERTA
                           </span>
                         )}
-                      </div>
-                      <div className="p-2.5 flex flex-col flex-1 gap-1.5">
-                        <h3 className="text-xs font-semibold line-clamp-2 flex-1">{p.name}</h3>
+                      <div className="p-2.5 flex flex-col flex-1 gap-1.5" style={{ color: "var(--card-foreground)" }}>
+                        <h3 style={{ color: "var(--card-foreground)" }} className="text-xs font-semibold line-clamp-2 flex-1">{p.name}</h3>
                         <span className="text-sm font-black text-primary">
                           {formatPrice(p.price)}
                         </span>
@@ -4070,7 +4069,11 @@ export function PublicCatalog({
                               consultProduct(p.name);
                             }}
                             className="flex-1 text-[10px] border py-1.5 hover:bg-accent transition flex items-center justify-center gap-0.5"
-                            style={{ borderRadius: cfg.cardRounded }}
+                            style={{
+                              borderRadius: cfg.cardRounded,
+                              borderColor: "var(--border)",
+                              color: "var(--foreground)",
+                            }}
                           >
                             <WhatsAppIcon className="h-3 w-3" /> Consultar
                           </button>
