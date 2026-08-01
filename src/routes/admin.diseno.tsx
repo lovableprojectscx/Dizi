@@ -533,8 +533,8 @@ function DisenoUnificadoPage() {
                   <ColorSwatch colors={BG_COLORS} selected={bgColor} onSelect={setBgColor} />
                 </div>
 
-                {/* Color de Tarjeta y Acento */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Color de Tarjeta, Texto y Acento */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-2 bg-zinc-50/50 p-4 rounded-2xl border">
                     <label className="font-bold text-xs text-zinc-800">Fondo de Tarjeta</label>
                     <input
@@ -546,7 +546,17 @@ function DisenoUnificadoPage() {
                   </div>
 
                   <div className="space-y-2 bg-zinc-50/50 p-4 rounded-2xl border">
-                    <label className="font-bold text-xs text-zinc-800">Color de Acento Secundario</label>
+                    <label className="font-bold text-xs text-zinc-800">Color de Texto</label>
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="h-9 w-full rounded-xl cursor-pointer border border-zinc-200"
+                    />
+                  </div>
+
+                  <div className="space-y-2 bg-zinc-50/50 p-4 rounded-2xl border">
+                    <label className="font-bold text-xs text-zinc-800">Color de Acento</label>
                     <input
                       type="color"
                       value={accentColor}
