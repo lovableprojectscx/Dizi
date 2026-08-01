@@ -262,6 +262,22 @@ function DisenoUnificadoPage() {
     }
   };
 
+  const onBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("La imagen es muy pesada (máximo 10 MB)");
+      return;
+    }
+    try {
+      const webpDataUrl = await convertImageToWebP(file);
+      setBannerImage(webpDataUrl);
+      toast.info("Imagen de portada cargada. Haz clic en Guardar cambios.");
+    } catch {
+      toast.error("No se pudo procesar la imagen del banner.");
+    }
+  };
+
   // Guardar configuración unificada
   const save = async () => {
     const toastId = toast.loading("Guardando diseño...");
