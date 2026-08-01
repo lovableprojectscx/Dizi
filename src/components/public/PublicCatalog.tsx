@@ -5703,11 +5703,10 @@ export function PublicCatalog({
                           <div className="flex gap-4 px-4 w-max min-w-full">
                             <button
                               onClick={() => setActiveCat("all")}
+                              style={{ color: activeCat === "all" ? "var(--primary)" : "var(--muted-foreground)" }}
                               className={cn(
                                 "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
-                                activeCat === "all"
-                                  ? "text-[var(--primary)] font-extrabold"
-                                  : "text-stone-400 hover:text-stone-700",
+                                activeCat === "all" && "font-extrabold",
                               )}
                             >
                               <LayoutGrid className="h-3.5 w-3.5 shrink-0" />
@@ -5720,11 +5719,10 @@ export function PublicCatalog({
                             {store.products.some((p) => p.isOnSale) && (
                               <button
                                 onClick={() => setActiveCat("sale")}
+                                style={{ color: activeCat === "sale" ? "var(--primary)" : "var(--muted-foreground)" }}
                                 className={cn(
                                   "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
-                                  activeCat === "sale"
-                                    ? "text-[var(--primary)] font-extrabold"
-                                    : "text-stone-400 hover:text-stone-700",
+                                  activeCat === "sale" && "font-extrabold",
                                 )}
                               >
                                 <Flame className="h-3.5 w-3.5 shrink-0 text-red-500" />
