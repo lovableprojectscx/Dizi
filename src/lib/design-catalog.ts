@@ -43,6 +43,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "grid",
     name: "Grilla Simétrica",
     description: "Distribución clásica en rejilla 2×N con tarjetas limpias. Ideal para catálogos con amplio inventario.",
+    previewImage: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80",
     layout: "grid",
     defaultTheme: {
       brandColor: "#4f46e5",
@@ -63,6 +64,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "overlay",
     name: "Overlay Visual",
     description: "Tarjetas verticales 3:4 con texto superpuesto sobre imagen. Estilo dinámico tipo redes sociales.",
+    previewImage: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=800&q=80",
     layout: "overlay",
     defaultTheme: {
       brandColor: "#ea580c",
@@ -83,6 +85,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "hero",
     name: "Hero Panorámico",
     description: "Cabecera de impacto + galería destacada circular. El primer producto captura la atención inmediata.",
+    previewImage: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
     layout: "hero",
     defaultTheme: {
       brandColor: "#16a34a",
@@ -103,6 +106,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "spotlight",
     name: "Enfoque Spotlight",
     description: "Enfoca la atención en productos estrella individuales con presentación tipo vitrina de lujo.",
+    previewImage: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80",
     layout: "spotlight",
     defaultTheme: {
       brandColor: "#d97706",
@@ -123,6 +127,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "editorial",
     name: "Estilo Editorial",
     description: "Tipografía de titulares y espacios generosos. Perfecto para marcas que cuentan historias.",
+    previewImage: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80",
     layout: "editorial",
     defaultTheme: {
       brandColor: "#334155",
@@ -143,6 +148,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "tiles",
     name: "Mosaico Tiles",
     description: "Bloques tipo azulejo interconectados. Distribución moderna ideal para catálogos visuales.",
+    previewImage: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
     layout: "tiles",
     defaultTheme: {
       brandColor: "#7c3aed",
@@ -164,6 +170,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "magazine",
     name: "Revista Magazine",
     description: "Disposición asimétrica inspirada en publicaciones de tendencia y catálogos de temporada.",
+    previewImage: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=800&q=80",
     layout: "magazine",
     defaultTheme: {
       brandColor: "#e11d48",
@@ -184,6 +191,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "diagonal",
     name: "Diagonal Dynamic",
     description: "Cortes en diagonal y ángulos dinámicos. Da un aire de energía, deporte e innovación.",
+    previewImage: "https://images.unsplash.com/photo-1552346154-21d32810aba3?auto=format&fit=crop&w=800&q=80",
     layout: "diagonal",
     defaultTheme: {
       brandColor: "#2563eb",
@@ -204,6 +212,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "arch",
     name: "Arch Studio",
     description: "Arcos curvados elegantes en imágenes y tarjetas. Otorga una estética artística distintiva.",
+    previewImage: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
     layout: "arch",
     defaultTheme: {
       brandColor: "#be185d",
@@ -224,6 +233,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "banner_grid",
     name: "Portada con Banner",
     description: "Sección principal con imagen de portada panorámica seguida de catálogo organizativo.",
+    previewImage: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     layout: "banner_grid",
     defaultTheme: {
       brandColor: "#059669",
@@ -244,7 +254,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "bloom_general",
     name: "Bloom Estándar Premium",
     description: "Diseño multipropósito limpio y moderno con carrusel de banners superiores y destacados.",
-    previewImage: "/images/standard_premium_mockup.png",
+    previewImage: "https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=800&q=80",
     layout: "bloom_general",
     defaultTheme: {
       brandColor: "#FF823A",
@@ -266,7 +276,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "bloom_floral",
     name: "Bloom Floral",
     description: "Diseño romántico de esquinas suaves y detalles curvos especiales para florerías y regalos.",
-    previewImage: "/images/mockups/boutique.png",
+    previewImage: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
     layout: "bloom_floral",
     defaultTheme: {
       brandColor: "#be185d",
@@ -288,7 +298,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "bite",
     name: "Bite Gastronómico",
     description: "Layout gastronómico optimizado para rápida navegación, fotos apetitosas e interacción directa.",
-    previewImage: "/images/mockups/restaurant.png",
+    previewImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
     layout: "bite",
     defaultTheme: {
       brandColor: "#dc2626",
@@ -310,7 +320,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "nature",
     name: "Nature Orgánico",
     description: "Elegancia natural en verde salvia con tipografía serif. Salud, belleza y productos botánicos.",
-    previewImage: "/images/mockups/eco.png",
+    previewImage: "https://images.unsplash.com/photo-1608248597379-e09214732684?auto=format&fit=crop&w=800&q=80",
     layout: "nature",
     defaultTheme: {
       brandColor: "#047857",
@@ -332,7 +342,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "lookbook",
     name: "Lookbook Moda",
     description: "Catálogo de alta moda con tarjetas estilo revista y presentación limpia para colecciones.",
-    previewImage: "/images/mockups/luxury.png",
+    previewImage: "https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=800&q=80",
     layout: "lookbook",
     defaultTheme: {
       brandColor: "#18181b",
