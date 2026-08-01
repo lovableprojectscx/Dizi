@@ -6087,7 +6087,7 @@ export function PublicCatalog({
                       <div
                         className={cn(
                           "w-full h-full rounded-[inherit] overflow-hidden relative",
-                          store.niche === "floreria" ? "bg-[#fdfaf8]" : "bg-[var(--card)]",
+                          "bg-[var(--card)]",
                         )}
                       >
                         {banners.length > 0 ? (
@@ -6097,8 +6097,9 @@ export function PublicCatalog({
                               {banners.map((slide, idx) => (
                                 <div
                                   key={idx}
+                                  style={{ backgroundColor: "var(--card)" }}
                                   className={cn(
-                                    "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform bg-[#fdfaf8]",
+                                    "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
                                     idx === currentBannerIndex
                                       ? "opacity-100 scale-100 z-10"
                                       : "opacity-0 scale-105 z-0 pointer-events-none",
@@ -6114,7 +6115,7 @@ export function PublicCatalog({
                                     alt={`${store.bannerTitle || store.name} ${idx + 1}`}
                                     className="w-full h-full object-contain relative z-10"
                                   />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-stone-900/35 via-transparent to-transparent z-20" />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-20" />
                                 </div>
                               ))}
                             </div>
@@ -6130,7 +6131,12 @@ export function PublicCatalog({
                                       (prev) => (prev - 1 + banners.length) % banners.length,
                                     );
                                   }}
-                                  className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/75 backdrop-blur-md text-stone-700 flex items-center justify-center hover:bg-white transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                                  style={{
+                                    backgroundColor: "var(--card)",
+                                    borderColor: "var(--border)",
+                                    color: "var(--card-foreground)",
+                                  }}
+                                  className="absolute left-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
                                 >
                                   <ChevronLeft className="h-5 w-5" />
                                 </button>
@@ -6140,7 +6146,12 @@ export function PublicCatalog({
                                     e.stopPropagation();
                                     setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
                                   }}
-                                  className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full bg-white/75 backdrop-blur-md text-stone-700 flex items-center justify-center hover:bg-white transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
+                                  style={{
+                                    backgroundColor: "var(--card)",
+                                    borderColor: "var(--border)",
+                                    color: "var(--card-foreground)",
+                                  }}
+                                  className="absolute right-4 top-1/2 -translate-y-1/2 h-9 w-9 rounded-full backdrop-blur-md border flex items-center justify-center transition-all shadow-md opacity-0 group-hover/banner:opacity-100 active:scale-90 z-20 cursor-pointer"
                                 >
                                   <ChevronRight className="h-5 w-5" />
                                 </button>
@@ -6149,7 +6160,10 @@ export function PublicCatalog({
 
                             {/* Indicator dots */}
                             {banners.length > 1 && (
-                              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/40 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
+                              <div
+                                style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                                className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 backdrop-blur-xs border px-2.5 py-1.5 rounded-full"
+                              >
                                 {banners.map((_, idx) => (
                                   <button
                                     key={idx}
@@ -6161,8 +6175,8 @@ export function PublicCatalog({
                                     className={cn(
                                       "h-1.5 rounded-full transition-all duration-300",
                                       idx === currentBannerIndex
-                                        ? "w-4 bg-white"
-                                        : "w-1.5 bg-white/50 hover:bg-white/80",
+                                        ? "w-4 bg-[var(--primary)]"
+                                        : "w-1.5 opacity-40 hover:opacity-80 bg-[var(--foreground)]",
                                     )}
                                   />
                                 ))}
@@ -6173,17 +6187,15 @@ export function PublicCatalog({
                           <div
                             className={cn(
                               "w-full h-full flex flex-col items-center justify-center p-6 text-center relative",
-                              store.niche === "floreria"
-                                ? "bg-gradient-to-br from-rose-50/50 via-rose-100/20 to-stone-50"
-                                : "bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-muted/20",
+                              "bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-muted/20",
                             )}
                           >
                             <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
                             <div className="relative z-10">
                               <h2
-                                style={{ color: store.textColor ? store.textColor : undefined }}
+                                style={{ color: "var(--foreground)" }}
                                 className={cn(
-                                  "text-2xl sm:text-4xl font-normal text-stone-800 tracking-wide",
+                                  "text-2xl sm:text-4xl font-normal tracking-wide",
                                   isSerif ? "font-serif" : "font-sans font-bold",
                                 )}
                               >
@@ -6249,9 +6261,9 @@ export function PublicCatalog({
                         )}
                       >
                         <h3
-                          style={{ color: store.textColor ? store.textColor : undefined }}
+                          style={{ color: "var(--foreground)" }}
                           className={cn(
-                            "text-sm sm:text-base font-medium text-stone-800 tracking-wider flex items-center gap-2 uppercase",
+                            "text-sm sm:text-base font-medium tracking-wider flex items-center gap-2 uppercase",
                             isSerif ? "font-serif" : "font-sans font-bold",
                           )}
                         >
@@ -6280,7 +6292,7 @@ export function PublicCatalog({
                         </h3>
                         {featuredProducts.length > 1 && (
                           <>
-                            <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">
+                            <span style={{ color: "var(--muted-foreground)" }} className="text-[9px] font-bold uppercase tracking-widest animate-pulse font-sans md:hidden">
                               Desliza →
                             </span>
                             <div className="hidden md:flex items-center gap-1.5">
@@ -6297,7 +6309,12 @@ export function PublicCatalog({
                                   ) as HTMLElement | null;
                                   s?.scrollBy({ left: -320, behavior: "smooth" });
                                 }}
-                                className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="h-8 w-8 rounded-full border hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
                               >
                                 <ChevronLeft className="h-4 w-4" />
                               </button>
@@ -6314,7 +6331,12 @@ export function PublicCatalog({
                                   ) as HTMLElement | null;
                                   s?.scrollBy({ left: 320, behavior: "smooth" });
                                 }}
-                                className="h-8 w-8 rounded-full border border-[var(--border)] bg-[var(--card)] text-stone-500 hover:text-[var(--primary)] hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="h-8 w-8 rounded-full border hover:border-[var(--primary)] flex items-center justify-center transition shadow-xs active:scale-95"
                               >
                                 <ChevronRight className="h-4 w-4" />
                               </button>
@@ -6333,6 +6355,11 @@ export function PublicCatalog({
                             <div
                               key={p.id}
                               onClick={() => setViewingProduct(p)}
+                              style={{
+                                backgroundColor: "var(--card)",
+                                borderColor: "var(--border)",
+                                color: "var(--card-foreground)",
+                              }}
                               className={cn(featuredCardClass)}
                             >
                               <div className="space-y-3">
@@ -6356,13 +6383,10 @@ export function PublicCatalog({
                                   {/* Floating Badge inside image container */}
                                   <div
                                     style={{
-                                      backgroundColor:
-                                        store.niche === "floreria" ? undefined : "var(--primary)",
+                                      backgroundColor: "var(--primary)",
+                                      color: "var(--primary-foreground)",
                                     }}
-                                    className={cn(
-                                      "absolute bottom-3 left-3 z-10 text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans",
-                                      store.niche === "floreria" ? "bg-rose-500" : "",
-                                    )}
+                                    className="absolute bottom-3 left-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans"
                                   >
                                     {p.isOnSale
                                       ? "Oferta"
@@ -6373,23 +6397,10 @@ export function PublicCatalog({
                                 </div>
                                 {/* Info */}
                                 <div className="space-y-1 text-left px-1">
-                                  {store.niche === "floreria" && (
-                                    <span
-                                      className="text-[10px] italic font-serif block mb-0.5"
-                                      style={{
-                                        color:
-                                          "color-mix(in srgb, var(--primary) 70%, transparent)",
-                                      }}
-                                    >
-                                      {isFallback
-                                        ? "Arreglo Sugerido"
-                                        : "Sugerencia de la Florista"}
-                                    </span>
-                                  )}
                                   <h4
-                                    style={{ color: store.textColor ? store.textColor : undefined }}
+                                    style={{ color: "var(--card-foreground)" }}
                                     className={cn(
-                                      "font-semibold text-sm sm:text-base text-stone-800 transition-colors line-clamp-2 leading-snug min-h-[2.5rem]",
+                                      "font-semibold text-sm sm:text-base transition-colors line-clamp-2 leading-snug min-h-[2.5rem]",
                                       isSerif ? "font-serif" : "font-sans",
                                       "group-hover:text-[var(--primary)]",
                                     )}
@@ -6403,11 +6414,8 @@ export function PublicCatalog({
                                     return (
                                       <>
                                         <p
-                                          style={{
-                                            color: store.textColor ? store.textColor : undefined,
-                                            opacity: store.textColor ? 0.8 : undefined,
-                                          }}
-                                          className="text-xs text-stone-500 line-clamp-2 leading-5 min-h-10 font-sans"
+                                          style={{ color: "var(--muted-foreground)" }}
+                                          className="text-xs line-clamp-2 leading-5 min-h-10 font-sans"
                                         >
                                           {cleanDesc}
                                         </p>
@@ -6427,23 +6435,13 @@ export function PublicCatalog({
                               </div>
                               {/* Buy section */}
                               <div
-                                className={cn(
-                                  "flex items-center justify-between pt-3 mt-3 border-t px-1",
-                                  store.niche === "floreria"
-                                    ? "border-rose-100/30"
-                                    : "border-[var(--border)]",
-                                )}
+                                style={{ borderColor: "var(--border)" }}
+                                className="flex items-center justify-between pt-3 mt-3 border-t px-1"
                               >
                                 <div className="text-left min-w-0">
                                   <span
-                                    style={{
-                                      color:
-                                        store.niche === "floreria" ? undefined : "var(--primary)",
-                                    }}
-                                    className={cn(
-                                      "text-base font-semibold font-sans whitespace-nowrap truncate block",
-                                      store.niche === "floreria" ? "text-rose-600" : "",
-                                    )}
+                                    style={{ color: "var(--primary)" }}
+                                    className="text-base font-semibold font-sans whitespace-nowrap truncate block"
                                   >
                                     {formatPrice(p.price)}
                                   </span>
@@ -6451,7 +6449,7 @@ export function PublicCatalog({
                                     p.originalPrice &&
                                     p.price &&
                                     p.originalPrice > p.price && (
-                                      <span className="text-xs text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">
+                                      <span style={{ color: "var(--muted-foreground)" }} className="text-xs line-through block -mt-1 font-sans whitespace-nowrap truncate">
                                         {formatPrice(p.originalPrice)}
                                       </span>
                                     )}
@@ -6714,11 +6712,8 @@ export function PublicCatalog({
                 {/* 4. Product Grid */}
                 <div className="space-y-4 relative z-10">
                   <h3
-                    style={{
-                      color: store.textColor ? store.textColor : undefined,
-                      opacity: store.textColor ? 0.7 : undefined,
-                    }}
-                    className="text-xs font-bold uppercase tracking-widest text-stone-400 text-left"
+                    style={{ color: "var(--muted-foreground)" }}
+                    className="text-xs font-bold uppercase tracking-widest text-left"
                   >
                     {activeCat === "all"
                       ? "Nuestros Productos"
@@ -6741,12 +6736,8 @@ export function PublicCatalog({
                     if (gridProducts.length === 0) {
                       return (
                         <div
-                          className={cn(
-                            "text-center py-12 text-xs text-stone-400 shadow-xs",
-                            store.niche === "floreria"
-                              ? "border border-rose-100/50 rounded-[2rem] bg-white/50"
-                              : "border border-[var(--border)] rounded-3xl bg-[var(--card)]/50",
-                          )}
+                          style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                          className="text-center py-12 text-xs border rounded-3xl shadow-xs"
                         >
                           {store.niche === "floreria"
                             ? "No hay arreglos florales en esta categoría."
@@ -6774,6 +6765,11 @@ export function PublicCatalog({
                             <React.Fragment key={p.id}>
                               <article
                                 key={p.id}
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--card-foreground)",
+                                }}
                                 className={cn(gridCardClass)}
                                 onClick={() => setViewingProduct(p)}
                               >
@@ -6793,15 +6789,10 @@ export function PublicCatalog({
                                     {p.isOnSale && (
                                       <span
                                         style={{
-                                          backgroundColor:
-                                            store.niche === "floreria"
-                                              ? undefined
-                                              : "var(--primary)",
+                                          backgroundColor: "var(--primary)",
+                                          color: "var(--primary-foreground)",
                                         }}
-                                        className={cn(
-                                          "absolute top-2.5 right-2.5 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10",
-                                          store.niche === "floreria" ? "bg-rose-500" : "",
-                                        )}
+                                        className="absolute top-2.5 right-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10"
                                       >
                                         Oferta
                                       </span>
@@ -6810,25 +6801,19 @@ export function PublicCatalog({
                                   {/* Info */}
                                   <div className="p-3 pt-1 space-y-1 text-left">
                                     <h4
-                                      style={{
-                                        color: store.textColor ? store.textColor : undefined,
-                                      }}
+                                      style={{ color: "var(--card-foreground)" }}
                                       className={cn(
-                                        "font-semibold text-sm text-stone-800 transition-colors line-clamp-2 leading-5 min-h-10",
-                                        store.niche === "floreria"
-                                          ? "font-serif group-hover:text-rose-600"
-                                          : "font-sans group-hover:text-[var(--primary)]",
+                                        "font-semibold text-sm transition-colors line-clamp-2 leading-5 min-h-10",
+                                        isSerif ? "font-serif" : "font-sans",
+                                        "group-hover:text-[var(--primary)]",
                                       )}
                                     >
                                       {p.name}
                                     </h4>
                                     {p.description && (
                                       <p
-                                        style={{
-                                          color: store.textColor ? store.textColor : undefined,
-                                          opacity: store.textColor ? 0.8 : undefined,
-                                        }}
-                                        className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans"
+                                        style={{ color: "var(--muted-foreground)" }}
+                                        className="text-[11px] line-clamp-2 leading-4 min-h-8 font-sans"
                                       >
                                         {p.description}
                                       </p>
@@ -6859,7 +6844,7 @@ export function PublicCatalog({
                                       p.originalPrice &&
                                       p.price &&
                                       p.originalPrice > p.price && (
-                                        <span className="text-[10px] text-stone-400 line-through -mt-0.5 font-sans">
+                                        <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through -mt-0.5 font-sans">
                                           {formatPrice(p.originalPrice)}
                                         </span>
                                       )}
