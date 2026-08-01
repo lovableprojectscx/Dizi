@@ -3232,7 +3232,7 @@ export function PublicCatalog({
                                     "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
                                     cfg.cardShadow,
                                     bioTypography === "serif" &&
-                                      "border-gray-100 hover:border-black/20",
+                                      "border-border hover:border-primary/40",
                                   )}
                                   style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
                                   onClick={() => setViewingProduct(p)}
@@ -3306,7 +3306,7 @@ export function PublicCatalog({
                                           e.stopPropagation();
                                           cartAdd(store.id, p.id);
                                         }}
-                                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
+                                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-primary-foreground hover:opacity-90 transition shrink-0"
                                       >
                                         <Plus className="h-3.5 w-3.5" />
                                       </button>
