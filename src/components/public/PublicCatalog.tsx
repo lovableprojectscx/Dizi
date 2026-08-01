@@ -5497,7 +5497,7 @@ export function PublicCatalog({
                                     {store.bannerTitle || `Abraza la pureza de la naturaleza`}
                                   </h2>
                                   {store.bioDescription && (
-                                    <p className="text-stone-500 text-xs line-clamp-2 leading-relaxed">
+                                    <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
                                       {store.bioDescription}
                                     </p>
                                   )}
@@ -5519,7 +5519,7 @@ export function PublicCatalog({
                                     {nicheTags.buttonText}
                                   </button>
                                   {/* Decorative small organic element */}
-                                  <span className="text-stone-400 text-xs italic flex items-center gap-1.5 font-serif">
+                                  <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
                                     <Leaf
                                       style={{
                                         color:
@@ -5709,7 +5709,7 @@ export function PublicCatalog({
                                       >
                                         {p.name}
                                       </h4>
-                                      <p className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans">
+                                      <p className="text-[11px] text-[var(--muted-foreground)] line-clamp-2 leading-4 min-h-8 font-sans">
                                         {(p.description || "").replace(/#destacado/g, "").trim()}
                                       </p>
                                     </div>
@@ -5978,7 +5978,7 @@ export function PublicCatalog({
                                           {p.name}
                                         </h4>
                                         {p.description && (
-                                          <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
+                                          <p style={{ color: "var(--muted-foreground)" }} className="text-[11px] line-clamp-2 h-7 leading-normal font-sans">
                                             {p.description}
                                           </p>
                                         )}
@@ -9441,12 +9441,12 @@ function PriceRangeSlider({
     onChange([min, clamp(v, min, max)]);
   };
 
-  const mutedText = isDark ? "text-white/50" : "text-black/40";
-  const fgText = isDark ? "text-white/80" : "text-black/70";
+  const mutedStyle: React.CSSProperties = { color: "var(--muted-foreground)" };
+  const fgStyle: React.CSSProperties = { color: "var(--foreground)" };
 
   return (
     <div className="space-y-1.5">
-      <div className={`flex items-center justify-between text-xs font-medium ${fgText}`}>
+      <div style={fgStyle} className="flex items-center justify-between text-xs font-medium">
         <span>Precio Máximo</span>
         <div className="flex items-center gap-2">
           <span className="font-bold tabular-nums">S/ {hi.toLocaleString()}</span>
@@ -9465,7 +9465,8 @@ function PriceRangeSlider({
       <div className="relative h-5 flex items-center">
         {/* Rail */}
         <div
-          className={`absolute w-full h-1.5 rounded-full ${isDark ? "bg-white/15" : "bg-black/10"}`}
+          style={{ backgroundColor: "color-mix(in srgb, var(--foreground) 15%, transparent)" }}
+          className="absolute w-full h-1.5 rounded-full"
         />
         {/* Active range */}
         <div
@@ -9485,7 +9486,7 @@ function PriceRangeSlider({
         />
       </div>
 
-      <div className={`flex justify-between text-[10px] ${mutedText}`}>
+      <div style={mutedStyle} className="flex justify-between text-[10px]">
         <span>S/ {min.toLocaleString()}</span>
         <span>S/ {max.toLocaleString()}</span>
       </div>
