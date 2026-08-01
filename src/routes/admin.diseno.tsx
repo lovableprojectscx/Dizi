@@ -1176,7 +1176,7 @@ function DisenoUnificadoPage() {
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent
           className={cn(
-            "p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-3xl flex flex-col transition-all duration-300",
+            "p-0 overflow-hidden bg-zinc-950 border-zinc-800 rounded-3xl flex flex-col transition-all duration-300 [&>button:last-child]:hidden",
             previewDevice === "mobile"
               ? "max-w-2xl w-[95vw] h-[92vh]"
               : "max-w-6xl w-[95vw] h-[92vh]"
