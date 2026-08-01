@@ -159,49 +159,7 @@ function Dashboard() {
         </Card>
       )}
 
-      {/* ── SECCIÓN 1: GRID DE MÉTRICAS (Ahora al inicio) ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          icon={<Package className="h-4 w-4 text-blue-500" />}
-          label="Productos activos"
-          value={`${activeProducts}/${plan.productLimit === Infinity ? "∞" : plan.productLimit}`}
-          trend="En catálogo público"
-          tooltipText="Número de productos visibles en tu catálogo actual frente al límite de productos que admite tu plan."
-        />
-        <MetricCard
-          icon={<MessageCircle className="h-4 w-4 text-emerald-500" />}
-          label="Clics WhatsApp"
-          value={String(store.whatsappClicks)}
-          trend="Interacciones"
-          tooltipText="Número total de veces que tus clientes han hecho clic para iniciar un chat o enviar un pedido por WhatsApp."
-        />
-        <MetricCard
-          icon={<Eye className="h-4 w-4 text-purple-500" />}
-          label="Visitas al catálogo"
-          value={String(store.views || 0)}
-          trend="Visualizaciones"
-          tooltipText="Número total de veces que tus clientes han ingresado a ver tu catálogo."
-        />
-        <MetricCard
-          icon={
-            isTrial ? (
-              <Clock className="h-4 w-4 text-amber-500 animate-pulse" />
-            ) : (
-              <Sparkles className="h-4 w-4 text-amber-500" />
-            )
-          }
-          label="Plan Actual"
-          value={isTrial ? `${plan.name} (Prueba)` : plan.name}
-          trend={isTrial ? `Prueba: quedan ${daysLeft} días` : "Suscripción activa"}
-          tooltipText={
-            isTrial
-              ? "Estás disfrutando de un período de prueba gratuito de 15 días con acceso a todas las funciones premium del Plan Emprendedor."
-              : "El tipo de plan que tienes contratado. Si necesitas más capacidad o funciones, puedes cambiar de plan."
-          }
-        />
-      </div>
-
-      {/* ── SECCIÓN 2: COMPARTE TU TIENDA (Widget Integrado con QR) ── */}
+      {/* ── SECCIÓN 1: COMPARTE TU TIENDA (Widget Integrado con QR) ── */}
       <Card className="border border-border/50 rounded-xl bg-card shadow-sm overflow-hidden">
         <div className="p-5 sm:p-6">
           <div className="flex items-center gap-2 border-b pb-3 border-border/30 mb-5">
@@ -373,6 +331,48 @@ function Dashboard() {
           </div>
         </div>
       </Card>
+
+      {/* ── SECCIÓN 2: GRID DE MÉTRICAS & DASHBOARD ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <MetricCard
+          icon={<Package className="h-4 w-4 text-blue-500" />}
+          label="Productos activos"
+          value={`${activeProducts}/${plan.productLimit === Infinity ? "∞" : plan.productLimit}`}
+          trend="En catálogo público"
+          tooltipText="Número de productos visibles en tu catálogo actual frente al límite de productos que admite tu plan."
+        />
+        <MetricCard
+          icon={<MessageCircle className="h-4 w-4 text-emerald-500" />}
+          label="Clics WhatsApp"
+          value={String(store.whatsappClicks)}
+          trend="Interacciones"
+          tooltipText="Número total de veces que tus clientes han hecho clic para iniciar un chat o enviar un pedido por WhatsApp."
+        />
+        <MetricCard
+          icon={<Eye className="h-4 w-4 text-purple-500" />}
+          label="Visitas al catálogo"
+          value={String(store.views || 0)}
+          trend="Visualizaciones"
+          tooltipText="Número total de veces que tus clientes han ingresado a ver tu catálogo."
+        />
+        <MetricCard
+          icon={
+            isTrial ? (
+              <Clock className="h-4 w-4 text-amber-500 animate-pulse" />
+            ) : (
+              <Sparkles className="h-4 w-4 text-amber-500" />
+            )
+          }
+          label="Plan Actual"
+          value={isTrial ? `${plan.name} (Prueba)` : plan.name}
+          trend={isTrial ? `Prueba: quedan ${daysLeft} días` : "Suscripción activa"}
+          tooltipText={
+            isTrial
+              ? "Estás disfrutando de un período de prueba gratuito de 15 días con acceso a todas las funciones premium del Plan Emprendedor."
+              : "El tipo de plan que tienes contratado. Si necesitas más capacidad o funciones, puedes cambiar de plan."
+          }
+        />
+      </div>
     </div>
   );
 }
