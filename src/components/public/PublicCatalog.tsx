@@ -4175,7 +4175,11 @@ export function PublicCatalog({
                                 e.stopPropagation();
                                 cartAdd(store.id, p.id);
                               }}
-                              className="bg-white text-black text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:bg-white/90 transition"
+                              style={{
+                                backgroundColor: "var(--primary)",
+                                color: "var(--primary-foreground)",
+                              }}
+                              className="text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:opacity-90 transition"
                             >
                               <Plus className="h-3 w-3 inline" />
                             </button>
@@ -4244,7 +4248,11 @@ export function PublicCatalog({
                                     e.stopPropagation();
                                     cartAdd(store.id, p.id);
                                   }}
-                                  className="h-7 w-7 bg-white text-black flex items-center justify-center hover:bg-white/90 transition"
+                                  style={{
+                                    backgroundColor: "var(--primary)",
+                                    color: "var(--primary-foreground)",
+                                  }}
+                                  className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
