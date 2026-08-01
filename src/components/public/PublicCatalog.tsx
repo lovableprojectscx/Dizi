@@ -1594,7 +1594,33 @@ export function PublicCatalog({
 
   // Derive card background from custom bg — slightly lighter for contrast or explicit cardBg
   const explicitCardBg = (store as any).cardBg || undefined;
-  const effectiveCardBg = explicitCardBg || (customBg ? blendWithWhite(customBg, effectiveIsDark ? 0.12 : 0.08) : undefined);
+  let effectiveCardBg = explicitCardBg || (customBg ? blendWithWhite(customBg, effectiveIsDark ? 0.12 : 0.08) : undefined);
+  if (explicitCardBg) {
+    const cardLum = hexLuminance(explicitCardBg);
+    if (effectiveIsDark && cardLum > 0.65) {
+      effectiveCardBg = "#1c1917"; // Fuerza fondo de tarjeta oscuro en modo oscuro si tenian un blanco pegado
+    } else if (!effectiveIsDark && cardLum < 0.35) {
+      effectiveCardBg = "#ffffff"; // Fuerza fondo de tarjeta claro en modo claro si tenian un negro pegado
+    }
+  }
+
+  // RULE 1: Dark Mode MANDATES light text (#f4f4f5). Light Mode MANDATES dark text (#18181b).
+  // Previously saved colors from old sessions must not cause unreadable text.
+  const rawTextColor = store.textColor || undefined;
+  let effectiveTextColor: string;
+  if (effectiveIsDark) {
+    if (rawTextColor && hexLuminance(rawTextColor) >= 0.45) {
+      effectiveTextColor = rawTextColor; // El usuario eligio a proposito un color de texto claro
+    } else {
+      effectiveTextColor = "#f4f4f5"; // Texto claro por defecto para modo oscuro
+    }
+  } else {
+    if (rawTextColor && hexLuminance(rawTextColor) <= 0.65) {
+      effectiveTextColor = rawTextColor; // El usuario eligio a proposito un color de texto oscuro
+    } else {
+      effectiveTextColor = "#18181b"; // Texto oscuro por defecto para modo claro
+    }
+  }
 
   // Gradient backgrounds for locked models that have a special identity
   const MODEL_GRADIENTS: Record<string, string> = {
@@ -1611,18 +1637,10 @@ export function PublicCatalog({
   // All foreground vars recalculated from effectiveIsDark so any model+bg combo stays readable
   const themeVars: React.CSSProperties = {
     ...cfg.vars,
-    "--foreground": store.textColor || (effectiveIsDark ? "#f4f4f5" : "#18181b"),
-    "--card-foreground": store.textColor || (effectiveIsDark ? "#f4f4f5" : "#18181b"),
-    "--foreground-muted": store.textColor
-      ? `color-mix(in srgb, ${store.textColor} 70%, transparent)`
-      : effectiveIsDark
-        ? "#a1a1aa"
-        : "#52525b",
-    "--muted-foreground": store.textColor
-      ? `color-mix(in srgb, ${store.textColor} 60%, transparent)`
-      : effectiveIsDark
-        ? "#a1a1aa"
-        : "#71717a",
+    "--foreground": effectiveTextColor,
+    "--card-foreground": effectiveTextColor,
+    "--foreground-muted": effectiveIsDark ? "#a1a1aa" : "#52525b",
+    "--muted-foreground": effectiveIsDark ? "#a1a1aa" : "#71717a",
     "--muted": effectiveIsDark ? "#1e293b" : "#f1f5f9",
     "--secondary": effectiveIsDark ? "#1e2535" : "#f8fafc",
     "--border": (store as any).accentColor || (effectiveIsDark ? "#334155" : "#e2e8f0"),
@@ -4057,6 +4075,7 @@ export function PublicCatalog({
                             OFERTA
                           </span>
                         )}
+                      </div>
                       <div className="p-2.5 flex flex-col flex-1 gap-1.5" style={{ color: "var(--card-foreground)" }}>
                         <h3 style={{ color: "var(--card-foreground)" }} className="text-xs font-semibold line-clamp-2 flex-1">{p.name}</h3>
                         <span className="text-sm font-black text-primary">

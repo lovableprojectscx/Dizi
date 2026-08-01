@@ -11,43 +11,68 @@ import type {
 } from "./types";
 import { supabase, uploadBase64ToStorage } from "./supabase";
 import { toast } from "sonner";
+import { hexLuminance } from "./utils";
 
-const mapStoreFromDB = (row: any): Store => ({
-  id: row.id,
-  slug: row.slug,
-  name: row.name,
-  phone: row.phone || "",
-  countryCode: row.country_code || "51",
-  logo: row.logo,
-  plan: row.plan as PlanId,
-  model: row.model,
-  brandColor: row.brand_color,
-  bgColor: row.bg_color,
-  textColor: row.text_color,
-  banners: Array.isArray(row.banners) && row.banners.length > 0
-    ? row.banners
-    : typeof row.banner_image === "string" && row.banner_image.includes("|||")
-      ? row.banner_image.split("|||").map((b: string) => b.trim()).filter(Boolean)
-      : row.banner_image
-        ? [row.banner_image]
-        : [],
-  bannerImage: typeof row.banner_image === "string" && row.banner_image.includes("|||")
-    ? row.banner_image
-    : Array.isArray(row.banners) && row.banners.length > 0
-      ? row.banners.join("|||")
-      : row.banner_image,
-  bannerTitle: row.banner_title,
-  bannerStyle: row.banner_style ?? "direct",
-  niche: row.niche ?? "general",
-  catalogTypography: row.catalog_typography ?? "sans",
-  cardStyle: row.card_style ?? "standard",
-  cardBg: row.card_bg ?? null,
-  accentColor: row.accent_color ?? null,
-  borderRadius: row.border_radius ?? null,
-  imgShape: row.img_shape ?? null,
-  isDark: row.is_dark ?? false,
-  ownerId: row.owner_id,
-  active: row.active,
+const mapStoreFromDB = (row: any): Store => {
+  const isDarkVal = row.is_dark ?? (row.bg_color ? hexLuminance(row.bg_color) < 0.35 : false);
+
+  // Rule 3: Sanitizar colores desalineados guardados anteriormente en la BD
+  let cleanTextColor = row.text_color ?? null;
+  if (cleanTextColor) {
+    const lumText = hexLuminance(cleanTextColor);
+    if (isDarkVal && lumText < 0.45) {
+      cleanTextColor = null; // Limpiar texto oscuro guardado por error en modo oscuro
+    } else if (!isDarkVal && lumText > 0.65) {
+      cleanTextColor = null; // Limpiar texto claro guardado por error en modo claro
+    }
+  }
+
+  let cleanCardBg = row.card_bg ?? null;
+  if (cleanCardBg) {
+    const lumCard = hexLuminance(cleanCardBg);
+    if (isDarkVal && lumCard > 0.65) {
+      cleanCardBg = null; // Limpiar tarjeta clara guardada en modo oscuro
+    } else if (!isDarkVal && lumCard < 0.35) {
+      cleanCardBg = null; // Limpiar tarjeta oscura guardada en modo claro
+    }
+  }
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    phone: row.phone || "",
+    countryCode: row.country_code || "51",
+    logo: row.logo,
+    plan: row.plan as PlanId,
+    model: row.model,
+    brandColor: row.brand_color,
+    bgColor: row.bg_color,
+    textColor: cleanTextColor,
+    banners: Array.isArray(row.banners) && row.banners.length > 0
+      ? row.banners
+      : typeof row.banner_image === "string" && row.banner_image.includes("|||")
+        ? row.banner_image.split("|||").map((b: string) => b.trim()).filter(Boolean)
+        : row.banner_image
+          ? [row.banner_image]
+          : [],
+    bannerImage: typeof row.banner_image === "string" && row.banner_image.includes("|||")
+      ? row.banner_image
+      : Array.isArray(row.banners) && row.banners.length > 0
+        ? row.banners.join("|||")
+        : row.banner_image,
+    bannerTitle: row.banner_title,
+    bannerStyle: row.banner_style ?? "direct",
+    niche: row.niche ?? "general",
+    catalogTypography: row.catalog_typography ?? "sans",
+    cardStyle: row.card_style ?? "standard",
+    cardBg: cleanCardBg,
+    accentColor: row.accent_color ?? null,
+    borderRadius: row.border_radius ?? null,
+    imgShape: row.img_shape ?? null,
+    isDark: isDarkVal,
+    ownerId: row.owner_id,
+    active: row.active,
   isPublished: row.is_published,
   createdAt: row.created_at,
   whatsappClicks: row.whatsapp_clicks || 0,

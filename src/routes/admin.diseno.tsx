@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { type PlanId } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
@@ -242,6 +242,21 @@ function DisenoUnificadoPage() {
     setTypography(preset.values.typography);
     setCardStyle(preset.values.cardStyle);
     toast.success(`✨ Tema "${preset.name}" aplicado como punto de partida`);
+  };
+
+  const handleBgColorSelect = (newBg: string) => {
+    setBgColor(newBg);
+    const dark = hexLuminance(newBg) < 0.35;
+    setIsDark(dark);
+    if (dark) {
+      setCardBg("#18181b");
+      setTextColor("#f4f4f5");
+      setAccentColor("#27272a");
+    } else {
+      setCardBg("#ffffff");
+      setTextColor("#18181b");
+      setAccentColor("#e2e8f0");
+    }
   };
 
   // Guardar configuración unificada
@@ -530,7 +545,7 @@ function DisenoUnificadoPage() {
                     <label className="font-bold text-xs text-zinc-800">Color de Fondo del Catálogo</label>
                     <span className="font-mono text-[10px] text-zinc-400 uppercase">{bgColor}</span>
                   </div>
-                  <ColorSwatch colors={BG_COLORS} selected={bgColor} onSelect={setBgColor} />
+                  <ColorSwatch colors={BG_COLORS} selected={bgColor} onSelect={handleBgColorSelect} />
                 </div>
 
                 {/* Color de Tarjeta, Texto y Acento */}
@@ -622,7 +637,21 @@ function DisenoUnificadoPage() {
                     <input
                       type="checkbox"
                       checked={isDark}
-                      onChange={(e) => setIsDark(e.target.checked)}
+                      onChange={(e) => {
+                        const nextDark = e.target.checked;
+                        setIsDark(nextDark);
+                        if (nextDark) {
+                          setBgColor("#09090b");
+                          setCardBg("#18181b");
+                          setTextColor("#f4f4f5");
+                          setAccentColor("#27272a");
+                        } else {
+                          setBgColor("#ffffff");
+                          setCardBg("#ffffff");
+                          setTextColor("#18181b");
+                          setAccentColor("#e2e8f0");
+                        }
+                      }}
                       className="h-4 w-4 rounded accent-primary cursor-pointer"
                     />
                   </div>
