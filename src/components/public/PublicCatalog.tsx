@@ -1128,11 +1128,11 @@ function DiziNativeAdCard({
         style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
         className="w-full border-t border-b py-12 px-6 sm:px-12 flex flex-col items-center justify-center text-center space-y-6 select-none animate-in fade-in duration-500"
       >
-        <div className="h-16 w-16 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm animate-pulse">
+        <div className="h-16 w-16 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm animate-pulse bg-white p-2">
           <img
-            src="/images/dizi_ad_brand_3d.webp"
+            src="/images/Icono.png"
             alt="Dizi"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         </div>
         <div className="space-y-2 max-w-lg">
@@ -1167,11 +1167,11 @@ function DiziNativeAdCard({
         style={{ borderColor: "var(--border)" }}
         className="flex gap-4 py-6 border-b border-dashed items-center select-none animate-in fade-in duration-300"
       >
-        <div className="h-10 w-10 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-xs">
+        <div className="h-10 w-10 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-xs bg-white p-1.5">
           <img
-            src="/images/dizi_ad_brand_3d.webp"
+            src="/images/Icono.png"
             alt="Dizi"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain"
           />
         </div>
         <div className="flex-1 text-left min-w-0">
