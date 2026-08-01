@@ -1436,7 +1436,7 @@ export function PublicCatalog({
   const modelDaysLeft = modelGraceDaysLeft(store);
 
   /* ── Theme setup ─────────────────────────────────── */
-  const rawModelId = resolveRenderModel(getEffectiveModel(store));
+  const rawModelId = resolveRenderModel(isMockup ? (store.model || "minimalista") : getEffectiveModel(store));
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
 
