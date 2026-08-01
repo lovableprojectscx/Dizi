@@ -1181,18 +1181,32 @@ function DisenoUnificadoPage() {
               : "max-w-6xl w-[95vw] h-[92vh]"
           )}
         >
-          <DialogHeader className="p-3.5 bg-zinc-900 border-b border-zinc-800 flex flex-row items-center justify-between pr-12">
-            <DialogTitle className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              Vista Previa Expandida
-            </DialogTitle>
+          <DialogHeader className="p-3 bg-zinc-900 border-b border-zinc-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="flex items-center justify-between w-full sm:w-auto">
+              <DialogTitle className="text-white text-xs sm:text-sm font-bold flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                Vista Previa Expandida
+              </DialogTitle>
 
-            <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+              {/* Botón Salir Prominente */}
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsPreviewOpen(false)}
+                className="h-8 px-3.5 rounded-xl text-xs font-extrabold gap-1 text-white bg-red-600 hover:bg-red-700 active:scale-95 shadow-md"
+              >
+                <X className="h-4 w-4" />
+                <span>Salir</span>
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-center gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-800">
               <button
                 type="button"
                 onClick={() => setPreviewDevice("mobile")}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-none justify-center",
                   previewDevice === "mobile"
                     ? "bg-primary text-white shadow-md"
                     : "text-zinc-400 hover:text-white"
@@ -1205,7 +1219,7 @@ function DisenoUnificadoPage() {
                 type="button"
                 onClick={() => setPreviewDevice("desktop")}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all flex-1 sm:flex-none justify-center",
                   previewDevice === "desktop"
                     ? "bg-primary text-white shadow-md"
                     : "text-zinc-400 hover:text-white"
