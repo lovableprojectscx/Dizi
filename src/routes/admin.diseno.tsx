@@ -714,6 +714,140 @@ function DisenoUnificadoPage() {
               </div>
 
               <div className="space-y-3">
+                {/* 0. Cintillo Promocional / Barra de Anuncios (Envío Gratis) */}
+                <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-orange-100 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-4.5 w-4.5 text-orange-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                          Cintillo Promocional / Envío Gratis
+                          <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-[9px] font-extrabold py-0.5">
+                            Barra Superior
+                          </Badge>
+                        </h4>
+                        <p className="text-[11px] text-zinc-550">
+                          Muestra un anuncio superior en el catálogo (Envío gratis, descuentos, avisos importantes).
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={promoBarEnabled}
+                          onChange={(e) => setPromoBarEnabled(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                      </label>
+                    </div>
+                  </div>
+
+                  {promoBarEnabled && (
+                    <div className="pt-3 border-t border-zinc-200/80 space-y-3 animate-in fade-in duration-200">
+                      <div className="space-y-1">
+                        <label className="font-bold text-xs text-zinc-800">Texto del Anuncio / Oferta</label>
+                        <input
+                          type="text"
+                          value={promoBarText}
+                          onChange={(e) => setPromoBarText(e.target.value)}
+                          placeholder="Ej: ¡Envío gratis a partir de S/. 150 en todos los pedidos!"
+                          className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="font-bold text-xs text-zinc-800">Acción al Hacer Clic</label>
+                          <select
+                            value={promoBarActionType}
+                            onChange={(e) => setPromoBarActionType(e.target.value as any)}
+                            className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                          >
+                            <option value="none">Sin botón (Solo mensaje)</option>
+                            <option value="cart">Abrir Carrito</option>
+                            <option value="url">Abrir Enlace Externo</option>
+                            <option value="category">Ir a Categoría</option>
+                            <option value="product">Ver Producto</option>
+                          </select>
+                        </div>
+
+                        {promoBarActionType !== "none" && promoBarActionType !== "cart" && (
+                          <div className="space-y-1">
+                            <label className="font-bold text-xs text-zinc-800">
+                              {promoBarActionType === "url" ? "URL del Enlace" : "ID o Valor"}
+                            </label>
+                            <input
+                              type="text"
+                              value={promoBarActionValue}
+                              onChange={(e) => setPromoBarActionValue(e.target.value)}
+                              placeholder={promoBarActionType === "url" ? "https://..." : "Valor"}
+                              className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                        <div className="space-y-1">
+                          <label className="font-bold text-[11px] text-zinc-700">Fondo Personalizado</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={promoBarBgColor || brandColor || "#ea580c"}
+                              onChange={(e) => setPromoBarBgColor(e.target.value)}
+                              className="h-8 w-10 rounded-lg cursor-pointer border border-zinc-200 p-0.5"
+                            />
+                            {promoBarBgColor && (
+                              <button
+                                type="button"
+                                onClick={() => setPromoBarBgColor("")}
+                                className="text-[10px] text-zinc-400 hover:text-zinc-700 underline"
+                              >
+                                Restablecer
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="font-bold text-[11px] text-zinc-700">Texto Personalizado</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="color"
+                              value={promoBarTextColor || "#ffffff"}
+                              onChange={(e) => setPromoBarTextColor(e.target.value)}
+                              className="h-8 w-10 rounded-lg cursor-pointer border border-zinc-200 p-0.5"
+                            />
+                            {promoBarTextColor && (
+                              <button
+                                type="button"
+                                onClick={() => setPromoBarTextColor("")}
+                                className="text-[10px] text-zinc-400 hover:text-zinc-700 underline"
+                              >
+                                Restablecer
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-2 rounded-xl border bg-white mt-auto h-10">
+                          <span className="font-bold text-xs text-zinc-700">Marquesina (Scroll)</span>
+                          <input
+                            type="checkbox"
+                            checked={promoBarIsMarquee}
+                            onChange={(e) => setPromoBarIsMarquee(e.target.checked)}
+                            className="h-4 w-4 rounded accent-primary cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* 1. Marca de Agua Dizi */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                   <div className="flex items-center gap-3">
