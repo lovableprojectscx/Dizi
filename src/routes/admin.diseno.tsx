@@ -1143,8 +1143,8 @@ function DisenoUnificadoPage() {
           )}
         </div>
 
-        {/* Panel de Live Preview Lateral (5 Columnas en Desktop) */}
-        <div className="lg:col-span-5">
+        {/* Panel de Live Preview Lateral (Solo visible en escritorio desktop) */}
+        <div className="hidden lg:block lg:col-span-5">
           <div className="sticky top-6 rounded-3xl border border-zinc-900 bg-[#09090b] p-3 shadow-2xl space-y-3">
             <div className="flex items-center justify-between px-3 pt-2 text-white">
               <div className="flex items-center gap-2">
