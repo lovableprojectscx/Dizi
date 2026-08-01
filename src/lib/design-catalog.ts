@@ -383,6 +383,22 @@ export function resolveRenderModel(structureId: string | null | undefined): stri
   return RENDER_MODEL_MAP[structureId] ?? structureId;
 }
 
+export function modelSupportsCategoryIcons(structureOrModelId: string | null | undefined): boolean {
+  if (!structureOrModelId) return false;
+  const struct = DESIGN_STRUCTURES.find(
+    (s) => s.id === structureOrModelId || s.layout === structureOrModelId
+  );
+  if (struct?.supportsCategoryIcons) return true;
+
+  const renderModel = resolveRenderModel(structureOrModelId);
+  return (
+    renderModel === "bite" ||
+    renderModel === "bloom" ||
+    renderModel === "nature" ||
+    renderModel === "aurora"
+  );
+}
+
 /** Traduce un model historico (+ niche) a su estructura unificada, para preseleccionar en el panel. */
 const LEGACY_STRUCTURE_MAP: Record<string, string> = {
   minimalista: "grid",

@@ -291,7 +291,9 @@ const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
   ],
 };
 
-const isPremiumModel = (model?: string) => true;
+import { modelSupportsCategoryIcons } from "@/lib/design-catalog";
+
+const isPremiumModel = (model?: string) => modelSupportsCategoryIcons(model);
 
 const getNicheLabel = (model?: string) => {
   return "Ícono de la Categoría";
