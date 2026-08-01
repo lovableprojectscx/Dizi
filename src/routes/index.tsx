@@ -21,7 +21,6 @@ import {
   Check,
   Flame,
   Zap,
-  TrendingUp,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -65,7 +64,7 @@ function LandingPage() {
       id: "bite",
       name: "Bite Gastronómico",
       niche: "Gastronomía / Restobar",
-      desc: "Categorías táctiles, badges de especialidades y pedidos inmediatos a cocina.",
+      desc: "Categorías táctiles, especialidades de cocina y pedidos directos por WhatsApp.",
       badge: "Popular",
       category: "gastronomia",
       image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80",
@@ -152,7 +151,7 @@ function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground pb-16 md:pb-0">
       {/* ── 1. HEADER / NAVBAR DE NAVEGACIÓN ── */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 backdrop-blur-md transition-all">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
@@ -160,7 +159,7 @@ function LandingPage() {
             <img
               src="/images/dizi-logo-principal-color.png"
               alt="Dizi Catálogos Digitales"
-              className="h-9 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105"
+              className="h-8 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </Link>
 
@@ -193,15 +192,16 @@ function LandingPage() {
             </Button>
             <Button
               asChild
-              className="hidden md:flex font-extrabold text-xs rounded-xl h-10 px-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105"
+              className="hidden md:flex font-extrabold text-xs rounded-xl h-10 px-5 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95"
             >
               <Link to="/register">
                 Crear Catálogo Gratis <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>
             </Button>
+
             {/* Botón Hamburguesa Móvil */}
             <button
-              className="md:hidden flex items-center justify-center h-10 w-10 rounded-xl bg-muted/60 border border-border/40 transition-colors"
+              className="md:hidden flex items-center justify-center h-10 w-10 rounded-xl bg-muted/60 border border-border/40 transition-all active:scale-95"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Menú de Navegación"
             >
@@ -210,9 +210,9 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Menú Desplegable Móvil */}
+        {/* Menú Desplegable Móvil con Animación */}
         {menuOpen && (
-          <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-md px-4 py-5 space-y-3 animate-in slide-in-from-top duration-200">
+          <div className="md:hidden border-t border-border/40 bg-background/98 backdrop-blur-xl px-4 py-5 space-y-3 animate-in fade-in slide-in-from-top duration-200 shadow-xl">
             <a
               href="#beneficios"
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
@@ -249,12 +249,12 @@ function LandingPage() {
               Novedades
             </Link>
             <div className="pt-3 border-t border-border/40 grid grid-cols-2 gap-2">
-              <Button variant="outline" asChild className="w-full font-bold text-xs rounded-xl h-10 text-foreground">
+              <Button variant="outline" asChild className="w-full font-bold text-xs rounded-xl h-10 text-foreground active:scale-95">
                 <Link to="/login" onClick={() => setMenuOpen(false)}>
                   Iniciar Sesión
                 </Link>
               </Button>
-              <Button asChild className="w-full font-extrabold text-xs rounded-xl h-10 shadow-md">
+              <Button asChild className="w-full font-extrabold text-xs rounded-xl h-10 shadow-md active:scale-95">
                 <Link to="/register" onClick={() => setMenuOpen(false)}>
                   Crear Gratis
                 </Link>
@@ -264,12 +264,12 @@ function LandingPage() {
         )}
       </header>
 
-      {/* ── 2. SECCIÓN HERO BALANCEADA PARA PC Y MÓVIL (SIN HUECOS VACÍOS) ── */}
-      <section className="relative overflow-hidden pt-10 sm:pt-16 pb-16 sm:pb-24 bg-gradient-to-b from-primary/[0.04] via-background to-background border-b border-border/30">
+      {/* ── 2. SECCIÓN HERO MÓVIL Y DESKTOP OPTIMIZADA (SIN SIMULADOR EN MÓVIL PANTALLA PEQUEÑA) ── */}
+      <section className="relative overflow-hidden pt-8 sm:pt-16 pb-12 sm:pb-24 bg-gradient-to-b from-primary/[0.04] via-background to-background border-b border-border/30">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* LADO IZQUIERDO: SEO & ACCIONES CONTEXTUALES */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            {/* LADO IZQUIERDO: TEXTOS SEO & ACCIONES */}
+            <div className="lg:col-span-7 space-y-5 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
               {/* Badge Principal */}
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider shadow-xs">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -285,16 +285,16 @@ function LandingPage() {
               </h1>
 
               {/* Subtítulo Conciso (SEO & GEO) */}
-              <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
                 Digitaliza tus productos en una tienda interactiva sin comisiones. Tus clientes arman su carrito y te envían el pedido directo a tu WhatsApp.
               </p>
 
-              {/* Botones de Acción (Alto Contraste Garantizado) */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+              {/* Botones de Acción Móvil & Desktop */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto h-13 px-8 rounded-2xl font-black text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 gap-2"
+                  className="w-full sm:w-auto h-12 sm:h-13 px-8 rounded-2xl font-black text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 gap-2"
                 >
                   <Link to="/register">
                     Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
@@ -305,7 +305,7 @@ function LandingPage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto h-13 px-7 rounded-2xl font-bold text-sm border-border text-foreground hover:bg-muted gap-2 shadow-xs"
+                  className="w-full sm:w-auto h-12 sm:h-13 px-7 rounded-2xl font-bold text-xs sm:text-sm border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs"
                 >
                   <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
                     <Smartphone className="h-4 w-4 text-primary" /> Ver Tienda de Ejemplo
@@ -314,43 +314,43 @@ function LandingPage() {
                 </Button>
               </div>
 
-              {/* 3 Tarjetas de Beneficios Rápidos (Llenan el espacio en PC) */}
-              <div className="pt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3.5 rounded-2xl bg-card border border-border/50 flex items-center gap-3 text-left">
-                  <div className="h-8 w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
-                    <Zap className="h-4 w-4" />
+              {/* 3 Tarjetas de Beneficios Rápidos (Optimizadas para Móviles y PC) */}
+              <div className="pt-4 grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card border border-border/50 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                    <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">2 Minutos</p>
-                    <p className="text-[10px] text-muted-foreground">Configuración rápida</p>
+                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">2 Minutos</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Configuración</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-card border border-border/50 flex items-center gap-3 text-left">
-                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <MessageCircle className="h-4 w-4" />
+                <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card border border-border/50 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">0% Comisiones</p>
-                    <p className="text-[10px] text-muted-foreground">Cobras a tu cuenta</p>
+                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">0% Comisión</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Cobro directo</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-card border border-border/50 flex items-center gap-3 text-left">
-                  <div className="h-8 w-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                    <ShieldCheck className="h-4 w-4" />
+                <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card border border-border/50 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
+                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+                    <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">15 Días Gratis</p>
-                    <p className="text-[10px] text-muted-foreground">Prueba Plan Pro</p>
+                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">15 Días Free</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Prueba Pro</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* LADO DERECHO: SIMULADOR DE MÓVIL DENSE Y COMPLETO (SIN ESPACIOS VACÍOS) */}
-            <div className="lg:col-span-5 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-[320px] sm:max-w-[340px] h-[550px] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden">
+            {/* LADO DERECHO: SIMULADOR DE MÓVIL DENSE (SOLO VISIBLE EN PANTALLAS MD+) */}
+            <div className="hidden lg:flex lg:col-span-5 justify-end">
+              <div className="relative w-full max-w-[340px] h-[550px] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
                 {/* Altavoz y Cámara de iPhone */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 h-5 w-28 bg-zinc-950 rounded-b-2xl z-40 flex items-center justify-center">
                   <div className="h-2 w-10 bg-zinc-800 rounded-full"></div>
@@ -395,7 +395,7 @@ function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Grilla 2x2 Completa de Productos (Ocupa todo el espacio de forma densa) */}
+                  {/* Grilla 2x2 Completa de Productos */}
                   <div className="grid grid-cols-2 gap-1.5 flex-1 my-1 overflow-hidden">
                     <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
@@ -454,7 +454,7 @@ function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Botón Flotante Carrito WhatsApp en Móvil ajustado al fondo */}
+                  {/* Botón Flotante Carrito WhatsApp */}
                   <div className="bg-[#25D366] text-white p-2.5 rounded-xl font-extrabold text-xs flex items-center justify-between shadow-md shrink-0 mt-1">
                     <div className="flex items-center gap-1.5">
                       <MessageCircle className="h-4 w-4 fill-white" />
@@ -469,10 +469,10 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 3. COMPARACIÓN DIRETA TRADICIONAL VS DIZI ── */}
-      <section id="beneficios" className="py-16 sm:py-24 bg-card border-b border-border/40">
+      {/* ── 3. COMPARACIÓN DIRECTA TRADICIONAL VS DIZI ── */}
+      <section id="beneficios" className="py-12 sm:py-20 bg-card border-b border-border/40">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-12">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
               Comparación de Método
             </span>
@@ -481,12 +481,12 @@ function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="p-6 sm:p-8 rounded-3xl bg-red-500/[0.02] border border-red-500/20 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            <div className="p-5 sm:p-8 rounded-3xl bg-red-500/[0.02] border border-red-500/20 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider">
                 <XCircle className="h-4 w-4" /> Venta Tradicional por Fotos / PDFs
               </div>
-              <ul className="space-y-3 text-xs sm:text-sm text-muted-foreground pt-2">
+              <ul className="space-y-3 text-xs sm:text-sm text-muted-foreground pt-1">
                 <li className="flex items-start gap-2.5">
                   <XCircle className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
                   <span>Fotos sueltas enviadas por chat que saturan el celular del cliente.</span>
@@ -502,11 +502,11 @@ function LandingPage() {
               </ul>
             </div>
 
-            <div className="p-6 sm:p-8 rounded-3xl bg-emerald-500/[0.02] border border-emerald-500/30 space-y-4">
+            <div className="p-5 sm:p-8 rounded-3xl bg-emerald-500/[0.02] border border-emerald-500/30 space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
                 <CheckCircle2 className="h-4 w-4" /> Plataforma Web Dizi
               </div>
-              <ul className="space-y-3 text-xs sm:text-sm text-foreground/90 font-medium pt-2">
+              <ul className="space-y-3 text-xs sm:text-sm text-foreground/90 font-medium pt-1">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500 shrink-0 mt-0.5" />
                   <span>Enlace web único para tu bio de Instagram, TikTok o código QR.</span>
@@ -526,9 +526,9 @@ function LandingPage() {
       </section>
 
       {/* ── 4. SHOWCASE DE 15 DISEÑOS CON TARJETAS VISUALES ── */}
-      <section id="modelos" className="py-16 sm:py-24 bg-background">
+      <section id="modelos" className="py-12 sm:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-10">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-10">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
               Modelos de Interfaz
             </span>
@@ -536,13 +536,13 @@ function LandingPage() {
               15 Estructuras de Diseño Adaptables
             </h2>
 
-            <div className="flex items-center justify-center gap-2 pt-4 flex-wrap">
+            <div className="flex items-center justify-center gap-1.5 pt-3 overflow-x-auto no-scrollbar pb-1">
               <button
                 onClick={() => setActiveNiche("all")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
                   activeNiche === "all"
-                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -551,9 +551,9 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("gastronomia")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
                   activeNiche === "gastronomia"
-                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -562,9 +562,9 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("boutique")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
                   activeNiche === "boutique"
-                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -573,9 +573,9 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("eco")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
                   activeNiche === "eco"
-                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -584,9 +584,9 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("tech")}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0",
                   activeNiche === "tech"
-                    ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -595,14 +595,14 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {filteredModels.map((model) => (
               <div
                 key={model.id}
-                className="group rounded-3xl border border-border/60 bg-card overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col justify-between"
+                className="group rounded-3xl border border-border/60 bg-card overflow-hidden transition-all duration-300 hover:shadow-xl active:scale-[0.99] flex flex-col justify-between"
               >
                 <div>
-                  <div className="relative h-44 w-full overflow-hidden bg-muted">
+                  <div className="relative h-40 sm:h-44 w-full overflow-hidden bg-muted">
                     <img
                       src={model.image}
                       alt={model.name}
@@ -630,7 +630,7 @@ function LandingPage() {
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Semántico & Móvil
                   </span>
-                  <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10">
+                  <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10 active:scale-95">
                     <Link to="/register">
                       Probar Modelo <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
@@ -643,9 +643,9 @@ function LandingPage() {
       </section>
 
       {/* ── 5. MÓDULOS DE FUNCIONALIDAD ── */}
-      <section id="modulos" className="py-16 sm:py-24 bg-muted/30 border-y border-border/40">
+      <section id="modulos" className="py-12 sm:py-24 bg-muted/30 border-y border-border/40">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-12">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
               Módulos Pro
             </span>
@@ -654,10 +654,10 @@ function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 rounded-2xl bg-card border border-border/50 space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
-                <Flame className="h-5 w-5" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
+              <div className="h-9 w-9 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <Flame className="h-4.5 w-4.5" />
               </div>
               <h3 className="font-bold text-sm text-foreground">Cintillo Promocional</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -665,9 +665,9 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-card border border-border/50 space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-                <Layers className="h-5 w-5" />
+            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
+              <div className="h-9 w-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <Layers className="h-4.5 w-4.5" />
               </div>
               <h3 className="font-bold text-sm text-foreground">Banners Multi-Imagen</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -675,9 +675,9 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-card border border-border/50 space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
-                <FileDown className="h-5 w-5" />
+            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
+              <div className="h-9 w-9 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
+                <FileDown className="h-4.5 w-4.5" />
               </div>
               <h3 className="font-bold text-sm text-foreground">Exportador Catálogo PDF</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -685,9 +685,9 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-card border border-border/50 space-y-3">
-              <div className="h-10 w-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                <ShieldCheck className="h-5 w-5" />
+            <div className="p-5 rounded-2xl bg-card border border-border/50 space-y-2">
+              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <ShieldCheck className="h-4.5 w-4.5" />
               </div>
               <h3 className="font-bold text-sm text-foreground">Protección In-App Browser</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
@@ -698,10 +698,10 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 6. PLANES & PRECIOS (TEXTO DE ALTO CONTRASATE GARANTIZADO) ── */}
-      <section id="precios" className="py-16 sm:py-24 bg-background">
+      {/* ── 6. PLANES & PRECIOS (SIN EMOJIS, ALTO CONTRASATE) ── */}
+      <section id="precios" className="py-12 sm:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-12">
+          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-12">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
               Precios Claros
             </span>
@@ -710,7 +710,7 @@ function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch">
             {/* PLAN SEMILLA */}
             <div className="p-6 rounded-3xl border border-border/60 bg-card flex flex-col justify-between space-y-6">
               <div className="space-y-4">
@@ -722,7 +722,7 @@ function LandingPage() {
                   <span className="text-3xl font-black text-foreground">S/ 0</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
-                <ul className="space-y-2.5 text-xs text-foreground pt-2">
+                <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
                     <span>Hasta 20 Productos</span>
@@ -737,7 +737,7 @@ function LandingPage() {
                   </li>
                 </ul>
               </div>
-              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted">
+              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
                 <Link to="/register">Crear Cuenta Gratis</Link>
               </Button>
             </div>
@@ -753,7 +753,7 @@ function LandingPage() {
                   <span className="text-3xl font-black text-foreground">S/ 29</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
-                <ul className="space-y-2.5 text-xs text-foreground pt-2">
+                <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
                     <span>Hasta 100 Productos</span>
@@ -772,15 +772,16 @@ function LandingPage() {
                   </li>
                 </ul>
               </div>
-              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted">
+              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
                 <Link to="/register">Elegir Emprendedor</Link>
               </Button>
             </div>
 
-            {/* PLAN PRO (MÁS POPULAR CON LISTÓN) */}
+            {/* PLAN PRO (MÁS POPULAR SIN EMOJIS) */}
             <div className="p-6 rounded-3xl border-2 border-primary bg-primary/[0.02] flex flex-col justify-between space-y-6 relative shadow-xl shadow-primary/10">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-extrabold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md">
-                MÁS POPULAR ⭐
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground font-extrabold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full shadow-md flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                <span>MÁS POPULAR</span>
               </div>
               <div className="space-y-4 pt-1">
                 <span className="text-xs font-bold text-primary uppercase tracking-widest">
@@ -791,7 +792,7 @@ function LandingPage() {
                   <span className="text-3xl font-black text-foreground">S/ 49</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
-                <ul className="space-y-2.5 text-xs text-foreground pt-2 font-medium">
+                <ul className="space-y-2.5 text-xs text-foreground pt-1 font-medium">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
                     <span>Hasta 500 Productos</span>
@@ -810,7 +811,7 @@ function LandingPage() {
                   </li>
                 </ul>
               </div>
-              <Button asChild className="w-full font-extrabold text-xs rounded-xl h-10 shadow-md">
+              <Button asChild className="w-full font-extrabold text-xs rounded-xl h-10 shadow-md active:scale-95">
                 <Link to="/register">Comenzar Prueba Pro</Link>
               </Button>
             </div>
@@ -826,7 +827,7 @@ function LandingPage() {
                   <span className="text-3xl font-black text-foreground">S/ 79</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
-                <ul className="space-y-2.5 text-xs text-foreground pt-2">
+                <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
                     <span>Productos Ilimitados</span>
@@ -841,7 +842,7 @@ function LandingPage() {
                   </li>
                 </ul>
               </div>
-              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted">
+              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
                 <Link to="/register">Elegir Ilimitado</Link>
               </Button>
             </div>
@@ -849,10 +850,10 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 7. PREGUNTAS FRECUENTES (FAQ ACORDEÓN) ── */}
-      <section className="py-16 sm:py-24 bg-card border-t border-border/40">
+      {/* ── 7. PREGUNTAS FRECUENTES ── */}
+      <section className="py-12 sm:py-24 bg-card border-t border-border/40">
         <div className="container mx-auto max-w-4xl px-4 sm:px-6">
-          <div className="text-center space-y-2 mb-10">
+          <div className="text-center space-y-2 mb-8 sm:mb-10">
             <span className="text-xs font-bold uppercase tracking-widest text-primary">
               Resolviendo tus Dudas
             </span>
@@ -861,7 +862,7 @@ function LandingPage() {
             </h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {faqs.map((faq, idx) => (
               <div
                 key={idx}
@@ -869,7 +870,7 @@ function LandingPage() {
               >
                 <button
                   onClick={() => toggleFaq(idx)}
-                  className="w-full p-5 text-left font-bold text-sm sm:text-base text-foreground flex items-center justify-between gap-4"
+                  className="w-full p-4 sm:p-5 text-left font-bold text-xs sm:text-base text-foreground flex items-center justify-between gap-4 active:bg-muted/50"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown
@@ -880,7 +881,7 @@ function LandingPage() {
                   />
                 </button>
                 {openFaq === idx && (
-                  <div className="px-5 pb-5 pt-0 text-xs sm:text-sm text-muted-foreground leading-relaxed border-t border-border/20 pt-3">
+                  <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-0 text-xs sm:text-sm text-muted-foreground leading-relaxed border-t border-border/20 pt-3 animate-in fade-in duration-200">
                     {faq.a}
                   </div>
                 )}
@@ -891,16 +892,16 @@ function LandingPage() {
       </section>
 
       {/* ── 8. BANNER FINAL CTA ── */}
-      <section className="py-16 sm:py-20 bg-gradient-to-r from-primary via-orange-600 to-amber-600 text-white text-center">
-        <div className="container mx-auto max-w-4xl px-4 sm:px-6 space-y-6">
-          <h2 className="text-3xl sm:text-5xl font-black tracking-tight">
+      <section className="py-12 sm:py-20 bg-gradient-to-r from-primary via-orange-600 to-amber-600 text-white text-center">
+        <div className="container mx-auto max-w-4xl px-4 sm:px-6 space-y-5">
+          <h2 className="text-2xl sm:text-5xl font-black tracking-tight">
             ¿Listo para digitalizar tu catálogo hoy?
           </h2>
           <div className="pt-2">
             <Button
               asChild
               size="lg"
-              className="h-13 px-9 rounded-2xl font-black text-sm bg-white text-primary hover:bg-white/90 shadow-2xl transition-all hover:scale-105 gap-2"
+              className="h-12 sm:h-13 px-8 sm:px-9 rounded-2xl font-black text-xs sm:text-sm bg-white text-primary hover:bg-white/90 shadow-2xl transition-all hover:scale-105 active:scale-95 gap-2"
             >
               <Link to="/register">
                 Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
@@ -911,8 +912,8 @@ function LandingPage() {
       </section>
 
       {/* ── 9. FOOTER INSTITUCIONAL ── */}
-      <footer className="border-t border-border/40 bg-background py-12 text-xs text-muted-foreground">
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 space-y-8">
+      <footer className="border-t border-border/40 bg-background py-10 text-xs text-muted-foreground">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 space-y-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-col items-center md:items-start gap-2">
               <img
@@ -920,12 +921,12 @@ function LandingPage() {
                 alt="Dizi Logo"
                 className="h-8 w-auto object-contain"
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground text-center md:text-left">
                 Plataforma de Catálogos Web para MYPEs en Perú. Operado por <strong>Idenza</strong>.
               </p>
             </div>
 
-            <div className="flex items-center gap-6 font-bold text-foreground">
+            <div className="flex items-center gap-5 font-bold text-foreground text-xs flex-wrap justify-center">
               <Link to="/ayuda" className="hover:text-primary transition-colors">
                 Centro de Ayuda
               </Link>
@@ -946,6 +947,19 @@ function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* ── 10. BARRA FLOTANTE FIJA PARA MÓVILES (STICKY BOTTOM CTA) ── */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 p-3 flex items-center justify-between gap-3 shadow-2xl">
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Dizi Catálogos</span>
+          <span className="text-[11px] font-extrabold text-foreground">15 Días Gratis</span>
+        </div>
+        <Button asChild className="h-10 px-5 rounded-xl text-xs font-extrabold bg-primary text-primary-foreground shadow-lg shadow-primary/25 active:scale-95">
+          <Link to="/register">
+            Crear Catálogo Gratis <ArrowRight className="ml-1 h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
