@@ -152,7 +152,7 @@ const mapStoreFromDB = (row: any): Store => {
       const valB = isNaN(dateB) ? 0 : dateB;
       return valB - valA; // newest first
     }),
-});
+};
 
 interface AppState {
   stores: Store[];
