@@ -3332,7 +3332,7 @@ export function PublicCatalog({
                   <article
                     key={p.id}
                     className="relative overflow-hidden cursor-pointer group"
-                    style={{ borderRadius: cfg.cardRounded, aspectRatio: "3/4" }}
+                    style={{ borderRadius: cfg.cardRounded, aspectRatio: "3/4", backgroundColor: "var(--card)" }}
                     onClick={() => setViewingProduct(p)}
                   >
                     <img
