@@ -3232,7 +3232,7 @@ export function PublicCatalog({
                                     "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
                                     cfg.cardShadow,
                                     bioTypography === "serif" &&
-                                      "border-border hover:border-primary/40",
+                                      "border-gray-100 hover:border-black/20",
                                   )}
                                   style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
                                   onClick={() => setViewingProduct(p)}
@@ -3306,7 +3306,7 @@ export function PublicCatalog({
                                           e.stopPropagation();
                                           cartAdd(store.id, p.id);
                                         }}
-                                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-primary-foreground hover:opacity-90 transition shrink-0"
+                                        className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
                                       >
                                         <Plus className="h-3.5 w-3.5" />
                                       </button>
@@ -4175,11 +4175,7 @@ export function PublicCatalog({
                                 e.stopPropagation();
                                 cartAdd(store.id, p.id);
                               }}
-                              style={{
-                                backgroundColor: "var(--primary)",
-                                color: "var(--primary-foreground)",
-                              }}
-                              className="text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:opacity-90 transition"
+                              className="bg-white text-black text-[10px] tracking-widest uppercase px-4 py-2 font-bold hover:bg-white/90 transition"
                             >
                               <Plus className="h-3 w-3 inline" />
                             </button>
@@ -4248,11 +4244,7 @@ export function PublicCatalog({
                                     e.stopPropagation();
                                     cartAdd(store.id, p.id);
                                   }}
-                                  style={{
-                                    backgroundColor: "var(--primary)",
-                                    color: "var(--primary-foreground)",
-                                  }}
-                                  className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
+                                  className="h-7 w-7 bg-white text-black flex items-center justify-center hover:bg-white/90 transition"
                                 >
                                   <Plus className="h-3 w-3" />
                                 </button>
@@ -4377,11 +4369,10 @@ export function PublicCatalog({
                                 className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
                                 style={{
                                   backgroundColor: "var(--primary)",
-                                  color: "var(--primary-foreground)",
                                   borderRadius: cfg.cardRounded,
                                 }}
                               >
-                                <Plus className="h-3 w-3" />
+                                <Plus className="h-3 w-3 text-white" />
                               </button>
                             </div>
                           </div>
@@ -4481,11 +4472,10 @@ export function PublicCatalog({
                                   className="h-7 w-7 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
-                                    color: "var(--primary-foreground)",
                                     borderRadius: cfg.cardRounded,
                                   }}
                                 >
-                                  <Plus className="h-3 w-3" />
+                                  <Plus className="h-3 w-3 text-white" />
                                 </button>
                               </div>
                             </div>
@@ -4543,11 +4533,10 @@ export function PublicCatalog({
                                   className="h-6 w-6 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
-                                    color: "var(--primary-foreground)",
                                     borderRadius: cfg.cardRounded,
                                   }}
                                 >
-                                  <Plus className="h-3 w-3" />
+                                  <Plus className="h-3 w-3 text-white" />
                                 </button>
                               </div>
                             </div>
@@ -5367,7 +5356,30 @@ export function PublicCatalog({
                                   {banners.map((slide, idx) => (
                                     <div
                                       key={idx}
-                                                      {/* Arrows */}
+                                      style={{ backgroundColor: "var(--background)" }}
+                                      className={cn(
+                                        "absolute inset-0 w-full h-full transition-all duration-1000 ease-in-out transform",
+                                        idx === currentBannerIndex
+                                          ? "opacity-100 scale-100 z-10"
+                                          : "opacity-0 scale-105 z-0 pointer-events-none",
+                                      )}
+                                    >
+                                      {/* Blurred background */}
+                                      <div
+                                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
+                                        style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
+                                      />
+                                      <img
+                                        src={getOptimizedImageUrl(slide, 1200)}
+                                        alt={`${store.bannerTitle || store.name} ${idx + 1}`}
+                                        className="w-full h-full object-contain relative z-10"
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Arrows */}
                                 {banners.length > 1 && (
                                   <>
                                     <button
@@ -5378,12 +5390,8 @@ export function PublicCatalog({
                                           (prev) => (prev - 1 + banners.length) % banners.length,
                                         );
                                       }}
-                                      style={{
-                                        backgroundColor: "var(--card)",
-                                        borderColor: "var(--border)",
-                                        color: "var(--foreground)",
-                                      }}
-                                      className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full border flex items-center justify-center transition-all shadow-md z-20 cursor-pointer"
+                                      style={{ color: "var(--primary)" }}
+                                      className="absolute left-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
                                     >
                                       <ChevronLeft className="h-5 w-5" />
                                     </button>
@@ -5395,12 +5403,8 @@ export function PublicCatalog({
                                           (prev) => (prev + 1) % banners.length,
                                         );
                                       }}
-                                      style={{
-                                        backgroundColor: "var(--card)",
-                                        borderColor: "var(--border)",
-                                        color: "var(--foreground)",
-                                      }}
-                                      className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full border flex items-center justify-center transition-all shadow-md z-20 cursor-pointer"
+                                      style={{ color: "var(--primary)" }}
+                                      className="absolute right-4 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-all shadow-md z-20 cursor-pointer"
                                     >
                                       <ChevronRight className="h-5 w-5" />
                                     </button>
@@ -5409,10 +5413,7 @@ export function PublicCatalog({
 
                                 {/* Indicator dots */}
                                 {banners.length > 1 && (
-                                  <div
-                                    style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-                                    className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 backdrop-blur-xs border px-2.5 py-1.5 rounded-full"
-                                  >
+                                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20 bg-stone-900/30 backdrop-blur-xs px-2.5 py-1.5 rounded-full">
                                     {banners.map((_, idx) => (
                                       <button
                                         key={idx}
@@ -5424,8 +5425,8 @@ export function PublicCatalog({
                                         className={cn(
                                           "h-1.5 rounded-full transition-all duration-300",
                                           idx === currentBannerIndex
-                                            ? "w-4 bg-[var(--primary)]"
-                                            : "w-1.5 opacity-40 hover:opacity-80 bg-[var(--foreground)]",
+                                            ? "w-4 bg-white"
+                                            : "w-1.5 bg-white/50 hover:bg-white/80",
                                         )}
                                       />
                                     ))}
@@ -5486,7 +5487,7 @@ export function PublicCatalog({
                                     {store.bannerTitle || `Abraza la pureza de la naturaleza`}
                                   </h2>
                                   {store.bioDescription && (
-                                    <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
+                                    <p className="text-stone-500 text-xs line-clamp-2 leading-relaxed">
                                       {store.bioDescription}
                                     </p>
                                   )}
@@ -5508,7 +5509,7 @@ export function PublicCatalog({
                                     {nicheTags.buttonText}
                                   </button>
                                   {/* Decorative small organic element */}
-                                  <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
+                                  <span className="text-stone-400 text-xs italic flex items-center gap-1.5 font-serif">
                                     <Leaf
                                       style={{
                                         color:
@@ -5648,7 +5649,7 @@ export function PublicCatalog({
                                     borderColor: "var(--border)",
                                     backgroundColor: "var(--card)",
                                   }}
-                                  className="w-[210px] sm:w-[260px] lg:w-[290px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border shadow-xs"
+                                  className="w-[210px] sm:w-[260px] lg:w-[290px] shrink-0 snap-start p-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between cursor-pointer group relative rounded-[2.5rem] border hover:shadow-lg hover:shadow-stone-200/50 shadow-sm"
                                 >
                                   <div className="space-y-3">
                                     {/* Curved nature image card */}
@@ -5698,7 +5699,7 @@ export function PublicCatalog({
                                       >
                                         {p.name}
                                       </h4>
-                                      <p style={{ color: "var(--muted-foreground)" }} className="text-[11px] line-clamp-2 leading-4 min-h-8 font-sans">
+                                      <p className="text-[11px] text-stone-500 line-clamp-2 leading-4 min-h-8 font-sans">
                                         {(p.description || "").replace(/#destacado/g, "").trim()}
                                       </p>
                                     </div>
@@ -5716,7 +5717,7 @@ export function PublicCatalog({
                                         p.originalPrice &&
                                         p.price &&
                                         p.originalPrice > p.price && (
-                                          <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through block -mt-1 font-sans whitespace-nowrap truncate">
+                                          <span className="text-[10px] text-stone-400 line-through block -mt-1 font-sans whitespace-nowrap truncate">
                                             {formatPrice(p.originalPrice)}
                                           </span>
                                         )}
@@ -5725,42 +5726,6 @@ export function PublicCatalog({
                                       {/* Consult button */}
                                       <button
                                         type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          consultProduct(p.name);
-                                        }}
-                                        style={{
-                                          backgroundColor: "var(--card)",
-                                          borderColor: "var(--border)",
-                                          color: "var(--primary)",
-                                        }}
-                                        className="h-7 w-7 rounded-full border hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-xs"
-                                        title="Consultar por WhatsApp"
-                                      >
-                                        <WhatsAppIcon className="h-3.5 w-3.5" />
-                                      </button>
-                                      {/* Add button */}
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          cartAdd(store.id, p.id);
-                                          setCartOpen(true);
-                                        }}
-                                        className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans shrink-0"
-                                      >
-                                        <Plus className="h-3 w-3" />
-                                        Añadir
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}       type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           consultProduct(p.name);
@@ -5853,12 +5818,11 @@ export function PublicCatalog({
                                 <button
                                   key={c.id}
                                   onClick={() => setActiveCat(c.id)}
-                                  style={{
-                                    color: active ? "var(--primary)" : "var(--muted-foreground)",
-                                  }}
                                   className={cn(
                                     "flex items-center gap-1.5 px-1 py-2 transition-all duration-300 shrink-0 text-xs font-bold uppercase tracking-wider relative pb-2.5 select-none",
-                                    active && "font-extrabold",
+                                    active
+                                      ? "text-[var(--primary)] font-extrabold"
+                                      : "text-stone-400 hover:text-stone-700",
                                   )}
                                 >
                                   {iconKey ? (
@@ -5910,10 +5874,9 @@ export function PublicCatalog({
                             <div
                               style={{
                                 borderColor: "var(--border)",
-                                backgroundColor: "var(--card)",
-                                color: "var(--muted-foreground)",
+                                backgroundColor: "color-mix(in srgb, var(--card) 60%, transparent)",
                               }}
-                              className="text-center py-12 text-xs border rounded-[2rem]"
+                              className="text-center py-12 text-xs text-stone-400 border rounded-[2rem]"
                             >
                               No hay productos botánicos en esta categoría.
                             </div>
@@ -5942,13 +5905,11 @@ export function PublicCatalog({
                                     key={p.id}
                                     style={{
                                       borderColor: "var(--border)",
-                                      backgroundColor: "var(--card)",
-                                      color: "var(--card-foreground)",
                                       boxShadow:
                                         "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)",
                                     }}
                                     className={cn(
-                                      "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border hover:shadow-lg shadow-xs select-none text-left",
+                                      "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none text-left",
                                       isEven
                                         ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1"
                                         : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1",
@@ -6001,13 +5962,13 @@ export function PublicCatalog({
                                           {nicheTags.productTag}
                                         </span>
                                         <h4
-                                          style={{ color: "var(--card-foreground)" }}
+                                          style={{ color: "var(--foreground)" }}
                                           className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
                                         >
                                           {p.name}
                                         </h4>
                                         {p.description && (
-                                          <p style={{ color: "var(--muted-foreground)" }} className="text-[11px] line-clamp-2 h-7 leading-normal font-sans">
+                                          <p className="text-[11px] text-stone-500 line-clamp-2 h-7 leading-normal font-sans">
                                             {p.description}
                                           </p>
                                         )}
@@ -6978,10 +6939,10 @@ export function PublicCatalog({
                   return activeBanners[0] ? (
                     <div
                       className={cn(
-                        "relative w-full overflow-hidden",
+                        "relative w-full overflow-hidden bg-zinc-950",
                         bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : "",
                       )}
-                      style={{ borderRadius: borderVal, aspectRatio: "16/7", backgroundColor: "var(--card)" }}
+                      style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
                     >
                       {/* Blurred background */}
                       <div
