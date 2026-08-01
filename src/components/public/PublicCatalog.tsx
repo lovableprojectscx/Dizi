@@ -3858,14 +3858,11 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "editorial" ? (
               /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
-              <div className="divide-y" style={{ borderColor: "var(--border)" }}>
+              <div className="space-y-3">
                 {filtered.map((p) => (
                   <article
                     key={p.id}
-                    className={cn(
-                      gridCardClass,
-                      cfg.cardShadow,
-                    )}
+                    className="flex flex-row items-start gap-4 p-3.5 sm:p-4 border rounded-2xl cursor-pointer transition-all duration-300 group hover:shadow-md select-none text-left"
                     style={{
                       borderRadius: cfg.cardRounded,
                       backgroundColor: "var(--card)",
@@ -3875,8 +3872,7 @@ export function PublicCatalog({
                     onClick={() => setViewingProduct(p)}
                   >
                     <div
-                      className="relative shrink-0 overflow-hidden bg-muted"
-                      style={{ width: "100px", height: "100px", borderRadius: cfg.imgRounded }}
+                      className="relative shrink-0 overflow-hidden bg-muted aspect-square w-24 sm:w-28 rounded-xl border border-border/40"
                     >
                       <img
                         src={getOptimizedImageUrl(
@@ -3893,66 +3889,68 @@ export function PublicCatalog({
                         }}
                       />
                       {p.isOnSale && (
-                        <span className="absolute top-1 left-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">
-                          SALE
+                        <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+                          OFERTA
                         </span>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
+                    <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
+                      <div className="space-y-1">
+                        <span style={{ color: "var(--muted-foreground)" }} className="text-[9px] font-bold uppercase tracking-widest font-sans block">
+                          Editorial Selection
+                        </span>
                         <h3
                           style={{ color: "var(--card-foreground)" }}
-                          className={cn(
-                            "font-semibold text-sm leading-snug",
-                            cfg.headerStyle === "minimal"
-                              ? "tracking-widest uppercase text-xs font-light"
-                              : "",
-                          )}
+                          className="font-serif-editorial text-sm sm:text-base font-normal leading-snug group-hover:text-[var(--primary)] transition-colors line-clamp-1"
                         >
                           {p.name}
                         </h3>
                         {p.description && (
-                          <p style={{ color: "var(--muted-foreground)" }} className="text-xs mt-1 line-clamp-2">
+                          <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
                             {p.description}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-black text-primary">{formatPrice(p.price)}</span>
+                      <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-border/40 gap-2">
+                        <div className="flex flex-col text-left">
+                          <span className="font-extrabold text-sm text-[var(--primary)]">{formatPrice(p.price)}</span>
                           {p.isOnSale &&
                             p.originalPrice &&
                             p.price &&
                             p.originalPrice > p.price && (
-                              <span style={{ color: "var(--muted-foreground)" }} className="text-xs line-through">
+                              <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through -mt-0.5">
                                 {formatPrice(p.originalPrice)}
                               </span>
                             )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-1.5 items-center shrink-0">
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               consultProduct(p.name);
                             }}
                             style={{
-                              borderRadius: cfg.cardRounded,
+                              backgroundColor: "var(--card)",
                               borderColor: "var(--border)",
-                              color: "var(--foreground)",
+                              color: "var(--primary)",
                             }}
-                            className="text-xs border px-3 py-1.5 hover:bg-accent transition flex items-center gap-1"
+                            className="h-7.5 w-7.5 rounded-full border hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] transition-all duration-300 flex items-center justify-center shrink-0 active:scale-95 shadow-xs"
+                            title="Consultar por WhatsApp"
                           >
-                            <WhatsAppIcon className="h-3 w-3" /> Consultar
+                            <WhatsAppIcon className="h-3.5 w-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               cartAdd(store.id, p.id);
+                              setCartOpen(true);
                             }}
-                            className="bg-primary text-primary-foreground px-3 py-1.5 flex items-center gap-1 text-xs font-bold hover:opacity-90 transition"
-                            style={{ borderRadius: cfg.cardRounded }}
+                            className="h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-xs shrink-0"
                           >
-                            <Plus className="h-3 w-3" /> Añadir
+                            <Plus className="h-3 w-3" />
+                            Añadir
                           </button>
                         </div>
                       </div>
