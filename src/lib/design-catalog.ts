@@ -320,7 +320,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     id: "nature",
     name: "Nature Orgánico",
     description: "Elegancia natural en verde salvia con tipografía serif. Salud, belleza y productos botánicos.",
-    previewImage: "https://images.unsplash.com/photo-1608248597379-e09214732684?auto=format&fit=crop&w=800&q=80",
+    previewImage: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80",
     layout: "nature",
     defaultTheme: {
       brandColor: "#047857",
