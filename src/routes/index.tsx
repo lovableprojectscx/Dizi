@@ -154,7 +154,7 @@ function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground pb-16 md:pb-0">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-background text-foreground font-sans antialiased selection:bg-primary selection:text-primary-foreground pb-16 md:pb-0">
       {/* ── 1. HEADER / NAVBAR CON IDENTIDAD DE MARCA ── */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/90 backdrop-blur-md transition-all">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
@@ -578,22 +578,22 @@ function LandingPage() {
               15 Estructuras de Diseño Adaptables
             </h2>
 
-            <div className="flex items-center justify-center gap-1.5 pt-3 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-3 max-w-full px-2">
               <button
                 onClick={() => setActiveNiche("all")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "all"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
                 )}
               >
-                Todos los Diseños (15)
+                Todos (15)
               </button>
               <button
                 onClick={() => setActiveNiche("gastronomia")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "gastronomia"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -604,7 +604,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("boutique")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "boutique"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -615,7 +615,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("eco")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "eco"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
@@ -626,7 +626,7 @@ function LandingPage() {
               <button
                 onClick={() => setActiveNiche("tech")}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
+                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
                   activeNiche === "tech"
                     ? "bg-primary border-primary text-primary-foreground shadow-xs"
                     : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
