@@ -348,45 +348,56 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* LADO DERECHO: SIMULADOR DE MÓVIL (OPTIMIZADO PARA PANTALLAS GRANDES) */}
+            {/* LADO DERECHO: SIMULADOR DE MÓVIL DENSE Y COMPLETO (SIN ESPACIOS VACÍOS) */}
             <div className="lg:col-span-5 flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-[320px] sm:max-w-[350px] aspect-[9/18] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden">
+              <div className="relative w-full max-w-[320px] sm:max-w-[340px] h-[550px] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden">
                 {/* Altavoz y Cámara de iPhone */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 h-5 w-28 bg-zinc-950 rounded-b-2xl z-40 flex items-center justify-center">
                   <div className="h-2 w-10 bg-zinc-800 rounded-full"></div>
                 </div>
 
                 {/* Pantalla Simulada de Tienda */}
-                <div className="h-full w-full rounded-[2.2rem] bg-card overflow-hidden flex flex-col justify-between pt-6 pb-4 px-3 text-left relative z-10 font-sans border border-border/30">
-                  <div className="space-y-2 border-b border-border/40 pb-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+                <div className="h-full w-full rounded-[2.2rem] bg-card overflow-hidden flex flex-col justify-between pt-5 pb-3 px-3 text-left relative z-10 font-sans border border-border/30">
+                  {/* Banner de Portada de Tienda */}
+                  <div className="relative h-20 -mx-3 -mt-5 mb-2 overflow-hidden bg-muted">
+                    <img
+                      src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=500&q=80"
+                      alt="Grano & Miga Cover"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                    <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+                      <span className="text-[11px] font-extrabold text-white tracking-wide truncate">
                         Grano & Miga · Café
                       </span>
-                      <span className="text-[9px] font-extrabold bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      <span className="text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full shadow-xs">
                         Abierto
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 bg-muted/60 p-1.5 rounded-xl border text-[11px] text-muted-foreground">
-                      <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  </div>
+
+                  {/* Buscador y Pestañas */}
+                  <div className="space-y-1.5 mb-1.5">
+                    <div className="flex items-center gap-1 bg-muted/60 p-1.5 rounded-xl border text-[10px] text-muted-foreground">
+                      <ShoppingBag className="h-3 w-3 text-primary shrink-0" />
                       <span className="truncate">¿Qué deseas pedir hoy?</span>
+                    </div>
+                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
+                      <span className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-primary text-primary-foreground shrink-0">
+                        Cafetería
+                      </span>
+                      <span className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
+                        Panadería
+                      </span>
+                      <span className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
+                        Postres
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex gap-1.5 py-2 overflow-x-auto no-scrollbar">
-                    <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-primary text-primary-foreground shrink-0">
-                      Cafetería
-                    </span>
-                    <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
-                      Panadería
-                    </span>
-                    <span className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
-                      Postres
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 flex-1 my-1 overflow-hidden">
-                    <div className="bg-muted/40 border border-border/40 rounded-xl p-2 flex flex-col justify-between">
+                  {/* Grilla 2x2 Completa de Productos (Ocupa todo el espacio de forma densa) */}
+                  <div className="grid grid-cols-2 gap-1.5 flex-1 my-1 overflow-hidden">
+                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
                           src="https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=300&q=80"
@@ -395,12 +406,12 @@ function LandingPage() {
                         />
                       </div>
                       <div className="mt-1 space-y-0.5">
-                        <p className="text-[11px] font-bold text-foreground truncate">Latte Especial</p>
-                        <p className="text-[10px] font-black text-primary">S/ 12.00</p>
+                        <p className="text-[10px] font-bold text-foreground truncate">Latte Especial</p>
+                        <p className="text-[9.5px] font-black text-primary">S/ 12.00</p>
                       </div>
                     </div>
 
-                    <div className="bg-muted/40 border border-border/40 rounded-xl p-2 flex flex-col justify-between">
+                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
                           src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=300&q=80"
@@ -409,18 +420,47 @@ function LandingPage() {
                         />
                       </div>
                       <div className="mt-1 space-y-0.5">
-                        <p className="text-[11px] font-bold text-foreground truncate">Croissant Almendras</p>
-                        <p className="text-[10px] font-black text-primary">S/ 16.00</p>
+                        <p className="text-[10px] font-bold text-foreground truncate">Croissant Almendras</p>
+                        <p className="text-[9.5px] font-black text-primary">S/ 16.00</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
+                      <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
+                        <img
+                          src="https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=300&q=80"
+                          alt="Cheesecake"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[10px] font-bold text-foreground truncate">Cheesecake Berries</p>
+                        <p className="text-[9.5px] font-black text-primary">S/ 18.00</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
+                      <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
+                        <img
+                          src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=300&q=80"
+                          alt="Espresso"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[10px] font-bold text-foreground truncate">Espresso Doble</p>
+                        <p className="text-[9.5px] font-black text-primary">S/ 9.00</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-[#25D366] text-white p-2.5 rounded-xl font-extrabold text-xs flex items-center justify-between shadow-md">
+                  {/* Botón Flotante Carrito WhatsApp en Móvil ajustado al fondo */}
+                  <div className="bg-[#25D366] text-white p-2.5 rounded-xl font-extrabold text-xs flex items-center justify-between shadow-md shrink-0 mt-1">
                     <div className="flex items-center gap-1.5">
                       <MessageCircle className="h-4 w-4 fill-white" />
                       <span>Pedir por WhatsApp</span>
                     </div>
-                    <span className="bg-white/20 px-2 py-0.5 rounded-md text-[10px]">S/ 28.00</span>
+                    <span className="bg-white/20 px-2 py-0.5 rounded-md text-[10px]">S/ 55.00</span>
                   </div>
                 </div>
               </div>
