@@ -291,12 +291,10 @@ const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
   ],
 };
 
-const isPremiumModel = (model?: string) =>
-  model === "bite" || model === "bloom" || model === "nature";
+const isPremiumModel = (model?: string) => true;
 
 const getNicheLabel = (model?: string) => {
-  if (isPremiumModel(model)) return "Ícono para Categoría (Premium)";
-  return "Ícono del Nicho";
+  return "Ícono de la Categoría";
 };
 
 const getAvailableIcons = (store: any) => {
@@ -766,9 +764,9 @@ function ProductsPage() {
 
   const startEditCategory = (c: Category) => {
     setEditCatId(c.id);
-    const { label, iconKey } = parseCategoryName(c.name);
+    const { label, iconKey } = parseCategoryName(c.name, c.icon);
     setEditCatName(label);
-    setEditIconKey(iconKey);
+    setEditIconKey(c.icon || iconKey);
     setEditDialogOpen(true);
   };
 
@@ -855,7 +853,7 @@ function ProductsPage() {
     setIsAddingCat(true);
     try {
       const finalName = selectedIconKey ? `${trimmed}|${selectedIconKey}` : trimmed;
-      await upsertCategory(store.id, { id: "", name: finalName });
+      await upsertCategory(store.id, { id: "", name: finalName, icon: selectedIconKey });
       setNewCatName("");
       setSelectedIconKey("");
       setCatDialogOpen(false);
@@ -875,7 +873,7 @@ function ProductsPage() {
     setIsEditingCat(true);
     try {
       const finalName = editIconKey ? `${trimmed}|${editIconKey}` : trimmed;
-      await upsertCategory(store.id, { id: editCatId, name: finalName });
+      await upsertCategory(store.id, { id: editCatId, name: finalName, icon: editIconKey });
       setEditCatId(null);
       setEditDialogOpen(false);
       toast.success("Categoría actualizada con éxito");
