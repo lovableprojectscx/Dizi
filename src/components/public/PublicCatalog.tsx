@@ -4307,9 +4307,10 @@ export function PublicCatalog({
                                 e.stopPropagation();
                                 cartAdd(store.id, p.id);
                               }}
-                              className="h-10 px-4 text-xs font-bold text-black hover:opacity-90 transition"
+                              className="h-10 px-4 text-xs font-bold hover:opacity-90 transition"
                               style={{
                                 backgroundColor: "var(--primary)",
+                                color: "var(--primary-foreground)",
                                 borderRadius: cfg.cardRounded,
                               }}
                             >
