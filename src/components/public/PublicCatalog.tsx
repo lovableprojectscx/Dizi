@@ -3841,9 +3841,15 @@ export function PublicCatalog({
                   <article
                     key={p.id}
                     className={cn(
-                      "flex gap-4 py-5 cursor-pointer group transition-all",
+                      gridCardClass,
                       cfg.cardShadow,
                     )}
+                    style={{
+                      borderRadius: cfg.cardRounded,
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--border)",
+                      color: "var(--card-foreground)",
+                    }}
                     onClick={() => setViewingProduct(p)}
                   >
                     <div
@@ -3873,6 +3879,7 @@ export function PublicCatalog({
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
                         <h3
+                          style={{ color: "var(--card-foreground)" }}
                           className={cn(
                             "font-semibold text-sm leading-snug",
                             cfg.headerStyle === "minimal"
@@ -3883,7 +3890,7 @@ export function PublicCatalog({
                           {p.name}
                         </h3>
                         {p.description && (
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          <p style={{ color: "var(--muted-foreground)" }} className="text-xs mt-1 line-clamp-2">
                             {p.description}
                           </p>
                         )}
@@ -3895,7 +3902,7 @@ export function PublicCatalog({
                             p.originalPrice &&
                             p.price &&
                             p.originalPrice > p.price && (
-                              <span className="text-xs text-muted-foreground line-through">
+                              <span style={{ color: "var(--muted-foreground)" }} className="text-xs line-through">
                                 {formatPrice(p.originalPrice)}
                               </span>
                             )}
@@ -3906,8 +3913,12 @@ export function PublicCatalog({
                               e.stopPropagation();
                               consultProduct(p.name);
                             }}
+                            style={{
+                              borderRadius: cfg.cardRounded,
+                              borderColor: "var(--border)",
+                              color: "var(--foreground)",
+                            }}
                             className="text-xs border px-3 py-1.5 hover:bg-accent transition flex items-center gap-1"
-                            style={{ borderRadius: cfg.cardRounded }}
                           >
                             <WhatsAppIcon className="h-3 w-3" /> Consultar
                           </button>
