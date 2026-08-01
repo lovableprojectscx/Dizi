@@ -366,6 +366,7 @@ const RENDER_MODEL_MAP: Record<string, string> = {
   banner_grid: "portada",
   bloom_general: "bloom",
   bloom_floral: "bloom",
+  bloom: "bloom",
   bite: "bite",
   nature: "nature",
   lookbook: "lookbook",
