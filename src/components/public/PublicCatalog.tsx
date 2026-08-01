@@ -2499,22 +2499,26 @@ export function PublicCatalog({
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="¿Qué estás buscando hoy?"
-                      className={cn(
-                        "w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition",
-                        modelId === "bite" &&
-                          "bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 focus:ring-[var(--primary)] focus:border-[var(--primary)]",
-                      )}
+                      style={{
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--foreground)",
+                      }}
+                      className="w-full rounded-full border pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition placeholder:text-muted-foreground"
                     />
                   </div>
                   <button
                     onClick={() => setIsFilterOpen(true)}
+                    style={{
+                      backgroundColor: "var(--card)",
+                      borderColor: "var(--border)",
+                      color: "var(--foreground)",
+                    }}
                     className={cn(
-                      "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition md:hidden",
-                      modelId === "bite" &&
-                        "bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white",
+                      "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-semibold transition md:hidden hover:opacity-90",
                     )}
                   >
-                    <SlidersHorizontal className="h-4 w-4" />
+                    <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                     <span>Filtros</span>
                     {(() => {
                       const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0) + (selectedDiet !== "all" ? 1 : 0);
@@ -2896,17 +2900,27 @@ export function PublicCatalog({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="¿Qué estás buscando hoy?"
-                  className="w-full rounded-full bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition"
+                  style={{
+                    backgroundColor: "var(--card)",
+                    borderColor: "var(--border)",
+                    color: "var(--foreground)",
+                  }}
+                  className="w-full rounded-full border pl-10 pr-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-ring transition placeholder:text-muted-foreground"
                 />
               </div>
               <button
                 onClick={() => setIsFilterOpen(true)}
+                style={{
+                  backgroundColor: "var(--card)",
+                  borderColor: "var(--border)",
+                  color: "var(--foreground)",
+                }}
                 className={cn(
-                  "relative shrink-0 items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-secondary hover:bg-accent text-sm font-semibold transition",
+                  "relative shrink-0 items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-semibold transition hover:opacity-90",
                   isMockup ? "flex" : "flex md:hidden"
                 )}
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                 <span>Filtros</span>
                 {(() => {
                   const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
