@@ -142,7 +142,7 @@ const mapStoreFromDB = (row: any): Store => {
       tags: Array.isArray(p.tags) ? p.tags : [],
       createdAt: p.created_at,
     }))
-    .sort((a, b) => {
+    .sort((a: any, b: any) => {
       if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
         return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
       }
@@ -152,6 +152,7 @@ const mapStoreFromDB = (row: any): Store => {
       const valB = isNaN(dateB) ? 0 : dateB;
       return valB - valA; // newest first
     }),
+  };
 };
 
 interface AppState {
