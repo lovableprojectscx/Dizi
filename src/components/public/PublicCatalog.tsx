@@ -4377,10 +4377,11 @@ export function PublicCatalog({
                                 className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
                                 style={{
                                   backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
                                   borderRadius: cfg.cardRounded,
                                 }}
                               >
-                                <Plus className="h-3 w-3 text-white" />
+                                <Plus className="h-3 w-3" />
                               </button>
                             </div>
                           </div>
@@ -4480,10 +4481,11 @@ export function PublicCatalog({
                                   className="h-7 w-7 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
+                                    color: "var(--primary-foreground)",
                                     borderRadius: cfg.cardRounded,
                                   }}
                                 >
-                                  <Plus className="h-3 w-3 text-white" />
+                                  <Plus className="h-3 w-3" />
                                 </button>
                               </div>
                             </div>
@@ -4541,10 +4543,11 @@ export function PublicCatalog({
                                   className="h-6 w-6 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
+                                    color: "var(--primary-foreground)",
                                     borderRadius: cfg.cardRounded,
                                   }}
                                 >
-                                  <Plus className="h-3 w-3 text-white" />
+                                  <Plus className="h-3 w-3" />
                                 </button>
                               </div>
                             </div>
@@ -6975,10 +6978,10 @@ export function PublicCatalog({
                   return activeBanners[0] ? (
                     <div
                       className={cn(
-                        "relative w-full overflow-hidden bg-zinc-950",
+                        "relative w-full overflow-hidden",
                         bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : "",
                       )}
-                      style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
+                      style={{ borderRadius: borderVal, aspectRatio: "16/7", backgroundColor: "var(--card)" }}
                     >
                       {/* Blurred background */}
                       <div
