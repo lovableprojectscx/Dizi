@@ -4563,7 +4563,7 @@ export function PublicCatalog({
                         {p.isOnSale && (
                           <span
                             className="absolute top-4 left-4 text-[10px] font-black tracking-widest uppercase px-3 py-1"
-                            style={{ backgroundColor: "var(--primary)", color: "#000" }}
+                            style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
                           >
                             OFERTA
                           </span>
