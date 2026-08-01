@@ -4870,7 +4870,7 @@ export function PublicCatalog({
                         className="flex items-center justify-between border-l-2 pl-3 transition-colors duration-300"
                         style={{ borderColor: "var(--primary)" }}
                       >
-                        <h3 className="text-sm sm:text-base font-black text-white tracking-widest flex items-center gap-2 uppercase">
+                        <h3 style={{ color: "var(--foreground)" }} className="text-sm sm:text-base font-black tracking-widest flex items-center gap-2 uppercase">
                           {/* Premium 4-point diamond SVG */}
                           <svg
                             viewBox="0 0 24 24"
@@ -4884,7 +4884,7 @@ export function PublicCatalog({
                         </h3>
                         {featuredProducts.length > 1 && (
                           <>
-                            <span className="text-[9px] text-zinc-400 font-black uppercase tracking-widest animate-pulse md:hidden">
+                            <span style={{ color: "var(--muted-foreground)" }} className="text-[9px] font-black uppercase tracking-widest animate-pulse md:hidden">
                               Desliza →
                             </span>
                             <div className="hidden md:flex items-center gap-1.5">
@@ -4897,7 +4897,12 @@ export function PublicCatalog({
                                   )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
                                   s?.scrollBy({ left: -320, behavior: "smooth" });
                                 }}
-                                className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="h-8 w-8 rounded-full border hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
                               >
                                 <ChevronLeft className="h-4 w-4" />
                               </button>
@@ -4910,7 +4915,12 @@ export function PublicCatalog({
                                   )?.querySelector("[data-carousel-scroll]") as HTMLElement | null;
                                   s?.scrollBy({ left: 320, behavior: "smooth" });
                                 }}
-                                className="h-8 w-8 rounded-full border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
+                                style={{
+                                  backgroundColor: "var(--card)",
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground)",
+                                }}
+                                className="h-8 w-8 rounded-full border hover:border-[var(--primary)] flex items-center justify-center transition active:scale-95"
                               >
                                 <ChevronRight className="h-4 w-4" />
                               </button>
@@ -4929,11 +4939,16 @@ export function PublicCatalog({
                             <div
                               key={p.id}
                               onClick={() => setViewingProduct(p)}
-                              className="w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start rounded-3xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
+                              style={{
+                                backgroundColor: "var(--card)",
+                                borderColor: "var(--border)",
+                                color: "var(--card-foreground)",
+                              }}
+                              className="w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start rounded-3xl border p-3 transition-all duration-300 hover:scale-[1.02] shadow-xl flex flex-col justify-between cursor-pointer group"
                             >
                               <div className="space-y-3">
                                 {/* Image */}
-                                <div className="relative aspect-square w-full rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-800">
+                                <div style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }} className="relative aspect-square w-full rounded-2xl overflow-hidden border">
                                   <img
                                     src={getOptimizedImageUrl(
                                       p.image ||
@@ -4950,10 +4965,10 @@ export function PublicCatalog({
                                 </div>
                                 {/* Info */}
                                 <div className="space-y-1 text-left px-1">
-                                  <h4 className="font-extrabold text-sm sm:text-base text-white group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
+                                  <h4 style={{ color: "var(--card-foreground)" }} className="font-extrabold text-sm sm:text-base group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
                                     {p.name}
                                   </h4>
-                                  <p className="text-xs text-zinc-400 line-clamp-2 leading-4 min-h-8">
+                                  <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-4 min-h-8">
                                     {(p.description || "").replace(/#destacado/g, "").trim()}
                                   </p>
                                 </div>
