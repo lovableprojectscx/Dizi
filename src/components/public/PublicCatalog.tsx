@@ -57,6 +57,7 @@ import {
   Coffee,
   Beer,
   Croissant,
+  ZoomIn,
 } from "lucide-react";
 
 const Tiktok = ({ className }: { className?: string }) => (
@@ -105,6 +106,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl } from "@/lib/image-utils";
+import { ImageZoomModal } from "./ImageZoomModal";
 
 const EMPTY_CART: any[] = [];
 
@@ -1284,6 +1286,7 @@ export function PublicCatalog({
   const [cartOpen, setCartOpen] = useState(false);
   const [isLookbookCatOpen, setIsLookbookCatOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [zoomImage, setZoomImage] = useState<{ src: string; title?: string } | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showInAppHelpModal, setShowInAppHelpModal] = useState(false);
@@ -3237,8 +3240,7 @@ export function PublicCatalog({
                                   className={cn(
                                     "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
                                     cfg.cardShadow,
-                                    bioTypography === "serif" &&
-                                      "border-gray-100 hover:border-black/20",
+                                    bioTypography === "serif" && "border-gray-100 hover:border-black/20"
                                   )}
                                   style={{ borderRadius: cfg.cardRounded || "0.75rem" }}
                                   onClick={() => setViewingProduct(p)}
@@ -3269,6 +3271,21 @@ export function PublicCatalog({
                                       <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
                                         <Flame className="h-2.5 w-2.5" /> Oferta
                                       </span>
+                                    )}
+                                    {/* Zoom Lupa Indicator Button */}
+                                    {p.image && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setZoomImage({ src: p.image, title: p.name });
+                                        }}
+                                        className="absolute top-2 right-2 z-20 h-7 w-7 flex items-center justify-center rounded-full bg-black/65 backdrop-blur-md text-white hover:bg-black/85 transition-all shadow-md border border-white/20 active:scale-95 cursor-pointer"
+                                        title="Ampliar flyer / foto en HD"
+                                        aria-label="Ampliar flyer o foto"
+                                      >
+                                        <ZoomIn className="h-3.5 w-3.5" />
+                                      </button>
                                     )}
                                   </div>
                                   {/* Info */}
@@ -7865,13 +7882,32 @@ export function PublicCatalog({
                     800
                   )}
                   alt={viewingProduct.name}
-                  className="relative z-10 h-full w-full object-contain"
+                  className="relative z-10 h-full w-full object-contain cursor-pointer"
+                  onClick={() => {
+                    const imgUrl = productImages[viewingProduct.id] || viewingProduct.image;
+                    if (imgUrl) setZoomImage({ src: imgUrl, title: viewingProduct.name });
+                  }}
                   decoding="async"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
                       "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85";
                   }}
                 />
+
+                {/* Floating Zoom Indicator Button (Lupa) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const imgUrl = productImages[viewingProduct.id] || viewingProduct.image;
+                    if (imgUrl) setZoomImage({ src: imgUrl, title: viewingProduct.name });
+                  }}
+                  className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/90 transition-all shadow-xl border border-white/20 active:scale-95 cursor-pointer"
+                  title="Ampliar flyer / foto en HD"
+                >
+                  <ZoomIn className="h-4 w-4 text-white animate-pulse" />
+                  <span>Toca para ampliar</span>
+                </button>
 
                 {/* Dark overlay for dark themes */}
                 {effectiveIsDark && (
@@ -8367,6 +8403,14 @@ export function PublicCatalog({
           </div>
         </div>
       )}
+
+      {/* ── High-Res Interactive Image Zoom Modal ────────────────────── */}
+      <ImageZoomModal
+        isOpen={!!zoomImage}
+        onClose={() => setZoomImage(null)}
+        src={zoomImage?.src || ""}
+        title={zoomImage?.title}
+      />
     </div>
   );
 }
