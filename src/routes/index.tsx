@@ -267,17 +267,17 @@ function LandingPage() {
         )}
       </header>
 
-      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (IMPRESIÓN VISUAL WOW PARA MÓVIL Y DESKTOP) ── */}
-      <section className="relative overflow-hidden pt-6 sm:pt-16 pb-12 sm:pb-20 bg-gradient-to-b from-primary/[0.06] via-background to-background border-b border-border/30">
+      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (AIREADO, ELEGANTE Y SIN APLASTAR EN MÓVIL) ── */}
+      <section className="relative overflow-hidden pt-8 sm:pt-16 pb-12 sm:pb-20 bg-gradient-to-b from-primary/[0.05] via-background to-background border-b border-border/30">
         {/* Resplandor ambiente de fondo (Ambient Glow) */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-72 sm:w-[500px] h-72 sm:h-[500px] bg-gradient-to-tr from-primary/20 via-orange-500/15 to-amber-500/10 blur-[100px] rounded-full pointer-events-none z-0" />
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-72 sm:w-[500px] h-72 sm:h-[500px] bg-gradient-to-tr from-primary/15 via-orange-500/10 to-amber-500/5 blur-[100px] rounded-full pointer-events-none z-0" />
 
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* LADO IZQUIERDO: ESENCIA DE MARCA */}
-            <div className="lg:col-span-7 space-y-5 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
               {/* Título Principal SEO + Frase de Marca */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.12]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.15]">
                 Tu negocio, ordenado y presentable en{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
                   un solo link
@@ -290,7 +290,7 @@ function LandingPage() {
               </p>
 
               {/* Botones de Acción */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
                 <Button
                   asChild
                   size="lg"
@@ -314,7 +314,27 @@ function LandingPage() {
                 </Button>
               </div>
 
-              {/* 3 Tarjetas de Beneficios Clave */}
+              {/* Tarjeta de Demostración Compacta en Cristal (Solo Visible en Celulares para No Satúrar) */}
+              <div className="lg:hidden mt-4 p-3.5 rounded-2xl bg-gradient-to-r from-primary/10 via-amber-500/10 to-emerald-500/10 border border-primary/20 backdrop-blur-md flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 text-primary">
+                    <Smartphone className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
+                      Catálogo Demo Activo <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">dizi.pe/grano-miga · Ejemplo real</p>
+                  </div>
+                </div>
+                <Button asChild size="sm" variant="outline" className="h-8 px-3 text-xs font-bold rounded-xl border-primary/30 text-primary hover:bg-primary/10 shrink-0">
+                  <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
+                    Ver Demo <ExternalLink className="ml-1 h-3 w-3" />
+                  </a>
+                </Button>
+              </div>
+
+              {/* 3 Tarjetas de Beneficios Clave Aireadas */}
               <div className="pt-2 grid grid-cols-3 gap-2 sm:gap-3">
                 <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
                   <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
@@ -348,9 +368,9 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* LADO DERECHO: DEMOSTRACIÓN VISUAL IMPACTANTE (VISIBLE EN MÓVIL Y ESCRITORIO) */}
-            <div className="lg:col-span-5 flex justify-center mt-4 lg:mt-0">
-              <div className="relative w-full max-w-[320px] sm:max-w-[340px] rounded-[2.5rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
+            {/* LADO DERECHO: SIMULADOR DE IPHONE COMPLETO (SOLO EN ESCRITORIO / PANTALLAS GRANDES PARA EVITAR APLASTAMIENTO MÓVIL) */}
+            <div className="hidden lg:flex lg:col-span-5 justify-end">
+              <div className="relative w-full max-w-[340px] h-[550px] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
                 {/* Altavoz y Cámara de iPhone */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 h-5 w-28 bg-zinc-950 rounded-b-2xl z-40 flex items-center justify-center">
                   <div className="h-2 w-10 bg-zinc-800 rounded-full"></div>
@@ -359,11 +379,11 @@ function LandingPage() {
                 {/* Badge Flotante "Verídico en Dizi" */}
                 <div className="absolute top-8 left-3 z-30 bg-black/80 backdrop-blur-md text-white text-[9px] font-extrabold px-2.5 py-1 rounded-full border border-white/20 flex items-center gap-1 shadow-lg">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>Tu tienda enizi.pe/tu-negocio</span>
+                  <span>Tu tienda en dizi.pe/tu-negocio</span>
                 </div>
 
                 {/* Pantalla Simulada de Tienda */}
-                <div className="w-full rounded-[2rem] bg-card overflow-hidden flex flex-col justify-between pt-5 pb-3 px-3 text-left relative z-10 font-sans border border-border/30">
+                <div className="h-full w-full rounded-[2.2rem] bg-card overflow-hidden flex flex-col justify-between pt-5 pb-3 px-3 text-left relative z-10 font-sans border border-border/30">
                   {/* Banner de Portada de Tienda */}
                   <div className="relative h-20 -mx-3 -mt-5 mb-2 overflow-hidden bg-muted">
                     <img
@@ -402,7 +422,7 @@ function LandingPage() {
                   </div>
 
                   {/* Grilla 2x2 Completa de Productos */}
-                  <div className="grid grid-cols-2 gap-1.5 my-1">
+                  <div className="grid grid-cols-2 gap-1.5 flex-1 my-1 overflow-hidden">
                     <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
