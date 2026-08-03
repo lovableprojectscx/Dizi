@@ -24,6 +24,8 @@ import {
   BookOpen,
   Link2,
   TrendingUp,
+  PackagePlus,
+  Share2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -508,34 +510,58 @@ function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-3xl bg-card border border-border/60 space-y-3 text-center sm:text-left relative overflow-hidden">
-              <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm">
-                1
+            {/* Paso 1 */}
+            <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4 text-left relative overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 group">
+              <div className="flex items-center justify-between">
+                <div className="h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center font-heading font-extrabold text-sm shadow-xs">
+                  1
+                </div>
+                <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <PackagePlus className="h-5.5 w-5.5" />
+                </div>
               </div>
-              <h3 className="font-bold text-base text-foreground">Sube tus productos</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Registra tus productos con fotografía, precio y descripción desde tu teléfono celular en minutos.
-              </p>
+              <div className="space-y-1.5">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Sube tus productos</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Registra tus productos con fotografía, precio y descripción desde tu teléfono celular en minutos.
+                </p>
+              </div>
             </div>
 
-            <div className="p-6 rounded-3xl bg-card border border-border/60 space-y-3 text-center sm:text-left relative overflow-hidden">
-              <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm">
-                2
+            {/* Paso 2 */}
+            <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4 text-left relative overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 group">
+              <div className="flex items-center justify-between">
+                <div className="h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center font-heading font-extrabold text-sm shadow-xs">
+                  2
+                </div>
+                <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <Share2 className="h-5.5 w-5.5" />
+                </div>
               </div>
-              <h3 className="font-bold text-base text-foreground">Comparte tu link único</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Coloca el enlace de tu catálogo en tu bio de Instagram, TikTok o Facebook y compártelo por WhatsApp.
-              </p>
+              <div className="space-y-1.5">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Comparte tu link único</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Coloca el enlace de tu catálogo en tu bio de Instagram, TikTok o Facebook y compártelo por WhatsApp.
+                </p>
+              </div>
             </div>
 
-            <div className="p-6 rounded-3xl bg-card border border-border/60 space-y-3 text-center sm:text-left relative overflow-hidden">
-              <div className="h-10 w-10 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-sm">
-                3
+            {/* Paso 3 */}
+            <div className="p-6 rounded-3xl bg-card border border-border/80 space-y-4 text-left relative overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 group">
+              <div className="flex items-center justify-between">
+                <div className="h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center font-heading font-extrabold text-sm shadow-xs">
+                  3
+                </div>
+                <div className="h-11 w-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <MessageCircle className="h-5.5 w-5.5" />
+                </div>
               </div>
-              <h3 className="font-bold text-base text-foreground">Recibe pedidos en WhatsApp</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Tus clientes eligen en tu tienda web y te envían el pedido armado y listo para responder por WhatsApp.
-              </p>
+              <div className="space-y-1.5">
+                <h3 className="font-heading font-bold text-base sm:text-lg text-foreground">Recibe pedidos en WhatsApp</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  Tus clientes eligen en tu tienda web y te envían el pedido armado y listo para responder por WhatsApp.
+                </p>
+              </div>
             </div>
           </div>
         </div>
