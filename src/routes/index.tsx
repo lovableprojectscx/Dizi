@@ -276,12 +276,6 @@ function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* LADO IZQUIERDO: ESENCIA DE MARCA */}
             <div className="lg:col-span-7 space-y-5 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
-              {/* Badge de Prueba Social */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider shadow-xs font-sans">
-                <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
-                <span>La plataforma N°1 para MYPEs en Perú</span>
-              </div>
-
               {/* Título Principal SEO + Frase de Marca */}
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.12]">
                 Tu negocio, ordenado y presentable en{" "}
