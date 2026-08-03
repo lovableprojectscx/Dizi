@@ -33,7 +33,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ 9.90. Prueba 15 días gratis.",
+          "Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ 9.90.",
       },
       {
         name: "keywords",
@@ -148,8 +148,8 @@ function LandingPage() {
       a: "Sí. Todos los planes de pago incluyen el módulo de Exportación PDF Vectorial. Con un solo clic generas un catálogo profesional imprimible con tu logotipo.",
     },
     {
-      q: "¿Cómo funciona el Libro de Reclamaciones Digital?",
-      a: "Dizi integra el formulario legal conforme a la normativa INDECOPI del Perú. Tus clientes pueden registrar reclamos o quejas y tú los gestionas desde tu panel administrativo.",
+      q: "¿Puedo empezar gratis sin pagar nada?",
+      a: "Sí. Puedes registrarte y crear tu catálogo con el Plan Semilla Gratuito (S/ 0.00) por tiempo ilimitado, sin necesidad de ingresar tarjeta de crédito.",
     },
   ];
 
@@ -273,12 +273,6 @@ function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* LADO IZQUIERDO: ESENCIA DE MARCA */}
             <div className="lg:col-span-7 space-y-5 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
-              {/* Badge Oficial */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider shadow-xs font-sans">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Catálogo Web · Link en Bio · Pedidos por WhatsApp</span>
-              </div>
-
               {/* Título Principal SEO + Frase de Marca */}
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.12]">
                 Tu negocio, ordenado y presentable en{" "}
@@ -344,8 +338,8 @@ function LandingPage() {
                     <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div>
-                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">15 Días Free</p>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Prueba Plan Pro</p>
+                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">100% Móvil</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Sin descargar app</p>
                   </div>
                 </div>
               </div>
@@ -797,7 +791,7 @@ function LandingPage() {
                 </ul>
               </div>
               <Button asChild className="w-full font-extrabold text-xs rounded-xl h-10 shadow-md active:scale-95">
-                <Link to="/register">Comenzar Prueba Pro</Link>
+                <Link to="/register">Elegir Plan Pro</Link>
               </Button>
             </div>
 
@@ -940,7 +934,7 @@ function LandingPage() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 p-3 flex items-center justify-between gap-3 shadow-2xl font-sans">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Dizi Catálogos</span>
-          <span className="text-[11px] font-extrabold text-foreground">15 Días Gratis</span>
+          <span className="text-[11px] font-extrabold text-foreground">Plan Semilla S/ 0</span>
         </div>
         <Button asChild className="h-10 px-5 rounded-xl text-xs font-extrabold bg-primary text-primary-foreground shadow-lg shadow-primary/25 active:scale-95">
           <Link to="/register">
