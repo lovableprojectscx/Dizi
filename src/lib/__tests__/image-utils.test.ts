@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
-import { convertImageToWebP, convertImageUrlToWebP, getOptimizedImageUrl } from "../image-utils";
+import { convertImageToWebP, convertImageUrlToWebP, getOptimizedImageUrl, getThumbnailUrl } from "../image-utils";
 
 describe("Pruebas unitarias de image-utils.ts", () => {
   let createdCanvases: any[] = [];
@@ -166,6 +166,20 @@ describe("Pruebas unitarias de image-utils.ts", () => {
       expect(getOptimizedImageUrl(dataUrl, 400)).toBe(dataUrl);
       expect(getOptimizedImageUrl(blobUrl, 1600)).toBe(blobUrl);
       expect(getOptimizedImageUrl(supabaseUrl, 600)).toBe(supabaseUrl);
+    });
+  });
+
+  describe("getThumbnailUrl", () => {
+    it("debe retornar la URL de miniatura _thumb.webp para imágenes de Supabase Storage", () => {
+      const supabaseUrl = "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test.webp";
+      expect(getThumbnailUrl(supabaseUrl)).toBe("https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test_thumb.webp");
+    });
+
+    it("debe conservar URLs que ya sean miniaturas o URLs externas", () => {
+      const thumbUrl = "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test_thumb.webp";
+      const externalUrl = "https://example.com/image.png";
+      expect(getThumbnailUrl(thumbUrl)).toBe(thumbUrl);
+      expect(getThumbnailUrl(externalUrl)).toBe(externalUrl);
     });
   });
 });

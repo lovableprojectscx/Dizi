@@ -28,9 +28,13 @@ function isWebpSupported(): boolean {
 
 /**
  * Convierte un File de imagen a WebP (o JPEG fallback) y lo devuelve como data URL.
- * Redimensiona si algún lado supera MAX_DIMENSION, manteniendo proporción.
+ * Redimensiona si algún lado supera maxDimension, manteniendo la proporción y máxima nitidez.
  */
-export function convertImageToWebP(file: File): Promise<string> {
+export function convertImageToWebP(
+  file: File,
+  maxDimension: number = MAX_DIMENSION,
+  qualityOverride?: number
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
@@ -39,13 +43,13 @@ export function convertImageToWebP(file: File): Promise<string> {
       let { width, height } = img;
 
       // Redimensionar si es muy grande
-      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+      if (width > maxDimension || height > maxDimension) {
         if (width > height) {
-          height = Math.round((height * MAX_DIMENSION) / width);
-          width = MAX_DIMENSION;
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
         } else {
-          width = Math.round((width * MAX_DIMENSION) / height);
-          height = MAX_DIMENSION;
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
         }
       }
 
@@ -68,7 +72,7 @@ export function convertImageToWebP(file: File): Promise<string> {
       URL.revokeObjectURL(objectUrl);
 
       const format = isWebpSupported() ? "image/webp" : "image/jpeg";
-      const quality = format === "image/webp" ? WEBP_QUALITY : 0.88;
+      const quality = qualityOverride ?? (format === "image/webp" ? WEBP_QUALITY : 0.88);
       const webpDataUrl = canvas.toDataURL(format, quality);
       resolve(webpDataUrl);
     };
@@ -80,6 +84,14 @@ export function convertImageToWebP(file: File): Promise<string> {
 
     img.src = objectUrl;
   });
+}
+
+/**
+ * Genera una miniatura ligera en WebP (máx 400px, ~25KB) a partir de un archivo File.
+ * Preserva nitidez cristalina en recuadros pequeños de la grilla.
+ */
+export function createThumbnailWebP(file: File): Promise<string> {
+  return convertImageToWebP(file, 400, 0.78);
 }
 
 /**
@@ -152,5 +164,18 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
 export function getOptimizedImageUrl(url: string | null | undefined, _width: number = 600): string {
   if (!url) return "";
   const cleanUrl = url.trim();
+  return cleanUrl;
+}
+
+/**
+ * Devuelve la URL de la miniatura optimizada de 400px si está disponible,
+ * o la URL limpia original como fallback.
+ */
+export function getThumbnailUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  const cleanUrl = url.trim();
+  if (cleanUrl.includes("/storage/v1/object/public/images/") && cleanUrl.endsWith(".webp") && !cleanUrl.endsWith("_thumb.webp")) {
+    return cleanUrl.replace(/\.webp$/, "_thumb.webp");
+  }
   return cleanUrl;
 }
