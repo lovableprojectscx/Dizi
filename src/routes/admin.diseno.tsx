@@ -401,47 +401,47 @@ function DisenoUnificadoPage() {
       </div>
 
       {/* Navegación por Secciones Principales */}
-      <div className="flex items-center gap-2 mt-6 p-1.5 bg-zinc-100/80 rounded-2xl border border-zinc-200/80 w-fit">
+      <div className="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2 mt-6 p-1.5 bg-zinc-100/90 rounded-2xl border border-zinc-200/80 w-full sm:w-fit">
         <button
           type="button"
           onClick={() => setActiveSection("estructura")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
+            "flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center cursor-pointer",
             activeSection === "estructura"
               ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-550 hover:text-zinc-900"
+              : "text-zinc-500 hover:text-zinc-900"
           )}
         >
-          <LayoutGrid className="h-4 w-4" />
-          1. Estructura ({DESIGN_STRUCTURES.length})
+          <LayoutGrid className={cn("h-5 w-5 sm:h-4 sm:w-4 shrink-0", activeSection === "estructura" ? "text-primary" : "text-zinc-500")} />
+          <span className="leading-tight">1. Estructura ({DESIGN_STRUCTURES.length})</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection("tema")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
+            "flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center cursor-pointer",
             activeSection === "tema"
               ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-550 hover:text-zinc-900"
+              : "text-zinc-500 hover:text-zinc-900"
           )}
         >
-          <Palette className="h-4 w-4" />
-          2. Tema & Colores
+          <Palette className={cn("h-5 w-5 sm:h-4 sm:w-4 shrink-0", activeSection === "tema" ? "text-amber-500" : "text-zinc-500")} />
+          <span className="leading-tight">2. Tema & Colores</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection("modulos")}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all",
+            "flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 py-2.5 sm:px-4 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all text-center cursor-pointer",
             activeSection === "modulos"
               ? "bg-white text-zinc-900 shadow-sm"
-              : "text-zinc-550 hover:text-zinc-900"
+              : "text-zinc-500 hover:text-zinc-900"
           )}
         >
-          <Layers className="h-4 w-4" />
-          3. Módulos & Funciones
+          <Layers className={cn("h-5 w-5 sm:h-4 sm:w-4 shrink-0", activeSection === "modulos" ? "text-purple-500" : "text-zinc-500")} />
+          <span className="leading-tight">3. Módulos & Funciones</span>
         </button>
       </div>
 
