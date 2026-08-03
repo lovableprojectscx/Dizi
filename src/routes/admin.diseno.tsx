@@ -365,16 +365,16 @@ function DisenoUnificadoPage() {
   return (
     <div className="w-full max-w-7xl mx-auto px-4 py-6">
       {/* Header Unificado */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-zinc-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="font-black text-2xl tracking-tight text-zinc-900">Diseño del Catálogo</h1>
-            <Badge className="bg-primary/10 text-primary border-none text-[10px] font-extrabold uppercase px-2.5 py-0.5">
+            <h1 className="font-heading font-extrabold text-2xl tracking-tight text-foreground">Diseño del Catálogo</h1>
+            <Badge className="bg-primary/10 text-primary border-none text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full">
               Sistema Unificado
             </Badge>
           </div>
-          <p className="text-xs text-zinc-550 mt-1">
-            Personaliza la estructura visual, la paleta de colores y activa los módulos de tu catálogo.
+          <p className="text-xs text-muted-foreground mt-1 font-medium">
+            Personaliza la estructura visual, la paleta de colores y activa los módulos de tu catálogo digital.
           </p>
         </div>
 
@@ -383,7 +383,7 @@ function DisenoUnificadoPage() {
             type="button"
             variant="outline"
             onClick={() => setIsPreviewOpen(true)}
-            className="flex-1 sm:flex-none rounded-xl text-xs font-bold gap-2"
+            className="flex-1 sm:flex-none rounded-xl text-xs font-bold gap-2 bg-white hover:bg-muted border-border/60 cursor-pointer"
           >
             <Eye className="h-4 w-4" />
             Vista previa
@@ -392,7 +392,7 @@ function DisenoUnificadoPage() {
           <Button
             type="button"
             onClick={save}
-            className="flex-1 sm:flex-none rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-white gap-2 shadow-md"
+            className="flex-1 sm:flex-none rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-white gap-2 shadow-xs cursor-pointer"
           >
             <Check className="h-4 w-4" />
             Guardar cambios

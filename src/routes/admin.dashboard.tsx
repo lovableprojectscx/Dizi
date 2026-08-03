@@ -105,17 +105,17 @@ function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-6 max-w-5xl mx-auto pb-10">
       {/* Header Responsive */}
-      <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-3 sm:pb-4">
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3 sm:pb-4">
         <div>
-          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-foreground line-clamp-1">
+          <h1 className="text-xl sm:text-3xl font-heading font-extrabold tracking-tight text-foreground line-clamp-1">
             {store.name}
           </h1>
-          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-            Panel de administración de tu catálogo
+          <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5 font-medium">
+            Panel de administración de tu catálogo digital
           </p>
         </div>
         <div className="shrink-0">
-          <span className="text-[9px] sm:text-[10px] font-extrabold bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20 tracking-wider uppercase">
+          <span className="text-[10px] sm:text-xs font-extrabold bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20 tracking-wider uppercase">
             Plan {plan.name}
           </span>
         </div>
@@ -123,15 +123,15 @@ function Dashboard() {
 
       {/* Banner de estado inicial minimalista */}
       {store.products.length === 0 && (
-        <Card className="border border-primary/20 bg-primary/[0.02] shadow-none rounded-xl">
+        <Card className="border border-primary/25 bg-primary/[0.03] shadow-xs rounded-2xl">
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                <Sparkles className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+              <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary shrink-0 shadow-xs">
+                <Sparkles className="h-5 w-5" />
               </div>
               <div className="space-y-0.5 text-center sm:text-left">
                 <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                  <h3 className="text-xs sm:text-sm font-semibold text-foreground">Tu catálogo está listo</h3>
+                  <h3 className="text-xs sm:text-sm font-heading font-bold text-foreground">Tu catálogo está listo</h3>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -152,9 +152,9 @@ function Dashboard() {
                 </p>
               </div>
             </div>
-            <Button asChild size="sm" className="rounded-lg font-bold text-xs h-8 sm:h-9 w-full sm:w-auto">
+            <Button asChild size="sm" className="rounded-xl font-bold text-xs h-9 sm:h-10 w-full sm:w-auto bg-primary hover:bg-primary/90 text-white shadow-sm">
               <Link to="/admin/productos">
-                <Plus className="h-3.5 w-3.5 mr-1.5" /> Agregar primer producto
+                <Plus className="h-4 w-4 mr-1.5" /> Agregar primer producto
               </Link>
             </Button>
           </CardContent>
@@ -162,11 +162,13 @@ function Dashboard() {
       )}
 
       {/* ── SECCIÓN 1: COMPARTE TU TIENDA (Widget Integrado con QR) ── */}
-      <Card className="border border-border/50 rounded-2xl bg-card shadow-sm overflow-hidden">
+      <Card className="border border-border/80 rounded-2xl bg-card shadow-xs overflow-hidden">
         <div className="p-4 sm:p-6">
-          <div className="flex items-center gap-2 border-b pb-2.5 sm:pb-3 border-border/30 mb-4 sm:mb-5">
-            <Share2 className="h-4 w-4 text-primary" />
-            <h2 className="text-xs sm:text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
+          <div className="flex items-center gap-2 border-b pb-2.5 sm:pb-3 border-border/40 mb-4 sm:mb-5">
+            <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+              <Share2 className="h-4 w-4" />
+            </div>
+            <h2 className="text-xs sm:text-sm font-heading font-bold tracking-tight text-foreground uppercase tracking-wider">
               Comparte tu Negocio
             </h2>
           </div>
@@ -175,29 +177,31 @@ function Dashboard() {
             {/* LADO IZQUIERDO: Selector de Pestaña y Enlace */}
             <div className="md:col-span-2 space-y-3.5 sm:space-y-4 flex flex-col justify-between">
               {/* Selector tipo Pestaña adaptado a móvil */}
-              <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl border border-border/20 gap-1 w-full">
+              <div className="grid grid-cols-2 p-1.5 bg-muted/80 rounded-xl border border-border/40 gap-1.5 w-full">
                 <button
+                  type="button"
                   onClick={() => setShareTab("catalog")}
                   className={cn(
-                    "px-2 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5",
+                    "px-2 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
                     shareTab === "catalog"
-                      ? "bg-background text-foreground shadow-xs font-extrabold"
+                      ? "bg-white text-foreground shadow-xs font-extrabold border border-border/50"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Store className="h-3.5 w-3.5 shrink-0" />
+                  <Store className="h-4 w-4 shrink-0 text-primary" />
                   <span className="truncate">Catálogo Digital</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShareTab("bio")}
                   className={cn(
-                    "px-2 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5",
+                    "px-2 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer",
                     shareTab === "bio"
-                      ? "bg-background text-foreground shadow-xs font-extrabold"
+                      ? "bg-white text-foreground shadow-xs font-extrabold border border-border/50"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Link2 className="h-3.5 w-3.5 shrink-0" />
+                  <Link2 className="h-4 w-4 shrink-0 text-primary" />
                   <span className="truncate">Link en Bio</span>
                 </button>
               </div>
@@ -206,7 +210,7 @@ function Dashboard() {
               <div className="space-y-2.5">
                 {shareTab === "catalog" ? (
                   <div className="space-y-0.5">
-                    <p className="text-xs sm:text-sm font-semibold text-foreground">
+                    <p className="text-xs sm:text-sm font-heading font-bold text-foreground">
                       Dirección de tu Tienda Online
                     </p>
                     <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
@@ -217,14 +221,14 @@ function Dashboard() {
                 ) : (
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs sm:text-sm font-semibold text-foreground">
+                      <p className="text-xs sm:text-sm font-heading font-bold text-foreground">
                         Tu Página Unificada de Redes
                       </p>
                       <span
                         className={cn(
                           "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase border tracking-wider",
                           store.bioLinksEnabled
-                            ? "text-emerald-600 bg-emerald-50 border-emerald-200/50"
+                            ? "text-emerald-700 bg-emerald-50 border-emerald-200"
                             : "text-muted-foreground bg-muted border-border/40",
                         )}
                       >
@@ -240,13 +244,13 @@ function Dashboard() {
                 {/* Caja de Enlace Integrada */}
                 <div
                   className={cn(
-                    "flex items-center justify-between gap-2 bg-muted/30 hover:bg-muted/40 transition-colors rounded-xl px-3 py-2 border border-border/40 w-full",
+                    "flex items-center justify-between gap-2 bg-muted/50 hover:bg-muted/70 transition-colors rounded-xl px-3.5 py-2.5 border border-border/60 w-full",
                     shareTab === "bio" &&
                       !store.bioLinksEnabled &&
                       "opacity-50 select-none pointer-events-none",
                   )}
                 >
-                  <span className="truncate select-all font-mono text-[11px] sm:text-xs font-semibold text-foreground/90 flex-1">
+                  <span className="truncate select-all font-mono text-[11px] sm:text-xs font-semibold text-foreground flex-1">
                     {activeUrl}
                   </span>
                   <div className="flex items-center gap-1 shrink-0">
@@ -255,23 +259,23 @@ function Dashboard() {
                       onClick={() => copyText(activeUrl)}
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 rounded-lg text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary transition-colors shrink-0"
                       title="Copiar enlace"
                     >
                       {copiedLink ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        <Check className="h-4 w-4 text-emerald-600" />
                       ) : (
-                        <Copy className="h-3.5 w-3.5" />
+                        <Copy className="h-4 w-4" />
                       )}
                     </Button>
                     <a
                       href={activeUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-7 w-7 rounded-lg hover:bg-muted/40 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      className="h-8 w-8 rounded-lg hover:bg-muted/60 flex items-center justify-center text-muted-foreground hover:text-primary transition-colors shrink-0"
                       title="Abrir enlace"
                     >
-                      <ExternalLink className="h-3.5 w-3.5" />
+                      <ExternalLink className="h-4 w-4" />
                     </a>
                   </div>
                 </div>
@@ -280,7 +284,7 @@ function Dashboard() {
               {/* Botones de acción dinámicos de pie */}
               <div className="pt-1 flex items-center gap-2 flex-wrap">
                 {shareTab === "catalog" ? (
-                  <div className="[&>button]:h-8 [&>button]:sm:h-9 [&>button]:rounded-lg [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/60 [&>button]:bg-transparent [&>button]:hover:bg-muted">
+                  <div className="[&>button]:h-9 [&>button]:rounded-xl [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/60 [&>button]:bg-white [&>button]:hover:bg-muted">
                     <CatalogPdfExportButton store={store} variant="admin" />
                   </div>
                 ) : (
@@ -288,10 +292,10 @@ function Dashboard() {
                     asChild
                     size="sm"
                     variant="outline"
-                    className="h-8 sm:h-9 rounded-lg gap-1.5 font-bold text-xs shadow-none border-border/60"
+                    className="h-9 rounded-xl gap-1.5 font-bold text-xs shadow-none border-border/60 bg-white hover:bg-muted"
                   >
                     <Link to="/admin/link-bio">
-                      <Settings className="h-3.5 w-3.5 text-primary" />
+                      <Settings className="h-4 w-4 text-primary" />
                       Configurar Bio-Link
                     </Link>
                   </Button>
@@ -300,35 +304,35 @@ function Dashboard() {
             </div>
 
             {/* LADO DERECHO: Código QR Integrado (Compacto en móvil) */}
-            <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center p-3 sm:p-4 bg-muted/20 border border-border/30 rounded-xl gap-3">
-              <div className="flex flex-col items-center gap-1.5">
-                <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center p-4 bg-muted/40 border border-border/60 rounded-2xl gap-3">
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-heading">
                   Código QR
                 </span>
 
                 {activeQr ? (
-                  <div className="p-1.5 bg-white rounded-xl border border-border/10 shadow-xs relative group overflow-hidden shrink-0">
+                  <div className="p-2 bg-white rounded-xl border border-border/40 shadow-xs relative group overflow-hidden shrink-0">
                     <img
                       src={activeQr}
                       alt={`Código QR ${shareTab === "catalog" ? "catálogo" : "Bio-Link"}`}
-                      className="h-20 w-20 sm:h-28 sm:w-28 rounded-lg object-contain"
+                      className="h-22 w-22 sm:h-28 sm:w-28 rounded-lg object-contain"
                     />
                   </div>
                 ) : (
-                  <div className="h-20 w-20 sm:h-28 sm:w-28 rounded-lg bg-muted flex items-center justify-center border border-dashed border-muted-foreground/20 text-[10px] text-muted-foreground text-center p-1">
+                  <div className="h-22 w-22 sm:h-28 sm:w-28 rounded-lg bg-muted flex items-center justify-center border border-dashed border-muted-foreground/30 text-[10px] text-muted-foreground text-center p-1">
                     QR no disponible
                   </div>
                 )}
               </div>
 
               <Button
+                type="button"
                 onClick={() => downloadQrCode(shareTab)}
                 disabled={shareTab === "bio" && !store.bioLinksEnabled}
                 size="sm"
-                variant="default"
-                className="rounded-lg gap-1.5 font-bold h-8 px-3 text-xs shadow-none disabled:opacity-40 shrink-0 self-center"
+                className="rounded-xl gap-1.5 font-bold h-9 px-4 text-xs bg-primary hover:bg-primary/90 text-white shadow-xs disabled:opacity-40 shrink-0 self-center"
               >
-                <Download className="h-3 w-3" /> Descargar QR
+                <Download className="h-3.5 w-3.5" /> Descargar QR
               </Button>
             </div>
           </div>
@@ -338,21 +342,21 @@ function Dashboard() {
       {/* ── SECCIÓN 2: GRID DE MÉTRICAS & DASHBOARD ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <MetricCard
-          icon={<Package className="h-4 w-4 text-blue-500" />}
+          icon={<Package className="h-5 w-5 text-blue-600" />}
           label="Productos activos"
           value={`${activeProducts}/${plan.productLimit === Infinity ? "∞" : plan.productLimit}`}
           trend="En catálogo público"
           tooltipText="Número de productos visibles en tu catálogo actual frente al límite de productos que admite tu plan."
         />
         <MetricCard
-          icon={<MessageCircle className="h-4 w-4 text-emerald-500" />}
+          icon={<MessageCircle className="h-5 w-5 text-emerald-600" />}
           label="Clics WhatsApp"
           value={String(store.whatsappClicks)}
           trend="Interacciones"
           tooltipText="Número total de veces que tus clientes han hecho clic para iniciar un chat o enviar un pedido por WhatsApp."
         />
         <MetricCard
-          icon={<Eye className="h-4 w-4 text-purple-500" />}
+          icon={<Eye className="h-5 w-5 text-purple-600" />}
           label="Visitas catálogo"
           value={String(store.views || 0)}
           trend="Visualizaciones"
@@ -361,9 +365,9 @@ function Dashboard() {
         <MetricCard
           icon={
             isTrial ? (
-              <Clock className="h-4 w-4 text-amber-500 animate-pulse" />
+              <Clock className="h-5 w-5 text-amber-500 animate-pulse" />
             ) : (
-              <Sparkles className="h-4 w-4 text-amber-500" />
+              <Sparkles className="h-5 w-5 text-amber-500" />
             )
           }
           label="Plan Actual"
@@ -398,15 +402,15 @@ function MetricCard({
   return (
     <Card
       className={cn(
-        "border border-border/50 shadow-xs hover:shadow-sm transition-all duration-300 rounded-xl overflow-hidden relative group bg-card",
+        "border border-border/60 shadow-xs hover:shadow-sm transition-all duration-300 rounded-2xl overflow-hidden relative group bg-card",
         className,
       )}
     >
-      <CardContent className="p-3 sm:p-4 flex flex-col justify-between h-full min-h-[95px] sm:min-h-[110px]">
+      <CardContent className="p-3.5 sm:p-4 flex flex-col justify-between h-full min-h-[100px] sm:min-h-[115px]">
         <div className="space-y-1">
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1 min-w-0">
-              <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate font-heading">
                 {label}
               </span>
               {tooltipText && (
@@ -423,15 +427,15 @@ function MetricCard({
                 </Tooltip>
               )}
             </div>
-            <div className="text-muted-foreground shrink-0 opacity-80 group-hover:scale-105 transition-transform">
+            <div className="text-muted-foreground shrink-0 group-hover:scale-110 transition-transform">
               {icon}
             </div>
           </div>
-          <div className="text-xl sm:text-3xl font-normal tracking-tight text-foreground truncate">
+          <div className="text-xl sm:text-3xl font-heading font-extrabold tracking-tight text-foreground truncate">
             {value}
           </div>
         </div>
-        {trend && <p className="text-[9px] sm:text-[10px] text-muted-foreground font-medium pt-0.5 truncate">{trend}</p>}
+        {trend && <p className="text-[10px] text-muted-foreground font-medium pt-0.5 truncate">{trend}</p>}
       </CardContent>
     </Card>
   );

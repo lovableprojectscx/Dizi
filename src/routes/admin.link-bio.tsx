@@ -971,9 +971,11 @@ function LinkBioPage() {
   return (
     <div className="space-y-6 max-w-6xl mx-auto px-2 pb-10">
       {/* Page Header */}
-      <div className="flex items-center gap-2 border-b border-border/40 pb-4">
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent flex items-center gap-2">
-          <Link2 className="h-7 w-7 text-primary shrink-0" />
+      <div className="flex items-center gap-2 border-b border-border/60 pb-4">
+        <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-foreground flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-primary/10 text-primary">
+            <Link2 className="h-6 w-6" />
+          </div>
           Link en Bio
         </h1>
         <Tooltip>

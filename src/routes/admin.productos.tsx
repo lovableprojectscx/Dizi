@@ -890,22 +890,22 @@ function ProductsPage() {
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-foreground">
           Gestión de Catálogo
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 font-medium">
           Organiza, crea y edita los productos y categorías de tu catálogo digital.
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground max-w-md w-full grid grid-cols-2">
-          <TabsTrigger value="productos" className="flex items-center justify-center gap-2">
-            <Package className="h-4 w-4" />
+        <TabsList className="inline-flex h-11 items-center justify-center rounded-xl bg-muted/80 p-1 text-muted-foreground max-w-md w-full grid grid-cols-2 border border-border/40">
+          <TabsTrigger value="productos" className="flex items-center justify-center gap-2 rounded-lg font-bold text-xs cursor-pointer data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            <Package className="h-4 w-4 text-primary" />
             <span>Productos</span>
           </TabsTrigger>
-          <TabsTrigger value="categorias" className="flex items-center justify-center gap-2">
-            <Tag className="h-4 w-4" />
+          <TabsTrigger value="categorias" className="flex items-center justify-center gap-2 rounded-lg font-bold text-xs cursor-pointer data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-xs">
+            <Tag className="h-4 w-4 text-primary" />
             <span>Categorías</span>
           </TabsTrigger>
         </TabsList>
@@ -914,13 +914,13 @@ function ProductsPage() {
         <TabsContent value="productos" className="space-y-4 mt-6">
           {/* Banner de recuperación de carga masiva en progreso */}
           {!bulkOpen && bulkDrafts.length > 0 && (
-            <div className="animate-in fade-in slide-in-from-top-4 duration-300 rounded-2xl border border-amber-200/80 dark:border-amber-900/35 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-sm backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="animate-in fade-in slide-in-from-top-4 duration-300 rounded-2xl border border-amber-200/80 dark:border-amber-900/35 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-xs backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-start gap-3">
                 <div className="text-amber-600 dark:text-amber-500 mt-0.5 shrink-0 bg-amber-100 dark:bg-amber-900/40 p-2 rounded-xl">
                   <Images className="h-5 w-5 animate-pulse" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-amber-800 dark:text-amber-200 text-sm">
+                  <h4 className="font-heading font-bold text-amber-800 dark:text-amber-200 text-sm">
                     Carga masiva en progreso
                   </h4>
                   <p className="text-xs text-amber-700/85 dark:text-amber-300/80 mt-0.5 leading-relaxed">
@@ -953,35 +953,32 @@ function ProductsPage() {
                 </Button>
                 <Button
                   size="sm"
-                  className="flex-1 sm:flex-none h-8.5 text-xs font-bold gap-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-sm shadow-amber-600/20 transition-all active:scale-95 cursor-pointer"
+                  className="flex-1 sm:flex-none h-8.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition-all active:scale-95 gap-1.5 cursor-pointer"
                   onClick={() => setBulkOpen(true)}
                 >
-                  <Plus className="h-3 w-3" />
-                  Continuar Editando
+                  <Pencil className="h-3.5 w-3.5" />
+                  Continuar editando ({bulkDrafts.length})
                 </Button>
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between flex-wrap gap-3">
+          {/* Subencabezado de productos */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Mis Productos</h2>
-              <p className="text-sm text-muted-foreground">
-                {store.products.filter((p) => !p.isSample).length} de{" "}
-                {effectiveLimit === Infinity ? "ilimitados" : effectiveLimit} (plan{" "}
-                {effectivePlan.name})
-                {subscriptionExpired && effectivePlan.id !== plan.id && (
-                  <span className="ml-1 text-amber-600 font-semibold">
-                    — suscripción vencida, límite reducido
-                  </span>
-                )}
+              <h2 className="text-base sm:text-lg font-heading font-bold text-foreground">Mis Productos</h2>
+              <p className="text-xs text-muted-foreground">
+                {store.products.length} de{" "}
+                {effectiveLimit === Infinity ? "Ilimitados" : effectiveLimit} (plan{" "}
+                {subscriptionExpired ? "semilla" : store.plan})
               </p>
             </div>
+
             <div className="flex gap-2 items-center flex-wrap">
               <Button
                 variant="outline"
                 onClick={handleBulkButtonClick}
-                className="gap-1.5 font-bold text-xs h-9 sm:h-10 px-4 border-dashed border-primary/40 text-primary hover:bg-primary/5 hover:border-primary"
+                className="gap-1.5 font-bold text-xs h-9 sm:h-10 px-4 border-dashed border-primary/50 text-primary hover:bg-primary/5 hover:border-primary rounded-xl cursor-pointer"
               >
                 <Images className="h-4 w-4 text-primary shrink-0" />
                 Carga Rápida por Fotos
@@ -989,7 +986,7 @@ function ProductsPage() {
               <Button
                 onClick={openNew}
                 disabled={reachedLimit}
-                className="font-bold text-xs h-9 sm:h-10 px-4 gap-1.5"
+                className="font-bold text-xs h-9 sm:h-10 px-4 gap-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-xs cursor-pointer"
               >
                 {reachedLimit ? (
                   <Lock className="h-4 w-4 shrink-0" />

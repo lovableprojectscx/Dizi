@@ -51,9 +51,10 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <Link to="/admin/dashboard" className="flex items-center px-2 py-2">
-          <img src="/images/Logo.png" alt="Dizi" className="h-8 w-auto object-contain" />
+      <SidebarHeader className="border-b border-border/60 pb-3">
+        <Link to="/admin/dashboard" className="flex items-center gap-2 px-3 py-2 hover:opacity-90 transition-opacity">
+          <img src="/images/dizi-logo-principal-color.png" alt="Dizi" className="h-8 w-auto object-contain group-data-[collapsible=icon]:hidden" />
+          <img src="/images/dizi-isotipo-color.png" alt="Dizi" className="h-8 w-8 object-contain hidden group-data-[collapsible=icon]:block" />
         </Link>
       </SidebarHeader>
 
