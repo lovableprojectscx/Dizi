@@ -267,34 +267,34 @@ function LandingPage() {
         )}
       </header>
 
-      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (AIREADO, ELEGANTE Y SIN APLASTAR EN MÓVIL) ── */}
-      <section className="relative overflow-hidden pt-8 sm:pt-16 pb-12 sm:pb-20 bg-gradient-to-b from-primary/[0.05] via-background to-background border-b border-border/30">
+      {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (TIPOGRAFÍA ESTÁNDAR Y ESPACIADO HOLGADO) ── */}
+      <section className="relative overflow-hidden pt-10 sm:pt-20 pb-16 sm:pb-24 bg-gradient-to-b from-primary/[0.05] via-background to-background border-b border-border/30">
         {/* Resplandor ambiente de fondo (Ambient Glow) */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-72 sm:w-[500px] h-72 sm:h-[500px] bg-gradient-to-tr from-primary/15 via-orange-500/10 to-amber-500/5 blur-[100px] rounded-full pointer-events-none z-0" />
 
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             {/* LADO IZQUIERDO: ESENCIA DE MARCA */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
+            <div className="lg:col-span-7 space-y-7 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
               {/* Título Principal SEO + Frase de Marca */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.15]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.18]">
                 Tu negocio, ordenado y presentable en{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
                   un solo link
                 </span>
               </h1>
 
-              {/* Subtítulo de Marca Empoderador */}
-              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+              {/* Subtítulo de Marca Empoderador (Tamaño Estándar Legible de 16px en Móvil) */}
+              <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
                 Tú ya sabes vender. Dizi solo hace que se note. Transforma las consultas de tus redes sociales en pedidos organizados directo a tu WhatsApp. Sin comisiones.
               </p>
 
-              {/* Botones de Acción */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
+              {/* Botones de Acción Espaciados */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto h-12 sm:h-13 px-8 rounded-2xl font-black text-xs sm:text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
+                  className="w-full sm:w-auto h-13 sm:h-14 px-8 rounded-2xl font-black text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
                 >
                   <Link to="/register">
                     Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
@@ -305,7 +305,7 @@ function LandingPage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto h-12 sm:h-13 px-7 rounded-2xl font-bold text-xs sm:text-sm border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs font-sans"
+                  className="w-full sm:w-auto h-13 sm:h-14 px-7 rounded-2xl font-bold text-sm sm:text-base border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs font-sans"
                 >
                   <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
                     <Smartphone className="h-4 w-4 text-primary" /> Ver Tienda de Ejemplo
@@ -315,54 +315,54 @@ function LandingPage() {
               </div>
 
               {/* Tarjeta de Demostración Compacta en Cristal (Solo Visible en Celulares para No Satúrar) */}
-              <div className="lg:hidden mt-4 p-3.5 rounded-2xl bg-gradient-to-r from-primary/10 via-amber-500/10 to-emerald-500/10 border border-primary/20 backdrop-blur-md flex items-center justify-between gap-3 shadow-xs">
+              <div className="lg:hidden my-6 p-4 rounded-2xl bg-gradient-to-r from-primary/10 via-amber-500/10 to-emerald-500/10 border border-primary/20 backdrop-blur-md flex items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-3 text-left">
-                  <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 text-primary">
-                    <Smartphone className="h-4.5 w-4.5" />
+                  <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 text-primary">
+                    <Smartphone className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
-                      Catálogo Demo Activo <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    <p className="text-xs sm:text-sm font-extrabold text-foreground flex items-center gap-1.5">
+                      Catálogo Demo Activo <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                     </p>
-                    <p className="text-[10px] text-muted-foreground">dizi.pe/grano-miga · Ejemplo real</p>
+                    <p className="text-[11px] text-muted-foreground">dizi.pe/grano-miga · Ejemplo real</p>
                   </div>
                 </div>
-                <Button asChild size="sm" variant="outline" className="h-8 px-3 text-xs font-bold rounded-xl border-primary/30 text-primary hover:bg-primary/10 shrink-0">
+                <Button asChild size="sm" variant="outline" className="h-8.5 px-3.5 text-xs font-bold rounded-xl border-primary/30 text-primary hover:bg-primary/10 shrink-0">
                   <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
                     Ver Demo <ExternalLink className="ml-1 h-3 w-3" />
                   </a>
                 </Button>
               </div>
 
-              {/* 3 Tarjetas de Beneficios Clave Aireadas */}
-              <div className="pt-2 grid grid-cols-3 gap-2 sm:gap-3">
-                <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
-                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
-                    <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              {/* 3 Tarjetas de Beneficios Clave Aireadas (Tipografía Estándar 12px/11px) */}
+              <div className="pt-4 grid grid-cols-3 gap-2.5 sm:gap-4">
+                <div className="p-3 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2.5 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                    <Zap className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
                   </div>
                   <div>
-                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">En 2 Minutos</p>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Listo sin código</p>
+                    <p className="text-xs sm:text-sm font-bold text-foreground leading-tight">En 2 Minutos</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Listo sin código</p>
                   </div>
                 </div>
 
-                <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
-                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <MessageCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <div className="p-3 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2.5 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <MessageCircle className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
                   </div>
                   <div>
-                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">0% Comisión</p>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Cobro directo</p>
+                    <p className="text-xs sm:text-sm font-bold text-foreground leading-tight">0% Comisión</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Cobro directo</p>
                   </div>
                 </div>
 
-                <div className="p-2.5 sm:p-3.5 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2 sm:gap-3">
-                  <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                    <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <div className="p-3 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2.5 sm:gap-3">
+                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+                    <ShieldCheck className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
                   </div>
                   <div>
-                    <p className="text-[11px] sm:text-xs font-bold text-foreground leading-tight">100% Móvil</p>
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Sin descargar app</p>
+                    <p className="text-xs sm:text-sm font-bold text-foreground leading-tight">100% Móvil</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">Sin descargar app</p>
                   </div>
                 </div>
               </div>
