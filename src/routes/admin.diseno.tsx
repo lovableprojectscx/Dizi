@@ -1172,7 +1172,19 @@ function DisenoUnificadoPage() {
         </div>
       </div>
 
-      {/* Modal de Previsualización Expandida con Conmutador Móvil / Escritorio */}
+      {/* Botón Flotante de Vista Previa para Móviles (Sigue al usuario mientras hace scroll) */}
+      <div className="lg:hidden fixed bottom-20 right-4 z-40">
+        <Button
+          type="button"
+          onClick={() => setIsPreviewOpen(true)}
+          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-heading font-extrabold text-xs px-4 py-3 rounded-full shadow-lg shadow-primary/30 border border-white/20 transition-transform active:scale-95 cursor-pointer"
+        >
+          <Eye className="h-4.5 w-4.5 text-white animate-pulse" />
+          <span>Vista previa</span>
+        </Button>
+      </div>
+
+      {/* MODAL DE VISTA PREVIA FULLSCREEN */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent
           className={cn(
