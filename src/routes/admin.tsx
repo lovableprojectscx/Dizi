@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   createFileRoute,
   Outlet,
@@ -15,12 +16,24 @@ import {
   Eye,
   Home,
   Package,
-  Tag,
   Settings,
   ClipboardList,
   Link2,
   AlertTriangle,
+  MoreHorizontal,
+  Palette,
+  Star,
+  ExternalLink,
+  LifeBuoy,
+  ChevronRight,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { getActiveSession, getSessionSync, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -60,6 +73,14 @@ function AdminLayout() {
   const stop = useApp((s) => s.stopImpersonation);
   const setStore = useApp((s) => s.setCurrentStore);
   const router = useRouter();
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const isMoreActive =
+    pathname === "/admin/diseno" ||
+    pathname === "/admin/plan" ||
+    pathname === "/admin/reclamaciones" ||
+    pathname.startsWith("/ayuda");
 
   if (stores.length === 0) {
     return (
@@ -185,16 +206,172 @@ function AdminLayout() {
             <Outlet />
           </main>
 
-          {/* Bottom Nav para movil */}
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t flex items-center justify-around px-2 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+          {/* Bottom Nav para móvil con botón de 3 Puntos (...) */}
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t flex items-center justify-around px-1 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.08)]">
             <MobileNavItem to="/admin/dashboard" icon={Home} label="Inicio" />
             <MobileNavItem to="/admin/productos" icon={Package} label="Productos" />
             <MobileNavItem to="/admin/link-bio" icon={Link2} label="Bio-Link" />
-            {store?.libroReclamacionesActivo && (
-              <MobileNavItem to="/admin/reclamaciones" icon={ClipboardList} label="Reclamos" />
-            )}
             <MobileNavItem to="/admin/configuracion" icon={Settings} label="Ajustes" />
+            
+            {/* Botón de 3 Puntos (...) para Ver Más */}
+            <button
+              type="button"
+              onClick={() => setIsMoreOpen(true)}
+              className={cn(
+                "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors cursor-pointer",
+                isMoreActive || isMoreOpen ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <div
+                className={cn(
+                  "flex items-center justify-center h-8 w-12 rounded-full transition-all duration-200",
+                  isMoreActive || isMoreOpen ? "bg-primary/10" : "",
+                )}
+              >
+                <MoreHorizontal className="h-5 w-5" />
+                {isMoreActive && (
+                  <span className="absolute top-2.5 right-3.5 h-2 w-2 rounded-full bg-primary animate-pulse" />
+                )}
+              </div>
+              <span className={cn("text-[10px] font-medium", isMoreActive || isMoreOpen ? "font-bold" : "")}>
+                Más
+              </span>
+            </button>
           </nav>
+
+          {/* Sheet de Opciones Adicionales (Menú 3 Puntos) */}
+          <Sheet open={isMoreOpen} onOpenChange={setIsMoreOpen}>
+            <SheetContent
+              side="bottom"
+              className="rounded-t-3xl p-5 bg-card border-t max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl z-[999]"
+            >
+              <SheetHeader className="text-left pb-2 border-b">
+                <SheetTitle className="text-base font-bold flex items-center justify-between">
+                  <span>Menú de Opciones</span>
+                  {store && (
+                    <span className="text-xs font-normal text-muted-foreground bg-muted px-2.5 py-1 rounded-full border">
+                      {store.name}
+                    </span>
+                  )}
+                </SheetTitle>
+                <SheetDescription className="text-xs text-muted-foreground">
+                  Accede a todas las herramientas y secciones adicionales de tu tienda.
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="grid grid-cols-1 gap-1.5 py-1">
+                <Link
+                  to="/admin/diseno"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-purple-100 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                      <Palette className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Diseño del Catálogo</p>
+                      <p className="text-xs text-muted-foreground">Estilos, temas visuales y plantillas</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                <Link
+                  to="/admin/plan"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                      <Star className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Mi Plan y Suscripción</p>
+                      <p className="text-xs text-muted-foreground">Límites, beneficios y facturación</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                {store?.libroReclamacionesActivo && (
+                  <Link
+                    to="/admin/reclamaciones"
+                    onClick={() => setIsMoreOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                        <ClipboardList className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Libro de Reclamaciones</p>
+                        <p className="text-xs text-muted-foreground">Reclamos y quejas registradas</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Link>
+                )}
+
+                {store && (
+                  <a
+                    href={`/t/${store.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMoreOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <ExternalLink className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Ver mi Catálogo Público</p>
+                        <p className="text-xs text-muted-foreground">Abrir vista como cliente final</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </a>
+                )}
+
+                <Link
+                  to="/ayuda"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-teal-100 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                      <LifeBuoy className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Centro de Ayuda</p>
+                      <p className="text-xs text-muted-foreground">Preguntas frecuentes y soporte</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                <div className="h-[1px] bg-border my-1" />
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsMoreOpen(false);
+                    await signOut();
+                    window.location.href = "/login";
+                  }}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 transition-all font-semibold text-sm cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                      <LogOut className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <span>Cerrar Sesión</span>
+                  </div>
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </SidebarProvider>
@@ -215,7 +392,7 @@ function MobileNavItem({ to, icon: Icon, label }: { to: string; icon: any; label
     >
       <div
         className={cn(
-          "flex items-center justify-center h-8 w-14 rounded-full transition-all duration-200",
+          "flex items-center justify-center h-8 w-12 rounded-full transition-all duration-200",
           active ? "bg-primary/10" : "",
         )}
       >
