@@ -158,27 +158,14 @@ describe("Pruebas unitarias de image-utils.ts", () => {
       expect(getOptimizedImageUrl("")).toBe("");
     });
 
-    it("debe devolver data URLs y blob URLs intactos", () => {
+    it("debe devolver la URL limpia directamente sin modificar para evitar fallos de carga", () => {
       const dataUrl = "data:image/png;base64,abc123";
       const blobUrl = "blob:http://localhost/123";
+      const supabaseUrl = "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test.webp";
+
       expect(getOptimizedImageUrl(dataUrl, 400)).toBe(dataUrl);
       expect(getOptimizedImageUrl(blobUrl, 1600)).toBe(blobUrl);
-    });
-
-    it("debe solicitar versión de miniaturas (w=400, q=80) para grillas de tarjetas", () => {
-      const original = "https://midominio.com/foto.jpg";
-      const thumbUrl = getOptimizedImageUrl(original, 400);
-      expect(thumbUrl).toContain("wsrv.nl/?url=");
-      expect(thumbUrl).toContain("&w=400");
-      expect(thumbUrl).toContain("&q=80");
-    });
-
-    it("debe solicitar versión de Alta Resolución (w=1600, q=92) para el Zoom de flyers", () => {
-      const original = "https://midominio.com/flyer.jpg";
-      const zoomUrl = getOptimizedImageUrl(original, 1600);
-      expect(zoomUrl).toContain("wsrv.nl/?url=");
-      expect(zoomUrl).toContain("&w=1600");
-      expect(zoomUrl).toContain("&q=92");
+      expect(getOptimizedImageUrl(supabaseUrl, 600)).toBe(supabaseUrl);
     });
   });
 });

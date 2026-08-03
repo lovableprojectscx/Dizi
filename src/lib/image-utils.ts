@@ -145,31 +145,12 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
 }
 
 /**
- * Optimiza una URL de imagen para reducir el consumo de ancho de banda y cached egress.
- * Para miniaturas en tarjetas solicita un ancho ajustado (ej. 400-600px) a través de wsrv.nl,
- * mientras que para zoom o vistas ampliadas devuelve alta resolución (1600px+) o la URL original.
+ * Optimiza una URL de imagen para el catálogo.
+ * Devuelve la URL original limpia para garantizar compatibilidad total con Supabase Storage
+ * y prevenir fallos de carga en el sitio público.
  */
-export function getOptimizedImageUrl(url: string | null | undefined, width: number = 600): string {
+export function getOptimizedImageUrl(url: string | null | undefined, _width: number = 600): string {
   if (!url) return "";
   const cleanUrl = url.trim();
-
-  // Si es un data URL (base64) o un blob local, devolver tal cual
-  if (cleanUrl.startsWith("data:") || cleanUrl.startsWith("blob:")) {
-    return cleanUrl;
-  }
-
-  // Si ya viene formateado con wsrv.nl o es SVG, devolver tal cual
-  if (cleanUrl.includes("wsrv.nl") || cleanUrl.endsWith(".svg")) {
-    return cleanUrl;
-  }
-
-  try {
-    const isHighRes = width >= 1200;
-    const quality = isHighRes ? 92 : 80;
-    // Si se pide alta resolución (>1600px) y es HTTP(S), enrutar a wsrv.nl con alta calidad WebP
-    const encoded = encodeURIComponent(cleanUrl);
-    return `https://wsrv.nl/?url=${encoded}&w=${width}&q=${quality}&output=webp`;
-  } catch (e) {
-    return cleanUrl;
-  }
+  return cleanUrl;
 }
