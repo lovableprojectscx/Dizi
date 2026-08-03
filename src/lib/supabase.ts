@@ -87,7 +87,7 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     if (res.error) throw res.error;
 
     const { data: urlData } = supabase.storage.from("images").getPublicUrl(res.data.path);
-    return `${urlData.publicUrl}?t=${Date.now()}`;
+    return urlData.publicUrl;
   } catch (error) {
     console.error("[uploadBase64ToStorage] Error uploading image:", error);
     throw error;
