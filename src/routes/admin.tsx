@@ -198,7 +198,7 @@ function AdminLayout() {
               </Button>
             </div>
           )}
-          <header className="h-14 border-b flex items-center px-3 gap-3 bg-card sticky top-0 z-20">
+          <header className="hidden md:flex h-14 border-b items-center px-3 gap-3 bg-card sticky top-0 z-20">
             <SidebarTrigger />
             <div className="flex-1" />
           </header>
