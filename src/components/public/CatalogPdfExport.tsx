@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import type { Store, Product } from "@/lib/types";
 import { formatPrice, buildWaUrl } from "@/lib/whatsapp";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 /* ─────────────────────────────────────────────────────────
    PDF STYLE THEMES
@@ -137,6 +138,14 @@ function blendColors(fg: string, bg: string, alpha: number): string {
   }
 }
 
+/** Detecta dinámicamente si una imagen base64 es PNG o JPEG para evitar errores en jsPDF */
+function getImageFormat(b64: string): "PNG" | "JPEG" {
+  if (b64.startsWith("data:image/png") || b64.startsWith("data:image/webp")) {
+    return "PNG";
+  }
+  return "JPEG";
+}
+
 /** Descarga una imagen, la recorta (object-fit: cover) al aspect ratio objetivo (y opcionalmente a un círculo) y la convierte a JPEG/PNG comprimido */
 export async function urlToBase64(
   url: string,
@@ -168,12 +177,9 @@ export async function urlToBase64(
           if (!error && data) {
             blob = data;
             useBlobUrl = true;
-          } else {
-            // Si Supabase Storage devolvió error (ej. 404 Not Found), abortar inmediatamente sin reintentos
-            return null;
           }
         } catch {
-          return null;
+          /* Continuar a fetch directo */
         }
       }
 
@@ -284,9 +290,10 @@ export async function urlToBase64(
 }
 
 /** Sanitiza texto para evitar problemas con jsPDF */
-function safe(str: string | undefined | null): string {
-  if (!str) return "";
-  return str.replace(/[^\x00-\x7F]/g, (c) => {
+function safe(str: any): string {
+  if (str === null || str === undefined) return "";
+  const s = String(str);
+  return s.replace(/[^\x00-\x7F]/g, (c) => {
     const map: Record<string, string> = {
       á: "a",
       é: "e",
@@ -324,7 +331,8 @@ export async function generateCatalogPdf(
   onProgress?: (current: number, total: number) => void,
 ) {
   // Dynamic import — no aumenta el bundle inicial
-  const { default: jsPDF } = await import("jspdf");
+  const jsPDFModule = await import("jspdf");
+  const jsPDF = jsPDFModule.default || (jsPDFModule as any).jsPDF || jsPDFModule;
 
   const t = theme.preview;
   const PAGE_W = 210; // A4 mm
@@ -400,7 +408,7 @@ export async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 2, 2, "F");
-        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, getImageFormat(logoB64), logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -448,7 +456,7 @@ export async function generateCatalogPdf(
     let logoLoaded = false;
     if (logoB64) {
       try {
-        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, getImageFormat(logoB64), logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -495,7 +503,7 @@ export async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.circle(PAGE_W / 2, logoY + logoSize / 2, logoSize / 2 + 2, "F");
-        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, getImageFormat(logoB64), logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -541,7 +549,7 @@ export async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, getImageFormat(logoB64), logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -582,7 +590,7 @@ export async function generateCatalogPdf(
       try {
         doc.setFillColor("#ffffff");
         doc.roundedRect(logoX - 1, logoY - 1, logoSize + 2, logoSize + 2, 3, 3, "F");
-        doc.addImage(logoB64, logoFormat, logoX, logoY, logoSize, logoSize, undefined, "FAST");
+        doc.addImage(logoB64, getImageFormat(logoB64), logoX, logoY, logoSize, logoSize, undefined, "FAST");
         logoLoaded = true;
       } catch {}
     }
@@ -679,6 +687,11 @@ export async function generateCatalogPdf(
   let processedCount = 0;
   const totalCount = visibleProds.length;
 
+  // Notificar progreso inicial de 0 inmediatamente
+  if (onProgress) {
+    onProgress(0, Math.max(1, totalCount));
+  }
+
   for (const group of grouped) {
     newPage();
     categoryPageNumbers.push({ name: group.catName, page: doc.internal.getNumberOfPages() });
@@ -750,7 +763,7 @@ export async function generateCatalogPdf(
         const b64 = await urlToBase64(prod.image, IMG_W / IMG_H);
         if (b64) {
           try {
-            doc.addImage(b64, "JPEG", imgX, imgY, IMG_W, IMG_H, undefined, "FAST");
+            doc.addImage(b64, getImageFormat(b64), imgX, imgY, IMG_W, IMG_H, undefined, "FAST");
             imgLoaded = true;
           } catch {
             /* fallback */
@@ -1128,7 +1141,7 @@ export function CatalogPdfExportButton({
   const handleGenerate = async () => {
     setGenerating(true);
     setDone(false);
-    setProgress({ current: 0, total: visibleCount });
+    setProgress({ current: 0, total: Math.max(1, visibleCount) });
     try {
       await generateCatalogPdf(store, theme, (current, total) => {
         setProgress({ current, total });
@@ -1141,6 +1154,9 @@ export function CatalogPdfExportButton({
       }, 1800);
     } catch (err) {
       console.error("[PDF Export]", err);
+      toast.error(
+        "No se pudo generar el PDF: " + (err instanceof Error ? err.message : "Error desconocido"),
+      );
       setProgress(null);
     } finally {
       setGenerating(false);
@@ -1256,13 +1272,21 @@ export function CatalogPdfExportButton({
                   <div className="flex justify-between text-xs font-semibold text-muted-foreground">
                     <span>Procesando productos...</span>
                     <span>
-                      {progress.current} de {progress.total} ({Math.round((progress.current / progress.total) * 100)}%)
+                      {progress.current} de {progress.total} (
+                      {progress.total > 0
+                        ? Math.round((progress.current / progress.total) * 100)
+                        : 0}
+                      %)
                     </span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary transition-all duration-300 ease-out"
-                      style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                      style={{
+                        width: `${
+                          progress.total > 0 ? (progress.current / progress.total) * 100 : 0
+                        }%`,
+                      }}
                     />
                   </div>
                 </div>
