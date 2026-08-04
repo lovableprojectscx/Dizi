@@ -3,7 +3,8 @@ import { useApp } from "@/lib/store";
 import { PLANS, type PlanId, daysUntilExpiry, formatDate } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock, Sparkles } from "lucide-react";
+import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock, Sparkles, Zap } from "lucide-react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -46,6 +47,7 @@ const features: Record<PlanId, string[]> = {
 function PlanPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id));
+  const [isAnnual, setIsAnnual] = useState(false);
 
   if (!store) return null;
 
@@ -161,54 +163,97 @@ function PlanPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── Toggle Mensual / Anual ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+        <div>
+          <h2 className="text-lg font-bold text-foreground">Planes y Tarifas Disponibles</h2>
+          <p className="text-xs text-muted-foreground">Elige el plan que mejor se adapte al volumen de tu catálogo</p>
+        </div>
+        <div className="inline-flex items-center gap-1.5 p-1 bg-muted rounded-full border self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsAnnual(false)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-bold transition-all",
+              !isAnnual ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Facturación Mensual
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAnnual(true)}
+            className={cn(
+              "px-3 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1",
+              isAnnual ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <span>Facturación Anual</span>
+            <span className={cn("text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider", isAnnual ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-600")}>
+              -25%
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {(Object.keys(PLANS) as PlanId[]).map((p) => {
           const isCurrent = store.plan === p;
+          const planInfo = PLANS[p];
+          const displayPrice = isAnnual && planInfo.annualPrice > 0 ? planInfo.annualPrice : planInfo.price;
+          const periodLabel = isAnnual && planInfo.annualPrice > 0 ? "/año" : "/mes";
+
           return (
             <Card
               key={p}
-              className={cn("relative", isCurrent && "border-primary ring-2 ring-primary/30")}
+              className={cn("relative flex flex-col justify-between", isCurrent && "border-primary ring-2 ring-primary/30")}
             >
               {isCurrent && (
-                <span className="absolute -top-2 left-4 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                  <Star className="h-3 w-3" /> Actual
+                <span className="absolute -top-2 left-4 bg-primary text-primary-foreground text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full inline-flex items-center gap-1 z-10">
+                  <Star className="h-3 w-3" /> Plan Actual
                 </span>
               )}
-              <CardContent className="p-5 space-y-3">
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-bold">{PLANS[p].name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black">S/ {PLANS[p].price.toFixed(2)}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold">
-                      /mes
-                    </span>
+              <CardContent className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="flex flex-col">
+                    <h3 className="text-base font-bold">{planInfo.name}</h3>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-2xl font-black">S/ {displayPrice > 0 ? displayPrice.toFixed(2) : "0"}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold">
+                        {periodLabel}
+                      </span>
+                    </div>
+                    {isAnnual && planInfo.annualPrice > 0 && (
+                      <span className="text-[10px] text-emerald-600 font-bold mt-0.5">
+                        Equivalente a S/ {(planInfo.annualPrice / 12).toFixed(2)}/mes
+                      </span>
+                    )}
                   </div>
+                  <p className="text-xs font-semibold text-primary">
+                    Hasta {planInfo.productLimit} productos
+                  </p>
+                  <ul className="space-y-1.5 text-xs pt-1">
+                    {features[p].map((f) => (
+                      <li key={f} className="flex items-start gap-1.5">
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                        <span className="leading-tight">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <p className="text-xs font-medium text-muted-foreground">
-                  {PLANS[p].productLimit === Infinity
-                    ? "Productos ilimitados"
-                    : `Hasta ${PLANS[p].productLimit} productos`}
-                </p>
-                <ul className="space-y-1 text-sm pt-2">
-                  {features[p].map((f) => (
-                    <li key={f} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <div className="pt-2">
-                  {!isCurrent && (
+
+                <div className="pt-3">
+                  {!isCurrent ? (
                     <a
-                      href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, me gustaría actualizar mi tienda "${store.name}" al plan ${PLANS[p].name}.`)}`}
+                      href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, me gustaría contratar el plan ${planInfo.name} (${isAnnual ? "Anual" : "Mensual"}) para mi tienda "${store.name}".`)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex h-9 w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
+                      className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-primary px-3 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition-colors"
                     >
-                      Actualizar Plan
+                      Solicitar {planInfo.name}
                     </a>
-                  )}
-                  {isCurrent && (
-                    <div className="h-9 w-full flex items-center justify-center text-sm font-medium text-muted-foreground bg-muted/50 rounded-md">
+                  ) : (
+                    <div className="h-9 w-full flex items-center justify-center text-xs font-bold text-muted-foreground bg-muted/60 rounded-lg">
                       Plan Activo
                     </div>
                   )}
@@ -218,6 +263,31 @@ function PlanPage() {
           );
         })}
       </div>
+
+      {/* ── Servicio Opcional: Configuración Asistida S/ 79 ── */}
+      <Card className="border border-blue-500/20 bg-blue-500/5 overflow-hidden rounded-2xl">
+        <CardContent className="p-5">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2.5 py-0.5 rounded-full">
+                <Zap className="h-3 w-3" /> Servicio Opcional Llave en Mano
+              </div>
+              <h3 className="text-base font-bold text-foreground">Configuración Asistida Dizi — S/ 79 (Pago Único)</h3>
+              <p className="text-xs text-muted-foreground">
+                ¿Prefieres que dejemos tu tienda lista por ti? Carga de hasta 30 productos, diseño de banner, categorías, perfil Link en Bio y capacitación de 20 min.
+              </p>
+            </div>
+            <a
+              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, me interesa contratar el servicio opcional de Configuración Asistida (S/ 79) para mi tienda "${store.name}".`)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 text-xs font-bold shadow-md transition-colors"
+            >
+              Solicitar Configuración (S/ 79)
+            </a>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Sección de Referidos / Recompensas ── */}
       <Card className="border border-primary/20 bg-primary/5 dark:bg-primary/10 overflow-hidden rounded-2xl">
