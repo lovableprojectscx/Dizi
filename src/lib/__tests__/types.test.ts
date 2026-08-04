@@ -170,26 +170,26 @@ describe("Pruebas unitarias de Reglas de Suscripción (types.ts)", () => {
   });
 
   describe("shouldUseSemillaModel", () => {
-    it("debe retornar false si está en periodo de gracia de diseño", () => {
-      const store = createMockStore("pro", "2026-07-02T12:00:00Z"); // Venció hace 5 días (gracia de 10 días restantes)
+    it("debe retornar false siempre, garantizando que el diseño elegido por el cliente no se degrada", () => {
+      const store = createMockStore("semilla", undefined, "overlay");
       expect(shouldUseSemillaModel(store)).toBe(false);
-    });
-
-    it("debe retornar true si la gracia de diseño expiró", () => {
-      const store = createMockStore("pro", "2026-06-20T12:00:00Z"); // Venció hace 17 días
-      expect(shouldUseSemillaModel(store)).toBe(true);
     });
   });
 
   describe("getEffectiveModel", () => {
-    it("debe retornar el modelo semilla si expiró el periodo de gracia", () => {
-      const store = createMockStore("pro", "2026-06-20T12:00:00Z", "boutique");
-      expect(getEffectiveModel(store)).toBe("minimalista");
+    it("debe retornar el modelo seleccionado por la tienda sin importar si el plan es Semilla", () => {
+      const store = createMockStore("semilla", undefined, "hero");
+      expect(getEffectiveModel(store)).toBe("hero");
     });
 
-    it("debe retornar el modelo configurado si no ha expirado la gracia", () => {
-      const store = createMockStore("pro", "2026-07-06T12:00:00Z", "boutique");
+    it("debe retornar el modelo seleccionado en planes pagados o vencidos", () => {
+      const store = createMockStore("pro", "2026-06-20T12:00:00Z", "boutique");
       expect(getEffectiveModel(store)).toBe("boutique");
+    });
+
+    it("debe retornar 'minimalista' por defecto únicamente si el modelo de la tienda es nulo o indefinido", () => {
+      const store = createMockStore("semilla", undefined, "");
+      expect(getEffectiveModel(store)).toBe("minimalista");
     });
   });
 

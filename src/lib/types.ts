@@ -211,20 +211,15 @@ export function modelGraceDaysLeft(store: Store): number | null {
 }
 
 /**
- * Indica si el modelo premium debe reemplazarse ya por el modelo semilla.
- * (cuando pasaron mas de 15 dias desde el vencimiento)
- */
-export function shouldUseSemillaModel(store: Store): boolean {
-  const left = modelGraceDaysLeft(store);
-  return left !== null && left === 0;
-}
-
-/**
  * Retorna el modelo que debe usarse actualmente en el catalogo publico.
+ * Todas las estructuras y plantillas de diseño estan 100% disponibles para todos los planes.
  */
 export function getEffectiveModel(store: Store): string {
-  if (shouldUseSemillaModel(store)) return SEMILLA_MODEL;
   return store.model || SEMILLA_MODEL;
+}
+
+export function shouldUseSemillaModel(_store: Store): boolean {
+  return false;
 }
 
 /** Formatea una fecha ISO para mostrar en UI: "13 may. 2026" */
