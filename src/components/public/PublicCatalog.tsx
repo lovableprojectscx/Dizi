@@ -1452,7 +1452,7 @@ export function PublicCatalog({
   const rawModelId = resolveRenderModel(isMockup ? (store.model || "minimalista") : getEffectiveModel(store));
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
-  const showDesktopSidebar = mode === "catalog" && !isMockup && cfg.layout === "grid";
+  const showDesktopSidebar = mode === "catalog" && !isMockup;
 
   const isPremiumModel =
     modelId === "bloom" ||
