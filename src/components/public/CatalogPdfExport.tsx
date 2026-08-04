@@ -8,7 +8,7 @@
  */
 
 import { useState, useRef } from "react";
-import { Download, X, Loader2, Check, Palette } from "lucide-react";
+import { Download, X, Loader2, Check, Palette, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Store, Product } from "@/lib/types";
@@ -1217,7 +1217,28 @@ export function CatalogPdfExportButton({
             </div>
 
             {/* Contenido */}
-            <div className="p-5 space-y-5">
+            {store.plan === "semilla" ? (
+              <div className="p-6 text-center space-y-4">
+                <div className="mx-auto h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <Lock className="h-6 w-6" />
+                </div>
+                <div className="space-y-1.5">
+                  <h3 className="font-bold text-base">Función Exclusiva para Planes de Paga</h3>
+                  <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                    La exportación de catálogo interactivo en formato PDF vectorial está disponible para tiendas en plan <strong>Emprendedor (S/ 19.90/mes)</strong>, <strong>Catálogo Pro</strong> o <strong>Ilimitado</strong>.
+                  </p>
+                </div>
+                <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+                  <Button size="sm" onClick={() => (window.location.href = "/admin/plan")} className="font-semibold gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white border-none shadow-md">
+                    <Sparkles className="h-4 w-4" /> Desbloquear con Plan Emprendedor
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setOpen(false)}>
+                    Cerrar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-5 space-y-5">
               {/* Elige el estilo */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
@@ -1316,6 +1337,7 @@ export function CatalogPdfExportButton({
                 )}
               </Button>
             </div>
+            )}
           </div>
         </div>
       )}

@@ -35,6 +35,7 @@ import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
+import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 
@@ -1073,11 +1074,7 @@ function DisenoUnificadoPage() {
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-auto">
                     {currentPlanLevel >= 1 ? (
-                      <Link to="/admin/productos">
-                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
-                          Exportar en Productos
-                        </Button>
-                      </Link>
+                      <CatalogPdfExportButton store={store} variant="admin" />
                     ) : (
                       <Link to="/admin/plan">
                         <Button size="sm" variant="outline" className="text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold gap-1">

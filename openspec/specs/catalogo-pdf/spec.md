@@ -44,5 +44,18 @@ El PDF generado DEBE ser interactivo y actuar como un folleto digital dinámico.
 - **Cuando** se visualiza un producto en el PDF
 - **Entonces** se dibuja un botón verde "PEDIR" al lado del precio con un hipervínculo que abre WhatsApp con el número del comercio y un mensaje pre-redactado consultando por dicho producto.
 
+### Requisito: Restricción por Plan de Suscripcion
+La función de Exportación de Catálogo en PDF DEBE estar desbloqueada y disponible para todos los comercios en planes de paga (`emprendedor`, `pro`, `ilimitado`). En el plan `semilla` (Gratuito), la función DEBE mostrarse bloqueada con una invitación a actualizar al Plan Emprendedor (S/ 19.90/mes) o superior.
+
+#### Escenario: Acceso desde plan de paga (Emprendedor, Pro, Ilimitado)
+- **Dado** que la tienda se encuentra en plan `emprendedor`, `pro` o `ilimitado`
+- **Cuando** el usuario hace clic en "Descargar PDF" o "Exportar Catálogo en PDF"
+- **Entonces** se despliega el selector de 5 temas visuales y se permite generar y descargar el archivo PDF sin restricciones.
+
+#### Escenario: Intento de acceso desde Plan Semilla
+- **Dado** que la tienda se encuentra en plan `semilla`
+- **Cuando** el usuario intenta acceder a la exportación en PDF
+- **Entonces** se despliega el modal informativo indicando "Función Exclusiva para Planes de Paga" con enlace directo al módulo de actualización de plan (`/admin/plan`).
+
 ## Trazabilidad
-Casos de prueba: `src/components/public/__tests__/CatalogPdfExport.test.ts` · Código: `src/components/public/CatalogPdfExport.tsx`
+Casos de prueba: `src/components/public/__tests__/CatalogPdfExport.test.ts` · Código: `src/components/public/CatalogPdfExport.tsx`, `src/routes/admin.diseno.tsx`, `src/routes/admin.plan.tsx`
