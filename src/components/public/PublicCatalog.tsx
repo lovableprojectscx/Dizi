@@ -1448,6 +1448,7 @@ export function PublicCatalog({
   const rawModelId = resolveRenderModel(isMockup ? (store.model || "minimalista") : getEffectiveModel(store));
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
+  const showDesktopSidebar = mode === "catalog" && !isMockup && cfg.layout === "grid";
 
   const isPremiumModel =
     modelId === "bloom" ||
@@ -3006,14 +3007,15 @@ export function PublicCatalog({
       <main
         className={cn("mx-auto px-4 pt-6 pb-32", mode === "catalog" ? "max-w-7xl" : "max-w-5xl")}
       >
+        {/* ── SECCIÓN PRINCIPAL: FILTROS + GRILLA DE PRODUCTOS ── */}
         <div
           className={cn(
             "w-full",
-            mode === "catalog" && (isMockup ? "flex flex-col gap-4" : "flex flex-col md:flex-row gap-8 items-start"),
+            showDesktopSidebar ? "flex flex-col md:flex-row gap-8 items-start" : "flex flex-col gap-4",
           )}
         >
-          {/* SIDEBAR DE FILTROS (Desktop - solo cuando no es mockup de movil) */}
-          {mode === "catalog" && !isMockup && (
+          {/* SIDEBAR DE FILTROS (Desktop - solo en diseño de grilla tradicional) */}
+          {showDesktopSidebar && (
             <aside
               style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
               className="hidden md:block w-[240px] shrink-0 space-y-6 self-start sticky top-[120px] p-5 border rounded-2xl"
