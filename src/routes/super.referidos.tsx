@@ -208,7 +208,7 @@ function ReferidosPage() {
       const { error } = await supabase.rpc("process_referral_reward", {
         p_referred_store_id: referredStore.id,
         p_referred_plan: referredStore.plan,
-        p_referred_price: PLANS[referredStore.plan]?.price || 9.9,
+        p_referred_price: PLANS[referredStore.plan]?.price || 19.9,
       });
 
       if (error) throw error;
