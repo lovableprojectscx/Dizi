@@ -3400,8 +3400,8 @@ export function PublicCatalog({
                           "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
                       }}
                     />
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    {/* Gradient overlay suave */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                     {p.isOnSale && (
                       <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                         OFERTA
@@ -4036,7 +4036,7 @@ export function PublicCatalog({
                           "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
                     {filtered[0].isOnSale && (
                       <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
                         OFERTA
@@ -4187,7 +4187,7 @@ export function PublicCatalog({
                               "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85";
                           }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
                         {p.isOnSale && (
                           <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1">
                             SALE
@@ -4264,7 +4264,7 @@ export function PublicCatalog({
                                 "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80";
                             }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                           {p.isOnSale && (
                             <span className="absolute top-3 left-3 text-[9px] font-bold tracking-widest uppercase border border-white/50 text-white px-2 py-0.5">
                               SALE
@@ -4340,9 +4340,9 @@ export function PublicCatalog({
                           (e.target as HTMLImageElement).src = fallback;
                         }}
                       />
-                      {/* Gradient overlay */}
+                      {/* Gradient overlay suave */}
                       <div
-                        className={`absolute inset-0 ${isWide ? "bg-gradient-to-r from-black/70 via-black/30 to-transparent" : "bg-gradient-to-t from-black/75 via-black/10 to-transparent"}`}
+                        className={`absolute inset-0 ${isWide ? "bg-gradient-to-r from-black/45 via-black/10 to-transparent" : "bg-gradient-to-t from-black/50 via-black/10 to-transparent"}`}
                       />
                       {p.isOnSale && (
                         <span className="absolute top-3 left-3 text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
@@ -7028,7 +7028,7 @@ export function PublicCatalog({
                         alt={store.name}
                         className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 animate-in fade-in"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent z-10" />
                       <div className="absolute bottom-0 left-0 right-0 p-4 z-10 flex items-end justify-between gap-4">
                         <div>
                           <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
