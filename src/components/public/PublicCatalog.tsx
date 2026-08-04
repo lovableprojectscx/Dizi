@@ -933,6 +933,9 @@ const scanProductBadges = (
   };
   const badges: { emoji: string; label: string }[] = [];
 
+  if (hasTag("best_seller", "Más Vendido", ["destacado", "más vendido", "popular", "top"])) {
+    badges.push({ emoji: "🔥", label: "Más Vendido" });
+  }
   if (hasTag("spicy", "Picante", ["picante", "chile", "aji", "hot", "spicy"])) {
     badges.push({ emoji: "🌶️", label: "Picante" });
   }
@@ -5263,10 +5266,27 @@ export function PublicCatalog({
                                       loading="lazy"
                                     />
                                     {p.isOnSale && (
-                                      <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
+                                      <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg z-10">
                                         Oferta
                                       </span>
                                     )}
+                                    {(() => {
+                                      const badges = scanProductBadges(p.name, p.description, p.tags);
+                                      if (badges.length === 0) return null;
+                                      return (
+                                        <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1 pointer-events-none z-10">
+                                          {badges.slice(0, 2).map((b, i) => (
+                                            <span
+                                              key={i}
+                                              className="bg-black/65 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1"
+                                            >
+                                              <span>{b.emoji}</span>
+                                              <span>{b.label}</span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                   {/* Info */}
                                   <div className="p-3 pt-1 space-y-1 text-left">
@@ -8070,6 +8090,42 @@ export function PublicCatalog({
                       })()}
                     </span>
                   </div>
+
+                  {/* Etiquetas Táctiles del Producto */}
+                  {(() => {
+                    const productBadges = scanProductBadges(
+                      viewingProduct.name,
+                      viewingProduct.description,
+                      viewingProduct.tags
+                    );
+                    if (productBadges.length === 0) return null;
+                    return (
+                      <div className="pt-1">
+                        <p
+                          className="text-xs font-bold uppercase tracking-widest mb-1.5"
+                          style={{ color: "var(--primary)" }}
+                        >
+                          Etiquetas
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {productBadges.map((b, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border shadow-xs transition-all hover:scale-105"
+                              style={{
+                                backgroundColor: "var(--card)",
+                                borderColor: "var(--border)",
+                                color: "var(--foreground)",
+                              }}
+                            >
+                              <span className="text-sm">{b.emoji}</span>
+                              <span>{b.label}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Action footer — also themed */}
