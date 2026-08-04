@@ -2897,16 +2897,10 @@ export function PublicCatalog({
       {modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
         <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-zinc-950">
           {/* Blurred background image to avoid letterboxes, while keeping main banner fully visible */}
-          <div
-            className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-xl opacity-60 scale-105"
-            style={{ backgroundImage: `url(${getOptimizedImageUrl(activeBanners[0], 200)})` }}
-          />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
-
           <img
             src={getOptimizedImageUrl(activeBanners[0], 1200)}
             alt={store.bannerTitle || store.name}
-            className="absolute inset-0 w-full h-full object-contain animate-in fade-in duration-1000"
+            className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-1000"
           />
           <div className="absolute inset-0 bg-black/10 md:bg-black/35" />
 
@@ -4826,15 +4820,10 @@ export function PublicCatalog({
                                     : "opacity-0 scale-105 z-0 pointer-events-none",
                                 )}
                               >
-                                {/* Blurred background */}
-                                <div
-                                  className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                  style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
-                                />
                                 <img
                                   src={getOptimizedImageUrl(slide, 1200)}
                                   alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                  className="w-full h-full object-contain relative z-10"
+                                  className="w-full h-full object-cover relative z-10"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-20" />
                               </div>
