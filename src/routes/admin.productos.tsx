@@ -65,6 +65,7 @@ import {
   LayoutGrid,
   X,
   Package,
+  Search,
   CupSoda,
   Pizza,
   IceCream,
@@ -544,6 +545,20 @@ function ProductsPage() {
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
 
+  // Buscador y filtro de productos para el administrador
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
+
+  const filteredProducts = store.products.filter((p) => {
+    const matchesSearch =
+      searchQuery.trim() === "" ||
+      p.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase().trim()));
+    const matchesCategory =
+      selectedCategoryFilter === "all" || p.categoryId === selectedCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
   const handleSingleProductOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       const hasChanges =
@@ -998,6 +1013,52 @@ function ProductsPage() {
             </div>
           </div>
 
+          {/* ── BARRA DE BÚSQUEDA Y FILTRO DE PRODUCTOS ── */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/60 p-3 rounded-2xl shadow-xs">
+            {/* Input de Búsqueda por Nombre o Descripción */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Buscar producto por nombre..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-9 h-10 text-xs rounded-xl border-border/60 bg-background focus-visible:ring-primary font-medium"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors p-1"
+                  title="Limpiar búsqueda"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Selector de Filtro por Categoría */}
+            <div className="w-full sm:w-60 shrink-0">
+              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                <SelectTrigger className="h-10 text-xs rounded-xl border-border/60 bg-background font-medium">
+                  <SelectValue placeholder="Todas las categorías" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las categorías ({store.products.length})</SelectItem>
+                  {store.categories.map((cat) => {
+                    const { label } = parseCategoryName(cat.name);
+                    const count = store.products.filter((p) => p.categoryId === cat.id).length;
+                    return (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {label} ({count})
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {/* Banner: productos ocultos por vencimiento */}
           {hiddenByExpiry > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
@@ -1047,7 +1108,7 @@ function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {store.products.map((p, idx) => (
+                {filteredProducts.map((p, idx) => (
                   <TableRow key={p.id}>
                     <TableCell>
                       {p.image ? (
@@ -1162,13 +1223,15 @@ function ProductsPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {store.products.length === 0 && (
+                {filteredProducts.length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={7}
-                      className="text-center text-sm text-muted-foreground py-8"
+                      className="text-center text-sm text-muted-foreground py-10"
                     >
-                      Aún no tienes productos. Crea el primero.
+                      {store.products.length === 0
+                        ? "Aún no tienes productos. Crea el primero."
+                        : "No se encontraron productos que coincidan con la búsqueda."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -1178,12 +1241,14 @@ function ProductsPage() {
 
           {/* Cards móvil */}
           <div className="flex flex-col gap-3 md:hidden">
-            {store.products.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-8">
-                Aún no tienes productos. Crea el primero.
+            {filteredProducts.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-10">
+                {store.products.length === 0
+                  ? "Aún no tienes productos. Crea el primero."
+                  : "No se encontraron productos que coincidan con la búsqueda."}
               </p>
             )}
-            {store.products.map((p, idx) => (
+            {filteredProducts.map((p, idx) => (
               <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
                 {p.image ? (
                   <img
