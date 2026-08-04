@@ -13,10 +13,16 @@ Cada plan DEBE definir su precio mensual, tarifa anual (con 25% de ahorro) y el 
 - **Ilimitado**: S/ 69.90 /mes — S/ 629 /año (Ahorras S/ 210) — Límite de **1,000 productos**.
 Alcanzado el límite del plan activo o efectivo, la creación o reactivación de productos se deniega con invitación al upgrade.
 
-#### Escenario: Límite superado en Plan Emprendedor
-- **Dado** una tienda Emprendedor con 100 productos activos
-- **Cuando** intenta agregar el N.º 101 o reactivar uno inactivo
-- **Entonces** la operación se deniega y se muestra la invitación de upgrade a Catálogo Pro (300 productos)
+### Requisito: Servicio Opcional de Configuración Asistida
+El sistema DEBE ofrecer como servicio opcional llave en mano la **Configuración Asistida Dizi por S/ 79 (Pago Único)**, que incluye la carga de hasta 30 productos, banner de portada, categorías, perfil de Link en Bio y capacitación de 20 minutos por WhatsApp o Meet.
+
+### Requisito: Toggle de Facturación Mensual / Anual en Landing Page
+La Landing Page pública (`https://dizi.idenza.site`) DEBE incluir un selector interactivo **Mensual / Anual (Ahorra hasta 25%)**. Al activar el modo Anual, las tarjetas de precios DEBEN proyectar la tarifa anual total y mostrar el costo mensual equivalente reducido.
+
+#### Escenario: Cambio a Facturación Anual
+- **Dado** que un visitante se encuentra en la sección de precios de la Landing Page
+- **Cuando** activa el selector de facturación Anual
+- **Entonces** la tarjeta del Plan Emprendedor muestra "S/ 179 /año (S/ 14.90/m)", Catálogo Pro muestra "S/ 359 /año (S/ 29.90/m)" e Ilimitado muestra "S/ 629 /año (S/ 52.40/m)".
 
 ### Requisito: Degradación con gracia (RF-06)
 Al vencer la suscripción se aplican dos periodos: 3 días de gracia de funciones (`GRACE_DAYS`) y 15 de diseño (`MODEL_GRACE_DAYS`).
