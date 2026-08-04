@@ -1,4 +1,4 @@
--- Migration: Fix get_public_store RPC to preserve the store's selected design model across all plans
+-- Migration: Fix get_public_store RPC to preserve the store's selected design model across all plans and include bio fields
 -- Date: 2026-08-04
 
 CREATE OR REPLACE FUNCTION get_public_store(store_slug text)
@@ -81,6 +81,17 @@ BEGIN
     'cancel_reason', store_row.cancel_reason,
     'plan_duration_months', store_row.plan_duration_months,
     'bio_description', store_row.bio_description,
+    'bio_links_enabled', COALESCE(store_row.bio_links_enabled, false),
+    'bio_banner', store_row.bio_banner,
+    'bio_logo', store_row.bio_logo,
+    'bio_theme', store_row.bio_theme,
+    'bio_typography', store_row.bio_typography,
+    'bio_show_catalog_button', store_row.bio_show_catalog_button,
+    'bio_button_style', store_row.bio_button_style,
+    'bio_button_color', store_row.bio_button_color,
+    'bio_button_text_color', store_row.bio_button_text_color,
+    'bio_bg_image', store_row.bio_bg_image,
+    'bio_bg_color', store_row.bio_bg_color,
     'location_lat', store_row.location_lat,
     'location_lng', store_row.location_lng,
     'location_address', store_row.location_address,
