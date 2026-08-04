@@ -31,13 +31,13 @@ Todo precio DEBE mostrarse con prefijo `S/` y dos decimales; sin precio definido
 - **Cuando** se despliega en el catálogo
 - **Entonces** la tarjeta muestra "A consultar"
 
-### Requisito: Preservación de Modelo Visual y Carrusel de Banners
-El servidor DEBE entregar en `get_public_store` el modelo visual elegido por el dueño (`model`), renderizándolo fielmente en el catálogo público con rotación de carrusel multi-banner de 5 segundos e indicadores táctiles, manteniendo la columna de filtros lateral en pantallas de escritorio (PC).
+### Requisito: Preservación de Modelo Visual y Carrusel Multi-Banner Responsivo
+El servidor DEBE entregar en `get_public_store` el modelo visual elegido por el dueño (`model`) y la lista completa de banners cargados concatenados por `|||` desde la columna `banners` o `banner_image`. El catálogo público DEBE renderizarlos con una relación de aspecto responsiva (`aspect-[16/7]` en móvil y `aspect-[21/7]` en PC) eliminando barras borrosas laterales (`blur-lg`), ofreciendo rotación automática cada 5 segundos y botones/puntos de navegación interactivos.
 
 #### Escenario: Renderizado completo en PC y Móvil
-- **Dado** que la tienda tiene configurado un modelo visual (ej. `bite`, `overlay`, `hero`, `spotlight`)
+- **Dado** que la tienda tiene configurado un modelo visual (ej. `bloom`, `bite`, `hero`, `spotlight`) con 2 o más banners cargados
 - **Cuando** un visitante accede a la URL pública `/t/:slug`
-- **Entonces** se renderiza la plantilla seleccionada, el carrusel de banners rota dinámicamente y en PC se mantiene visible la barra lateral de filtros y categorías.
+- **Entonces** se renderiza la plantilla seleccionada, el carrusel de banners rota dinámicamente cada 5s, las imágenes cubren de borde a borde el 100% del contenedor sin franjas laterales borrosas y en PC se mantiene la barra lateral de categorías.
 
 ## Trazabilidad
-Casos de prueba: CP-01 a CP-04, CP-14 · E2E-01 · Código: `src/routes/t.$slug.tsx`, `src/components/public/PublicCatalog.tsx`, RPC `get_public_store`
+Casos de prueba: CP-01 a CP-04, CP-14 · E2E-01 · Código: `src/routes/t.$slug.tsx`, `src/components/public/PublicCatalog.tsx`, RPC `get_public_store`, migración `20260804174500_fix_get_public_store_multi_banners.sql`
