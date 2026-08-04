@@ -5408,7 +5408,7 @@ export function PublicCatalog({
                               background:
                                 "linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--card)) 0%, color-mix(in srgb, var(--primary) 2%, var(--card)) 100%)",
                             }}
-                            className="relative w-full h-[25vh] xs:h-[28vh] sm:h-[400px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
+                            className="relative w-full aspect-[16/7] sm:aspect-[21/7] max-h-[360px] overflow-hidden rounded-[2.5rem_2.5rem_3.5rem_3.5rem] border shadow-md"
                           >
                             {banners.length > 0 ? (
                               <>
@@ -5425,15 +5425,10 @@ export function PublicCatalog({
                                           : "opacity-0 scale-105 z-0 pointer-events-none",
                                       )}
                                     >
-                                      {/* Blurred background */}
-                                      <div
-                                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                        style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
-                                      />
                                       <img
                                         src={getOptimizedImageUrl(slide, 1200)}
                                         alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                        className="w-full h-full object-contain relative z-10"
+                                        className="w-full h-full object-cover relative z-10"
                                       />
                                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
                                     </div>
@@ -6176,15 +6171,10 @@ export function PublicCatalog({
                                       : "opacity-0 scale-105 z-0 pointer-events-none",
                                   )}
                                 >
-                                  {/* Blurred background */}
-                                  <div
-                                    className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                                    style={{ backgroundImage: `url(${getOptimizedImageUrl(slide, 200)})` }}
-                                  />
                                   <img
                                     src={getOptimizedImageUrl(slide, 1200)}
                                     alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                    className="w-full h-full object-contain relative z-10"
+                                    className="w-full h-full object-cover relative z-10"
                                   />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-20" />
                                 </div>
@@ -7007,10 +6997,6 @@ export function PublicCatalog({
                       style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
                     >
                       {/* Blurred background */}
-                      <div
-                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 transition-all duration-700"
-                        style={{ backgroundImage: `url(${getOptimizedImageUrl(bannerUrl, 200)})` }}
-                      />
                       <img
                         key={currentBannerIndex}
                         src={getOptimizedImageUrl(bannerUrl, 1200)}
