@@ -892,28 +892,18 @@ function RegisterPage() {
     },
   ];
 
-  const planLevelMap: Record<PlanId, number> = { semilla: 0, emprendedor: 1, pro: 2, ilimitado: 3 };
-  const userPlanLevel = planLevelMap[plan];
-
   const models = ALL_MODELS.map((m) => ({
     ...m,
-    locked: m.planLevel > userPlanLevel,
+    locked: false,
     recommended: m.niches.includes(selectedNiche),
   }));
 
   useEffect(() => {
-    // Al cambiar nicho, seleccionar el primer modelo disponible para ese nicho y plan
-    const first = ALL_MODELS.find(
-      (m) => m.niches.includes(selectedNiche) && m.planLevel <= userPlanLevel,
-    );
+    // Al cambiar nicho, seleccionar el primer modelo sugerido para ese nicho
+    const first = ALL_MODELS.find((m) => m.niches.includes(selectedNiche));
     if (first) setSelectedModel(first.id);
-    else
-      setSelectedModel(
-        userPlanLevel === 0
-          ? "minimalista"
-          : (ALL_MODELS.find((m) => m.planLevel <= userPlanLevel)?.id ?? "minimalista"),
-      );
-  }, [selectedNiche, plan]);
+    else setSelectedModel("minimalista");
+  }, [selectedNiche]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1267,15 +1257,13 @@ function RegisterPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex justify-between">
                     <span>Modelo de Catálogo</span>
-                    {userPlanLevel === 0 && (
-                      <span className="text-[10px] text-muted-foreground font-normal normal-case">
-                        4 disponibles en Semilla
-                      </span>
-                    )}
+                    <span className="text-[10px] text-muted-foreground font-normal normal-case">
+                      Todos los modelos disponibles
+                    </span>
                   </label>
                   <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
                     {/* Recomendados para el nicho */}
-                    {models.filter((m) => m.recommended && !m.locked).length > 0 && (
+                    {models.filter((m) => m.recommended).length > 0 && (
                       <>
                         <div className="col-span-2 flex items-center gap-1.5 px-0.5">
                           <Star className="w-3 h-3 text-primary fill-primary" />
@@ -1284,7 +1272,7 @@ function RegisterPage() {
                           </p>
                         </div>
                         {models
-                          .filter((m) => m.recommended && !m.locked)
+                          .filter((m) => m.recommended)
                           .map((m) => (
                             <div
                               key={m.id + "_rec"}
@@ -1331,30 +1319,15 @@ function RegisterPage() {
                     {models.map((m) => (
                       <div
                         key={m.id}
-                        onClick={() => !m.locked && setSelectedModel(m.id)}
-                        className={`relative rounded-xl border-2 overflow-hidden transition-all ${
-                          m.locked
-                            ? "opacity-50 cursor-not-allowed grayscale-[20%]"
-                            : "cursor-pointer hover:shadow-md hover:-translate-y-0.5"
-                        } ${
-                          selectedModel === m.id && !m.locked
+                        onClick={() => setSelectedModel(m.id)}
+                        className={`relative rounded-xl border-2 overflow-hidden transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${
+                          selectedModel === m.id
                             ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
                             : "border-slate-100 hover:border-primary/40"
                         }`}
                       >
-                        {/* Candado overlay */}
-                        {m.locked && (
-                          <div className="absolute inset-0 z-10 bg-black/5 backdrop-blur-[1px] flex flex-col items-center justify-center gap-1">
-                            <div className="h-7 w-7 rounded-full bg-white/90 shadow flex items-center justify-center">
-                              <Lock className="h-3.5 w-3.5 text-slate-500" />
-                            </div>
-                            <span className="text-[7px] font-extrabold uppercase tracking-widest text-slate-500">
-                              Premium
-                            </span>
-                          </div>
-                        )}
                         {/* Checkmark */}
-                        {selectedModel === m.id && !m.locked && (
+                        {selectedModel === m.id && (
                           <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
                             <CheckCircle2 className="w-3 h-3" />
                           </div>
