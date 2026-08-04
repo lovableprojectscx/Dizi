@@ -18,5 +18,13 @@ El registro DEBE exigir un token vigente, no usado y asociado a un plan; al comp
 - **Cuando** `check_invite` lo valida
 - **Entonces** el registro se bloquea con "Invitación inválida o expirada"
 
+### Requisito: Selección de Modelo de Catálogo sin Restricción por Plan
+Durante el registro en 3 pasos, el comerciante DEBE poder seleccionar libremente cualquiera de los modelos de diseño visuales (Minimalista, Clásico, Vibrante, Eco Hero, Nature Mint, Nocturno, Elite +, Boutique, Bite, Hero, Spotlight, etc.) sin bloqueos por nivel de plan.
+
+#### Escenario: Elección libre de diseño en Plan Semilla o Superior
+- **Dado** que un usuario se registra en cualquier plan (Semilla, Emprendedor, Pro, Ilimitado)
+- **Cuando** llega al Paso 2 (Diseño)
+- **Entonces** todos los modelos se muestran 100% desbloqueados para su libre elección
+
 ## Trazabilidad
-Casos de prueba: CP-10, CP-11 · E2E-02 · Código: `src/routes/register.tsx`, migración `20260617020000_secure_invites_lookup.sql`
+Casos de prueba: CP-10, CP-11 · E2E-02 · Código: `src/routes/register.tsx`, `src/routes/admin.diseno.tsx`, migración `20260804153500_fix_get_public_store_allow_all_models.sql`
