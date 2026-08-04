@@ -3461,11 +3461,29 @@ export function PublicCatalog({
                     {activeBanners.length > 0 && (
                       <div className="absolute inset-0 w-full h-full">
                         <img
-                          src={getOptimizedImageUrl(activeBanners[0], 1200)}
+                          key={currentBannerIndex}
+                          src={getOptimizedImageUrl(activeBanners[currentBannerIndex] || activeBanners[0], 1200)}
                           alt={store.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-700 animate-in fade-in"
                         />
                         <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" />
+                        {activeBanners.length > 1 && (
+                          <div className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
+                            {activeBanners.map((_, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setCurrentBannerIndex(idx)}
+                                className={cn(
+                                  "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
+                                  idx === currentBannerIndex
+                                    ? "w-5 bg-white"
+                                    : "w-1.5 bg-white/40 hover:bg-white/70",
+                                )}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -6990,32 +7008,56 @@ export function PublicCatalog({
                       : bStyle === "curved"
                         ? "3.5rem 1.5rem 3.5rem 1.5rem"
                         : "1.5rem"; // 24px rounded
-                  return activeBanners[0] ? (
+                  const bannerUrl = activeBanners[currentBannerIndex] || activeBanners[0];
+                  return activeBanners.length > 0 ? (
                     <div
                       className={cn(
-                        "relative w-full overflow-hidden bg-zinc-950",
+                        "relative w-full overflow-hidden bg-zinc-950 group",
                         bStyle === "direct" ? "-mx-4 w-[calc(100%+2rem)]" : "",
                       )}
                       style={{ borderRadius: borderVal, aspectRatio: "16/7" }}
                     >
                       {/* Blurred background */}
                       <div
-                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105"
-                        style={{ backgroundImage: `url(${getOptimizedImageUrl(activeBanners[0], 200)})` }}
+                        className="absolute inset-0 w-full h-full bg-cover bg-center filter blur-lg opacity-40 scale-105 transition-all duration-700"
+                        style={{ backgroundImage: `url(${getOptimizedImageUrl(bannerUrl, 200)})` }}
                       />
                       <img
-                        src={getOptimizedImageUrl(activeBanners[0], 1200)}
+                        key={currentBannerIndex}
+                        src={getOptimizedImageUrl(bannerUrl, 1200)}
                         alt={store.name}
-                        className="absolute inset-0 w-full h-full object-contain"
+                        className="absolute inset-0 w-full h-full object-contain transition-opacity duration-500 animate-in fade-in"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-                        <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
-                          {(store as any).bannerTitle || `Catálogo ${store.name}`}
-                        </p>
-                        <p className="text-white/70 text-xs mt-0.5">
-                          Toca un producto para más info
-                        </p>
+                      <div className="absolute bottom-0 left-0 right-0 p-4 z-10 flex items-end justify-between gap-4">
+                        <div>
+                          <p className="text-white font-black text-xl leading-tight drop-shadow-lg">
+                            {(store as any).bannerTitle || `Catálogo ${store.name}`}
+                          </p>
+                          <p className="text-white/70 text-xs mt-0.5">
+                            Toca un producto para más info
+                          </p>
+                        </div>
+
+                        {/* Banner Dots / Indicators */}
+                        {activeBanners.length > 1 && (
+                          <div className="flex items-center gap-1.5 shrink-0 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/20">
+                            {activeBanners.map((_, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setCurrentBannerIndex(idx)}
+                                aria-label={`Ver banner ${idx + 1}`}
+                                className={cn(
+                                  "h-1.5 rounded-full transition-all duration-300 cursor-pointer",
+                                  idx === currentBannerIndex
+                                    ? "w-5 bg-white"
+                                    : "w-1.5 bg-white/40 hover:bg-white/70",
+                                )}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : (
