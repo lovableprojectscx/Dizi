@@ -1,4 +1,4 @@
--- Migration: Fix get_public_store RPC to preserve the store's selected design model across all plans and include bio fields
+-- Migration: Fix get_public_store RPC to preserve the store's selected design model across all plans, bio fields, and quick_links
 -- Date: 2026-08-04
 
 CREATE OR REPLACE FUNCTION get_public_store(store_slug text)
@@ -92,6 +92,13 @@ BEGIN
     'bio_button_text_color', store_row.bio_button_text_color,
     'bio_bg_image', store_row.bio_bg_image,
     'bio_bg_color', store_row.bio_bg_color,
+    'quick_links', (
+      CASE WHEN store_plan = 'semilla' THEN
+          COALESCE((SELECT jsonb_agg(value) FROM (SELECT value FROM jsonb_array_elements(COALESCE(store_row.quick_links, '[]'::jsonb)) LIMIT 3) t), '[]'::jsonb)
+      ELSE
+          COALESCE(store_row.quick_links, '[]'::jsonb)
+      END
+    ),
     'location_lat', store_row.location_lat,
     'location_lng', store_row.location_lng,
     'location_address', store_row.location_address,
