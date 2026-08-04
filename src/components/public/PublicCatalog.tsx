@@ -7026,7 +7026,7 @@ export function PublicCatalog({
                         key={currentBannerIndex}
                         src={getOptimizedImageUrl(bannerUrl, 1200)}
                         alt={store.name}
-                        className="absolute inset-0 w-full h-full object-contain transition-opacity duration-500 animate-in fade-in"
+                        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 animate-in fade-in"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
                       <div className="absolute bottom-0 left-0 right-0 p-4 z-10 flex items-end justify-between gap-4">
