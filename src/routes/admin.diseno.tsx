@@ -946,6 +946,11 @@ function DisenoUnificadoPage() {
                             ? "El Plan Semilla no incluye imágenes personalizadas en portada. Actualiza a Emprendedor (1 banner) o Pro/Ilimitado (hasta 5 en carrusel)."
                             : `Gestiona hasta ${maxAllowedBanners} banner(s) para la portada de tu catálogo. (${bannerList.length}/${maxAllowedBanners} subidos)`}
                         </p>
+                        <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg w-fit shadow-2xs">
+                          <span className="text-amber-600">📐 Tamaño recomendado:</span>
+                          <span className="font-black text-amber-950">1200 × 400 px</span>
+                          <span className="text-amber-700 font-normal hidden sm:inline">(Formato panorámico 3:1)</span>
+                        </div>
                       </div>
                     </div>
 
