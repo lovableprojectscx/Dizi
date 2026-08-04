@@ -71,6 +71,7 @@ import {
   IceCream,
   Cake,
   Utensils,
+  Tag,
   Flower,
   Gift,
   Heart,
@@ -257,7 +258,7 @@ function CategoryIcon({ iconKey, className }: { iconKey: string; className?: str
         </svg>
       );
     default:
-      return <Utensils className={sizeClass} />;
+      return <Tag className={sizeClass} />;
   }
 }
 

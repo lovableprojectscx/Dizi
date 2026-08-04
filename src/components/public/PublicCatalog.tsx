@@ -38,6 +38,7 @@ import {
   Leaf,
   LayoutGrid,
   Utensils,
+  Tag,
   ChevronLeft,
   ChevronRight,
   BadgeCheck,
@@ -909,7 +910,7 @@ function CategoryIcon({
           </svg>
         );
       default:
-        return null;
+        return <Tag className={sizeClass} />;
     }
   };
   return (
@@ -5178,7 +5179,7 @@ export function PublicCatalog({
                                   style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
                                 />
                               ) : (
-                                <Utensils
+                                <Tag
                                   className="h-4 w-4 shrink-0"
                                   style={{ color: active ? "var(--primary-foreground)" : "var(--primary)" }}
                                 />
@@ -6703,7 +6704,7 @@ export function PublicCatalog({
                                   }}
                                 />
                               ) : (
-                                <Utensils
+                                <Tag
                                   className="h-4 w-4 shrink-0"
                                   style={{
                                     color: active ? "var(--primary-foreground)" : "var(--primary)",
