@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import type { PlanId } from "@/lib/types";
 
 const PLAN_OPTIONS: { value: PlanId; label: string }[] = [
-  { value: "emprendedor", label: "Emprendedor (S/ 9.90)" },
-  { value: "pro", label: "Pro (S/ 14.90)" },
-  { value: "ilimitado", label: "Ilimitado (S/ 34.90)" },
+  { value: "emprendedor", label: "Emprendedor (S/ 19.90 / mes)" },
+  { value: "pro", label: "Catálogo Pro (S/ 39.90 / mes)" },
+  { value: "ilimitado", label: "Ilimitado (S/ 69.90 / mes)" },
   { value: "semilla", label: "Semilla (Gratis)" },
 ];
 

@@ -7,13 +7,14 @@ export interface Plan {
   name: string;
   productLimit: number;
   price: number;
+  annualPrice: number;
 }
 
 export const PLANS: Record<PlanId, Plan> = {
-  semilla: { id: "semilla", name: "Semilla", productLimit: 20, price: 0 },
-  emprendedor: { id: "emprendedor", name: "Emprendedor", productLimit: 50, price: 9.9 },
-  pro: { id: "pro", name: "Pro", productLimit: 200, price: 14.9 },
-  ilimitado: { id: "ilimitado", name: "Ilimitado", productLimit: Infinity, price: 34.9 },
+  semilla: { id: "semilla", name: "Semilla", productLimit: 20, price: 0, annualPrice: 0 },
+  emprendedor: { id: "emprendedor", name: "Emprendedor", productLimit: 100, price: 19.9, annualPrice: 179 },
+  pro: { id: "pro", name: "Catálogo Pro", productLimit: 300, price: 39.9, annualPrice: 359 },
+  ilimitado: { id: "ilimitado", name: "Ilimitado", productLimit: 1000, price: 69.9, annualPrice: 629 },
 };
 
 export const PLAN_DURATION_OPTIONS = [

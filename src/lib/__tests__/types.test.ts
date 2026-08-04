@@ -113,8 +113,14 @@ describe("Pruebas unitarias de Reglas de Suscripción (types.ts)", () => {
     });
 
     it("debe retornar el límite del plan original si está vigente", () => {
-      const store = createMockStore("pro", "2026-07-10T12:00:00Z");
-      expect(getEffectiveProductLimit(store)).toBe(200);
+      const storePro = createMockStore("pro", "2026-07-10T12:00:00Z");
+      expect(getEffectiveProductLimit(storePro)).toBe(300);
+
+      const storeEmprendedor = createMockStore("emprendedor", "2026-07-10T12:00:00Z");
+      expect(getEffectiveProductLimit(storeEmprendedor)).toBe(100);
+
+      const storeIlimitado = createMockStore("ilimitado", "2026-07-10T12:00:00Z");
+      expect(getEffectiveProductLimit(storeIlimitado)).toBe(1000);
     });
 
     it("debe retornar el límite del plan semilla si el plan venció y pasó la gracia", () => {

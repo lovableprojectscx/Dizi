@@ -71,7 +71,6 @@ import {
   IceCream,
   Cake,
   Utensils,
-  Tag,
   Flower,
   Gift,
   Heart,

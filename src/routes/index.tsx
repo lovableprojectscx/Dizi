@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ 9.90.",
+          "Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ 19.90.",
       },
       {
         name: "keywords",
@@ -59,6 +59,7 @@ function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeNiche, setActiveNiche] = useState<string>("all");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -578,7 +579,7 @@ function LandingPage() {
               Catálogo Web + Link en Bio + Libro de Reclamaciones
             </h2>
             <p className="text-sm text-muted-foreground">
-              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú desde S/ 9.90 / mes.
+              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú desde S/ 19.90 / mes.
             </p>
           </div>
 
@@ -743,9 +744,35 @@ function LandingPage() {
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
               Planes Transparentes en Soles
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Las 15 estructuras de diseño están incluidas en todos los planes. Eliges según tus productos y marca.
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+              Las 15 estructuras de diseño están incluidas en todos los planes. Eliges según la cantidad de productos que necesitas exhibir.
             </p>
+
+            {/* Toggle Mensual / Anual */}
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <span className={`text-xs font-bold ${!isAnnual ? "text-foreground font-black" : "text-muted-foreground"}`}>
+                Mensual
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsAnnual(!isAnnual)}
+                className={`relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                  isAnnual ? "bg-primary" : "bg-muted-foreground/30"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    isAnnual ? "translate-x-7" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className={`text-xs font-bold flex items-center gap-1.5 ${isAnnual ? "text-foreground font-black" : "text-muted-foreground"}`}>
+                <span>Anual</span>
+                <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  Ahorra 25% (3 meses gratis)
+                </span>
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch font-sans">
@@ -763,7 +790,7 @@ function LandingPage() {
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Hasta 20 Productos</span>
+                    <span className="font-bold">Hasta 20 Productos</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -771,7 +798,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Carrito a WhatsApp</span>
+                    <span>Carrito directo a WhatsApp</span>
                   </li>
                 </ul>
               </div>
@@ -788,13 +815,17 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Emprendedor</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 9.90</span>
-                  <span className="text-xs text-muted-foreground">/mes</span>
+                  <span className="text-3xl font-black text-foreground">
+                    {isAnnual ? "S/ 179" : "S/ 19.90"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {isAnnual ? "/año (S/ 14.90/m)" : "/mes"}
+                  </span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Hasta 50 Productos</span>
+                    <span className="font-bold text-primary">Hasta 100 Productos</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -823,13 +854,17 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Catálogo Pro</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 14.90</span>
-                  <span className="text-xs text-muted-foreground">/mes</span>
+                  <span className="text-3xl font-black text-foreground">
+                    {isAnnual ? "S/ 359" : "S/ 39.90"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {isAnnual ? "/año (S/ 29.90/m)" : "/mes"}
+                  </span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1 font-medium">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Hasta 200 Productos</span>
+                    <span className="font-bold text-primary">Hasta 300 Productos</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -858,13 +893,17 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Ilimitado</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 34.90</span>
-                  <span className="text-xs text-muted-foreground">/mes</span>
+                  <span className="text-3xl font-black text-foreground">
+                    {isAnnual ? "S/ 629" : "S/ 69.90"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {isAnnual ? "/año (S/ 52.40/m)" : "/mes"}
+                  </span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Productos Ilimitados</span>
+                    <span className="font-bold">Hasta 1,000 Productos</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -878,6 +917,34 @@ function LandingPage() {
               </div>
               <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
                 <Link to="/register">Elegir Ilimitado</Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Servicio Opcional: Configuración Asistida S/ 79 */}
+          <div className="mt-8 p-6 rounded-3xl border border-blue-500/20 bg-blue-500/5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 text-xs font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                <Zap className="h-4 w-4" /> Servicio Opcional Llave en Mano
+              </div>
+              <h4 className="text-lg font-bold text-foreground">Configuración Asistida Dizi</h4>
+              <p className="text-xs text-muted-foreground max-w-2xl">
+                ¿Prefieres que dejemos tu catálogo listo para vender? Incluye carga de hasta 30 productos, banner personalizado, categorías, Link en Bio y capacitación guiada de 20 minutos por WhatsApp.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 shrink-0">
+              <div className="text-right">
+                <span className="text-2xl font-black text-foreground">S/ 79</span>
+                <span className="block text-[10px] text-muted-foreground font-bold">Pago único</span>
+              </div>
+              <Button asChild size="sm" className="font-bold text-xs rounded-xl h-10 bg-blue-600 hover:bg-blue-700 text-white">
+                <a
+                  href={`https://wa.me/51925176472?text=${encodeURIComponent("Hola Dizi, quiero solicitar el servicio de Configuración Asistida (S/ 79) para mi tienda.")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Solicitar por WhatsApp
+                </a>
               </Button>
             </div>
           </div>
