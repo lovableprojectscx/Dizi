@@ -3900,18 +3900,18 @@ export function PublicCatalog({
             ) : cfg.layout === "editorial" ? (
               /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
               <div className="space-y-3">
-                {filtered.map((p) => (
-                  <article
-                    key={p.id}
-                    className="flex flex-row items-start gap-4 p-3.5 sm:p-4 border rounded-2xl cursor-pointer transition-all duration-300 group hover:shadow-md select-none text-left"
-                    style={{
-                      borderRadius: cfg.cardRounded,
-                      backgroundColor: "var(--card)",
-                      borderColor: "var(--border)",
-                      color: "var(--card-foreground)",
-                    }}
-                    onClick={() => setViewingProduct(p)}
-                  >
+                {filtered.map((p, idx) => (
+                  <React.Fragment key={p.id}>
+                    <article
+                      className="flex flex-row items-start gap-4 p-3.5 sm:p-4 border rounded-2xl cursor-pointer transition-all duration-300 group hover:shadow-md select-none text-left"
+                      style={{
+                        borderRadius: cfg.cardRounded,
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
+                        color: "var(--card-foreground)",
+                      }}
+                      onClick={() => setViewingProduct(p)}
+                    >
                     <div
                       className="relative shrink-0 overflow-hidden bg-muted aspect-square w-24 sm:w-28 rounded-xl border border-border/40"
                     >
@@ -3997,8 +3997,18 @@ export function PublicCatalog({
                       </div>
                     </div>
                   </article>
-                ))}
-              </div>
+                  {store.plan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
+                    <DiziNativeAdCard
+                      layout="editorial"
+                      primaryColor={primaryColor}
+                      slug={store.slug}
+                      cardRounded={cfg.cardRounded}
+                      cardShadow={cfg.cardShadow}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
             ) : cfg.layout === "hero" ? (
               /* ── HERO layout: first product is 2-col featured, rest are small grid */
               <div className="space-y-3">
@@ -4303,6 +4313,15 @@ export function PublicCatalog({
                     </div>
                   ));
                 })()}
+                {store.plan === "semilla" && (
+                  <DiziNativeAdCard
+                    layout="editorial"
+                    primaryColor={primaryColor}
+                    slug={store.slug}
+                    cardRounded={cfg.cardRounded}
+                    cardShadow={cfg.cardShadow}
+                  />
+                )}
               </div>
             ) : cfg.layout === "tiles" ? (
               /* ── TILES layout: alternating wide (full) + square pair — inspired by Apple editorial */
@@ -4312,20 +4331,20 @@ export function PublicCatalog({
                   const fallback =
                     "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
                   return (
-                    <article
-                      key={p.id}
-                      className={cn(
-                        "relative overflow-hidden cursor-pointer group",
-                        isWide ? "col-span-2" : "",
-                        cfg.cardShadow,
-                      )}
-                      style={{
-                        aspectRatio: isWide ? "16/7" : "1/1",
-                        borderRadius: cfg.cardRounded,
-                        backgroundColor: "var(--card)",
-                      }}
-                      onClick={() => setViewingProduct(p)}
-                    >
+                    <React.Fragment key={p.id}>
+                      <article
+                        className={cn(
+                          "relative overflow-hidden cursor-pointer group",
+                          isWide ? "col-span-2" : "",
+                          cfg.cardShadow,
+                        )}
+                        style={{
+                          aspectRatio: isWide ? "16/7" : "1/1",
+                          borderRadius: cfg.cardRounded,
+                          backgroundColor: "var(--card)",
+                        }}
+                        onClick={() => setViewingProduct(p)}
+                      >
                       <img
                         src={getOptimizedImageUrl(p.image || fallback, isWide ? 800 : 400)}
                         alt={p.name}
@@ -4427,9 +4446,19 @@ export function PublicCatalog({
                         </div>
                       )}
                     </article>
-                  );
-                })}
-              </div>
+                    {store.plan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
+                      <DiziNativeAdCard
+                        layout="grid"
+                        primaryColor={primaryColor}
+                        slug={store.slug}
+                        cardRounded={cfg.cardRounded}
+                        cardShadow={cfg.cardShadow}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
             ) : cfg.layout === "spotlight" ? (
               /* ── SPOTLIGHT layout: 1 large featured + 2 stacked small — inspired by Farfetch / Mytheresa */
               <div className="space-y-3">
@@ -4610,12 +4639,12 @@ export function PublicCatalog({
                   const slantRight = "polygon(0 0, 100% 0, 100% 88%, 0 100%)";
                   const slantLeft = "polygon(0 0, 100% 0, 100% 100%, 0 88%)";
                   return (
-                    <article
-                      key={p.id}
-                      className="relative cursor-pointer group overflow-hidden"
-                      style={{ backgroundColor: "var(--card)" }}
-                      onClick={() => setViewingProduct(p)}
-                    >
+                    <React.Fragment key={p.id}>
+                      <article
+                        className="relative cursor-pointer group overflow-hidden"
+                        style={{ backgroundColor: "var(--card)" }}
+                        onClick={() => setViewingProduct(p)}
+                      >
                       {/* Slanted image */}
                       <div
                         className="relative overflow-hidden"
@@ -4705,9 +4734,19 @@ export function PublicCatalog({
                         </div>
                       </div>
                     </article>
-                  );
-                })}
-              </div>
+                    {store.plan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
+                      <DiziNativeAdCard
+                        layout="editorial"
+                        primaryColor={primaryColor}
+                        slug={store.slug}
+                        cardRounded={cfg.cardRounded}
+                        cardShadow={cfg.cardShadow}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
             ) : cfg.layout === "arch" ? (
               /* ── ARCH layout: arched portrait frames — luxury cosmetics / Byredo / AESOP style */
               <div
@@ -4716,15 +4755,15 @@ export function PublicCatalog({
                   isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3",
                 )}
               >
-                {filtered.map((p) => {
+                {filtered.map((p, idx) => {
                   const fallback =
                     "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80";
                   return (
-                    <article
-                      key={p.id}
-                      className="flex flex-col items-center cursor-pointer group"
-                      onClick={() => setViewingProduct(p)}
-                    >
+                    <React.Fragment key={p.id}>
+                      <article
+                        className="flex flex-col items-center cursor-pointer group"
+                        onClick={() => setViewingProduct(p)}
+                      >
                       {/* Arched image frame */}
                       <div
                         className="relative overflow-hidden w-full group-hover:scale-[1.02] transition-transform duration-500"
@@ -4791,9 +4830,19 @@ export function PublicCatalog({
                         </div>
                       </div>
                     </article>
-                  );
-                })}
-              </div>
+                    {store.plan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
+                      <DiziNativeAdCard
+                        layout="bloom"
+                        primaryColor={primaryColor}
+                        slug={store.slug}
+                        cardRounded={cfg.cardRounded}
+                        cardShadow={cfg.cardShadow}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
             ) : cfg.layout === "bite" ? (
               /* ── BITE PREMIUM RESTAURANT LAYOUT ── */
               <div className="space-y-8 select-none">
