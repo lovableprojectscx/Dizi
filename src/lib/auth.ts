@@ -70,6 +70,20 @@ export async function signOut() {
   if (error) throw error;
 }
 
+export async function resetPasswordForEmail(email: string) {
+  const origin = typeof window !== "undefined" && window.location?.origin ? window.location.origin : "https://dizi.idenza.site";
+  const redirectTo = `${origin}/login?reset=true`;
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateUserPassword(newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+  return data;
+}
+
 export async function getActiveSession() {
   const {
     data: { session },
