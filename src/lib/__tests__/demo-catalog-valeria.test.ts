@@ -24,7 +24,7 @@ describe("Pruebas Unitarias del Catálogo Demo Creado: Valeria Boutique (Moda Mu
 
   it("debe retornar la configuración completa de Valeria Boutique con dirección de pedidos a WhatsApp de Dizi", () => {
     const head = (CatalogRoute.options as any).head({
-      params: { slug: "valeria-boutique" },
+      params: { slug: "valeria" },
       loaderData: { store: mockValeriaStore },
       search: {},
     });
