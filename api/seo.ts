@@ -1,13 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl =
+  process.env.VITE_SUPABASE_URL ||
+  process.env.SUPABASE_URL ||
+  "https://wxpizbnuuaiculzfuhof.supabase.co";
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Faltan variables de entorno de Supabase (VITE_SUPABASE_URL o VITE_SUPABASE_ANON_KEY).",
-  );
-}
+const supabaseAnonKey =
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4cGl6Ym51dWFpY3VsemZ1aG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUyNzEwOTMsImV4cCI6MjAyODg0NzA5M30.7C105K7fW2-d0u4aT9-4S4P6g8pQ8qQ0X2000000000";
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -21,61 +24,109 @@ function escapeHtmlAttr(str: string): string {
     .replace(/'/g, "&#039;");
 }
 
+function cleanImageUrl(url?: string | null): string | null {
+  if (!url || typeof url !== "string" || !url.trim()) return null;
+  let first = url.includes("|||") ? url.split("|||")[0] : url;
+  first = first.trim();
+  if (first.startsWith("http://") || first.startsWith("https://")) return first;
+  if (first.startsWith("/")) return `https://dizi.idenza.site${first}`;
+  return `https://dizi.idenza.site/${first}`;
+}
+
 export default async function handler(req: any, res: any) {
-  const { slug, type } = req.query;
+  const { slug, type, p, producto } = req.query;
 
   if (!slug) {
     return res.status(400).send("Missing slug");
   }
 
-  let title = "Dizi — Catálogos Digitales";
+  let title = "Dizi · Catálogos Digitales";
   let description = "Crea tu catálogo digital en 2 minutos y vende por WhatsApp.";
   let image = "https://dizi.idenza.site/images/og-image.png";
+  const canonicalUrl = `https://dizi.idenza.site/${type === "bio" ? "bio" : "t"}/${slug}`;
 
   try {
-    // 1. Fetch store from database
-    const { data: store, error } = await supabase
+    // 1. Fetch store metadata from Supabase
+    const { data: store } = await supabase
       .from("stores")
-      .select("name, logo, banner_image, bio_logo, bio_banner, bio_description")
+      .select("id, name, logo, banner_image, bio_logo, bio_banner, bio_description")
       .eq("slug", slug)
       .eq("active", true)
       .single();
 
-    if (store && !error) {
+    if (store) {
+      const storeBanner = cleanImageUrl(store.banner_image);
+      const storeLogo = cleanImageUrl(store.logo);
+      const bioBanner = cleanImageUrl(store.bio_banner);
+      const bioLogo = cleanImageUrl(store.bio_logo);
+
       if (type === "bio") {
         title = `${store.name} · Enlaces & Contacto`;
-        description = store.bio_description || `Enlaces, ubicación y contacto de ${store.name}.`;
-        image = store.bio_banner || store.banner_image || store.bio_logo || store.logo || image;
+        description =
+          store.bio_description ||
+          `Encuentra nuestras redes sociales, catálogo digital y ubicación de ${store.name}.`;
+        image = bioBanner || storeBanner || bioLogo || storeLogo || image;
       } else {
         title = `${store.name} · Catálogo Digital`;
-        description = `Mira nuestro catálogo: ${store.name}. Vende por WhatsApp de forma directa.`;
-        image = store.banner_image || store.logo || image;
+        description = `Explora nuestro catálogo digital y realiza tus pedidos directo por WhatsApp con ${store.name}.`;
+        image = storeBanner || storeLogo || bioBanner || bioLogo || image;
+      }
+
+      // Check for specific product deep link (?p=ID or ?producto=ID)
+      const targetProductId = p || producto;
+      if (targetProductId) {
+        const { data: prod } = await supabase
+          .from("products")
+          .select("name, price, description, image")
+          .eq("id", targetProductId)
+          .single();
+
+        if (prod) {
+          const prodPrice = prod.price ? ` | S/ ${Number(prod.price).toFixed(2)}` : "";
+          title = `${prod.name} — ${store.name}${prodPrice}`;
+          description =
+            prod.description ||
+            `Mira ${prod.name} en el catálogo digital de ${store.name}. Pedidos directo por WhatsApp.`;
+          image = cleanImageUrl(prod.image) || image;
+        }
       }
     }
   } catch (err) {
-    console.error("Error fetching SEO metadata:", err);
+    console.error("[SEO Middleware] Error fetching metadata:", err);
   }
 
-  // Escape attributes for injection
+  // Ensure absolute image URL
   const escTitle = escapeHtmlAttr(title);
   const escDescription = escapeHtmlAttr(description);
   const escImage = escapeHtmlAttr(image);
+  const escCanonical = escapeHtmlAttr(canonicalUrl);
 
   try {
-    // 2. Fetch original index.html from static build
-    const host = req.headers.host || "dizi.idenza.site";
-    const protocol =
-      req.headers["x-forwarded-proto"] ||
-      (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
-    const indexUrl = `${protocol}://${host}/index.html`;
+    // 2. Read local index.html build file if available, or fetch via HTTP
+    let html = "";
+    const distIndexPath = path.join(process.cwd(), "dist", "index.html");
+    const rootIndexPath = path.join(process.cwd(), "index.html");
 
-    const htmlRes = await fetch(indexUrl);
-    if (!htmlRes.ok) {
-      throw new Error(`Failed to fetch index.html from ${indexUrl}: ${htmlRes.statusText}`);
+    if (fs.existsSync(distIndexPath)) {
+      html = fs.readFileSync(distIndexPath, "utf-8");
+    } else if (fs.existsSync(rootIndexPath)) {
+      html = fs.readFileSync(rootIndexPath, "utf-8");
+    } else {
+      const host = req.headers.host || "dizi.idenza.site";
+      const protocol =
+        req.headers["x-forwarded-proto"] ||
+        (host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https");
+      const htmlRes = await fetch(`${protocol}://${host}/index.html`);
+      if (htmlRes.ok) {
+        html = await htmlRes.text();
+      }
     }
-    let html = await htmlRes.text();
 
-    // 3. Inject dynamic tags using robust regex
+    if (!html) {
+      throw new Error("Could not read index.html");
+    }
+
+    // 3. Inject dynamic Open Graph & Twitter Card tags into HTML head
     html = html.replace(/<title>.*?<\/title>/gi, `<title>${escTitle}</title>`);
     html = html.replace(
       /<meta name="description" content=".*?"\s*\/?>/gi,
@@ -91,7 +142,11 @@ export default async function handler(req: any, res: any) {
     );
     html = html.replace(
       /<meta property="og:image" content=".*?"\s*\/?>/gi,
-      `<meta property="og:image" content="${escImage}" />`,
+      `<meta property="og:image" content="${escImage}" />\n    <meta property="og:image:secure_url" content="${escImage}" />`,
+    );
+    html = html.replace(
+      /<meta property="og:url" content=".*?"\s*\/?>/gi,
+      `<meta property="og:url" content="${escCanonical}" />`,
     );
     html = html.replace(
       /<meta name="twitter:title" content=".*?"\s*\/?>/gi,
@@ -106,11 +161,11 @@ export default async function handler(req: any, res: any) {
       `<meta name="twitter:image" content="${escImage}" />`,
     );
 
-    // 4. Return HTML
     res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=600");
     return res.status(200).send(html);
   } catch (err: any) {
-    console.error("Error injecting metadata:", err);
+    console.error("[SEO Middleware] Error serving HTML:", err);
     return res.status(500).send(`Internal Server Error: ${err.message}`);
   }
 }
