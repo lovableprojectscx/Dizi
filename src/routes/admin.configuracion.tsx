@@ -197,7 +197,7 @@ function ConfigPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto px-2 pb-10">
+    <div className="space-y-5 sm:space-y-6 max-w-2xl w-full mx-auto px-2 sm:px-4 pb-10 overflow-x-hidden">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground bg-clip-text text-transparent flex items-center gap-2">
@@ -210,43 +210,43 @@ function ConfigPage() {
       </div>
 
       {/* ── CARD 1: DIRECCIÓN WEB Y ENLACES (Share Widget) ── */}
-      <Card className="border-border/50 shadow-sm overflow-hidden bg-gradient-to-br from-card via-card to-primary/[0.01]">
-        <CardContent className="p-5 sm:p-6 space-y-5">
+      <Card className="border-border/50 shadow-sm overflow-hidden bg-gradient-to-br from-card via-card to-primary/[0.01] w-full max-w-full">
+        <CardContent className="p-4 sm:p-6 space-y-5 overflow-hidden">
           <div className="flex items-center gap-2 border-b pb-3 border-border/30">
-            <Globe className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
+            <Globe className="h-4 w-4 text-primary shrink-0" />
+            <h2 className="text-xs sm:text-sm font-bold tracking-tight text-foreground uppercase tracking-wider">
               Dirección Web de la Tienda
             </h2>
           </div>
 
           {/* Input del Slug */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="space-y-1.5 w-full max-w-full">
+            <Label className="text-[11px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Link de tu Tienda (Slug)
             </Label>
-            <div className="flex max-w-md rounded-lg border border-input shadow-none focus-within:ring-1 focus-within:ring-primary bg-background overflow-hidden h-10 transition-shadow">
-              <span className="flex items-center px-3 bg-muted/30 text-muted-foreground/80 text-xs border-r shrink-0 font-medium select-none">
+            <div className="flex w-full max-w-md rounded-lg border border-input shadow-none focus-within:ring-1 focus-within:ring-primary bg-background overflow-hidden h-10 transition-shadow">
+              <span className="flex items-center px-2 sm:px-3 bg-muted/30 text-muted-foreground/80 text-[11px] sm:text-xs border-r shrink-0 font-medium select-none">
                 dizi.idenza.site/t/
               </span>
               <Input
                 value={slug}
                 onChange={(e) => handleSlugChange(e.target.value)}
-                className="rounded-none border-0 shadow-none focus-visible:ring-0 min-w-0 text-sm h-full"
+                className="rounded-none border-0 shadow-none focus-visible:ring-0 min-w-0 text-xs sm:text-sm h-full px-2 sm:px-3 flex-1"
                 placeholder="mi-tienda"
               />
               {slugStatus === "checking" && (
-                <span className="flex items-center px-3 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="flex items-center px-2 text-muted-foreground shrink-0">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 </span>
               )}
               {slugStatus === "available" && (
-                <span className="flex items-center px-3 text-emerald-500">
-                  <CheckCircle2 className="h-4 w-4" />
+                <span className="flex items-center px-2 text-emerald-500 shrink-0">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
                 </span>
               )}
               {(slugStatus === "taken" || slugStatus === "invalid") && (
-                <span className="flex items-center px-3 text-destructive">
-                  <AlertCircle className="h-4 w-4" />
+                <span className="flex items-center px-2 text-destructive shrink-0">
+                  <AlertCircle className="h-3.5 w-3.5" />
                 </span>
               )}
             </div>
@@ -264,17 +264,17 @@ function ConfigPage() {
           </div>
 
           {/* Enlaces de Compartir Visuales (No inputs!) */}
-          <div className="grid gap-4 pt-1 sm:grid-cols-2">
+          <div className="grid gap-4 pt-1 sm:grid-cols-2 w-full max-w-full">
             {/* Catalogo Directo */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="space-y-1.5 min-w-0">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest block">
                 Catálogo Digital
               </span>
-              <div className="flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 shadow-none">
-                <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">
+              <div className="flex items-center justify-between gap-2 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-2.5 sm:px-3 py-2 sm:py-2.5 border border-border/40 shadow-none overflow-hidden w-full max-w-full">
+                <span className="truncate min-w-0 select-all font-mono text-[11px] sm:text-xs font-semibold text-foreground/80 flex-1">
                   {catalogUrl}
                 </span>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     type="button"
                     onClick={() => copyLink(catalogUrl, "catalog")}
@@ -303,28 +303,28 @@ function ConfigPage() {
             </div>
 
             {/* Bio-Link Profesional */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
+            <div className="space-y-1.5 min-w-0">
+              <div className="flex items-center justify-between gap-1 flex-wrap sm:flex-nowrap">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                   Link en Bio / Redes
                 </span>
                 {store.bioLinksEnabled ? (
-                  <span className="text-[9px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-full border border-emerald-200/50 font-bold uppercase tracking-wider">
+                  <span className="text-[9px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-full border border-emerald-200/50 font-bold uppercase tracking-wider shrink-0 ml-auto">
                     Activo
                   </span>
                 ) : (
-                  <span className="text-[9px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border/50 font-bold uppercase tracking-wider">
+                  <span className="text-[9px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border/50 font-bold uppercase tracking-wider shrink-0 ml-auto">
                     Inactivo
                   </span>
                 )}
               </div>
               <div
-                className={`flex items-center justify-between gap-3 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-3 py-2.5 border border-border/40 shadow-none ${!store.bioLinksEnabled ? "opacity-50 select-none pointer-events-none" : ""}`}
+                className={`flex items-center justify-between gap-2 bg-muted/20 hover:bg-muted/30 transition-colors rounded-xl px-2.5 sm:px-3 py-2 sm:py-2.5 border border-border/40 shadow-none overflow-hidden w-full max-w-full ${!store.bioLinksEnabled ? "opacity-50 select-none pointer-events-none" : ""}`}
               >
-                <span className="truncate select-all font-mono text-xs font-semibold text-foreground/80 flex-1">
+                <span className="truncate min-w-0 select-all font-mono text-[11px] sm:text-xs font-semibold text-foreground/80 flex-1">
                   {bioUrl}
                 </span>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     type="button"
                     disabled={!store.bioLinksEnabled}
