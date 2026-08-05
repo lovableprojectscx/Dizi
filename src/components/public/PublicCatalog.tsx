@@ -59,6 +59,8 @@ import {
   Beer,
   Croissant,
   ZoomIn,
+  Share2,
+  Copy,
 } from "lucide-react";
 
 const Tiktok = ({ className }: { className?: string }) => (
@@ -2259,6 +2261,56 @@ export function PublicCatalog({
       window.open(buildWaUrl(store.phone, signedMsg), "_blank");
     }
   };
+
+  /* Compartir Enlace Directo del Producto (Web Share API + Copiar al Portapapeles) */
+  const shareProduct = async (product: Product, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const origin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : "https://dizi.idenza.site";
+    const productUrl = `${origin}/t/${store.slug}?p=${product.id}`;
+    const shareData = {
+      title: `${product.name} — ${store.name}`,
+      text: `Mira ${product.name} en ${store.name}: ${formatPrice(product.price)}`,
+      url: productUrl,
+    };
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast.success("¡Enlace compartido!");
+      } catch (err: any) {
+        if (err?.name !== "AbortError") {
+          navigator.clipboard.writeText(productUrl);
+          toast.success("¡Enlace del producto copiado!");
+        }
+      }
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(productUrl);
+      toast.success("¡Enlace del producto copiado al portapapeles!");
+    } else {
+      fallbackCopy(productUrl);
+      toast.success("¡Enlace copiado!");
+    }
+  };
+
+  /* Auto-abrir producto especifico si la URL contiene el parametro ?p=ID o ?producto=ID */
+  useEffect(() => {
+    if (typeof window !== "undefined" && store.products && store.products.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetProductId = urlParams.get("p") || urlParams.get("producto");
+      if (targetProductId) {
+        const found = store.products.find((prod) => prod.id === targetProductId);
+        if (found) {
+          setViewingProduct(found);
+        }
+      }
+    }
+  }, [store.products]);
 
   /* ── Render ──────────────────────────────────────── */
   return (
@@ -7944,14 +7996,26 @@ export function PublicCatalog({
                   backgroundColor: "var(--background)",
                 }}
               >
-                {/* Close button (aspita) - Hidden on desktop since sheet renders one in top-right */}
-                <button
-                  onClick={() => setViewingProduct(null)}
-                  className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all md:hidden"
-                  style={{ borderRadius: cfg.cardRounded }}
-                >
-                  <X className="h-6 w-6" />
-                </button>
+                {/* Floating action buttons (Top Right): Share and Close */}
+                <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => shareProduct(viewingProduct, e)}
+                    className="h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-md text-white hover:bg-black/50 transition-all shadow-md cursor-pointer"
+                    style={{ borderRadius: cfg.cardRounded }}
+                    title="Compartir o copiar enlace de este producto"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewingProduct(null)}
+                    className="h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-md text-white hover:bg-black/50 transition-all shadow-md cursor-pointer md:hidden"
+                    style={{ borderRadius: cfg.cardRounded }}
+                    title="Cerrar vista"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
 
                 {/* Blurred background backdrop to fill the container nicely without cropping the main product */}
                 <img
@@ -8055,47 +8119,51 @@ export function PublicCatalog({
               </div>
 
               {/* Right Column: Content + Actions */}
-              <div className="flex-1 flex flex-col overflow-hidden md:h-full md:w-1/2 md:relative pr-2">
-                {/* Content */}
-                <div
-                  className="flex-1 overflow-y-auto px-5 py-5 space-y-4 pt-10 md:pt-14"
-                  style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
-                >
-                  {/* Title — adapts typography to model */}
-                  <h2
-                    className={cn(
-                      "leading-tight",
-                      cfg.headerStyle === "bold"
-                        ? "text-2xl font-black"
-                        : cfg.headerStyle === "minimal"
-                          ? "text-lg font-light tracking-[0.2em] uppercase"
-                          : "text-xl font-bold",
-                    )}
-                    style={{ color: "var(--foreground)" }}
-                  >
-                    {viewingProduct.name}
-                  </h2>
-
-                  {/* Price — only show below image for non-dark overlay models */}
-                  {!(
-                    cfg.layout === "magazine" ||
-                    (effectiveIsDark && cfg.layout === "overlay")
-                  ) && (
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-2xl font-black" style={{ color: "var(--primary)" }}>
-                        {formatPrice(viewingProduct.price)}
-                      </span>
-                      {viewingProduct.isOnSale &&
-                        viewingProduct.originalPrice &&
-                        viewingProduct.price &&
-                        viewingProduct.originalPrice > viewingProduct.price && (
-                          <span
-                            className="text-sm line-through"
-                            style={{ color: "var(--muted-foreground)" }}
-                          >
-                            {formatPrice(viewingProduct.originalPrice)}
-                          </span>
-                        )}
+              <div className="flex-1 overflow-y-auto flex flex-col justify-between md:!h-full">
+                <div className="p-5 space-y-4">
+                  {/* Title & Price (Hidden on image for magazine/overlay dark) */}
+                  {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
+                    <div className="space-y-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3
+                          className={cn(
+                            "font-extrabold text-xl leading-tight",
+                            cfg.headerStyle === "minimal"
+                              ? "font-light tracking-widest uppercase text-lg"
+                              : "",
+                          )}
+                          style={{ color: "var(--foreground)" }}
+                        >
+                          {viewingProduct.name}
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={(e) => shareProduct(viewingProduct, e)}
+                          className="h-9 w-9 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0 cursor-pointer"
+                          title="Compartir producto"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-baseline gap-2 pt-0.5">
+                        <span
+                          className={cn(
+                            "font-black text-2xl",
+                            cfg.headerStyle === "minimal" ? "font-light tracking-wider" : "",
+                          )}
+                          style={{ color: "var(--primary)" }}
+                        >
+                          {formatPrice(viewingProduct.price)}
+                        </span>
+                        {viewingProduct.isOnSale &&
+                          viewingProduct.originalPrice &&
+                          viewingProduct.price &&
+                          viewingProduct.originalPrice > viewingProduct.price && (
+                            <span className="text-sm line-through text-muted-foreground font-normal">
+                              {formatPrice(viewingProduct.originalPrice)}
+                            </span>
+                          )}
+                      </div>
                     </div>
                   )}
 
@@ -8203,11 +8271,25 @@ export function PublicCatalog({
 
                 {/* Action footer — also themed */}
                 <div
-                  className="border-t px-5 py-4 flex gap-3 shrink-0"
+                  className="border-t px-4 sm:px-5 py-4 flex gap-2 sm:gap-3 shrink-0"
                   style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
                 >
                   <button
-                    className="flex-1 h-12 gap-2 font-semibold text-sm flex items-center justify-center border transition hover:opacity-80"
+                    type="button"
+                    onClick={(e) => shareProduct(viewingProduct, e)}
+                    className="h-12 w-12 shrink-0 flex items-center justify-center border transition hover:opacity-80 cursor-pointer shadow-xs"
+                    style={{
+                      borderRadius: cfg.cardRounded,
+                      borderColor: "var(--border)",
+                      color: "var(--foreground)",
+                      backgroundColor: "var(--card)",
+                    }}
+                    title="Compartir enlace de este producto"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    className="flex-1 h-12 gap-1.5 sm:gap-2 font-semibold text-xs sm:text-sm flex items-center justify-center border transition hover:opacity-80 cursor-pointer"
                     style={{
                       borderRadius: cfg.cardRounded,
                       borderColor: "var(--primary)",
