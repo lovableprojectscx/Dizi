@@ -64,21 +64,53 @@ export const Route = createFileRoute("/t/$slug")({
     const store = await fetchStoreBySlug(params.slug);
     return { store };
   },
-  head: ({ params, loaderData }) => {
+  head: ({ params, loaderData, search }) => {
     const store = loaderData?.store;
-    const title = store ? `${store.name} · Catálogo Digital` : `Catálogo · ${params.slug}`;
-    const description = store
-      ? `Mira nuestro catálogo: ${store.name}. Vende por WhatsApp.`
+    const targetProductId = (search as any)?.p || (search as any)?.producto;
+    const product = store?.products?.find((p) => p.id === targetProductId);
+
+    const getValidImageUrl = (url?: string | null) => {
+      if (!url || typeof url !== "string" || !url.trim()) return null;
+      const clean = url.trim();
+      if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+      if (clean.startsWith("/")) return `https://dizi.idenza.site${clean}`;
+      return `https://dizi.idenza.site/${clean}`;
+    };
+
+    let title = store ? `${store.name} · Catálogo Digital` : `Catálogo · ${params.slug}`;
+    let description = store
+      ? `Explora nuestro catálogo digital y realiza tus pedidos directo por WhatsApp con ${store.name}.`
       : `Catálogo digital de ${params.slug}`;
-    const image =
-      store?.bannerImage || store?.logo || "https://dizi.idenza.site/images/og-image.png";
+    let image =
+      getValidImageUrl(store?.bannerImage) ||
+      getValidImageUrl(store?.logo) ||
+      "https://dizi.idenza.site/images/og-image.png";
+
+    if (product) {
+      title = `${product.name} — ${store?.name || params.slug}`;
+      if (product.price) {
+        title += ` | S/ ${product.price.toFixed(2)}`;
+      }
+      description =
+        product.description ||
+        `Mira ${product.name} en el catálogo digital de ${store?.name || params.slug}. Pedidos por WhatsApp.`;
+      image = getValidImageUrl(product.image) || image;
+    }
+
+    const canonicalUrl = `https://dizi.idenza.site/t/${params.slug}${targetProductId ? `?p=${targetProductId}` : ""}`;
+
     return {
       meta: [
         { title },
         { name: "description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Dizi" },
+        { property: "og:url", content: canonicalUrl },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:image", content: image },
+        { property: "og:image:secure_url", content: image },
+        { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },

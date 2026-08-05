@@ -12,23 +12,39 @@ export const Route = createFileRoute("/bio/$slug")({
   },
   head: ({ params, loaderData }) => {
     const store = loaderData?.store;
+
+    const getValidImageUrl = (url?: string | null) => {
+      if (!url || typeof url !== "string" || !url.trim()) return null;
+      const clean = url.trim();
+      if (clean.startsWith("http://") || clean.startsWith("https://")) return clean;
+      if (clean.startsWith("/")) return `https://dizi.idenza.site${clean}`;
+      return `https://dizi.idenza.site/${clean}`;
+    };
+
     const title = store ? `${store.name} · Enlaces & Contacto` : `Bio-Link · ${params.slug}`;
     const description = store
-      ? `Enlaces y ubicación de ${store.name}. Síguenos y contáctanos.`
+      ? `Encuentra nuestras redes sociales, catálogo digital y ubicación de ${store.name}.`
       : `Enlaces y ubicación de ${params.slug}`;
     const image =
-      store?.bioBanner ||
-      store?.bannerImage ||
-      store?.bioLogo ||
-      store?.logo ||
+      getValidImageUrl(store?.bioBanner) ||
+      getValidImageUrl(store?.bannerImage) ||
+      getValidImageUrl(store?.bioLogo) ||
+      getValidImageUrl(store?.logo) ||
       "https://dizi.idenza.site/images/og-image.png";
+    const canonicalUrl = `https://dizi.idenza.site/bio/${params.slug}`;
+
     return {
       meta: [
         { title },
         { name: "description", content: description },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Dizi" },
+        { property: "og:url", content: canonicalUrl },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:image", content: image },
+        { property: "og:image:secure_url", content: image },
+        { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
