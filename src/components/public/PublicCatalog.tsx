@@ -7996,26 +7996,15 @@ export function PublicCatalog({
                   backgroundColor: "var(--background)",
                 }}
               >
-                {/* Floating action buttons (Top Right): Share and Close */}
-                <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => shareProduct(viewingProduct, e)}
-                    className="h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-md text-white hover:bg-black/50 transition-all shadow-md cursor-pointer"
-                    style={{ borderRadius: cfg.cardRounded }}
-                    title="Compartir o copiar enlace de este producto"
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => setViewingProduct(null)}
-                    className="h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-md text-white hover:bg-black/50 transition-all shadow-md cursor-pointer md:hidden"
-                    style={{ borderRadius: cfg.cardRounded }}
-                    title="Cerrar vista"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
-                </div>
+                {/* Close button (aspita) - Hidden on desktop since sheet renders one in top-right */}
+                <button
+                  onClick={() => setViewingProduct(null)}
+                  className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all shadow-md cursor-pointer md:hidden"
+                  style={{ borderRadius: cfg.cardRounded }}
+                  title="Cerrar vista"
+                >
+                  <X className="h-6 w-6" />
+                </button>
 
                 {/* Blurred background backdrop to fill the container nicely without cropping the main product */}
                 <img
@@ -8124,27 +8113,17 @@ export function PublicCatalog({
                   {/* Title & Price (Hidden on image for magazine/overlay dark) */}
                   {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
                     <div className="space-y-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <h3
-                          className={cn(
-                            "font-extrabold text-xl leading-tight",
-                            cfg.headerStyle === "minimal"
-                              ? "font-light tracking-widest uppercase text-lg"
-                              : "",
-                          )}
-                          style={{ color: "var(--foreground)" }}
-                        >
-                          {viewingProduct.name}
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={(e) => shareProduct(viewingProduct, e)}
-                          className="h-9 w-9 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-primary transition-all shrink-0 cursor-pointer"
-                          title="Compartir producto"
-                        >
-                          <Share2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <h3
+                        className={cn(
+                          "font-extrabold text-xl leading-tight",
+                          cfg.headerStyle === "minimal"
+                            ? "font-light tracking-widest uppercase text-lg"
+                            : "",
+                        )}
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        {viewingProduct.name}
+                      </h3>
                       <div className="flex items-baseline gap-2 pt-0.5">
                         <span
                           className={cn(
