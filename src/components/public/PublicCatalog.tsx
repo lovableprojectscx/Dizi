@@ -2210,12 +2210,16 @@ export function PublicCatalog({
 
     if (isInAppBrowser()) {
       setPendingOrderMsg(signedMsg);
+      setCartOpen(false);
+      setViewingProduct(null);
       setShowInAppHelpModal(true);
     } else {
       const waUrl = buildWaUrl(store.phone, signedMsg);
       setSuccessOrderUrl(waUrl);
       window.open(waUrl, "_blank");
       cartClear(store.id);
+      setCartOpen(false);
+      setViewingProduct(null);
       setShowSuccessModal(true);
     }
   };
@@ -2224,6 +2228,9 @@ export function PublicCatalog({
     incClicks(store.id);
     const msg = `Hola, me interesa el producto: ${name}`;
     const signedMsg = appendDiziSignature(msg);
+
+    setCartOpen(false);
+    setViewingProduct(null);
 
     if (isInAppBrowser()) {
       setPendingOrderMsg(signedMsg);
@@ -8265,8 +8272,12 @@ export function PublicCatalog({
 
       {/* ── In-App Browser Help Modal (TikTok/Instagram) ── */}
       {showInAppHelpModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+        <div
+          onClick={() => setShowInAppHelpModal(false)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200"
+        >
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: "var(--card)",
               borderColor: "var(--border)",
@@ -8281,7 +8292,7 @@ export function PublicCatalog({
                 backgroundColor: "color-mix(in srgb, var(--foreground) 8%, transparent)",
                 color: "var(--foreground)",
               }}
-              className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-80"
+              className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-80 cursor-pointer z-10"
             >
               <X className="h-4 w-4" />
             </button>
@@ -8365,7 +8376,7 @@ export function PublicCatalog({
                   borderColor: copied ? "#16a34a" : "var(--border)",
                   color: copied ? "#16a34a" : "var(--foreground)",
                 }}
-                className="w-full h-11 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition"
+                className="w-full h-11 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition cursor-pointer"
               >
                 {copied ? (
                   <>
@@ -8389,7 +8400,7 @@ export function PublicCatalog({
                   borderColor: "var(--border)",
                   color: "var(--foreground)",
                 }}
-                className="flex-1 h-12 rounded-2xl border text-xs font-bold transition hover:bg-accent"
+                className="flex-1 h-12 rounded-2xl border text-xs font-bold transition hover:bg-accent cursor-pointer"
               >
                 Cerrar
               </button>
@@ -8400,13 +8411,15 @@ export function PublicCatalog({
                   window.open(waUrl, "_blank");
                   setShowInAppHelpModal(false);
                   cartClear(store.id);
+                  setCartOpen(false);
+                  setViewingProduct(null);
                   setShowSuccessModal(true);
                 }}
                 style={{
                   backgroundColor: "var(--primary)",
                   color: "var(--primary-foreground)",
                 }}
-                className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5"
+                className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <WhatsAppIcon className="h-4 w-4" />
                 Intentar continuar
@@ -8418,8 +8431,12 @@ export function PublicCatalog({
 
       {/* ── Success and Viral Loop Modal ── */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+        <div
+          onClick={() => setShowSuccessModal(false)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-in fade-in duration-200"
+        >
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: "var(--card)",
               borderColor: "var(--border)",
@@ -8434,7 +8451,7 @@ export function PublicCatalog({
                 backgroundColor: "color-mix(in srgb, var(--foreground) 8%, transparent)",
                 color: "var(--foreground)",
               }}
-              className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-80"
+              className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center transition hover:opacity-80 cursor-pointer z-10"
             >
               <X className="h-4 w-4" />
             </button>
@@ -8468,7 +8485,7 @@ export function PublicCatalog({
                     window.open(successOrderUrl, "_blank");
                   }
                 }}
-                className="w-full h-11 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/20 transition"
+                className="w-full h-11 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/20 transition cursor-pointer"
               >
                 <WhatsAppIcon className="h-4 w-4" />
                 ¿No se abrió WhatsApp? Volver a intentar
@@ -8509,7 +8526,7 @@ export function PublicCatalog({
                     backgroundColor: primaryColor,
                     boxShadow: `0 4px 12px ${primaryColor}25`,
                   }}
-                  className="w-full h-10 rounded-xl font-bold text-xs text-white transition hover:opacity-95 active:scale-98 flex items-center justify-center"
+                  className="w-full h-10 rounded-xl font-bold text-xs text-white transition hover:opacity-95 active:scale-98 flex items-center justify-center cursor-pointer"
                 >
                   Crear mi catálogo gratis
                 </button>
@@ -8520,7 +8537,7 @@ export function PublicCatalog({
             <div className="pt-1">
               <button
                 onClick={() => setShowSuccessModal(false)}
-                className="w-full h-11 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold transition text-zinc-700 dark:text-zinc-300 flex items-center justify-center"
+                className="w-full h-11 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-bold transition text-zinc-700 dark:text-zinc-300 flex items-center justify-center cursor-pointer"
               >
                 Cerrar
               </button>
