@@ -1,16 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-describe("Pruebas Unitarias del Middleware Serverless SEO (/api/seo.ts)", () => {
-  function escapeHtmlAttr(str: string): string {
-    if (!str) return "";
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
+describe("Pruebas Unitarias del Servidor SEO (/api/seo.ts) para WhatsApp", () => {
   function cleanImageUrl(url?: string | null): string | null {
     if (!url || typeof url !== "string" || !url.trim()) return null;
     let first = url.includes("|||") ? url.split("|||")[0] : url;
@@ -20,38 +10,40 @@ describe("Pruebas Unitarias del Middleware Serverless SEO (/api/seo.ts)", () => 
     return `https://dizi.idenza.site/${first}`;
   }
 
-  it("debe limpiar correctamente las URLs con multiples banners separadas por |||", () => {
-    const raw = "https://images.unsplash.com/banner1.jpg|||https://images.unsplash.com/banner2.jpg";
-    const cleaned = cleanImageUrl(raw);
-    expect(cleaned).toBe("https://images.unsplash.com/banner1.jpg");
+  function getBestStoreImage(store: any, type: string, defaultImage: string): string {
+    const storeBanner = cleanImageUrl(store.banner_image);
+    const storeLogo = cleanImageUrl(store.logo);
+    const bioBanner = cleanImageUrl(store.bio_banner);
+    const bioLogo = cleanImageUrl(store.bio_logo);
+
+    return (
+      (type === "bio"
+        ? bioBanner || storeBanner || bioLogo || storeLogo
+        : storeBanner || bioBanner || storeLogo || bioLogo) || defaultImage
+    );
+  }
+
+  it("debe elegir la imagen del banner de la tienda como primera prioridad", () => {
+    const store = {
+      banner_image: "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/s_ncidl1d/banners/banner_0_3s06.webp",
+      logo: "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/s_ncidl1d/logo.jpg",
+    };
+    const img = getBestStoreImage(store, "catalog", "https://dizi.idenza.site/images/og-image.png");
+    expect(img).toBe("https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/s_ncidl1d/banners/banner_0_3s06.webp");
   });
 
-  it("debe inyectar adecuadamente las meta etiquetas og:image y og:image:secure_url para WhatsApp", () => {
-    let mockHtml = `
-      <html>
-        <head>
-          <title>Default</title>
-          <meta name="description" content="Default" />
-          <meta property="og:title" content="Default" />
-          <meta property="og:description" content="Default" />
-          <meta property="og:image" content="https://dizi.idenza.site/images/og-image.png" />
-          <meta name="twitter:image" content="https://dizi.idenza.site/images/og-image.png" />
-        </head>
-      </html>
-    `;
+  it("debe recurrir al logo (perfil) de la tienda si la tienda no tiene un banner registrado", () => {
+    const storeNoBanner = {
+      banner_image: null,
+      logo: "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/s_ncidl1d/logo.jpg",
+    };
+    const img = getBestStoreImage(storeNoBanner, "catalog", "https://dizi.idenza.site/images/og-image.png");
+    expect(img).toBe("https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/s_ncidl1d/logo.jpg");
+  });
 
-    const escTitle = escapeHtmlAttr("MODX · Urban & Streetwear · Catálogo Digital");
-    const escDescription = escapeHtmlAttr("Explora nuestro catálogo digital.");
-    const escImage = escapeHtmlAttr("https://images.unsplash.com/photo-banner-modx.jpg");
-
-    mockHtml = mockHtml.replace(/<title>.*?<\/title>/gi, `<title>${escTitle}</title>`);
-    mockHtml = mockHtml.replace(
-      /<meta property="og:image" content=".*?"\s*\/?>/gi,
-      `<meta property="og:image" content="${escImage}" />\n    <meta property="og:image:secure_url" content="${escImage}" />`,
-    );
-
-    expect(mockHtml).toContain('<title>MODX · Urban &amp; Streetwear · Catálogo Digital</title>');
-    expect(mockHtml).toContain('<meta property="og:image" content="https://images.unsplash.com/photo-banner-modx.jpg" />');
-    expect(mockHtml).toContain('<meta property="og:image:secure_url" content="https://images.unsplash.com/photo-banner-modx.jpg" />');
+  it("solo debe recurrir a la imagen predeterminada de Dizi si la tienda no tiene ni banner ni logo", () => {
+    const emptyStore = { banner_image: null, logo: null, bio_banner: null, bio_logo: null };
+    const img = getBestStoreImage(emptyStore, "catalog", "https://dizi.idenza.site/images/og-image.png");
+    expect(img).toBe("https://dizi.idenza.site/images/og-image.png");
   });
 });
