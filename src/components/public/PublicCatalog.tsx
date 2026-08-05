@@ -524,8 +524,8 @@ const BG_LOCKED_MODELS = new Set([
 ]);
 
 const getQuickLinkBranding = (label: string, url: string) => {
-  const labelLower = label.toLowerCase();
-  const urlLower = url.toLowerCase();
+  const labelLower = (label || "").toLowerCase();
+  const urlLower = (url || "").toLowerCase();
 
   // WhatsApp
   if (
@@ -2827,7 +2827,9 @@ export function PublicCatalog({
                 return (
                   store.quickLinks &&
                   store.quickLinks.map((link, idx) => {
-                    const labelLower = link.label.toLowerCase();
+                    const labelText = link.label || link.title || "";
+                    const linkUrl = link.url || "";
+                    const labelLower = labelText.toLowerCase();
                     const isOfficialSocial = [
                       "instagram",
                       "facebook",
@@ -2842,8 +2844,8 @@ export function PublicCatalog({
                       }
                     }
 
-                    const branding = getQuickLinkBranding(link.label, link.url);
-                    const href = link.url.startsWith("http") ? link.url : `https://${link.url}`;
+                    const branding = getQuickLinkBranding(labelText, linkUrl);
+                    const href = linkUrl.startsWith("http") ? linkUrl : linkUrl ? `https://${linkUrl}` : "#";
 
                     let platform:
                       | "instagram"
@@ -2856,7 +2858,7 @@ export function PublicCatalog({
                       | "spotify"
                       | "pinterest"
                       | "twitter" = "custom";
-                    const urlLower = link.url.toLowerCase();
+                    const urlLower = linkUrl.toLowerCase();
                     if (urlLower.includes("instagram.com") || labelLower.includes("instagram")) {
                       platform = "instagram";
                     } else if (
@@ -2912,7 +2914,7 @@ export function PublicCatalog({
                       <div key={idx} className="w-full">
                         {renderBioButton(
                           href,
-                          link.label,
+                          labelText,
                           branding.bg,
                           defaultBorder,
                           "#ffffff",
