@@ -8086,67 +8086,44 @@ export function PublicCatalog({
                     </span>
                   ))}
 
-                {/* For dark/magazine: show price on image */}
-                {(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
-                  <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
-                    <p
-                      className={cn(
-                        "text-white font-black text-2xl",
-                        cfg.headerStyle === "minimal" ? "font-light tracking-widest uppercase" : "",
-                      )}
-                    >
-                      {formatPrice(viewingProduct.price)}
-                      {viewingProduct.isOnSale &&
-                        viewingProduct.originalPrice &&
-                        viewingProduct.price &&
-                        viewingProduct.originalPrice > viewingProduct.price && (
-                          <span className="text-white/40 text-sm line-through ml-3 font-normal">
-                            {formatPrice(viewingProduct.originalPrice)}
-                          </span>
-                        )}
-                    </p>
-                  </div>
-                )}
               </div>
 
               {/* Right Column: Content + Actions */}
               <div className="flex-1 overflow-y-auto flex flex-col justify-between md:!h-full">
                 <div className="p-5 space-y-4">
-                  {/* Title & Price (Hidden on image for magazine/overlay dark) */}
-                  {!(cfg.layout === "magazine" || (effectiveIsDark && cfg.layout === "overlay")) && (
-                    <div className="space-y-1">
-                      <h3
+                  {/* Title & Price - Always rendered together in content section */}
+                  <div className="space-y-1">
+                    <h3
+                      className={cn(
+                        "font-extrabold text-xl leading-tight",
+                        cfg.headerStyle === "minimal"
+                          ? "font-light tracking-widest uppercase text-lg"
+                          : "",
+                      )}
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {viewingProduct.name}
+                    </h3>
+                    <div className="flex items-baseline gap-2 pt-0.5">
+                      <span
                         className={cn(
-                          "font-extrabold text-xl leading-tight",
-                          cfg.headerStyle === "minimal"
-                            ? "font-light tracking-widest uppercase text-lg"
-                            : "",
+                          "font-black text-2xl",
+                          cfg.headerStyle === "minimal" ? "font-light tracking-wider" : "",
                         )}
-                        style={{ color: "var(--foreground)" }}
+                        style={{ color: "var(--primary)" }}
                       >
-                        {viewingProduct.name}
-                      </h3>
-                      <div className="flex items-baseline gap-2 pt-0.5">
-                        <span
-                          className={cn(
-                            "font-black text-2xl",
-                            cfg.headerStyle === "minimal" ? "font-light tracking-wider" : "",
-                          )}
-                          style={{ color: "var(--primary)" }}
-                        >
-                          {formatPrice(viewingProduct.price)}
-                        </span>
-                        {viewingProduct.isOnSale &&
-                          viewingProduct.originalPrice &&
-                          viewingProduct.price &&
-                          viewingProduct.originalPrice > viewingProduct.price && (
-                            <span className="text-sm line-through text-muted-foreground font-normal">
-                              {formatPrice(viewingProduct.originalPrice)}
-                            </span>
-                          )}
-                      </div>
+                        {formatPrice(viewingProduct.price)}
+                      </span>
+                      {viewingProduct.isOnSale &&
+                        viewingProduct.originalPrice &&
+                        viewingProduct.price &&
+                        viewingProduct.originalPrice > viewingProduct.price && (
+                          <span className="text-sm line-through text-muted-foreground font-normal">
+                            {formatPrice(viewingProduct.originalPrice)}
+                          </span>
+                        )}
                     </div>
-                  )}
+                  </div>
 
                   {/* Description */}
                   {viewingProduct.description && (
