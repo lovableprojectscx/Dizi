@@ -1,18 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 
-const supabaseUrl =
+const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL ||
   process.env.SUPABASE_URL ||
   "https://wxpizbnuuaiculzfuhof.supabase.co";
 
-const supabaseAnonKey =
+const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   process.env.SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4cGl6Ym51dWFpY3VsemZ1aG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUyNzEwOTMsImV4cCI6MjAyODg0NzA5M30.7C105K7fW2-d0u4aT9-4S4P6g8pQ8qQ0X2000000000";
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4cGl6Ym51dWFpY3VsemZ1aG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjM3MzMsImV4cCI6MjA5Mzg5OTczM30.azLkp485_RtvtgkUAOesk9BOwgqJiO7QLrM1sxI5-5A";
 
 function escapeHtmlAttr(str: string): string {
   if (!str) return "";
@@ -26,6 +23,10 @@ function escapeHtmlAttr(str: string): string {
 
 function cleanImageUrl(url?: string | null): string | null {
   if (!url || typeof url !== "string" || !url.trim()) return null;
+
+  // Filter out inline SVG data URIs because social crawlers like WhatsApp cannot render data: URIs as OG cards
+  if (url.startsWith("data:")) return null;
+
   let first = url.includes("|||") ? url.split("|||")[0] : url;
   first = first.trim();
   if (first.startsWith("http://") || first.startsWith("https://")) return first;
@@ -50,49 +51,68 @@ export default async function handler(req: any, res: any) {
   const canonicalUrl = `https://dizi.idenza.site/${type === "bio" ? "bio" : "t"}/${slug}`;
 
   try {
-    // 1. Fetch store metadata from Supabase
-    const { data: store } = await supabase
-      .from("stores")
-      .select("id, name, logo, banner_image, bio_logo, bio_banner, bio_description")
-      .eq("slug", slug)
-      .eq("active", true)
-      .maybeSingle();
+    // Query Supabase REST API directly with case-insensitive slug lookup
+    const storeRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/stores?slug=ilike.${encodeURIComponent(slug)}&active=eq.true&select=id,name,logo,banner_image,bio_logo,bio_banner,bio_description`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
 
-    if (store) {
-      const storeBanner = cleanImageUrl(store.banner_image);
-      const storeLogo = cleanImageUrl(store.logo);
-      const bioBanner = cleanImageUrl(store.bio_banner);
-      const bioLogo = cleanImageUrl(store.bio_logo);
+    if (storeRes.ok) {
+      const stores = await storeRes.json();
+      const store = stores && stores.length > 0 ? stores[0] : null;
 
-      const bestImage =
-        type === "bio"
-          ? bioBanner || storeBanner || bioLogo || storeLogo || defaultImage
-          : storeBanner || bioBanner || storeLogo || bioLogo || defaultImage;
+      if (store) {
+        const storeBanner = cleanImageUrl(store.banner_image);
+        const storeLogo = cleanImageUrl(store.logo);
+        const bioBanner = cleanImageUrl(store.bio_banner);
+        const bioLogo = cleanImageUrl(store.bio_logo);
 
-      title = `${store.name} · ${type === "bio" ? "Enlaces & Contacto" : "Catálogo Digital"}`;
-      description =
-        store.bio_description ||
-        (type === "bio"
-          ? `Encuentra nuestras redes sociales, catálogo digital y ubicación de ${store.name}.`
-          : `Explora nuestro catálogo digital y realiza tus pedidos directo por WhatsApp con ${store.name}.`);
-      image = bestImage;
+        // Hierarchy: Store Banner -> Store Bio Banner -> Store Logo -> Store Bio Logo -> Fallback Dizi
+        const bestImage =
+          type === "bio"
+            ? bioBanner || storeBanner || bioLogo || storeLogo || defaultImage
+            : storeBanner || bioBanner || storeLogo || bioLogo || defaultImage;
 
-      // Check for specific product deep link (?p=ID or ?producto=ID)
-      const targetProductId = p || producto;
-      if (targetProductId) {
-        const { data: prod } = await supabase
-          .from("products")
-          .select("name, price, description, image")
-          .eq("id", targetProductId)
-          .maybeSingle();
+        title = `${store.name} · ${type === "bio" ? "Enlaces & Contacto" : "Catálogo Digital"}`;
+        description =
+          store.bio_description ||
+          (type === "bio"
+            ? `Encuentra nuestras redes sociales, catálogo digital y ubicación de ${store.name}.`
+            : `Explora nuestro catálogo digital y realiza tus pedidos directo por WhatsApp con ${store.name}.`);
+        image = bestImage;
 
-        if (prod) {
-          const prodPrice = prod.price ? ` | S/ ${Number(prod.price).toFixed(2)}` : "";
-          title = `${prod.name} — ${store.name}${prodPrice}`;
-          description =
-            prod.description ||
-            `Mira ${prod.name} en el catálogo digital de ${store.name}. Pedidos directo por WhatsApp.`;
-          image = cleanImageUrl(prod.image) || image;
+        // Check for specific product deep link (?p=ID or ?producto=ID)
+        const targetProductId = p || producto;
+        if (targetProductId) {
+          const prodRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(targetProductId)}&select=name,price,description,image`,
+            {
+              headers: {
+                apikey: SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          if (prodRes.ok) {
+            const prods = await prodRes.json();
+            const prod = prods && prods.length > 0 ? prods[0] : null;
+            if (prod) {
+              const prodPrice = prod.price ? ` | S/ ${Number(prod.price).toFixed(2)}` : "";
+              title = `${prod.name} — ${store.name}${prodPrice}`;
+              description =
+                prod.description ||
+                `Mira ${prod.name} en el catálogo digital de ${store.name}. Pedidos directo por WhatsApp.`;
+              image = cleanImageUrl(prod.image) || image;
+            }
+          }
         }
       }
     }
@@ -106,7 +126,7 @@ export default async function handler(req: any, res: any) {
   const escCanonical = escapeHtmlAttr(canonicalUrl);
 
   try {
-    // 2. Read built index.html from dist/index.html (created by Vite build) or fetch from host
+    // Read compiled dist/index.html or root index.html
     let html = "";
     const distIndexPath = path.join(process.cwd(), "dist", "index.html");
     const rootIndexPath = path.join(process.cwd(), "index.html");
@@ -127,7 +147,7 @@ export default async function handler(req: any, res: any) {
     }
 
     if (html) {
-      // 3. Inject dynamic Open Graph & Twitter Card tags
+      // Inject dynamic Open Graph & Twitter Card tags
       html = html.replace(/<title>.*?<\/title>/gi, `<title>${escTitle}</title>`);
       html = html.replace(
         /<meta name="description" content=".*?"\s*\/?>/gi,
