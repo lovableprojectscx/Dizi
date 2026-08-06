@@ -4,18 +4,21 @@
       "includeFiles": "dist/index.html"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/bio/:slug",
-      "destination": "/api/seo?slug=:slug&type=bio"
+      "src": "/bio/(?<slug>[^/]+)",
+      "dest": "/api/seo?slug=$slug&type=bio"
     },
     {
-      "source": "/t/:slug",
-      "destination": "/api/seo?slug=:slug&type=catalog"
+      "src": "/t/(?<slug>[^/]+)",
+      "dest": "/api/seo?slug=$slug&type=catalog"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
   "headers": [
