@@ -448,7 +448,9 @@ function TenantsPage() {
             {sorted.map((s) => {
               const visibleProds = s.products?.filter((p) => p.visible && !p.isSample).length || 0;
               const payloadKB = (0.8 + visibleProds * 0.35 + (s.categories?.length || 0) * 0.1).toFixed(2);
-              const estimatedMB = (((s.views || 0) * parseFloat(payloadKB)) / 1024).toFixed(2);
+              const realMB = s.egressBytes && s.egressBytes > 0
+                ? (s.egressBytes / (1024 * 1024)).toFixed(2)
+                : (((s.views || 0) * parseFloat(payloadKB)) / 1024).toFixed(2);
 
               return (
                 <React.Fragment key={s.id}>
@@ -524,7 +526,7 @@ function TenantsPage() {
 
                     <TableCell>
                       <div className="flex flex-col text-xs font-mono">
-                        <span className="font-bold text-foreground">{estimatedMB} MB</span>
+                        <span className="font-bold text-foreground">{realMB} MB</span>
                         <span className="text-[10px] text-muted-foreground">{payloadKB} KB/visita</span>
                       </div>
                     </TableCell>
