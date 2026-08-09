@@ -412,11 +412,13 @@ function Dashboard() {
           </div>
 
           <div className="p-3 rounded-xl bg-background border border-border/50 space-y-1">
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Egress Estimado Acumulado</span>
+            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Egress Real Medido</span>
             <p className="text-sm font-bold text-foreground">
-              {(((store.views || 0) * (0.8 + (store.products?.filter((p) => p.visible).length || 0) * 0.35)) / 1024).toFixed(2)} MB
+              {store.egressBytes && store.egressBytes > 0
+                ? `${(store.egressBytes / (1024 * 1024)).toFixed(2)} MB`
+                : `${((((store.views || 0) * (0.8 + (store.products?.filter((p) => p.visible).length || 0) * 0.35)) / 1024)).toFixed(2)} MB`}
             </p>
-            <p className="text-[10px] text-muted-foreground">De 5,000 MB mensuales</p>
+            <p className="text-[10px] text-muted-foreground">De 5,000 MB mensuales (Plan Gratis)</p>
           </div>
 
           <div className="p-3 rounded-xl bg-background border border-border/50 space-y-1">

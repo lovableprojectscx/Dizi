@@ -77,6 +77,7 @@ const mapStoreFromDB = (row: any): Store => {
   createdAt: row.created_at,
   whatsappClicks: row.whatsapp_clicks || 0,
   views: row.views || 0,
+  egressBytes: Number(row.egress_bytes || 0),
   priceFilterEnabled: row.price_filter_enabled ?? false,
   libroReclamacionesActivo: row.libro_reclamaciones_activo ?? false,
   empresaRuc: row.empresa_ruc ?? undefined,

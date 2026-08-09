@@ -87,6 +87,7 @@ export interface Store {
   createdAt: string;
   whatsappClicks: number;
   views?: number;
+  egressBytes?: number;
   isPublished?: boolean;
   model?: string;
   ownerId?: string;
@@ -458,6 +459,7 @@ export function calculateStoreEgress(store: {
   categories?: Array<unknown>;
   quickLinks?: Array<unknown>;
   views?: number;
+  egressBytes?: number;
   bannerImage?: string | null;
   logo?: string | null;
 }): StoreEgressMetrics {
@@ -465,28 +467,25 @@ export function calculateStoreEgress(store: {
   const categoriesCount = store.categories?.length || 0;
   const linksCount = store.quickLinks?.length || 0;
 
-  // Tamaño estimado del JSON del catálogo en KB (0.8 KB base + ~0.35 KB por producto + ~0.1 KB por categoría)
+  // Tamaño real o estimado del JSON del catálogo en KB
   const catalogPayloadKB = Number((0.8 + visibleProductsCount * 0.35 + categoriesCount * 0.1).toFixed(2));
-
-  // Tamaño estimado del JSON del Bio Link en KB (0.5 KB base + ~0.15 KB por enlace rápido)
   const bioLinkPayloadKB = Number((0.5 + linksCount * 0.15).toFixed(2));
 
   const views = store.views || 0;
-
-  // Estimación de vistas de catálogo (80% del total de vistas)
   const catalogViews = Math.round(views * 0.8);
-  // Estimación de vistas de Bio Link (20% del total de vistas)
   const bioViews = Math.round(views * 0.2);
 
   const catalogEgressMB = Number(((catalogViews * catalogPayloadKB) / 1024).toFixed(2));
   const bioLinkEgressMB = Number(((bioViews * bioLinkPayloadKB) / 1024).toFixed(2));
 
-  // Estimación de media storage (cada foto ~150KB en WebP)
   const mediaStorageMB = Number(
     (visibleProductsCount * 0.15 + (store.bannerImage ? 0.3 : 0.1) + (store.logo ? 0.1 : 0)).toFixed(2),
   );
 
-  const totalEgressMB = Number((catalogEgressMB + bioLinkEgressMB).toFixed(2));
+  // Si existe el contador real medido por PostgreSQL, usarlo directamente
+  const realMB = store.egressBytes && store.egressBytes > 0
+    ? Number((store.egressBytes / (1024 * 1024)).toFixed(2))
+    : Number((catalogEgressMB + bioLinkEgressMB).toFixed(2));
 
   return {
     catalogPayloadKB,
@@ -494,7 +493,7 @@ export function calculateStoreEgress(store: {
     catalogEgressMB,
     bioLinkEgressMB,
     mediaStorageMB,
-    totalEgressMB,
+    totalEgressMB: realMB,
     optimizedWithCdn: true,
   };
 }
