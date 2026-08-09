@@ -5,8 +5,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
-  // Carga todas las variables de entorno (incluyendo las que no tienen el prefijo VITE_)
-  // y las asigna a process.env para que estén disponibles en el backend local (como WHAPI_TOKEN)
+  // Carga todas las variables de entorno y las asigna a process.env para endpoints de servidor
   const env = loadEnv(mode, process.cwd(), "");
   Object.assign(process.env, env);
 
