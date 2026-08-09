@@ -442,3 +442,59 @@ export function checkImageRatio(
       : "Tu imagen es mas alta de lo recomendado — se recortara arriba y abajo.",
   };
 }
+
+export interface StoreEgressMetrics {
+  catalogPayloadKB: number;
+  bioLinkPayloadKB: number;
+  catalogEgressMB: number;
+  bioLinkEgressMB: number;
+  mediaStorageMB: number;
+  totalEgressMB: number;
+  optimizedWithCdn: boolean;
+}
+
+export function calculateStoreEgress(store: {
+  products?: Array<{ visible: boolean; isSample?: boolean }>;
+  categories?: Array<unknown>;
+  quickLinks?: Array<unknown>;
+  views?: number;
+  bannerImage?: string | null;
+  logo?: string | null;
+}): StoreEgressMetrics {
+  const visibleProductsCount = store.products?.filter((p) => p.visible && !p.isSample).length || 0;
+  const categoriesCount = store.categories?.length || 0;
+  const linksCount = store.quickLinks?.length || 0;
+
+  // Tamaño estimado del JSON del catálogo en KB (0.8 KB base + ~0.35 KB por producto + ~0.1 KB por categoría)
+  const catalogPayloadKB = Number((0.8 + visibleProductsCount * 0.35 + categoriesCount * 0.1).toFixed(2));
+
+  // Tamaño estimado del JSON del Bio Link en KB (0.5 KB base + ~0.15 KB por enlace rápido)
+  const bioLinkPayloadKB = Number((0.5 + linksCount * 0.15).toFixed(2));
+
+  const views = store.views || 0;
+
+  // Estimación de vistas de catálogo (80% del total de vistas)
+  const catalogViews = Math.round(views * 0.8);
+  // Estimación de vistas de Bio Link (20% del total de vistas)
+  const bioViews = Math.round(views * 0.2);
+
+  const catalogEgressMB = Number(((catalogViews * catalogPayloadKB) / 1024).toFixed(2));
+  const bioLinkEgressMB = Number(((bioViews * bioLinkPayloadKB) / 1024).toFixed(2));
+
+  // Estimación de media storage (cada foto ~150KB en WebP)
+  const mediaStorageMB = Number(
+    (visibleProductsCount * 0.15 + (store.bannerImage ? 0.3 : 0.1) + (store.logo ? 0.1 : 0)).toFixed(2),
+  );
+
+  const totalEgressMB = Number((catalogEgressMB + bioLinkEgressMB).toFixed(2));
+
+  return {
+    catalogPayloadKB,
+    bioLinkPayloadKB,
+    catalogEgressMB,
+    bioLinkEgressMB,
+    mediaStorageMB,
+    totalEgressMB,
+    optimizedWithCdn: true,
+  };
+}

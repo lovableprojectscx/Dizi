@@ -439,115 +439,129 @@ function TenantsPage() {
               <TableHead className="font-bold text-foreground">Plan contratado</TableHead>
               <TableHead className="font-bold text-foreground">Vencimiento</TableHead>
               <TableHead className="font-bold text-foreground">Estado</TableHead>
+              <TableHead className="font-bold text-foreground">Egress Estimado</TableHead>
               <TableHead className="font-bold text-foreground">Fecha Registro</TableHead>
               <TableHead className="text-right pr-6 font-bold text-foreground">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y">
-            {sorted.map((s) => (
-              <React.Fragment key={s.id}>
-                {/* Store Main Row */}
-                <TableRow className="hover:bg-muted/5 transition-colors">
-                  <TableCell className="py-4 pl-6">
-                    <div className="flex items-center gap-3">
-                      {s.logo ? (
-                        <img
-                          src={s.logo}
-                          alt=""
-                          className="h-9 w-9 rounded-full object-cover border"
-                        />
-                      ) : (
-                        <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary/10 to-primary/20 text-primary flex items-center justify-center text-xs font-black border">
-                          {s.name.substring(0, 2).toUpperCase()}
+            {sorted.map((s) => {
+              const visibleProds = s.products?.filter((p) => p.visible && !p.isSample).length || 0;
+              const payloadKB = (0.8 + visibleProds * 0.35 + (s.categories?.length || 0) * 0.1).toFixed(2);
+              const estimatedMB = (((s.views || 0) * parseFloat(payloadKB)) / 1024).toFixed(2);
+
+              return (
+                <React.Fragment key={s.id}>
+                  {/* Store Main Row */}
+                  <TableRow className="hover:bg-muted/5 transition-colors">
+                    <TableCell className="py-4 pl-6">
+                      <div className="flex items-center gap-3">
+                        {s.logo ? (
+                          <img
+                            src={s.logo}
+                            alt=""
+                            className="h-9 w-9 rounded-full object-cover border"
+                          />
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary/10 to-primary/20 text-primary flex items-center justify-center text-xs font-black border">
+                            {s.name.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="font-bold text-sm text-foreground">{s.name}</p>
+                            {s.libroReclamacionesActivo && (
+                              <span
+                                title="Libro de reclamaciones activo"
+                                className="inline-flex items-center gap-0.5 text-[9px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/30"
+                              >
+                                <ClipboardList className="h-2.5 w-2.5" /> Libro
+                              </span>
+                            )}
+                            {isStoreInactiveCandidate(s) && (
+                              <span
+                                title="Tienda inactiva sin visitas por más de 15 días"
+                                className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
+                              >
+                                <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> Inactiva
+                                (15d+)
+                              </span>
+                            )}
+                          </div>
+                          <Link
+                            to="/t/$slug"
+                            params={{ slug: s.slug }}
+                            target="_blank"
+                            className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-0.5 mt-0.5 font-mono"
+                          >
+                            /t/{s.slug} <ExternalLink className="h-3 w-3 opacity-60" />
+                          </Link>
                         </div>
-                      )}
-                      <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-bold text-sm text-foreground">{s.name}</p>
-                          {s.libroReclamacionesActivo && (
-                            <span
-                              title="Libro de reclamaciones activo"
-                              className="inline-flex items-center gap-0.5 text-[9px] bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/30"
-                            >
-                              <ClipboardList className="h-2.5 w-2.5" /> Libro
-                            </span>
-                          )}
-                          {isStoreInactiveCandidate(s) && (
-                            <span
-                              title="Tienda inactiva sin visitas por más de 15 días"
-                              className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
-                            >
-                              <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> Inactiva
-                              (15d+)
-                            </span>
-                          )}
-                        </div>
-                        <Link
-                          to="/t/$slug"
-                          params={{ slug: s.slug }}
-                          target="_blank"
-                          className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-0.5 mt-0.5 font-mono"
-                        >
-                          /t/{s.slug} <ExternalLink className="h-3 w-3 opacity-60" />
-                        </Link>
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell>
-                    <PlanBadge plan={s.plan} />
-                  </TableCell>
+                    <TableCell>
+                      <PlanBadge plan={s.plan} />
+                    </TableCell>
 
-                  <TableCell>
-                    <ExpiryBadge store={s} />
-                  </TableCell>
+                    <TableCell>
+                      <ExpiryBadge store={s} />
+                    </TableCell>
 
-                  <TableCell>
-                    {s.active ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                        Activa
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-semibold">
-                        <span className="h-2 w-2 rounded-full bg-zinc-400" />
-                        Suspendida
-                      </span>
-                    )}
-                  </TableCell>
+                    <TableCell>
+                      {s.active ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                          Activa
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-semibold">
+                          <span className="h-2 w-2 rounded-full bg-zinc-400" />
+                          Suspendida
+                        </span>
+                      )}
+                    </TableCell>
 
-                  <TableCell className="text-xs text-muted-foreground font-medium">
-                    {new Date(s.createdAt).toLocaleDateString("es-PE", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col text-xs font-mono">
+                        <span className="font-bold text-foreground">{estimatedMB} MB</span>
+                        <span className="text-[10px] text-muted-foreground">{payloadKB} KB/visita</span>
+                      </div>
+                    </TableCell>
 
-                  <TableCell className="text-right pr-6">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs gap-1 border-zinc-200 dark:border-zinc-800 bg-background hover:bg-zinc-50 font-bold"
-                        onClick={() => openManagePanel(s.id)}
-                      >
-                        Gestionar
-                      </Button>
+                    <TableCell className="text-xs text-muted-foreground font-medium">
+                      {new Date(s.createdAt).toLocaleDateString("es-PE", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </TableCell>
 
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs font-bold gap-1 shadow-sm"
-                        onClick={() => impersonate(s.id)}
-                      >
-                        <LogIn className="h-3.5 w-3.5" />
-                        Acceder
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              </React.Fragment>
-            ))}
+                    <TableCell className="text-right pr-6">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs gap-1 border-zinc-200 dark:border-zinc-800 bg-background hover:bg-zinc-50 font-bold"
+                          onClick={() => openManagePanel(s.id)}
+                        >
+                          Gestionar
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          className="h-8 text-xs font-bold gap-1 shadow-sm"
+                          onClick={() => impersonate(s.id)}
+                        >
+                          <LogIn className="h-3.5 w-3.5" />
+                          Acceder
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              );
+            })}
 
             {sorted.length === 0 && (
               <TableRow>
