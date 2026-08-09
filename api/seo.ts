@@ -4,7 +4,7 @@ import path from "path";
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL ||
   process.env.SUPABASE_URL ||
-  "https://wxpizbnuuaiculzfuhof.supabase.co";
+  "https://zkqzdwxjthjdjchimmds.supabase.co";
 
 const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
