@@ -18,6 +18,11 @@ describe("formatPrice (RF-03)", () => {
   it("CP-04: formatea precio con decimales y redondea (0.005 -> S/ 0.01)", () => {
     expect(formatPrice(0.005)).toBe("S/ 0.01");
   });
+
+  it("CP-05: precio 0 o nulo para productos a consultar", () => {
+    expect(formatPrice(0)).toBe("A consultar");
+    expect(formatPrice(null)).toBe("A consultar");
+  });
 });
 
 describe("buildWaUrl (RF-02)", () => {

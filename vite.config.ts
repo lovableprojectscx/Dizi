@@ -13,7 +13,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       // autoCodeSplitting: parte el bundle por ruta. Sin esto, quien abre un catalogo
       // publico descarga tambien todo el panel de administracion (~9000 lineas que nunca usa).
-      TanStackRouterVite({ autoCodeSplitting: true }),
+      TanStackRouterVite({
+        autoCodeSplitting: true,
+        routeFileIgnorePattern: ".*\\.test\\.(ts|tsx)$",
+      }),
       react(),
       tailwindcss(),
       tsconfigPaths(),
