@@ -1,14 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 
-const DEFAULT_SUPABASE_URL = "https://wxpizbnuuaiculzfuhof.supabase.co";
-const DEFAULT_SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind4cGl6Ym51dWFpY3VsemZ1aG9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMjM3MzMsImV4cCI6MjA5Mzg5OTczM30.azLkp485_RtvtgkUAOesk9BOwgqJiO7QLrM1sxI5-5A";
+// Proyecto activo de producción oficial Dizi
+const DEFAULT_SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("[Supabase] Advertencia: Verifica las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en tu archivo .env");
+  console.warn("[Supabase] Verifica las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en tu archivo .env");
 }
 
 // Timeout de 30 segundos para peticiones a Supabase (permite subida de imágenes en conexiones móviles)
@@ -37,7 +36,6 @@ export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
  * Retorna la URL pública de la imagen subida.
  */
 export async function uploadBase64ToStorage(base64Data: string, path: string): Promise<string> {
-  // Si no es un base64 data url, devolver el string tal cual (por si ya es una URL HTTP)
   if (!base64Data.startsWith("data:")) {
     return base64Data;
   }
@@ -55,13 +53,11 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
     }
     const blob = new Blob([u8arr], { type: mime });
 
-    // Determinar la extensión correcta según el tipo MIME de la imagen
     let ext = "webp";
     if (mime === "image/jpeg") ext = "jpg";
     else if (mime === "image/png") ext = "png";
     else if (mime === "image/gif") ext = "gif";
 
-    // Reemplazar la extensión en la ruta por la correspondiente al formato real
     const cleanPath = path.replace(/\.[a-zA-Z0-9]+$/, `.${ext}`);
 
     let res = await supabase.storage.from("images").upload(cleanPath, blob, {
@@ -70,7 +66,6 @@ export async function uploadBase64ToStorage(base64Data: string, path: string): P
       cacheControl: "31536000",
     });
 
-    // Reintento automático en caso de micro-corte de red móvil
     if (res.error) {
       console.warn("[uploadBase64ToStorage] Reintentando subida de imagen por parpadeo de red...", res.error);
       res = await supabase.storage.from("images").upload(cleanPath, blob, {
