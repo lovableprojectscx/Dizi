@@ -1232,6 +1232,7 @@ function DiziNativeAdCard({
             alt="Dizi Catálogos"
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
+decoding="async"
           />
           <span
             style={{
@@ -3320,6 +3321,7 @@ export function PublicCatalog({
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
+decoding="async"
                                       style={{
                                         borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0`,
                                       }}
@@ -3450,6 +3452,7 @@ export function PublicCatalog({
                       alt={p.name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
                       loading="lazy"
+decoding="async"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
@@ -3763,6 +3766,7 @@ export function PublicCatalog({
                               alt={p.name}
                               className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
                               loading="lazy"
+decoding="async"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src =
                                   "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
@@ -3985,6 +3989,7 @@ export function PublicCatalog({
                         alt={p.name}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
+decoding="async"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src =
                             "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
@@ -4178,6 +4183,7 @@ export function PublicCatalog({
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
+decoding="async"
                           style={{ borderRadius: cfg.imgRounded }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
@@ -5152,6 +5158,7 @@ export function PublicCatalog({
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     loading="lazy"
+decoding="async"
                                   />
                                   <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
                                     Destacado
@@ -5381,6 +5388,7 @@ export function PublicCatalog({
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
+decoding="async"
                                     />
                                     {p.isOnSale && (
                                       <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg z-10">
@@ -5836,6 +5844,7 @@ export function PublicCatalog({
                                         alt={p.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                         loading="lazy"
+decoding="async"
                                       />
                                       <div
                                         style={{
@@ -6106,6 +6115,7 @@ export function PublicCatalog({
                                           alt={p.name}
                                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                                           loading="lazy"
+decoding="async"
                                         />
                                         {p.isOnSale && (
                                           <span
@@ -6550,6 +6560,7 @@ export function PublicCatalog({
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
                                     loading="lazy"
+decoding="async"
                                   />
                                   {/* Floating Badge inside image container */}
                                   <div
@@ -6956,6 +6967,7 @@ export function PublicCatalog({
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
+decoding="async"
                                     />
                                     {p.isOnSale && (
                                       <span
@@ -7191,6 +7203,7 @@ export function PublicCatalog({
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
+decoding="async"
                           style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
@@ -7285,6 +7298,7 @@ export function PublicCatalog({
                             alt={p.name}
                             className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
+decoding="async"
                             style={{ borderRadius: cfg.imgRounded }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =

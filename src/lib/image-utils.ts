@@ -6,8 +6,8 @@
  * usando el canvas del browser — sin dependencias externas.
  */
 
-const MAX_DIMENSION = 1080; // px máximo en cualquier lado (optimizado para carga HD rápida en móviles)
-const WEBP_QUALITY = 0.80; // 0.80 = excelente nitidez visual reduciendo el peso a ~150KB por foto de 10MB
+const MAX_DIMENSION = 800; // px máximo en cualquier lado (optimizado para carga HD súper rápida en móviles a ~35KB)
+const WEBP_QUALITY = 0.75; // 0.75 = nitidez cristalina reduciendo el peso de fotos de 10MB a solo ~35KB-45KB
 
 let _isWebpSupported: boolean | null = null;
 
