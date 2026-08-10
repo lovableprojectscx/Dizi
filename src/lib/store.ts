@@ -361,7 +361,11 @@ export const useApp = create<AppState>()(
           dbPatch.bg_color = (updatedPatch as any).bgColor;
         if (updatedPatch.textColor !== undefined) dbPatch.text_color = updatedPatch.textColor;
         if ((updatedPatch as any).bannerImage !== undefined) {
-          dbPatch.banner_image = (updatedPatch as any).bannerImage;
+          const img = (updatedPatch as any).bannerImage;
+          dbPatch.banner_image = img;
+          dbPatch.banners = img
+            ? img.split("|||").map((b: string) => b.trim()).filter(Boolean)
+            : [];
         }
         if ((updatedPatch as any).bannerTitle !== undefined)
           dbPatch.banner_title = (updatedPatch as any).bannerTitle;
