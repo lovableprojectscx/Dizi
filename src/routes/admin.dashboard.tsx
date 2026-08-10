@@ -380,56 +380,6 @@ function Dashboard() {
           }
         />
       </div>
-
-      {/* ── SECCIÓN 3: CONTROL DE ANCHO DE BANDA & OPTIMIZACIÓN (EGRESS METER) ── */}
-      <Card className="border border-emerald-500/20 bg-emerald-500/[0.02] rounded-2xl p-4 sm:p-5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border/40 pb-3 mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 shrink-0">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-heading font-bold text-foreground flex items-center gap-2">
-                Eficiencia de Ancho de Banda (Egress)
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-300">
-                  Caché CDN Activa ⚡
-                </span>
-              </h3>
-              <p className="text-[11px] sm:text-xs text-muted-foreground">
-                Consumo estimado por visitas a tu Catálogo Digital y Link en Bio.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-          <div className="p-3 rounded-xl bg-background border border-border/50 space-y-1">
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Payload por visita</span>
-            <p className="text-sm font-bold text-foreground">
-              {(0.8 + (store.products?.filter((p) => p.visible).length || 0) * 0.35).toFixed(2)} KB
-            </p>
-            <p className="text-[10px] text-emerald-600 font-medium">100% Compreso en WebP</p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-background border border-border/50 space-y-1">
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Egress Real Medido</span>
-            <p className="text-sm font-bold text-foreground">
-              {store.egressBytes && store.egressBytes > 0
-                ? `${(store.egressBytes / (1024 * 1024)).toFixed(2)} MB`
-                : `${((((store.views || 0) * (0.8 + (store.products?.filter((p) => p.visible).length || 0) * 0.35)) / 1024)).toFixed(2)} MB`}
-            </p>
-            <p className="text-[10px] text-muted-foreground">De 5,000 MB mensuales (Plan Gratis)</p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-background border border-border/50 space-y-1">
-            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Estado de Transferencia</span>
-            <p className="text-sm font-bold text-emerald-600 flex items-center gap-1">
-              <Check className="h-4 w-4" /> Ultra-Optimizado
-            </p>
-            <p className="text-[10px] text-muted-foreground">0% riesgo de suspensión</p>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }
