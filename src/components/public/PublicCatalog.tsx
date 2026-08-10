@@ -134,7 +134,7 @@ function InfiniteScrollSentinel({
           onLoadMore();
         }
       },
-      { rootMargin: "400px" }
+      { rootMargin: "100px" }
     );
 
     const el = sentinelRef.current;
@@ -2157,11 +2157,11 @@ export function PublicCatalog({
     return Array.from(set);
   }, [productsWithImages]);
 
-  const [visibleLimit, setVisibleLimit] = useState(24);
+  const [visibleLimit, setVisibleLimit] = useState(12);
 
-  // Reiniciar el límite visible a 24 al cambiar cualquier filtro, búsqueda o categoría
+  // Reiniciar el límite visible a 12 al cambiar cualquier filtro, búsqueda o categoría
   useEffect(() => {
-    setVisibleLimit(24);
+    setVisibleLimit(12);
   }, [activeCat, query, priceRange, selectedDiet, sortBy]);
 
   const filtered = useMemo(() => {
@@ -2171,7 +2171,7 @@ export function PublicCatalog({
   const hasMoreProducts = visibleLimit < rawFiltered.length;
 
   const loadMoreProducts = useCallback(() => {
-    setVisibleLimit((prev) => prev + 24);
+    setVisibleLimit((prev) => prev + 12);
   }, []);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);

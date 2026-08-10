@@ -478,22 +478,24 @@ export function calculateStoreEgress(store: {
   const catalogEgressMB = Number(((catalogViews * catalogPayloadKB) / 1024).toFixed(2));
   const bioLinkEgressMB = Number(((bioViews * bioLinkPayloadKB) / 1024).toFixed(2));
 
-  const mediaStorageMB = Number(
-    (visibleProductsCount * 0.15 + (store.bannerImage ? 0.3 : 0.1) + (store.logo ? 0.1 : 0)).toFixed(2),
-  );
+  // Descarga estimada de imágenes de Storage (lote inicial de 12 fotos ~80KB cada una)
+  const imageDownloadsPerVisitMB = Math.min(12, visibleProductsCount) * 0.08;
+  const totalMediaEgressMB = Number((views * imageDownloadsPerVisitMB).toFixed(2));
 
-  // Si existe el contador real medido por PostgreSQL, usarlo directamente
-  const realMB = store.egressBytes && store.egressBytes > 0
+  // Si existe el contador de API medido por PostgreSQL, sumarle el estimado de descarga de imágenes
+  const apiJsonMB = store.egressBytes && store.egressBytes > 0
     ? Number((store.egressBytes / (1024 * 1024)).toFixed(2))
     : Number((catalogEgressMB + bioLinkEgressMB).toFixed(2));
+
+  const combinedTotalMB = Number((apiJsonMB + totalMediaEgressMB).toFixed(2));
 
   return {
     catalogPayloadKB,
     bioLinkPayloadKB,
     catalogEgressMB,
     bioLinkEgressMB,
-    mediaStorageMB,
-    totalEgressMB: realMB,
+    mediaStorageMB: totalMediaEgressMB,
+    totalEgressMB: combinedTotalMB,
     optimizedWithCdn: true,
   };
 }

@@ -2,7 +2,7 @@ import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
-import { PLANS, type PlanId, daysUntilExpiry, daysSinceExpiry, formatDate } from "@/lib/types";
+import { PLANS, type PlanId, daysUntilExpiry, daysSinceExpiry, formatDate, calculateStoreEgress } from "@/lib/types";
 import { SubscriptionManager } from "@/components/admin/SubscriptionManager";
 import {
   Table,
@@ -446,11 +446,9 @@ function TenantsPage() {
           </TableHeader>
           <TableBody className="divide-y">
             {sorted.map((s) => {
-              const visibleProds = s.products?.filter((p) => p.visible && !p.isSample).length || 0;
-              const payloadKB = (0.8 + visibleProds * 0.35 + (s.categories?.length || 0) * 0.1).toFixed(2);
-              const realMB = s.egressBytes && s.egressBytes > 0
-                ? (s.egressBytes / (1024 * 1024)).toFixed(2)
-                : (((s.views || 0) * parseFloat(payloadKB)) / 1024).toFixed(2);
+              const egressMetrics = calculateStoreEgress(s);
+              const payloadKB = egressMetrics.catalogPayloadKB;
+              const realMB = egressMetrics.totalEgressMB.toFixed(2);
 
               return (
                 <React.Fragment key={s.id}>
