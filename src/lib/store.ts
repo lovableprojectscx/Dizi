@@ -246,8 +246,13 @@ export const useApp = create<AppState>()(
 
           if (data) {
             const dbStores = data.map((row) => mapStoreFromDB(row));
+            const currentId = get().currentStoreId;
+            const isValidCurrent = dbStores.some((s) => s.id === currentId);
+            const nextCurrentId = isValidCurrent ? currentId : (dbStores[0]?.id || null);
+
             set({
               stores: dbStores,
+              currentStoreId: nextCurrentId,
               promotions: dbPromotions,
               fetchError: null,
               lastFetched: Date.now(),
@@ -357,10 +362,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.textColor !== undefined) dbPatch.text_color = updatedPatch.textColor;
         if ((updatedPatch as any).bannerImage !== undefined) {
           dbPatch.banner_image = (updatedPatch as any).bannerImage;
-          const parts = ((updatedPatch as any).bannerImage || "").split("|||").map((b: string) => b.trim()).filter(Boolean);
-          dbPatch.banners = parts;
         }
-        if (updatedPatch.banners !== undefined) dbPatch.banners = updatedPatch.banners;
         if ((updatedPatch as any).bannerTitle !== undefined)
           dbPatch.banner_title = (updatedPatch as any).bannerTitle;
         if (updatedPatch.bannerStyle !== undefined) dbPatch.banner_style = updatedPatch.bannerStyle;
