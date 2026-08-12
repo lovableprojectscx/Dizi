@@ -32,10 +32,14 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Solo interceptar peticiones GET de imágenes de Supabase Storage o imágenes estáticas locales
+  // Interceptar peticiones GET de imágenes de Supabase Storage, API del catálogo o imágenes estáticas locales
   const isSupabaseImage =
     IMAGE_DOMAINS.some((domain) => url.hostname.endsWith(domain)) &&
     url.pathname.includes("/storage/v1/object/public/images/");
+
+  const isSupabaseApi =
+    IMAGE_DOMAINS.some((domain) => url.hostname.endsWith(domain)) &&
+    url.pathname.includes("/rest/v1/rpc/get_public_store");
 
   const isLocalImage =
     url.pathname.endsWith(".webp") ||
@@ -44,7 +48,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.endsWith(".jpeg") ||
     url.pathname.endsWith(".svg");
 
-  if (event.request.method === "GET" && (isSupabaseImage || isLocalImage)) {
+  if (event.request.method === "GET" && (isSupabaseImage || isSupabaseApi || isLocalImage)) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(event.request);

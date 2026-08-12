@@ -33,15 +33,33 @@ describe("Pruebas unitarias de Service Worker (public/sw.js)", () => {
     }
   }
 
+  function isSupabaseApi(urlStr: string) {
+    try {
+      const url = new URL(urlStr);
+      return (
+        IMAGE_DOMAINS.some((domain) => url.hostname.endsWith(domain)) &&
+        url.pathname.includes("/rest/v1/rpc/get_public_store")
+      );
+    } catch {
+      return false;
+    }
+  }
+
   it("debe identificar correctamente URLs de imágenes de Supabase Storage para caché", () => {
     const supabaseUrl =
       "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_hv4u9yp/products/f0eigod9.webp?t=123";
     expect(isSupabaseImage(supabaseUrl)).toBe(true);
   });
 
-  it("debe rechazar peticiones API de Supabase que no sean imágenes de Storage", () => {
+  it("debe identificar e interceptar peticiones RPC del catálogo público para caché nativo", () => {
+    const rpcUrl = "https://zkqzdwxjthjdjchimmds.supabase.co/rest/v1/rpc/get_public_store";
+    expect(isSupabaseApi(rpcUrl)).toBe(true);
+  });
+
+  it("debe rechazar peticiones API de Supabase administrativas que no sean del catálogo", () => {
     const apiUrl = "https://zkqzdwxjthjdjchimmds.supabase.co/rest/v1/stores?select=*";
     expect(isSupabaseImage(apiUrl)).toBe(false);
+    expect(isSupabaseApi(apiUrl)).toBe(false);
   });
 
   it("debe identificar correctamente imágenes locales estáticas", () => {
