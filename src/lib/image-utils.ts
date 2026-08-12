@@ -163,7 +163,7 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
  */
 export function getOptimizedImageUrl(url: string | null | undefined, _width: number = 600): string {
   if (!url) return "";
-  const cleanUrl = url.trim();
+  const cleanUrl = url.split("?")[0].trim();
   return cleanUrl;
 }
 
