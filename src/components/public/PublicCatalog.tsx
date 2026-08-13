@@ -125,24 +125,39 @@ function InfiniteScrollSentinel({
   totalCount: number;
 }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const isAutoAllowed = currentCount < 24;
 
   useEffect(() => {
-    if (!hasMore) return;
+    if (!hasMore || !isAutoAllowed) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           onLoadMore();
         }
       },
-      { rootMargin: "100px" }
+      { rootMargin: "50px" }
     );
 
     const el = sentinelRef.current;
     if (el) observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, onLoadMore]);
+  }, [hasMore, isAutoAllowed, onLoadMore]);
 
   if (!hasMore) return null;
+
+  if (!isAutoAllowed) {
+    return (
+      <div className="col-span-full w-full py-8 flex flex-col items-center justify-center gap-2 select-none">
+        <button
+          type="button"
+          onClick={onLoadMore}
+          className="flex items-center gap-2 text-sm font-bold text-primary-foreground bg-primary hover:bg-primary/90 transition-all px-6 py-3 rounded-full shadow-md hover:scale-105 active:scale-95"
+        >
+          <span>Ver más productos ({currentCount} de {totalCount})</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
