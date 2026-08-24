@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   createFileRoute,
   Outlet,
@@ -131,9 +131,11 @@ function AdminLayout() {
 
   const store = stores.find((s) => s.id === storeId) ?? stores[0];
 
-  if (stores.length > 0 && !storeId) {
-    setStore(stores[0].id);
-  }
+  useEffect(() => {
+    if (stores.length > 0 && !storeId) {
+      setStore(stores[0].id);
+    }
+  }, [stores, storeId, setStore]);
 
   return (
     <SidebarProvider>
@@ -334,6 +336,27 @@ function AdminLayout() {
                   </a>
                 )}
 
+                {store && store.bioLinksEnabled && (
+                  <a
+                    href={`/bio/${store.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsMoreOpen(false)}
+                    className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
+                        <Link2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">Ver mi Bio-Link Público</p>
+                        <p className="text-xs text-muted-foreground">Abrir enlace único para redes sociales</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </a>
+                )}
+
                 <Link
                   to="/ayuda"
                   onClick={() => setIsMoreOpen(false)}
@@ -403,4 +426,3 @@ function MobileNavItem({ to, icon: Icon, label }: { to: string; icon: any; label
   );
 }
 
-export const _redirectFromAdmin = redirect;

@@ -1,5 +1,4 @@
 import { resolveRenderModel } from "@/lib/design-catalog";
-import { PRODUCT_TAGS } from "@/lib/tags";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -96,7 +95,7 @@ import { Button } from "@/components/ui/button";
 import { useApp, useCart } from "@/lib/store";
 import { buildWaUrl, formatPrice } from "@/lib/whatsapp";
 import { toast } from "sonner";
-import type { Store, Product } from "@/lib/types";
+import type { Store, Product, ProductVariation } from "@/lib/types";
 import {
   getEffectiveProductLimit,
   getEffectiveModel,
@@ -108,7 +107,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { getOptimizedImageUrl } from "@/lib/image-utils";
+import { getOptimizedImageUrl, getThumbnailUrl } from "@/lib/image-utils";
 import { ImageZoomModal } from "./ImageZoomModal";
 
 const EMPTY_CART: any[] = [];
@@ -937,62 +936,6 @@ function CategoryIcon({
   );
 }
 
-const scanProductBadges = (
-  name: string,
-  description?: string,
-  tags?: string[],
-): { emoji: string; label: string }[] => {
-  const text = `${name} ${description || ""}`.toLowerCase();
-  const tagList = Array.isArray(tags) ? tags.map((t) => t.toLowerCase()) : [];
-  const hasTag = (id: string, label: string, keywords: string[]) => {
-    if (tagList.includes(id.toLowerCase()) || tagList.includes(label.toLowerCase())) return true;
-    return keywords.some((kw) => text.includes(kw.toLowerCase()));
-  };
-  const badges: { emoji: string; label: string }[] = [];
-
-  if (hasTag("best_seller", "Más Vendido", ["destacado", "más vendido", "popular", "top"])) {
-    badges.push({ emoji: "🔥", label: "Más Vendido" });
-  }
-  if (hasTag("spicy", "Picante", ["picante", "chile", "aji", "hot", "spicy"])) {
-    badges.push({ emoji: "🌶️", label: "Picante" });
-  }
-  if (hasTag("vegan", "Vegano", ["vegano", "vegan", "vegetariano", "vegetarian"])) {
-    badges.push({ emoji: "🌱", label: "Vegano" });
-  }
-  if (hasTag("gluten", "Sin Gluten", ["sin gluten", "gluten-free", "gluten free", "celiaco"])) {
-    badges.push({ emoji: "🌾", label: "Sin Gluten" });
-  }
-  if (hasTag("cotton", "Algodón", ["algodón", "algodon", "cotton"])) {
-    badges.push({ emoji: "🧵", label: "Algodón" });
-  }
-  if (hasTag("winter", "Invierno", ["invierno", "winter", "frío", "frio"])) {
-    badges.push({ emoji: "❄️", label: "Invierno" });
-  }
-  if (hasTag("summer", "Verano", ["verano", "summer", "playa", "calor"])) {
-    badges.push({ emoji: "☀️", label: "Verano" });
-  }
-  if (hasTag("birthday", "Cumpleaños", ["cumpleaños", "cumple", "birthday"])) {
-    badges.push({ emoji: "🎂", label: "Cumpleaños" });
-  }
-  if (hasTag("love", "Amor", ["amor", "love", "romántico", "romantico", "aniversario", "pareja", "novia", "novio"])) {
-    badges.push({ emoji: "❤️", label: "Amor" });
-  }
-  if (hasTag("condolences", "Pésame", ["condolencias", "pesame", "luto", "condolence"])) {
-    badges.push({ emoji: "🕊️", label: "Pésame" });
-  }
-  if (hasTag("express", "Express", ["express", "rápido", "rapido", "fast", "corto"])) {
-    badges.push({ emoji: "⚡", label: "Express" });
-  }
-  if (hasTag("organic", "Orgánico", ["orgánico", "organico", "organic", "natural"])) {
-    badges.push({ emoji: "🌿", label: "Orgánico" });
-  }
-  if (hasTag("relax", "Relajante", ["relajante", "relax", "antiestrés", "antiestres"])) {
-    badges.push({ emoji: "💆", label: "Relajante" });
-  }
-
-  return badges;
-};
-
 const DEFAULT_CONFIG: ModelConfig = MODEL_CONFIGS.minimalista;
 const BANNER_MODELS = new Set([
   "elite",
@@ -1247,7 +1190,7 @@ function DiziNativeAdCard({
             alt="Dizi Catálogos"
             className="absolute inset-0 h-full w-full object-cover"
             loading="lazy"
-decoding="async"
+            decoding="async"
           />
           <span
             style={{
@@ -1308,6 +1251,7 @@ export function PublicCatalog({
   const [cartOpen, setCartOpen] = useState(false);
   const [isLookbookCatOpen, setIsLookbookCatOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
   const [zoomImage, setZoomImage] = useState<{ src: string; title?: string } | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -1349,7 +1293,6 @@ export function PublicCatalog({
   };
 
   const [sortBy, setSortBy] = useState<string>("all");
-  const [selectedDiet, setSelectedDiet] = useState<string>("all");
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   const activeBanners = useMemo(() => {
@@ -1375,51 +1318,7 @@ export function PublicCatalog({
     return () => clearInterval(interval);
   }, [bannersCount]);
 
-  const [productImages, setProductImages] = useState<Record<string, string>>({});
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!store?.id || !store.products || store.products.length === 0) {
-      setImagesLoaded(true);
-      return;
-    }
-    const fetchImages = async () => {
-      try {
-        const productIds = store.products.map((p) => p.id);
-        const { supabase } = await import("@/lib/supabase");
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, image")
-          .in("id", productIds);
-        if (data && !error) {
-          const imageMap: Record<string, string> = {};
-          data.forEach((p: any) => {
-            if (p.image) {
-              imageMap[p.id] = p.image;
-            }
-          });
-          setProductImages(imageMap);
-        }
-      } catch (err) {
-        console.error("Error cargando imágenes de productos asíncronamente:", err);
-      } finally {
-        setImagesLoaded(true);
-      }
-    };
-    fetchImages();
-  }, [store?.id, store.products]);
-
-  const productsWithImages = useMemo(() => {
-    return (store.products || []).map((p) => {
-      const hasRealImage = !!productImages[p.id];
-      const placeholder =
-        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MDAiIGhlaWdodD0iNjAwIiB2aWV3Qm94PSIwIDAgNjAwIDYwMCI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2YxZjVmOSIvPjwvc3ZnPg==";
-      return {
-        ...p,
-        image: hasRealImage ? productImages[p.id] : imagesLoaded ? p.image || "" : placeholder,
-      };
-    });
-  }, [store.products, productImages, imagesLoaded]);
+  const productsWithImages = store.products || [];
 
   const cart = useCart((s) => s.carts[store.id] ?? EMPTY_CART);
   const cartAdd = useCart((s) => s.add);
@@ -1949,176 +1848,6 @@ export function PublicCatalog({
       .slice(0, effectiveProductLimit === Infinity ? undefined : effectiveProductLimit);
 
     let result = visibleProducts;
-
-    // Apply diet / classification filter
-    if (selectedDiet !== "all") {
-      const tagMatches = result.filter(
-        (p) =>
-          Array.isArray(p.tags) &&
-          p.tags.some((t) => {
-            const tLower = t.toLowerCase();
-            const dietLower = selectedDiet.toLowerCase();
-            if (tLower === dietLower) return true;
-            const tagDef = PRODUCT_TAGS.find((def) => def.id === dietLower);
-            return tagDef ? tagDef.label.toLowerCase() === tLower || tagDef.keywords.includes(tLower) : false;
-          })
-      );
-      if (tagMatches.length > 0) {
-        result = tagMatches;
-      } else if (modelId === "bite") {
-        if (selectedDiet === "spicy") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("picante") ||
-              p.name.toLowerCase().includes("spicy") ||
-              p.name.toLowerCase().includes("ají") ||
-              p.name.toLowerCase().includes("salsa") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("picante") ||
-                  p.description.toLowerCase().includes("spicy") ||
-                  p.description.toLowerCase().includes("ají"))),
-          );
-        } else if (selectedDiet === "vegan") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("vegan") ||
-              p.name.toLowerCase().includes("vegano") ||
-              p.name.toLowerCase().includes("vegetariano") ||
-              p.name.toLowerCase().includes("ensalada") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("vegan") ||
-                  p.description.toLowerCase().includes("vegano") ||
-                  p.description.toLowerCase().includes("vegetariano"))),
-          );
-        } else if (selectedDiet === "gluten") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("sin gluten") ||
-              p.name.toLowerCase().includes("gluten free") ||
-              p.name.toLowerCase().includes("sin tacc") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("sin gluten") ||
-                  p.description.toLowerCase().includes("gluten free"))),
-          );
-        }
-      } else if (modelId === "glam") {
-        if (selectedDiet === "cotton") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("algodón") ||
-              p.name.toLowerCase().includes("cotton") ||
-              p.name.toLowerCase().includes("hilo") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("algodón") ||
-                  p.description.toLowerCase().includes("cotton") ||
-                  p.description.toLowerCase().includes("hilo"))),
-          );
-        } else if (selectedDiet === "winter") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("invierno") ||
-              p.name.toLowerCase().includes("lana") ||
-              p.name.toLowerCase().includes("abrigo") ||
-              p.name.toLowerCase().includes("casaca") ||
-              p.name.toLowerCase().includes("sweat") ||
-              p.name.toLowerCase().includes("hoodie") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("invierno") ||
-                  p.description.toLowerCase().includes("lana") ||
-                  p.description.toLowerCase().includes("abrigo"))),
-          );
-        } else if (selectedDiet === "summer") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("verano") ||
-              p.name.toLowerCase().includes("lino") ||
-              p.name.toLowerCase().includes("playa") ||
-              p.name.toLowerCase().includes("shor") ||
-              p.name.toLowerCase().includes("polo") ||
-              p.name.toLowerCase().includes("top") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("verano") ||
-                  p.description.toLowerCase().includes("lino") ||
-                  p.description.toLowerCase().includes("playa"))),
-          );
-        }
-      } else if (modelId === "bloom") {
-        if (selectedDiet === "love") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("amor") ||
-              p.name.toLowerCase().includes("roja") ||
-              p.name.toLowerCase().includes("te amo") ||
-              p.name.toLowerCase().includes("aniversario") ||
-              p.name.toLowerCase().includes("corazón") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("amor") ||
-                  p.description.toLowerCase().includes("te amo") ||
-                  p.description.toLowerCase().includes("romántico"))),
-          );
-        } else if (selectedDiet === "birthday") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("cumple") ||
-              p.name.toLowerCase().includes("alegre") ||
-              p.name.toLowerCase().includes("sol") ||
-              p.name.toLowerCase().includes("globo") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("cumple") ||
-                  p.description.toLowerCase().includes("celebrar"))),
-          );
-        } else if (selectedDiet === "condolences") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("pésame") ||
-              p.name.toLowerCase().includes("condolencia") ||
-              p.name.toLowerCase().includes("blanca") ||
-              p.name.toLowerCase().includes("lágrima") ||
-              p.name.toLowerCase().includes("urna") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("pésame") ||
-                  p.description.toLowerCase().includes("condolencia"))),
-          );
-        }
-      } else if (modelId === "vibe") {
-        if (selectedDiet === "express") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("express") ||
-              p.name.toLowerCase().includes("rápido") ||
-              p.name.toLowerCase().includes("30 min") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("express") ||
-                  p.description.toLowerCase().includes("30 minutos"))),
-          );
-        } else if (selectedDiet === "organic") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("orgánic") ||
-              p.name.toLowerCase().includes("natural") ||
-              p.name.toLowerCase().includes("soya") ||
-              p.name.toLowerCase().includes("vege") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("orgánic") ||
-                  p.description.toLowerCase().includes("natural") ||
-                  p.description.toLowerCase().includes("soya"))),
-          );
-        } else if (selectedDiet === "relax") {
-          result = result.filter(
-            (p) =>
-              p.name.toLowerCase().includes("relaj") ||
-              p.name.toLowerCase().includes("zen") ||
-              p.name.toLowerCase().includes("antiestrés") ||
-              p.name.toLowerCase().includes("aroma") ||
-              p.name.toLowerCase().includes("lavanda") ||
-              (p.description &&
-                (p.description.toLowerCase().includes("relaj") ||
-                  p.description.toLowerCase().includes("descanso"))),
-          );
-        }
-      }
-    }
-
     result = result
       .filter((p) => {
         if (activeCat === "all") return true;
@@ -2157,28 +1886,15 @@ export function PublicCatalog({
     priceRange,
     effectiveProductLimit,
     sortBy,
-    selectedDiet,
-    modelId,
+        modelId,
   ]);
-
-  const availableTags = useMemo(() => {
-    const set = new Set<string>();
-    for (const p of productsWithImages) {
-      if (Array.isArray(p.tags)) {
-        for (const t of p.tags) {
-          if (t) set.add(t);
-        }
-      }
-    }
-    return Array.from(set);
-  }, [productsWithImages]);
 
   const [visibleLimit, setVisibleLimit] = useState(12);
 
   // Reiniciar el límite visible a 12 al cambiar cualquier filtro, búsqueda o categoría
   useEffect(() => {
     setVisibleLimit(12);
-  }, [activeCat, query, priceRange, selectedDiet, sortBy]);
+  }, [activeCat, query, priceRange, sortBy]);
 
   const filtered = useMemo(() => {
     return rawFiltered.slice(0, visibleLimit);
@@ -2468,18 +2184,18 @@ export function PublicCatalog({
       {/* Preview banner */}
       {!store.isPublished && (
         <div className="bg-primary/20 border-b border-primary/30 text-primary px-4 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest">
-          Modo Previzualizacion — Solo tu puedes ver esto
+          Modo Previsualización — Solo tú puedes ver esto
         </div>
       )}
 
-      {/* Banner: modelo premium en periodo de gracia (solo visible al owner via previewMode) */}
+      {/* Banner: modelo premium en período de gracia (solo visible al owner via previewMode) */}
       {modelDaysLeft !== null && modelDaysLeft > 0 && !store.isPublished && (
         <div className="bg-amber-500 text-white px-4 py-2 text-center text-xs font-semibold">
-          Estas usando el modelo <strong>{store.model}</strong> de tu plan anterior. En{" "}
+          Estás usando el modelo <strong>{store.model}</strong> de tu plan anterior. En{" "}
           <strong>
-            {modelDaysLeft} dia{modelDaysLeft !== 1 ? "s" : ""}
+            {modelDaysLeft} día{modelDaysLeft !== 1 ? "s" : ""}
           </strong>{" "}
-          cambiara automaticamente al modelo Semilla.{" "}
+          cambiará automáticamente al modelo Semilla.{" "}
           <a href="/admin/plan" className="underline hover:no-underline">
             Renueva para conservarlo
           </a>
@@ -2490,18 +2206,18 @@ export function PublicCatalog({
       {/* Banner: modelo ya cambiado a semilla (solo visible al owner) */}
       {modelDaysLeft === 0 && !store.isPublished && (
         <div className="bg-destructive text-white px-4 py-2 text-center text-xs font-semibold">
-          Tu suscripcion vencio. El catalogo ahora usa el modelo Semilla.{" "}
+          Tu suscripción venció. El catálogo ahora usa el modelo Semilla.{" "}
           <a href="/admin/plan" className="underline hover:no-underline">
             Renueva tu plan
           </a>{" "}
-          para recuperar tu diseno original.
+          para recuperar tu diseño original.
         </div>
       )}
 
-      {/* Banner publico: plan vencido, productos limitados */}
+      {/* Banner público: plan vencido, productos limitados */}
       {isExpired && (
         <div className="bg-muted border-b px-4 py-1.5 text-center text-[10px] text-muted-foreground uppercase tracking-widest">
-          Catalogo en modo limitado — mostrando {PLANS["semilla"].productLimit} productos
+          Catálogo en modo limitado — mostrando {PLANS["semilla"].productLimit} productos
         </div>
       )}
 
@@ -2632,7 +2348,7 @@ export function PublicCatalog({
                     <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                     <span>Filtros</span>
                     {(() => {
-                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0) + (selectedDiet !== "all" ? 1 : 0);
+                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
                       return cnt > 0 ? (
                         <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
                           {cnt}
@@ -2643,7 +2359,7 @@ export function PublicCatalog({
                 </div>
 
                 {/* Active filter tags */}
-                {(activeCat !== "all" || priceRange || selectedDiet !== "all") && (
+                {(activeCat !== "all" || priceRange) && (
                   <div className="flex flex-wrap gap-1.5">
                     {activeCat !== "all" && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
@@ -2664,17 +2380,7 @@ export function PublicCatalog({
                         </button>
                       </span>
                     )}
-                    {selectedDiet !== "all" && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                        🏷️ {PRODUCT_TAGS.find((t) => t.id === selectedDiet)?.label || selectedDiet}
-                        <button
-                          onClick={() => setSelectedDiet("all")}
-                          className="ml-1 hover:opacity-60 transition"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    )}
+                    
                     {priceRange && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
                         Hasta S/ {priceRange[1]}
@@ -3156,56 +2862,14 @@ export function PublicCatalog({
                 </div>
               </div>
 
-              {/* Filtro de Etiquetas Táctiles */}
-              {availableTags.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-border">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left flex items-center justify-between">
-                    <span>Etiquetas Táctiles</span>
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      onClick={() => setSelectedDiet("all")}
-                      className={cn(
-                        "px-2.5 py-1 rounded-full text-xs font-bold transition border",
-                        selectedDiet === "all"
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-secondary text-secondary-foreground border-border hover:bg-accent"
-                      )}
-                    >
-                      Todas
-                    </button>
-                    {availableTags.map((tagId) => {
-                      const tagDef = PRODUCT_TAGS.find((t) => t.id === tagId);
-                      const displayLabel = tagDef ? tagDef.label : tagId;
-                      const active =
-                        selectedDiet.toLowerCase() === tagId.toLowerCase() ||
-                        selectedDiet.toLowerCase() === displayLabel.toLowerCase();
-                      return (
-                        <button
-                          key={tagId}
-                          onClick={() => setSelectedDiet(active ? "all" : tagId)}
-                          className={cn(
-                            "px-2.5 py-1 rounded-full text-xs font-bold transition border",
-                            active
-                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                              : "bg-secondary text-secondary-foreground border-border hover:bg-accent"
-                          )}
-                        >
-                          {displayLabel}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              
 
               {/* Limpiar Filtros */}
-              {(activeCat !== "all" || priceRange || selectedDiet !== "all") && (
+              {(activeCat !== "all" || priceRange) && (
                 <button
                   onClick={() => {
                     setActiveCat("all");
                     setPriceRange(null);
-                    setSelectedDiet("all");
                   }}
                   className="w-full text-center py-2 border border-border hover:bg-muted text-xs font-bold rounded-lg transition"
                   style={{ color: "var(--muted-foreground)" }}
@@ -3329,20 +2993,21 @@ export function PublicCatalog({
                                   >
                                     <img
                                       src={getOptimizedImageUrl(
-                                        p.image ||
-                                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                                        getThumbnailUrl(p.image) ||
+                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                                         400
                                       )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
-decoding="async"
+                                      decoding="async"
                                       style={{
                                         borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0`,
                                       }}
                                       onError={(e) => {
-                                        (e.target as HTMLImageElement).src =
-                                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                                        const el = e.target as HTMLImageElement;
+                                        el.onerror = null;
+                                        el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
                                       }}
                                     />
                                     {p.isOnSale && (
@@ -3460,17 +3125,18 @@ decoding="async"
                   >
                     <img
                       src={getOptimizedImageUrl(
-                        p.image ||
-                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                        getThumbnailUrl(p.image) ||
+                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                         400
                       )}
                       alt={p.name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
                       loading="lazy"
-decoding="async"
+                      decoding="async"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                        const el = e.target as HTMLImageElement;
+                        el.onerror = null;
+                        el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
                       }}
                     />
                     {/* Gradient overlay suave */}
@@ -3774,17 +3440,18 @@ decoding="async"
                           >
                             <img
                               src={getOptimizedImageUrl(
-                                p.image ||
+                                getThumbnailUrl(p.image) ||
                                 "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80",
-                                600
+                                400
                               )}
                               alt={p.name}
                               className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
                               loading="lazy"
-decoding="async"
+                              decoding="async"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                  "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
+                                const el = e.target as HTMLImageElement;
+                                el.onerror = null;
+                                el.src = p.image || "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
                               }}
                             />
                             {p.isOnSale && (
@@ -3997,17 +3664,18 @@ decoding="async"
                     >
                       <img
                         src={getOptimizedImageUrl(
-                          p.image ||
-                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                          getThumbnailUrl(p.image) ||
+                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                           200
                         )}
                         alt={p.name}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
-decoding="async"
+                        decoding="async"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                          const el = e.target as HTMLImageElement;
+                          el.onerror = null;
+                          el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
                         }}
                       />
                       {p.isOnSale && (
@@ -4111,14 +3779,14 @@ decoding="async"
                     <img
                       src={getOptimizedImageUrl(
                         filtered[0].image ||
-                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                         800
                       )}
                       alt={filtered[0].name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
@@ -4191,18 +3859,19 @@ decoding="async"
                       >
                         <img
                           src={getOptimizedImageUrl(
-                            p.image ||
-                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                            getThumbnailUrl(p.image) ||
+                            "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                             400
                           )}
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
-decoding="async"
+                          decoding="async"
                           style={{ borderRadius: cfg.imgRounded }}
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                            const el = e.target as HTMLImageElement;
+                            el.onerror = null;
+                            el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
                           }}
                         />
                         {p.isOnSale && (
@@ -4339,14 +4008,17 @@ decoding="async"
                         >
                           <img
                             src={getOptimizedImageUrl(
-                              p.image ||
+                              getThumbnailUrl(p.image) ||
                                 "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80",
-                              600,
+                              400,
                             )}
                             alt={p.name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src =
+                                p.image ||
                                 "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80";
                             }}
                           />
@@ -4411,7 +4083,7 @@ decoding="async"
                 {filtered.map((p, i) => {
                   const isWide = i % 3 === 0;
                   const fallback =
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
+                    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80";
                   return (
                     <React.Fragment key={p.id}>
                       <article
@@ -4428,11 +4100,15 @@ decoding="async"
                         onClick={() => setViewingProduct(p)}
                       >
                       <img
-                        src={getOptimizedImageUrl(p.image || fallback, isWide ? 800 : 400)}
+                        src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, isWide ? 800 : 400)}
                         alt={p.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = fallback;
+                          const el = e.target as HTMLImageElement;
+                          el.onerror = null;
+                          el.src = p.image || fallback;
                         }}
                       />
                       {/* Gradient overlay suave */}
@@ -4546,7 +4222,7 @@ decoding="async"
               <div className="space-y-3">
                 {(() => {
                   const fallback =
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=80";
+                    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80";
                   const groups: (typeof filtered)[] = [];
                   for (let i = 0; i < filtered.length; i += 3)
                     groups.push(filtered.slice(i, i + 3));
@@ -4569,11 +4245,13 @@ decoding="async"
                           onClick={() => setViewingProduct(group[0])}
                         >
                           <img
-                            src={getOptimizedImageUrl(group[0].image || fallback, 500)}
+                            src={getOptimizedImageUrl(getThumbnailUrl(group[0].image) || fallback, 500)}
                             alt={group[0].name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = fallback;
+                              const el = e.target as HTMLImageElement;
+                              el.onerror = null;
+                              el.src = group[0].image || fallback;
                             }}
                           />
                           <div
@@ -4655,11 +4333,15 @@ decoding="async"
                             onClick={() => setViewingProduct(p)}
                           >
                             <img
-                              src={getOptimizedImageUrl(p.image || fallback, 300)}
+                              src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 300)}
                               alt={p.name}
                               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600"
+                              loading="lazy"
+                              decoding="async"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = fallback;
+                                const el = e.target as HTMLImageElement;
+                                el.onerror = null;
+                                el.src = p.image || fallback;
                               }}
                             />
                             <div
@@ -4736,11 +4418,15 @@ decoding="async"
                         }}
                       >
                         <img
-                          src={getOptimizedImageUrl(p.image || fallback, 800)}
+                          src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 400)}
                           alt={p.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = fallback;
+                            const el = e.target as HTMLImageElement;
+                            el.onerror = null;
+                            el.src = p.image || fallback;
                           }}
                         />
                         {p.isOnSale && (
@@ -4839,7 +4525,7 @@ decoding="async"
               >
                 {filtered.map((p, idx) => {
                   const fallback =
-                    "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80";
+                    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
                   return (
                     <React.Fragment key={p.id}>
                       <article
@@ -4857,12 +4543,16 @@ decoding="async"
                         }}
                       >
                         <img
-                          src={getOptimizedImageUrl(p.image || fallback, 400)}
+                          src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 400)}
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = fallback;
+                            const el = e.target as HTMLImageElement;
+                            el.onerror = null;
+                            el.src = p.image || fallback;
                           }}
                         />
                         {/* Subtle vignette */}
@@ -4954,6 +4644,8 @@ decoding="async"
                                 <img
                                   src={getOptimizedImageUrl(slide, 1200)}
                                   alt={`${store.bannerTitle || store.name} ${idx + 1}`}
+                                  loading={idx === 0 ? "eager" : "lazy"}
+                                  decoding="async"
                                   className="w-full h-full object-cover relative z-10"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-20" />
@@ -5166,14 +4858,19 @@ decoding="async"
                                 <div style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }} className="relative aspect-square w-full rounded-2xl overflow-hidden border">
                                   <img
                                     src={getOptimizedImageUrl(
-                                      p.image ||
-                                        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
+                                      getThumbnailUrl(p.image) ||
+                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                                       500,
                                     )}
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     loading="lazy"
-decoding="async"
+                                    decoding="async"
+                                    onError={(e) => {
+                                      const el = e.target as HTMLImageElement;
+                                      el.onerror = null;
+                                      el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                    }}
                                   />
                                   <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
                                     Destacado
@@ -5396,37 +5093,26 @@ decoding="async"
                                   <div style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }} className="relative overflow-hidden aspect-square rounded-2xl m-2 border">
                                     <img
                                       src={getOptimizedImageUrl(
-                                        p.image ||
-                                          "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80",
-                                        500,
+                                        getThumbnailUrl(p.image) ||
+                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                        400,
                                       )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
-decoding="async"
+                                      decoding="async"
+                                      onError={(e) => {
+                                        const el = e.target as HTMLImageElement;
+                                        el.onerror = null;
+                                        el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                      }}
                                     />
                                     {p.isOnSale && (
                                       <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg z-10">
                                         Oferta
                                       </span>
                                     )}
-                                    {(() => {
-                                      const badges = scanProductBadges(p.name, p.description, p.tags);
-                                      if (badges.length === 0) return null;
-                                      return (
-                                        <div className="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1 pointer-events-none z-10">
-                                          {badges.slice(0, 2).map((b, i) => (
-                                            <span
-                                              key={i}
-                                              className="bg-black/65 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-xs flex items-center gap-1"
-                                            >
-                                              <span>{b.emoji}</span>
-                                              <span>{b.label}</span>
-                                            </span>
-                                          ))}
-                                        </div>
-                                      );
-                                    })()}
+                                    
                                   </div>
                                   {/* Info */}
                                   <div className="p-3 pt-1 space-y-1 text-left">
@@ -5561,8 +5247,10 @@ decoding="async"
                                       <img
                                         src={getOptimizedImageUrl(slide, 1200)}
                                         alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                        className="w-full h-full object-cover relative z-10"
-                                      />
+                                  loading={idx === 0 ? "eager" : "lazy"}
+                                  decoding="async"
+                                  className="w-full h-full object-cover relative z-10"
+                                />
                                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent z-20" />
                                     </div>
                                   ))}
@@ -5852,14 +5540,19 @@ decoding="async"
                                     >
                                       <img
                                         src={getOptimizedImageUrl(
-                                          p.image ||
+                                          getThumbnailUrl(p.image) ||
                                           "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                                           400
                                         )}
                                         alt={p.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                         loading="lazy"
-decoding="async"
+                                        decoding="async"
+                                        onError={(e) => {
+                                          const el = e.target as HTMLImageElement;
+                                          el.onerror = null;
+                                          el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                        }}
                                       />
                                       <div
                                         style={{
@@ -6123,14 +5816,19 @@ decoding="async"
                                       >
                                         <img
                                           src={getOptimizedImageUrl(
-                                            p.image ||
+                                            getThumbnailUrl(p.image) ||
                                             "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                                             400
                                           )}
                                           alt={p.name}
                                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                                           loading="lazy"
-decoding="async"
+                                          decoding="async"
+                                          onError={(e) => {
+                                            const el = e.target as HTMLImageElement;
+                                            el.onerror = null;
+                                            el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                          }}
                                         />
                                         {p.isOnSale && (
                                           <span
@@ -6309,8 +6007,10 @@ decoding="async"
                                   <img
                                     src={getOptimizedImageUrl(slide, 1200)}
                                     alt={`${store.bannerTitle || store.name} ${idx + 1}`}
-                                    className="w-full h-full object-cover relative z-10"
-                                  />
+                                  loading={idx === 0 ? "eager" : "lazy"}
+                                  decoding="async"
+                                  className="w-full h-full object-cover relative z-10"
+                                />
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent z-20" />
                                 </div>
                               ))}
@@ -6568,14 +6268,19 @@ decoding="async"
                                 >
                                   <img
                                     src={getOptimizedImageUrl(
-                                      p.image ||
+                                      getThumbnailUrl(p.image) ||
                                       "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                                       400
                                     )}
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
                                     loading="lazy"
-decoding="async"
+                                    decoding="async"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src =
+                                        p.image ||
+                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                    }}
                                   />
                                   {/* Floating Badge inside image container */}
                                   <div
@@ -6975,14 +6680,19 @@ decoding="async"
                                   <div className={cn(gridImgClass)}>
                                     <img
                                       src={getOptimizedImageUrl(
-                                        p.image ||
+                                        getThumbnailUrl(p.image) ||
                                         "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
                                         400
                                       )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                       loading="lazy"
-decoding="async"
+                                      decoding="async"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src =
+                                          p.image ||
+                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                      }}
                                     />
                                     {p.isOnSale && (
                                       <span
@@ -7211,18 +6921,19 @@ decoding="async"
                       >
                         <img
                           src={getOptimizedImageUrl(
-                            p.image ||
+                            getThumbnailUrl(p.image) ||
                             "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
                             400
                           )}
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
-decoding="async"
+                          decoding="async"
                           style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                            const el = e.target as HTMLImageElement;
+                            el.onerror = null;
+                            el.src = p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
                           }}
                         />
                         {p.isOnSale && (
@@ -7306,18 +7017,19 @@ decoding="async"
                         >
                           <img
                             src={getOptimizedImageUrl(
-                              p.image ||
+                              getThumbnailUrl(p.image) ||
                               "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
                               400
                             )}
                             alt={p.name}
                             className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
-decoding="async"
+                            decoding="async"
                             style={{ borderRadius: cfg.imgRounded }}
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                              const el = e.target as HTMLImageElement;
+                              el.onerror = null;
+                              el.src = p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
                             }}
                           />
                           {p.isOnSale && (
@@ -7693,7 +7405,7 @@ decoding="async"
                 }}
               >
                 <img
-                  src={getOptimizedImageUrl(l.product.image, 200)}
+                  src={getOptimizedImageUrl(getThumbnailUrl(l.product.image) || l.product.image, 200)}
                   alt={l.product.name}
                   className="h-12 w-12 object-cover shrink-0"
                   style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
@@ -7990,7 +7702,10 @@ decoding="async"
       <Sheet
         open={!!viewingProduct}
         onOpenChange={(v) => {
-          if (!v) setViewingProduct(null);
+          if (!v) {
+            setViewingProduct(null);
+            setSelectedVariation(null);
+          }
         }}
       >
         <SheetContent
@@ -8012,7 +7727,14 @@ decoding="async"
               ? viewingProduct.description
               : "Detalle del producto seleccionado."}
           </SheetDescription>
-          {viewingProduct && (
+          {viewingProduct && (() => {
+            const displayedImage = selectedVariation?.image || viewingProduct.image;
+            const displayedPrice =
+              selectedVariation?.price !== null && selectedVariation?.price !== undefined
+                ? selectedVariation.price
+                : viewingProduct.price;
+
+            return (
             <div className="flex flex-col h-full md:flex-row md:overflow-hidden">
               {/* Image — taller for overlay/magazine, shorter for editorial */}
               <div
@@ -8029,7 +7751,10 @@ decoding="async"
               >
                 {/* Close button (aspita) - Hidden on desktop since sheet renders one in top-right */}
                 <button
-                  onClick={() => setViewingProduct(null)}
+                  onClick={() => {
+                    setViewingProduct(null);
+                    setSelectedVariation(null);
+                  }}
                   className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all shadow-md cursor-pointer md:hidden"
                   style={{ borderRadius: cfg.cardRounded }}
                   title="Cerrar vista"
@@ -8040,10 +7765,9 @@ decoding="async"
                 {/* Blurred background backdrop to fill the container nicely without cropping the main product */}
                 <img
                   src={getOptimizedImageUrl(
-                    productImages[viewingProduct.id] ||
-                    viewingProduct.image ||
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85",
-                    200
+                    getThumbnailUrl(displayedImage) ||
+                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=400&q=70",
+                    400
                   )}
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-90 select-none pointer-events-none scale-110"
@@ -8056,16 +7780,15 @@ decoding="async"
 
                 <img
                   src={getOptimizedImageUrl(
-                    productImages[viewingProduct.id] ||
-                    viewingProduct.image ||
+                    displayedImage ||
                     "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85",
                     800
                   )}
                   alt={viewingProduct.name}
-                  className="relative z-10 h-full w-full object-contain cursor-pointer"
+                  className="relative z-10 h-full w-full object-contain cursor-pointer transition-all duration-300"
                   onClick={() => {
-                    const imgUrl = productImages[viewingProduct.id] || viewingProduct.image;
-                    if (imgUrl) setZoomImage({ src: imgUrl, title: viewingProduct.name });
+                    const imgUrl = displayedImage;
+                    if (imgUrl) setZoomImage({ src: imgUrl, title: selectedVariation ? `${viewingProduct.name} (${selectedVariation.name})` : viewingProduct.name });
                   }}
                   decoding="async"
                   onError={(e) => {
@@ -8079,8 +7802,8 @@ decoding="async"
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const imgUrl = productImages[viewingProduct.id] || viewingProduct.image;
-                    if (imgUrl) setZoomImage({ src: imgUrl, title: viewingProduct.name });
+                    const imgUrl = displayedImage;
+                    if (imgUrl) setZoomImage({ src: imgUrl, title: selectedVariation ? `${viewingProduct.name} (${selectedVariation.name})` : viewingProduct.name });
                   }}
                   className="absolute bottom-3 right-3 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/75 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/90 transition-all shadow-xl border border-white/20 active:scale-95 cursor-pointer"
                   title="Ampliar flyer / foto en HD"
@@ -8141,18 +7864,94 @@ decoding="async"
                         )}
                         style={{ color: "var(--primary)" }}
                       >
-                        {formatPrice(viewingProduct.price)}
+                        {formatPrice(displayedPrice)}
                       </span>
                       {viewingProduct.isOnSale &&
                         viewingProduct.originalPrice &&
-                        viewingProduct.price &&
-                        viewingProduct.originalPrice > viewingProduct.price && (
+                        displayedPrice &&
+                        viewingProduct.originalPrice > displayedPrice && (
                           <span className="text-sm line-through text-muted-foreground font-normal">
                             {formatPrice(viewingProduct.originalPrice)}
                           </span>
                         )}
                     </div>
                   </div>
+
+                  {/* ── Variaciones / Opciones del Producto ── */}
+                  {viewingProduct.variations && viewingProduct.variations.length > 0 && (
+                    <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                      <p
+                        className={cn(
+                          "text-xs font-bold uppercase tracking-widest",
+                          cfg.headerStyle === "minimal"
+                            ? "tracking-[0.3em]"
+                            : "",
+                        )}
+                        style={{ color: "var(--primary)" }}
+                      >
+                        Opciones Disponibles ({viewingProduct.variations.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {/* Opción Base / Principal */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedVariation(null)}
+                          className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer select-none",
+                            selectedVariation === null
+                              ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary font-bold"
+                              : "border-zinc-200 dark:border-zinc-800 text-muted-foreground hover:border-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/30 font-medium",
+                          )}
+                        >
+                          {viewingProduct.image && (
+                            <img
+                              src={getThumbnailUrl(viewingProduct.image) || viewingProduct.image}
+                              alt={viewingProduct.name}
+                              className="w-5 h-5 rounded-md object-cover border border-zinc-200 dark:border-zinc-700"
+                            />
+                          )}
+                          <span>Principal</span>
+                        </button>
+
+                        {/* Opciones adicionales */}
+                        {viewingProduct.variations.map((v) => {
+                          const isSelected = selectedVariation?.id === v.id;
+                          return (
+                            <button
+                              key={v.id}
+                              type="button"
+                              onClick={() => setSelectedVariation(v)}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer select-none",
+                                isSelected
+                                  ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary font-bold"
+                                  : "border-zinc-200 dark:border-zinc-800 text-muted-foreground hover:border-zinc-400 bg-zinc-50/50 dark:bg-zinc-900/30 font-medium",
+                              )}
+                            >
+                              {v.image && (
+                                <img
+                                  src={v.image}
+                                  alt={v.name}
+                                  className="w-5 h-5 rounded-md object-cover border border-zinc-200 dark:border-zinc-700"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              )}
+                              <span>{v.name}</span>
+                              {v.price !== null &&
+                                v.price !== undefined &&
+                                v.price !== viewingProduct.price && (
+                                  <span className="text-[10px] opacity-80 font-normal">
+                                    ({formatPrice(v.price)})
+                                  </span>
+                                )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Description */}
                   {viewingProduct.description && (
@@ -8219,41 +8018,7 @@ decoding="async"
                     </span>
                   </div>
 
-                  {/* Etiquetas Táctiles del Producto */}
-                  {(() => {
-                    const productBadges = scanProductBadges(
-                      viewingProduct.name,
-                      viewingProduct.description,
-                      viewingProduct.tags
-                    );
-                    if (productBadges.length === 0) return null;
-                    return (
-                      <div className="pt-1">
-                        <p
-                          className="text-xs font-bold uppercase tracking-widest mb-1.5"
-                          style={{ color: "var(--primary)" }}
-                        >
-                          Etiquetas
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {productBadges.map((b, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border shadow-xs transition-all hover:scale-105"
-                              style={{
-                                backgroundColor: "var(--card)",
-                                borderColor: "var(--border)",
-                                color: "var(--foreground)",
-                              }}
-                            >
-                              <span className="text-sm">{b.emoji}</span>
-                              <span>{b.label}</span>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
+                  
                 </div>
 
                 {/* Action footer — also themed */}
@@ -8287,8 +8052,10 @@ decoding="async"
                         : {}),
                     }}
                     onClick={() => {
-                      consultProduct(viewingProduct.name, viewingProduct.id);
+                      const varSuffix = selectedVariation ? ` (Opción: ${selectedVariation.name})` : "";
+                      consultProduct(`${viewingProduct.name}${varSuffix}`, viewingProduct.id);
                       setViewingProduct(null);
+                      setSelectedVariation(null);
                     }}
                   >
                     <WhatsAppIcon className="h-4 w-4" />
@@ -8309,8 +8076,9 @@ decoding="async"
                         : {}),
                     }}
                     onClick={() => {
-                      cartAdd(store.id, viewingProduct.id);
+                      cartAdd(store.id, viewingProduct.id, selectedVariation || undefined);
                       setViewingProduct(null);
+                      setSelectedVariation(null);
                       setCartOpen(true);
                     }}
                   >
@@ -8320,7 +8088,8 @@ decoding="async"
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
         </SheetContent>
       </Sheet>
 

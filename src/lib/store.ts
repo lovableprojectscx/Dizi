@@ -10,6 +10,7 @@ import type {
   PlanPromotion,
 } from "./types";
 import { supabase, uploadBase64ToStorage } from "./supabase";
+import { createThumbnailFromBase64 } from "./image-utils";
 import { toast } from "sonner";
 import { hexLuminance } from "./utils";
 
@@ -141,6 +142,7 @@ const mapStoreFromDB = (row: any): Store => {
       isSample: p.is_sample,
       sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
       tags: Array.isArray(p.tags) ? p.tags : [],
+      variations: Array.isArray(p.variations) ? p.variations : [],
       createdAt: p.created_at,
     }))
     .sort((a: any, b: any) => {
@@ -464,7 +466,7 @@ export const useApp = create<AppState>()(
           }));
         } catch (error) {
           console.error("[updateStore] Error:", error);
-          toast.error("No se pudo actualizar la configuracion");
+          toast.error("No se pudo actualizar la configuración");
           throw error;
         }
       },
@@ -529,6 +531,8 @@ export const useApp = create<AppState>()(
               is_on_sale: p.isOnSale,
               visible: p.visible,
               is_sample: p.isSample,
+              tags: p.tags || [],
+              variations: p.variations || [],
             })),
           );
           if (prodError) {
@@ -644,10 +648,10 @@ export const useApp = create<AppState>()(
                 : st,
             ),
           }));
-          toast.success("Suscripcion cancelada");
+          toast.success("Suscripción cancelada");
         } catch (error) {
           console.error("[cancelSubscription] Error:", error);
-          toast.error("Error al cancelar la suscripcion");
+          toast.error("Error al cancelar la suscripción");
         }
       },
 
@@ -680,7 +684,7 @@ export const useApp = create<AppState>()(
           toast.success(`Plan extendido ${monthsToAdd} mes${monthsToAdd > 1 ? "es" : ""}`);
         } catch (error) {
           console.error("[extendSubscription] Error:", error);
-          toast.error("Error al extender la suscripcion");
+          toast.error("Error al extender la suscripción");
         }
       },
 
@@ -738,16 +742,51 @@ export const useApp = create<AppState>()(
         const prodId = product.id || uid();
         let imageUrl = product.image;
 
-        // Si la imagen es un base64, subirla a Supabase Storage
+        const st = useApp.getState().stores.find((s) => s.id === storeId);
+        const existingProduct = st?.products.find((pr) => pr.id === prodId);
+        const oldImage = existingProduct?.image;
+
+        // Si la imagen es un base64, subirla a Supabase Storage (imagen HD 800px + miniatura 400px en paralelo)
         if (imageUrl && imageUrl.startsWith("data:")) {
+          const timestamp = Date.now();
+          const newImagePath = `${storeId}/products/${prodId}_${timestamp}.webp`;
+          const newThumbPath = `${storeId}/products/${prodId}_${timestamp}_thumb.webp`;
+
           try {
-            imageUrl = await uploadBase64ToStorage(imageUrl, `${storeId}/products/${prodId}.webp`);
-          } catch (uploadErr) {
-            console.error("[upsertProduct] Image upload failed:", uploadErr);
-            // Si la subida al Storage falla y el base64 es grande, abortar para evitar rechazos por Payload Too Large en PostgREST
-            if (imageUrl.length > 200000) {
-              throw new Error("No se pudo subir la imagen del producto al servidor. Verifica tu conexión a internet.");
+            const rawBase64 = imageUrl;
+            const uploadMainPromise = uploadBase64ToStorage(rawBase64, newImagePath);
+            const uploadThumbPromise = createThumbnailFromBase64(rawBase64, 400, 0.70)
+              .then((thumbBase64) => uploadBase64ToStorage(thumbBase64, newThumbPath))
+              .catch((thumbErr) => {
+                console.warn("[upsertProduct] Fallback: No se pudo subir _thumb.webp, la cuadrícula usará la imagen HD", thumbErr);
+                return "";
+              });
+
+            const [uploadedUrl] = await Promise.all([uploadMainPromise, uploadThumbPromise]);
+            imageUrl = uploadedUrl;
+
+            // Limpiar la imagen anterior del storage en segundo plano para no demorar la respuesta
+            if (oldImage && oldImage.includes("/public/images/") && oldImage !== imageUrl) {
+              try {
+                const parts = oldImage.split("/public/images/");
+                if (parts.length > 1) {
+                  const oldPath = decodeURIComponent(parts[1].split("?")[0]);
+                  const oldThumb = oldPath.endsWith(".webp") && !oldPath.endsWith("_thumb.webp")
+                    ? oldPath.replace(/\.webp$/, "_thumb.webp")
+                    : null;
+                  const filesToDelete = [oldPath];
+                  if (oldThumb) filesToDelete.push(oldThumb);
+                  supabase.storage.from("images").remove(filesToDelete).catch(() => {});
+                }
+              } catch (cleanErr) {
+                console.warn("[upsertProduct] No se pudo eliminar imagen previa:", cleanErr);
+              }
             }
+          } catch (uploadErr: any) {
+            console.error("[upsertProduct] Image upload failed:", uploadErr);
+            throw new Error(
+              uploadErr?.message || "No se pudo subir la imagen del producto al servidor. Verifica tu conexión a internet.",
+            );
           }
         }
 
@@ -762,7 +801,6 @@ export const useApp = create<AppState>()(
             ? product.originalPrice
             : null;
 
-        const st = useApp.getState().stores.find((s) => s.id === storeId);
         const exists = st ? st.products.some((pr) => pr.id === prodId) : false;
 
         let finalSortOrder = product.sortOrder;
@@ -774,6 +812,26 @@ export const useApp = create<AppState>()(
           finalSortOrder = maxOrder + 1;
         }
 
+        let finalVariations = product.variations || [];
+        if (finalVariations.length > 0) {
+          finalVariations = await Promise.all(
+            finalVariations.map(async (v) => {
+              if (v.image && v.image.startsWith("data:")) {
+                try {
+                  const uniqueVarId = v.id || Math.random().toString(36).slice(2, 7);
+                  const varPath = `${storeId}/products/${prodId}_var_${uniqueVarId}.webp`;
+                  const uploadedVarUrl = await uploadBase64ToStorage(v.image, varPath);
+                  return { ...v, id: v.id || uniqueVarId, image: uploadedVarUrl };
+                } catch (varUploadErr) {
+                  console.error("[upsertProduct] Error subiendo imagen de variación:", varUploadErr);
+                  return v;
+                }
+              }
+              return v;
+            }),
+          );
+        }
+
         const p = {
           ...product,
           id: prodId,
@@ -782,6 +840,7 @@ export const useApp = create<AppState>()(
           originalPrice: cleanOriginalPrice,
           description: product.description || undefined,
           sortOrder: finalSortOrder !== undefined && finalSortOrder !== null ? finalSortOrder : 0,
+          variations: finalVariations,
           createdAt: product.createdAt || new Date().toISOString(),
         };
 
@@ -802,7 +861,7 @@ export const useApp = create<AppState>()(
             }
           }
 
-          const { error } = await supabase.from("products").upsert({
+          const payload: any = {
             id: p.id,
             store_id: storeId,
             category_id: p.categoryId || null,
@@ -816,9 +875,30 @@ export const useApp = create<AppState>()(
             is_sample: p.isSample,
             sort_order: p.sortOrder,
             tags: p.tags || [],
-          });
+            variations: p.variations || [],
+          };
 
-          if (error) throw error;
+          let { error } = await supabase.from("products").upsert(payload);
+
+          // Fallback resiliente: Si la columna 'variations' aún no está en el schema cache de Supabase,
+          // reintentamos sin 'variations' para que el usuario nunca vea un error bloqueante en pantalla.
+          if (
+            error &&
+            (error.message?.includes("variations") ||
+              error.details?.includes("variations") ||
+              error.code === "PGRST204" ||
+              (error as any).hint?.includes("variations"))
+          ) {
+            console.warn(
+              "[upsertProduct] Columna 'variations' no detectada en schema cache de Supabase. Reintentando guardado compatible...",
+              error.message
+            );
+            const { variations, ...safePayload } = payload;
+            const retryRes = await supabase.from("products").upsert(safePayload);
+            if (retryRes.error) throw retryRes.error;
+          } else if (error) {
+            throw error;
+          }
 
           set((s) => ({
             stores: s.stores.map((st) => {
@@ -851,7 +931,7 @@ export const useApp = create<AppState>()(
           }));
         } catch (error) {
           console.error("[upsertProduct] Error:", error);
-          toast.error("Error al guardar producto");
+          throw error;
         }
       },
 
@@ -861,14 +941,19 @@ export const useApp = create<AppState>()(
           const store = get().stores.find((st) => st.id === storeId);
           const product = store?.products.find((p) => p.id === productId);
 
-          // Eliminar la imagen física del storage si existe
+          // Eliminar la imagen física del storage si existe (imagen principal y miniatura)
           if (product && product.image && product.image.includes("/public/images/")) {
             try {
               const parts = product.image.split("/public/images/");
               if (parts.length > 1) {
                 const imagePath = decodeURIComponent(parts[1].split("?")[0]);
+                const thumbPath = imagePath.endsWith(".webp") && !imagePath.endsWith("_thumb.webp")
+                  ? imagePath.replace(/\.webp$/, "_thumb.webp")
+                  : null;
                 console.log(`[deleteProduct] Eliminando imagen del storage: ${imagePath}`);
-                await supabase.storage.from("images").remove([imagePath]);
+                const filesToRemove = [imagePath];
+                if (thumbPath) filesToRemove.push(thumbPath);
+                await supabase.storage.from("images").remove(filesToRemove);
               }
             } catch (err) {
               console.error("[deleteProduct] Falló la eliminación de la imagen en storage:", err);
@@ -1245,20 +1330,29 @@ export const useApp = create<AppState>()(
         })),
         currentStoreId: state.currentStoreId,
         impersonatedBy: state.impersonatedBy,
+        lastFetched: state.lastFetched,
       }),
     },
   ),
 );
 
-interface CartItem {
+export interface CartItem {
   productId: string;
   qty: number;
+  variationId?: string | null;
+  variationName?: string | null;
+  variationPrice?: number | null;
+  variationImage?: string | null;
 }
-interface CartState {
+export interface CartState {
   carts: Record<string, CartItem[]>;
-  add: (storeId: string, productId: string) => void;
-  setQty: (storeId: string, productId: string, qty: number) => void;
-  remove: (storeId: string, productId: string) => void;
+  add: (
+    storeId: string,
+    productId: string,
+    variation?: { id?: string | null; name?: string | null; price?: number | null; image?: string | null } | null
+  ) => void;
+  setQty: (storeId: string, productId: string, qty: number, variationId?: string | null) => void;
+  remove: (storeId: string, productId: string, variationId?: string | null) => void;
   clear: (storeId: string) => void;
 }
 
@@ -1266,31 +1360,58 @@ export const useCart = create<CartState>()(
   persist(
     (set) => ({
       carts: {},
-      add: (storeId, productId) =>
+      add: (storeId, productId, variation = null) =>
         set((s) => {
           const cart = s.carts[storeId] ?? [];
-          const exists = cart.find((i) => i.productId === productId);
+          const varId = variation?.id || null;
+          const exists = cart.find(
+            (i) => i.productId === productId && (i.variationId || null) === varId
+          );
           const next = exists
-            ? cart.map((i) => (i.productId === productId ? { ...i, qty: i.qty + 1 } : i))
-            : [...cart, { productId, qty: 1 }];
+            ? cart.map((i) =>
+                i.productId === productId && (i.variationId || null) === varId
+                  ? { ...i, qty: i.qty + 1 }
+                  : i
+              )
+            : [
+                ...cart,
+                {
+                  productId,
+                  qty: 1,
+                  variationId: varId,
+                  variationName: variation?.name || null,
+                  variationPrice: variation?.price !== undefined ? variation.price : null,
+                  variationImage: variation?.image || null,
+                },
+              ];
           return { carts: { ...s.carts, [storeId]: next } };
         }),
-      setQty: (storeId, productId, qty) =>
+      setQty: (storeId, productId, qty, variationId = null) =>
         set((s) => {
           const cart = s.carts[storeId] ?? [];
+          const varId = variationId || null;
           const next =
             qty <= 0
-              ? cart.filter((i) => i.productId !== productId)
-              : cart.map((i) => (i.productId === productId ? { ...i, qty } : i));
+              ? cart.filter((i) => !(i.productId === productId && (i.variationId || null) === varId))
+              : cart.map((i) =>
+                  i.productId === productId && (i.variationId || null) === varId
+                    ? { ...i, qty }
+                    : i
+                );
           return { carts: { ...s.carts, [storeId]: next } };
         }),
-      remove: (storeId, productId) =>
-        set((s) => ({
-          carts: {
-            ...s.carts,
-            [storeId]: (s.carts[storeId] ?? []).filter((i) => i.productId !== productId),
-          },
-        })),
+      remove: (storeId, productId, variationId = null) =>
+        set((s) => {
+          const varId = variationId || null;
+          return {
+            carts: {
+              ...s.carts,
+              [storeId]: (s.carts[storeId] ?? []).filter(
+                (i) => !(i.productId === productId && (i.variationId || null) === varId)
+              ),
+            },
+          };
+        }),
       clear: (storeId) => set((s) => ({ carts: { ...s.carts, [storeId]: [] } })),
     }),
     { name: "dizi-carts-v1" },

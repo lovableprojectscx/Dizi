@@ -37,6 +37,13 @@ export interface Category {
   icon?: string;
 }
 
+export interface ProductVariation {
+  id: string;
+  name: string;
+  price?: number | null;
+  image?: string | null;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -51,6 +58,7 @@ export interface Product {
   sortOrder?: number;
   tags?: string[];
   createdAt?: string;
+  variations?: ProductVariation[];
 }
 
 export interface QuickLink {

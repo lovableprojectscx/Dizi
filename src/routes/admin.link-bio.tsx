@@ -693,8 +693,7 @@ function LinkBioPage() {
   const [newLinkThumbnail, setNewLinkThumbnail] = useState("");
   const [newLinkIcon, setNewLinkIcon] = useState("");
 
-  const [saving, setSaving] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadedStoreId, setLoadedStoreId] = useState<string | null>(null);
 
   const [copiedBio, setCopiedBio] = useState(false);
 
@@ -759,7 +758,7 @@ function LinkBioPage() {
 
   /* Load store data once */
   useEffect(() => {
-    if (store && !isLoaded) {
+    if (store && loadedStoreId !== store.id) {
       setBioDescription(store.bioDescription || "");
       setBioLinksEnabled(store.bioLinksEnabled ?? false);
       setLocationAddress(store.locationAddress || "");
@@ -782,9 +781,9 @@ function LinkBioPage() {
       setActiveBgTab(store.bioBgImage ? "image" : "color");
 
       setCustomLinks(store.quickLinks || []);
-      setIsLoaded(true);
+      setLoadedStoreId(store.id);
     }
-  }, [store, isLoaded]);
+  }, [store, loadedStoreId]);
 
   /* Leaflet map */
   useEffect(() => {
@@ -868,7 +867,7 @@ function LinkBioPage() {
         markerInstance.current = null;
       }
     };
-  }, [bioLinksEnabled, isLoaded, activeEditTab, mapElement]);
+  }, [bioLinksEnabled, loadedStoreId, activeEditTab, mapElement]);
 
   /* Invalidate Leaflet map size when location section opens */
   useEffect(() => {

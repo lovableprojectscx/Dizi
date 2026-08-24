@@ -114,8 +114,8 @@ export function ImageUploadGuided({
   );
 
   const handleFile = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Imagen muy grande (max 10 MB)");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Imagen muy pesada (máximo 50 MB)");
       return;
     }
     setConverting(true);
@@ -243,7 +243,7 @@ export function ImageUploadGuided({
                 Seleccionar imagen
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Formatos JPG, PNG, WebP (máx. 10MB)
+                Formatos JPG, PNG, WebP (optimización automática)
               </p>
             </div>
           </div>

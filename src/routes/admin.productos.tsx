@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef } from "react";
-import { PRODUCT_TAGS } from "@/lib/tags";
+import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
   PLANS,
   type Product,
+  type ProductVariation,
   getEffectivePlan,
   getEffectiveProductLimit,
   isSubscriptionExpired,
@@ -63,6 +63,7 @@ import {
   Tag,
   Check,
   LayoutGrid,
+  Layers,
   X,
   Package,
   Search,
@@ -470,6 +471,836 @@ function CategorySelect({
   );
 }
 
+/* ── Modal de Producto Aislado para Máximo Rendimiento y Fluidez ── */
+interface SingleProductDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  product: Product;
+  store: any;
+  imageSpec: any;
+  onSave: (product: Product) => Promise<void>;
+  onCreateCategory: (name: string) => Promise<string | null>;
+  showConfirm: (config: {
+    title: string;
+    description: string;
+    cancelText?: string;
+    actionText?: string;
+    onAction: () => void;
+    onCancel?: () => void;
+  }) => void;
+}
+
+function SingleProductDialog({
+  open,
+  onOpenChange,
+  product,
+  store,
+  imageSpec,
+  onSave,
+  onCreateCategory,
+  showConfirm,
+}: SingleProductDialogProps) {
+  const [editing, setEditing] = useState<Product>(product);
+  const [variations, setVariations] = useState<ProductVariation[]>(product.variations || []);
+  const [priceInput, setPriceInput] = useState("");
+  const [originalPriceInput, setOriginalPriceInput] = useState("");
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const cleanDesc = (product.description || "").replace(/#destacado/g, "").trim();
+      setEditing({
+        ...product,
+        description: cleanDesc,
+      });
+      setVariations(product.variations || []);
+      setPriceInput(
+        product.price === null || product.price === undefined || product.price === 0
+          ? ""
+          : product.price.toString()
+      );
+      setOriginalPriceInput(product.originalPrice ? product.originalPrice.toString() : "");
+      setIsFeatured(
+        product.description?.includes("#destacado") || product.name?.includes("#destacado") || false
+      );
+    }
+  }, [open, product]);
+
+  const handleAddVariation = () => {
+    if (variations.length >= 10) {
+      toast.error("Máximo 10 variaciones por producto");
+      return;
+    }
+    const newVar: ProductVariation = {
+      id: Math.random().toString(36).slice(2, 7),
+      name: "",
+      price: null,
+      image: null,
+    };
+    setVariations((prev) => [...prev, newVar]);
+  };
+
+  const handleRemoveVariation = (index: number) => {
+    setVariations((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVarChange = (index: number, field: keyof ProductVariation, val: any) => {
+    setVariations((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: val };
+      return next;
+    });
+  };
+
+  const handleUploadVarImage = async (index: number, file: File) => {
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("La foto es muy pesada (máximo 50 MB)");
+      return;
+    }
+    try {
+      const webpData = await convertImageToWebP(file);
+      handleVarChange(index, "image", webpData);
+      toast.success("Foto de variante cargada");
+    } catch {
+      toast.error("No se pudo procesar la imagen de la variante");
+    }
+  };
+
+  const handleRemoveVarImage = (index: number) => {
+    handleVarChange(index, "image", null);
+  };
+
+  const handleCloseAttempt = (isOpen: boolean) => {
+    if (!isOpen) {
+      const hasChanges =
+        (editing.name || "").trim() !== (product.name || "").trim() ||
+        priceInput.trim() !== (product.price ? product.price.toString() : "") ||
+        editing.image !== (product.image || "") ||
+        JSON.stringify(variations) !== JSON.stringify(product.variations || []) ||
+        (editing.description || "").trim() !==
+          ((product.description || "").replace(/#destacado/g, "").trim());
+
+      if (hasChanges) {
+        showConfirm({
+          title: "Cambios sin guardar",
+          description:
+            "Tienes cambios sin guardar en este producto. ¿Deseas cerrar el formulario y perder los cambios?",
+          actionText: "Descartar",
+          cancelText: "Seguir editando",
+          onAction: () => onOpenChange(false),
+        });
+        return;
+      }
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handleSave = async () => {
+    const cleanPrice = priceInput.replace(",", ".");
+    const cleanOriginalPrice = originalPriceInput.replace(",", ".");
+
+    const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
+    const parsedOriginalPrice = cleanOriginalPrice === "" ? null : parseFloat(cleanOriginalPrice);
+
+    if (
+      (parsedPrice !== null && isNaN(parsedPrice)) ||
+      (editing.isOnSale && parsedOriginalPrice !== null && isNaN(parsedOriginalPrice))
+    ) {
+      toast.error("Por favor ingresa un precio válido");
+      return;
+    }
+
+    if (!editing.name || !editing.categoryId) {
+      toast.error("Completa los campos requeridos (nombre y categoría)");
+      return;
+    }
+
+    let rawDesc = (editing.description || "").replace(/#destacado/g, "").trim();
+    if (isFeatured) {
+      rawDesc = (rawDesc + " #destacado").trim();
+    }
+
+    const cleanVariations = variations
+      .map((v) => ({ ...v, name: v.name.trim() }))
+      .filter((v) => v.name.length > 0);
+
+    const updatedProduct: Product = {
+      ...editing,
+      price: parsedPrice,
+      originalPrice: editing.isOnSale ? parsedOriginalPrice : null,
+      description: rawDesc || undefined,
+      variations: cleanVariations,
+      isSample: false,
+    };
+
+    setSaving(true);
+    try {
+      await onSave(updatedProduct);
+      onOpenChange(false);
+      toast.success("Producto guardado correctamente");
+    } catch (err: any) {
+      console.error("[save product] Error:", err);
+      toast.error(
+        err?.message || "Ocurrió un error al guardar el producto. Por favor intenta de nuevo."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleCloseAttempt}>
+      <DialogContent
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background"
+      >
+        <DialogHeader className="px-6 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
+          <div className="pr-6">
+            <DialogTitle className="text-lg font-extrabold tracking-tight flex items-center gap-2 text-foreground">
+              <span className="h-5 w-1 rounded bg-primary" />
+              {!editing.id || editing.id === "" || !store?.products?.some((p: any) => p.id === editing.id)
+                ? "Nuevo Producto"
+                : "Editar Producto"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+              Configura los detalles del artículo para publicarlo en tu catálogo digital.
+            </DialogDescription>
+          </div>
+        </DialogHeader>
+
+        <div className="overflow-y-auto flex-1 p-5 md:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Columna Izquierda: Imagen y Multimedia (col-span 5) */}
+            <div className="md:col-span-5 space-y-3.5">
+              <div className="space-y-0.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                  Imagen del Producto
+                </h3>
+                <p className="text-[10px] text-muted-foreground/60 leading-normal hidden sm:block">
+                  Formatos JPG, PNG, WebP con compresión automática.
+                </p>
+              </div>
+              <ImageUploadGuided
+                value={editing.image}
+                onChange={(image) => setEditing((prev) => ({ ...prev, image }))}
+                spec={imageSpec}
+                label=""
+              />
+            </div>
+
+            {/* Columna Derecha: Parámetros del Producto (col-span 7) */}
+            <div className="md:col-span-7 space-y-4">
+              {/* Nombre */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                  Nombre del producto
+                </Label>
+                <Input
+                  placeholder="Ej. iPhone 15 Pro Max 256GB"
+                  className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
+                  value={editing.name}
+                  onChange={(e) => setEditing((prev) => ({ ...prev, name: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                  }}
+                />
+              </div>
+
+              {/* Card de Interruptores (Oferta y Destacado) */}
+              <div className="border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/10 p-4 rounded-xl space-y-3.5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">
+                      ¿Este producto está en oferta?
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Muestra un precio de oferta junto al original tachado.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={editing.isOnSale ?? false}
+                    onCheckedChange={(v) => {
+                      setEditing((prev) => ({
+                        ...prev,
+                        isOnSale: v,
+                        originalPrice: v ? prev.originalPrice : null,
+                      }));
+                      if (!v) setOriginalPriceInput("");
+                    }}
+                  />
+                </div>
+
+                {isPremiumModel(store.model) && (
+                  <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-orange-500" /> ¿Destacar este producto?
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Aparecerá en la sección de recomendados y carrusel superior.
+                      </p>
+                    </div>
+                    <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
+                  </div>
+                )}
+              </div>
+
+              {/* Precios y Categoría */}
+              {editing.isOnSale ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                      Precio Original
+                    </Label>
+                    <div className="relative flex items-center mt-1">
+                      <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
+                        S/
+                      </span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm"
+                        value={originalPriceInput}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(",", ".");
+                          val = val.replace(/[^0-9.]/g, "");
+                          const parts = val.split(".");
+                          if (parts.length > 2) return;
+                          setOriginalPriceInput(val);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === " ") e.stopPropagation();
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-red-500 flex items-center gap-1">
+                      Precio Oferta
+                    </Label>
+                    <div className="relative flex items-center mt-1">
+                      <span className="absolute left-3 text-sm text-red-400 font-semibold select-none">
+                        S/
+                      </span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00"
+                        className="pl-8 h-10 rounded-xl border-red-200 dark:border-red-900/50 bg-red-50/30 dark:bg-red-950/10 focus-visible:ring-red-500 text-sm text-red-600 dark:text-red-400 font-bold"
+                        value={priceInput}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(",", ".");
+                          val = val.replace(/[^0-9.]/g, "");
+                          const parts = val.split(".");
+                          if (parts.length > 2) return;
+                          setPriceInput(val);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === " ") e.stopPropagation();
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                      <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
+                    </Label>
+                    <CategorySelect
+                      value={editing.categoryId}
+                      categories={store.categories}
+                      onChange={(v) => setEditing((prev) => ({ ...prev, categoryId: v }))}
+                      onCreateCategory={onCreateCategory}
+                      storeModel={store.model}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                      Precio
+                    </Label>
+                    <div className="relative flex items-center mt-1">
+                      <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
+                        S/
+                      </span>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.00 (Dejar vacío para consultar)"
+                        className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm"
+                        value={priceInput}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(",", ".");
+                          val = val.replace(/[^0-9.]/g, "");
+                          const parts = val.split(".");
+                          if (parts.length > 2) return;
+                          setPriceInput(val);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === " ") e.stopPropagation();
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
+                      <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
+                    </Label>
+                    <CategorySelect
+                      value={editing.categoryId}
+                      categories={store.categories}
+                      onChange={(v) => setEditing((prev) => ({ ...prev, categoryId: v }))}
+                      onCreateCategory={onCreateCategory}
+                      storeModel={store.model}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Descripción */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                  Descripción (opcional)
+                </Label>
+                <Textarea
+                  rows={2}
+                  placeholder="Ej. Especificaciones técnicas, detalles o notas..."
+                  className="focus-visible:ring-primary rounded-xl min-h-[75px] text-sm py-2 resize-none border-slate-200 dark:border-slate-800"
+                  value={editing.description ?? ""}
+                  onChange={(e) => setEditing((prev) => ({ ...prev, description: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                  }}
+                />
+              </div>
+
+              {/* ── Variaciones del Producto (Colores, Tallas, Presentaciones) ── */}
+              <div className="space-y-3 pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                      <Layers className="h-3.5 w-3.5 text-primary" /> Variaciones (Opciones)
+                    </Label>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Colores, tallas o presentaciones con foto y precio opcional.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs font-semibold rounded-lg gap-1 border-dashed hover:border-primary hover:text-primary cursor-pointer"
+                    onClick={handleAddVariation}
+                  >
+                    <Plus className="h-3 w-3" /> Agregar Opción
+                  </Button>
+                </div>
+
+                {/* Lista de Variaciones */}
+                {variations.length > 0 && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {variations.map((v, index) => (
+                      <div
+                        key={v.id || index}
+                        className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30"
+                      >
+                        {/* Subida / Preview de Foto de Variante */}
+                        <div className="relative shrink-0">
+                          {v.image ? (
+                            <div className="relative group w-9 h-9 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-white">
+                              <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveVarImage(index)}
+                                className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                                title="Quitar foto"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="w-9 h-9 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary" title="Subir foto de esta variante">
+                              <Camera className="h-3.5 w-3.5" />
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleUploadVarImage(index, file);
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Nombre de la Variante */}
+                        <div className="flex-1 min-w-[100px]">
+                          <Input
+                            placeholder="Ej: Rojo, XL, 1 Litro..."
+                            value={v.name}
+                            onChange={(e) => handleVarChange(index, "name", e.target.value)}
+                            className="h-8 text-xs rounded-lg border-slate-200 dark:border-slate-700"
+                            onKeyDown={(e) => {
+                              if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                            }}
+                          />
+                        </div>
+
+                        {/* Precio Opcional */}
+                        <div className="w-24 shrink-0 relative">
+                          <span className="absolute left-2 top-2 text-[10px] text-muted-foreground/60 font-semibold select-none">
+                            S/
+                          </span>
+                          <Input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="Precio"
+                            value={v.price !== null && v.price !== undefined ? v.price.toString() : ""}
+                            onChange={(e) => {
+                              let val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                              const num = val === "" ? null : parseFloat(val);
+                              handleVarChange(index, "price", isNaN(num as any) ? null : num);
+                            }}
+                            className="pl-6 h-8 text-xs rounded-lg border-slate-200 dark:border-slate-700"
+                            onKeyDown={(e) => {
+                              if (e.key === " ") e.stopPropagation();
+                            }}
+                          />
+                        </div>
+
+                        {/* Eliminar Variante */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveVariation(index)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                          title="Eliminar opción"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 justify-end w-full">
+          <Button
+            variant="outline"
+            disabled={saving}
+            className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
+            onClick={() => handleCloseAttempt(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            disabled={saving || !editing.name.trim() || !editing.categoryId}
+            className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-xs text-white"
+            onClick={handleSave}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                Guardando producto...
+              </>
+            ) : editing.id ? (
+              "Guardar cambios"
+            ) : (
+              "Guardar producto"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ── Fila de Tabla de Producto Memoizada para 60+ FPS ── */
+interface ProductTableRowProps {
+  p: Product;
+  idx: number;
+  totalCount: number;
+  storeModel?: string;
+  categoryLabel: string;
+  categoryIconKey?: string;
+  onEdit: (p: Product) => void;
+  onDelete: (p: Product) => void;
+  onToggle: (id: string) => void;
+  onSwap: (fromIdx: number, toIdx: number) => void;
+}
+
+const ProductTableRow = React.memo(function ProductTableRow({
+  p,
+  idx,
+  totalCount,
+  storeModel,
+  categoryLabel,
+  categoryIconKey,
+  onEdit,
+  onDelete,
+  onToggle,
+  onSwap,
+}: ProductTableRowProps) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <TableRow>
+      <TableCell>
+        {p.image && !imgError ? (
+          <img
+            src={p.image}
+            alt={p.name}
+            className="h-10 w-10 rounded-lg object-cover bg-muted/30"
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
+      </TableCell>
+      <TableCell className="font-medium">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span>{p.name}</span>
+          {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0"
+            >
+              ⭐ Destacado
+            </Badge>
+          )}
+          {!p.visible && (
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 px-1.5 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:bg-amber-950/20 shrink-0"
+            >
+              Borrador
+            </Badge>
+          )}
+          {p.variations && p.variations.length > 0 && (
+            <Badge
+              variant="outline"
+              className="text-[9px] py-0 px-1.5 border-primary/30 text-primary bg-primary/5 font-medium shrink-0"
+            >
+              {p.variations.length} {p.variations.length === 1 ? "variante" : "variantes"}
+            </Badge>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-col">
+          <span className="font-bold">{formatPrice(p.price)}</span>
+          {p.isOnSale &&
+            p.originalPrice &&
+            p.price !== null &&
+            p.price !== undefined &&
+            p.originalPrice > p.price && (
+              <span className="text-[10px] text-muted-foreground line-through">
+                {formatPrice(p.originalPrice)}
+              </span>
+            )}
+        </div>
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        <div className="flex items-center gap-2">
+          {isPremiumModel(storeModel) && categoryIconKey && (
+            <CategoryIcon
+              iconKey={categoryIconKey}
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+            />
+          )}
+          <span>{categoryLabel}</span>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id)} />
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-0.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={idx === 0}
+            onClick={() => onSwap(idx, idx - 1)}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+            title="Subir"
+          >
+            <ArrowUp className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={idx === totalCount - 1}
+            onClick={() => onSwap(idx, idx + 1)}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+            title="Bajar"
+          >
+            <ArrowDown className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </TableCell>
+      <TableCell className="text-right">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 hover:bg-primary hover:text-white transition-colors duration-75 cursor-pointer"
+          onClick={() => onEdit(p)}
+          title="Editar producto"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 hover:bg-destructive hover:text-white transition-colors duration-75 cursor-pointer"
+          onClick={() => onDelete(p)}
+          title="Eliminar producto"
+        >
+          <Trash2 className="h-4 w-4 text-destructive hover:text-white" />
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
+
+/* ── Tarjeta Móvil de Producto Memoizada ── */
+const ProductMobileCard = React.memo(function ProductMobileCard({
+  p,
+  idx,
+  totalCount,
+  storeModel,
+  categoryLabel,
+  categoryIconKey,
+  onEdit,
+  onDelete,
+  onToggle,
+  onSwap,
+}: ProductTableRowProps) {
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <div className="flex items-center gap-3 p-3 border rounded-xl bg-card">
+      {p.image && !imgError ? (
+        <img
+          src={p.image}
+          alt={p.name}
+          className="h-14 w-14 rounded-lg object-cover shrink-0 bg-muted/30"
+          loading="lazy"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
+          <ImageIcon className="h-5 w-5 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+          <p className="font-semibold text-sm truncate">{p.name}</p>
+          {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
+            <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
+              ⭐ Destacado
+            </span>
+          )}
+          {!p.visible && (
+            <span className="shrink-0 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1 rounded dark:text-amber-400 dark:bg-amber-950/20 dark:border-amber-900/50">
+              Borrador
+            </span>
+          )}
+          {p.variations && p.variations.length > 0 && (
+            <span className="shrink-0 text-[9px] font-medium text-primary bg-primary/5 border border-primary/20 px-1 rounded">
+              {p.variations.length} {p.variations.length === 1 ? "opción" : "opciones"}
+            </span>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {isPremiumModel(storeModel) && categoryIconKey && (
+              <CategoryIcon
+                iconKey={categoryIconKey}
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+              />
+            )}
+            <span>{categoryLabel}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
+          {p.isOnSale &&
+            p.originalPrice &&
+            p.price !== null &&
+            p.price !== undefined &&
+            p.originalPrice > p.price && (
+              <span className="text-[11px] text-muted-foreground line-through">
+                {formatPrice(p.originalPrice)}
+              </span>
+            )}
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-2 shrink-0">
+        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id)} />
+        <div className="flex gap-1 items-center">
+          <div className="flex items-center gap-0.5 border border-border/60 rounded-md p-0.5 bg-muted/10">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={idx === 0}
+              onClick={() => onSwap(idx, idx - 1)}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+              title="Subir"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={idx === totalCount - 1}
+              onClick={() => onSwap(idx, idx + 1)}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
+              title="Bajar"
+            >
+              <ArrowDown className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-primary hover:text-white transition-colors duration-75 cursor-pointer"
+            onClick={() => onEdit(p)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-destructive hover:text-white transition-colors duration-75 cursor-pointer"
+            onClick={() => onDelete(p)}
+          >
+            <Trash2 className="h-3.5 w-3.5 text-destructive hover:text-white" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 function ProductsPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id));
@@ -539,48 +1370,56 @@ function ProductsPage() {
   };
 
   // Products UI state
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Product>(empty());
-  const [priceInput, setPriceInput] = useState("");
-  const [originalPriceInput, setOriginalPriceInput] = useState("");
-  const [isFeatured, setIsFeatured] = useState(false);
+  const [isSingleDialogOpen, setIsSingleDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   // Buscador y filtro de productos para el administrador
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
 
-  const filteredProducts = store.products.filter((p) => {
-    const matchesSearch =
-      searchQuery.trim() === "" ||
-      p.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-      (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase().trim()));
-    const matchesCategory =
-      selectedCategoryFilter === "all" || p.categoryId === selectedCategoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return store.products.filter((p) => {
+      const matchesSearch =
+        q === "" ||
+        p.name.toLowerCase().includes(q) ||
+        (p.description && p.description.toLowerCase().includes(q));
+      const matchesCategory =
+        selectedCategoryFilter === "all" || p.categoryId === selectedCategoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [store.products, searchQuery, selectedCategoryFilter]);
 
-  const handleSingleProductOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      const hasChanges =
-        editing.name.trim() !== "" ||
-        priceInput.trim() !== "" ||
-        editing.image !== "" ||
-        (editing.description || "").trim() !== "";
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, { label: string; iconKey?: string }>();
+    store.categories.forEach((c) => {
+      map.set(c.id, parseCategoryName(c.name, c.icon));
+    });
+    return map;
+  }, [store.categories]);
 
-      if (hasChanges) {
-        showConfirm({
-          title: "Cambios sin guardar",
-          description:
-            "Tienes cambios sin guardar en este producto. ¿Deseas cerrar el formulario y perder los cambios?",
-          actionText: "Descartar",
-          cancelText: "Seguir editando",
-          onAction: () => setOpen(false),
-        });
-        return;
-      }
-    }
-    setOpen(isOpen);
-  };
+  const handleOpenEdit = useCallback((p: Product) => {
+    setEditingProduct(p);
+    setIsSingleDialogOpen(true);
+  }, []);
+
+  const handleConfirmDelete = useCallback((p: Product) => {
+    showConfirm({
+      title: "Eliminar producto",
+      description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
+      actionText: "Eliminar",
+      cancelText: "Cancelar",
+      onAction: () => del(store.id, p.id),
+    });
+  }, [del, store.id]);
+
+  const handleToggleVisible = useCallback((productId: string) => {
+    toggle(store.id, productId);
+  }, [toggle, store.id]);
+
+  const handleSwapOrder = useCallback((fromIdx: number, toIdx: number) => {
+    swap(store.id, fromIdx, toIdx);
+  }, [swap, store.id]);
 
   interface BulkDraft {
     id: string;
@@ -588,6 +1427,7 @@ function ProductsPage() {
     price: string;
     categoryId: string;
     description: string;
+    variations?: ProductVariation[];
     file: File;
     previewUrl: string;
     status: "pending" | "processing" | "success" | "error";
@@ -629,6 +1469,56 @@ function ProductsPage() {
   const updateActiveDraft = (updates: Partial<BulkDraft>) => {
     if (!selectedDraftId) return;
     setBulkDrafts((prev) => prev.map((d) => (d.id === selectedDraftId ? { ...d, ...updates } : d)));
+  };
+
+  const handleAddBulkVariation = () => {
+    if (!activeDraft) return;
+    const currentVars = activeDraft.variations || [];
+    if (currentVars.length >= 10) {
+      toast.error("Máximo 10 variaciones por producto");
+      return;
+    }
+    const newVar: ProductVariation = {
+      id: Math.random().toString(36).slice(2, 7),
+      name: "",
+      price: null,
+      image: null,
+    };
+    updateActiveDraft({ variations: [...currentVars, newVar] });
+  };
+
+  const handleRemoveBulkVariation = (varIdx: number) => {
+    if (!activeDraft) return;
+    const currentVars = activeDraft.variations || [];
+    updateActiveDraft({
+      variations: currentVars.filter((_, i) => i !== varIdx),
+    });
+  };
+
+  const handleBulkVarChange = (varIdx: number, field: keyof ProductVariation, val: any) => {
+    if (!activeDraft) return;
+    const currentVars = [...(activeDraft.variations || [])];
+    currentVars[varIdx] = { ...currentVars[varIdx], [field]: val };
+    updateActiveDraft({ variations: currentVars });
+  };
+
+  const handleUploadBulkVarImage = async (varIdx: number, file: File) => {
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("La foto es muy pesada (máximo 50 MB)");
+      return;
+    }
+    try {
+      const webpData = await convertImageToWebP(file);
+      handleBulkVarChange(varIdx, "image", webpData);
+      toast.success("Foto de variante cargada");
+    } catch {
+      toast.error("No se pudo procesar la imagen de la variante");
+    }
+  };
+
+  const handleRemoveBulkVarImage = (varIdx: number) => {
+    handleBulkVarChange(varIdx, "image", null);
   };
 
   const removeDraft = (id: string) => {
@@ -677,6 +1567,7 @@ function ProductsPage() {
         price: "",
         categoryId: defaultCatId!,
         description: "",
+        variations: [],
         file,
         previewUrl: URL.createObjectURL(file),
         status: "pending",
@@ -721,6 +1612,10 @@ function ProductsPage() {
         const cleanPrice = draft.price.replace(",", ".");
         const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
 
+        const cleanVariations = (draft.variations || [])
+          .map((v) => ({ ...v, name: v.name.trim() }))
+          .filter((v) => v.name.length > 0);
+
         await upsert(store.id, {
           id: "",
           name: draft.name,
@@ -728,6 +1623,7 @@ function ProductsPage() {
           categoryId: draft.categoryId,
           image: webpDataUrl,
           description: draft.description || undefined,
+          variations: cleanVariations,
           visible: true,
           isSample: false,
         });
@@ -792,64 +1688,17 @@ function ProductsPage() {
       toast.error("Has alcanzado el límite de tu plan");
       return;
     }
-    setEditing({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
-    setPriceInput("");
-    setOriginalPriceInput("");
-    setIsFeatured(false);
-    setOpen(true);
+    setEditingProduct({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
+    setIsSingleDialogOpen(true);
   };
 
   const openEdit = (p: Product) => {
-    // Limpiar el tag #destacado y espacios sobrantes del inicio/fin al iniciar la edición
-    const cleanDesc = (p.description || "").replace(/#destacado/g, "").trim();
-    setEditing({
-      ...p,
-      description: cleanDesc,
-    });
-    setPriceInput(
-      p.price === null || p.price === undefined || p.price === 0 ? "" : p.price.toString(),
-    );
-    setOriginalPriceInput(p.originalPrice ? p.originalPrice.toString() : "");
-    setIsFeatured(p.description?.includes("#destacado") || p.name?.includes("#destacado") || false);
-    setOpen(true);
+    setEditingProduct(p);
+    setIsSingleDialogOpen(true);
   };
 
-  const save = () => {
-    const cleanPrice = priceInput.replace(",", ".");
-    const cleanOriginalPrice = originalPriceInput.replace(",", ".");
-
-    const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
-    const parsedOriginalPrice = cleanOriginalPrice === "" ? null : parseFloat(cleanOriginalPrice);
-
-    if (
-      (parsedPrice !== null && isNaN(parsedPrice)) ||
-      (editing.isOnSale && parsedOriginalPrice !== null && isNaN(parsedOriginalPrice))
-    ) {
-      toast.error("Por favor ingresa un precio válido");
-      return;
-    }
-
-    if (!editing.name || !editing.categoryId) {
-      toast.error("Completa los campos requeridos");
-      return;
-    }
-
-    let rawDesc = (editing.description || "").replace(/#destacado/g, "").trim();
-    if (isFeatured) {
-      rawDesc = (rawDesc + " #destacado").trim();
-    }
-
-    const updatedProduct: Product = {
-      ...editing,
-      price: parsedPrice,
-      originalPrice: editing.isOnSale ? parsedOriginalPrice : null,
-      description: rawDesc || undefined,
-      isSample: false,
-    };
-
-    upsert(store.id, updatedProduct);
-    setOpen(false);
-    toast.success("Producto guardado");
+  const handleSaveProduct = async (productToSave: Product) => {
+    await upsert(store.id, productToSave);
   };
 
   /* Crea categoría inline y devuelve el nuevo id */
@@ -1108,121 +1957,24 @@ function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.map((p, idx) => (
-                  <TableRow key={p.id}>
-                    <TableCell>
-                      {p.image ? (
-                        <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
-                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span>{p.name}</span>
-                        {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0"
-                          >
-                            ⭐ Destacado
-                          </Badge>
-                        )}
-                        {!p.visible && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] py-0 px-1.5 border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-900/50 dark:text-amber-400 dark:bg-amber-950/20 shrink-0"
-                          >
-                            Borrador
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold">{formatPrice(p.price)}</span>
-                        {p.isOnSale &&
-                          p.originalPrice &&
-                          p.price !== null &&
-                          p.price !== undefined &&
-                          p.originalPrice > p.price && (
-                            <span className="text-[10px] text-muted-foreground line-through">
-                              {formatPrice(p.originalPrice)}
-                            </span>
-                          )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {(() => {
-                        const cat = store.categories.find((c) => c.id === p.categoryId);
-                        if (!cat) return "sin categoría";
-                        const { label, iconKey } = parseCategoryName(cat.name);
-                        return (
-                          <div className="flex items-center gap-2">
-                            {isPremiumModel(store.model) && iconKey && (
-                              <CategoryIcon
-                                iconKey={iconKey}
-                                className="h-4 w-4 shrink-0 text-muted-foreground"
-                              />
-                            )}
-                            <span>{label}</span>
-                          </div>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-0.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={idx === 0}
-                          onClick={() => swap(store.id, idx, idx - 1)}
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
-                          title="Subir"
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={idx === store.products.length - 1}
-                          onClick={() => swap(store.id, idx, idx + 1)}
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
-                          title="Bajar"
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          showConfirm({
-                            title: "Eliminar producto",
-                            description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
-                            actionText: "Eliminar",
-                            cancelText: "Cancelar",
-                            onAction: () => del(store.id, p.id),
-                          });
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredProducts.map((p, idx) => {
+                  const catInfo = categoryMap.get(p.categoryId) || { label: "Sin categoría", iconKey: "" };
+                  return (
+                    <ProductTableRow
+                      key={p.id}
+                      p={p}
+                      idx={idx}
+                      totalCount={store.products.length}
+                      storeModel={store.model}
+                      categoryLabel={catInfo.label}
+                      categoryIconKey={catInfo.iconKey}
+                      onEdit={handleOpenEdit}
+                      onDelete={handleConfirmDelete}
+                      onToggle={handleToggleVisible}
+                      onSwap={handleSwapOrder}
+                    />
+                  );
+                })}
                 {filteredProducts.length === 0 && (
                   <TableRow>
                     <TableCell
@@ -1248,119 +2000,24 @@ function ProductsPage() {
                   : "No se encontraron productos que coincidan con la búsqueda."}
               </p>
             )}
-            {filteredProducts.map((p, idx) => (
-              <div key={p.id} className="flex items-center gap-3 p-3 border rounded-xl bg-card">
-                {p.image ? (
-                  <img
-                    src={p.image}
-                    alt=""
-                    className="h-14 w-14 rounded-lg object-cover shrink-0"
-                  />
-                ) : (
-                  <div className="h-14 w-14 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                    <p className="font-semibold text-sm truncate">{p.name}</p>
-                    {isPremiumModel(store.model) && p.description?.includes("#destacado") && (
-                      <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
-                        ⭐ Destacado
-                      </span>
-                    )}
-                    {!p.visible && (
-                      <span className="shrink-0 text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1 rounded dark:text-amber-400 dark:bg-amber-950/20 dark:border-amber-900/50">
-                        Borrador
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {(() => {
-                      const cat = store.categories.find((c) => c.id === p.categoryId);
-                      if (!cat) return "Sin categoría";
-                      const { label, iconKey } = parseCategoryName(cat.name);
-                      return (
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {isPremiumModel(store.model) && iconKey && (
-                            <CategoryIcon
-                              iconKey={iconKey}
-                              className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                            />
-                          )}
-                          <span>{label}</span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-sm font-bold text-primary">{formatPrice(p.price)}</span>
-                    {p.isOnSale &&
-                      p.originalPrice &&
-                      p.price !== null &&
-                      p.price !== undefined &&
-                      p.originalPrice > p.price && (
-                        <span className="text-[11px] text-muted-foreground line-through">
-                          {formatPrice(p.originalPrice)}
-                        </span>
-                      )}
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-2 shrink-0">
-                  <Switch checked={p.visible} onCheckedChange={() => toggle(store.id, p.id)} />
-                  <div className="flex gap-1 items-center">
-                    <div className="flex items-center gap-0.5 border border-border/60 rounded-md p-0.5 bg-muted/10">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={idx === 0}
-                        onClick={() => swap(store.id, idx, idx - 1)}
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
-                        title="Subir"
-                      >
-                        <ArrowUp className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={idx === store.products.length - 1}
-                        onClick={() => swap(store.id, idx, idx + 1)}
-                        className="h-7 w-7 text-muted-foreground hover:text-foreground disabled:opacity-30 rounded-md shrink-0 cursor-pointer"
-                        title="Bajar"
-                      >
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => openEdit(p)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        showConfirm({
-                          title: "Eliminar producto",
-                          description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
-                          actionText: "Eliminar",
-                          cancelText: "Cancelar",
-                          onAction: () => del(store.id, p.id),
-                        });
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {filteredProducts.map((p, idx) => {
+              const catInfo = categoryMap.get(p.categoryId) || { label: "Sin categoría", iconKey: "" };
+              return (
+                <ProductMobileCard
+                  key={p.id}
+                  p={p}
+                  idx={idx}
+                  totalCount={store.products.length}
+                  storeModel={store.model}
+                  categoryLabel={catInfo.label}
+                  categoryIconKey={catInfo.iconKey}
+                  onEdit={handleOpenEdit}
+                  onDelete={handleConfirmDelete}
+                  onToggle={handleToggleVisible}
+                  onSwap={handleSwapOrder}
+                />
+              );
+            })}
           </div>
         </TabsContent>
 
@@ -1672,301 +2329,17 @@ function ProductsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog formulario de producto */}
-      <Dialog open={open} onOpenChange={handleSingleProductOpenChange}>
-        <DialogContent
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
-          className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background"
-        >
-          <DialogHeader className="px-6 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
-            <div className="pr-6">
-              <DialogTitle className="text-lg font-extrabold tracking-tight flex items-center gap-2 text-foreground">
-                <span className="h-5 w-1 rounded bg-primary" />
-                {editing.id ? "Editar Producto" : "Nuevo Producto"}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Configura los detalles del artículo para publicarlo en tu catálogo digital.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-
-          <div className="overflow-y-auto flex-1 p-5 md:p-6">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Columna Izquierda: Imagen y Multimedia (col-span 5) */}
-              <div className="md:col-span-5 space-y-3.5">
-                <div className="space-y-0.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                    Imagen del Producto
-                  </h3>
-                  <p className="text-[10px] text-muted-foreground/60 leading-normal hidden sm:block">
-                    Formatos JPG, PNG, WebP de hasta 10MB.
-                  </p>
-                </div>
-                <ImageUploadGuided
-                  value={editing.image}
-                  onChange={(image) => setEditing({ ...editing, image })}
-                  spec={imageSpec}
-                  label=""
-                />
-              </div>
-
-              {/* Columna Derecha: Parámetros del Producto (col-span 7) */}
-              <div className="md:col-span-7 space-y-4">
-                {/* Nombre */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                    Nombre del producto
-                  </Label>
-                  <Input
-                    placeholder="Ej. iPhone 15 Pro Max 256GB"
-                    className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
-                    value={editing.name}
-                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                    ref={(el) => {
-                      if (el) {
-                        const handleNativeKeyDown = (e: KeyboardEvent) => {
-                          if (e.key === " ") e.stopPropagation();
-                        };
-                        if ((el as any)._keydownHandler) {
-                          el.removeEventListener("keydown", (el as any)._keydownHandler);
-                        }
-                        el.addEventListener("keydown", handleNativeKeyDown);
-                        (el as any)._keydownHandler = handleNativeKeyDown;
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Card de Interruptores (Oferta y Destacado) */}
-                <div className="border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/10 p-4 rounded-xl space-y-3.5 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">
-                        ¿Este producto está en oferta?
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Muestra un precio de oferta junto al original tachado.
-                      </p>
-                    </div>
-                    <Switch
-                      checked={!!editing.isOnSale}
-                      onCheckedChange={(v) => setEditing({ ...editing, isOnSale: v })}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                  </div>
-
-                  {isPremiumModel(store.model) && (
-                    <div className="border-t border-slate-100 dark:border-slate-800/50 pt-3.5 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-xs text-orange-600 dark:text-orange-500">
-                          ¿Destacar producto (Premium)?
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          Se mostrará en la sección destacada de tu catálogo.
-                        </p>
-                      </div>
-                      <Switch
-                        checked={isFeatured}
-                        onCheckedChange={setIsFeatured}
-                        className="data-[state=checked]:bg-orange-500"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Precios y Categorías */}
-                {editing.isOnSale ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                        Precio Original
-                      </Label>
-                      <div className="relative flex items-center mt-1">
-                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
-                          S/
-                        </span>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="50.00"
-                          className="pl-8 h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800 focus-visible:ring-primary"
-                          value={originalPriceInput}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(",", ".");
-                            val = val.replace(/[^0-9.]/g, "");
-                            const parts = val.split(".");
-                            if (parts.length > 2) return;
-                            setOriginalPriceInput(val);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-primary">
-                        Precio Oferta
-                      </Label>
-                      <div className="relative flex items-center mt-1">
-                        <span className="absolute left-3 text-sm text-primary/70 font-semibold select-none">
-                          S/
-                        </span>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="35.00"
-                          className="pl-8 h-10 rounded-xl border-primary/30 bg-primary/5 text-primary font-semibold focus-visible:ring-primary text-sm"
-                          value={priceInput}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(",", ".");
-                            val = val.replace(/[^0-9.]/g, "");
-                            const parts = val.split(".");
-                            if (parts.length > 2) return;
-                            setPriceInput(val);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="col-span-1 sm:col-span-2 space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
-                        <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
-                      </Label>
-                      <CategorySelect
-                        value={editing.categoryId}
-                        categories={store.categories}
-                        onChange={(v) => setEditing({ ...editing, categoryId: v })}
-                        onCreateCategory={handleCreateCategory}
-                        storeModel={store.model}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                        Precio
-                      </Label>
-                      <div className="relative flex items-center mt-1">
-                        <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
-                          S/
-                        </span>
-                        <Input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="0.00 (Dejar vacío para consultar)"
-                          className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm"
-                          value={priceInput}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(",", ".");
-                            val = val.replace(/[^0-9.]/g, "");
-                            const parts = val.split(".");
-                            if (parts.length > 2) return;
-                            setPriceInput(val);
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
-                        <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
-                      </Label>
-                      <CategorySelect
-                        value={editing.categoryId}
-                        categories={store.categories}
-                        onChange={(v) => setEditing({ ...editing, categoryId: v })}
-                        onCreateCategory={handleCreateCategory}
-                        storeModel={store.model}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Descripción */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                    Descripción (opcional)
-                  </Label>
-                  <Textarea
-                    rows={3}
-                    placeholder="Ej. Especificaciones técnicas, colores, stock o detalles..."
-                    className="focus-visible:ring-primary rounded-xl min-h-[90px] text-sm py-2.5 resize-none border-slate-200 dark:border-slate-800"
-                    value={editing.description ?? ""}
-                    onChange={(e) => setEditing({ ...editing, description: e.target.value })}
-                    ref={(el) => {
-                      if (el) {
-                        const handleNativeKeyDown = (e: KeyboardEvent) => {
-                          if (e.key === " " || e.key === "Enter") {
-                            e.stopPropagation();
-                          }
-                        };
-                        if ((el as any)._keydownHandler) {
-                          el.removeEventListener("keydown", (el as any)._keydownHandler);
-                        }
-                        el.addEventListener("keydown", handleNativeKeyDown);
-                        (el as any)._keydownHandler = handleNativeKeyDown;
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Etiquetas de Producto */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
-                    <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Etiquetas táctiles del producto
-                  </Label>
-                  <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
-                    {PRODUCT_TAGS.map((tagDef) => {
-                      const currentTags = editing.tags || [];
-                      const active = currentTags.includes(tagDef.id) || currentTags.includes(tagDef.label);
-                      return (
-                        <button
-                          key={tagDef.id}
-                          type="button"
-                          onClick={() => {
-                            let next: string[];
-                            if (active) {
-                              next = currentTags.filter((t) => t !== tagDef.id && t !== tagDef.label);
-                            } else {
-                              next = [...currentTags, tagDef.id];
-                            }
-                            setEditing({ ...editing, tags: next });
-                          }}
-                          className={cn(
-                            "px-2.5 py-1 rounded-lg text-xs font-bold transition-all border",
-                            active
-                              ? "bg-primary text-white border-primary shadow-xs"
-                              : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300"
-                          )}
-                        >
-                          {tagDef.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    Selecciona las etiquetas que facilitan el filtrado táctil directo de este producto en el catálogo.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter className="px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 justify-end w-full">
-            <Button
-              variant="outline"
-              className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
-              onClick={() => handleSingleProductOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-xs text-white"
-              onClick={save}
-            >
-              Guardar producto
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modal optimizado de producto */}
+      <SingleProductDialog
+        open={isSingleDialogOpen}
+        onOpenChange={setIsSingleDialogOpen}
+        product={editingProduct || empty()}
+        store={store}
+        imageSpec={imageSpec}
+        onSave={handleSaveProduct}
+        onCreateCategory={handleCreateCategory}
+        showConfirm={showConfirm}
+      />
 
       {/* Input oculto para carga masiva por fotos */}
       <input
@@ -2070,6 +2443,13 @@ function ProductsPage() {
                               #{idx + 1}
                             </span>
 
+                            {/* Variations badge */}
+                            {draft.variations && draft.variations.length > 0 && (
+                              <span className="absolute top-1 left-1 bg-primary text-white text-[8px] px-1.5 py-0.2 rounded-md font-bold shadow-xs">
+                                {draft.variations.length} {draft.variations.length === 1 ? "opc" : "opcs"}
+                              </span>
+                            )}
+
                             {/* Status overlays */}
                             {draft.status === "processing" && (
                               <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -2154,6 +2534,12 @@ function ProductsPage() {
                           <span className="absolute bottom-0.5 left-1 bg-black/60 text-white text-[8px] px-1 py-0.2 rounded font-bold backdrop-blur-sm">
                             #{idx + 1}
                           </span>
+
+                          {draft.variations && draft.variations.length > 0 && (
+                            <span className="absolute top-0.5 left-0.5 bg-primary text-white text-[7px] px-1 py-0.2 rounded font-bold">
+                              +{draft.variations.length}
+                            </span>
+                          )}
 
                           {draft.status === "processing" && (
                             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -2316,6 +2702,120 @@ function ProductsPage() {
                               }
                             }}
                           />
+                        </div>
+
+                        {/* ── Variaciones del Producto en Carga Masiva ── */}
+                        <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                <Layers className="h-3.5 w-3.5 text-primary" /> Opciones / Variaciones
+                              </Label>
+                              <p className="text-[10px] text-muted-foreground">
+                                Colores o tallas con foto y precio opcional.
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-6.5 text-[11px] font-semibold rounded-md gap-1 border-dashed hover:border-primary hover:text-primary cursor-pointer px-2"
+                              onClick={handleAddBulkVariation}
+                            >
+                              <Plus className="h-3 w-3" /> Opción
+                            </Button>
+                          </div>
+
+                          {activeDraft.variations && activeDraft.variations.length > 0 && (
+                            <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                              {activeDraft.variations.map((v, vIdx) => (
+                                <div
+                                  key={v.id || vIdx}
+                                  className="flex items-center gap-1.5 p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30"
+                                >
+                                  {/* Subir foto de variante */}
+                                  <div className="relative shrink-0">
+                                    {v.image ? (
+                                      <div className="relative group w-7 h-7 rounded-md overflow-hidden border border-zinc-300 dark:border-zinc-700 bg-white">
+                                        <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveBulkVarImage(vIdx)}
+                                          className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                                          title="Quitar foto"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <label
+                                        className="w-7 h-7 rounded-md border border-dashed border-zinc-300 dark:border-zinc-700 hover:border-primary hover:bg-primary/5 flex items-center justify-center cursor-pointer text-muted-foreground hover:text-primary transition-colors"
+                                        title="Subir foto de esta variante"
+                                      >
+                                        <Camera className="h-3 w-3" />
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) handleUploadBulkVarImage(vIdx, file);
+                                          }}
+                                        />
+                                      </label>
+                                    )}
+                                  </div>
+
+                                  {/* Nombre de la variante */}
+                                  <div className="flex-1 min-w-[80px]">
+                                    <Input
+                                      placeholder="Ej. Rojo, Talla M..."
+                                      value={v.name}
+                                      onChange={(e) => handleBulkVarChange(vIdx, "name", e.target.value)}
+                                      className="h-7 text-xs rounded-md"
+                                      onKeyDown={(e) => {
+                                        if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Precio opcional de la variante */}
+                                  <div className="w-20 shrink-0 relative">
+                                    <span className="absolute left-1.5 top-1.5 text-[9px] text-muted-foreground/60 font-semibold select-none">
+                                      S/
+                                    </span>
+                                    <Input
+                                      type="text"
+                                      inputMode="decimal"
+                                      placeholder="Precio"
+                                      value={v.price !== null && v.price !== undefined ? v.price.toString() : ""}
+                                      onChange={(e) => {
+                                        let val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                                        const num = val === "" ? null : parseFloat(val);
+                                        handleBulkVarChange(vIdx, "price", isNaN(num as any) ? null : num);
+                                      }}
+                                      className="pl-5 h-7 text-xs rounded-md"
+                                      onKeyDown={(e) => {
+                                        if (e.key === " ") e.stopPropagation();
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Eliminar variante */}
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleRemoveBulkVariation(vIdx)}
+                                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                    title="Eliminar opción"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

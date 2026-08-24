@@ -56,6 +56,11 @@ describe("Pruebas unitarias de Service Worker (public/sw.js)", () => {
     expect(isSupabaseApi(rpcUrl)).toBe(true);
   });
 
+  it("debe identificar e interceptar peticiones RPC get_public_store con parámetros GET (?store_slug=...)", () => {
+    const rpcGetUrl = "https://zkqzdwxjthjdjchimmds.supabase.co/rest/v1/rpc/get_public_store?store_slug=mi-tienda-demo";
+    expect(isSupabaseApi(rpcGetUrl)).toBe(true);
+  });
+
   it("debe rechazar peticiones API de Supabase administrativas que no sean del catálogo", () => {
     const apiUrl = "https://zkqzdwxjthjdjchimmds.supabase.co/rest/v1/stores?select=*";
     expect(isSupabaseImage(apiUrl)).toBe(false);
@@ -67,3 +72,4 @@ describe("Pruebas unitarias de Service Worker (public/sw.js)", () => {
     expect(isLocalImage(localWebp)).toBe(true);
   });
 });
+

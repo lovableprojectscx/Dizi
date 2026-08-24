@@ -39,5 +39,13 @@ El servidor DEBE entregar en `get_public_store` el modelo visual elegido por el 
 - **Cuando** un visitante accede a la URL pública `/t/:slug`
 - **Entonces** se renderiza la plantilla seleccionada, el carrusel de banners rota dinámicamente cada 5s, las imágenes cubren de borde a borde el 100% del contenedor sin franjas laterales borrosas y en PC se mantiene la barra lateral de categorías.
 
+### Requisito: Caché Nativo de Catálogo e Inmunidad Egress vía GET y Service Worker
+El cliente DEBE solicitar el RPC `get_public_store` utilizando el método HTTP `GET` (`{ get: true }`). El Service Worker DEBE interceptar esta solicitud y cachearla localmente con estrategia *Stale-While-Revalidate*, garantizando 0 bytes de egress a la base de datos en visitas recurrentes y carga instantánea. Las rutas públicas `/t/:slug` y `/bio/:slug` DEBEN implementar adicionalmente `staleTime: 5min` en el enrutador para eliminar llamadas redundantes en sesión.
+
+### Requisito: Miniaturas Automáticas de Cuadrícula (Dual-Resolution WebP 400px vs 800px)
+El sistema DEBE generar y subir automáticamente una miniatura optimizada de 400px (`_thumb.webp`, ~12KB–15KB) al momento de guardar o actualizar productos con imágenes en base64, preservando la imagen HD completa de 800px (`.webp`, ~35KB). Las vistas de cuadrícula del catálogo público DEBEN solicitar la miniatura `_thumb.webp` mediante `getThumbnailUrl()`, reservando la descarga de la imagen principal HD de 800px para cuando el visitante abra el modal de detalle del producto o el visor de zoom. En caso de ausencia de miniatura en productos heredados, el catálogo DEBE recuperar transparentemente la imagen principal mediante fallback en el evento `onError`.
+
 ## Trazabilidad
-Casos de prueba: CP-01 a CP-04, CP-14 · E2E-01 · Código: `src/routes/t.$slug.tsx`, `src/components/public/PublicCatalog.tsx`, RPC `get_public_store`, migración `20260804174500_fix_get_public_store_multi_banners.sql`
+Casos de prueba: CP-01 a CP-04, CP-14, SW-01 a SW-04 · E2E-01 · Código: `src/routes/t.$slug.tsx`, `src/routes/bio.$slug.tsx`, `public/sw.js`, `src/lib/image-utils.ts`, `src/lib/store.ts`, `src/components/public/PublicCatalog.tsx`, RPC `get_public_store`, migración `20260804174500_fix_get_public_store_multi_banners.sql`
+
+

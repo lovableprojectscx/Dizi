@@ -71,9 +71,9 @@ function PlanPage() {
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-destructive text-sm">Tu suscripcion ha vencido</p>
+            <p className="font-semibold text-destructive text-sm">Tu suscripción ha vencido</p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Tu plan vencio el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Ahora
+              Tu plan venció el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Ahora
               tienes las funciones del plan Semilla. Para renovar, contacta con soporte.
             </p>
             <a
@@ -93,7 +93,7 @@ function PlanPage() {
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold text-amber-800 text-sm">
-              Tu suscripcion vence en {days === 0 ? "hoy" : `${days} dia${days !== 1 ? "s" : ""}`}
+              Tu suscripción vence en {days === 0 ? "hoy" : `${days} día${days !== 1 ? "s" : ""}`}
             </p>
             <p className="text-sm text-muted-foreground mt-0.5">
               Vence el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Contacta con
@@ -133,7 +133,7 @@ function PlanPage() {
               <Calendar className="w-4 h-4 text-emerald-600" />
               <span className="text-sm font-medium text-emerald-800">
                 Plan activo hasta <strong>{formatDate(store.planExpiresAt)}</strong>
-                <span className="text-emerald-600 font-normal"> ({days} dias restantes)</span>
+                <span className="text-emerald-600 font-normal"> ({days} días restantes)</span>
               </span>
             </div>
           </div>

@@ -57,7 +57,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "General / Comercio",
   },
   {
@@ -78,7 +78,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "shadow",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Moda / Calzado",
   },
   {
@@ -99,7 +99,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Bienestar / Ecológico",
   },
   {
@@ -120,7 +120,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "shadow",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Joyería / Boutique",
   },
   {
@@ -141,7 +141,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "flat",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Corporativo / Marcas Premium",
   },
   {
@@ -162,7 +162,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Tecnología / Accesorios",
     supportsCategoryIcons: true,
   },
@@ -184,7 +184,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "flat",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Noche / Tendencias",
   },
   {
@@ -205,7 +205,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Deportes / Juventud",
   },
   {
@@ -226,7 +226,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "curved",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Diseño / Arte / Belleza",
   },
   {
@@ -247,7 +247,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Promociones / Marcas con Banner",
   },
   {
@@ -268,7 +268,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Multipropósito Premium",
     supportsCategoryIcons: true,
   },
@@ -290,7 +290,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "curved",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Florería / Regalos",
     supportsCategoryIcons: true,
   },
@@ -312,7 +312,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Gastronomía / Restobar",
     supportsCategoryIcons: true,
   },
@@ -334,7 +334,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Salud / Orgánico",
     supportsCategoryIcons: true,
   },
@@ -356,7 +356,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "flat",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics", "tagFilter"],
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Moda / Colecciones",
   },
 ];
@@ -438,9 +438,9 @@ export function resolveStructureId(
   niche?: string | null,
 ): string {
   if (!modelId) return "grid";
-  // Ya es un id unificado
-  if (RENDER_MODEL_MAP[modelId]) return modelId;
-  // bloom historico: se desambigua por el rubro
+  // bloom histórico: se desambigua por el rubro
   if (modelId === "bloom") return niche === "floreria" ? "bloom_floral" : "bloom_general";
+  // Ya es un id unificado (de las 15 estructuras)
+  if (DESIGN_STRUCTURES.some((s) => s.id === modelId)) return modelId;
   return LEGACY_STRUCTURE_MAP[modelId] ?? "grid";
 }

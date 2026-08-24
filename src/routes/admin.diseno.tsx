@@ -155,7 +155,7 @@ function DisenoUnificadoPage() {
   // Estado principal de navegación entre las 3 secciones
   const [activeSection, setActiveSection] = useState<"estructura" | "tema" | "modulos">("estructura");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadedStoreId, setLoadedStoreId] = useState<string | null>(null);
 
   // 1. Estructura seleccionada (mapeando modelos legados como boutique a spotlight)
   const [selectedStructure, setSelectedStructure] = useState<string>(
@@ -200,9 +200,9 @@ function DisenoUnificadoPage() {
   const [promoBarTextColor, setPromoBarTextColor] = useState<string>(store.promoBarTextColor || "");
   const [promoBarIsMarquee, setPromoBarIsMarquee] = useState<boolean>(store.promoBarIsMarquee || false);
 
-  // Carga inicial sincronizada
+  // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
-    if (store && !isLoaded) {
+    if (store && loadedStoreId !== store.id) {
       setSelectedStructure(resolveStructureId(store.model, store.niche));
       setBrandColor(store.brandColor || "#4f46e5");
       setBgColor((store as any).bgColor || "#ffffff");
@@ -215,7 +215,8 @@ function DisenoUnificadoPage() {
       setTypography(store.catalogTypography || "sans");
       setCardStyle(store.cardStyle || "standard");
 
-      setBannerImage(originalBannerImage);
+      const currBannerImg = (store as any).bannerImage || "";
+      setBannerImage(currBannerImg);
       setBannerTitle((store as any).bannerTitle || "");
       setBannerTagline(store.bannerTagline || "");
       setBannerBottomTag(store.bannerBottomTag || "");
@@ -228,9 +229,9 @@ function DisenoUnificadoPage() {
       setPromoBarBgColor(store.promoBarBgColor || "");
       setPromoBarTextColor(store.promoBarTextColor || "");
       setPromoBarIsMarquee(store.promoBarIsMarquee || false);
-      setIsLoaded(true);
+      setLoadedStoreId(store.id);
     }
-  }, [store, isLoaded]);
+  }, [store, loadedStoreId]);
 
   // Aplicar un Preset de Tema
   const handleApplyPreset = (preset: ThemePreset) => {
@@ -268,8 +269,8 @@ function DisenoUnificadoPage() {
   const maxAllowedBanners = store.plan === "semilla" ? 0 : store.plan === "emprendedor" ? 1 : store.plan === "pro" ? 3 : 5;
 
   const handleAddBanner = async (file: File, indexToReplace?: number) => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("La imagen es muy pesada (máximo 10 MB)");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("La imagen es muy pesada (máximo 50 MB)");
       return;
     }
     try {
@@ -1106,34 +1107,6 @@ function DisenoUnificadoPage() {
                     ) : (
                       <Link to="/admin/plan">
                         <Button size="sm" variant="outline" className="text-xs h-8 border-purple-200 text-purple-700 hover:bg-purple-50 font-semibold gap-1">
-                          <Lock className="h-3 w-3" /> Desbloquear
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                {/* 6. Filtro de Etiquetas */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                      <Tag className="h-4.5 w-4.5 text-amber-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-zinc-900">Filtro Táctil de Etiquetas</h4>
-                      <p className="text-[11px] text-zinc-550">Etiquetas interactivas (vegano, picante, más vendido, sin gluten)</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 self-end sm:self-auto">
-                    {currentPlanLevel >= 2 ? (
-                      <Link to="/admin/productos">
-                        <Button size="sm" variant="outline" className="text-xs h-8 font-semibold">
-                          Asignar Etiquetas
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Link to="/admin/plan">
-                        <Button size="sm" variant="outline" className="text-xs h-8 border-amber-300 text-amber-800 hover:bg-amber-50 font-semibold gap-1">
                           <Lock className="h-3 w-3" /> Desbloquear
                         </Button>
                       </Link>

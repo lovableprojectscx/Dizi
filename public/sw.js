@@ -10,8 +10,20 @@ const IMAGE_DOMAINS = [
   "supabase.co",
 ];
 
-// Instalar Service Worker e iniciar inmediatamente
+const PRECACHE_ASSETS = [
+  "/images/Icono.png",
+  "/images/Logo.png",
+  "/images/dizi_ad_brand_3d.webp",
+  "/images/og-image.png",
+];
+
+// Instalar Service Worker y precachear assets estáticos esenciales
 self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS).catch(() => {});
+    })
+  );
   self.skipWaiting();
 });
 
@@ -53,7 +65,25 @@ self.addEventListener("fetch", (event) => {
       caches.open(CACHE_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(event.request);
 
-        // Petición en segundo plano para actualizar caché (Stale-While-Revalidate)
+        // 1. Estrategia Cache-First pura para imágenes:
+        // Si la imagen ya existe en la caché local del dispositivo, responder directamente sin enviar peticiones de red de fondo (0 bytes Egress).
+        if (isSupabaseImage || isLocalImage) {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          try {
+            const networkResponse = await fetch(event.request);
+            if (networkResponse && networkResponse.status === 200) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          } catch (err) {
+            return cachedResponse || Response.error();
+          }
+        }
+
+        // 2. Estrategia Stale-While-Revalidate para el RPC de datos (get_public_store):
+        // Responde de inmediato desde caché y sincroniza en segundo plano si hay cambios de precios o stock.
         const fetchPromise = fetch(event.request)
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
@@ -61,13 +91,8 @@ self.addEventListener("fetch", (event) => {
             }
             return networkResponse;
           })
-          .catch((err) => {
-            // Si falla la red (sin conexión o bloqueo ISP), responder con respuesta en caché si existe
-            return cachedResponse;
-          });
+          .catch(() => cachedResponse);
 
-        // Si ya está en caché, responder INMEDIATAMENTE (0ms latencia, 0 Egress)
-        // De lo contrario, esperar a la red
         return cachedResponse || fetchPromise;
       })
     );

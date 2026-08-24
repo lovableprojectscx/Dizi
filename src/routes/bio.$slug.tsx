@@ -3,9 +3,11 @@ import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
-import { StoreErrorComponent } from "./t.$slug";
+import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 
 export const Route = createFileRoute("/bio/$slug")({
+  staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
+  gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
   loader: async ({ params }) => {
     const store = await fetchStoreBySlug(params.slug);
     return { store };
@@ -65,7 +67,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   );
 
   const fetchPromise = (async (): Promise<Store | null> => {
-    const { data, error } = await supabase.rpc("get_public_store", { store_slug: slug });
+    const { data, error } = await supabase.rpc("get_public_store", { store_slug: slug }, { get: true });
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
@@ -172,6 +174,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
           visible: p.visible,
           isSample: p.is_sample,
           sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+          variations: Array.isArray(p.variations) ? p.variations : [],
           createdAt: p.created_at,
         }))
         .sort((a, b) => {

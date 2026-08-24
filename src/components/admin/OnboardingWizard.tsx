@@ -53,19 +53,22 @@ export function OnboardingWizard() {
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
+  const hasSkippedRef = React.useRef(false);
+
   // Auto-skip onboarding if they already have both brand elements AND products configured
   React.useEffect(() => {
-    if (!store || store.onboardingCompleted) return;
+    if (!store || store.onboardingCompleted || hasSkippedRef.current) return;
 
     const hasBrand = !!(store.logo || store.bannerImage);
     const hasProducts = store.products && store.products.some((p) => !p.isSample);
 
     if (hasBrand && hasProducts) {
-      // Auto-skip
-      updateStore(store.id, { onboardingCompleted: true });
+      hasSkippedRef.current = true;
+      // Auto-skip sin bloquear la UI
+      updateStore(store.id, { onboardingCompleted: true }).catch(() => {});
       setIsOpen(false);
     }
-  }, [storeId, store?.logo, store?.bannerImage, store?.products?.length]);
+  }, [storeId, store?.onboardingCompleted, store?.logo, store?.bannerImage, store?.products?.length]);
 
   // Step 1 States: Identity (Name, Logo, Banner)
   const [storeName, setStoreName] = useState(store?.name || "");

@@ -87,11 +87,71 @@ export function convertImageToWebP(
 }
 
 /**
- * Genera una miniatura ligera en WebP (máx 400px, ~25KB) a partir de un archivo File.
+ * Genera una miniatura ligera en WebP (máx 400px, ~12KB–15KB) a partir de un archivo File.
  * Preserva nitidez cristalina en recuadros pequeños de la grilla.
  */
 export function createThumbnailWebP(file: File): Promise<string> {
-  return convertImageToWebP(file, 400, 0.78);
+  return convertImageToWebP(file, 400, 0.70);
+}
+
+/**
+ * Genera una miniatura ligera en WebP (máx 400px, calidad 0.70, ~12KB–15KB) a partir de un base64 Data URL.
+ * Usado al guardar productos para crear el asset complementario `_thumb.webp`.
+ */
+export function createThumbnailFromBase64(
+  base64Data: string,
+  maxDimension: number = 400,
+  quality: number = 0.70
+): Promise<string> {
+  return new Promise((resolve) => {
+    if (!base64Data || !base64Data.startsWith("data:")) {
+      resolve(base64Data);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        resolve(base64Data);
+        return;
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "medium";
+      ctx.drawImage(img, 0, 0, width, height);
+
+      try {
+        const format = isWebpSupported() ? "image/webp" : "image/jpeg";
+        const thumbDataUrl = canvas.toDataURL(format, quality);
+        resolve(thumbDataUrl);
+      } catch (err) {
+        resolve(base64Data);
+      }
+    };
+
+    img.onerror = () => {
+      resolve(base64Data);
+    };
+
+    img.src = base64Data;
+  });
 }
 
 /**
@@ -173,9 +233,15 @@ export function getOptimizedImageUrl(url: string | null | undefined, _width: num
  */
 export function getThumbnailUrl(url: string | null | undefined): string {
   if (!url) return "";
-  const cleanUrl = url.trim();
-  if (cleanUrl.includes("/storage/v1/object/public/images/") && cleanUrl.endsWith(".webp") && !cleanUrl.endsWith("_thumb.webp")) {
+  const cleanUrl = url.split("?")[0].trim();
+  if (
+    cleanUrl.includes("/storage/v1/object/public/images/") &&
+    cleanUrl.endsWith(".webp") &&
+    !cleanUrl.endsWith("_thumb.webp") &&
+    !cleanUrl.includes("_var_")
+  ) {
     return cleanUrl.replace(/\.webp$/, "_thumb.webp");
   }
   return cleanUrl;
 }
+

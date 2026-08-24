@@ -148,4 +148,3 @@ function SuperLayout() {
   );
 }
 
-export const _r = redirect;

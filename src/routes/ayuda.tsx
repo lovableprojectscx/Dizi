@@ -329,19 +329,9 @@ function AyudaPage() {
               los extremos: en celular se recortan los costados.
             </p>
 
-            <h3>Peso máximo</h3>
+            <h3>Optimización y peso de imágenes</h3>
             <p>
-              10 MB por imagen. Si tu foto pesa más, o si el catálogo carga lento, comprímela gratis
-              en{" "}
-              <a
-                href="https://squoosh.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                squoosh.app
-              </a>
-              . Bajar una foto de 4 MB a 300 KB no se nota en calidad y sí se nota en velocidad.
+              Admite hasta <strong>50 MB por imagen</strong>. Al subir cualquier foto, Dizi la comprime y optimiza automáticamente a formato WebP ultraligero de alta nitidez sin que tengas que hacer nada manual.
             </p>
 
             <Tip>

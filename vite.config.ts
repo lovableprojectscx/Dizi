@@ -97,6 +97,28 @@ export default defineConfig(({ mode }) => {
         },
       },
     ],
+    build: {
+      target: "es2020",
+      chunkSizeWarningLimit: 600,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules/jspdf") || id.includes("node_modules/html2canvas")) {
+              return "vendor-pdf";
+            }
+            if (id.includes("node_modules/recharts")) {
+              return "vendor-charts";
+            }
+            if (id.includes("node_modules/@radix-ui/")) {
+              return "vendor-radix";
+            }
+            if (id.includes("node_modules/leaflet")) {
+              return "vendor-leaflet";
+            }
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         "@": "/src",

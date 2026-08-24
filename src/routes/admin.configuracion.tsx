@@ -70,11 +70,11 @@ function ConfigPage() {
   const [copiedCatalog, setCopiedCatalog] = useState(false);
   const [copiedBio, setCopiedBio] = useState(false);
 
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [loadedStoreId, setLoadedStoreId] = useState<string | null>(null);
 
-  /* Load store once */
+  /* Sincroniza los campos cuando carga la tienda o cuando cambia de tienda/impersonación */
   useEffect(() => {
-    if (store && store.logo !== undefined && !isLoaded) {
+    if (store && loadedStoreId !== store.id) {
       setName(store.name || "");
       setCountry(store.countryCode || "51");
       setNumber(
@@ -90,14 +90,15 @@ function ConfigPage() {
       setEmpresaRazonSocial(store.empresaRazonSocial ?? "");
       setEmpresaDireccion(store.empresaDireccion ?? "");
       setShowDiziBranding(store.showDiziBranding ?? true);
-      setIsLoaded(true);
+      setLoadedStoreId(store.id);
     }
-  }, [store, isLoaded]);
+  }, [store, loadedStoreId]);
 
   if (!store) return null;
 
-  const catalogUrl = `${window.location.origin}/t/${store.slug}`;
-  const bioUrl = `${window.location.origin}/bio/${store.slug}`;
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site";
+  const catalogUrl = `${origin}/t/${store.slug}`;
+  const bioUrl = `${origin}/bio/${store.slug}`;
 
   const handleSlugChange = (value: string) => {
     const clean = value
@@ -183,8 +184,8 @@ function ConfigPage() {
 
   const onLogo = async (file?: File) => {
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("El logo es muy pesado (máximo 10 MB)");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("El logo es muy pesado (máximo 50 MB)");
       return;
     }
     try {
@@ -446,7 +447,7 @@ function ConfigPage() {
               <p className="text-sm font-semibold">Logo del Negocio</p>
               <p className="text-xs text-muted-foreground">
                 Haz clic en el círculo para subir tu logotipo. Recomendado cuadrado de 500x500px.
-                JPG, PNG o WEBP. Máx. 10MB.
+                JPG, PNG o WEBP con compresión automática.
               </p>
             </div>
           </div>

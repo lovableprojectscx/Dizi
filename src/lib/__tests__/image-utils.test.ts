@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
-import { convertImageToWebP, convertImageUrlToWebP, getOptimizedImageUrl, getThumbnailUrl } from "../image-utils";
+import {
+  convertImageToWebP,
+  convertImageUrlToWebP,
+  createThumbnailFromBase64,
+  createThumbnailWebP,
+  getOptimizedImageUrl,
+  getThumbnailUrl,
+} from "../image-utils";
 
 describe("Pruebas unitarias de image-utils.ts", () => {
   let createdCanvases: any[] = [];
@@ -137,6 +144,27 @@ describe("Pruebas unitarias de image-utils.ts", () => {
     await expect(promise).rejects.toThrow("No se pudo leer la imagen");
   });
 
+  it("debe crear miniatura WebP de 400px a partir de File", async () => {
+    mockWidth = 1200;
+    mockHeight = 900;
+    const file = new File([""], "photo.png", { type: "image/png" });
+    const result = await createThumbnailWebP(file);
+    expect(result).toContain("data:image/webp;base64,mockedData");
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas.width).toBe(400);
+  });
+
+  it("debe crear miniatura WebP de 400px a partir de base64 Data URL con createThumbnailFromBase64", async () => {
+    mockWidth = 1200;
+    mockHeight = 600;
+    const base64 = "data:image/webp;base64,mockDataUrlOriginal";
+    const result = await createThumbnailFromBase64(base64, 400, 0.70);
+    expect(result).toContain("data:image/webp;base64,mockedData");
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas.width).toBe(400);
+    expect(drawingCanvas.height).toBe(200);
+  });
+
   it("debe retornar inmediatamente la URL si ya es una data URL", async () => {
     const dataUrl = "data:image/png;base64,alreadyConverted";
     const result = await convertImageUrlToWebP(dataUrl);
@@ -175,6 +203,11 @@ describe("Pruebas unitarias de image-utils.ts", () => {
       expect(getThumbnailUrl(supabaseUrl)).toBe("https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test_thumb.webp");
     });
 
+    it("debe limpiar parámetros query (?t=123) al resolver la miniatura _thumb.webp", () => {
+      const supabaseUrlWithQuery = "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test.webp?t=173456789";
+      expect(getThumbnailUrl(supabaseUrlWithQuery)).toBe("https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test_thumb.webp");
+    });
+
     it("debe conservar URLs que ya sean miniaturas o URLs externas", () => {
       const thumbUrl = "https://wxpizbnuuaiculzfuhof.supabase.co/storage/v1/object/public/images/test_thumb.webp";
       const externalUrl = "https://example.com/image.png";
@@ -183,3 +216,4 @@ describe("Pruebas unitarias de image-utils.ts", () => {
     });
   });
 });
+
