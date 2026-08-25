@@ -1318,7 +1318,15 @@ export function PublicCatalog({
     return () => clearInterval(interval);
   }, [bannersCount]);
 
-  const productsWithImages = store.products || [];
+  const [allProducts, setAllProducts] = useState<Product[]>(store.products || []);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const totalProductsCount = store.totalProductsCount ?? (store.products?.length || 0);
+
+  useEffect(() => {
+    setAllProducts(store.products || []);
+  }, [store.products]);
+
+  const productsWithImages = allProducts;
 
   const cart = useCart((s) => s.carts[store.id] ?? EMPTY_CART);
   const cartAdd = useCart((s) => s.add);
@@ -1900,11 +1908,66 @@ export function PublicCatalog({
     return rawFiltered.slice(0, visibleLimit);
   }, [rawFiltered, visibleLimit]);
 
-  const hasMoreProducts = visibleLimit < rawFiltered.length;
+  const hasMoreProducts =
+    visibleLimit < rawFiltered.length ||
+    (allProducts.length < totalProductsCount && activeCat === "all" && !query && !priceRange);
 
-  const loadMoreProducts = useCallback(() => {
-    setVisibleLimit((prev) => prev + 12);
-  }, []);
+  const loadMoreProducts = useCallback(async () => {
+    // 1. Si todavía hay productos en el arreglo filtrado en memoria
+    if (visibleLimit < rawFiltered.length) {
+      setVisibleLimit((prev) => prev + 12);
+      return;
+    }
+
+    // 2. Si ya se mostraron los de memoria y faltan en la base de datos, solicitar el siguiente bloque
+    if (allProducts.length < totalProductsCount && !isLoadingMore && !isMockup && store?.slug) {
+      setIsLoadingMore(true);
+      try {
+        const { data, error } = await supabase.rpc("get_public_store_products", {
+          p_store_slug: store.slug,
+          p_page_offset: allProducts.length,
+          p_page_limit: 24,
+        });
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const newBatch: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: Number(p.price),
+            categoryId: p.category_id,
+            image: p.image || "",
+            description: p.description,
+            isOnSale: p.is_on_sale,
+            originalPrice: p.original_price ? Number(p.original_price) : undefined,
+            visible: p.visible,
+            isSample: p.is_sample,
+            sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+            variations: Array.isArray(p.variations) ? p.variations : [],
+            createdAt: p.created_at,
+          }));
+
+          setAllProducts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const uniqueNew = newBatch.filter((p) => !existingIds.has(p.id));
+            return [...prev, ...uniqueNew];
+          });
+          setVisibleLimit((prev) => prev + 12);
+        }
+      } catch (err) {
+        console.error("[loadMoreProducts] Error cargando siguiente bloque:", err);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  }, [
+    visibleLimit,
+    rawFiltered.length,
+    allProducts.length,
+    totalProductsCount,
+    isLoadingMore,
+    isMockup,
+    store?.slug,
+  ]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -7102,7 +7165,7 @@ export function PublicCatalog({
               hasMore={hasMoreProducts}
               onLoadMore={loadMoreProducts}
               currentCount={filtered.length}
-              totalCount={rawFiltered.length}
+              totalCount={Math.max(rawFiltered.length, totalProductsCount)}
             />
 
             {mode === "bio" && (

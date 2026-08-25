@@ -58,6 +58,19 @@ export const Route = createFileRoute("/bio/$slug")({
 });
 
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
+  // 1. Verificación en caché de sesión local (Zero-Egress para navegación en la misma sesión)
+  if (typeof window !== "undefined") {
+    try {
+      const cached = sessionStorage.getItem(`dizi_bio_cache_${slug}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.ts < 5 * 60 * 1000 && parsed.store) {
+          return parsed.store;
+        }
+      }
+    } catch {}
+  }
+
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(
       () =>
@@ -67,7 +80,12 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   );
 
   const fetchPromise = (async (): Promise<Store | null> => {
-    const { data, error } = await supabase.rpc("get_public_store", { store_slug: slug }, { get: true });
+    // Para el Bio-Link, solo se necesitan hasta 6 productos para el showcase de productos
+    const { data, error } = await supabase.rpc(
+      "get_public_store",
+      { store_slug: slug, page_limit: 6, page_offset: 0 },
+      { get: true }
+    );
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
@@ -96,7 +114,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       }
     }
 
-    return {
+    const storeResult: Store = {
       id: data.id,
       slug: data.slug,
       name: data.name,
@@ -160,6 +178,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       promoBarBgColor: data.promo_bar_bg_color ?? undefined,
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
+      totalProductsCount: data.total_products_count !== undefined ? Number(data.total_products_count) : (productsWithImages?.length || 0),
       categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
       products: (productsWithImages || [])
         .map((p: any) => ({
@@ -186,6 +205,18 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
           return dateB - dateA;
         }),
     };
+
+    // Guardar en sessionStorage para peticiones posteriores en la misma sesión
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.setItem(
+          `dizi_bio_cache_${slug}`,
+          JSON.stringify({ ts: Date.now(), store: storeResult })
+        );
+      } catch {}
+    }
+
+    return storeResult;
   })();
 
   return Promise.race([fetchPromise, timeoutPromise]);

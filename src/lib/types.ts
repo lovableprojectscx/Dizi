@@ -145,6 +145,7 @@ export interface Store {
   promoBarIsMarquee?: boolean;
   categories: Category[];
   products: Product[];
+  totalProductsCount?: number;
 }
 
 export interface Invite {
