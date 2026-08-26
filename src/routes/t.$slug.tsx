@@ -71,18 +71,42 @@ export const Route = createFileRoute("/t/$slug")({
 
 // Carga la tienda directamente desde Supabase por slug (para visitantes públicos
 // que no tienen el store de Zustand cargado todavía).
-async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<Store | null> {
-  // 1. Verificación en caché de sesión local (Zero-Egress para navegación en la misma sesión)
+async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<Store | null> {
+  // 1. Verificación en caché local inteligente por Timestamp (Zero-Egress para visitas recurrentes)
   if (typeof window !== "undefined") {
     try {
-      const cached = sessionStorage.getItem(`dizi_store_cache_${slug}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Date.now() - parsed.ts < 5 * 60 * 1000 && parsed.store) {
-          return parsed.store;
+      const cachedRaw =
+        localStorage.getItem(`dizi_store_cache_${slug}`) ||
+        sessionStorage.getItem(`dizi_store_cache_${slug}`);
+      if (cachedRaw) {
+        const cached = JSON.parse(cachedRaw);
+        // Si la caché se verificó hace menos de 2 minutos, entregar directo sin red (0 KB de datos)
+        if (Date.now() - (cached.verifiedAt || cached.ts || 0) < 2 * 60 * 1000 && cached.store) {
+          return cached.store;
+        }
+
+        // Si la tienda ya está en caché local, hacer una micro-consulta ultraligera de solo updated_at (~100 bytes)
+        if (cached.store && cached.updated_at) {
+          const { data: storeMeta, error: metaErr } = await supabase
+            .from("stores")
+            .select("updated_at")
+            .eq("slug", slug)
+            .maybeSingle();
+
+          if (!metaErr && storeMeta && storeMeta.updated_at === cached.updated_at) {
+            // La tienda no ha sufrido cambios: renovar el TTL local y devolver la caché existente
+            const refreshedCache = {
+              ...cached,
+              verifiedAt: Date.now(),
+            };
+            localStorage.setItem(`dizi_store_cache_${slug}`, JSON.stringify(refreshedCache));
+            return cached.store;
+          }
         }
       }
-    } catch {}
+    } catch (e) {
+      console.warn("[fetchStoreBySlug] Cache check fallback:", e);
+    }
   }
 
   const timeoutPromise = new Promise<never>((_, reject) =>
@@ -102,6 +126,16 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<S
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
+      // Contingencia: si la red falla pero hay caché previa en el dispositivo, usarla
+      if (typeof window !== "undefined") {
+        try {
+          const cachedRaw = localStorage.getItem(`dizi_store_cache_${slug}`);
+          if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw);
+            if (cached?.store) return cached.store;
+          }
+        } catch {}
+      }
       throw new Error(`DB Error: ${error.message}`);
     }
     if (!data) return null;
@@ -222,13 +256,17 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<S
         }),
     };
 
-    // Guardar en sessionStorage para peticiones posteriores en la misma sesión
+    // Guardar en localStorage y sessionStorage con timestamp para visitas recurrentes Zero-Egress
     if (typeof window !== "undefined") {
       try {
-        sessionStorage.setItem(
-          `dizi_store_cache_${slug}`,
-          JSON.stringify({ ts: Date.now(), store: storeResult })
-        );
+        const cachePayload = {
+          store: storeResult,
+          updated_at: data.updated_at || storeResult.updatedAt || new Date().toISOString(),
+          ts: Date.now(),
+          verifiedAt: Date.now(),
+        };
+        localStorage.setItem(`dizi_store_cache_${slug}`, JSON.stringify(cachePayload));
+        sessionStorage.setItem(`dizi_store_cache_${slug}`, JSON.stringify(cachePayload));
       } catch {}
     }
 

@@ -2025,7 +2025,7 @@ export function PublicCatalog({
         .rpc("get_public_store_products", {
           p_store_slug: store.slug,
           p_page_offset: 0,
-          p_page_limit: 48,
+          p_page_limit: 24,
           p_category_id: activeCat,
           p_search_query: null,
         })
@@ -3187,7 +3187,7 @@ export function PublicCatalog({
                               <React.Fragment key={p.id}>
                                 <article
                                   className={cn(
-                                    "overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
+                                    "product-card-contain overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group border bg-card shadow-sm hover:shadow-md",
                                     cfg.cardShadow,
                                     bioTypography === "serif" && "border-gray-100 hover:border-black/20"
                                   )}
@@ -5303,7 +5303,7 @@ export function PublicCatalog({
                                   borderColor: "var(--border)",
                                   color: "var(--card-foreground)",
                                 }}
-                                className="overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-3xl hover:scale-[1.02] shadow-lg text-left"
+                                className="product-card-contain overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border rounded-3xl hover:scale-[1.02] shadow-lg text-left"
                                 onClick={() => setViewingProduct(p)}
                               >
                                 <div>
@@ -6020,7 +6020,7 @@ export function PublicCatalog({
                                         "0 8px 24px -8px color-mix(in srgb, var(--primary) 8%, transparent)",
                                     }}
                                     className={cn(
-                                      "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none text-left",
+                                      "product-card-contain overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-500 group border bg-[var(--card)] hover:shadow-lg shadow-xs select-none text-left",
                                       isEven
                                         ? "rounded-[3rem_1rem_3rem_1rem] hover:rotate-1"
                                         : "rounded-[1rem_3rem_1rem_3rem] hover:-rotate-1",
@@ -6910,7 +6910,7 @@ export function PublicCatalog({
                                   borderColor: "var(--border)",
                                   color: "var(--card-foreground)",
                                 }}
-                                className={cn(gridCardClass)}
+                                className={cn("product-card-contain", gridCardClass)}
                                 onClick={() => setViewingProduct(p)}
                               >
                                 <div>
