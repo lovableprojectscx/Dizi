@@ -152,4 +152,57 @@ describe("Suite Exhaustiva: Paginación Lazy Loading en DB y Optimización de Eg
       expect(buttonLabel).toBe("Ver más productos (24 de 298)");
     });
   });
+
+  describe("6. Conteo Real de Productos por Categoría desde PostgreSQL", () => {
+    it("debe mapear productCount en las categorías recibidas de get_public_store", () => {
+      const rawCategoriesFromDb = [
+        { id: "cat_cerámica", name: "Cerámica 🇵🇪", product_count: 57 },
+        { id: "cat_luces", name: "Iluminación", product_count: 11 },
+        { id: "cat_vacia", name: "Sin Productos", product_count: 0 },
+      ];
+
+      const mappedCategories = rawCategoriesFromDb.map((c) => ({
+        id: c.id,
+        name: c.name,
+        productCount: c.product_count !== undefined ? Number(c.product_count) : undefined,
+      }));
+
+      expect(mappedCategories[0].productCount).toBe(57);
+      expect(mappedCategories[1].productCount).toBe(11);
+      expect(mappedCategories[2].productCount).toBe(0);
+    });
+
+    it("debe mostrar el productCount del servidor en el sidebar sin requerir scroll previo", () => {
+      const category = { id: "cat_cerámica", name: "Cerámica 🇵🇪", productCount: 57 };
+      const productsInLocalMemory = [{ id: "p1", categoryId: "cat_flores" }]; // 0 en memoria
+
+      const displayedCount =
+        category.productCount !== undefined
+          ? category.productCount
+          : productsInLocalMemory.filter((p) => p.categoryId === category.id).length;
+
+      expect(displayedCount).toBe(57);
+    });
+  });
+
+  describe("7. Búsqueda Global en Servidor para Tiendas con +36 Productos", () => {
+    it("debe fusionar resultados de búsqueda remota preservando la integridad de memoria", () => {
+      const initialProducts = [
+        { id: "p1", name: "Florero Azul" },
+        { id: "p2", name: "Macetas Vintage" },
+      ];
+
+      const searchResultsFromDb = [
+        { id: "p80", name: "Espejo Sol Dorado" },
+        { id: "p1", name: "Florero Azul" }, // Coincidencia ya existente
+      ];
+
+      const existingIds = new Set(initialProducts.map((p) => p.id));
+      const uniqueNew = searchResultsFromDb.filter((p) => !existingIds.has(p.id));
+      const merged = [...initialProducts, ...uniqueNew];
+
+      expect(merged).toHaveLength(3);
+      expect(merged.some((p) => p.name === "Espejo Sol Dorado")).toBe(true);
+    });
+  });
 });

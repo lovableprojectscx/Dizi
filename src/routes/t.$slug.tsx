@@ -89,16 +89,16 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<S
     setTimeout(
       () =>
         reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")),
-      12000,
+      18000,
     ),
   );
 
   const fetchPromise = (async (): Promise<Store | null> => {
-    const { data, error } = await supabase.rpc(
-      "get_public_store",
-      { store_slug: slug, page_limit: pageLimit, page_offset: 0 },
-      { get: true }
-    );
+    const { data, error } = await supabase.rpc("get_public_store", {
+      store_slug: slug,
+      page_limit: pageLimit,
+      page_offset: 0,
+    });
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
@@ -191,7 +191,11 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<S
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       totalProductsCount: data.total_products_count !== undefined ? Number(data.total_products_count) : (productsWithImages?.length || 0),
-      categories: (data.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
+      categories: (data.categories || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        productCount: c.product_count !== undefined ? Number(c.product_count) : undefined,
+      })),
       products: (productsWithImages || [])
         .map((p: any) => ({
           id: p.id,

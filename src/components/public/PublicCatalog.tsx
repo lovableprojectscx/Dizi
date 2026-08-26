@@ -1,4 +1,5 @@
 import { resolveRenderModel } from "@/lib/design-catalog";
+import { supabase } from "@/lib/supabase";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -1898,6 +1899,7 @@ export function PublicCatalog({
   ]);
 
   const [visibleLimit, setVisibleLimit] = useState(12);
+  const [isCategoryFetching, setIsCategoryFetching] = useState(false);
 
   // Reiniciar el límite visible a 12 al cambiar cualquier filtro, búsqueda o categoría
   useEffect(() => {
@@ -1908,9 +1910,41 @@ export function PublicCatalog({
     return rawFiltered.slice(0, visibleLimit);
   }, [rawFiltered, visibleLimit]);
 
-  const hasMoreProducts =
-    visibleLimit < rawFiltered.length ||
-    (allProducts.length < totalProductsCount && activeCat === "all" && !query && !priceRange);
+  const activeCategoryObj = useMemo(() => {
+    return store?.categories?.find((c) => c.id === activeCat);
+  }, [store?.categories, activeCat]);
+
+  const expectedCategoryCount = activeCategoryObj?.productCount;
+
+  const hasMoreProducts = useMemo(() => {
+    if (visibleLimit < rawFiltered.length) return true;
+    if (isMockup) return false;
+
+    if (activeCat === "all") {
+      return allProducts.length < totalProductsCount && !query && !priceRange;
+    }
+
+    if (activeCat === "sale") {
+      return false;
+    }
+
+    // Para una categoría específica
+    if (expectedCategoryCount !== undefined) {
+      return rawFiltered.length < expectedCategoryCount;
+    }
+
+    return allProducts.length < totalProductsCount;
+  }, [
+    visibleLimit,
+    rawFiltered.length,
+    isMockup,
+    activeCat,
+    allProducts.length,
+    totalProductsCount,
+    query,
+    priceRange,
+    expectedCategoryCount,
+  ]);
 
   const loadMoreProducts = useCallback(async () => {
     // 1. Si todavía hay productos en el arreglo filtrado en memoria
@@ -1919,14 +1953,19 @@ export function PublicCatalog({
       return;
     }
 
-    // 2. Si ya se mostraron los de memoria y faltan en la base de datos, solicitar el siguiente bloque
-    if (allProducts.length < totalProductsCount && !isLoadingMore && !isMockup && store?.slug) {
+    // 2. Si faltan productos en la base de datos para la vista actual, solicitar el siguiente bloque
+    if (!isLoadingMore && !isMockup && store?.slug) {
       setIsLoadingMore(true);
       try {
+        const isFilteringCat = activeCat !== "all" && activeCat !== "sale";
+        const isSearching = Boolean(query.trim());
+
         const { data, error } = await supabase.rpc("get_public_store_products", {
           p_store_slug: store.slug,
-          p_page_offset: allProducts.length,
+          p_page_offset: isFilteringCat || isSearching ? rawFiltered.length : allProducts.length,
           p_page_limit: 24,
+          p_category_id: isFilteringCat ? activeCat : null,
+          p_search_query: isSearching ? query.trim() : null,
         });
 
         if (!error && Array.isArray(data) && data.length > 0) {
@@ -1949,7 +1988,7 @@ export function PublicCatalog({
           setAllProducts((prev) => {
             const existingIds = new Set(prev.map((p) => p.id));
             const uniqueNew = newBatch.filter((p) => !existingIds.has(p.id));
-            return [...prev, ...uniqueNew];
+            return uniqueNew.length > 0 ? [...prev, ...uniqueNew] : prev;
           });
           setVisibleLimit((prev) => prev + 12);
         }
@@ -1967,7 +2006,113 @@ export function PublicCatalog({
     isLoadingMore,
     isMockup,
     store?.slug,
+    activeCat,
+    query,
   ]);
+
+  // Carga inmediata de categoría al hacer clic en ella (si aún no hay productos de esa categoría en memoria)
+  useEffect(() => {
+    if (isMockup || !store?.slug || activeCat === "all" || activeCat === "sale") return;
+
+    const currentMatchingCount = allProducts.filter((p) => p.categoryId === activeCat && p.visible && !p.isSample).length;
+    const expectedCount = expectedCategoryCount ?? 1;
+
+    if (currentMatchingCount === 0 && expectedCount > 0) {
+      let isMounted = true;
+      setIsCategoryFetching(true);
+
+      supabase
+        .rpc("get_public_store_products", {
+          p_store_slug: store.slug,
+          p_page_offset: 0,
+          p_page_limit: 48,
+          p_category_id: activeCat,
+          p_search_query: null,
+        })
+        .then(({ data, error }) => {
+          if (!isMounted) return;
+          if (!error && Array.isArray(data) && data.length > 0) {
+            const newBatch: Product[] = data.map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              price: Number(p.price),
+              categoryId: p.category_id,
+              image: p.image || "",
+              description: p.description,
+              isOnSale: p.is_on_sale,
+              originalPrice: p.original_price ? Number(p.original_price) : undefined,
+              visible: p.visible,
+              isSample: p.is_sample,
+              sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+              variations: Array.isArray(p.variations) ? p.variations : [],
+              createdAt: p.created_at,
+            }));
+
+            setAllProducts((prev) => {
+              const existingIds = new Set(prev.map((p) => p.id));
+              const uniqueNew = newBatch.filter((p) => !existingIds.has(p.id));
+              return uniqueNew.length > 0 ? [...prev, ...uniqueNew] : prev;
+            });
+          }
+        })
+        .catch((err) => console.error("[categoryFetch] Error fetching category products:", err))
+        .finally(() => {
+          if (isMounted) setIsCategoryFetching(false);
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [activeCat, isMockup, store?.slug, expectedCategoryCount, allProducts]);
+
+  // Búsqueda en servidor al escribir en el buscador con debounce
+  useEffect(() => {
+    if (isMockup || !store?.slug || allProducts.length >= totalProductsCount) return;
+
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_public_store_products", {
+          p_store_slug: store.slug,
+          p_page_offset: 0,
+          p_page_limit: 48,
+          p_category_id: activeCat !== "all" && activeCat !== "sale" ? activeCat : null,
+          p_search_query: trimmedQuery,
+        });
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const newBatch: Product[] = data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            price: Number(p.price),
+            categoryId: p.category_id,
+            image: p.image || "",
+            description: p.description,
+            isOnSale: p.is_on_sale,
+            originalPrice: p.original_price ? Number(p.original_price) : undefined,
+            visible: p.visible,
+            isSample: p.is_sample,
+            sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+            variations: Array.isArray(p.variations) ? p.variations : [],
+            createdAt: p.created_at,
+          }));
+
+          setAllProducts((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id));
+            const uniqueNew = newBatch.filter((p) => !existingIds.has(p.id));
+            return uniqueNew.length > 0 ? [...prev, ...uniqueNew] : prev;
+          });
+        }
+      } catch (err) {
+        console.error("[serverSearch] Error buscando en servidor:", err);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query, activeCat, isMockup, store?.slug, allProducts.length, totalProductsCount]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
   const cartLines = cart
@@ -2880,7 +3025,7 @@ export function PublicCatalog({
                     )}
                   >
                     <span>Todos</span>
-                    <span className="text-[10px] opacity-75">({productsWithImages.length})</span>
+                    <span className="text-[10px] opacity-75">({totalProductsCount || productsWithImages.length})</span>
                   </button>
 
                   {productsWithImages.some((p) => p.isOnSale) && (
@@ -2905,7 +3050,7 @@ export function PublicCatalog({
 
                   {store.categories.map((c) => {
                     const { label } = parseCategoryName(c.name, c.icon);
-                    const count = productsWithImages.filter((p) => p.categoryId === c.id).length;
+                    const count = c.productCount !== undefined ? c.productCount : productsWithImages.filter((p) => p.categoryId === c.id).length;
                     return (
                       <button
                         key={c.id}
@@ -5117,6 +5262,16 @@ export function PublicCatalog({
                         : filtered;
 
                     if (gridProducts.length === 0) {
+                      if (isCategoryFetching || isLoadingMore) {
+                        return (
+                          <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
+                            <p className="text-xs text-muted-foreground font-medium">
+                              Cargando productos...
+                            </p>
+                          </div>
+                        );
+                      }
                       return (
                         <div style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--muted-foreground)" }} className="text-center py-12 border rounded-3xl text-xs">
                           No hay productos en esta categoría.
@@ -5816,6 +5971,16 @@ export function PublicCatalog({
                             : filtered;
 
                         if (gridProducts.length === 0) {
+                          if (isCategoryFetching || isLoadingMore) {
+                            return (
+                              <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
+                                <p className="text-xs text-stone-400 font-medium">
+                                  Cargando productos botánicos...
+                                </p>
+                              </div>
+                            );
+                          }
                           return (
                             <div
                               style={{
@@ -6699,6 +6864,16 @@ export function PublicCatalog({
                         : filtered;
 
                     if (gridProducts.length === 0) {
+                      if (isCategoryFetching || isLoadingMore) {
+                        return (
+                          <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
+                            <p className="text-xs text-muted-foreground font-medium">
+                              Cargando productos...
+                            </p>
+                          </div>
+                        );
+                      }
                       return (
                         <div
                           style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--muted-foreground)" }}

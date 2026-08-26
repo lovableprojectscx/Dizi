@@ -35,6 +35,7 @@ export interface Category {
   id: string;
   name: string;
   icon?: string;
+  productCount?: number;
 }
 
 export interface ProductVariation {
