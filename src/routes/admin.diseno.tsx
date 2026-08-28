@@ -145,7 +145,7 @@ function ColorSwatch({
 
 function DisenoUnificadoPage() {
   const id = useApp((s) => s.currentStoreId);
-  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
   const update = useApp((s) => s.updateStore);
 
   if (!store) return null;
@@ -328,10 +328,10 @@ function DisenoUnificadoPage() {
         promoBarIsMarquee,
       } as any);
 
-      toast.success("🎨 Diseño unificado guardado en tu catálogo", { id: toastId });
-    } catch (err) {
+      toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
+    } catch (err: any) {
       console.error("[save diseño unificado]", err);
-      toast.error("Error al guardar el diseño. Revisa la consola.", { id: toastId });
+      toast.error(err?.message || "Error al guardar el diseño.", { id: toastId });
     }
   };
 

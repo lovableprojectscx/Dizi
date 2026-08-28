@@ -653,7 +653,7 @@ function PhonePreview({
 /* ─── main page ─── */
 function LinkBioPage() {
   const id = useApp((s) => s.currentStoreId);
-  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
   const update = useApp((s) => s.updateStore);
 
   const [bioDescription, setBioDescription] = useState(store?.bioDescription || "");

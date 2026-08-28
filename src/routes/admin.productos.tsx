@@ -1303,7 +1303,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
 
 function ProductsPage() {
   const id = useApp((s) => s.currentStoreId);
-  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
 
   if (!store) {
     return (

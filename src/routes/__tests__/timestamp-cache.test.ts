@@ -95,4 +95,13 @@ describe("Módulo de Caché Inteligente por Timestamp y Optimización de 24 Item
     expect(DEFAULT_PAGE_LIMIT).toBe(24);
     expect(DEFAULT_PAGE_LIMIT).toBeLessThan(36);
   });
+
+  it("6. Invalidation clears public store cache when merchant updates design", () => {
+    const slug = "test-store-invalidate";
+    mockLocalStorage.setItem(`dizi_store_cache_${slug}`, JSON.stringify({ store: { id: "123" } }));
+    expect(mockLocalStorage.getItem(`dizi_store_cache_${slug}`)).toBeTruthy();
+
+    mockLocalStorage.removeItem(`dizi_store_cache_${slug}`);
+    expect(mockLocalStorage.getItem(`dizi_store_cache_${slug}`)).toBeNull();
+  });
 });

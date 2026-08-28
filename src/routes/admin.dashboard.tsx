@@ -34,7 +34,7 @@ export const Route = createFileRoute("/admin/dashboard")({
 
 function Dashboard() {
   const id = useApp((s) => s.currentStoreId);
-  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
 
   if (!store) {
     return (

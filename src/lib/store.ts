@@ -15,6 +15,18 @@ import { toast } from "sonner";
 import { hexLuminance } from "./utils";
 import { getUserRole } from "./auth";
 
+export function invalidateStorePublicCache(slug?: string | null) {
+  if (typeof window === "undefined" || !slug) return;
+  try {
+    localStorage.removeItem(`dizi_store_cache_${slug}`);
+    sessionStorage.removeItem(`dizi_store_cache_${slug}`);
+    localStorage.removeItem(`dizi_bio_cache_${slug}`);
+    sessionStorage.removeItem(`dizi_bio_cache_${slug}`);
+  } catch (e) {
+    console.warn("[invalidateStorePublicCache]", e);
+  }
+}
+
 const mapStoreFromDB = (row: any): Store => {
   const isDarkVal = row.is_dark ?? (row.bg_color ? hexLuminance(row.bg_color) < 0.35 : false);
 
@@ -476,6 +488,10 @@ export const useApp = create<AppState>()(
           set((s) => ({
             stores: s.stores.map((st) => (st.id === id ? { ...st, ...updatedPatch } : st)),
           }));
+
+          const updatedStore = get().stores.find((st) => st.id === id);
+          if (updatedStore?.slug) invalidateStorePublicCache(updatedStore.slug);
+          if (updatedPatch.slug) invalidateStorePublicCache(updatedPatch.slug);
         } catch (error) {
           console.error("[updateStore] Error:", error);
           toast.error("No se pudo actualizar la configuración");
@@ -984,6 +1000,8 @@ export const useApp = create<AppState>()(
               };
             }),
           }));
+
+          if (st?.slug) invalidateStorePublicCache(st.slug);
         } catch (error) {
           console.error("[upsertProduct] Error:", error);
           throw error;
@@ -1025,6 +1043,8 @@ export const useApp = create<AppState>()(
                 : st,
             ),
           }));
+
+          if (store?.slug) invalidateStorePublicCache(store.slug);
         } catch (error) {
           console.error("[deleteProduct] Error:", error);
           toast.error("Error al eliminar producto");
@@ -1057,6 +1077,8 @@ export const useApp = create<AppState>()(
                 : st,
             ),
           }));
+
+          if (store?.slug) invalidateStorePublicCache(store.slug);
         } catch (error) {
           console.error("[toggleProductVisible] Error:", error);
           toast.error("Error al cambiar visibilidad");
@@ -1177,6 +1199,9 @@ export const useApp = create<AppState>()(
               };
             }),
           }));
+
+          const st = useApp.getState().stores.find((s) => s.id === storeId);
+          if (st?.slug) invalidateStorePublicCache(st.slug);
           toast.success("Categoria guardada");
         } catch (error) {
           console.error("[upsertCategory] Error:", error);
@@ -1196,6 +1221,9 @@ export const useApp = create<AppState>()(
                 : st,
             ),
           }));
+
+          const st = useApp.getState().stores.find((s) => s.id === storeId);
+          if (st?.slug) invalidateStorePublicCache(st.slug);
           toast.success("Categoria eliminada");
         } catch (error) {
           console.error("[deleteCategory] Error:", error);

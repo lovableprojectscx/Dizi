@@ -80,11 +80,6 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
         sessionStorage.getItem(`dizi_store_cache_${slug}`);
       if (cachedRaw) {
         const cached = JSON.parse(cachedRaw);
-        // Si la caché se verificó hace menos de 2 minutos, entregar directo sin red (0 KB de datos)
-        if (Date.now() - (cached.verifiedAt || cached.ts || 0) < 2 * 60 * 1000 && cached.store) {
-          return cached.store;
-        }
-
         // Si la tienda ya está en caché local, hacer una micro-consulta ultraligera de solo updated_at (~100 bytes)
         if (cached.store && cached.updated_at) {
           const { data: storeMeta, error: metaErr } = await supabase

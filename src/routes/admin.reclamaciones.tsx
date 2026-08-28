@@ -285,7 +285,7 @@ function ReclamacionRow({ rec, onUpdate }: { rec: Reclamacion; onUpdate: () => v
 /* ── Página principal ──────────────────────────────────────── */
 function ReclamacionesPage() {
   const id = useApp((s) => s.currentStoreId);
-  const store = useApp((s) => s.stores.find((st) => st.id === id));
+  const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
 
   const [reclamaciones, setReclamaciones] = useState<Reclamacion[]>([]);
   const [loading, setLoading] = useState(true);
