@@ -82,6 +82,12 @@ function AdminLayout() {
     pathname === "/admin/reclamaciones" ||
     pathname.startsWith("/ayuda");
 
+  useEffect(() => {
+    if (stores.length === 0 && !fetchError) {
+      fetchData();
+    }
+  }, [stores.length, fetchError, fetchData]);
+
   if (stores.length === 0) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background p-4 text-center">

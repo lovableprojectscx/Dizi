@@ -139,11 +139,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const fetchData = useApp((s) => s.fetchData);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   return (
     <QueryClientProvider client={queryClient}>

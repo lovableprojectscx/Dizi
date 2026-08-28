@@ -13,6 +13,7 @@ import { supabase, uploadBase64ToStorage } from "./supabase";
 import { createThumbnailFromBase64 } from "./image-utils";
 import { toast } from "sonner";
 import { hexLuminance } from "./utils";
+import { getUserRole } from "./auth";
 
 const mapStoreFromDB = (row: any): Store => {
   const isDarkVal = row.is_dark ?? (row.bg_color ? hexLuminance(row.bg_color) < 0.35 : false);
@@ -237,9 +238,20 @@ export const useApp = create<AppState>()(
 
         set({ fetchError: null });
         try {
-          const { data, error } = await supabase
+          const { data: sessionData } = await supabase.auth.getSession();
+          const user = sessionData?.session?.user;
+          const role = user ? getUserRole(user) : null;
+
+          let query = supabase
             .from("stores")
             .select("*, categories(*), products(*)");
+
+          // Si el usuario es un comerciante (no super_admin), solo cargar sus tiendas
+          if (user && role !== "super_admin") {
+            query = query.eq("owner_id", user.id);
+          }
+
+          const { data, error } = await query;
           if (error) throw error;
 
           let dbPromotions: PlanPromotion[] = [];

@@ -116,7 +116,7 @@ function LoginPage() {
 
       if (stores && stores.length > 0) {
         setCurrentStore(stores[0].id);
-        await fetchData();
+        fetchData();
         navigate({ to: "/admin" });
       } else {
         // Usuario autenticado pero sin tienda — redirigir al registro

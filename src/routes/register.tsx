@@ -1044,8 +1044,8 @@ function RegisterPage() {
           errorMessage = "El link de la tienda ya esta en uso. Por favor, elige otro.";
         } else if (err.message?.includes("categories_pkey")) {
           errorMessage = "Error de sistema al crear la categoria. Por favor, intenta de nuevo.";
-        } else if (err.status === 429 || err.message?.includes("rate limit")) {
-          errorMessage = "Demasiados intentos. Por favor, intentalo mas tarde.";
+        } else if (err.status === 429 || err.message?.includes("rate limit") || err.message?.includes("over_email_send_rate_limit")) {
+          errorMessage = "Límite de correos alcanzado temporalmente por el servidor. Por favor, espera unos minutos o desactiva 'Confirm email' en tu panel de Supabase.";
         } else if (err.message?.includes("User already registered")) {
           errorMessage = "Este correo ya tiene una cuenta. Intenta iniciar sesion.";
         } else {
