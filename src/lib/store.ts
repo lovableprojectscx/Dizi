@@ -484,37 +484,80 @@ export const useApp = create<AppState>()(
       },
 
       addStore: async (store) => {
-        const { error: rpcError } = await supabase.rpc("initialize_store", {
-          p_id: store.id,
-          p_slug: store.slug,
-          p_name: store.name,
-          p_phone: store.phone,
-          p_country_code: store.countryCode,
-          p_plan: store.plan,
-          p_owner_id: store.ownerId,
-          p_model: store.model,
-          p_niche: store.niche,
-          p_category_id: store.categories[0]?.id || uid(),
-        });
+        let rpcSuccess = false;
+        const mainCatId = store.categories[0]?.id || uid();
 
-        if (rpcError) {
-          console.error("[addStore] RPC error:", rpcError);
-          throw rpcError;
+        try {
+          const { error: rpcError } = await supabase.rpc("initialize_store", {
+            p_id: store.id,
+            p_slug: store.slug,
+            p_name: store.name,
+            p_phone: store.phone,
+            p_country_code: store.countryCode,
+            p_plan: store.plan,
+            p_owner_id: store.ownerId,
+            p_model: store.model,
+            p_niche: store.niche,
+            p_category_id: mainCatId,
+          });
+
+          if (!rpcError) {
+            rpcSuccess = true;
+          } else {
+            console.warn("[addStore] RPC error, intentando inserción directa resiliente:", rpcError);
+          }
+        } catch (e) {
+          console.warn("[addStore] RPC exception, intentando inserción directa resiliente:", e);
         }
 
-        // Guardar campos iniciales que no son insertados por el RPC initialize_store
-        const initialUpdates: any = {};
-        if (store.brandColor) initialUpdates.brand_color = store.brandColor;
-        if (store.niche) initialUpdates.niche = store.niche;
-        if (store.referredBy) initialUpdates.referred_by = store.referredBy;
+        // Si el RPC falló (por ejemplo por firma de tipo uuid en BD), crear la tienda y categoría directamente
+        if (!rpcSuccess) {
+          const { error: storeInsertError } = await supabase.from("stores").insert({
+            id: store.id,
+            slug: store.slug,
+            name: store.name,
+            phone: store.phone,
+            country_code: store.countryCode,
+            plan: store.plan,
+            owner_id: store.ownerId,
+            model: store.model,
+            niche: store.niche,
+            brand_color: store.brandColor || null,
+            active: true,
+            is_published: true,
+            referred_by: store.referredBy || null,
+          });
 
-        if (Object.keys(initialUpdates).length > 0) {
-          const { error: updateError } = await supabase
-            .from("stores")
-            .update(initialUpdates)
-            .eq("id", store.id);
-          if (updateError) {
-            console.error("[addStore] Error al guardar brandColor/niche/referredBy:", updateError);
+          if (storeInsertError) {
+            console.error("[addStore] Fallback store insert error:", storeInsertError);
+            throw storeInsertError;
+          }
+
+          // Crear categoría inicial
+          const { error: catInsertError } = await supabase.from("categories").insert({
+            id: mainCatId,
+            store_id: store.id,
+            name: store.categories[0]?.name || "Principal",
+          });
+
+          if (catInsertError) {
+            console.warn("[addStore] Fallback category insert warning:", catInsertError);
+          }
+        } else {
+          // Guardar campos iniciales si el RPC fue exitoso
+          const initialUpdates: any = {};
+          if (store.brandColor) initialUpdates.brand_color = store.brandColor;
+          if (store.niche) initialUpdates.niche = store.niche;
+          if (store.referredBy) initialUpdates.referred_by = store.referredBy;
+
+          if (Object.keys(initialUpdates).length > 0) {
+            const { error: updateError } = await supabase
+              .from("stores")
+              .update(initialUpdates)
+              .eq("id", store.id);
+            if (updateError) {
+              console.error("[addStore] Error al guardar brandColor/niche/referredBy:", updateError);
+            }
           }
         }
 
