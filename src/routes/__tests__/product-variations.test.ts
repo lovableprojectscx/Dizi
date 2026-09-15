@@ -269,4 +269,99 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
     // Para la imagen de variación NO debe añadir _thumb.webp para evitar 404
     expect(getThumbnailUrl(varImgUrl)).toBe(varImgUrl);
   });
+
+  it("9. Carrito y pedido WhatsApp reflejan la opción seleccionada y precios efectivos de variantes", () => {
+    const storeId = "store-test-1";
+    const storeName = "Tienda Moda";
+
+    const baseProduct: Product = {
+      id: "prod-polo-1",
+      name: "Polo Oversize",
+      price: 40.0,
+      categoryId: "cat-moda",
+      visible: true,
+      image: "https://dizi.pe/img/polo_base.webp",
+      variations: [
+        {
+          id: "var-negro-m",
+          name: "Negro / M",
+          price: 45.0,
+          image: "https://dizi.pe/img/polo_negro.webp",
+        },
+        {
+          id: "var-blanco-s",
+          name: "Blanco / S",
+          price: null, // hereda 40.0
+        },
+      ],
+    };
+
+    // 1. Simulación de lógica handleAddToCart:
+    // Si tiene variaciones, no debe añadir directamente a ciegas al carrito
+    const shouldOpenModal = (p: Product) => Boolean(p.variations && p.variations.length > 0);
+    expect(shouldOpenModal(baseProduct)).toBe(true);
+
+    // 2. Cliente selecciona variante "Negro / M" con precio propio S/ 45.00
+    useCart.getState().add(storeId, baseProduct.id, baseProduct.variations![0]);
+    // Cliente selecciona variante "Blanco / S" que hereda precio S/ 40.00
+    useCart.getState().add(storeId, baseProduct.id, baseProduct.variations![1]);
+    // Cliente añade 1 más de "Negro / M" (qty = 2)
+    useCart.getState().add(storeId, baseProduct.id, baseProduct.variations![0]);
+
+    const cart = useCart.getState().carts[storeId];
+    expect(cart).toHaveLength(2);
+
+    // Mapeo idéntico a PublicCatalog.tsx
+    const cartLines = cart.map((c) => {
+      const effectivePrice =
+        c.variationPrice !== null && c.variationPrice !== undefined
+          ? c.variationPrice
+          : baseProduct.price;
+      const lineKey = c.variationId ? `${c.productId}_${c.variationId}` : c.productId;
+      const itemImg = c.variationImage || baseProduct.image;
+      return {
+        ...c,
+        product: baseProduct,
+        effectivePrice,
+        lineKey,
+        itemImg,
+      };
+    });
+
+    const total = cartLines.reduce((acc, l) => acc + (l.effectivePrice || 0) * l.qty, 0);
+
+    // Línea 1: Negro / M x 2 @ 45.0 = 90.0
+    const lineNegro = cartLines.find((l) => l.variationId === "var-negro-m")!;
+    expect(lineNegro.qty).toBe(2);
+    expect(lineNegro.effectivePrice).toBe(45.0);
+    expect(lineNegro.lineKey).toBe("prod-polo-1_var-negro-m");
+    expect(lineNegro.itemImg).toBe("https://dizi.pe/img/polo_negro.webp");
+
+    // Línea 2: Blanco / S x 1 @ 40.0 = 40.0
+    const lineBlanco = cartLines.find((l) => l.variationId === "var-blanco-s")!;
+    expect(lineBlanco.qty).toBe(1);
+    expect(lineBlanco.effectivePrice).toBe(40.0);
+    expect(lineBlanco.lineKey).toBe("prod-polo-1_var-blanco-s");
+    expect(lineBlanco.itemImg).toBe("https://dizi.pe/img/polo_base.webp");
+
+    // Total: 90 + 40 = 130.0
+    expect(total).toBe(130.0);
+
+    // Construcción del mensaje de WhatsApp como en sendOrder()
+    const lines = cartLines
+      .map((l) => {
+        const itemPrice = l.effectivePrice ? l.effectivePrice * l.qty : null;
+        const varSuffix = l.variationName ? ` (Opción: ${l.variationName})` : "";
+        return `• ${l.product.name}${varSuffix} x${l.qty} — ${formatPrice(itemPrice)}`;
+      })
+      .join("\n");
+
+    const totalMsg = formatPrice(total);
+    const msg = `Hola ${storeName}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+
+    expect(msg).toContain("• Polo Oversize (Opción: Negro / M) x2 — S/ 90.00");
+    expect(msg).toContain("• Polo Oversize (Opción: Blanco / S) x1 — S/ 40.00");
+    expect(msg).toContain("Total: S/ 130.00");
+  });
 });
+

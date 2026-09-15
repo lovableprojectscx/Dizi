@@ -2122,10 +2122,19 @@ export function PublicCatalog({
   const cartLines = cart
     .map((c) => {
       const product = productsWithImages.find((p) => p.id === c.productId);
-      return product ? { ...c, product } : null;
+      if (!product) return null;
+      const effectivePrice =
+        c.variationPrice !== null && c.variationPrice !== undefined
+          ? c.variationPrice
+          : product.price;
+      return {
+        ...c,
+        product,
+        effectivePrice,
+      };
     })
     .filter((l): l is NonNullable<typeof l> => l !== null);
-  const total = cartLines.reduce((a, l) => a + (l.product.price || 0) * l.qty, 0);
+  const total = cartLines.reduce((a, l) => a + (l.effectivePrice || 0) * l.qty, 0);
 
   const appendDiziSignature = (text: string) => {
     const showBranding = store.plan === "semilla" ? true : (store.showDiziBranding ?? true);
@@ -2137,12 +2146,26 @@ export function PublicCatalog({
   };
 
   /* ── Actions ─────────────────────────────────────── */
+  const handleAddToCart = (product: Product, e?: React.MouseEvent): boolean => {
+    if (e) {
+      e.stopPropagation();
+    }
+    // Si el producto tiene variaciones, abrir el modal para que el cliente seleccione su opción
+    if (product.variations && product.variations.length > 0) {
+      setViewingProduct(product);
+      return false;
+    }
+    cartAdd(store.id, product.id);
+    return true;
+  };
+
   const sendOrder = () => {
-    const hasQuoteItems = cartLines.some((l) => !l.product.price);
+    const hasQuoteItems = cartLines.some((l) => !l.effectivePrice);
     const lines = cartLines
       .map((l) => {
-        const itemPrice = l.product.price ? l.product.price * l.qty : null;
-        return `• ${l.product.name} x${l.qty} — ${formatPrice(itemPrice)}`;
+        const itemPrice = l.effectivePrice ? l.effectivePrice * l.qty : null;
+        const varSuffix = l.variationName ? ` (Opción: ${l.variationName})` : "";
+        return `• ${l.product.name}${varSuffix} x${l.qty} — ${formatPrice(itemPrice)}`;
       })
       .join("\n");
     const totalMsg =
@@ -3280,10 +3303,7 @@ export function PublicCatalog({
                                           )}
                                       </div>
                                       <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          cartAdd(store.id, p.id);
-                                        }}
+                                        onClick={(e) => handleAddToCart(p, e)}
                                         className="h-7 w-7 rounded-full flex items-center justify-center bg-primary text-white hover:opacity-90 transition shrink-0"
                                       >
                                         <Plus className="h-3.5 w-3.5" />
@@ -3386,10 +3406,7 @@ export function PublicCatalog({
                             <WhatsAppIcon className="h-3.5 w-3.5" />
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cartAdd(store.id, p.id);
-                            }}
+                            onClick={(e) => handleAddToCart(p, e)}
                             className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:opacity-90 transition"
                           >
                             <Plus className="h-3.5 w-3.5" />
@@ -3824,9 +3841,7 @@ export function PublicCatalog({
                                   <button
                                     type="button"
                                     onClick={(e) => {
-                                      e.stopPropagation();
-                                      cartAdd(store.id, p.id);
-                                      setCartOpen(true);
+                                      if (handleAddToCart(p, e)) setCartOpen(true);
                                     }}
                                     style={
                                       {
@@ -3945,9 +3960,7 @@ export function PublicCatalog({
                           <button
                             type="button"
                             onClick={(e) => {
-                              e.stopPropagation();
-                              cartAdd(store.id, p.id);
-                              setCartOpen(true);
+                              if (handleAddToCart(p, e)) setCartOpen(true);
                             }}
                             className="h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-1 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-xs shrink-0"
                           >
@@ -4028,10 +4041,7 @@ export function PublicCatalog({
                             <WhatsAppIcon className="h-3.5 w-3.5" /> Consultar
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cartAdd(store.id, filtered[0].id);
-                            }}
+                            onClick={(e) => handleAddToCart(filtered[0], e)}
                             className="bg-primary text-primary-foreground text-xs px-4 py-2 font-bold hover:opacity-90 transition flex items-center gap-1"
                             style={{ borderRadius: cfg.cardRounded }}
                           >
@@ -4113,10 +4123,7 @@ export function PublicCatalog({
                             <WhatsAppIcon className="h-3 w-3" /> Consultar
                           </button>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              cartAdd(store.id, p.id);
-                            }}
+                            onClick={(e) => handleAddToCart(p, e)}
                             className="bg-primary text-primary-foreground w-7 h-7 flex items-center justify-center hover:opacity-90 transition shrink-0"
                             style={{ borderRadius: cfg.cardRounded }}
                           >
@@ -4183,10 +4190,7 @@ export function PublicCatalog({
                               CONSULTAR
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                cartAdd(store.id, p.id);
-                              }}
+                              onClick={(e) => handleAddToCart(p, e)}
                               style={{
                                 backgroundColor: "var(--primary)",
                                 color: "var(--primary-foreground)",
@@ -4259,10 +4263,7 @@ export function PublicCatalog({
                                   <WhatsAppIcon className="h-3 w-3" />
                                 </button>
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cartAdd(store.id, p.id);
-                                  }}
+                                  onClick={(e) => handleAddToCart(p, e)}
                                   style={{
                                     backgroundColor: "var(--primary)",
                                     color: "var(--primary-foreground)",
@@ -4362,10 +4363,7 @@ export function PublicCatalog({
                               Consultar
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                cartAdd(store.id, p.id);
-                              }}
+                              onClick={(e) => handleAddToCart(p, e)}
                               className="h-10 px-4 text-xs font-bold hover:opacity-90 transition"
                               style={{
                                 backgroundColor: "var(--primary)",
@@ -4398,10 +4396,7 @@ export function PublicCatalog({
                                 <WhatsAppIcon className="h-3 w-3" />
                               </button>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cartAdd(store.id, p.id);
-                                }}
+                                onClick={(e) => handleAddToCart(p, e)}
                                 className="h-7 w-7 flex items-center justify-center hover:opacity-90 transition"
                                 style={{
                                   backgroundColor: "var(--primary)",
@@ -4514,10 +4509,7 @@ export function PublicCatalog({
                                   <WhatsAppIcon className="h-3 w-3" />
                                 </button>
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cartAdd(store.id, group[0].id);
-                                  }}
+                                  onClick={(e) => handleAddToCart(group[0], e)}
                                   className="h-7 w-7 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
@@ -4580,10 +4572,7 @@ export function PublicCatalog({
                                   {formatPrice(p.price)}
                                 </span>
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    cartAdd(store.id, p.id);
-                                  }}
+                                  onClick={(e) => handleAddToCart(p, e)}
                                   className="h-6 w-6 flex items-center justify-center hover:opacity-90"
                                   style={{
                                     backgroundColor: "var(--primary)",
@@ -4698,10 +4687,7 @@ export function PublicCatalog({
                               <WhatsAppIcon className="h-3.5 w-3.5" />
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                cartAdd(store.id, p.id);
-                              }}
+                              onClick={(e) => handleAddToCart(p, e)}
                               className="h-9 px-4 text-xs font-black uppercase tracking-widest transition hover:opacity-80"
                               style={{
                                 backgroundColor: "var(--primary)",
@@ -5116,9 +5102,7 @@ export function PublicCatalog({
                                 <button
                                   type="button"
                                   onClick={(e) => {
-                                    e.stopPropagation();
-                                    cartAdd(store.id, p.id);
-                                    setCartOpen(true);
+                                    if (handleAddToCart(p, e)) setCartOpen(true);
                                   }}
                                   style={{
                                     backgroundColor: "var(--card)",
@@ -5370,9 +5354,7 @@ export function PublicCatalog({
                                   <button
                                     type="button"
                                     onClick={(e) => {
-                                      e.stopPropagation();
-                                      cartAdd(store.id, p.id);
-                                      setCartOpen(true);
+                                      if (handleAddToCart(p, e)) setCartOpen(true);
                                     }}
                                     style={{
                                       backgroundColor: "var(--card)",
@@ -5844,9 +5826,7 @@ export function PublicCatalog({
                                       <button
                                         type="button"
                                         onClick={(e) => {
-                                          e.stopPropagation();
-                                          cartAdd(store.id, p.id);
-                                          setCartOpen(true);
+                                          if (handleAddToCart(p, e)) setCartOpen(true);
                                         }}
                                         className="h-7 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold uppercase tracking-wider active:scale-95 shadow-sm font-sans shrink-0"
                                       >
@@ -6133,9 +6113,7 @@ export function PublicCatalog({
                                         <button
                                           type="button"
                                           onClick={(e) => {
-                                            e.stopPropagation();
-                                            cartAdd(store.id, p.id);
-                                            setCartOpen(true);
+                                            if (handleAddToCart(p, e)) setCartOpen(true);
                                           }}
                                           className="flex-1 h-7.5 px-3 rounded-full text-[var(--primary-foreground)] bg-[var(--primary)] hover:opacity-90 transition-all duration-300 flex items-center justify-center gap-0.5 text-[9px] font-bold tracking-wider uppercase active:scale-95 shadow-sm font-sans"
                                         >
@@ -6619,8 +6597,7 @@ export function PublicCatalog({
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      cartAdd(store.id, p.id);
-                                      setCartOpen(true);
+                                      if (handleAddToCart(p, e)) setCartOpen(true);
                                     }}
                                     style={{
                                       backgroundColor: "var(--primary)",
@@ -7031,8 +7008,7 @@ export function PublicCatalog({
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        cartAdd(store.id, p.id);
-                                        setCartOpen(true);
+                                        if (handleAddToCart(p, e)) setCartOpen(true);
                                       }}
                                       style={{
                                         backgroundColor: "var(--primary)",
@@ -7206,7 +7182,7 @@ export function PublicCatalog({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              cartAdd(store.id, p.id);
+                              handleAddToCart(p, e);
                             }}
                             style={{
                               backgroundColor: "var(--primary)",
@@ -7311,7 +7287,7 @@ export function PublicCatalog({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                cartAdd(store.id, p.id);
+                                handleAddToCart(p, e);
                               }}
                               className="inline-flex items-center justify-center bg-primary text-primary-foreground w-9 h-9 hover:bg-primary/90 transition shrink-0"
                               style={{ borderRadius: cfg.cardRounded }}
@@ -7638,80 +7614,89 @@ export function PublicCatalog({
                 Tu carrito está vacío.
               </div>
             )}
-            {cartLines.map((l) => (
-              <div
-                key={l.productId}
-                className="flex items-center gap-3 p-2"
-                style={{
-                  backgroundColor: "var(--card)",
-                  border: `1px solid var(--border)`,
-                  borderRadius: cfg.cardRounded,
-                }}
-              >
-                <img
-                  src={getOptimizedImageUrl(getThumbnailUrl(l.product.image) || l.product.image, 200)}
-                  alt={l.product.name}
-                  className="h-12 w-12 object-cover shrink-0"
-                  style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=200&q=70";
+            {cartLines.map((l) => {
+              const itemImg = l.variationImage || getThumbnailUrl(l.product.image) || l.product.image;
+              const lineKey = l.variationId ? `${l.productId}_${l.variationId}` : l.productId;
+              return (
+                <div
+                  key={lineKey}
+                  className="flex items-center gap-3 p-2"
+                  style={{
+                    backgroundColor: "var(--card)",
+                    border: `1px solid var(--border)`,
+                    borderRadius: cfg.cardRounded,
                   }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      "text-sm font-bold truncate",
-                      cfg.headerStyle === "minimal" ? "tracking-wide uppercase text-xs" : "",
-                    )}
-                    style={{ color: "var(--foreground)" }}
-                  >
-                    {l.product.name}
-                  </p>
-                  <p className="text-xs" style={{ color: "var(--primary)" }}>
-                    {formatPrice(l.product.price)}
-                  </p>
-                </div>
-                {/* Qty controls */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => cartSet(store.id, l.productId, l.qty - 1)}
-                    className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
-                    style={{
-                      border: `1px solid var(--border)`,
-                      color: "var(--foreground)",
-                      borderRadius: cfg.cardRounded,
-                    }}
-                  >
-                    <Minus className="h-3 w-3" />
-                  </button>
-                  <span
-                    className="w-6 text-center text-sm font-black"
-                    style={{ color: "var(--foreground)" }}
-                  >
-                    {l.qty}
-                  </span>
-                  <button
-                    onClick={() => cartSet(store.id, l.productId, l.qty + 1)}
-                    className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
-                    style={{
-                      border: `1px solid var(--border)`,
-                      color: "var(--foreground)",
-                      borderRadius: cfg.cardRounded,
-                    }}
-                  >
-                    <Plus className="h-3 w-3" />
-                  </button>
-                </div>
-                <button
-                  onClick={() => cartRemove(store.id, l.productId)}
-                  className="h-7 w-7 flex items-center justify-center transition hover:opacity-60"
-                  style={{ color: "var(--muted-foreground)" }}
                 >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                  <img
+                    src={getOptimizedImageUrl(itemImg, 200)}
+                    alt={l.product.name}
+                    className="h-12 w-12 object-cover shrink-0"
+                    style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=200&q=70";
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={cn(
+                        "text-sm font-bold truncate",
+                        cfg.headerStyle === "minimal" ? "tracking-wide uppercase text-xs" : "",
+                      )}
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {l.product.name}
+                    </p>
+                    {l.variationName && (
+                      <span className="inline-flex items-center text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md mt-0.5 max-w-full truncate">
+                        Opción: {l.variationName}
+                      </span>
+                    )}
+                    <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
+                      {formatPrice(l.effectivePrice)}
+                    </p>
+                  </div>
+                  {/* Qty controls */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => cartSet(store.id, l.productId, l.qty - 1, l.variationId)}
+                      className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
+                      style={{
+                        border: `1px solid var(--border)`,
+                        color: "var(--foreground)",
+                        borderRadius: cfg.cardRounded,
+                      }}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <span
+                      className="w-6 text-center text-sm font-black"
+                      style={{ color: "var(--foreground)" }}
+                    >
+                      {l.qty}
+                    </span>
+                    <button
+                      onClick={() => cartSet(store.id, l.productId, l.qty + 1, l.variationId)}
+                      className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
+                      style={{
+                        border: `1px solid var(--border)`,
+                        color: "var(--foreground)",
+                        borderRadius: cfg.cardRounded,
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => cartRemove(store.id, l.productId, l.variationId)}
+                    className="h-7 w-7 flex items-center justify-center transition hover:opacity-60"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           {/* Footer */}
