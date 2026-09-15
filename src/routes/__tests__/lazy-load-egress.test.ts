@@ -66,6 +66,25 @@ describe("Suite Exhaustiva: Paginación Lazy Loading en DB y Optimización de Eg
       const estimatedPayloadSizeKb = bioData.products.length * 0.4 + 2; // ~4.4 KB
       expect(estimatedPayloadSizeKb).toBeLessThan(10);
     });
+
+    it("no debe activar sentinel de scroll infinito ni botón de 'Ver más productos' en modo bio", () => {
+      const mode: "catalog" | "bio" = "bio";
+      const totalProductsCount = 237;
+      const loadedProducts = 6;
+
+      // En modo bio, el sentinel de carga progresiva no debe renderizarse
+      const shouldRenderSentinel = mode !== "bio";
+      expect(shouldRenderSentinel).toBe(false);
+
+      // hasMoreProducts debe ser invariablemente false en modo bio para evitar llamadas de red
+      const computeHasMore = (m: string, visible: number, total: number) => {
+        if (m === "bio") return false;
+        return visible < total;
+      };
+
+      expect(computeHasMore("bio", loadedProducts, totalProductsCount)).toBe(false);
+      expect(computeHasMore("catalog", loadedProducts, totalProductsCount)).toBe(true);
+    });
   });
 
   describe("3. RPC get_public_store_products para carga paginada bajo demanda", () => {

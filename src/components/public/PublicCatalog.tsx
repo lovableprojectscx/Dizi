@@ -1917,6 +1917,7 @@ export function PublicCatalog({
   const expectedCategoryCount = activeCategoryObj?.productCount;
 
   const hasMoreProducts = useMemo(() => {
+    if (mode === "bio") return false;
     if (visibleLimit < rawFiltered.length) return true;
     if (isMockup) return false;
 
@@ -1935,6 +1936,7 @@ export function PublicCatalog({
 
     return allProducts.length < totalProductsCount;
   }, [
+    mode,
     visibleLimit,
     rawFiltered.length,
     isMockup,
@@ -1947,6 +1949,7 @@ export function PublicCatalog({
   ]);
 
   const loadMoreProducts = useCallback(async () => {
+    if (mode === "bio") return;
     // 1. Si todavía hay productos en el arreglo filtrado en memoria
     if (visibleLimit < rawFiltered.length) {
       setVisibleLimit((prev) => prev + 12);
@@ -1999,6 +2002,7 @@ export function PublicCatalog({
       }
     }
   }, [
+    mode,
     visibleLimit,
     rawFiltered.length,
     allProducts.length,
@@ -7335,13 +7339,15 @@ export function PublicCatalog({
               </div>
             )}
 
-            {/* Sentinel de Carga Progresiva (Infinite Scroll) */}
-            <InfiniteScrollSentinel
-              hasMore={hasMoreProducts}
-              onLoadMore={loadMoreProducts}
-              currentCount={filtered.length}
-              totalCount={Math.max(rawFiltered.length, totalProductsCount)}
-            />
+            {/* Sentinel de Carga Progresiva (Infinite Scroll) - Exclusivo del catálogo general */}
+            {mode !== "bio" && (
+              <InfiniteScrollSentinel
+                hasMore={hasMoreProducts}
+                onLoadMore={loadMoreProducts}
+                currentCount={filtered.length}
+                totalCount={Math.max(rawFiltered.length, totalProductsCount)}
+              />
+            )}
 
             {mode === "bio" && (
               <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
