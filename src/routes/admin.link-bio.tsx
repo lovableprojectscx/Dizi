@@ -338,8 +338,36 @@ function PhonePreview({
   const hasLocation = !!(showMap !== false && locationAddress.trim() && locationLat && locationLng);
 
   const allLinks = [
-    ...(hasWhatsApp ? [{ label: "WhatsApp", url: "", icon: "whatsapp", isHardcoded: true }] : []),
-    ...(hasLocation ? [{ label: "Ubicación", url: "", icon: "location", isHardcoded: true }] : []),
+    ...(hasWhatsApp
+      ? [
+          {
+            label: "WhatsApp",
+            url: "",
+            icon: "whatsapp",
+            char: "W",
+            bgColor: undefined,
+            textColor: undefined,
+            thumbnailUrl: undefined,
+            iconName: undefined,
+            isHardcoded: true,
+          },
+        ]
+      : []),
+    ...(hasLocation
+      ? [
+          {
+            label: "Ubicación",
+            url: "",
+            icon: "location",
+            char: "U",
+            bgColor: undefined,
+            textColor: undefined,
+            thumbnailUrl: undefined,
+            iconName: undefined,
+            isHardcoded: true,
+          },
+        ]
+      : []),
     ...customLinks.map((l) => {
       const { platform, char } = getMockupIconAndBrand(l);
       return {
@@ -696,6 +724,7 @@ function LinkBioPage() {
   const [loadedStoreId, setLoadedStoreId] = useState<string | null>(null);
 
   const [copiedBio, setCopiedBio] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [suggestions, setSuggestions] = useState<
     { display_name: string; lat: string; lon: string }[]
