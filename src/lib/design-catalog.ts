@@ -1,21 +1,50 @@
+/**
+ * @file design-catalog.ts
+ * @description Catálogo de estructuras y plantillas de diseño visual para las tiendas de DIZI.
+ * Define los modelos arquitectónicos (Grilla, Overlay, Hero, Magazine, Tiles, Spotlight, Arch, etc.),
+ * sus paletas de color y estilos tipográficos predeterminados, módulos compatibles y función
+ * de resolución de modelo en tiempo de ejecución (`resolveRenderModel`).
+ */
+
+/**
+ * Valores estéticos predeterminados asignados a una estructura de diseño.
+ */
 export interface StructureThemeDefaults {
+  /** Color primario de marca */
   brandColor?: string;
+  /** Color de fondo del catálogo */
   bgColor?: string;
+  /** Color principal del texto */
   textColor?: string;
+  /** Color de fondo de las tarjetas de producto */
   cardBg?: string;
+  /** Color de acento para botones y badges */
   accentColor?: string;
+  /** Radio de curvatura de esquinas */
   borderRadius?: string;
+  /** Forma geométrica de las fotos de producto */
   imgShape?: "square" | "rounded" | "circle";
+  /** Activa modo oscuro por defecto */
   isDark?: boolean;
+  /** Tipografía predeterminada */
   typography?: "sans" | "serif" | "rounded" | "modern";
+  /** Estilo de las tarjetas de producto */
   cardStyle?: "standard" | "flat" | "shadow" | "curved";
 }
 
+/**
+ * Definición completa de una plantilla o estructura de diseño disponible en DIZI.
+ */
 export interface StructureDef {
+  /** Identificador único de la plantilla */
   id: string;
+  /** Nombre comercial visible para el comerciante */
   name: string;
+  /** Descripción del estilo y público objetivo */
   description: string;
+  /** Imagen de previsualización para el catálogo de plantillas */
   previewImage?: string;
+  /** Tipo de distribución geométrica aplicada en la UI */
   layout:
     | "grid"
     | "overlay"
@@ -32,9 +61,13 @@ export interface StructureDef {
     | "bite"
     | "nature"
     | "lookbook";
+  /** Paleta y estilos por defecto */
   defaultTheme: StructureThemeDefaults;
+  /** Módulos y funcionalidades compatibles con esta estructura */
   supportedModules: string[];
+  /** Rubro o nicho comercial sugerido */
   suggestedNiche?: string;
+  /** Soporta iconos personalizados en categorías */
   supportsCategoryIcons?: boolean;
 }
 

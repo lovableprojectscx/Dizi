@@ -1,3 +1,11 @@
+/**
+ * @file admin.tsx
+ * @description Layout principal y guardia de autenticación para el panel de administración (/admin/*).
+ * Valida la sesión activa del usuario con Supabase Auth antes de cargar cualquier vista hija,
+ * provee la estructura visual con sidebar colapsable, barra inferior móvil, soporte para modo
+ * de suplantación (impersonation) de super-admin y el asistente de bienvenida (OnboardingWizard).
+ */
+
 import { useState, useEffect } from "react";
 import {
   createFileRoute,
@@ -39,6 +47,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { OnboardingWizard } from "@/components/admin/OnboardingWizard";
 
+/**
+ * Ruta raíz del panel `/admin` con guardia de autenticación.
+ * Redirige a `/login` si no existe sesión válida en Supabase ni en almacenamiento local.
+ */
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
     try {
@@ -64,6 +76,9 @@ export const Route = createFileRoute("/admin")({
   component: AdminLayout,
 });
 
+/**
+ * Componente Layout contenedor que envuelve todas las páginas del panel de administración.
+ */
 function AdminLayout() {
   const storeId = useApp((s) => s.currentStoreId);
   const stores = useApp((s) => s.stores);

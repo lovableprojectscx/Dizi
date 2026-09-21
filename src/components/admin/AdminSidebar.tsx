@@ -1,3 +1,11 @@
+/**
+ * @file AdminSidebar.tsx
+ * @description Barra de navegación lateral colapsable para el panel de administración (/admin/*).
+ * Organiza las rutas en tres grupos lógicos: "Mi tienda" (Inicio, Productos),
+ * "Canales y Apariencia" (Link en Bio, Diseño) y "Configuración" (Ajustes, Reclamaciones, Plan, Ayuda).
+ * Incluye acceso rápido para ver la tienda en vivo y botón de cierre de sesión.
+ */
+
 import { Link, useRouterState } from "@tanstack/react-router";
 import { signOut } from "@/lib/auth";
 import { useApp } from "@/lib/store";
@@ -25,6 +33,9 @@ import {
   LifeBuoy,
 } from "lucide-react";
 
+/**
+ * Componente de barra lateral interactiva del panel de administración.
+ */
 export function AdminSidebar() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const storeId = useApp((s) => s.currentStoreId);

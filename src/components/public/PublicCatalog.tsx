@@ -1,3 +1,15 @@
+/**
+ * @file PublicCatalog.tsx
+ * @description Componente maestro de la experiencia pública de compra en DIZI.
+ * Soporta dos modos operativos:
+ * 1. `mode="catalog"`: Catálogo digital completo con buscador, selector de categorías,
+ *    filtro de precios, tarjetas de producto con diferentes layouts (minimalista, portada,
+ *    editorial, etc.), modal de producto con selector de variantes, carrito de compras flotante
+ *    y generador automático del pedido para WhatsApp.
+ * 2. `mode="bio"`: Página Link-in-Bio con botones sociales interactivos, mapa Leaflet
+ *    de ubicación física y vitrina de productos destacados.
+ */
+
 import { resolveRenderModel } from "@/lib/design-catalog";
 import { supabase } from "@/lib/supabase";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
@@ -2025,15 +2037,16 @@ export function PublicCatalog({
       let isMounted = true;
       setIsCategoryFetching(true);
 
-      supabase
-        .rpc("get_public_store_products", {
+      Promise.resolve(
+        supabase.rpc("get_public_store_products", {
           p_store_slug: store.slug,
           p_page_offset: 0,
           p_page_limit: 24,
           p_category_id: activeCat,
           p_search_query: null,
-        })
-        .then(({ data, error }) => {
+        }),
+      )
+        .then(({ data, error }: any) => {
           if (!isMounted) return;
           if (!error && Array.isArray(data) && data.length > 0) {
             const newBatch: Product[] = data.map((p: any) => ({
@@ -2059,7 +2072,7 @@ export function PublicCatalog({
             });
           }
         })
-        .catch((err) => console.error("[categoryFetch] Error fetching category products:", err))
+        .catch((err: any) => console.error("[categoryFetch] Error fetching category products:", err))
         .finally(() => {
           if (isMounted) setIsCategoryFetching(false);
         });
@@ -2784,7 +2797,7 @@ export function PublicCatalog({
                 return (
                   store.quickLinks &&
                   store.quickLinks.map((link, idx) => {
-                    const labelText = link.label || link.title || "";
+                    const labelText = link.label || (link as any).title || "";
                     const linkUrl = link.url || "";
                     const labelLower = labelText.toLowerCase();
                     const isOfficialSocial = [

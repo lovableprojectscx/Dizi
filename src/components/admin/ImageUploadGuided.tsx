@@ -1,3 +1,11 @@
+/**
+ * @file ImageUploadGuided.tsx
+ * @description Componente guiado para la subida, compresión y validación de proporciones de imágenes.
+ * Analiza el aspect ratio de la fotografía contra las dimensiones recomendadas de la plantilla
+ * activa (`ImageSpec`), advierte si se recortarán los laterales o superior/inferior, y procesa
+ * la compresión a WebP en el navegador mediante la Canvas API antes de emitir el data URL.
+ */
+
 import { useState, useRef, useCallback } from "react";
 import { ImageIcon, CheckCircle2, AlertTriangle, Info, UploadCloud, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,15 +16,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+/**
+ * Propiedades del componente de subida guiada de imágenes.
+ */
 interface ImageUploadGuidedProps {
+  /** Valor actual de la imagen (URL o Data URL) */
   value: string;
+  /** Callback para actualizar la imagen procesada */
   onChange: (v: string) => void;
+  /** Especificación de proporciones de la plantilla activa */
   spec: ImageSpec;
+  /** Etiqueta descriptiva del campo */
   label?: string;
 }
 
 type RatioStatus = "ok" | "warning" | null;
 
+/**
+ * Componente de carga asistida de fotos con arrastrar y soltar (drag-and-drop),
+ * importación por URL externa y conversión automática a WebP.
+ */
 export function ImageUploadGuided({
   value,
   onChange,

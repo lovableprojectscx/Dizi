@@ -1,3 +1,13 @@
+/**
+ * @file super.referidos.tsx
+ * @description Módulo de administración del programa de referidos y afiliados para Dizi.
+ * Proporciona:
+ * - Supervisión del árbol de referidos entre comercios de la plataforma.
+ * - Registro de métricas de afiliación: total de tiendas invitadas y activas por embajador.
+ * - Modal administrativo para otorgar recompensas manuales (meses adicionales de suscripción gratuita).
+ * - Extensión directa de vigencia de planes (`planExpiresAt`) como incentivo de crecimiento orgánico.
+ */
+
 import * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
@@ -38,6 +48,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+/**
+ * Definición de la ruta `/super/referidos` en TanStack Router.
+ */
 export const Route = createFileRoute("/super/referidos")({
   component: ReferidosPage,
 });
@@ -85,6 +98,12 @@ function PlanBadge({ plan }: { plan: PlanId }) {
   }
 }
 
+/**
+ * Componente principal del módulo de referidos.
+ * Computa la red de tiendas referidas mediante el campo `referredBy`,
+ * permitiendo auditar tiendas invitadas, tiendas anfitrionas y extender
+ * planes de manera bonificada.
+ */
 function ReferidosPage() {
   const stores = useApp((s) => s.stores);
   const updateStore = useApp((s) => s.updateStore);

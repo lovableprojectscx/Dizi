@@ -16,6 +16,13 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+/**
+ * @file admin.reclamaciones.tsx
+ * @description Módulo de gestión del Libro de Reclamaciones virtual (/admin/reclamaciones).
+ * Permite al comercio revisar, responder y archivar reclamos y quejas registrados por los consumidores,
+ * emitiendo respuestas formales dentro de los plazos legales establecidos por INDECOPI (Perú).
+ */
+
 export const Route = createFileRoute("/admin/reclamaciones")({
   component: ReclamacionesPage,
 });

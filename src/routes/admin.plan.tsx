@@ -8,6 +8,13 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+/**
+ * @file admin.plan.tsx
+ * @description Módulo de visualización y contratación de planes de suscripción (/admin/plan).
+ * Muestra el plan actual de la tienda, días de vigencia restantes, cálculo de productos utilizados
+ * frente al límite contratado, tabla comparativa de beneficios y enlaces de contacto/pago.
+ */
+
 export const Route = createFileRoute("/admin/plan")({
   component: PlanPage,
 });

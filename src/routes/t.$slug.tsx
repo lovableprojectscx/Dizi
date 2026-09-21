@@ -1,10 +1,21 @@
+/**
+ * @file t.$slug.tsx
+ * @description Ruta pública del Catálogo Digital de una tienda (/t/:slug) en TanStack Router.
+ * Gestiona la carga de datos con verificación de caché inteligente (Zero-Egress),
+ * configuración dinámica de meta tags para SEO / Open Graph y renderizado del catálogo interactivo.
+ */
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
 
+/**
+ * Definición de la ruta de TanStack Router para `/t/$slug`.
+ * Configura tiempos de retención en caché (`staleTime: 5 min`, `gcTime: 15 min`),
+ * cargador de datos (`loader`), generador de metadatos SEO (`head`) y pantalla de error.
+ */
 export const Route = createFileRoute("/t/$slug")({
   staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
   gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
@@ -12,10 +23,10 @@ export const Route = createFileRoute("/t/$slug")({
     const store = await fetchStoreBySlug(params.slug);
     return { store };
   },
-  head: ({ params, loaderData, search }) => {
+  head: ({ params, loaderData, search }: any) => {
     const store = loaderData?.store;
     const targetProductId = (search as any)?.p || (search as any)?.producto;
-    const product = store?.products?.find((p) => p.id === targetProductId);
+    const product = store?.products?.find((p: any) => p.id === targetProductId);
 
     const getValidImageUrl = (url?: string | null) => {
       if (!url || typeof url !== "string" || !url.trim()) return null;
@@ -69,8 +80,19 @@ export const Route = createFileRoute("/t/$slug")({
   errorComponent: StoreErrorComponent,
 });
 
-// Carga la tienda directamente desde Supabase por slug (para visitantes públicos
-// que no tienen el store de Zustand cargado todavía).
+/**
+ * Carga los datos de una tienda por su slug desde la base de datos de Supabase.
+ *
+ * Implementa una estrategia de ahorro de transferencia (Zero-Egress):
+ * 1. Revisa si existe una copia previa en `localStorage` o `sessionStorage`.
+ * 2. Si existe, realiza una micro-consulta de solo `updated_at` a Supabase (~100 bytes).
+ * 3. Si la fecha coincide, reutiliza inmediatamente los datos en caché sin descargar el catálogo completo.
+ * 4. Si la fecha difiere o no hay caché, ejecuta el RPC `get_public_store` con un timeout de 18 segundos.
+ *
+ * @param slug Identificador URL único de la tienda.
+ * @param pageLimit Cantidad inicial de productos a cargar (por defecto 24).
+ * @returns Promesa con el objeto `Store` o null si no se encuentra.
+ */
 async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<Store | null> {
   // 1. Verificación en caché local inteligente por Timestamp (Zero-Egress para visitas recurrentes)
   if (typeof window !== "undefined") {
@@ -80,7 +102,6 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
         sessionStorage.getItem(`dizi_store_cache_${slug}`);
       if (cachedRaw) {
         const cached = JSON.parse(cachedRaw);
-        // Si la tienda ya está en caché local, hacer una micro-consulta ultraligera de solo updated_at (~100 bytes)
         if (cached.store && cached.updated_at) {
           const { data: storeMeta, error: metaErr } = await supabase
             .from("stores")
@@ -89,7 +110,6 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
             .maybeSingle();
 
           if (!metaErr && storeMeta && storeMeta.updated_at === cached.updated_at) {
-            // La tienda no ha sufrido cambios: renovar el TTL local y devolver la caché existente
             const refreshedCache = {
               ...cached,
               verifiedAt: Date.now(),
@@ -121,7 +141,6 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
-      // Contingencia: si la red falla pero hay caché previa en el dispositivo, usarla
       if (typeof window !== "undefined") {
         try {
           const cachedRaw = localStorage.getItem(`dizi_store_cache_${slug}`);
@@ -135,7 +154,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
     }
     if (!data) return null;
 
-    // Fallback: If product images are missing due to RPC bug, fetch them directly
+    // Fallback: Si las imágenes de producto no llegaron por alguna incompatibilidad en RPC, cargarlas directamente
     let productsWithImages = data.products || [];
     if (
       productsWithImages.length > 0 &&
@@ -241,7 +260,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
           variations: Array.isArray(p.variations) ? p.variations : [],
           createdAt: p.created_at,
         }))
-        .sort((a, b) => {
+        .sort((a: any, b: any) => {
           if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
             return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
           }
@@ -251,12 +270,11 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
         }),
     };
 
-    // Guardar en localStorage y sessionStorage con timestamp para visitas recurrentes Zero-Egress
     if (typeof window !== "undefined") {
       try {
         const cachePayload = {
           store: storeResult,
-          updated_at: data.updated_at || storeResult.updatedAt || new Date().toISOString(),
+          updated_at: data.updated_at || (storeResult as any).updatedAt || new Date().toISOString(),
           ts: Date.now(),
           verifiedAt: Date.now(),
         };
@@ -271,6 +289,10 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
   return Promise.race([fetchPromise, timeoutPromise]);
 }
 
+/**
+ * Componente principal renderizado para la ruta `/t/$slug`.
+ * Valida si la tienda existe y se encuentra activa antes de renderizar `PublicCatalog`.
+ */
 function StorePublic() {
   const { slug } = Route.useParams();
   const { store } = Route.useLoaderData();

@@ -1,3 +1,11 @@
+/**
+ * @file store.ts
+ * @description Gestión de estado global con Zustand para la plataforma DIZI.
+ * Controla la carga y persistencia local de tiendas, catálogo de productos, categorías,
+ * estado de suscripciones, impersonación de super-admin y carrito de compras.
+ * Sincroniza de forma reactiva y optimista con Supabase (PostgreSQL, Storage y RPC).
+ */
+
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -15,6 +23,13 @@ import { toast } from "sonner";
 import { hexLuminance } from "./utils";
 import { getUserRole } from "./auth";
 
+/**
+ * Invalida el cache público almacenado en `localStorage` y `sessionStorage` para una tienda.
+ * Se invoca inmediatamente tras modificar la configuración de la tienda, productos o categorías
+ * para que los visitantes vean los cambios al instante sin esperar la expiración natural.
+ *
+ * @param slug Identificador único (slug) de la tienda.
+ */
 export function invalidateStorePublicCache(slug?: string | null) {
   if (typeof window === "undefined" || !slug) return;
   try {
@@ -27,10 +42,23 @@ export function invalidateStorePublicCache(slug?: string | null) {
   }
 }
 
+/**
+ * Transforma un registro crudo de la tabla `stores` de PostgreSQL (snake_case)
+ * al modelo tipado `Store` en TypeScript (camelCase).
+ *
+ * Incluye sanitización de reglas de negocio:
+ * 1. Detección y normalización de modo oscuro según luminancia del color de fondo (`bg_color`).
+ * 2. Limpieza de colores de texto o tarjetas incongruentes (ej: texto oscuro en fondo negro).
+ * 3. Normalización de cadenas de banners múltiples separadas por `|||`.
+ * 4. Mapeo y ordenamiento cronológico y por `sortOrder` de productos.
+ *
+ * @param row Fila devuelta por la consulta de Supabase.
+ * @returns Objeto `Store` normalizado y sanitizado.
+ */
 const mapStoreFromDB = (row: any): Store => {
   const isDarkVal = row.is_dark ?? (row.bg_color ? hexLuminance(row.bg_color) < 0.35 : false);
 
-  // Rule 3: Sanitizar colores desalineados guardados anteriormente en la BD
+  // Sanitizar colores desalineados guardados anteriormente en la BD
   let cleanTextColor = row.text_color ?? null;
   if (cleanTextColor) {
     const lumText = hexLuminance(cleanTextColor);
@@ -87,111 +115,136 @@ const mapStoreFromDB = (row: any): Store => {
     isDark: isDarkVal,
     ownerId: row.owner_id,
     active: row.active,
-  isPublished: row.is_published,
-  createdAt: row.created_at,
-  whatsappClicks: row.whatsapp_clicks || 0,
-  views: row.views || 0,
-  egressBytes: Number(row.egress_bytes || 0),
-  priceFilterEnabled: row.price_filter_enabled ?? false,
-  libroReclamacionesActivo: row.libro_reclamaciones_activo ?? false,
-  empresaRuc: row.empresa_ruc ?? undefined,
-  empresaRazonSocial: row.empresa_razon_social ?? undefined,
-  empresaDireccion: row.empresa_direccion ?? undefined,
-  planExpiresAt: row.plan_expires_at ?? undefined,
-  subscriptionStatus: (row.subscription_status ?? "trial") as SubscriptionStatus,
-  cancelledAt: row.cancelled_at ?? undefined,
-  cancelReason: row.cancel_reason ?? undefined,
-  planDurationMonths: row.plan_duration_months ?? undefined,
-  customPrice:
-    row.custom_price !== null && row.custom_price !== undefined
-      ? Number(row.custom_price)
-      : undefined,
-  bioDescription: row.bio_description ?? undefined,
-  locationLat: row.location_lat ? Number(row.location_lat) : undefined,
-  locationLng: row.location_lng ? Number(row.location_lng) : undefined,
-  locationAddress: row.location_address ?? undefined,
-  showMap: row.show_map ?? true,
-  showDiziBranding: row.show_dizi_branding ?? true,
-  referredBy: row.referred_by ?? null,
-  referralRewarded: row.referral_rewarded ?? false,
-  quickLinks: row.quick_links ?? [],
-  bioLinksEnabled: row.bio_links_enabled ?? false,
-  bioLogo: row.bio_logo ?? undefined,
-  bioBanner: row.bio_banner ?? undefined,
-  bioTheme: row.bio_theme ?? "default",
-  bioTypography: row.bio_typography ?? "sans",
-  bioShowCatalogButton: row.bio_show_catalog_button ?? null,
-  bioButtonStyle:
-    row.bio_button_style === "rounded-full" ? "pill-solid" : (row.bio_button_style ?? "pill-solid"),
-  bioButtonColor: row.bio_button_color ?? undefined,
-  bioButtonTextColor: row.bio_button_text_color ?? undefined,
-  bioBgImage: row.bio_bg_image ?? undefined,
-  bioBgColor: row.bio_bg_color ?? undefined,
-  bannerTagline: row.banner_tagline,
-  bannerBottomTag: row.banner_bottom_tag,
-  promoBarEnabled: row.promo_bar_enabled ?? false,
-  promoBarText: row.promo_bar_text ?? "",
-  promoBarActionType: row.promo_bar_action_type ?? "none",
-  promoBarActionValue: row.promo_bar_action_value ?? "",
-  promoBarBgColor: row.promo_bar_bg_color ?? null,
-  promoBarTextColor: row.promo_bar_text_color ?? null,
-  promoBarIsMarquee: row.promo_bar_is_marquee ?? false,
-  onboardingCompleted: row.onboarding_completed ?? false,
-  categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
-  products: (row.products || [])
-    .map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      price: p.price !== null && p.price !== undefined ? Number(p.price) : null,
-      categoryId: p.category_id,
-      image: p.image,
-      description: p.description,
-      isOnSale: p.is_on_sale,
-      originalPrice:
-        p.original_price !== null && p.original_price !== undefined
-          ? Number(p.original_price)
-          : null,
-      visible: p.visible,
-      isSample: p.is_sample,
-      sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
-      tags: Array.isArray(p.tags) ? p.tags : [],
-      variations: Array.isArray(p.variations) ? p.variations : [],
-      createdAt: p.created_at,
-    }))
-    .sort((a: any, b: any) => {
-      if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
-        return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
-      }
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      const valA = isNaN(dateA) ? 0 : dateA;
-      const valB = isNaN(dateB) ? 0 : dateB;
-      return valB - valA; // newest first
-    }),
+    isPublished: row.is_published,
+    createdAt: row.created_at,
+    whatsappClicks: row.whatsapp_clicks || 0,
+    views: row.views || 0,
+    egressBytes: Number(row.egress_bytes || 0),
+    priceFilterEnabled: row.price_filter_enabled ?? false,
+    libroReclamacionesActivo: row.libro_reclamaciones_activo ?? false,
+    empresaRuc: row.empresa_ruc ?? undefined,
+    empresaRazonSocial: row.empresa_razon_social ?? undefined,
+    empresaDireccion: row.empresa_direccion ?? undefined,
+    planExpiresAt: row.plan_expires_at ?? undefined,
+    subscriptionStatus: (row.subscription_status ?? "trial") as SubscriptionStatus,
+    cancelledAt: row.cancelled_at ?? undefined,
+    cancelReason: row.cancel_reason ?? undefined,
+    planDurationMonths: row.plan_duration_months ?? undefined,
+    customPrice:
+      row.custom_price !== null && row.custom_price !== undefined
+        ? Number(row.custom_price)
+        : undefined,
+    bioDescription: row.bio_description ?? undefined,
+    locationLat: row.location_lat ? Number(row.location_lat) : undefined,
+    locationLng: row.location_lng ? Number(row.location_lng) : undefined,
+    locationAddress: row.location_address ?? undefined,
+    showMap: row.show_map ?? true,
+    showDiziBranding: row.show_dizi_branding ?? true,
+    referredBy: row.referred_by ?? null,
+    referralRewarded: row.referral_rewarded ?? false,
+    quickLinks: row.quick_links ?? [],
+    bioLinksEnabled: row.bio_links_enabled ?? false,
+    bioLogo: row.bio_logo ?? undefined,
+    bioBanner: row.bio_banner ?? undefined,
+    bioTheme: row.bio_theme ?? "default",
+    bioTypography: row.bio_typography ?? "sans",
+    bioShowCatalogButton: row.bio_show_catalog_button ?? null,
+    bioButtonStyle:
+      row.bio_button_style === "rounded-full" ? "pill-solid" : (row.bio_button_style ?? "pill-solid"),
+    bioButtonColor: row.bio_button_color ?? undefined,
+    bioButtonTextColor: row.bio_button_text_color ?? undefined,
+    bioBgImage: row.bio_bg_image ?? undefined,
+    bioBgColor: row.bio_bg_color ?? undefined,
+    bannerTagline: row.banner_tagline,
+    bannerBottomTag: row.banner_bottom_tag,
+    promoBarEnabled: row.promo_bar_enabled ?? false,
+    promoBarText: row.promo_bar_text ?? "",
+    promoBarActionType: row.promo_bar_action_type ?? "none",
+    promoBarActionValue: row.promo_bar_action_value ?? "",
+    promoBarBgColor: row.promo_bar_bg_color ?? null,
+    promoBarTextColor: row.promo_bar_text_color ?? null,
+    promoBarIsMarquee: row.promo_bar_is_marquee ?? false,
+    onboardingCompleted: row.onboarding_completed ?? false,
+    categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
+    products: (row.products || [])
+      .map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price !== null && p.price !== undefined ? Number(p.price) : null,
+        categoryId: p.category_id,
+        image: p.image,
+        description: p.description,
+        isOnSale: p.is_on_sale,
+        originalPrice:
+          p.original_price !== null && p.original_price !== undefined
+            ? Number(p.original_price)
+            : null,
+        visible: p.visible,
+        isSample: p.is_sample,
+        sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+        tags: Array.isArray(p.tags) ? p.tags : [],
+        variations: Array.isArray(p.variations) ? p.variations : [],
+        createdAt: p.created_at,
+      }))
+      .sort((a: any, b: any) => {
+        if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
+          return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+        }
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const valA = isNaN(dateA) ? 0 : dateA;
+        const valB = isNaN(dateB) ? 0 : dateB;
+        return valB - valA; // newest first
+      }),
   };
 };
 
+/**
+ * Definición del estado y las acciones del store principal `useApp`.
+ */
 interface AppState {
+  /** Lista de tiendas accesibles para el usuario actual */
   stores: Store[];
+  /** ID de la tienda seleccionada actualmente en el panel de administración */
   currentStoreId: string | null;
+  /** Identificador de sesión en modo impersonación por el super-admin */
   impersonatedBy: string | null;
+  /** Mensaje de error en la última sincronización con Supabase (si ocurrió) */
   fetchError: string | null;
+  /** Promociones activas de planes comerciales */
   promotions: PlanPromotion[];
+  /** Timestamp de la última sincronización exitosa para control de caché */
   lastFetched: number | null;
+
+  /** Carga las tiendas del usuario desde Supabase con caché de 5 minutos */
   fetchData: (force?: boolean) => Promise<void>;
+  /** Cambia la tienda activa en el panel */
   setCurrentStore: (id: string | null) => void;
+  /** Actualiza la configuración de una tienda, subiendo imágenes a Supabase Storage si son base64 */
   updateStore: (id: string, patch: Partial<Store>) => Promise<void>;
+  /** Registra una nueva tienda llamando al RPC `initialize_store` */
   addStore: (store: Store) => void;
+  /** Crea un nuevo token de invitación de plan en la tabla `invites` */
   addInvite: (invite: Omit<Invite, "createdAt">) => Promise<void>;
+  /** Canjea una invitación llamando al RPC `activate_subscription_with_invite` */
   markInviteUsed: (token: string, storeId?: string) => Promise<void>;
+  /** Cancela la suscripción de una tienda y degrada a plan semilla */
   cancelSubscription: (storeId: string, reason?: string) => Promise<void>;
+  /** Extiende la vigencia del plan de una tienda en N meses adicionales */
   extendSubscription: (storeId: string, monthsToAdd: number) => Promise<void>;
+  /** Inserta o actualiza un producto con generación de miniatura paralela */
   upsertProduct: (storeId: string, product: Product) => void;
+  /** Elimina un producto y limpia sus imágenes en Supabase Storage */
   deleteProduct: (storeId: string, productId: string) => void;
+  /** Alterna la visibilidad pública de un producto */
   toggleProductVisible: (storeId: string, productId: string) => void;
+  /** Intercambia el orden visual de dos productos con debounce de sincronización */
   swapProductsOrder: (storeId: string, index1: number, index2: number) => Promise<void>;
+  /** Inserta o renombra una categoría de la tienda */
   upsertCategory: (storeId: string, cat: Category) => void;
+  /** Elimina una categoría de la tienda */
   deleteCategory: (storeId: string, catId: string) => void;
+  /** Modifica el plan de una tienda mediante el RPC `activate_subscription` */
   setPlan: (
     storeId: string,
     plan: PlanId,
@@ -200,13 +253,21 @@ interface AppState {
     keepExpiration?: boolean,
     manualExpiration?: string,
   ) => Promise<void>;
+  /** Concede un periodo de prueba gratuito a una tienda */
   setTrialPlan: (storeId: string, plan: PlanId, durationDays?: number) => Promise<void>;
+  /** Alterna el estado activo/desactivado de la tienda */
   toggleStoreActive: (storeId: string) => void;
+  /** Inicia la sesión en modo suplantación (impersonation) para soporte técnico */
   startImpersonation: (storeId: string) => void;
+  /** Finaliza el modo suplantación y restaura la vista regular */
   stopImpersonation: () => void;
+  /** Incrementa el contador de clics hacia WhatsApp de la tienda */
   incWhatsappClicks: (storeId: string) => void;
+  /** Incrementa el contador de visitas recibidas en el catálogo */
   incViews: (storeId: string) => void;
+  /** Actualiza los precios promocionales de un plan comercial */
   updatePlanPromotion: (planId: PlanId, patch: Partial<PlanPromotion>) => Promise<void>;
+  /** Elimina definitivamente una tienda y sus datos en cascada */
   deleteStore: (storeId: string) => Promise<void>;
 }
 
@@ -1419,26 +1480,50 @@ export const useApp = create<AppState>()(
   ),
 );
 
+/**
+ * Representa un artículo añadido al carrito de compras de una tienda.
+ */
 export interface CartItem {
+  /** ID del producto */
   productId: string;
+  /** Cantidad seleccionada */
   qty: number;
+  /** ID de la variación elegida (si aplica) */
   variationId?: string | null;
+  /** Nombre descriptivo de la variación (ej: "Talla M / Azul") */
   variationName?: string | null;
+  /** Precio unitario específico de la variación */
   variationPrice?: number | null;
+  /** Imagen específica de la variación */
   variationImage?: string | null;
 }
+
+/**
+ * Estado y acciones del store de carritos de compra `useCart`.
+ * Soporta carritos independientes por cada tienda (`storeId`).
+ */
 export interface CartState {
+  /** Mapa de carritos organizados por ID de tienda: Record<storeId, CartItem[]> */
   carts: Record<string, CartItem[]>;
+  /** Agrega un producto o variante al carrito de la tienda especificada */
   add: (
     storeId: string,
     productId: string,
     variation?: { id?: string | null; name?: string | null; price?: number | null; image?: string | null } | null
   ) => void;
+  /** Actualiza la cantidad de un artículo en el carrito */
   setQty: (storeId: string, productId: string, qty: number, variationId?: string | null) => void;
+  /** Elimina un producto o variante del carrito */
   remove: (storeId: string, productId: string, variationId?: string | null) => void;
+  /** Vacía completamente el carrito de una tienda */
   clear: (storeId: string) => void;
 }
 
+/**
+ * Hook de Zustand para la gestión de carritos de compra de los clientes.
+ * Persiste los artículos en `localStorage` bajo la clave `dizi-carts-v1`
+ * para no perder el pedido si el usuario recarga la página o regresa más tarde.
+ */
 export const useCart = create<CartState>()(
   persist(
     (set) => ({

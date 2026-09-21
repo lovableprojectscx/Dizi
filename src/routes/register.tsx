@@ -1,3 +1,14 @@
+/**
+ * @file register.tsx
+ * @description Flujo de registro y onboarding guiado para nuevos comercios en Dizi.
+ * Incluye:
+ * - Detección de sesión activa en `beforeLoad` con redirección automática al panel correspondiente.
+ * - Validación en tiempo real de disponibilidad de slug (`/t/mi-negocio`).
+ * - Soporte para canje de tokens de invitación (`?token=...`) que desbloquean planes Pro/Emprendedor de inmediato.
+ * - Selección visual interactiva de plantillas de diseño y rubro con vistas previas dinámicas (`ModelLayoutPreview`).
+ * - Creación simultánea de cuenta en Supabase Auth y registro en la tabla `stores` con productos y categorías iniciales.
+ */
+
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X } from "lucide-react";
@@ -7,6 +18,10 @@ import { supabase } from "@/lib/supabase";
 import type { PlanId } from "@/lib/types";
 import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 
+/**
+ * Definición de la ruta `/register` en TanStack Router.
+ * Redirige usuarios ya autenticados a su consola de administración.
+ */
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
     try {

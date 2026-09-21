@@ -1,15 +1,33 @@
+/**
+ * @file ImageZoomModal.tsx
+ * @description Visor modal interactivo de imágenes a pantalla completa con soporte de gestos táctiles.
+ * Incluye zoom por pellizco (pinch-to-zoom), doble toque para ampliar a 2.5x, arrastre panorámico (pan),
+ * rueda de ratón para escritorio y deslizamiento vertical hacia abajo (swipe-down) para cerrar.
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import { X, ZoomIn, ZoomOut, RotateCcw, ArrowDown } from "lucide-react";
 import { getOptimizedImageUrl } from "@/lib/image-utils";
 
+/**
+ * Propiedades del visor modal de zoom de imagen.
+ */
 interface ImageZoomModalProps {
+  /** Determina si el modal se encuentra abierto */
   isOpen: boolean;
+  /** Función callback para cerrar el modal */
   onClose: () => void;
+  /** URL de la imagen a visualizar (se solicitará versión HD de hasta 1600px) */
   src: string;
+  /** Texto alternativo accesible para la imagen */
   alt?: string;
+  /** Título descriptivo mostrado en la barra superior */
   title?: string;
 }
 
+/**
+ * Componente modal para ampliación e inspección detallada de imágenes de producto o flyers.
+ */
 export function ImageZoomModal({ isOpen, onClose, src, alt, title }: ImageZoomModalProps) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });

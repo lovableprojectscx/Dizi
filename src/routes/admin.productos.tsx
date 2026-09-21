@@ -105,6 +105,17 @@ import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
 import { convertImageToWebP } from "@/lib/image-utils";
 
+/**
+ * @file admin.productos.tsx
+ * @description Módulo de administración de productos, inventario, categorías y variantes (/admin/productos).
+ * Gestiona el ciclo completo de vida del catálogo:
+ * - Creación y edición con carga guiada de imágenes y compresión a WebP.
+ * - Variantes con precio y fotografía diferenciada.
+ * - Categorización y filtros por estado.
+ * - Reordenamiento visual táctil/drag-and-drop con sincronización debounced en base de datos.
+ * - Eliminación automática de productos de prueba (samples).
+ */
+
 export const Route = createFileRoute("/admin/productos")({
   component: ProductsPage,
 });

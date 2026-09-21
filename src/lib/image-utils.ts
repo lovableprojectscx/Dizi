@@ -1,9 +1,9 @@
 /**
- * image-utils.ts
- * Utilidades de procesamiento de imágenes en el cliente.
- * Convierte cualquier formato (JPG, PNG, HEIC, etc.) a WebP
- * (o JPEG como fallback en navegadores antiguos/iOS antiguos)
- * usando el canvas del browser — sin dependencias externas.
+ * @file image-utils.ts
+ * @description Utilidades de procesamiento y compresión de imágenes en el cliente (Browser Canvas).
+ * Convierte formatos pesados (JPG, PNG, HEIC) a WebP optimizado (~35 KB) o JPEG como fallback,
+ * redimensiona manteniendo nitidez cristalina, genera miniaturas complementarias (_thumb.webp)
+ * y construye URLs con transformaciones de tamaño para el CDN de Supabase Storage.
  */
 
 const MAX_DIMENSION = 800; // px máximo en cualquier lado (optimizado para carga HD súper rápida en móviles a ~35KB)

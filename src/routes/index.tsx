@@ -1,3 +1,13 @@
+/**
+ * @file index.tsx
+ * @description Landing page principal y portal de conversión de Dizi.
+ * Presenta la propuesta de valor del SaaS para digitalizar catálogos de MYPES y comercios:
+ * - Propuesta de valor: catálogo digital interactivo, pedidos directos por WhatsApp, Link in Bio y Libro de Reclamaciones legal.
+ * - Demostración en vivo de plantillas por rubro (Gastronomía, Moda, Florería, Servicios, Tecnología).
+ * - Comparativa de planes y precios (Semilla, Emprendedor, Pro, Ilimitado) con selector mensual/anual.
+ * - Preguntas frecuentes (FAQ) interactivas, testimonios de clientes y optimización SEO con metadatos OpenGraph.
+ */
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +38,9 @@ import {
   Share2,
 } from "lucide-react";
 
+/**
+ * Definición de la ruta raíz `/` en TanStack Router con metadatos SEO y OpenGraph.
+ */
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -55,6 +68,9 @@ export const Route = createFileRoute("/")({
   component: LandingPage,
 });
 
+/**
+ * Componente principal de la Landing Page pública.
+ */
 function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeNiche, setActiveNiche] = useState<string>("all");

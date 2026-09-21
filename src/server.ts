@@ -1,3 +1,13 @@
+/**
+ * @file server.ts
+ * @description Punto de entrada para el servidor SSR (Nitro / Cloudflare / Node / H3 runtime).
+ * Gestiona:
+ * - Redirección canónica a `dizi.idenza.site` para peticiones en producción que apunten a dominios no autorizados.
+ * - Carga dinámica del bundle de renderizado del lado del servidor (`@tanstack/react-start/server-entry`).
+ * - Intercepción y normalización de fallos catastróficos del motor h3 (`normalizeCatastrophicSsrResponse`),
+ *   reconstituyendo el stack trace original mediante `error-capture` y emitiendo una página de error institucional amigable.
+ */
+
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
@@ -9,6 +19,9 @@ type ServerEntry = {
 
 let serverEntryPromise: Promise<ServerEntry> | undefined;
 
+/**
+ * Carga perezosa del ejecutor SSR de TanStack Start.
+ */
 async function getServerEntry(): Promise<ServerEntry> {
   if (!serverEntryPromise) {
     serverEntryPromise = import("@tanstack/react-start/server-entry").then(
@@ -18,6 +31,9 @@ async function getServerEntry(): Promise<ServerEntry> {
   return serverEntryPromise;
 }
 
+/**
+ * Genera una respuesta HTTP 500 con una plantilla HTML limpia y moderna de fallo de servidor.
+ */
 function brandedErrorResponse(): Response {
   return new Response(renderErrorPage(), {
     status: 500,

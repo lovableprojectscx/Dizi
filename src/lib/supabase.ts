@@ -1,16 +1,39 @@
+/**
+ * @file supabase.ts
+ * @description Configuración del cliente Supabase, control de timeout para conexiones móviles
+ * y utilidad para subida y conversión de imágenes en formato WebP a Supabase Storage.
+ */
+
 import { createClient } from "@supabase/supabase-js";
 
-// Base de datos oficial activa de produccion DIZI OFICIAL
+/**
+ * URL de respaldo predeterminada del proyecto oficial de DIZI en Supabase.
+ */
 const DEFAULT_SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
 
+/**
+ * URL de Supabase resuelta desde variables de entorno de Vite o respaldo predeterminado.
+ */
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+
+/**
+ * Clave anónima pública de Supabase resuelta desde variables de entorno de Vite.
+ */
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("[Supabase] Verifica las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en tu archivo .env");
 }
 
-// Timeout de 30 segundos para peticiones a Supabase (permite subida de imágenes en conexiones móviles)
+/**
+ * Wrapper de `fetch` con un tiempo de espera (timeout) extendido de 30 segundos.
+ * Diseñado especialmente para evitar caídas de conexión durante la subida de imágenes
+ * o sincronización de catálogos en redes móviles 3G/4G con alta latencia.
+ *
+ * @param url Destino de la petición HTTP.
+ * @param options Opciones de configuración de fetch (cabeceras, método, cuerpo).
+ * @returns Promesa con la respuesta de la petición.
+ */
 const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Response> => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), 30000);
@@ -25,6 +48,10 @@ const customFetch = (url: RequestInfo | URL, options?: RequestInit): Promise<Res
     });
 };
 
+/**
+ * Instancia global singleton del cliente Supabase configurada para DIZI.
+ * Utiliza `customFetch` para garantizar resiliencia en conexiones inestables.
+ */
 export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
   global: {
     fetch: customFetch,
@@ -32,8 +59,20 @@ export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
 });
 
 /**
- * Sube una imagen en formato base64 Data URL a un bucket de Supabase Storage.
- * Retorna la URL pública de la imagen subida.
+ * Convierte y sube una imagen en formato Data URL Base64 hacia el bucket `images` de Supabase Storage.
+ *
+ * Características principales:
+ * - Detecta el tipo MIME de la imagen y normaliza la extensión a `.webp`, `.jpg`, `.png` o `.gif`.
+ * - Convierte la cadena base64 en un array binario (`Uint8Array`) y genera un `Blob`.
+ * - Aplica cabeceras de cache prolongado (`cacheControl: 31536000` = 1 año) para acelerar cargas en CDN.
+ * - Implementa un reintento automático en caso de micro-cortes o parpadeos de red.
+ * - Retorna la URL pública final limpia (sin parámetros de consulta).
+ *
+ * @param base64Data Cadena Data URL en formato base64 (ej: "data:image/webp;base64,...").
+ *                   Si ya es una URL HTTP, se retorna inmediatamente sin procesar.
+ * @param path Ruta de destino dentro del bucket (ej: "{storeId}/products/{productId}.webp").
+ * @returns Promesa con la URL pública permanente de la imagen alojada.
+ * @throws Error si el formato base64 es inválido o la subida a Storage falla definitivamente.
  */
 export async function uploadBase64ToStorage(base64Data: string, path: string): Promise<string> {
   if (!base64Data.startsWith("data:")) {

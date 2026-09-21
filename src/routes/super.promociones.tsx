@@ -1,3 +1,14 @@
+/**
+ * @file super.promociones.tsx
+ * @description Centro de gestión de cupones de invitación y promociones de planes en Dizi.
+ * Proporciona:
+ * - Emisión de códigos de invitación con beneficios directos de plan (Emprendedor, Pro, Ilimitado).
+ * - Configuración de vigencia flexible (por días o meses) y fecha de expiración automática.
+ * - Monitoreo de estado de canje: Activo, Canjeado (por qué comercio) o Expirado.
+ * - Copiado rápido de enlaces de registro directo con token precargado (`/register?token=...`).
+ * - Gestión de banners y campañas promocionales de descuento para planes de suscripción.
+ */
+
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { PLANS, type PlanId, type Invite } from "@/lib/types";
@@ -25,6 +36,9 @@ import {
 import { InviteGenerator } from "@/components/InviteGenerator";
 import { supabase } from "@/lib/supabase";
 
+/**
+ * Definición de la ruta `/super/promociones` en TanStack Router.
+ */
 export const Route = createFileRoute("/super/promociones")({
   component: SuperPromocionesPage,
 });
@@ -65,6 +79,11 @@ function formatDuration(val?: number, unit?: string, fallbackMonths?: number) {
   return `${value} ${value === 1 ? "Mes" : "Meses"}`;
 }
 
+/**
+ * Componente de página para supervisión de invitaciones y campañas de planes.
+ * Permite filtrar por plan y estado (activo, usado, expirado), generar nuevos tokens
+ * y copiar links de onboarding preparados.
+ */
 function SuperPromocionesPage() {
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(false);

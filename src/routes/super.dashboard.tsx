@@ -1,3 +1,13 @@
+/**
+ * @file super.dashboard.tsx
+ * @description Dashboard principal del Super Administrador para supervisión global de la plataforma Dizi.
+ * Calcula y proyecta métricas en tiempo real agregadas desde todas las tiendas:
+ * - KPIs generales: Comercios registrados, comercios activos vs suspendidos, total de productos, clics de WhatsApp.
+ * - Métricas financieras estimadas: MRR proyectado y distribución de planes contratados.
+ * - Gráficos interactivos Recharts: Crecimiento temporal de tiendas, volumen de clics de compra y participación por plan.
+ * - Top Comercios: Ranking de rendimiento con accesos directos e impersonación administrativa instantánea.
+ */
+
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
@@ -37,11 +47,16 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 
+/**
+ * Definición de la ruta `/super/dashboard` en TanStack Router.
+ */
 export const Route = createFileRoute("/super/dashboard")({
   component: SuperDashboard,
 });
 
-// Custom Tooltip component for Recharts that matches our premium look
+/**
+ * Componente personalizado de Tooltip para gráficos Recharts adaptado al sistema de diseño oscuro/claro de Dizi.
+ */
 function CustomTooltip({ active, payload, label }: any) {
   if (active && payload && payload.length) {
     return (
@@ -69,6 +84,11 @@ function CustomTooltip({ active, payload, label }: any) {
   return null;
 }
 
+/**
+ * Componente principal del panel de control Super Admin.
+ * Extrae tiendas del estado global `useApp` y computa métricas clave,
+ * agregaciones por mes, partición de planes y rendimiento comercial.
+ */
 function SuperDashboard() {
   const stores = useApp((s) => s.stores);
   const toggleActive = useApp((s) => s.toggleStoreActive);

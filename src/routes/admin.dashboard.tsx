@@ -1,3 +1,10 @@
+/**
+ * @file admin.dashboard.tsx
+ * @description Panel de control principal y resumen de métricas del comercio (/admin/dashboard).
+ * Provee visualización de visitas y clics a WhatsApp, enlaces rápidos de difusión con códigos QR
+ * generados dinámicamente, atajos para gestión de inventario y monitor del estado de suscripción.
+ */
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useApp } from "@/lib/store";
@@ -28,10 +35,16 @@ import { toast } from "sonner";
 import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
 import { cn } from "@/lib/utils";
 
+/**
+ * Definición de la ruta de TanStack Router para `/admin/dashboard`.
+ */
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
 });
 
+/**
+ * Componente principal del Dashboard del comercio.
+ */
 function Dashboard() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);

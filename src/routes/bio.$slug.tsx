@@ -1,10 +1,21 @@
+/**
+ * @file bio.$slug.tsx
+ * @description Ruta pública del Bio-Link (/bio/:slug) en TanStack Router.
+ * Renderiza la tarjeta de presentación digital de la tienda: enlaces de redes sociales,
+ * mapa interactivo con OpenStreetMap / Leaflet, y vitrina de productos destacados.
+ */
+
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
 import type { Store } from "@/lib/types";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 
+/**
+ * Definición de la ruta de TanStack Router para `/bio/$slug`.
+ * Configura caché en memoria (`staleTime: 5 min`, `gcTime: 15 min`),
+ * cargador de datos optimizado para bio-link, metadatos Open Graph y componente de error.
+ */
 export const Route = createFileRoute("/bio/$slug")({
   staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
   gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
@@ -12,7 +23,7 @@ export const Route = createFileRoute("/bio/$slug")({
     const store = await fetchStoreBySlug(params.slug);
     return { store };
   },
-  head: ({ params, loaderData }) => {
+  head: ({ params, loaderData }: any) => {
     const store = loaderData?.store;
 
     const getValidImageUrl = (url?: string | null) => {
@@ -57,6 +68,16 @@ export const Route = createFileRoute("/bio/$slug")({
   errorComponent: StoreErrorComponent,
 });
 
+/**
+ * Carga los datos de la tienda optimizados para la página Link-in-Bio.
+ *
+ * A diferencia del catálogo completo, solicita únicamente hasta 6 productos
+ * para alimentar la vitrina rápida de productos del bio-link, ahorrando transferencia.
+ * Implementa la misma verificación en dos pasos de `updated_at` (Zero-Egress).
+ *
+ * @param slug Identificador URL de la tienda.
+ * @returns Promesa con el objeto `Store` o null.
+ */
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   // 1. Verificación en caché local inteligente por Timestamp (Zero-Egress para visitas recurrentes)
   if (typeof window !== "undefined") {
@@ -66,7 +87,6 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
         sessionStorage.getItem(`dizi_bio_cache_${slug}`);
       if (cachedRaw) {
         const cached = JSON.parse(cachedRaw);
-        // Si la tienda ya está en caché local, hacer una micro-consulta ultraligera de solo updated_at (~100 bytes)
         if (cached.store && cached.updated_at) {
           const { data: storeMeta, error: metaErr } = await supabase
             .from("stores")
@@ -75,7 +95,6 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
             .maybeSingle();
 
           if (!metaErr && storeMeta && storeMeta.updated_at === cached.updated_at) {
-            // La tienda no ha sufrido cambios: renovar el TTL local y devolver la caché existente
             const refreshedCache = {
               ...cached,
               verifiedAt: Date.now(),
@@ -108,7 +127,6 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
 
     if (error) {
       console.error("[fetchStoreBySlug] RPC error:", error);
-      // Contingencia: si la red falla pero hay caché previa en el dispositivo, usarla
       if (typeof window !== "undefined") {
         try {
           const cachedRaw = localStorage.getItem(`dizi_bio_cache_${slug}`);
@@ -122,7 +140,6 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
     }
     if (!data) return null;
 
-    // Fallback: If product images are missing due to RPC bug, fetch them directly
     let productsWithImages = data.products || [];
     if (
       productsWithImages.length > 0 &&
@@ -188,7 +205,6 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       bioBanner: data.bio_banner ?? undefined,
       bioTheme: data.bio_theme ?? "default",
       bioTypography: data.bio_typography ?? "sans",
-      bioShowCatalogButton: data.bio_show_catalog_button ?? null,
       bioButtonStyle:
         data.bio_button_style === "rounded-full"
           ? "pill-solid"
@@ -229,7 +245,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
           variations: Array.isArray(p.variations) ? p.variations : [],
           createdAt: p.created_at,
         }))
-        .sort((a, b) => {
+        .sort((a: any, b: any) => {
           if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
             return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
           }
@@ -239,12 +255,11 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
         }),
     };
 
-    // Guardar en localStorage y sessionStorage con timestamp para visitas recurrentes Zero-Egress
     if (typeof window !== "undefined") {
       try {
         const cachePayload = {
           store: storeResult,
-          updated_at: data.updated_at || storeResult.updatedAt || new Date().toISOString(),
+          updated_at: data.updated_at || (storeResult as any).updatedAt || new Date().toISOString(),
           ts: Date.now(),
           verifiedAt: Date.now(),
         };
@@ -259,6 +274,10 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
   return Promise.race([fetchPromise, timeoutPromise]);
 }
 
+/**
+ * Componente principal renderizado para la ruta `/bio/$slug`.
+ * Valida la existencia y estado activo de la tienda antes de delegar a `PublicCatalog` en modo "bio".
+ */
 function BioPublic() {
   const { slug } = Route.useParams();
   const { store } = Route.useLoaderData();

@@ -81,6 +81,18 @@ const bioBgImageSpec = {
   tolerance: 0.25,
 };
 
+/**
+ * @file admin.link-bio.tsx
+ * @description Editor y configurador de la página Link-in-Bio de la tienda (/admin/link-bio).
+ * Provee herramientas para:
+ * - Creación y gestión de botones de redes sociales y enlaces personalizados (QuickLink).
+ * - Geolocalización de la tienda con búsqueda de direcciones (OpenStreetMap Nominatim)
+ *   y mapa interactivo Leaflet con marcador arrastrable.
+ * - Estilos visuales de botones (sólido, contorno, glass/cristal) y tipografías.
+ * - Subida y recorte de foto de perfil (1:1), banner de cabecera (16:9) y fondo vertical (9:16).
+ * - Maqueta interactiva de smartphone con previsualización en tiempo real.
+ */
+
 export const Route = createFileRoute("/admin/link-bio")({
   component: LinkBioPage,
 });

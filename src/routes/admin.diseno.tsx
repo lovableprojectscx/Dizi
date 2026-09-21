@@ -39,6 +39,18 @@ import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 
+/**
+ * @file admin.diseno.tsx
+ * @description Estudio de diseño y personalización de apariencia del catálogo (/admin/diseno).
+ * Permite al comercio configurar la identidad visual de su catálogo:
+ * - Selección de estructuras arquitectónicas de diseño (grilla, portada, editorial, etc.).
+ * - Ajuste de paletas de color con validación de contraste y luminancia (hexLuminance).
+ * - Tipografías, estilos y redondez de tarjetas, y formas de imagen.
+ * - Gestor de banners múltiples con recorte guiado.
+ * - Barra de anuncios promocionales tipo marquesina (planes Pro/Ilimitado).
+ * - Simulador de previsualización en vivo para móvil y escritorio.
+ */
+
 export const Route = createFileRoute("/admin/diseno")({
   component: DisenoUnificadoPage,
 });

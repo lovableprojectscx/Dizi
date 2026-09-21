@@ -25,6 +25,16 @@ import {
 } from "lucide-react";
 import { convertImageToWebP } from "@/lib/image-utils";
 
+/**
+ * @file admin.configuracion.tsx
+ * @description Módulo de configuración general del comercio (/admin/configuracion).
+ * Permite gestionar:
+ * - Nombre comercial, slug único con validación de disponibilidad en tiempo real.
+ * - Logotipo principal y número de WhatsApp con selector de código de país.
+ * - Activación del Libro de Reclamaciones virtual y datos fiscales (RUC, Razón Social, Dirección).
+ * - Opciones de catálogo (filtro de precios, visibilidad de marca DIZI).
+ */
+
 export const Route = createFileRoute("/admin/configuracion")({
   component: ConfigPage,
 });

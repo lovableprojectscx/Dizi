@@ -1,3 +1,11 @@
+/**
+ * @file SubscriptionManager.tsx
+ * @description Gestor integral de planes, facturación y estados de suscripción para una tienda.
+ * Soporta renovación con duración personalizada y precios especiales negociados,
+ * ajuste manual de fecha de expiración, extensión de meses adicionales, activación de periodos de prueba,
+ * cancelación controlada con registro de motivos, y suspensión/liberación de tiendas.
+ */
+
 import { useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
@@ -106,10 +114,17 @@ function StatusBadge({ store }: { store: Store }) {
   );
 }
 
+/**
+ * Propiedades del componente de gestión de suscripciones.
+ */
 interface SubscriptionManagerProps {
+  /** Tienda objetivo sobre la cual se aplicarán las acciones de suscripción */
   store: Store;
 }
 
+/**
+ * Panel de control y operaciones para la suscripción de una tienda.
+ */
 export function SubscriptionManager({ store }: SubscriptionManagerProps) {
   const navigate = useNavigate();
   const setPlan = useApp((s) => s.setPlan);

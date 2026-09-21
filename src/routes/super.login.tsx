@@ -1,3 +1,10 @@
+/**
+ * @file super.login.tsx
+ * @description Pantalla de inicio de sesión exclusivo para el Super Administrador de la plataforma Dizi.
+ * Autentica credenciales mediante Supabase Auth y realiza una estricta validación de rol ('super_admin').
+ * Si un usuario autenticado carece del rol correspondiente, la sesión se termina de inmediato y se deniega el acceso.
+ */
+
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +13,9 @@ import { toast } from "sonner";
 import { signInWithEmail, getUserRole } from "@/lib/auth";
 import { useApp } from "@/lib/store";
 
+/**
+ * Definición de la ruta `/super/login` en TanStack Router.
+ */
 export const Route = createFileRoute("/super/login")({
   head: () => ({
     meta: [{ title: "Acceso Super Admin — Dizi" }],
@@ -13,6 +23,9 @@ export const Route = createFileRoute("/super/login")({
   component: SuperLoginPage,
 });
 
+/**
+ * Componente del formulario de login restringido para Super Administrador.
+ */
 function SuperLoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");

@@ -1,10 +1,9 @@
 /**
- * CatalogPdfExport.tsx
- * ─────────────────────────────────────────────────────────
- * Botón + modal de descarga de catálogo en PDF.
- * Genera un PDF con diseño profesional diferente al catálogo
- * visual: logo/nombre, productos por categoría, precios.
- * El usuario elige entre 3 estilos visuales antes de descargar.
+ * @file CatalogPdfExport.tsx
+ * @description Generador y exportador de catálogo digital en formato PDF mediante jsPDF.
+ * Permite a comerciantes y compradores descargar un catálogo completo vectorizado
+ * con portadas temáticas, índice interactivo con enlaces de página, productos por categoría,
+ * precios regulares/tachados, miniaturas optimizadas y botones directos de pedido por WhatsApp.
  */
 
 import { useState, useRef } from "react";
@@ -19,10 +18,18 @@ import { toast } from "sonner";
 /* ─────────────────────────────────────────────────────────
    PDF STYLE THEMES
 ───────────────────────────────────────────────────────── */
+
+/**
+ * Configuración estética y paleta de colores para un tema de diseño en PDF.
+ */
 type PdfTheme = {
+  /** Identificador único del tema (ej: "elegante", "moderno", "oscuro") */
   id: string;
+  /** Nombre comercial del estilo */
   name: string;
+  /** Descripción del aspecto visual y tipografía */
   desc: string;
+  /** Paleta de colores aplicada a fondos, cabeceras, tarjetas y acentos */
   preview: {
     bg: string;
     header: string;
@@ -663,7 +670,7 @@ export async function generateCatalogPdf(
 
   // ── PÁGINA 2: ÍNDICE DE CATEGORÍAS ──
   newPage();
-  const indexPageNum = doc.internal.getNumberOfPages();
+  const indexPageNum = (doc.internal as any).getNumberOfPages();
 
   /* ── PÁGINAS DE PRODUCTOS POR CATEGORÍA ── */
   // Agrupar: primero por categoría, luego sin categoría
@@ -694,7 +701,7 @@ export async function generateCatalogPdf(
 
   for (const group of grouped) {
     newPage();
-    categoryPageNumbers.push({ name: group.catName, page: doc.internal.getNumberOfPages() });
+    categoryPageNumbers.push({ name: group.catName, page: (doc.internal as any).getNumberOfPages() });
 
     /* ── Encabezado de categoría ── */
     // Bloque de color a la izquierda
@@ -1123,6 +1130,15 @@ function ThemeCard({
 /* ─────────────────────────────────────────────────────────
    MAIN EXPORT BUTTON COMPONENT
 ───────────────────────────────────────────────────────── */
+
+/**
+ * Botón y modal interactivo para la descarga del catálogo en formato PDF.
+ * Permite seleccionar el tema visual antes de la exportación y muestra
+ * una barra de progreso en tiempo real durante la generación del documento.
+ *
+ * @param store Objeto de la tienda con productos y categorías.
+ * @param variant Variante visual del botón: "admin" para el panel de control o "catalog" para la barra pública.
+ */
 export function CatalogPdfExportButton({
   store,
   variant = "admin",

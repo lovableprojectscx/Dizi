@@ -1,3 +1,13 @@
+/**
+ * @file main.tsx
+ * @description Punto de entrada del cliente para la aplicación web Dizi (SPA/SSR hydration).
+ * Se encarga de:
+ * - Instanciar y proveer el enrutador TanStack Router (`RouterProvider`).
+ * - Registrar el Service Worker (`/sw.js`) en navegadores compatibles para acelerar
+ *   la carga y permitir el almacenamiento en caché nativo de imágenes en móviles.
+ * - Montar el árbol de React en el elemento DOM raíz `#root`.
+ */
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";

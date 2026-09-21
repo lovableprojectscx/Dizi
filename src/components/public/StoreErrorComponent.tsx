@@ -1,7 +1,32 @@
+/**
+ * @file StoreErrorComponent.tsx
+ * @description Pantalla de captura y recuperación de errores (Error Boundary)
+ * para las rutas públicas de la tienda (/t/:slug y /bio/:slug) en TanStack Router.
+ * Detecta fallos de conectividad (proveedores móviles, timeout de Supabase)
+ * y ofrece opciones de reintento automático e invalidación de caché.
+ */
+
 import { useRouter } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 
-export function StoreErrorComponent({ error, reset }: { error: any; reset: () => void }) {
+/**
+ * Propiedades del componente de error de tienda.
+ */
+interface StoreErrorComponentProps {
+  /** Error capturado por el Error Boundary de TanStack Router */
+  error: any;
+  /** Función para reiniciar el estado del Error Boundary */
+  reset: () => void;
+}
+
+/**
+ * Componente renderizado automáticamente cuando ocurre una excepción durante la carga
+ * o renderizado del catálogo público o del bio-link.
+ *
+ * Ofrece orientación específica para usuarios en redes móviles (Claro/Movistar en Perú)
+ * cuando se detecta un timeout de conexión con Supabase.
+ */
+export function StoreErrorComponent({ error, reset }: StoreErrorComponentProps) {
   const router = useRouter();
   const errorMsg = error?.message || (typeof error === "string" ? error : "") || "";
   const isTimeoutOrNetwork =

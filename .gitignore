@@ -43,8 +43,11 @@ scratch/
 AUTOMATIZAR PDF/
 ~$*.docx
 
-# Documentacion de negocio/tecnica -> vive en "INFORMACION NECESARIA" (fuera del repo)
-docs/
+# Documentacion de negocio pesada (.docx, .pptx) vive fuera del repo; permitir docs markdown
+docs/*
+!docs/*.md
+!docs/modules/
+!docs/modules/*.md
 *.docx
 *.pptx
 

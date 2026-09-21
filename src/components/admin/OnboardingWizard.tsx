@@ -1,3 +1,13 @@
+/**
+ * @file OnboardingWizard.tsx
+ * @description Asistente interactivo modal de bienvenida y configuración inicial para nuevos comercios.
+ * Guía al usuario paso a paso a través de 4 etapas esenciales:
+ * 1. Datos básicos: Nombre de la tienda y número de WhatsApp con selector de país.
+ * 2. Identidad visual: Subida de logotipo y color primario de marca.
+ * 3. Selección de plantilla: Elección del modelo arquitectónico de diseño.
+ * 4. Primer producto: Creación del primer artículo real para activar el catálogo.
+ */
+
 import React, { useState } from "react";
 import { useApp } from "@/lib/store";
 import { convertImageToWebP } from "@/lib/image-utils";
@@ -29,6 +39,10 @@ import {
   Info,
 } from "lucide-react";
 
+/**
+ * Componente del asistente de onboarding.
+ * Se abre automáticamente si `store.onboardingCompleted` es falso.
+ */
 export function OnboardingWizard() {
   const storeId = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === storeId));

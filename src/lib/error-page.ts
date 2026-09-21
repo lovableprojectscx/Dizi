@@ -1,3 +1,13 @@
+/**
+ * @file error-page.ts
+ * @description Generador de página de contingencia HTML para fallos no recuperables en el servidor (HTTP 500).
+ * Produce un documento HTML puro, autónomo, responsivo y sin dependencias externas de CSS ni JavaScript.
+ */
+
+/**
+ * Renderiza el marcado HTML de la página de error del servidor.
+ * @returns Cadena HTML completa lista para servirse como respuesta HTTP 500.
+ */
 export function renderErrorPage(): string {
   return `<!doctype html>
 <html lang="en">

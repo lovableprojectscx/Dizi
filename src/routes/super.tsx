@@ -1,3 +1,11 @@
+/**
+ * @file super.tsx
+ * @description Layout principal y guard de seguridad para el Panel Super Administrador de Dizi.
+ * Implementa control de acceso basado en roles (RBAC) verificando que el usuario autenticado
+ * posea el rol 'super_admin'. Provee la barra lateral de navegación con enlaces a Dashboard,
+ * Tiendas, Promociones y Referidos, junto con soporte de colapso y cierre de sesión.
+ */
+
 import {
   createFileRoute,
   Outlet,
@@ -29,6 +37,11 @@ import {
 } from "lucide-react";
 import { getActiveSession, getSessionSync, getUserRole, signOut } from "@/lib/auth";
 
+/**
+ * Ruta raíz `/super`.
+ * Su `beforeLoad` intercepta la navegación para asegurar que solo usuarios con rol 'super_admin'
+ * puedan acceder a cualquier subruta de administración de plataforma. Excluye `/super/login`.
+ */
 export const Route = createFileRoute("/super")({
   beforeLoad: async ({ location }) => {
     // Permitir acceso a la página de login sin estar autenticado
@@ -66,6 +79,12 @@ const items = [
   { title: "Referidos", url: "/super/referidos", icon: Users },
 ];
 
+/**
+ * Componente contenedor de diseño para el Panel Super Administrador.
+ * En caso de renderizar `/super/login`, muestra únicamente el contenido en pantalla completa sin sidebar.
+ * Para el resto de rutas, monta el `SidebarProvider` con las opciones de control global de tiendas,
+ * métricas y cupones promocionales.
+ */
 function SuperLayout() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();

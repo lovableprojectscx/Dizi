@@ -1,3 +1,14 @@
+/**
+ * @file login.tsx
+ * @description Pantalla de inicio de sesión y recuperación de contraseña para dueños de comercio en Dizi.
+ * Implementa:
+ * - Redirección automática si el usuario ya cuenta con una sesión válida (`beforeLoad`).
+ * - Autenticación estándar por correo electrónico y contraseña vía Supabase Auth.
+ * - Sincronización del estado global de la tienda correspondiente tras el inicio de sesión.
+ * - Flujo completo de recuperación de contraseña: envío de enlace por correo y diálogo de redefinición
+ *   al recibir el evento `PASSWORD_RECOVERY` de Supabase.
+ */
+
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Store, Eye, EyeOff, KeyRound, Mail, CheckCircle2 } from "lucide-react";
@@ -22,6 +33,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+/**
+ * Definición de la ruta `/login` en TanStack Router.
+ * Redirige usuarios ya identificados al panel de su comercio o super admin.
+ */
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
     try {
@@ -51,6 +66,9 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+/**
+ * Componente principal del formulario de inicio de sesión de comercios.
+ */
 function LoginPage() {
   const navigate = useNavigate();
   const setCurrentStore = useApp((s) => s.setCurrentStore);

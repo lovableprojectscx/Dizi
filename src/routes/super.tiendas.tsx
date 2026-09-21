@@ -1,3 +1,14 @@
+/**
+ * @file super.tiendas.tsx
+ * @description Directorio maestro y centro de gestión de comercios para el Super Administrador de Dizi.
+ * Proporciona:
+ * - Búsqueda en tiempo real por nombre, slug, email o teléfono de contacto.
+ * - Filtros avanzados por estado operativo (activo, suspendido, vencido) y tipo de plan (semilla, emprendedor, pro, ilimitado).
+ * - Ordenamiento multidimensional: por nombre, volumen de clics de WhatsApp, fecha de registro o consumo de egreso estimado.
+ * - Acceso a auditoría y gestión de suscripción con `SubscriptionManager` dentro de un panel lateral deslizable (Sheet).
+ * - Impersonación instantánea: permite al super admin ingresar a la consola del comercio como si fuera el titular.
+ */
+
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -46,11 +57,16 @@ import {
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 
+/**
+ * Definición de la ruta `/super/tiendas` en TanStack Router.
+ */
 export const Route = createFileRoute("/super/tiendas")({
   component: TenantsPage,
 });
 
-// Badges de planes con estética moderna y colores soft
+/**
+ * Badge visual con código de colores según el plan contratado por la tienda.
+ */
 function PlanBadge({ plan }: { plan: PlanId }) {
   switch (plan) {
     case "semilla":
@@ -121,6 +137,12 @@ function ExpiryBadge({ store }: { store: ReturnType<typeof useApp.getState>["sto
   );
 }
 
+/**
+ * Determina si una tienda es candidata a ser considerada inactiva/abandonada:
+ * - Es plan semilla o lleva más de 15 días con el plan vencido.
+ * - Fue creada hace más de 15 días.
+ * - Posee menos de 10 visitas y 0 clics de WhatsApp.
+ */
 function isStoreInactiveCandidate(store: any): boolean {
   if (!store.active) return false;
 
@@ -142,6 +164,11 @@ function isStoreInactiveCandidate(store: any): boolean {
   return true;
 }
 
+/**
+ * Componente principal de la tabla de comercios de la plataforma.
+ * Gestiona filtros combinados (plan, estado, nicho, libro de reclamaciones),
+ * apertura del Sheet para edición de suscripción e inicio de impersonación.
+ */
 function TenantsPage() {
   const stores = useApp((s) => s.stores);
   const startImpersonation = useApp((s) => s.startImpersonation);
