@@ -127,8 +127,12 @@ function ConfigPage() {
     }
     setSlugStatus("checking");
     slugCheckTimer = setTimeout(async () => {
-      const { data } = await supabase.from("stores").select("id").eq("slug", clean).single();
-      setSlugStatus(data ? "taken" : "available");
+      const { data: isAvailable, error } = await supabase.rpc("check_slug_available", { p_slug: clean });
+      if (error) {
+        setSlugStatus("idle");
+      } else {
+        setSlugStatus(isAvailable ? "available" : "taken");
+      }
     }, 500);
   };
 

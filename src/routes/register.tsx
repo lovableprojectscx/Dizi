@@ -927,13 +927,10 @@ function RegisterPage() {
     } else {
       setLoading(true);
       try {
-        const { data: existingStore } = await supabase
-          .from("stores")
-          .select("id")
-          .eq("slug", storeLink)
-          .single();
+        const { data: isAvailable, error: slugError } = await supabase
+          .rpc("check_slug_available", { p_slug: storeLink });
 
-        if (existingStore) {
+        if (slugError || isAvailable === false) {
           const { toast } = await import("sonner");
           toast.error("El link de la tienda ya esta en uso. Por favor, elige otro.");
           setLoading(false);
