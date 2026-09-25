@@ -1,3 +1,5 @@
+> ⚠️ **OBSOLETO / CON ERRORES desde 2026-09-25** — no usar como referencia. Ver `../../../INFORMACIÓN NECESARIA/04-TECNICA/FUENTE-DE-VERDAD.md` §6.
+
 # DIZI — Hoja de Precios y Estructura Comercial Regular (Agosto 2026)
 
 Este documento fija la estructura tarifaria regular de DIZI que reemplaza los precios promocionales de lanzamiento.
