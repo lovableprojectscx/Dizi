@@ -4,7 +4,9 @@ import sharp from "sharp";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://zkqzdwxjthjdjchimmds.supabase.co";
 const SUPABASE_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcXpkd3hqdGhqZGpjaGltbWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NTQ0MDYsImV4cCI6MjEwMDEzMDQwNn0.sEtzdqZPdCFMHHsPAxGEqJylCloV6s14Mh0fT75pQGU";
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 

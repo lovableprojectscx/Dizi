@@ -1,11 +1,10 @@
 import sharp from "sharp";
 
-const supabaseUrl = "https://zkqzdwxjthjdjchimmds.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcXpkd3hqdGhqZGpjaGltbWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NTQ0MDYsImV4cCI6MjEwMDEzMDQwNn0.sEtzdqZPdCFMHHsPAxGEqJylCloV6s14Mh0fT75pQGU";
+const supabaseUrl = process.env.VITE_SUPABASE_URL || "https://zkqzdwxjthjdjchimmds.supabase.co";
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 const headers = {
   "apikey": supabaseAnonKey,
-  "Authorization": `Bearer ${supabaseAnonKey}`,
 };
 
 async function backfillThumbnails() {
