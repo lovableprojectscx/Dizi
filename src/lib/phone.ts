@@ -5,7 +5,7 @@
  * Basado en libphonenumber-js/mobile para optimizar el peso en bundles.
  */
 
-import { parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js/mobile";
+import { parsePhoneNumberFromString, type CountryCode, type PhoneNumber } from "libphonenumber-js/mobile";
 
 export interface Country {
   iso: string;
@@ -63,67 +63,75 @@ export function getCountry(iso?: string): Country {
 }
 
 /**
- * Normaliza la entrada de un teléfono:
- * - Quita espacios, guiones, puntos, paréntesis y signo `+`.
- * - Elimina el código de marcado de país si el usuario lo repitió.
- * - Elimina el prefijo `0` local de países como Ecuador, Uruguay, Venezuela, Paraguay y Argentina.
- * - Elimina el prefijo `15` local de celulares en Argentina.
- * - Normaliza el formato de 10 dígitos en México (remueve el antiguo prefijo internacional `1`).
+ * Parsea un número de teléfono telefónico de forma inteligente:
+ * 1. Primero intenta interpretar lo que escribió el usuario tal cual, con el país elegido
+ *    (parsePhoneNumberFromString(input, iso)).
+ * 2. Si es Argentina y el usuario escribió formato local sin '9' (ej: 11 2345 6789),
+ *    prueba anteponiendo '9' ya que WhatsApp y libphonenumber-js/mobile exigen el prefijo 9
+ *    para celulares internacionales de Argentina.
+ * 3. Si no da válido tal cual, prueba quitando el código de país repetido si el usuario
+ *    ingresó el dial code en el campo de texto.
+ */
+export function parsePhone(iso: string, input: string): PhoneNumber | null {
+  if (!input || !input.trim()) return null;
+  const country = getCountry(iso);
+  const trimmed = input.trim();
+
+  // 1. Interpretar lo que escribió tal cual con el país elegido
+  const parsedDirect = parsePhoneNumberFromString(trimmed, country.iso as CountryCode);
+  if (parsedDirect && parsedDirect.isValid()) {
+    return parsedDirect;
+  }
+
+  // Argentina: si el usuario ingresó formato nacional sin '9' (ej: 11 2345 6789)
+  if (country.iso === "AR") {
+    const rawDigits = trimmed.replace(/\D/g, "");
+    if (!rawDigits.startsWith("9")) {
+      const with9 = parsePhoneNumberFromString("9" + rawDigits, "AR");
+      if (with9 && with9.isValid()) return with9;
+    }
+  }
+
+  // 2. Probar quitando el código de país repetido si el usuario lo tipeó
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (country.dial && digitsOnly.startsWith(country.dial)) {
+    const rest = digitsOnly.slice(country.dial.length);
+    if (rest.length >= 7) {
+      const parsedRest = parsePhoneNumberFromString(rest, country.iso as CountryCode);
+      if (parsedRest && parsedRest.isValid()) {
+        return parsedRest;
+      }
+      if (country.iso === "AR" && !rest.startsWith("9")) {
+        const arRestWith9 = parsePhoneNumberFromString("9" + rest, "AR");
+        if (arRestWith9 && arRestWith9.isValid()) {
+          return arRestWith9;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Normaliza la entrada de un teléfono devolviendo el número nacional limpio si es válido,
+ * o los dígitos limpios sin caracteres especiales si está en proceso de escritura.
  */
 export function normalizePhone(iso: string, input: string): string {
   if (!input) return "";
-  const country = getCountry(iso);
-  let cleaned = input.trim();
-
-  // Si empieza con +, remover el +
-  if (cleaned.startsWith("+")) {
-    cleaned = cleaned.slice(1).trim();
+  const parsed = parsePhone(iso, input);
+  if (parsed && parsed.isValid()) {
+    return parsed.nationalNumber;
   }
 
-  // Quitar caracteres no numéricos
-  cleaned = cleaned.replace(/[\s\-\.\(\)]/g, "");
-
-  // Si el usuario repitió el código de país (ej: +51 987... o 51987...)
+  let cleaned = input.replace(/[\s\-\.\(\)\+]/g, "");
+  const country = getCountry(iso);
   if (country.dial && cleaned.startsWith(country.dial)) {
     const rest = cleaned.slice(country.dial.length);
-    // Solo se remueve si lo restante tiene al menos 7 dígitos (longitud razonable de número local)
     if (rest.length >= 7) {
       cleaned = rest;
     }
   }
-
-  // Reglas particulares por país
-  if (country.iso === "AR") {
-    // En Argentina: quitar prefijo nacional '0'
-    if (cleaned.startsWith("0")) {
-      cleaned = cleaned.slice(1);
-    }
-    // Quitar prefijo móvil local '15' (ej: 011 15 ... o 11 15 ... o 351 15 ...)
-    if (cleaned.startsWith("1115")) {
-      cleaned = "11" + cleaned.slice(4);
-    } else if (/^\d{3}15\d+/.test(cleaned)) {
-      cleaned = cleaned.slice(0, 3) + cleaned.slice(5);
-    } else if (/^\d{4}15\d+/.test(cleaned)) {
-      cleaned = cleaned.slice(0, 4) + cleaned.slice(6);
-    } else if (cleaned.startsWith("15") && cleaned.length === 10) {
-      cleaned = cleaned.slice(2);
-    }
-    // Si el usuario ingresó el '9' prefijo móvil internacional (11 dígitos), dejar los 10 dígitos nacionales
-    if (cleaned.startsWith("9") && cleaned.length === 11) {
-      cleaned = cleaned.slice(1);
-    }
-  } else if (country.iso === "EC" || country.iso === "UY" || country.iso === "VE" || country.iso === "PY") {
-    // Países donde se antepone '0' al discar a nivel nacional (ej: Ecuador 099...)
-    if (cleaned.startsWith("0")) {
-      cleaned = cleaned.slice(1);
-    }
-  } else if (country.iso === "MX") {
-    // Si incluye el antiguo prefijo móvil '1' posterior al código de país (11 dígitos empezando con 1)
-    if (cleaned.startsWith("1") && cleaned.length === 11) {
-      cleaned = cleaned.slice(1);
-    }
-  }
-
   return cleaned;
 }
 
@@ -134,14 +142,18 @@ export function normalizePhone(iso: string, input: string): string {
  * - Resto: código de país + número nacional (formato E.164 sin `+`).
  */
 export function toWhatsAppDigits(iso: string, input: string): string {
-  const country = getCountry(iso);
-  const norm = normalizePhone(iso, input);
-  if (!norm) return "";
-
-  if (country.iso === "AR") {
-    return "549" + norm;
+  if (!input) return "";
+  const parsed = parsePhone(iso, input);
+  if (parsed && parsed.isValid()) {
+    return parsed.format("E.164").replace(/^\+/, "");
   }
-  return country.dial + norm;
+
+  const country = getCountry(iso);
+  const digits = input.replace(/\D/g, "");
+  if (digits.startsWith(country.dial)) {
+    return digits;
+  }
+  return country.dial + digits;
 }
 
 /**
@@ -155,40 +167,36 @@ export function validatePhone(iso: string, input: string): PhoneValidationResult
   }
 
   const country = getCountry(iso);
-  const norm = normalizePhone(iso, input);
+  const parsed = parsePhone(iso, input);
 
-  // Validación de longitud base y no celular para Perú
-  if (country.iso === "PE") {
-    if (!norm.startsWith("9")) {
-      return { ok: false, reason: "no_es_celular" };
-    }
-    if (norm.length < 9) {
-      return { ok: false, reason: "incompleto" };
-    }
-    if (norm.length > 9) {
-      return { ok: false, reason: "formato_invalido" };
-    }
-  }
-
-  // Validación con libphonenumber-js
-  let toParse = "+" + country.dial + norm;
-  if (country.iso === "AR") {
-    toParse = "+549" + norm;
-  }
-
-  const parsed = parsePhoneNumberFromString(toParse, country.iso as CountryCode);
   if (parsed && parsed.isValid()) {
     return {
       ok: true,
-      e164Digits: toWhatsAppDigits(iso, input)
+      e164Digits: parsed.format("E.164").replace(/^\+/, "")
     };
   }
 
   // Deducción precisa del motivo del error
-  const exNorm = normalizePhone(iso, country.example);
-  const expectedLen = exNorm.length;
+  const rawDigits = input.replace(/\D/g, "");
 
-  if (norm.length < expectedLen) {
+  // Validación de celular para Perú: en Perú los celulares empiezan con 9 y tienen 9 dígitos
+  if (country.iso === "PE") {
+    const nationalDigits = rawDigits.startsWith("51") && rawDigits.length > 2
+      ? rawDigits.slice(2)
+      : rawDigits;
+
+    if (nationalDigits.length > 0 && !nationalDigits.startsWith("9")) {
+      return { ok: false, reason: "no_es_celular" };
+    }
+    if (nationalDigits.length < 9) {
+      return { ok: false, reason: "incompleto" };
+    }
+    return { ok: false, reason: "formato_invalido" };
+  }
+
+  // Para otros países:
+  const exampleDigits = country.example.replace(/\D/g, "");
+  if (rawDigits.length < exampleDigits.length) {
     return { ok: false, reason: "incompleto" };
   }
 
@@ -212,12 +220,7 @@ export function formatPhoneDisplay(digits: string, iso?: string): string {
 
   // Intento 2: Si se proveyó ISO y no tenía el código de país
   if (iso) {
-    const country = getCountry(iso);
-    let toTry = "+" + country.dial + cleaned;
-    if (country.iso === "AR" && !cleaned.startsWith("54")) {
-      toTry = "+549" + cleaned;
-    }
-    const parsedWithCountry = parsePhoneNumberFromString(toTry, country.iso as CountryCode);
+    const parsedWithCountry = parsePhone(iso, cleaned);
     if (parsedWithCountry && parsedWithCountry.isValid()) {
       return parsedWithCountry.formatInternational();
     }

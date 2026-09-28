@@ -88,10 +88,32 @@ describe("Módulo de Telefonía y Países (phone.ts)", () => {
       expect(res.e164Digits).toBe("5491123456789");
     });
 
+    // AR: 54 9 11 2345 6789 -> ok -> 5491123456789
+    it("AR: 54 9 11 2345 6789 debe ser válido con 5491123456789", () => {
+      const res = validatePhone("AR", "54 9 11 2345 6789");
+      expect(res.ok).toBe(true);
+      expect(res.e164Digits).toBe("5491123456789");
+    });
+
+    // AR: 54 11 2345 6789 -> ok -> 5491123456789
+    it("AR: 54 11 2345 6789 debe ser válido con 5491123456789", () => {
+      const res = validatePhone("AR", "54 11 2345 6789");
+      expect(res.ok).toBe(true);
+      expect(res.e164Digits).toBe("5491123456789");
+    });
+
     // AR: 261468582 (caso real) -> error
     it("AR: 261468582 (caso real, número incompleto) debe fallar", () => {
       const res = validatePhone("AR", "261468582");
       expect(res.ok).toBe(false);
+    });
+
+    // BR: 55 91234 5678 (código de área 55) -> ok -> 5555912345678
+    it("BR: 55 91234 5678 (código de área 55 Santa Maria RS) debe conservar el 55 y dar 5555912345678", () => {
+      const res = validatePhone("BR", "55 91234 5678");
+      expect(res.ok).toBe(true);
+      expect(res.e164Digits).toBe("5555912345678");
+      expect(toWhatsAppDigits("BR", "55 91234 5678")).toBe("5555912345678");
     });
 
     // MX: 55 1234 5678 -> ok -> 525512345678
@@ -136,6 +158,7 @@ describe("Módulo de Telefonía y Países (phone.ts)", () => {
       expect(formatPhoneDisplay("51987654321")).toBe("+51 987 654 321");
       expect(formatPhoneDisplay("593991234567")).toBe("+593 99 123 4567");
       expect(formatPhoneDisplay("5491123456789")).toBe("+54 9 11 2345 6789");
+      expect(formatPhoneDisplay("5555912345678")).toBe("+55 55 91234 5678");
       expect(formatPhoneDisplay("525512345678")).toBe("+52 55 1234 5678");
       expect(formatPhoneDisplay("56961234567")).toBe("+56 9 6123 4567");
       expect(formatPhoneDisplay("59171234567")).toBe("+591 71234567");
@@ -150,7 +173,9 @@ describe("Módulo de Telefonía y Países (phone.ts)", () => {
     it("debe generar dígitos limpios para WhatsApp", () => {
       expect(toWhatsAppDigits("PE", "987 654 321")).toBe("51987654321");
       expect(toWhatsAppDigits("AR", "011 15 2345 6789")).toBe("5491123456789");
+      expect(toWhatsAppDigits("AR", "11 2345 6789")).toBe("5491123456789");
       expect(toWhatsAppDigits("EC", "099 123 4567")).toBe("593991234567");
+      expect(toWhatsAppDigits("BR", "55 91234 5678")).toBe("5555912345678");
     });
   });
 });
