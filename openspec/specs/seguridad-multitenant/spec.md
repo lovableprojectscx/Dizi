@@ -1,17 +1,20 @@
 # Spec: Seguridad Multi-tenant
 
+> Corregido el 29 sep 2026. Estado real en `04-TECNICA/FUENTE-DE-VERDAD.md` y `SEGURIDAD.md` §0.
+
 ## Propósito
 Garantizar el aislamiento absoluto de datos entre comercios y prevenir la escalación de privilegios. Cubre RF-07 y RF-08.
 
 ## Requisitos
 
 ### Requisito: Aislamiento por RLS (RF-07)
-Toda consulta a tablas críticas (`stores`, `products`, `complaints`) DEBE filtrarse en PostgreSQL mediante políticas Row Level Security basadas en `auth.uid()`.
+Toda consulta a tablas críticas (`stores`, `products`, `categories`, `reclamaciones`, `invites` y el bucket `images`) DEBE filtrarse en PostgreSQL mediante políticas Row Level Security basadas en `auth.uid()`.
 
 #### Escenario: Acceso cruzado bloqueado
 - **Dado** el comerciante A autenticado
-- **Cuando** consulta productos del comercio B (incluso por API directa)
-- **Entonces** recibe 0 filas, sin error de aplicación
+- **Cuando** intenta modificar o borrar datos o fotos del comercio B (incluso por API directa)
+- **Entonces** la base lo rechaza (0 filas afectadas o error de permisos)
+- **Nota:** los productos y datos de tiendas **publicadas** son públicos por diseño y se pueden leer
 
 ### Requisito: Anti-escalación de roles (RF-08)
 El trigger `trg_user_sync_role` DEBE sobrescribir cualquier intento de autoasignarse `super_admin` desde metadatos públicos.
