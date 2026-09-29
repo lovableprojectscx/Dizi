@@ -629,6 +629,11 @@ function SingleProductDialog({
       return;
     }
 
+    if (!editing.name || editing.name.trim().length === 0) {
+      toast.error("El nombre del producto no puede estar vacío.");
+      return;
+    }
+
     let rawDesc = (editing.description || "").replace(/#destacado/g, "").trim();
     if (isFeatured) {
       rawDesc = (rawDesc + " #destacado").trim();
@@ -638,20 +643,30 @@ function SingleProductDialog({
       .map((v) => ({ ...v, name: v.name.trim() }))
       .filter((v) => v.name.length > 0);
 
+    const isStillSampleName =
+      Boolean(editing.isSample) &&
+      (editing.name.trim().toLowerCase().startsWith("producto de ejemplo") ||
+        editing.name.trim().toLowerCase() === "ejemplo");
+
     const updatedProduct: Product = {
       ...editing,
+      name: editing.name.trim(),
       price: parsedPrice,
       originalPrice: editing.isOnSale ? parsedOriginalPrice : null,
       description: rawDesc || undefined,
       variations: cleanVariations,
-      isSample: false,
+      isSample: isStillSampleName,
     };
 
     setSaving(true);
     try {
       await onSave(updatedProduct);
       onOpenChange(false);
-      toast.success("Producto guardado correctamente");
+      if (isStillSampleName) {
+        toast.info("Guardado. Sigue marcado como ejemplo porque conserva el nombre de muestra.");
+      } else {
+        toast.success("Producto guardado correctamente");
+      }
     } catch (err: any) {
       console.error("[save product] Error:", err);
       toast.error(
@@ -684,6 +699,14 @@ function SingleProductDialog({
         </DialogHeader>
 
         <div className="overflow-y-auto flex-1 p-5 md:p-6">
+          {editing.isSample && (
+            <div className="flex items-center gap-2.5 p-3.5 mb-5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Este es un producto de ejemplo;</strong> cámbiale nombre, foto y precio para usarlo como tuyo.
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Columna Izquierda: Imagen y Multimedia (col-span 5) */}
             <div className="md:col-span-5 space-y-3.5">
@@ -1087,6 +1110,14 @@ const ProductTableRow = React.memo(function ProductTableRow({
       <TableCell className="font-medium">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span>{p.name}</span>
+          {p.isSample && (
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 px-1.5 border-purple-300 text-purple-700 bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:bg-purple-950/30 shrink-0 font-bold"
+            >
+              EJEMPLO
+            </Badge>
+          )}
           {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
             <Badge
               variant="outline"
@@ -1224,6 +1255,11 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
           <p className="font-semibold text-sm truncate">{p.name}</p>
+          {p.isSample && (
+            <span className="shrink-0 text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-1 rounded dark:text-purple-300 dark:bg-purple-950/30 dark:border-purple-800">
+              EJEMPLO
+            </span>
+          )}
           {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
             <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
               ⭐ Destacado

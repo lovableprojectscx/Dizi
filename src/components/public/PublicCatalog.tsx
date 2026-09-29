@@ -3061,7 +3061,7 @@ export function PublicCatalog({
                       "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
                       activeCat === "all"
                         ? "bg-primary text-primary-foreground font-black"
-                        : "hover:bg-accent text-foreground",
+                        : "hover:bg-muted text-foreground",
                     )}
                   >
                     <span>Todos</span>
@@ -3075,7 +3075,7 @@ export function PublicCatalog({
                         "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
                         activeCat === "sale"
                           ? "bg-primary text-primary-foreground font-black"
-                          : "hover:bg-accent text-foreground",
+                          : "hover:bg-muted text-foreground",
                       )}
                     >
                       <span className="flex items-center gap-1.5">
@@ -3099,7 +3099,7 @@ export function PublicCatalog({
                           "text-left px-3 py-2 text-xs font-bold transition rounded-lg w-full flex items-center justify-between",
                           activeCat === c.id
                             ? "bg-primary text-primary-foreground font-black"
-                            : "hover:bg-accent text-foreground",
+                            : "hover:bg-muted text-foreground",
                         )}
                       >
                         <span className="truncate pr-1">{label}</span>
