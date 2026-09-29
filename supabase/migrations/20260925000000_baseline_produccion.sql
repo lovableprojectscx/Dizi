@@ -13,6 +13,10 @@ SET row_security = off;
 
 CREATE SCHEMA IF NOT EXISTS public;
 
+-- 0. Extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
+
 -- 1. Tables
 -- Table: public.categories
 CREATE TABLE IF NOT EXISTS public.categories (
@@ -1132,6 +1136,12 @@ CREATE TRIGGER trg_products_touch_store AFTER UPDATE ON public.products FOR EACH
 DROP TRIGGER IF EXISTS trg_stores_touch_updated_at ON public.stores;
 CREATE TRIGGER trg_stores_touch_updated_at BEFORE UPDATE ON public.stores FOR EACH ROW EXECUTE FUNCTION handle_store_touch_updated_at();
 
+DROP TRIGGER IF EXISTS trg_user_sync_role ON auth.users;
+CREATE TRIGGER trg_user_sync_role
+  BEFORE INSERT OR UPDATE ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_user_sync_role();
+
 -- Storage Configuration
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('images', 'images', true, 10485760, null)
@@ -1147,4 +1157,33 @@ DROP POLICY IF EXISTS "Public Insert Access" ON storage.objects;
 CREATE POLICY "Public Insert Access" ON storage.objects FOR INSERT TO public WITH CHECK ((bucket_id = 'images'::text));
 DROP POLICY IF EXISTS "Public Read Access" ON storage.objects;
 CREATE POLICY "Public Read Access" ON storage.objects FOR SELECT TO public USING ((bucket_id = 'images'::text));
+
+-- 9. Table and View Privileges (como estaban antes de la Fase 0)
+GRANT ALL ON TABLE public.categories TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.invites TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.products TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.reclamaciones TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.stores TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.v_expiring_subscriptions TO anon, authenticated, service_role;
+
+-- 10. Function Privileges (como estaban antes de la Fase 0)
+GRANT EXECUTE ON FUNCTION public.activate_subscription(text, text, integer, text, numeric) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.activate_subscription(text, text, integer, numeric, boolean, timestamp with time zone) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.activate_subscription_with_invite(text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.cancel_subscription(text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.check_invite(text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.degrade_expired_plans() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.extend_subscription(text, integer) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_public_store(text, integer, integer) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.get_public_store_products(text, integer, integer, text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.handle_store_touch_updated_at() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.handle_user_sync_role() TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.increment_store_egress(text, bigint) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.increment_views(text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.increment_whatsapp_clicks(text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.initialize_store(text, text, text, text, text, text, uuid, text, text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.insert_reclamacion(text, text, text, text, text, text, text, boolean, text, text, text, numeric, text, text, text) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.process_referral_reward(text, text, numeric) TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.set_invite_expires_at() TO anon, authenticated, service_role;
+
 

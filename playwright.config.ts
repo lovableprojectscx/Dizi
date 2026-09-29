@@ -25,15 +25,23 @@ export default defineConfig({
     screenshot: "on",
     locale: "es-PE",
     viewport: { width: 1280, height: 720 },
+    extraHTTPHeaders: (process.env.VERCEL_PROTECTION_BYPASS || process.env.VERCEL_AUTOMATION_BYPASS_SECRET)
+      ? {
+          "x-vercel-protection-bypass": (process.env.VERCEL_PROTECTION_BYPASS || process.env.VERCEL_AUTOMATION_BYPASS_SECRET) as string,
+          "x-vercel-set-bypass-cookie": "s_true",
+        }
+      : undefined,
   },
   projects: [
     { name: "chromium-escritorio", use: { ...devices["Desktop Chrome"] } },
     { name: "movil-android", use: { ...devices["Pixel 7"] } },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.PW_BASE_URL
+    ? undefined
+    : {
+        command: "npm run dev",
+        url: "http://localhost:5173",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });
