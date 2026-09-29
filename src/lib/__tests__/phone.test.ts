@@ -178,4 +178,20 @@ describe("Módulo de Telefonía y Países (phone.ts)", () => {
       expect(toWhatsAppDigits("BR", "55 91234 5678")).toBe("5555912345678");
     });
   });
+
+  describe("Detección de tiendas inválidas existentes en producción", () => {
+    it("debe marcar como inválidas a belis-parfum, dikalzaflex y na con su country_iso actual (PE)", () => {
+      // belis-parfum: 51261468582 (número argentino con 51 antepuesto)
+      expect(validatePhone("PE", "51261468582").ok).toBe(false);
+      // dikalzaflex: 51099727093 (número ecuatoriano con 51 antepuesto)
+      expect(validatePhone("PE", "51099727093").ok).toBe(false);
+      // na: 5199964572 (8 dígitos locales en lugar de 9)
+      expect(validatePhone("PE", "5199964572").ok).toBe(false);
+    });
+
+    it("debe validar correctamente a Adornia (catalogo) y tiendas peruanas normales", () => {
+      expect(validatePhone("PE", "51939980472").ok).toBe(true);
+      expect(validatePhone("PE", "51925176472").ok).toBe(true);
+    });
+  });
 });
