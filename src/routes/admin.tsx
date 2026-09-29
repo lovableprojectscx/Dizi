@@ -46,6 +46,8 @@ import { getActiveSession, getSessionSync, signOut } from "@/lib/auth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { OnboardingWizard } from "@/components/admin/OnboardingWizard";
+import { validatePhone } from "@/lib/phone";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 
 /**
  * Ruta raíz del panel `/admin` con guardia de autenticación.
@@ -103,6 +105,15 @@ function AdminLayout() {
     }
   }, [stores.length, fetchError, fetchData]);
 
+  useEffect(() => {
+    if (stores.length > 0 && !storeId) {
+      setStore(stores[0].id);
+    }
+  }, [stores, storeId, setStore]);
+
+  const store = stores.find((s) => s.id === storeId) ?? stores[0];
+  const isPhoneValid = store ? validatePhone(store.countryIso || "PE", store.phone).ok : true;
+
   if (stores.length === 0) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background p-4 text-center">
@@ -150,14 +161,6 @@ function AdminLayout() {
     );
   }
 
-  const store = stores.find((s) => s.id === storeId) ?? stores[0];
-
-  useEffect(() => {
-    if (stores.length > 0 && !storeId) {
-      setStore(stores[0].id);
-    }
-  }, [stores, storeId, setStore]);
-
   return (
     <SidebarProvider>
       <OnboardingWizard />
@@ -190,6 +193,31 @@ function AdminLayout() {
               </Button>
             </div>
           )}
+          {store && !isPhoneValid && (
+            <div className="bg-red-50 text-red-900 border-b border-red-200 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30">
+              <span className="flex items-start gap-2 leading-tight flex-1">
+                <AlertTriangle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-red-800">
+                    Tu número de WhatsApp no es válido: tus clientes no pueden enviarte pedidos
+                  </p>
+                  <p className="text-xs text-red-700">
+                    Por favor actualiza tu número de WhatsApp para que tus clientes puedan contactarte y realizar pedidos.
+                  </p>
+                </div>
+              </span>
+              <Button
+                size="sm"
+                variant="destructive"
+                asChild
+                className="h-8 font-bold text-xs shrink-0 bg-red-600 hover:bg-red-700 text-white self-start sm:self-center"
+              >
+                <Link to="/admin/configuracion">
+                  Ir a Configuración
+                </Link>
+              </Button>
+            </div>
+          )}
           {store && !store.active && (
             <div className="bg-red-50 text-red-900 border-b border-red-200 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30">
               <span className="flex items-start gap-2 leading-tight flex-1">
@@ -212,7 +240,7 @@ function AdminLayout() {
                 className="h-8 font-bold text-xs shrink-0 bg-red-600 hover:bg-red-700 text-white self-start sm:self-center"
               >
                 <a
-                  href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, mi catálogo de la tienda "${store.name}" fue suspendido por inactividad. Quisiera reactivarlo.`)}`}
+                  href={buildWaUrl(DIZI_SUPPORT_PHONE, `Hola Dizi, mi catálogo de la tienda "${store.name}" fue suspendido por inactividad. Quisiera reactivarlo.`)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

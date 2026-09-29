@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useApp } from "@/lib/store";
 import { PLANS, type PlanId, daysUntilExpiry, daysSinceExpiry, formatDate, calculateStoreEgress } from "@/lib/types";
 import { SubscriptionManager } from "@/components/admin/SubscriptionManager";
+import { validatePhone } from "@/lib/phone";
 import {
   Table,
   TableBody,
@@ -512,6 +513,14 @@ function TenantsPage() {
                               >
                                 <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> Inactiva
                                 (15d+)
+                              </span>
+                            )}
+                            {!validatePhone(s.countryIso || "PE", s.phone).ok && (
+                              <span
+                                title="El número de WhatsApp no cumple con el formato internacional válido para su país"
+                                className="inline-flex items-center gap-1 text-[9px] bg-red-50 text-red-700 border border-red-200 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wider dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/30"
+                              >
+                                📵 WhatsApp inválido
                               </span>
                             )}
                           </div>
