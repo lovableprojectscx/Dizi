@@ -170,6 +170,8 @@ export interface Store {
   phone: string;
   /** Código telefónico internacional del país (ej: "51" para Perú) */
   countryCode: string;
+  /** Código ISO-3166 de 2 letras del país (ej: "PE" para Perú) */
+  countryIso?: string;
   /** URL del logotipo de la tienda */
   logo?: string | null;
   /** Color primario de marca en formato hexadecimal (ej: "#2563EB") */

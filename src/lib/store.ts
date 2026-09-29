@@ -85,6 +85,7 @@ const mapStoreFromDB = (row: any): Store => {
     name: row.name,
     phone: row.phone || "",
     countryCode: row.country_code || "51",
+    countryIso: row.country_iso || "PE",
     logo: row.logo,
     plan: row.plan as PlanId,
     model: row.model,
@@ -440,6 +441,8 @@ export const useApp = create<AppState>()(
         if (updatedPatch.slug !== undefined) dbPatch.slug = updatedPatch.slug;
         if (updatedPatch.name !== undefined) dbPatch.name = updatedPatch.name;
         if (updatedPatch.phone !== undefined) dbPatch.phone = updatedPatch.phone;
+        if (updatedPatch.countryCode !== undefined) dbPatch.country_code = updatedPatch.countryCode;
+        if (updatedPatch.countryIso !== undefined) dbPatch.country_iso = updatedPatch.countryIso;
         if (updatedPatch.logo !== undefined) dbPatch.logo = updatedPatch.logo;
         if (updatedPatch.model !== undefined) dbPatch.model = updatedPatch.model;
         if (updatedPatch.niche !== undefined) dbPatch.niche = updatedPatch.niche;
@@ -576,6 +579,7 @@ export const useApp = create<AppState>()(
             p_model: store.model,
             p_niche: store.niche,
             p_category_id: mainCatId,
+            p_country_iso: store.countryIso || "PE",
           });
 
           if (!rpcError) {
@@ -595,6 +599,7 @@ export const useApp = create<AppState>()(
             name: store.name,
             phone: store.phone,
             country_code: store.countryCode,
+            country_iso: store.countryIso || "PE",
             plan: store.plan,
             owner_id: store.ownerId,
             model: store.model,

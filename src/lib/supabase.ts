@@ -58,6 +58,10 @@ export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
   },
 });
 
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  (window as any).__supabase = supabase;
+}
+
 /**
  * Convierte y sube una imagen en formato Data URL Base64 hacia el bucket `images` de Supabase Storage.
  *

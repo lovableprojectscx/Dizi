@@ -24,6 +24,8 @@ import {
   Sliders,
 } from "lucide-react";
 import { convertImageToWebP } from "@/lib/image-utils";
+import { PhoneInput } from "@/components/PhoneInput";
+import { validatePhone, toWhatsAppDigits } from "@/lib/phone";
 
 /**
  * @file admin.configuracion.tsx
@@ -39,16 +41,6 @@ export const Route = createFileRoute("/admin/configuracion")({
   component: ConfigPage,
 });
 
-const COUNTRIES = [
-  { code: "51", name: "Perú" },
-  { code: "52", name: "México" },
-  { code: "54", name: "Argentina" },
-  { code: "56", name: "Chile" },
-  { code: "57", name: "Colombia" },
-  { code: "1", name: "EE. UU. / Canadá" },
-  { code: "34", name: "España" },
-];
-
 let slugCheckTimer: ReturnType<typeof setTimeout> | null = null;
 
 function ConfigPage() {
@@ -58,11 +50,11 @@ function ConfigPage() {
 
   /* Basic fields */
   const [name, setName] = useState(store?.name || "");
-  const [country, setCountry] = useState(store?.countryCode || "51");
-  const [number, setNumber] = useState(
-    store?.phone.startsWith(store?.countryCode || "")
-      ? store?.phone.slice((store?.countryCode || "").length)
-      : store?.phone || "",
+  const [phone, setPhone] = useState(store?.phone || "");
+  const [countryIso, setCountryIso] = useState(store?.countryIso || "PE");
+  const [countryCode, setCountryCode] = useState(store?.countryCode || "51");
+  const [isPhoneValid, setIsPhoneValid] = useState(() =>
+    validatePhone(store?.countryIso || "PE", store?.phone || "").ok
   );
   const [logo, setLogo] = useState(store?.logo ?? "");
   const [slug, setSlug] = useState(store?.slug || "");
@@ -86,12 +78,10 @@ function ConfigPage() {
   useEffect(() => {
     if (store && loadedStoreId !== store.id) {
       setName(store.name || "");
-      setCountry(store.countryCode || "51");
-      setNumber(
-        store.phone.startsWith(store.countryCode || "")
-          ? store.phone.slice((store.countryCode || "").length)
-          : store.phone || "",
-      );
+      setPhone(store.phone || "");
+      setCountryIso(store.countryIso || "PE");
+      setCountryCode(store.countryCode || "51");
+      setIsPhoneValid(validatePhone(store.countryIso || "PE", store.phone || "").ok);
       setLogo(store.logo ?? "");
       setSlug(store.slug || "");
       setPriceFilter(store.priceFilterEnabled ?? false);
@@ -149,9 +139,13 @@ function ConfigPage() {
   };
 
   const save = async () => {
-    const cleanNumber = number.replace(/\D/g, "");
-    if (!name.trim() || !cleanNumber) {
+    if (!name.trim() || !phone.trim()) {
       toast.error("Completa los campos requeridos");
+      return;
+    }
+    const valResult = validatePhone(countryIso, phone);
+    if (!valResult.ok) {
+      toast.error("Ingresa un número de celular válido para guardar");
       return;
     }
     if (slug.length < 3) {
@@ -171,8 +165,9 @@ function ConfigPage() {
     try {
       await update(store.id, {
         name: name.trim(),
-        countryCode: country,
-        phone: country + cleanNumber,
+        countryCode,
+        countryIso,
+        phone: valResult.e164Digits || toWhatsAppDigits(countryIso, phone),
         logo: logo || null,
         slug,
         priceFilterEnabled: priceFilter,
@@ -397,26 +392,16 @@ function ConfigPage() {
               <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                 <Phone className="h-3.5 w-3.5 text-primary" /> WhatsApp de Pedidos
               </Label>
-              <div className="flex gap-2">
-                <select
-                  className="border border-input rounded-md px-2 py-2 bg-background text-sm focus:ring-1 focus:ring-primary outline-none w-28 shrink-0 h-10 transition-shadow"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                >
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      +{c.code} {c.name}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  inputMode="numeric"
-                  placeholder="987654321"
-                  value={number}
-                  onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))}
-                  className="min-w-0 h-10 flex-1"
-                />
-              </div>
+              <PhoneInput
+                value={phone}
+                countryIso={countryIso}
+                onChange={({ digits, countryIso: iso, dial, valid }) => {
+                  setPhone(digits);
+                  setCountryIso(iso);
+                  setCountryCode(dial);
+                  setIsPhoneValid(valid);
+                }}
+              />
             </div>
           </div>
 
@@ -615,6 +600,7 @@ function ConfigPage() {
           onClick={save}
           disabled={
             saving ||
+            !isPhoneValid ||
             slugStatus === "taken" ||
             slugStatus === "checking" ||
             slugStatus === "invalid"

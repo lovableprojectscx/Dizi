@@ -166,6 +166,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       name: data.name,
       phone: data.phone || "",
       countryCode: data.country_code || "51",
+      countryIso: data.country_iso || "PE",
       logo: data.logo,
       plan: data.plan,
       model: data.model,

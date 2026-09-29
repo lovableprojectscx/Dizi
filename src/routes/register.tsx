@@ -17,6 +17,8 @@ import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import type { PlanId } from "@/lib/types";
 import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
+import { PhoneInput } from "@/components/PhoneInput";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -712,6 +714,9 @@ function RegisterPage() {
   const [storeName, setStoreName] = useState("");
   const [storeLink, setStoreLink] = useState("");
   const [storePhone, setStorePhone] = useState("");
+  const [phoneCountryIso, setPhoneCountryIso] = useState("PE");
+  const [phoneCountryDial, setPhoneCountryDial] = useState("51");
+  const [isPhoneValid, setIsPhoneValid] = useState(false);
 
   // Leer token de la URL
   const inviteToken = new URLSearchParams(window.location.search).get("invite");
@@ -1007,8 +1012,9 @@ function RegisterPage() {
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
           name: storeName || "Mi Nueva Tienda",
-          phone: storePhone.startsWith("51") ? storePhone : `51${storePhone}`,
-          countryCode: "51",
+          phone: storePhone,
+          countryCode: phoneCountryDial,
+          countryIso: phoneCountryIso,
           plan: plan as PlanId,
           active: true,
           isPublished: true,
@@ -1215,27 +1221,23 @@ function RegisterPage() {
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
                     WhatsApp de Ventas
                   </label>
-                  <div className="flex rounded-xl border border-slate-200 bg-white/50 focus-within:bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all overflow-hidden">
-                    <span className="flex items-center px-4 bg-slate-50 text-slate-500 text-sm border-r border-slate-200 font-bold">
-                      +51
-                    </span>
-                    <input
-                      type="tel"
-                      value={storePhone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        if (val.length <= 9) setStorePhone(val);
-                      }}
-                      className="flex h-12 w-full bg-transparent px-4 text-sm focus:outline-none"
-                      placeholder="999 888 777"
-                      required
-                    />
-                  </div>
+                  <PhoneInput
+                    value={storePhone}
+                    countryIso={phoneCountryIso}
+                    onChange={({ digits, countryIso, dial, valid }) => {
+                      setStorePhone(digits);
+                      setPhoneCountryIso(countryIso);
+                      setPhoneCountryDial(dial);
+                      setIsPhoneValid(valid);
+                    }}
+                    required
+                  />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer"
+                  disabled={!isPhoneValid}
+                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer"
                 >
                   Siguiente paso
                 </button>
@@ -1244,7 +1246,10 @@ function RegisterPage() {
                     ¿Necesitas ayuda con tu configuración?
                   </p>
                   <a
-                    href="https://wa.me/51925176472?text=Hola%2C%20necesito%20ayuda%20para%20configurar%20mi%20tienda%20en%20Dizi"
+                    href={buildWaUrl(
+                      DIZI_SUPPORT_PHONE,
+                      "Hola, necesito ayuda para configurar mi tienda en Dizi"
+                    )}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
