@@ -1354,9 +1354,7 @@ export const useApp = create<AppState>()(
                     customPrice:
                       plan === "semilla"
                         ? undefined
-                        : customPrice !== undefined
-                          ? customPrice
-                          : st.customPrice,
+                        : (customPrice ?? undefined),
                   }
                 : st,
             ),

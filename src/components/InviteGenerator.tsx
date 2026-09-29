@@ -39,7 +39,7 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
   const [durationValue, setDurationValue] = useState<number>(1);
   const [durationUnit, setDurationUnit] = useState<"days" | "months">("months");
   const [isCustomPrice, setIsCustomPrice] = useState(false);
-  const [customPrice, setCustomPrice] = useState<number>(0);
+  const [customPrice, setCustomPrice] = useState<number>(() => PLANS["emprendedor"].price);
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,6 +47,13 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
   const handleGenerate = async () => {
+    if (selectedPlan !== "semilla" && isCustomPrice && customPrice <= 0) {
+      const confirmZero = window.confirm(
+        "¿Seguro que deseas generar esta invitación con precio especial en S/ 0 (gratis)?"
+      );
+      if (!confirmZero) return;
+    }
+
     setLoading(true);
     try {
       const token = generateToken();
@@ -114,6 +121,8 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
               setSelectedPlan(val);
               if (val === "semilla") {
                 setIsCustomPrice(false);
+              } else {
+                setCustomPrice(PLANS[val].price);
               }
             }}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
@@ -162,7 +171,13 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
               type="checkbox"
               id="custom-price-checkbox"
               checked={isCustomPrice}
-              onChange={(e) => setIsCustomPrice(e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsCustomPrice(checked);
+                if (checked && customPrice <= 0 && selectedPlan !== "semilla") {
+                  setCustomPrice(PLANS[selectedPlan].price);
+                }
+              }}
               disabled={selectedPlan === "semilla"}
               className="rounded border-input text-primary focus:ring-primary h-4 w-4 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             />
