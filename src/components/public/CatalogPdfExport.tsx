@@ -301,6 +301,7 @@ export async function urlToBase64(
 function safe(str: any): string {
   if (str === null || str === undefined) return "";
   const s = String(str);
+  // eslint-disable-next-line no-control-regex
   return s.replace(/[^\x00-\x7F]/g, (c) => {
     const map: Record<string, string> = {
       á: "a",

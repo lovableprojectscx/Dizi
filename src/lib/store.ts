@@ -328,7 +328,7 @@ export const useApp = create<AppState>()(
           const { data, error } = await query;
           if (error) throw error;
 
-          let dbPromotions: PlanPromotion[] = [];
+          const dbPromotions: PlanPromotion[] = [];
           // Note: plan_prices table was removed in migration 20260617010000.
           // Using empty local array as pricing is now managed statically / via custom invites.
 
@@ -978,7 +978,7 @@ export const useApp = create<AppState>()(
             variations: p.variations || [],
           };
 
-          let { error } = await supabase.from("products").upsert(payload);
+          const { error } = await supabase.from("products").upsert(payload);
 
           // Fallback resiliente: Si la columna 'variations' aún no está en el schema cache de Supabase,
           // reintentamos sin 'variations' para que el usuario nunca vea un error bloqueante en pantalla.

@@ -475,7 +475,7 @@ function PhonePreview({
     return { shape, type, radiusClass };
   };
 
-  let { type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
+  const { type, radiusClass } = getMockupButtonStyle(bioButtonStyle);
 
   return (
     <div className="w-full max-w-[270px] mx-auto select-none">

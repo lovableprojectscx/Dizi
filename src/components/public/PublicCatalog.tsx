@@ -1741,7 +1741,7 @@ export function PublicCatalog({
     iconName?: string,
   ) => {
     const buttonStyleId = store.bioButtonStyle || "pill-solid";
-    let { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
+    const { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
 
     const customBg = overrideBg || store.bioButtonColor;
     const customText = overrideText || store.bioButtonTextColor;
@@ -9014,7 +9014,7 @@ function LibroReclamacionesModal({
     });
 
     // ── Guardar ────────────────────────────────────────────────
-    doc.save(`Reclamacion_${num.replace(/[°\s\/]/g, "_")}.pdf`);
+    doc.save(`Reclamacion_${num.replace(/[°\s/]/g, "_")}.pdf`);
   };
 
   const sBase: React.CSSProperties = {

@@ -1030,7 +1030,7 @@ function SingleProductDialog({
                             placeholder="Precio"
                             value={v.price !== null && v.price !== undefined ? v.price.toString() : ""}
                             onChange={(e) => {
-                              let val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                              const val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
                               const num = val === "" ? null : parseFloat(val);
                               handleVarChange(index, "price", isNaN(num as any) ? null : num);
                             }}
@@ -1242,7 +1242,7 @@ function CompleteProductsDialog({
                     disabled={item.isConsultOnly}
                     value={item.isConsultOnly ? "" : item.price}
                     onChange={(e) => {
-                      let val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                      const val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
                       updateItem(item.id, "price", val);
                     }}
                     placeholder={item.isConsultOnly ? "A consultar" : "0.00"}
@@ -3139,7 +3139,7 @@ function ProductsPage() {
                                       placeholder="Precio"
                                       value={v.price !== null && v.price !== undefined ? v.price.toString() : ""}
                                       onChange={(e) => {
-                                        let val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                                        const val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
                                         const num = val === "" ? null : parseFloat(val);
                                         handleBulkVarChange(vIdx, "price", isNaN(num as any) ? null : num);
                                       }}
