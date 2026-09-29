@@ -28,12 +28,14 @@ import {
   Share2,
   Eye,
   Clock,
+  AlertCircle,
 } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
 import { cn } from "@/lib/utils";
+import { isProductIncomplete } from "@/lib/products";
 
 /**
  * Definición de la ruta de TanStack Router para `/admin/dashboard`.
@@ -112,6 +114,7 @@ function Dashboard() {
   };
 
   const activeProducts = store.products.filter((p) => p.visible).length;
+  const incompleteProductsCount = store.products.filter(isProductIncomplete).length;
   const activeQr = shareTab === "catalog" ? catalogQr : bioQr;
   const activeUrl = shareTab === "catalog" ? catalogUrl : bioUrl;
 
@@ -133,6 +136,39 @@ function Dashboard() {
           </span>
         </div>
       </div>
+
+      {/* Alerta de productos incompletos (sin precio o con nombre de foto) */}
+      {incompleteProductsCount > 0 && (
+        <Card className="border border-amber-300 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/20 shadow-xs rounded-2xl">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 shadow-xs">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5 text-center sm:text-left">
+                <h3 className="text-xs sm:text-sm font-heading font-bold text-amber-950 dark:text-amber-200">
+                  {incompleteProductsCount}{" "}
+                  {incompleteProductsCount === 1
+                    ? "producto incompleto (sin precio o con nombre de archivo)"
+                    : "productos incompletos (sin precio o con nombre de archivo)"}
+                </h3>
+                <p className="text-[11px] sm:text-xs text-amber-800/80 dark:text-amber-300/80">
+                  Completa sus nombres y precios para que tus clientes puedan comprar sin dudas.
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              size="sm"
+              className="rounded-xl font-bold text-xs h-9 sm:h-10 w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white shadow-sm shrink-0 cursor-pointer"
+            >
+              <Link to="/admin/productos">
+                Completar productos
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Banner de estado inicial minimalista */}
       {store.products.length === 0 && (

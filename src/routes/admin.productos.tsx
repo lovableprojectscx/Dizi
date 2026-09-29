@@ -12,6 +12,7 @@ import {
   isSubscriptionExpired,
   getImageSpec,
 } from "@/lib/types";
+import { isProductIncomplete, isPlaceholderOrFilename } from "@/lib/products";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
 import {
@@ -858,9 +859,26 @@ function SingleProductDialog({
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                      Precio
-                    </Label>
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+                        Precio
+                      </Label>
+                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5"
+                          checked={priceInput === ""}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setPriceInput("");
+                            } else {
+                              setPriceInput("10.00");
+                            }
+                          }}
+                        />
+                        <span>A consultar</span>
+                      </label>
+                    </div>
                     <div className="relative flex items-center mt-1">
                       <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
                         S/
@@ -868,8 +886,9 @@ function SingleProductDialog({
                       <Input
                         type="text"
                         inputMode="decimal"
-                        placeholder="0.00 (Dejar vacío para consultar)"
-                        className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm"
+                        placeholder={priceInput === "" ? "A consultar" : "0.00"}
+                        disabled={priceInput === ""}
+                        className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm disabled:bg-muted/50 disabled:text-muted-foreground"
                         value={priceInput}
                         onChange={(e) => {
                           let val = e.target.value.replace(",", ".");
@@ -1062,6 +1081,196 @@ function SingleProductDialog({
   );
 }
 
+/* ── Pantalla Modal: Completa tus productos (Fase 1B - Bug B3) ── */
+interface CompleteDraftItem {
+  id: string;
+  name: string;
+  price: string;
+  isConsultOnly: boolean;
+  image: string;
+  originalProduct: Product;
+}
+
+function CompleteProductsDialog({
+  open,
+  onOpenChange,
+  incompleteProducts,
+  onSaveBatch,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  incompleteProducts: Product[];
+  onSaveBatch: (updates: Product[]) => Promise<void>;
+}) {
+  const [items, setItems] = useState<CompleteDraftItem[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setItems(
+        incompleteProducts.map((p) => {
+          const hasPrice = p.price !== null && p.price !== undefined;
+          return {
+            id: p.id,
+            name: isPlaceholderOrFilename(p.name) ? "" : p.name,
+            price: hasPrice ? p.price!.toString() : "",
+            isConsultOnly: !hasPrice,
+            image: p.image,
+            originalProduct: p,
+          };
+        })
+      );
+    }
+  }, [open, incompleteProducts]);
+
+  const updateItem = (id: string, field: keyof CompleteDraftItem, val: any) => {
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: val } : item))
+    );
+  };
+
+  const handleSave = async () => {
+    for (const item of items) {
+      if (!item.name.trim()) {
+        toast.error("Todos los productos deben tener un nombre.");
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const updatedProducts: Product[] = items.map((item) => {
+        const cleanPrice = item.isConsultOnly ? null : parseFloat(item.price.replace(",", "."));
+        const finalPrice = isNaN(cleanPrice as any) ? null : cleanPrice;
+        return {
+          ...item.originalProduct,
+          name: item.name.trim(),
+          price: finalPrice,
+          isSample: false,
+        };
+      });
+
+      await onSaveBatch(updatedProducts);
+      toast.success("¡Productos actualizados con éxito!");
+      onOpenChange(false);
+    } catch (err: any) {
+      console.error("[CompleteProductsDialog] Error:", err);
+      toast.error(err?.message || "Ocurrió un error al guardar los productos.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        onPointerDownOutside={(e) => e.preventDefault()}
+        className="max-w-3xl max-h-[92dvh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl border-none shadow-2xl bg-background"
+      >
+        <DialogHeader className="px-6 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
+          <DialogTitle className="text-lg font-extrabold flex items-center gap-2">
+            <span className="h-5 w-1 rounded bg-amber-500" />
+            Completa tus productos
+          </DialogTitle>
+          <DialogDescription className="text-xs text-muted-foreground">
+            Asigna un nombre real y precio a tus fotos importadas en un solo paso sin abrir una por una.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5">
+          {items.map((item, idx) => (
+            <div
+              key={item.id}
+              className="flex flex-col sm:flex-row sm:items-center gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-card hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-2xs"
+            >
+              <div className="flex items-center gap-3 shrink-0">
+                <img
+                  src={item.image}
+                  alt={item.name || "Producto"}
+                  className="w-13 h-13 rounded-lg object-cover bg-muted shrink-0"
+                />
+                <span className="text-xs font-mono font-bold text-muted-foreground w-6">
+                  #{idx + 1}
+                </span>
+              </div>
+
+              <div className="flex-1 min-w-0 space-y-1">
+                <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                  Nombre del producto *
+                </Label>
+                <Input
+                  value={item.name}
+                  onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                  placeholder="Ej. Vestido Floral, Zapatillas..."
+                  className="h-9 text-xs rounded-lg"
+                />
+              </div>
+
+              <div className="w-full sm:w-48 shrink-0 space-y-1">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">
+                    Precio (S/)
+                  </Label>
+                  <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={item.isConsultOnly}
+                      onChange={(e) => updateItem(item.id, "isConsultOnly", e.target.checked)}
+                      className="rounded border-slate-300 text-primary h-3 w-3"
+                    />
+                    <span>A consultar</span>
+                  </label>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 text-xs font-semibold text-muted-foreground/60 select-none">
+                    S/
+                  </span>
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    disabled={item.isConsultOnly}
+                    value={item.isConsultOnly ? "" : item.price}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                      updateItem(item.id, "price", val);
+                    }}
+                    placeholder={item.isConsultOnly ? "A consultar" : "0.00"}
+                    className="pl-7 h-9 text-xs rounded-lg disabled:bg-muted/50 disabled:text-muted-foreground"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter className="px-6 py-3.5 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-2 justify-end w-full">
+          <Button
+            variant="outline"
+            disabled={saving}
+            onClick={() => onOpenChange(false)}
+            className="h-9 text-xs rounded-xl cursor-pointer"
+          >
+            Hacerlo más tarde
+          </Button>
+          <Button
+            disabled={saving || items.length === 0}
+            onClick={handleSave}
+            className="h-9 text-xs rounded-xl font-bold bg-primary text-white cursor-pointer"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Guardando...
+              </>
+            ) : (
+              `Guardar todos los cambios (${items.length})`
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /* ── Fila de Tabla de Producto Memoizada para 60+ FPS ── */
 interface ProductTableRowProps {
   p: Product;
@@ -1116,6 +1325,14 @@ const ProductTableRow = React.memo(function ProductTableRow({
               className="text-[10px] py-0 px-1.5 border-purple-300 text-purple-700 bg-purple-50 dark:border-purple-800 dark:text-purple-300 dark:bg-purple-950/30 shrink-0 font-bold"
             >
               EJEMPLO
+            </Badge>
+          )}
+          {!p.isSample && isProductIncomplete(p) && (
+            <Badge
+              variant="outline"
+              className="text-[10px] py-0 px-1.5 border-amber-400 text-amber-800 bg-amber-50 dark:border-amber-700 dark:text-amber-300 dark:bg-amber-950/30 shrink-0 font-semibold"
+            >
+              Incompleto
             </Badge>
           )}
           {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
@@ -1260,6 +1477,11 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
               EJEMPLO
             </span>
           )}
+          {!p.isSample && isProductIncomplete(p) && (
+            <span className="shrink-0 text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-1 rounded dark:text-amber-300 dark:bg-amber-950/30 dark:border-amber-700">
+              Incompleto
+            </span>
+          )}
           {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
             <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
               ⭐ Destacado
@@ -1382,7 +1604,18 @@ function ProductsPage() {
     ? Math.max(0, visibleProducts.length - effectiveLimit)
     : 0;
 
-  const reachedLimit = store.products.filter((p) => !p.isSample).length >= effectiveLimit;
+  const reachedLimit = store.products.filter((p) => p.visible && !p.isSample).length >= effectiveLimit;
+  const [completeProductsOpen, setCompleteProductsOpen] = useState(false);
+  const incompleteProducts = useMemo(
+    () => store.products.filter(isProductIncomplete),
+    [store.products]
+  );
+
+  const handleSaveBatch = async (updatedProducts: Product[]) => {
+    for (const prod of updatedProducts) {
+      await upsert(store.id, prod);
+    }
+  };
 
   // Tabs routing logic
   const [activeTab, setActiveTab] = useState(() => {
@@ -1589,9 +1822,9 @@ function ProductsPage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const currentCount = store.products.filter((p) => !p.isSample).length;
+    const currentCount = store.products.filter((p) => p.visible && !p.isSample).length;
     if (currentCount + files.length > effectiveLimit) {
-      toast.error(`La subida masiva excede el límite de tu plan (${effectiveLimit} productos).`);
+      toast.error(`La subida masiva excede el límite de tu plan (${effectiveLimit} productos activos).`);
       return;
     }
 
@@ -1709,6 +1942,7 @@ function ProductsPage() {
       setBulkDrafts([]);
       setSelectedDraftId(null);
       setBulkOpen(false);
+      setCompleteProductsOpen(true);
     }
   };
 
@@ -1872,6 +2106,36 @@ function ProductsPage() {
                   Continuar editando ({bulkDrafts.length})
                 </Button>
               </div>
+            </div>
+          )}
+
+          {/* Banner de productos incompletos (Fase 1B - Bug B3) */}
+          {incompleteProducts.length > 0 && (
+            <div className="rounded-2xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/20 p-3.5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 shrink-0">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-heading font-bold text-amber-900 dark:text-amber-200 text-xs sm:text-sm">
+                    {incompleteProducts.length}{" "}
+                    {incompleteProducts.length === 1
+                      ? "producto incompleto (sin precio o con nombre de foto)"
+                      : "productos incompletos (sin precio o con nombre de foto)"}
+                  </h4>
+                  <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                    Completa nombres y precios en un solo paso para que tus clientes puedan comprar sin dudas.
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCompleteProductsOpen(true)}
+                className="h-8.5 border-amber-400 text-amber-900 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-200 shrink-0 font-bold cursor-pointer rounded-xl"
+              >
+                Completar en lista
+              </Button>
             </div>
           )}
 
@@ -2387,6 +2651,14 @@ function ProductsPage() {
         onSave={handleSaveProduct}
         onCreateCategory={handleCreateCategory}
         showConfirm={showConfirm}
+      />
+
+      {/* Modal para completar productos incompletos en lista (Fase 1B - Bug B3) */}
+      <CompleteProductsDialog
+        open={completeProductsOpen}
+        onOpenChange={setCompleteProductsOpen}
+        incompleteProducts={incompleteProducts}
+        onSaveBatch={handleSaveBatch}
       />
 
       {/* Input oculto para carga masiva por fotos */}
