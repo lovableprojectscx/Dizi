@@ -3,6 +3,11 @@
 ## Propósito
 Definir las características de calidad del producto con métricas verificables. Cubre RNF-01 a RNF-05.
 
+> **Estado real (29 sep 2026):** son **objetivos**, no todos se cumplen. RNF-01: las cabeceras CSP/HSTS están en
+> `vercel.json` pero no llegan al navegador (Fase 2). RNF-02: LCP móvil medido 11–13 s (Fase 3). RNF-04: `ci.yml`
+> escucha la rama `main` y se trabaja en `master`, así que no corre (Fase 2). RNF-05: se cumple (`error-capture.ts`, `error-page.ts`)
+> y se reforzó con reintentos ante fallos de Supabase (Fase 1B, B7).
+
 ## Requisitos
 
 ### RNF-01 - Seguridad
