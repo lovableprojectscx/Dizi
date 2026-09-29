@@ -2748,7 +2748,7 @@ export function PublicCatalog({
               {/* 1. PEDIR POR WHATSAPP */}
               {store.phone &&
                 renderBioButton(
-                  `https://wa.me/${store.phone}`,
+                  buildWaUrl(store.phone),
                   "Pedir por WhatsApp",
                   "#25D366",
                   "#128C7E",

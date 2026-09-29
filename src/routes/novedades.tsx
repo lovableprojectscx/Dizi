@@ -12,6 +12,7 @@ import {
   Wrench,
   Calendar,
 } from "lucide-react";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/novedades")({
   head: () => ({
@@ -526,7 +527,7 @@ function NovedadesPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
             <a
-              href="https://wa.me/51925176472?text=Hola%20Dizi%2C%20tengo%20una%20consulta"
+              href={buildWaUrl(DIZI_SUPPORT_PHONE, "Hola Dizi, tengo una consulta")}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition shadow-lg shadow-primary/20"

@@ -713,12 +713,6 @@ function LinkBioPage() {
 
   const [activeEditTab, setActiveEditTab] = useState("contenido");
   const [activeBgTab, setActiveBgTab] = useState<"color" | "image">("color");
-  const [country] = useState(store?.countryCode || "51");
-  const [number] = useState(
-    store?.phone?.startsWith(store?.countryCode || "")
-      ? store?.phone.slice((store?.countryCode || "").length)
-      : store?.phone || "",
-  );
 
   const [customLinks, setCustomLinks] = useState<QuickLink[]>([]);
   const [locationAddress, setLocationAddress] = useState(store?.locationAddress || "");
@@ -2328,7 +2322,7 @@ function LinkBioPage() {
                         bioDescription={bioDescription}
                         brandColor={store.brandColor || undefined}
                         bannerImage={bioBanner || store.bannerImage || undefined}
-                        phone={country + number.replace(/\D/g, "")}
+                        phone={store.phone}
                         locationAddress={locationAddress}
                         locationLat={locationLat}
                         locationLng={locationLng}
@@ -2374,7 +2368,7 @@ function LinkBioPage() {
             bioDescription={bioDescription}
             brandColor={store.brandColor || undefined}
             bannerImage={bioBanner || store.bannerImage || undefined}
-            phone={country + number.replace(/\D/g, "")}
+            phone={store.phone}
             locationAddress={locationAddress}
             locationLat={locationLat}
             locationLng={locationLng}

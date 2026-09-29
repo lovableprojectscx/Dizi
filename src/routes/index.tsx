@@ -37,6 +37,7 @@ import {
   PackagePlus,
   Share2,
 } from "lucide-react";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 
 /**
  * Definición de la ruta raíz `/` en TanStack Router con metadatos SEO y OpenGraph.
@@ -955,7 +956,7 @@ function LandingPage() {
               </div>
               <Button asChild size="sm" className="font-bold text-xs rounded-xl h-10 bg-blue-600 hover:bg-blue-700 text-white">
                 <a
-                  href={`https://wa.me/51925176472?text=${encodeURIComponent("Hola Dizi, quiero solicitar el servicio de Configuración Asistida (S/ 79) para mi tienda.")}`}
+                  href={buildWaUrl(DIZI_SUPPORT_PHONE, "Hola Dizi, quiero solicitar el servicio de Configuración Asistida (S/ 79) para mi tienda.")}
                   target="_blank"
                   rel="noreferrer"
                 >

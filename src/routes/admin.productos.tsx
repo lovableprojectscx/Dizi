@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import {
   PLANS,
   type Product,
@@ -1942,7 +1943,7 @@ function ProductsPage() {
                   visibles. Tus productos están guardados — renueva para mostrarlos todos de nuevo.
                 </p>
                 <a
-                  href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+                  href={buildWaUrl(DIZI_SUPPORT_PHONE, `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"

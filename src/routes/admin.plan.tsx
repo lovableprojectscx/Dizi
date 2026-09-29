@@ -7,6 +7,7 @@ import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock, Sparkles, Za
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 
 /**
  * @file admin.plan.tsx
@@ -84,7 +85,10 @@ function PlanPage() {
               tienes las funciones del plan Semilla. Para renovar, contacta con soporte.
             </p>
             <a
-              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+              href={buildWaUrl(
+                DIZI_SUPPORT_PHONE,
+                `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`
+              )}
               target="_blank"
               rel="noreferrer"
               className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-destructive px-4 text-xs font-medium text-white shadow hover:bg-destructive/90 transition-colors"
@@ -107,7 +111,10 @@ function PlanPage() {
               soporte para renovar.
             </p>
             <a
-              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}`}
+              href={buildWaUrl(
+                DIZI_SUPPORT_PHONE,
+                `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`
+              )}
               target="_blank"
               rel="noreferrer"
               className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-medium text-white shadow hover:bg-amber-700 transition-colors"
@@ -252,7 +259,10 @@ function PlanPage() {
                 <div className="pt-3">
                   {!isCurrent ? (
                     <a
-                      href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, me gustaría contratar el plan ${planInfo.name} (${isAnnual ? "Anual" : "Mensual"}) para mi tienda "${store.name}".`)}`}
+                      href={buildWaUrl(
+                        DIZI_SUPPORT_PHONE,
+                        `Hola Dizi, me gustaría contratar el plan ${planInfo.name} (${isAnnual ? "Anual" : "Mensual"}) para mi tienda "${store.name}".`
+                      )}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-primary px-3 text-xs font-bold text-primary-foreground shadow hover:bg-primary/90 transition-colors"
@@ -285,7 +295,10 @@ function PlanPage() {
               </p>
             </div>
             <a
-              href={`https://wa.me/51925176472?text=${encodeURIComponent(`Hola Dizi, me interesa contratar el servicio opcional de Configuración Asistida (S/ 79) para mi tienda "${store.name}".`)}`}
+              href={buildWaUrl(
+                DIZI_SUPPORT_PHONE,
+                `Hola Dizi, me interesa contratar el servicio opcional de Configuración Asistida (S/ 79) para mi tienda "${store.name}".`
+              )}
               target="_blank"
               rel="noreferrer"
               className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-4 text-xs font-bold shadow-md transition-colors"

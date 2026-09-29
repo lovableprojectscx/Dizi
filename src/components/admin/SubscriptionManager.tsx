@@ -11,6 +11,7 @@ import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { buildWaUrl } from "@/lib/whatsapp";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -349,17 +350,14 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
   };
 
   const handleSendWhatsAppAlert = () => {
-    const phone = store.phone.replace(/\D/g, "");
-    if (!phone) {
+    if (!store.phone) {
       toast.error("Esta tienda no tiene un teléfono registrado.");
       return;
     }
-    const country = store.countryCode || "51";
-    const fullPhone = phone.startsWith(country) ? phone : `${country}${phone}`;
 
     const text = `Hola *${store.name}*, te saludamos de *Dizi*. 👋\n\nNotamos que tu catálogo digital no registra visitas ni actividad reciente y se encuentra en nuestro *plan Semilla* gratuito.\n\nPara garantizar el uso eficiente del sistema y liberar enlaces que no se usan, nuestro sistema suspenderá la tienda y liberará el enlace */t/${store.slug}* para que otros comercios puedan utilizarlo en los próximos días.\n\nSi deseas mantener activo tu catálogo y conservar tu enlace, por favor responde a este mensaje o actualiza tu plan ingresando a tu panel de administración. ¡Estamos para ayudarte! 🚀`;
 
-    const url = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(text)}`;
+    const url = buildWaUrl(store.phone, text);
     window.open(url, "_blank");
   };
 

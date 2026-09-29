@@ -13,6 +13,7 @@ import {
   toWhatsAppDigits,
   formatPhoneDisplay,
 } from "@/lib/phone";
+import { buildWaUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -264,7 +265,7 @@ export function PhoneInput({
                 </strong>
               </span>
               <a
-                href={`https://wa.me/${targetDigits}`}
+                href={buildWaUrl(targetDigits)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-emerald-700 hover:text-emerald-800 underline font-semibold transition-colors ml-auto sm:ml-0"

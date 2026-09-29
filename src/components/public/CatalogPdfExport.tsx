@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Store, Product } from "@/lib/types";
 import { formatPrice, buildWaUrl } from "@/lib/whatsapp";
+import { formatPhoneDisplay } from "@/lib/phone";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -639,7 +640,7 @@ export async function generateCatalogPdf(
   const summaryItems = [
     `${visibleProds.length} productos`,
     `${cats.length} categorias`,
-    store.phone ? `WhatsApp: ${store.phone}` : null,
+    store.phone ? `WhatsApp: ${formatPhoneDisplay(store.phone, store.countryIso)}` : null,
   ].filter(Boolean);
 
   summaryItems.forEach((item, i) => {
@@ -965,7 +966,7 @@ export async function generateCatalogPdf(
 
   if (store.phone) {
     doc.setFontSize(13);
-    doc.text(`+${store.phone}`, PAGE_W / 2, PAGE_H / 2 + 12, { align: "center" });
+    doc.text(formatPhoneDisplay(store.phone, store.countryIso), PAGE_W / 2, PAGE_H / 2 + 12, { align: "center" });
   }
 
   doc.setFontSize(8);

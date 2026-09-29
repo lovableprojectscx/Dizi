@@ -18,6 +18,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/ayuda")({
   head: () => ({
@@ -35,9 +36,7 @@ export const Route = createFileRoute("/ayuda")({
   component: AyudaPage,
 });
 
-const WSP =
-  "https://wa.me/51925176472?text=" +
-  encodeURIComponent("Hola, necesito ayuda con mi catálogo Dizi");
+const WSP = buildWaUrl(DIZI_SUPPORT_PHONE, "Hola, necesito ayuda con mi catálogo Dizi");
 
 /* ---------------------------------- UI ---------------------------------- */
 
@@ -429,9 +428,10 @@ function AyudaPage() {
 
             <h3>WhatsApp</h3>
             <p>
-              Código de país más número, sin espacios ni guiones. Para Perú es <code>51</code> y
-              luego tus 9 dígitos. <strong>Este es el número que va a recibir todos los pedidos</strong>
-              , revísalo dos veces.
+              Selecciona la bandera de tu país y escribe tu número de celular. El sistema valida
+              automáticamente el formato de tu país y te permite pulsar <strong>"Probar en WhatsApp"</strong>{" "}
+              para verificar que abre tu chat. <strong>Este es el número que va a recibir todos los pedidos</strong>
+              , revísalo con atención.
             </p>
 
             <h3>Tu enlace</h3>
@@ -570,8 +570,10 @@ function AyudaPage() {
 
             <h3>"El pedido no me llega a WhatsApp"</h3>
             <p>
-              Casi siempre es el número mal cargado en Configuración: revisa que tenga el código de
-              país <code>51</code> adelante y ningún espacio ni guion.
+              Casi siempre es el número mal cargado en Configuración: revisa que hayas seleccionado
+              tu país correcto y que el número sea un celular válido. Puedes pulsar en{" "}
+              <strong>"Probar en WhatsApp"</strong> dentro de Configuración para confirmar que el
+              enlace abre tu chat.
             </p>
 
             <h3>"Subí una foto y se ve cortada"</h3>
