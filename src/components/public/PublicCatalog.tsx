@@ -2436,29 +2436,14 @@ export function PublicCatalog({
         </div>
       )}
 
-      {/* Banner: modelo premium en período de gracia (solo visible al owner via previewMode) */}
-      {modelDaysLeft !== null && modelDaysLeft > 0 && !store.isPublished && (
-        <div className="bg-amber-500 text-white px-4 py-2 text-center text-xs font-semibold">
-          Estás usando el modelo <strong>{store.model}</strong> de tu plan anterior. En{" "}
-          <strong>
-            {modelDaysLeft} día{modelDaysLeft !== 1 ? "s" : ""}
-          </strong>{" "}
-          cambiará automáticamente al modelo Semilla.{" "}
-          <a href="/admin/plan" className="underline hover:no-underline">
-            Renueva para conservarlo
+      {/* Aviso al comerciante si su suscripción venció (solo visible en modo previsualización) */}
+      {isExpired && !store.isPublished && (
+        <div className="bg-amber-600 text-white px-4 py-2 text-center text-xs font-semibold">
+          Tu plan ha vencido. Tu catálogo conserva tu diseño y muestra hasta {PLANS["semilla"].productLimit} productos.{" "}
+          <a href="/admin/plan" className="underline hover:no-underline font-bold">
+            Renueva tu plan aquí
           </a>
           .
-        </div>
-      )}
-
-      {/* Banner: modelo ya cambiado a semilla (solo visible al owner) */}
-      {modelDaysLeft === 0 && !store.isPublished && (
-        <div className="bg-destructive text-white px-4 py-2 text-center text-xs font-semibold">
-          Tu suscripción venció. El catálogo ahora usa el modelo Semilla.{" "}
-          <a href="/admin/plan" className="underline hover:no-underline">
-            Renueva tu plan
-          </a>{" "}
-          para recuperar tu diseño original.
         </div>
       )}
 

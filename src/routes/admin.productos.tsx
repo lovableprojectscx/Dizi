@@ -2144,9 +2144,14 @@ function ProductsPage() {
             <div>
               <h2 className="text-base sm:text-lg font-heading font-bold text-foreground">Mis Productos</h2>
               <p className="text-xs text-muted-foreground">
-                {store.products.length} de{" "}
+                {visibleProducts.filter((p) => !p.isSample).length} activos de{" "}
                 {effectiveLimit === Infinity ? "Ilimitados" : effectiveLimit} (plan{" "}
                 {subscriptionExpired ? "semilla" : store.plan})
+                {store.products.some((p) => !p.visible) && (
+                  <span>
+                    {" "}· {store.products.filter((p) => !p.visible).length} en borrador
+                  </span>
+                )}
               </p>
             </div>
 
