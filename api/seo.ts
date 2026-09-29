@@ -52,17 +52,37 @@ export default async function handler(req: any, res: any) {
 
   try {
     // Query Supabase REST API directly with case-insensitive slug lookup
-    const storeRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/stores?slug=ilike.${encodeURIComponent(slug)}&active=eq.true&select=id,name,logo,banner_image,bio_logo,bio_banner,bio_description`,
-      {
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          "Content-Type": "application/json",
+    let storeRes: Response | null = null;
+    try {
+      storeRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/stores?slug=ilike.${encodeURIComponent(slug)}&active=eq.true&select=id,name,logo,banner_image,bio_logo,bio_banner,bio_description`,
+        {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+          },
         },
-      },
-    );
+      );
 
-    if (storeRes.ok) {
+      // Reintento corto si Supabase responde 5xx
+      if (storeRes && storeRes.status >= 500) {
+        console.warn(`[SEO Middleware] Supabase respondió 5xx (${storeRes.status}) para ${slug}. Reintentando en 800ms...`);
+        await new Promise((r) => setTimeout(r, 800));
+        storeRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/stores?slug=ilike.${encodeURIComponent(slug)}&active=eq.true&select=id,name,logo,banner_image,bio_logo,bio_banner,bio_description`,
+          {
+            headers: {
+              apikey: SUPABASE_ANON_KEY,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+    } catch (fetchErr) {
+      console.warn(`[SEO Middleware] Error de red consultando tienda ${slug}:`, fetchErr);
+    }
+
+    if (storeRes && storeRes.ok) {
       const stores = await storeRes.json();
       const store = stores && stores.length > 0 ? stores[0] : null;
 
@@ -89,33 +109,52 @@ export default async function handler(req: any, res: any) {
         // Check for specific product deep link (?p=ID or ?producto=ID)
         const targetProductId = p || producto;
         if (targetProductId) {
-          const prodRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(targetProductId)}&select=name,price,description,image`,
-            {
-              headers: {
-                apikey: SUPABASE_ANON_KEY,
-                "Content-Type": "application/json",
+          let prodRes: Response | null = null;
+          try {
+            prodRes = await fetch(
+              `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(targetProductId)}&select=name,price,description,image`,
+              {
+                headers: {
+                  apikey: SUPABASE_ANON_KEY,
+                  "Content-Type": "application/json",
+                },
               },
-            },
-          );
+            );
 
-          if (prodRes.ok) {
-            const prods = await prodRes.json();
-            const prod = prods && prods.length > 0 ? prods[0] : null;
-            if (prod) {
-              const prodPrice = prod.price ? ` | S/ ${Number(prod.price).toFixed(2)}` : "";
-              title = `${prod.name} — ${store.name}${prodPrice}`;
-              description =
-                prod.description ||
-                `Mira ${prod.name} en el catálogo digital de ${store.name}. Pedidos directo por WhatsApp.`;
-              image = cleanImageUrl(prod.image) || image;
+            if (prodRes && prodRes.status >= 500) {
+              await new Promise((r) => setTimeout(r, 600));
+              prodRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/products?id=eq.${encodeURIComponent(targetProductId)}&select=name,price,description,image`,
+                {
+                  headers: {
+                    apikey: SUPABASE_ANON_KEY,
+                    "Content-Type": "application/json",
+                  },
+                },
+              );
             }
-          }
+
+            if (prodRes && prodRes.ok) {
+              const prods = await prodRes.json();
+              const prod = prods && prods.length > 0 ? prods[0] : null;
+              if (prod) {
+                const prodPrice = prod.price ? ` | S/ ${Number(prod.price).toFixed(2)}` : "";
+                title = `${prod.name} — ${store.name}${prodPrice}`;
+                description =
+                  prod.description ||
+                  `Mira ${prod.name} en el catálogo digital de ${store.name}. Pedidos directo por WhatsApp.`;
+                image = cleanImageUrl(prod.image) || image;
+              }
+            }
+          } catch {}
         }
       }
+    } else {
+      const code = storeRes ? storeRes.status : "NETWORK_ERROR";
+      console.error(`[SEO Middleware] Error final al obtener metadatos para ${slug} (status: ${code}). Usando metadatos por defecto.`);
     }
   } catch (err) {
-    console.error("[SEO Middleware] Error fetching metadata:", err);
+    console.error("[SEO Middleware] Error inesperado procesando metadatos:", err);
   }
 
   const escTitle = escapeHtmlAttr(title);

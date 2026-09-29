@@ -29,11 +29,19 @@ interface StoreErrorComponentProps {
 export function StoreErrorComponent({ error, reset }: StoreErrorComponentProps) {
   const router = useRouter();
   const errorMsg = error?.message || (typeof error === "string" ? error : "") || "";
-  const isTimeoutOrNetwork =
-    errorMsg.includes("Timeout") ||
-    errorMsg.toLowerCase().includes("fetch") ||
-    errorMsg.toLowerCase().includes("network") ||
-    !navigator.onLine;
+
+  // Error de red puro sin respuesta HTTP (desconexión total, fallo de DNS o bloqueo de proveedor)
+  const isPureNetwork =
+    (typeof navigator !== "undefined" && !navigator.onLine) ||
+    errorMsg.includes("TypeError: Failed to fetch") ||
+    errorMsg.includes("Failed to fetch") ||
+    (error?.name === "TypeError" && !error?.status);
+
+  // Mensaje neutro por defecto, reservando mención de proveedores solo para fallos de red puros
+  const title = isPureNetwork ? "Error de Conexión" : "No pudimos cargar el catálogo";
+  const description = isPureNetwork
+    ? "No pudimos conectar con el servidor. Revisa tu conexión a internet. Si estás usando Wi-Fi de Movistar o Claro, intenta desactivándolo y navegando con tus datos móviles (4G/5G)."
+    : "No pudimos cargar el catálogo. Revisa tu conexión y vuelve a intentar.";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 text-center">
@@ -49,14 +57,8 @@ export function StoreErrorComponent({ error, reset }: StoreErrorComponentProps) 
           </svg>
         </div>
         <div className="space-y-2">
-          <h1 className="text-lg font-bold text-foreground">
-            {isTimeoutOrNetwork ? "Error de Conexión" : "No se pudo cargar la página"}
-          </h1>
-          <p className="text-xs text-muted-foreground leading-normal">
-            {isTimeoutOrNetwork
-              ? "Estamos teniendo problemas para conectarnos a la base de datos. Si estás usando Wi-Fi de Movistar o Claro, intenta desactivándolo y navegando con tus datos móviles (4G/5G)."
-              : "Ocurrió un error inesperado al cargar la tienda. Por favor, intenta de nuevo."}
-          </p>
+          <h1 className="text-lg font-bold text-foreground">{title}</h1>
+          <p className="text-xs text-muted-foreground leading-normal">{description}</p>
         </div>
         <div className="flex flex-col gap-2 pt-2">
           <Button

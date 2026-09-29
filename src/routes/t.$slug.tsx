@@ -5,11 +5,30 @@
  * configuración dinámica de meta tags para SEO / Open Graph y renderizado del catálogo interactivo.
  */
 
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
-import { supabase } from "@/lib/supabase";
+import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import type { Store } from "@/lib/types";
+
+/**
+ * Obtiene la copia en caché local de la tienda si existe.
+ */
+export function getLocalStoreCache(slug: string): Store | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw =
+      localStorage.getItem(`dizi_store_cache_${slug}`) ||
+      sessionStorage.getItem(`dizi_store_cache_${slug}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.store || null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Definición de la ruta de TanStack Router para `/t/$slug`.
@@ -20,8 +39,15 @@ export const Route = createFileRoute("/t/$slug")({
   staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
   gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
   loader: async ({ params }) => {
+    // Si existe copia guardada en caché local, devolverla de inmediato para renderizado instantáneo
+    const cachedStore = getLocalStoreCache(params.slug);
+    if (cachedStore) {
+      return { store: cachedStore, isFromCache: true };
+    }
+
+    // Sin copia en caché: realizar carga directa con reintentos automáticos
     const store = await fetchStoreBySlug(params.slug);
-    return { store };
+    return { store, isFromCache: false };
   },
   head: ({ params, loaderData, search }: any) => {
     const store = loaderData?.store;
@@ -94,65 +120,17 @@ export const Route = createFileRoute("/t/$slug")({
  * @returns Promesa con el objeto `Store` o null si no se encuentra.
  */
 async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<Store | null> {
-  // 1. Verificación en caché local inteligente por Timestamp (Zero-Egress para visitas recurrentes)
-  if (typeof window !== "undefined") {
-    try {
-      const cachedRaw =
-        localStorage.getItem(`dizi_store_cache_${slug}`) ||
-        sessionStorage.getItem(`dizi_store_cache_${slug}`);
-      if (cachedRaw) {
-        const cached = JSON.parse(cachedRaw);
-        if (cached.store && cached.updated_at) {
-          const { data: storeMeta, error: metaErr } = await supabase
-            .from("stores")
-            .select("updated_at")
-            .eq("slug", slug)
-            .maybeSingle();
+  const { data, error } = await invokeRpcWithRetry("get_public_store", {
+    store_slug: slug,
+    page_limit: pageLimit,
+    page_offset: 0,
+  });
 
-          if (!metaErr && storeMeta && storeMeta.updated_at === cached.updated_at) {
-            const refreshedCache = {
-              ...cached,
-              verifiedAt: Date.now(),
-            };
-            localStorage.setItem(`dizi_store_cache_${slug}`, JSON.stringify(refreshedCache));
-            return cached.store;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("[fetchStoreBySlug] Cache check fallback:", e);
-    }
+  if (error) {
+    console.error("[fetchStoreBySlug] RPC error final:", error);
+    throw new Error(error.message || `DB Error: ${error.status || error.code || "Conexión fallida"}`);
   }
-
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(
-      () =>
-        reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")),
-      18000,
-    ),
-  );
-
-  const fetchPromise = (async (): Promise<Store | null> => {
-    const { data, error } = await supabase.rpc("get_public_store", {
-      store_slug: slug,
-      page_limit: pageLimit,
-      page_offset: 0,
-    });
-
-    if (error) {
-      console.error("[fetchStoreBySlug] RPC error:", error);
-      if (typeof window !== "undefined") {
-        try {
-          const cachedRaw = localStorage.getItem(`dizi_store_cache_${slug}`);
-          if (cachedRaw) {
-            const cached = JSON.parse(cachedRaw);
-            if (cached?.store) return cached.store;
-          }
-        } catch {}
-      }
-      throw new Error(`DB Error: ${error.message}`);
-    }
-    if (!data) return null;
+  if (!data) return null;
 
     // Fallback: Si las imágenes de producto no llegaron por alguna incompatibilidad en RPC, cargarlas directamente
     let productsWithImages = data.products || [];
@@ -285,9 +263,6 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
     }
 
     return storeResult;
-  })();
-
-  return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 /**
@@ -296,7 +271,34 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
  */
 function StorePublic() {
   const { slug } = Route.useParams();
-  const { store } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData();
+  const [store, setStore] = useState<Store | null>(loaderData.store);
+  const [showCachedNotice, setShowCachedNotice] = useState<boolean>(false);
+
+  useEffect(() => {
+    setStore(loaderData.store);
+
+    if (loaderData.isFromCache) {
+      let isMounted = true;
+      fetchStoreBySlug(slug)
+        .then((freshStore) => {
+          if (!isMounted) return;
+          if (freshStore) {
+            setStore(freshStore);
+            setShowCachedNotice(false);
+          }
+        })
+        .catch((err) => {
+          if (!isMounted) return;
+          console.warn("[StorePublic] Falló refresco en segundo plano; mostrando versión guardada:", err);
+          setShowCachedNotice(true);
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [slug, loaderData.isFromCache, loaderData.store]);
 
   if (!store) {
     return (
@@ -327,5 +329,18 @@ function StorePublic() {
     );
   }
 
-  return <PublicCatalog store={store} mode="catalog" />;
+  return (
+    <>
+      {showCachedNotice && (
+        <div
+          data-testid="cached-version-banner"
+          className="sticky top-0 z-50 bg-amber-500/10 border-b border-amber-500/20 backdrop-blur-md px-3 py-1.5 text-center text-xs text-amber-800 dark:text-amber-200 flex items-center justify-center gap-1.5 font-medium transition-all"
+        >
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span>Mostrando la última versión guardada</span>
+        </div>
+      )}
+      <PublicCatalog store={store} mode="catalog" />
+    </>
+  );
 }

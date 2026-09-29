@@ -5,11 +5,32 @@
  * mapa interactivo con OpenStreetMap / Leaflet, y vitrina de productos destacados.
  */
 
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
-import { supabase } from "@/lib/supabase";
+import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import type { Store } from "@/lib/types";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
+
+/**
+ * Obtiene la copia en caché local del Bio-Link si existe.
+ */
+export function getLocalBioCache(slug: string): Store | null {
+  if (typeof window !== "undefined") {
+    try {
+      const raw =
+        localStorage.getItem(`dizi_bio_cache_${slug}`) ||
+        sessionStorage.getItem(`dizi_bio_cache_${slug}`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.store || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 /**
  * Definición de la ruta de TanStack Router para `/bio/$slug`.
@@ -20,8 +41,15 @@ export const Route = createFileRoute("/bio/$slug")({
   staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
   gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
   loader: async ({ params }) => {
+    // Si existe copia guardada en caché local, devolverla de inmediato para renderizado instantáneo
+    const cachedStore = getLocalBioCache(params.slug);
+    if (cachedStore) {
+      return { store: cachedStore, isFromCache: true };
+    }
+
+    // Sin copia en caché: realizar carga directa con reintentos automáticos
     const store = await fetchStoreBySlug(params.slug);
-    return { store };
+    return { store, isFromCache: false };
   },
   head: ({ params, loaderData }: any) => {
     const store = loaderData?.store;
@@ -79,66 +107,17 @@ export const Route = createFileRoute("/bio/$slug")({
  * @returns Promesa con el objeto `Store` o null.
  */
 async function fetchStoreBySlug(slug: string): Promise<Store | null> {
-  // 1. Verificación en caché local inteligente por Timestamp (Zero-Egress para visitas recurrentes)
-  if (typeof window !== "undefined") {
-    try {
-      const cachedRaw =
-        localStorage.getItem(`dizi_bio_cache_${slug}`) ||
-        sessionStorage.getItem(`dizi_bio_cache_${slug}`);
-      if (cachedRaw) {
-        const cached = JSON.parse(cachedRaw);
-        if (cached.store && cached.updated_at) {
-          const { data: storeMeta, error: metaErr } = await supabase
-            .from("stores")
-            .select("updated_at")
-            .eq("slug", slug)
-            .maybeSingle();
+  const { data, error } = await invokeRpcWithRetry("get_public_store", {
+    store_slug: slug,
+    page_limit: 6,
+    page_offset: 0,
+  });
 
-          if (!metaErr && storeMeta && storeMeta.updated_at === cached.updated_at) {
-            const refreshedCache = {
-              ...cached,
-              verifiedAt: Date.now(),
-            };
-            localStorage.setItem(`dizi_bio_cache_${slug}`, JSON.stringify(refreshedCache));
-            return cached.store;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("[fetchStoreBySlug Bio] Cache check fallback:", e);
-    }
+  if (error) {
+    console.error("[fetchStoreBySlug Bio] RPC error final:", error);
+    throw new Error(error.message || `DB Error: ${error.status || error.code || "Conexión fallida"}`);
   }
-
-  const timeoutPromise = new Promise<never>((_, reject) =>
-    setTimeout(
-      () =>
-        reject(new Error("Timeout: La base de datos de Supabase tardó demasiado en responder.")),
-      18000,
-    ),
-  );
-
-  const fetchPromise = (async (): Promise<Store | null> => {
-    // Para el Bio-Link, solo se necesitan hasta 6 productos para el showcase de productos
-    const { data, error } = await supabase.rpc("get_public_store", {
-      store_slug: slug,
-      page_limit: 6,
-      page_offset: 0,
-    });
-
-    if (error) {
-      console.error("[fetchStoreBySlug] RPC error:", error);
-      if (typeof window !== "undefined") {
-        try {
-          const cachedRaw = localStorage.getItem(`dizi_bio_cache_${slug}`);
-          if (cachedRaw) {
-            const cached = JSON.parse(cachedRaw);
-            if (cached?.store) return cached.store;
-          }
-        } catch {}
-      }
-      throw new Error(`DB Error: ${error.message}`);
-    }
-    if (!data) return null;
+  if (!data) return null;
 
     let productsWithImages = data.products || [];
     if (
@@ -270,9 +249,6 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
     }
 
     return storeResult;
-  })();
-
-  return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 /**
@@ -281,7 +257,34 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
  */
 function BioPublic() {
   const { slug } = Route.useParams();
-  const { store } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData();
+  const [store, setStore] = useState<Store | null>(loaderData.store);
+  const [showCachedNotice, setShowCachedNotice] = useState<boolean>(false);
+
+  useEffect(() => {
+    setStore(loaderData.store);
+
+    if (loaderData.isFromCache) {
+      let isMounted = true;
+      fetchStoreBySlug(slug)
+        .then((freshStore) => {
+          if (!isMounted) return;
+          if (freshStore) {
+            setStore(freshStore);
+            setShowCachedNotice(false);
+          }
+        })
+        .catch((err) => {
+          if (!isMounted) return;
+          console.warn("[BioPublic] Falló refresco en segundo plano; mostrando versión guardada:", err);
+          setShowCachedNotice(true);
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [slug, loaderData.isFromCache, loaderData.store]);
 
   if (!store) {
     return (
@@ -312,5 +315,18 @@ function BioPublic() {
     );
   }
 
-  return <PublicCatalog store={store} mode="bio" />;
+  return (
+    <>
+      {showCachedNotice && (
+        <div
+          data-testid="cached-version-banner"
+          className="sticky top-0 z-50 bg-amber-500/10 border-b border-amber-500/20 backdrop-blur-md px-3 py-1.5 text-center text-xs text-amber-800 dark:text-amber-200 flex items-center justify-center gap-1.5 font-medium transition-all"
+        >
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span>Mostrando la última versión guardada</span>
+        </div>
+      )}
+      <PublicCatalog store={store} mode="bio" />
+    </>
+  );
 }

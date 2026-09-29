@@ -11,7 +11,7 @@
  */
 
 import { resolveRenderModel } from "@/lib/design-catalog";
-import { supabase } from "@/lib/supabase";
+import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -1975,7 +1975,7 @@ export function PublicCatalog({
         const isFilteringCat = activeCat !== "all" && activeCat !== "sale";
         const isSearching = Boolean(query.trim());
 
-        const { data, error } = await supabase.rpc("get_public_store_products", {
+        const { data, error } = await invokeRpcWithRetry("get_public_store_products", {
           p_store_slug: store.slug,
           p_page_offset: isFilteringCat || isSearching ? rawFiltered.length : allProducts.length,
           p_page_limit: 24,
@@ -2037,15 +2037,13 @@ export function PublicCatalog({
       let isMounted = true;
       setIsCategoryFetching(true);
 
-      Promise.resolve(
-        supabase.rpc("get_public_store_products", {
-          p_store_slug: store.slug,
-          p_page_offset: 0,
-          p_page_limit: 24,
-          p_category_id: activeCat,
-          p_search_query: null,
-        }),
-      )
+      invokeRpcWithRetry("get_public_store_products", {
+        p_store_slug: store.slug,
+        p_page_offset: 0,
+        p_page_limit: 24,
+        p_category_id: activeCat,
+        p_search_query: null,
+      })
         .then(({ data, error }: any) => {
           if (!isMounted) return;
           if (!error && Array.isArray(data) && data.length > 0) {
@@ -2092,7 +2090,7 @@ export function PublicCatalog({
 
     const timer = setTimeout(async () => {
       try {
-        const { data, error } = await supabase.rpc("get_public_store_products", {
+        const { data, error } = await invokeRpcWithRetry("get_public_store_products", {
           p_store_slug: store.slug,
           p_page_offset: 0,
           p_page_limit: 48,

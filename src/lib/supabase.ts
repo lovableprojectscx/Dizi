@@ -58,6 +58,119 @@ export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
   },
 });
 
+export interface RetryOptions {
+  maxRetries?: number;
+  delays?: number[];
+  onRetry?: (attempt: number, delay: number, error: any) => void;
+}
+
+/**
+ * Determina si un error retornado por Supabase o la red es transitorio y apto para reintento.
+ * - Retorna true ante errores HTTP 5xx (500, 502, 503, 504) o excepciones de red/fetch/timeout.
+ * - Retorna false ante errores HTTP 4xx (400, 401, 403, 404) para evitar reintentos inútiles.
+ */
+export function isRetryableError(error: any): boolean {
+  if (!error) return false;
+
+  // 1. Verificación por código de estado HTTP
+  const status =
+    error.status ||
+    error.statusCode ||
+    (typeof error.code === "number" ? error.code : parseInt(error.code, 10));
+
+  if (!isNaN(status)) {
+    // Errores de cliente 4xx: NO reintentar
+    if (status >= 400 && status < 500) {
+      return false;
+    }
+    // Errores de servidor 5xx: SÍ reintentar
+    if (status >= 500 && status < 600) {
+      return true;
+    }
+  }
+
+  // 2. Verificación por mensaje o nombre de excepción de red
+  const msg = (error.message || String(error)).toLowerCase();
+  if (
+    msg.includes("failed to fetch") ||
+    msg.includes("network error") ||
+    msg.includes("networkerror") ||
+    msg.includes("timeout") ||
+    msg.includes("abort") ||
+    msg.includes("bad gateway") ||
+    msg.includes("gateway timeout") ||
+    msg.includes("service unavailable") ||
+    msg.includes("internal server error") ||
+    msg.includes("econnrefused") ||
+    msg.includes("load failed") ||
+    error.name === "AbortError" ||
+    error.name === "TypeError"
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Ejecuta una función RPC de Supabase con reintentos automáticos y espera creciente (≈1s, 3s, 6s).
+ * Solo reintenta ante errores de red o HTTP 5xx; nunca ante 4xx.
+ *
+ * @param rpcName Nombre de la función RPC de PostgreSQL.
+ * @param params Parámetros para la función RPC.
+ * @param options Configuración de reintentos y delays.
+ * @returns Promesa con `{ data, error }`.
+ */
+export async function invokeRpcWithRetry<T = any>(
+  rpcName: string,
+  params: Record<string, any> = {},
+  options: RetryOptions = {},
+): Promise<{ data: T | null; error: any }> {
+  const maxRetries = options.maxRetries ?? 3;
+  const delays = options.delays ?? [1000, 3000, 6000];
+
+  let attempt = 0;
+  while (true) {
+    let resultData: T | null = null;
+    let resultError: any = null;
+
+    try {
+      const res = await supabase.rpc(rpcName, params);
+      resultData = res.data;
+      resultError = res.error;
+    } catch (err: any) {
+      resultError = err;
+    }
+
+    if (!resultError) {
+      return { data: resultData, error: null };
+    }
+
+    const retryable = isRetryableError(resultError);
+    if (retryable && attempt < maxRetries) {
+      const delay = delays[attempt] ?? delays[delays.length - 1];
+      console.warn(
+        `[Supabase Retry] ${rpcName} falló (intento ${attempt + 1}/${maxRetries}). Reintentando en ${delay}ms...`,
+        resultError,
+      );
+      if (options.onRetry) {
+        options.onRetry(attempt + 1, delay, resultError);
+      }
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      attempt++;
+      continue;
+    }
+
+    // Reintentos agotados o error 4xx no reintentable
+    const statusCode = resultError.status || resultError.statusCode || resultError.code || "UNKNOWN";
+    console.error(
+      `[Supabase Error Final] Endpoint: ${rpcName}, Status: ${statusCode}, Error:`,
+      resultError,
+    );
+    return { data: null, error: resultError };
+  }
+}
+
 if (typeof window !== "undefined" && import.meta.env.DEV) {
   (window as any).__supabase = supabase;
 }
