@@ -2,6 +2,8 @@
 -- Fase 1A: Soporte para teléfonos internacionales y códigos ISO de los 21 países en DIZI
 -- Fecha: 2026-09-28
 
+BEGIN;
+
 -- 1. Agregar columna country_iso a stores (default 'PE', NOT NULL)
 ALTER TABLE public.stores ADD COLUMN IF NOT EXISTS country_iso text NOT NULL DEFAULT 'PE';
 
@@ -100,6 +102,7 @@ END;
 $function$;
 
 GRANT EXECUTE ON FUNCTION public.initialize_store(text, text, text, text, text, text, uuid, text, text, text, text) TO authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION public.initialize_store(text, text, text, text, text, text, uuid, text, text, text, text) FROM PUBLIC, anon;
 
 -- 4. Actualizar get_public_store para devolver country_iso
 CREATE OR REPLACE FUNCTION public.get_public_store(store_slug text, page_limit integer DEFAULT 36, page_offset integer DEFAULT 0)
@@ -280,6 +283,8 @@ END;
 $function$;
 
 GRANT EXECUTE ON FUNCTION public.get_public_store(text, integer, integer) TO anon, authenticated, service_role;
+
+COMMIT;
 
 -- ==============================================================================
 -- REVERSIÓN:
