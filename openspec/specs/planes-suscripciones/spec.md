@@ -37,10 +37,13 @@ Al vencer la suscripción se aplican dos periodos: 3 días de gracia de funcione
 - **Cuando** se evalúa el plan efectivo
 - **Entonces** degrada a "semilla" (20 productos, etiqueta "Modo Limitado")
 
-#### Escenario: Gracia visual
-- **Dado** un plan vencido hace 10 días
+#### Escenario: Diseño al vencer (comportamiento real, verificado 29 sep 2026)
+- **Dado** un plan vencido hace 10 o más días
 - **Cuando** se carga el catálogo público
-- **Entonces** conserva el diseño premium con límites semilla; al día 16 revierte a "minimalista"
+- **Entonces** el catálogo **conserva el diseño elegido** por el comerciante (no se degrada a "minimalista"),
+  y aplica los límites del plan Semilla (20 productos) desde el día 4.
+- **Nota:** si la degradación del diseño se quiere activar, es una decisión comercial pendiente de Jack
+  (FUENTE-DE-VERDAD §8.4). Hoy no existe en SQL ni en TypeScript.
 
 ## Trazabilidad
 Casos de prueba: CP-06 a CP-09 · E2E-05 · Código: `src/lib/types.ts` (getEffectivePlan, getEffectiveProductLimit, getEffectiveModel)
