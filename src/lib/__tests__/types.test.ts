@@ -300,7 +300,7 @@ describe("Pruebas unitarias de Especificaciones de Imagen (types.ts)", () => {
       const store = createMockStoreWithModel("portada");
       const spec = getImageSpec(store);
       expect(spec.ratio).toBe("16/7");
-      expect(spec.label).toBe("Panoramica 16:7");
+      expect(spec.label).toBe("Panorámica 16:7");
     });
   });
 
@@ -322,13 +322,13 @@ describe("Pruebas unitarias de Especificaciones de Imagen (types.ts)", () => {
     it("debe retornar warning si la relación difiere más de la tolerancia (demasiado ancha)", () => {
       const result = checkImageRatio(1200, 800, specSquare); // 1.5 ratio vs 1.0 (50% de diferencia)
       expect(result.status).toBe("warning");
-      expect(result.message).toContain("mas ancha");
+      expect(result.message).toContain("más ancha");
     });
 
     it("debe retornar warning si la relación difiere más de la tolerancia (demasiado alta)", () => {
       const result = checkImageRatio(800, 1200, specSquare); // 0.67 ratio vs 1.0 (33% de diferencia)
       expect(result.status).toBe("warning");
-      expect(result.message).toContain("mas alta");
+      expect(result.message).toContain("más alta");
     });
   });
 });

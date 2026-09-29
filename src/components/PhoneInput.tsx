@@ -32,6 +32,24 @@ export interface PhoneChangePayload {
   valid: boolean;
 }
 
+function CountryFlag({ iso, name, fallback }: { iso: string; name: string; fallback: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return <span className="text-base leading-none select-none">{fallback}</span>;
+  }
+
+  return (
+    <img
+      src={`/flags/${iso.toLowerCase()}.svg`}
+      alt={name}
+      loading="lazy"
+      onError={() => setHasError(true)}
+      className="w-5 h-3.5 object-cover rounded-xs border border-slate-200/80 shadow-2xs shrink-0 select-none inline-block align-middle"
+    />
+  );
+}
+
 export interface PhoneInputProps {
   value?: string;
   countryIso?: string;
@@ -184,7 +202,11 @@ export function PhoneInput({
                 triggerClassName
               )}
             >
-              <span className="text-base leading-none select-none">{selectedCountry.flag}</span>
+              <CountryFlag
+                iso={selectedCountry.iso}
+                name={selectedCountry.name}
+                fallback={selectedCountry.flag}
+              />
               <span className="text-xs sm:text-sm font-semibold text-slate-700">
                 +{selectedCountry.dial}
               </span>
@@ -215,7 +237,7 @@ export function PhoneInput({
                         className="flex items-center justify-between py-2 px-3 text-xs sm:text-sm cursor-pointer hover:bg-slate-100"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-base leading-none shrink-0">{c.flag}</span>
+                          <CountryFlag iso={c.iso} name={c.name} fallback={c.flag} />
                           <span className="truncate font-medium text-slate-800">{c.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0 pl-2">
