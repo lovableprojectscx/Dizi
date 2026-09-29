@@ -12,6 +12,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SHOWCASE_LANDING_ITEM, getShowcaseUrl } from "@/lib/showcase";
 import {
   ShoppingBag,
   MessageCircle,
@@ -327,7 +328,7 @@ function LandingPage() {
                   size="lg"
                   className="w-full sm:w-auto h-13 sm:h-14 px-7 rounded-2xl font-bold text-sm sm:text-base border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs font-sans"
                 >
-                  <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
+                  <a href={getShowcaseUrl(SHOWCASE_LANDING_ITEM)} target="_blank" rel="noopener noreferrer">
                     <Smartphone className="h-4 w-4 text-primary" /> Ver Tienda de Ejemplo
                     <ExternalLink className="h-3.5 w-3.5 opacity-60" />
                   </a>
@@ -348,7 +349,7 @@ function LandingPage() {
                   </div>
                 </div>
                 <Button asChild size="sm" variant="outline" className="h-8.5 px-3.5 text-xs font-bold rounded-xl border-primary/30 text-primary hover:bg-primary/10 shrink-0">
-                  <a href="/t/grano-miga" target="_blank" rel="noopener noreferrer">
+                  <a href={getShowcaseUrl(SHOWCASE_LANDING_ITEM)} target="_blank" rel="noopener noreferrer">
                     Ver Demo <ExternalLink className="ml-1 h-3 w-3" />
                   </a>
                 </Button>

@@ -19,6 +19,7 @@ import type { PlanId } from "@/lib/types";
 import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
+import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -1530,9 +1531,7 @@ function RegisterPage() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
-                  name: "Florería",
-                  desc: "Arreglos florales",
-                  href: "https://dizi.idenza.site/bio/floreria-demo",
+                  id: "floreria",
                   icon: (
                     <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
                       <defs>
@@ -1612,9 +1611,7 @@ function RegisterPage() {
                   ),
                 },
                 {
-                  name: "WeHome Peru",
-                  desc: "Decoración & Hogar",
-                  href: "https://dizi.idenza.site/bio/wehomeperu",
+                  id: "wehome",
                   icon: (
                     <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
                       <defs>
@@ -1668,9 +1665,7 @@ function RegisterPage() {
                   ),
                 },
                 {
-                  name: "Restaurante",
-                  desc: "Menú digital",
-                  href: "https://dizi.idenza.site/bio/restaurante-demo",
+                  id: "restaurante",
                   icon: (
                     <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
                       <defs>
@@ -1711,9 +1706,7 @@ function RegisterPage() {
                   ),
                 },
                 {
-                  name: "Ortopédicos",
-                  desc: "Productos y precios",
-                  href: "https://dizi.idenza.site/bio/ortopedicos-demo",
+                  id: "ortopedicos",
                   icon: (
                     <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
                       <defs>
@@ -1755,9 +1748,7 @@ function RegisterPage() {
                   ),
                 },
                 {
-                  name: "GigaTech",
-                  desc: "Celulares & Tecnología",
-                  href: "https://dizi.idenza.site/bio/celulares-demo",
+                  id: "gigatech",
                   icon: (
                     <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
                       <defs>
@@ -1817,9 +1808,7 @@ function RegisterPage() {
                   ),
                 },
                 {
-                  name: "Kickz Premium",
-                  desc: "Zapatillas Urbanas",
-                  href: "https://dizi.idenza.site/bio/zapatillas-demo",
+                  id: "kickz",
                   icon: (
                     <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
                       <defs>
@@ -1871,27 +1860,31 @@ function RegisterPage() {
                     </svg>
                   ),
                 },
-              ].map((ex) => (
-                <a
-                  key={ex.href}
-                  href={ex.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-2.5 rounded-2xl border border-white/60 bg-white/40 backdrop-blur-md hover:bg-white hover:border-primary/30 hover:shadow-lg transition-all duration-300 px-3.5 py-3 group"
-                >
-                  <div className="w-10 h-10 shrink-0 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                    {ex.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-black leading-tight text-slate-800 truncate group-hover:text-primary transition-colors">
-                      {ex.name}
+              ].map((ex) => {
+                const item = SHOWCASE_REGISTER_ITEMS.find((s) => s.id === ex.id);
+                if (!item) return null;
+                return (
+                  <a
+                    key={item.slug}
+                    href={getShowcaseUrl(item)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 rounded-2xl border border-white/60 bg-white/40 backdrop-blur-md hover:bg-white hover:border-primary/30 hover:shadow-lg transition-all duration-300 px-3.5 py-3 group"
+                  >
+                    <div className="w-10 h-10 shrink-0 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                      {ex.icon}
                     </div>
-                    <div className="text-[10px] font-medium text-slate-500 truncate mt-0.5">
-                      {ex.desc}
+                    <div className="min-w-0">
+                      <div className="text-xs font-black leading-tight text-slate-800 truncate group-hover:text-primary transition-colors">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] font-medium text-slate-500 truncate mt-0.5">
+                        {item.desc}
+                      </div>
                     </div>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}
