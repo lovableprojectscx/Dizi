@@ -15,7 +15,6 @@ import type {
   Store,
   Invite,
   SubscriptionStatus,
-  PlanPromotion,
 } from "./types";
 import { supabase, uploadBase64ToStorage } from "./supabase";
 import { createThumbnailFromBase64 } from "./image-utils";
@@ -212,8 +211,6 @@ interface AppState {
   impersonatedBy: string | null;
   /** Mensaje de error en la última sincronización con Supabase (si ocurrió) */
   fetchError: string | null;
-  /** Promociones activas de planes comerciales */
-  promotions: PlanPromotion[];
   /** Timestamp de la última sincronización exitosa para control de caché */
   lastFetched: number | null;
 
@@ -266,8 +263,6 @@ interface AppState {
   incWhatsappClicks: (storeId: string) => void;
   /** Incrementa el contador de visitas recibidas en el catálogo */
   incViews: (storeId: string) => void;
-  /** Actualiza los precios promocionales de un plan comercial */
-  updatePlanPromotion: (planId: PlanId, patch: Partial<PlanPromotion>) => Promise<void>;
   /** Elimina definitivamente una tienda y sus datos en cascada */
   deleteStore: (storeId: string) => Promise<void>;
 }
@@ -293,7 +288,6 @@ export const useApp = create<AppState>()(
       currentStoreId: null,
       impersonatedBy: null,
       fetchError: null,
-      promotions: [],
       lastFetched: null,
 
       fetchData: async (force = false) => {
@@ -328,10 +322,6 @@ export const useApp = create<AppState>()(
           const { data, error } = await query;
           if (error) throw error;
 
-          const dbPromotions: PlanPromotion[] = [];
-          // Note: plan_prices table was removed in migration 20260617010000.
-          // Using empty local array as pricing is now managed statically / via custom invites.
-
           if (data) {
             const dbStores = data.map((row) => mapStoreFromDB(row));
             const currentId = get().currentStoreId;
@@ -341,7 +331,6 @@ export const useApp = create<AppState>()(
             set({
               stores: dbStores,
               currentStoreId: nextCurrentId,
-              promotions: dbPromotions,
               fetchError: null,
               lastFetched: Date.now(),
             });
@@ -1387,32 +1376,6 @@ export const useApp = create<AppState>()(
         } catch (error) {
           console.error("[incViews] Error:", error);
         }
-      },
-
-      updatePlanPromotion: async (planId, patch) => {
-        const currentPromos = useApp.getState().promotions;
-        const existing = currentPromos.find((p) => p.plan_id === planId);
-
-        const merged = {
-          plan_id: planId,
-          regular_price: patch.regular_price ?? existing?.regular_price ?? 0,
-          promo_price:
-            patch.promo_price !== undefined ? patch.promo_price : (existing?.promo_price ?? null),
-          promo_active: patch.promo_active ?? existing?.promo_active ?? false,
-          promo_label:
-            patch.promo_label !== undefined ? patch.promo_label : (existing?.promo_label ?? null),
-          promo_until:
-            patch.promo_until !== undefined ? patch.promo_until : (existing?.promo_until ?? null),
-        };
-
-        // Note: plan_prices table is deprecated, we only update local state if called.
-        set((state) => {
-          const exists = state.promotions.some((p) => p.plan_id === planId);
-          const nextPromos = exists
-            ? state.promotions.map((p) => (p.plan_id === planId ? { ...p, ...patch } : p))
-            : [...state.promotions, { ...merged, ...patch } as PlanPromotion];
-          return { promotions: nextPromos };
-        });
       },
     }),
     {

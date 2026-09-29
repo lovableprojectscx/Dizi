@@ -5,7 +5,6 @@ import {
   getEffectivePlan,
   getEffectiveProductLimit,
   isSubscriptionExpired,
-  modelGraceDaysLeft,
   shouldUseSemillaModel,
   getEffectiveModel,
   isPlanActive,
@@ -148,30 +147,6 @@ describe("Pruebas unitarias de Reglas de Suscripción (types.ts)", () => {
     it("debe retornar true si la fecha de expiración es pasada", () => {
       const store = createMockStore("pro", "2026-07-06T12:00:00Z");
       expect(isSubscriptionExpired(store)).toBe(true);
-    });
-  });
-
-  describe("modelGraceDaysLeft", () => {
-    it("debe retornar null para plan semilla", () => {
-      const store = createMockStore("semilla");
-      expect(modelGraceDaysLeft(store)).toBeNull();
-    });
-
-    it("debe retornar null si no hay fecha de vencimiento o si el plan está vigente", () => {
-      const store1 = createMockStore("pro");
-      const store2 = createMockStore("pro", "2026-07-10T12:00:00Z");
-      expect(modelGraceDaysLeft(store1)).toBeNull();
-      expect(modelGraceDaysLeft(store2)).toBeNull();
-    });
-
-    it("debe retornar días de gracia restantes del modelo (máximo 15)", () => {
-      const store = createMockStore("pro", "2026-07-02T12:00:00Z"); // Venció hace 5 días
-      expect(modelGraceDaysLeft(store)).toBe(10); // 15 - 5 = 10
-    });
-
-    it("debe retornar 0 si pasaron los 15 días de gracia", () => {
-      const store = createMockStore("pro", "2026-06-20T12:00:00Z"); // Venció hace 17 días
-      expect(modelGraceDaysLeft(store)).toBe(0);
     });
   });
 

@@ -113,7 +113,6 @@ import {
   getEffectiveProductLimit,
   getEffectiveModel,
   isSubscriptionExpired,
-  modelGraceDaysLeft,
   PLANS,
   planAllowsPromoBar,
 } from "@/lib/types";
@@ -1384,7 +1383,6 @@ export function PublicCatalog({
   /* ── Subscription state ─────────────────────────── */
   const effectiveProductLimit = getEffectiveProductLimit(store);
   const isExpired = isSubscriptionExpired(store);
-  const modelDaysLeft = modelGraceDaysLeft(store);
 
   /* ── Theme setup ─────────────────────────────────── */
   const rawModelId = resolveRenderModel(isMockup ? (store.model || "minimalista") : getEffectiveModel(store));
