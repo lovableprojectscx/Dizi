@@ -670,9 +670,20 @@ function SingleProductDialog({
       }
     } catch (err: any) {
       console.error("[save product] Error:", err);
-      toast.error(
-        err?.message || "Ocurrió un error al guardar el producto. Por favor intenta de nuevo."
-      );
+      const isLimitError =
+        err?.code === "P0001" ||
+        err?.message?.toLowerCase().includes("límite de productos") ||
+        err?.message?.toLowerCase().includes("limite de productos");
+      if (isLimitError) {
+        const limitNum = store ? getEffectiveProductLimit(store) : 20;
+        toast.error(
+          `Llegaste al límite de tu plan (${limitNum} productos). Oculta alguno o mejora tu plan.`
+        );
+      } else {
+        toast.error(
+          err?.message || "Ocurrió un error al guardar el producto. Por favor intenta de nuevo."
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -1913,7 +1924,13 @@ function ProductsPage() {
       } catch (err: any) {
         console.error(err);
         draft.status = "error";
-        draft.errorMessage = err?.message || "Error al subir";
+        const isLimitError =
+          err?.code === "P0001" ||
+          err?.message?.toLowerCase().includes("límite de productos") ||
+          err?.message?.toLowerCase().includes("limite de productos");
+        draft.errorMessage = isLimitError
+          ? `Llegaste al límite de tu plan (${effectiveLimit} productos). Oculta alguno o mejora tu plan.`
+          : (err?.message || "Error al subir");
       }
 
       setDraftsProcessed((prev) => prev + 1);
@@ -1931,10 +1948,17 @@ function ProductsPage() {
     await Promise.all(workers);
     setUploadingDrafts(false);
 
-    const failedCount = updatedDrafts.filter((d) => d.status === "error").length;
-    if (failedCount > 0) {
+    const failedDrafts = updatedDrafts.filter((d) => d.status === "error");
+    const hasLimitError = failedDrafts.some((d) =>
+      d.errorMessage?.includes("límite de tu plan")
+    );
+    if (hasLimitError) {
+      toast.error(
+        `Llegaste al límite de tu plan (${effectiveLimit} productos). Oculta alguno o mejora tu plan.`
+      );
+    } else if (failedDrafts.length > 0) {
       toast.warning(
-        `Importación finalizada. ${failedCount} productos fallaron y siguen en la grilla.`,
+        `Importación finalizada. ${failedDrafts.length} productos fallaron y siguen en la grilla.`,
       );
     } else {
       toast.success("¡Todos los productos se importaron con éxito!");
