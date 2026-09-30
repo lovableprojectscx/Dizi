@@ -52,6 +52,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { cn } from "@/lib/utils";
+import { formatPhoneDisplay } from "@/lib/phone";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 
 const bioLogoSpec = {
@@ -1192,7 +1193,11 @@ function LinkBioPage() {
                             <Phone className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                             <p className="text-muted-foreground text-[11px]">
                               WhatsApp vinculado automáticamente:{" "}
-                              <span className="font-bold text-foreground">+{country + number}</span>
+                              <span className="font-bold text-foreground">
+                                {store?.phone
+                                  ? formatPhoneDisplay(store.phone, store.countryIso)
+                                  : "No configurado"}
+                              </span>
                             </p>
                           </div>
                           <span className="text-[9px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 shrink-0">
