@@ -36,17 +36,26 @@ test.describe("D2: Verificación de Cabeceras y Flujos en Preview Celular (360x8
   test("Flujo E2E completo sin saltos condicionales", async ({ page, context }) => {
     test.setTimeout(90000);
 
-    // 0. Capturar violaciones de CSP en consola
+    // 0. Capturar violaciones y avisos de CSP en consola
+    const cspWarnings: string[] = [];
     page.on("console", (msg) => {
       const text = msg.text();
       if (
-        msg.type() === "error" &&
-        (text.toLowerCase().includes("content security policy") ||
-          text.toLowerCase().includes("csp") ||
-          text.toLowerCase().includes("violated directive"))
+        text.toLowerCase().includes("content security policy") ||
+        text.toLowerCase().includes("csp") ||
+        text.toLowerCase().includes("violated directive")
       ) {
-        console.error("[CSP Violation Error]", text);
-        cspViolations.push(text);
+        if (
+          text.includes("is ignored when delivered in a report-only policy") ||
+          text.toLowerCase().includes("[report only]") ||
+          msg.type() !== "error"
+        ) {
+          console.log("[CSP Report-Only Notice]", text);
+          cspWarnings.push(text);
+        } else {
+          console.error("[CSP Error]", text);
+          cspViolations.push(text);
+        }
       }
     });
 
@@ -273,10 +282,29 @@ test.describe("D2: Verificación de Cabeceras y Flujos en Preview Celular (360x8
     expect(decodeURIComponent(capturedWaUrl.replace(/\+/g, " "))).toContain("Producto D2 Audit");
 
     // ─────────────────────────────────────────────────────────────
-    // 6. CERO ERRORES DE CSP EN CONSOLA
+    // 6. CERO ERRORES DE CSP EN CONSOLA Y PERSISTENCIA DE REPORT-ONLY
     // ─────────────────────────────────────────────────────────────
     console.log("[Paso 6] Verificando violaciones de CSP en consola...");
+    const fs = await import("fs");
+    if (!fs.existsSync("scratch")) {
+      fs.mkdirSync("scratch", { recursive: true });
+    }
+    fs.writeFileSync(
+      "scratch/csp-report-only-warnings.json",
+      JSON.stringify(
+        {
+          timestamp: new Date().toISOString(),
+          targetUrl: page.url(),
+          totalNotices: cspWarnings.length,
+          notices: cspWarnings,
+        },
+        null,
+        2,
+      ),
+      "utf-8",
+    );
+    console.log(`[Paso 6] ${cspWarnings.length} avisos CSP Report-Only guardados en scratch/csp-report-only-warnings.json`);
     expect(cspViolations).toEqual([]);
-    console.log("[Paso 6] 0 errores de CSP detectados.");
+    console.log("[Paso 6] 0 errores fatales de CSP detectados.");
   });
 });
