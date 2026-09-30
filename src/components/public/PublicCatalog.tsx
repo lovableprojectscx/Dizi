@@ -113,8 +113,10 @@ import {
   getEffectiveProductLimit,
   getEffectiveModel,
   isSubscriptionExpired,
+  getEffectivePlan,
   PLANS,
   planAllowsPromoBar,
+  getMaxAllowedBanners,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
@@ -1258,6 +1260,7 @@ export function PublicCatalog({
   mode: "catalog" | "bio";
   isMockup?: boolean;
 }) {
+  const effectivePlan = getEffectivePlan(store);
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>("all");
@@ -1314,12 +1317,9 @@ export function PublicCatalog({
     const all = raw.includes("|||") ? raw.split("|||") : [raw];
 
     // Enforce limits: Semilla = 0, Emprendedor = 1, Pro = 3, Ilimitado = 5
-    const planId = store.plan;
-    if (planId === "semilla") return [];
-    if (planId === "emprendedor") return all.slice(0, 1);
-    if (planId === "pro") return all.slice(0, 3);
-    return all.slice(0, 5);
-  }, [store.bannerImage, store.plan]);
+    const maxBanners = getMaxAllowedBanners(store);
+    return all.slice(0, maxBanners);
+  }, [store.bannerImage, store.plan, store.planExpiresAt]);
 
   const bannersCount = activeBanners.length;
 
@@ -1654,7 +1654,7 @@ export function PublicCatalog({
       cardBg = "rgba(255, 255, 255, 0.05)";
       borderCol = "rgba(255, 255, 255, 0.1)";
     } else if (bioTheme === "custom") {
-      const isCustomImage = !!store.bioBgImage && store.plan !== "semilla";
+      const isCustomImage = !!store.bioBgImage && effectivePlan !== "semilla";
       if (isCustomImage) {
         background = `url(${store.bioBgImage})`;
         isDark = true;
@@ -1702,7 +1702,7 @@ export function PublicCatalog({
   }
 
   const getButtonStyle = (styleId: string) => {
-    const activeStyle = store.plan === "semilla" ? "pill-solid" : styleId || "pill-solid";
+    const activeStyle = effectivePlan === "semilla" ? "pill-solid" : styleId || "pill-solid";
     const parts = activeStyle.split("-");
     const shape = parts[0] || "pill";
     const type = parts[1] || "solid";
@@ -2147,9 +2147,9 @@ export function PublicCatalog({
   const total = cartLines.reduce((a, l) => a + (l.effectivePrice || 0) * l.qty, 0);
 
   const appendDiziSignature = (text: string) => {
-    const showBranding = store.plan === "semilla" ? true : (store.showDiziBranding ?? true);
+    const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? true);
     if (!showBranding) return text;
-    if (store.plan === "semilla") {
+    if (effectivePlan === "semilla") {
       return `${text}\n\n_Catálogo creado gratis con Dizi: dizi.idenza.site_`;
     }
     return `${text}\n\n_Catálogo creado con Dizi: dizi.idenza.site?ref=${store.slug}_`;
@@ -2774,7 +2774,7 @@ export function PublicCatalog({
               {/* 3. Enlaces rápidos del usuario (Redes sociales oficiales + personalizados) */}
               {(() => {
                 let customLinkCount = 0;
-                const isSemilla = store.plan === "semilla";
+                const isSemilla = effectivePlan === "semilla";
 
                 return (
                   store.quickLinks &&
@@ -2914,6 +2914,8 @@ export function PublicCatalog({
             src={getOptimizedImageUrl(activeBanners[0], 1200)}
             alt={store.bannerTitle || store.name}
             className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-1000"
+            loading="eager"
+            fetchPriority="high"
           />
           <div className="absolute inset-0 bg-black/10 md:bg-black/35" />
 
@@ -3199,7 +3201,7 @@ export function PublicCatalog({
                   <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
                     {(() => {
                       const bioProducts = filtered.slice(0, 5);
-                      const showAd = store.plan === "semilla" && !isMockup;
+                      const showAd = effectivePlan === "semilla" && !isMockup;
                       return (
                         <>
                           {bioProducts.map((p, index) => {
@@ -3229,7 +3231,8 @@ export function PublicCatalog({
                                       )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                      loading="lazy"
+                                      loading={index < 4 ? "eager" : "lazy"}
+                                      fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
                                       style={{
                                         borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0`,
@@ -3343,7 +3346,7 @@ export function PublicCatalog({
                     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2",
                 )}
               >
-                {filtered.map((p) => (
+                {filtered.map((p, index) => (
                   <article
                     key={p.id}
                     className="relative overflow-hidden cursor-pointer group"
@@ -3358,7 +3361,8 @@ export function PublicCatalog({
                       )}
                       alt={p.name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      loading="lazy"
+                      loading={index < 4 ? "eager" : "lazy"}
+                      fetchPriority={index < 2 ? "high" : "auto"}
                       decoding="async"
                       onError={(e) => {
                         const el = e.target as HTMLImageElement;
@@ -3428,6 +3432,8 @@ export function PublicCatalog({
                           src={getOptimizedImageUrl(activeBanners[currentBannerIndex] || activeBanners[0], 1200)}
                           alt={store.name}
                           className="w-full h-full object-cover transition-opacity duration-700 animate-in fade-in"
+                          fetchPriority="high"
+                          loading="eager"
                         />
                         <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px]" />
                         {activeBanners.length > 1 && (
@@ -3642,7 +3648,7 @@ export function PublicCatalog({
                     const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
                     const cartItem = cart.find((item) => item.productId === p.id);
                     const qty = cartItem ? cartItem.qty : 0;
-                    const showAd = store.plan === "semilla" && !isMockup;
+                    const showAd = effectivePlan === "semilla" && !isMockup;
                     const isAdPos = index === 4;
                     const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
                     return (
@@ -3670,7 +3676,8 @@ export function PublicCatalog({
                               )}
                               alt={p.name}
                               className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.03]"
-                              loading="lazy"
+                              loading={index < 4 ? "eager" : "lazy"}
+                              fetchPriority={index < 2 ? "high" : "auto"}
                               decoding="async"
                               onError={(e) => {
                                 const el = e.target as HTMLImageElement;
@@ -3892,7 +3899,8 @@ export function PublicCatalog({
                         )}
                         alt={p.name}
                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
+                        loading={idx < 4 ? "eager" : "lazy"}
+                        fetchPriority={idx < 2 ? "high" : "auto"}
                         decoding="async"
                         onError={(e) => {
                           const el = e.target as HTMLImageElement;
@@ -3966,7 +3974,7 @@ export function PublicCatalog({
                       </div>
                     </div>
                   </article>
-                  {store.plan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
+                  {effectivePlan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
                     <DiziNativeAdCard
                       layout="editorial"
                       primaryColor={primaryColor}
@@ -4004,6 +4012,9 @@ export function PublicCatalog({
                       )}
                       alt={filtered[0].name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
                           NO_IMAGE_PLACEHOLDER;
@@ -4055,7 +4066,7 @@ export function PublicCatalog({
                       : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
                   )}
                 >
-                  {filtered.slice(1).map((p) => (
+                  {filtered.slice(1).map((p, idx) => (
                     <article
                       key={p.id}
                       className={cn(
@@ -4082,7 +4093,8 @@ export function PublicCatalog({
                           )}
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
+                          loading={idx < 3 ? "eager" : "lazy"}
+                          fetchPriority={idx < 1 ? "high" : "auto"}
                           decoding="async"
                           style={{ borderRadius: cfg.imgRounded }}
                           onError={(e) => {
@@ -4210,7 +4222,7 @@ export function PublicCatalog({
                     pairs.push(nonFeatures.slice(i, i + 2));
                   return pairs.map((pair, pi) => (
                     <div key={pi} className="grid grid-cols-2 gap-1">
-                      {pair.map((p) => (
+                      {pair.map((p, pidx) => (
                         <article
                           key={p.id}
                           className="relative overflow-hidden cursor-pointer group"
@@ -4225,7 +4237,8 @@ export function PublicCatalog({
                             )}
                             alt={p.name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            loading="lazy"
+                            loading={pi === 0 ? "eager" : "lazy"}
+                            fetchPriority={pi === 0 && pidx === 0 ? "high" : "auto"}
                             decoding="async"
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
@@ -4273,7 +4286,7 @@ export function PublicCatalog({
                     </div>
                   ));
                 })()}
-                {store.plan === "semilla" && (
+                {effectivePlan === "semilla" && (
                   <DiziNativeAdCard
                     layout="editorial"
                     primaryColor={primaryColor}
@@ -4309,7 +4322,8 @@ export function PublicCatalog({
                         src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, isWide ? 800 : 400)}
                         alt={p.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                        loading="lazy"
+                        loading={i < 4 ? "eager" : "lazy"}
+                        fetchPriority={i < 2 ? "high" : "auto"}
                         decoding="async"
                         onError={(e) => {
                           const el = e.target as HTMLImageElement;
@@ -4404,7 +4418,7 @@ export function PublicCatalog({
                         </div>
                       )}
                     </article>
-                    {store.plan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
+                    {effectivePlan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
                       <DiziNativeAdCard
                         layout="grid"
                         primaryColor={primaryColor}
@@ -4448,6 +4462,9 @@ export function PublicCatalog({
                             src={getOptimizedImageUrl(getThumbnailUrl(group[0].image) || fallback, 500)}
                             alt={group[0].name}
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                            loading={gi === 0 ? "eager" : "lazy"}
+                            fetchPriority={gi === 0 ? "high" : "auto"}
+                            decoding="async"
                             onError={(e) => {
                               const el = e.target as HTMLImageElement;
                               el.onerror = null;
@@ -4519,7 +4536,7 @@ export function PublicCatalog({
                       )}
                       {/* 2 stacked small cards */}
                       <div className="flex flex-col gap-2">
-                        {group.slice(1).map((p) => (
+                        {group.slice(1).map((p, pidx) => (
                           <article
                             key={p.id}
                             className={cn(
@@ -4533,7 +4550,8 @@ export function PublicCatalog({
                               src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 300)}
                               alt={p.name}
                               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-600"
-                              loading="lazy"
+                              loading={gi === 0 ? "eager" : "lazy"}
+                              fetchPriority={gi === 0 && pidx === 0 ? "high" : "auto"}
                               decoding="async"
                               onError={(e) => {
                                 const el = e.target as HTMLImageElement;
@@ -4615,7 +4633,8 @@ export function PublicCatalog({
                           src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 400)}
                           alt={p.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          loading="lazy"
+                          loading={i < 4 ? "eager" : "lazy"}
+                          fetchPriority={i < 2 ? "high" : "auto"}
                           decoding="async"
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
@@ -4693,7 +4712,7 @@ export function PublicCatalog({
                         </div>
                       </div>
                     </article>
-                    {store.plan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
+                    {effectivePlan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
                       <DiziNativeAdCard
                         layout="editorial"
                         primaryColor={primaryColor}
@@ -4738,7 +4757,8 @@ export function PublicCatalog({
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
-                          loading="lazy"
+                          loading={i < 4 ? "eager" : "lazy"}
+                          fetchPriority={i < 2 ? "high" : "auto"}
                           decoding="async"
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
@@ -4793,7 +4813,7 @@ export function PublicCatalog({
                         </div>
                       </div>
                     </article>
-                    {store.plan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
+                    {effectivePlan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
                       <DiziNativeAdCard
                         layout="bloom"
                         primaryColor={primaryColor}
@@ -5033,7 +5053,7 @@ export function PublicCatalog({
                         className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4"
                       >
                         <div className="flex gap-4 px-4 snap-x snap-mandatory w-max min-w-full">
-                          {featuredProducts.map((p) => (
+                          {featuredProducts.map((p, idx) => (
                             <div
                               key={p.id}
                               onClick={() => setViewingProduct(p)}
@@ -5055,7 +5075,8 @@ export function PublicCatalog({
                                     )}
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    loading="lazy"
+                                    loading={idx < 3 ? "eager" : "lazy"}
+                                    fetchPriority={idx === 0 ? "high" : "auto"}
                                     decoding="async"
                                     onError={(e) => {
                                       const el = e.target as HTMLImageElement;
@@ -5270,7 +5291,7 @@ export function PublicCatalog({
                         )}
                       >
                         {gridProducts.map((p, index) => {
-                          const showAd = store.plan === "semilla" && !isMockup;
+                          const showAd = effectivePlan === "semilla" && !isMockup;
                           const isAdPos = index === 4;
                           const isLastNoAd =
                             index === gridProducts.length - 1 && gridProducts.length <= 4;
@@ -5298,7 +5319,8 @@ export function PublicCatalog({
                                       )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                      loading="lazy"
+                                      loading={index < 4 ? "eager" : "lazy"}
+                                      fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
                                       onError={(e) => {
                                         const el = e.target as HTMLImageElement;
@@ -5715,7 +5737,7 @@ export function PublicCatalog({
                             className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4"
                           >
                             <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
-                              {featuredProducts.map((p) => (
+                              {featuredProducts.map((p, idx) => (
                                 <div
                                   key={p.id}
                                   onClick={() => setViewingProduct(p)}
@@ -5743,7 +5765,8 @@ export function PublicCatalog({
                                         )}
                                         alt={p.name}
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                        loading="lazy"
+                                        loading={idx < 3 ? "eager" : "lazy"}
+                                        fetchPriority={idx === 0 ? "high" : "auto"}
                                         decoding="async"
                                         onError={(e) => {
                                           const el = e.target as HTMLImageElement;
@@ -5982,7 +6005,7 @@ export function PublicCatalog({
                           >
                             {gridProducts.map((p, idx) => {
                               const isEven = idx % 2 === 0;
-                              const showAd = store.plan === "semilla" && !isMockup;
+                              const showAd = effectivePlan === "semilla" && !isMockup;
                               const isAdPos = idx === 4;
                               const isLastNoAd =
                                 idx === gridProducts.length - 1 && gridProducts.length <= 4;
@@ -6027,7 +6050,8 @@ export function PublicCatalog({
                                           )}
                                           alt={p.name}
                                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
-                                          loading="lazy"
+                                          loading={idx < 4 ? "eager" : "lazy"}
+                                          fetchPriority={idx < 2 ? "high" : "auto"}
                                           decoding="async"
                                           onError={(e) => {
                                             const el = e.target as HTMLImageElement;
@@ -6450,7 +6474,7 @@ export function PublicCatalog({
                         className="overflow-x-auto scrollbar-none -mx-4 py-4 sm:-mx-4 sm:py-4"
                       >
                         <div className="flex gap-5 px-4 snap-x snap-mandatory w-max min-w-full">
-                          {featuredProducts.map((p) => (
+                          {featuredProducts.map((p, idx) => (
                             <div
                               key={p.id}
                               onClick={() => setViewingProduct(p)}
@@ -6477,7 +6501,8 @@ export function PublicCatalog({
                                     )}
                                     alt={p.name}
                                     className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
-                                    loading="lazy"
+                                    loading={idx < 3 ? "eager" : "lazy"}
+                                    fetchPriority={idx === 0 ? "high" : "auto"}
                                     decoding="async"
                                     onError={(e) => {
                                       (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
@@ -6868,7 +6893,7 @@ export function PublicCatalog({
                         )}
                       >
                         {gridProducts.map((p, index) => {
-                          const showAd = store.plan === "semilla" && !isMockup;
+                          const showAd = effectivePlan === "semilla" && !isMockup;
                           const isAdPos = index === 4;
                           const isLastNoAd =
                             index === gridProducts.length - 1 && gridProducts.length <= 4;
@@ -6896,7 +6921,8 @@ export function PublicCatalog({
                                       )}
                                       alt={p.name}
                                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                      loading="lazy"
+                                      loading={index < 4 ? "eager" : "lazy"}
+                                      fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
@@ -7111,7 +7137,7 @@ export function PublicCatalog({
 
                 {/* Grid de productos 2 columnas estilo app */}
                 <div className="grid grid-cols-2 gap-3">
-                  {filtered.map((p) => (
+                  {filtered.map((p, index) => (
                     <article
                       key={p.id}
                       className={cn(
@@ -7134,7 +7160,8 @@ export function PublicCatalog({
                           )}
                           alt={p.name}
                           className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
+                          loading={index < 4 ? "eager" : "lazy"}
+                          fetchPriority={index < 2 ? "high" : "auto"}
                           decoding="async"
                           style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
                           onError={(e) => {
@@ -7198,7 +7225,7 @@ export function PublicCatalog({
                 )}
               >
                 {filtered.map((p, index) => {
-                  const showAd = store.plan === "semilla" && !isMockup;
+                  const showAd = effectivePlan === "semilla" && !isMockup;
                   const isAdPos = index === 4;
                   const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
 
@@ -7230,7 +7257,8 @@ export function PublicCatalog({
                             )}
                             alt={p.name}
                             className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
+                            loading={index < 4 ? "eager" : "lazy"}
+                            fetchPriority={index < 2 ? "high" : "auto"}
                             decoding="async"
                             style={{ borderRadius: cfg.imgRounded }}
                             onError={(e) => {
@@ -7459,10 +7487,10 @@ export function PublicCatalog({
 
       {/* ── Footer Branding Dizi ─────────────────────── */}
       {(() => {
-        const showBranding = store.plan === "semilla" ? true : (store.showDiziBranding ?? true);
+        const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? true);
         if (!showBranding) return null;
 
-        const isSemilla = store.plan === "semilla";
+        const isSemilla = effectivePlan === "semilla";
         const refUrl = isSemilla
           ? "https://dizi.idenza.site"
           : `https://dizi.idenza.site?ref=${store.slug}`;
@@ -8312,7 +8340,7 @@ export function PublicCatalog({
       </Sheet>
 
       {/* Floating Badge for Plan Semilla stores */}
-      {store.plan === "semilla" && !isMockup && (
+      {effectivePlan === "semilla" && !isMockup && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <a
             href={`https://dizi.idenza.site/register?ref=${store.slug}`}
@@ -8549,7 +8577,7 @@ export function PublicCatalog({
             </div>
 
             {/* Tarjeta del Loop Viral (Creación de Tiendas) - Solo para tiendas Semilla */}
-            {store.plan === "semilla" && (
+            {effectivePlan === "semilla" && (
               <div
                 style={{
                   borderColor: `${primaryColor}20`,

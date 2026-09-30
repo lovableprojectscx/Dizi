@@ -115,6 +115,9 @@ export default defineConfig(({ mode }) => {
             if (id.includes("node_modules/leaflet")) {
               return "vendor-leaflet";
             }
+            if (id.includes("node_modules/@supabase/")) {
+              return "vendor-supabase";
+            }
           },
         },
       },

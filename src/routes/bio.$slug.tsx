@@ -90,6 +90,16 @@ export const Route = createFileRoute("/bio/$slug")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
       ],
+      links: image
+        ? [
+            {
+              rel: "preload",
+              as: "image",
+              href: image,
+              fetchPriority: "high",
+            },
+          ]
+        : [],
     };
   },
   component: BioPublic,

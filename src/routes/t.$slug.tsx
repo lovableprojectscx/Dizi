@@ -84,6 +84,10 @@ export const Route = createFileRoute("/t/$slug")({
 
     const canonicalUrl = `https://dizi.idenza.site/t/${params.slug}${targetProductId ? `?p=${targetProductId}` : ""}`;
 
+    const preloadImage =
+      (store?.bannerImage ? getValidImageUrl(store.bannerImage.split("|||")[0]) : null) ||
+      (store?.products?.[0]?.image ? getValidImageUrl(store.products[0].image) : null);
+
     return {
       meta: [
         { title },
@@ -100,6 +104,16 @@ export const Route = createFileRoute("/t/$slug")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
       ],
+      links: preloadImage
+        ? [
+            {
+              rel: "preload",
+              as: "image",
+              href: preloadImage,
+              fetchPriority: "high",
+            },
+          ]
+        : [],
     };
   },
   component: StorePublic,
