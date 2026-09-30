@@ -11,11 +11,11 @@
 
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X } from "lucide-react";
+import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
-import type { PlanId } from "@/lib/types";
+import { PLANS, type PlanId } from "@/lib/types";
 import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
@@ -719,9 +719,15 @@ function RegisterPage() {
   const [phoneCountryDial, setPhoneCountryDial] = useState("51");
   const [isPhoneValid, setIsPhoneValid] = useState(false);
 
-  // Leer token de la URL
+  // Leer parámetros de la URL
   const inviteToken = new URLSearchParams(window.location.search).get("invite");
   const refToken = new URLSearchParams(window.location.search).get("ref");
+  const requestedPlanParam = new URLSearchParams(window.location.search).get("plan") as PlanId | null;
+  const [requestedPlan] = useState<PlanId | null>(
+    requestedPlanParam && requestedPlanParam in PLANS ? requestedPlanParam : null
+  );
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [createdStoreData, setCreatedStoreData] = useState<{ id: string; slug: string; plan: PlanId } | null>(null);
 
   // Validar invite contra Supabase al montar
   useEffect(() => {
@@ -936,6 +942,11 @@ function RegisterPage() {
     if (step < 3) {
       setStep(step + 1);
     } else {
+      if (!acceptedTerms) {
+        const { toast } = await import("sonner");
+        toast.error("Debes aceptar los Términos de Servicio y la Política de Privacidad para continuar.");
+        return;
+      }
       setLoading(true);
       try {
         const { data: isAvailable, error: slugError } = await supabase
@@ -1014,6 +1025,8 @@ function RegisterPage() {
           return undefined;
         })();
 
+        const finalPlanToPass = (requestedPlan && requestedPlan !== "semilla" ? requestedPlan : plan) as PlanId;
+
         await addStore({
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
@@ -1021,7 +1034,9 @@ function RegisterPage() {
           phone: storePhone,
           countryCode: phoneCountryDial,
           countryIso: phoneCountryIso,
-          plan: plan as PlanId,
+          plan: finalPlanToPass,
+          requestedPlan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : undefined,
+          termsAcceptedAt: new Date().toISOString(),
           active: true,
           isPublished: true,
           createdAt: new Date().toISOString().split("T")[0],
@@ -1058,6 +1073,17 @@ function RegisterPage() {
         toast.success("Tienda creada con exito. Bienvenido a Dizi.");
 
         setCurrentStore(newStoreId);
+
+        // Si solicitó un plan de pago en /register?plan=..., mostrar confirmación con WhatsApp a soporte
+        if (requestedPlan && requestedPlan !== "semilla") {
+          setCreatedStoreData({
+            id: newStoreId,
+            slug: storeLink || newStoreId,
+            plan: requestedPlan,
+          });
+          return;
+        }
+
         navigate({ to: "/admin" });
       } catch (err: any) {
         console.error("Registration error:", err);
@@ -1207,10 +1233,73 @@ function RegisterPage() {
           <div className="absolute top-[18px] left-[15%] right-[15%] h-0.5 bg-slate-200 -z-10" />
         </div>
 
-        {/* Card del formulario */}
+        {/* Card del formulario o Confirmación de Plan Solicitado */}
         <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10 overflow-hidden">
-          <form onSubmit={handleRegister} className="space-y-4 relative">
-            {/* PASO 1 — Datos del negocio */}
+          {createdStoreData ? (
+            <div className="space-y-5 text-center py-2 animate-in fade-in zoom-in-95 duration-300">
+              <div className="mx-auto w-16 h-16 rounded-3xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-9 h-9" />
+              </div>
+              <div className="space-y-1.5">
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">
+                  ¡Tu tienda ha sido creada!
+                </h2>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  Tu catálogo está listo en{" "}
+                  <a
+                    href={`/t/${createdStoreData.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-primary hover:underline"
+                  >
+                    dizi.pe/{createdStoreData.slug}
+                  </a>
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">
+                    Plan elegido
+                  </span>
+                  <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    {PLANS[createdStoreData.plan]?.name || createdStoreData.plan}
+                  </span>
+                </div>
+                <div className="text-sm font-bold text-slate-800">
+                  S/ {PLANS[createdStoreData.plan]?.price.toFixed(2)}/mes
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  Tu tienda se creó en el Plan Semilla. Para activar tu plan y desbloquear todas sus funciones, comunícate con nosotros por WhatsApp:
+                </p>
+              </div>
+
+              <div className="space-y-2.5 pt-2">
+                <a
+                  href={buildWaUrl(
+                    DIZI_SUPPORT_PHONE,
+                    `Hola, acabo de crear mi tienda ${createdStoreData.slug} y quiero activar el plan ${PLANS[createdStoreData.plan]?.name || createdStoreData.plan} (S/ ${PLANS[createdStoreData.plan]?.price.toFixed(2)}/mes)`
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full h-12 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer text-sm"
+                >
+                  <MessageCircle className="w-5 h-5" /> Activar Plan por WhatsApp
+                </a>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate({ to: "/admin" })}
+                  className="w-full h-11 rounded-2xl font-bold text-xs text-slate-600 hover:text-slate-900 border-slate-200"
+                >
+                  Ir al Panel de Administración
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <form onSubmit={handleRegister} className="space-y-4 relative">
+                {/* PASO 1 — Datos del negocio */}
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="space-y-1.5">
@@ -1491,6 +1580,30 @@ function RegisterPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Aceptación obligatoria de Términos y Privacidad (G7) */}
+                <div className="flex items-start gap-2.5 pt-1">
+                  <input
+                    type="checkbox"
+                    id="acceptTerms"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer shrink-0"
+                    required
+                  />
+                  <label htmlFor="acceptTerms" className="text-xs text-slate-600 leading-snug cursor-pointer select-none">
+                    Acepto los{" "}
+                    <Link to="/terminos" target="_blank" className="text-primary font-bold hover:underline">
+                      Términos de Servicio
+                    </Link>{" "}
+                    y la{" "}
+                    <Link to="/privacidad" target="_blank" className="text-primary font-bold hover:underline">
+                      Política de Privacidad
+                    </Link>
+                    .
+                  </label>
+                </div>
+
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"
@@ -1501,7 +1614,7 @@ function RegisterPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !acceptedTerms}
                     className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {loading ? (
@@ -1528,7 +1641,9 @@ function RegisterPage() {
               </Link>
             </div>
           )}
-        </div>
+        </>
+      )}
+    </div>
 
         {/* Ejemplos — solo paso 1 */}
         {step === 1 && (
