@@ -51,9 +51,9 @@ describe("Pruebas del Panel Administrador y SuperAdmin (Fase 3)", () => {
   describe("Generador de Invitaciones SuperAdmin (InviteGenerator)", () => {
     it("debe verificar que las tarifas regulares figuren en las opciones de invitación", () => {
       const invitePlanLabels = [
-        { plan: "emprendedor", priceText: "S/ 19.90 / mes" },
-        { plan: "pro", priceText: "S/ 39.90 / mes" },
-        { plan: "ilimitado", priceText: "S/ 69.90 / mes" },
+        { plan: "emprendedor", priceText: `S/ ${PLANS.emprendedor.price.toFixed(2)} / mes` },
+        { plan: "pro", priceText: `S/ ${PLANS.pro.price.toFixed(2)} / mes` },
+        { plan: "ilimitado", priceText: `S/ ${PLANS.ilimitado.price.toFixed(2)} / mes` },
         { plan: "semilla", priceText: "Gratis" },
       ];
 

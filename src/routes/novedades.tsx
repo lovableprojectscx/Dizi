@@ -231,9 +231,9 @@ const NOTICIAS = [
     date: "13 mayo 2026",
     title: "Sistema de suscripciones con períodos y gracia",
     summary:
-      "Los planes ahora tienen fecha de vencimiento real. Al expirar: 3 días de gracia antes de reducir productos, 15 días para mantener el diseño premium, luego baja automáticamente al modelo semilla.",
+      "Los planes ahora tienen fecha de vencimiento real. Al expirar: 3 días de gracia antes de limitar a 20 productos visibles en el catálogo público; el diseño y todos los productos se conservan intactos.",
     detail:
-      "Los productos que excedan el límite del plan semilla (7) se ocultan del catálogo público pero no se eliminan. Al renovar, vuelven a aparecer automáticamente. Los invites también se generan con duración definida: 1, 3, 6 o 12 meses.",
+      "Los productos que excedan el límite del plan semilla (20) se ocultan del catálogo público pero no se eliminan de tu panel. Al renovar, vuelven a aparecer automáticamente. Los invites también se generan con duración definida: 1, 3, 6 o 12 meses.",
   },
   {
     id: 5,
@@ -271,11 +271,11 @@ const FAQ = [
   },
   {
     q: "¿Cuántos productos puedo subir?",
-    a: "Depende de tu plan: Semilla (gratis) permite hasta 20 productos, Emprendedor hasta 50, Pro hasta 200, e Ilimitado sin límite. Puedes cambiar de plan en cualquier momento.",
+    a: "Depende de tu plan: Semilla (gratis) permite hasta 20 productos, Emprendedor hasta 100, Pro hasta 300, e Ilimitado hasta 1,000. Puedes cambiar de plan en cualquier momento.",
   },
   {
     q: "¿Qué pasa si mi suscripción vence?",
-    a: "Tienes 3 días de gracia donde todo sigue igual. Luego, los productos que excedan el límite del plan gratuito (20) se ocultan del catálogo público, pero no se borran. Tu diseño premium se mantiene 15 días más, y después cambia al modelo básico. Al renovar, todo vuelve a la normalidad automáticamente.",
+    a: "Tienes 3 días de gracia donde todo sigue igual. Luego, los productos que excedan el límite del plan gratuito (20) se ocultan del catálogo público, pero no se borran de tu panel. Tu diseño se mantiene siempre intacto. Al renovar, todo vuelve a la normalidad automáticamente.",
   },
   {
     q: "¿Cómo realizan el pedido mis clientes?",
@@ -287,7 +287,7 @@ const FAQ = [
   },
   {
     q: "¿Puedo personalizar los colores y el diseño?",
-    a: "Sí. Tienes más de 15 modelos de diseño y puedes cambiar el color de acento y el fondo del catálogo. Los planes superiores desbloquean modelos premium como Dark Fashion, Portada con Banner, entre otros.",
+    a: "Sí. Tienes más de 15 modelos de diseño y puedes cambiar el color de acento y el fondo del catálogo. Todos los diseños están incluidos en todos los planes para que tu tienda luzca profesional desde el primer día.",
   },
   {
     q: "¿Puedo cambiar mi link personalizado después?",
