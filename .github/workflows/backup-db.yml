@@ -1,0 +1,84 @@
+name: Respaldo Semanal de Base de Datos (DIZI)
+
+# G5: Preparado para respaldos automáticos semanales de Supabase (Free tier no incluye backups).
+# NOTA: Programación automática comentada hasta que Jack configure los secretos (SUPABASE_DB_URL y BACKUP_PUBLIC_KEY).
+# Ejecución manual habilitada mediante workflow_dispatch.
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 8 * * 0' # Todos los domingos a las 3:00 a.m. Lima (08:00 UTC)
+
+jobs:
+  backup:
+    name: Extraer, Cifrar y Guardar Respaldo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar cliente de PostgreSQL y OpenSSL
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client openssl
+
+      - name: Validar variables y ejecutar pg_dump cifrado
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PUBKEY: ${{ secrets.BACKUP_PUBLIC_KEY }}
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$BACKUP_PUBKEY" ]; then
+            echo "::error::Faltan secretos requeridos (SUPABASE_DB_URL o BACKUP_PUBLIC_KEY)."
+            echo "Consultar la guía: INFORMACIÓN NECESARIA/04-TECNICA/RUNBOOK-Respaldo-y-Restauracion.md"
+            exit 1
+          fi
+
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          mkdir -p backups
+          
+          # Guardar clave pública temporal para cifrado asimétrico
+          echo "$BACKUP_PUBKEY" > backups/backup_pubkey.pem
+
+          # 1. Extracción con pg_dump (formato personalizado binario de PostgreSQL)
+          # Incluye public, auth (auth.users) y storage
+          echo "Iniciando pg_dump de public, auth y storage..."
+          pg_dump "$DB_URL" \
+            --format=custom \
+            --encoding=UTF8 \
+            --no-owner \
+            --no-privileges \
+            --schema=public \
+            --schema=auth \
+            --schema=storage \
+            -f "backups/dizi_backup_${TIMESTAMP}.dump"
+
+          # 2. Cifrado híbrido:
+          # Generar clave simétrica AES-256 de un solo uso
+          openssl rand -base64 32 > backups/temp_aes.key
+
+          # Cifrar el dump con AES-256-CBC
+          openssl enc -aes-256-cbc -salt -pbkdf2 \
+            -in "backups/dizi_backup_${TIMESTAMP}.dump" \
+            -out "backups/dizi_backup_${TIMESTAMP}.dump.enc" \
+            -pass file:backups/temp_aes.key
+
+          # Cifrar la clave AES con la clave pública RSA (solo Jack tiene la clave privada)
+          openssl pkeyutl -encrypt -pubin -inkey backups/backup_pubkey.pem \
+            -in backups/temp_aes.key \
+            -out "backups/dizi_key_${TIMESTAMP}.key.enc"
+
+          # 3. Limpieza de datos en claro
+          rm -f "backups/dizi_backup_${TIMESTAMP}.dump" backups/temp_aes.key backups/backup_pubkey.pem
+
+          echo "BACKUP_TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+          echo "Respaldo completado y cifrado exitosamente."
+
+      - name: Almacenar respaldo cifrado en artefactos (90 días de retención)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dizi-db-backup-${{ env.BACKUP_TIMESTAMP }}
+          path: |
+            backups/dizi_backup_*.dump.enc
+            backups/dizi_key_*.key.enc
+          retention-days: 90
