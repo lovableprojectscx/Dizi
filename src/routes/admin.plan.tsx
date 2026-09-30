@@ -20,38 +20,6 @@ export const Route = createFileRoute("/admin/plan")({
   component: PlanPage,
 });
 
-const features: Record<PlanId, string[]> = {
-  semilla: [
-    "Hasta 20 productos",
-    "Todas las 15 estructuras de diseño",
-    "Carrito a WhatsApp",
-    "Marca de agua Dizi visible",
-  ],
-  emprendedor: [
-    "Hasta 100 productos",
-    "Sin marca de agua (Marca propia)",
-    "Exportación de Catálogo a PDF",
-    "Todas las 15 estructuras de diseño",
-    "Página Link en Bio",
-  ],
-  pro: [
-    "Hasta 300 productos",
-    "Sin marca de agua (Marca propia)",
-    "Carrusel de 3 Banners en portada",
-    "Página Link en Bio",
-    "Estadísticas de clics y tráfico",
-    "Exportación de Catálogo a PDF",
-  ],
-  ilimitado: [
-    "Hasta 1,000 productos",
-    "Sin marca de agua (Marca propia)",
-    "Carrusel de 5 Banners en portada",
-    "Página Link en Bio",
-    "Estadísticas avanzadas",
-    "Soporte prioritario 24/7",
-  ],
-};
-
 function PlanPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
@@ -247,7 +215,7 @@ function PlanPage() {
                     Hasta {planInfo.productLimit} productos
                   </p>
                   <ul className="space-y-1.5 text-xs pt-1">
-                    {features[p].map((f) => (
+                    {PLANS[p].features.map((f) => (
                       <li key={f} className="flex items-start gap-1.5">
                         <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
                         <span className="leading-tight">{f}</span>

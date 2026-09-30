@@ -33,7 +33,10 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import QRCode from "qrcode";
 import { toast } from "sonner";
-import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
+import { lazy, Suspense } from "react";
+const CatalogPdfExportButton = lazy(() =>
+  import("@/components/public/CatalogPdfExport").then((m) => ({ default: m.CatalogPdfExportButton }))
+);
 import { cn } from "@/lib/utils";
 import { isProductIncomplete } from "@/lib/products";
 
@@ -334,7 +337,9 @@ function Dashboard() {
               <div className="pt-1 flex items-center gap-2 flex-wrap">
                 {shareTab === "catalog" ? (
                   <div className="[&>button]:h-9 [&>button]:rounded-xl [&>button]:font-bold [&>button]:text-xs [&>button]:shadow-none [&>button]:border-border/60 [&>button]:bg-white [&>button]:hover:bg-muted">
-                    <CatalogPdfExportButton store={store} variant="admin" />
+                    <Suspense fallback={null}>
+                      <CatalogPdfExportButton store={store} variant="admin" />
+                    </Suspense>
                   </div>
                 ) : (
                   <Button

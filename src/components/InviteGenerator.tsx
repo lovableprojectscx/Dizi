@@ -3,13 +3,13 @@ import { useApp } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Copy, Check, Link2, Calendar, FileText } from "lucide-react";
 import { toast } from "sonner";
-import type { PlanId } from "@/lib/types";
+import { PLANS, type PlanId } from "@/lib/types";
 
 const PLAN_OPTIONS: { value: PlanId; label: string }[] = [
-  { value: "emprendedor", label: "Emprendedor (S/ 19.90 / mes)" },
-  { value: "pro", label: "Catálogo Pro (S/ 39.90 / mes)" },
-  { value: "ilimitado", label: "Ilimitado (S/ 69.90 / mes)" },
-  { value: "semilla", label: "Semilla (Gratis)" },
+  { value: "emprendedor", label: `${PLANS.emprendedor.name} (S/ ${PLANS.emprendedor.price.toFixed(2)} / mes)` },
+  { value: "pro", label: `${PLANS.pro.name} (S/ ${PLANS.pro.price.toFixed(2)} / mes)` },
+  { value: "ilimitado", label: `${PLANS.ilimitado.name} (S/ ${PLANS.ilimitado.price.toFixed(2)} / mes)` },
+  { value: "semilla", label: `${PLANS.semilla.name} (Gratis)` },
 ];
 
 interface GeneratedLink {

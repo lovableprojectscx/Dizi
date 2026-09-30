@@ -36,16 +36,70 @@ export interface Plan {
   price: number;
   /** Precio anual con descuento por pago adelantado */
   annualPrice: number;
+  /** Lista oficial de características y beneficios incluidos en el plan */
+  features: string[];
 }
 
 /**
  * Catálogo de planes disponibles en el sistema con sus límites y precios oficiales.
+ * Fuente única de verdad técnica y comercial (G1 y G9).
  */
 export const PLANS: Record<PlanId, Plan> = {
-  semilla: { id: "semilla", name: "Semilla", productLimit: 20, price: 0, annualPrice: 0 },
-  emprendedor: { id: "emprendedor", name: "Emprendedor", productLimit: 100, price: 19.9, annualPrice: 179 },
-  pro: { id: "pro", name: "Catálogo Pro", productLimit: 300, price: 39.9, annualPrice: 359 },
-  ilimitado: { id: "ilimitado", name: "Ilimitado", productLimit: 1000, price: 69.9, annualPrice: 629 },
+  semilla: {
+    id: "semilla",
+    name: "Semilla",
+    productLimit: 20,
+    price: 0,
+    annualPrice: 0,
+    features: [
+      "Hasta 20 productos",
+      "Los 15 diseños",
+      "Carrito a WhatsApp",
+      "Link en Bio (3 enlaces)",
+      "Visitas y clics",
+      "Incluye publicidad de Dizi",
+    ],
+  },
+  emprendedor: {
+    id: "emprendedor",
+    name: "Emprendedor",
+    productLimit: 100,
+    price: 19.9,
+    annualPrice: 179,
+    features: [
+      "Hasta 100 productos",
+      "Sin marca ni publicidad de Dizi",
+      "Catálogo en PDF",
+      "1 banner de portada",
+      "Link en Bio ilimitado y con fondos",
+    ],
+  },
+  pro: {
+    id: "pro",
+    name: "Catálogo Pro",
+    productLimit: 300,
+    price: 39.9,
+    annualPrice: 359,
+    features: [
+      "Hasta 300 productos",
+      "Carrusel de 3 banners",
+      "Cintillo de anuncios",
+      "Todo lo de Emprendedor",
+    ],
+  },
+  ilimitado: {
+    id: "ilimitado",
+    name: "Ilimitado",
+    productLimit: 1000,
+    price: 69.9,
+    annualPrice: 629,
+    features: [
+      "Hasta 1,000 productos",
+      "Carrusel de 5 banners",
+      "Soporte prioritario 24/7",
+      "Todo lo de Pro",
+    ],
+  },
 };
 
 /**
@@ -307,6 +361,10 @@ export interface Store {
   products: Product[];
   /** Total de productos activos en base de datos para optimizaciones de conteo */
   totalProductsCount?: number;
+  /** Fecha/hora UTC en que el comercio aceptó los Términos y Privacidad (G7) */
+  termsAcceptedAt?: string | null;
+  /** Plan solicitado por el comercio al momento del registro (G9) */
+  requestedPlan?: PlanId | null;
 }
 
 /**
@@ -466,7 +524,23 @@ export function getBioLinksLimit(store: Store): number {
  * @param store Objeto de la tienda.
  */
 export function canUsePremiumBioFeatures(store: Store): boolean {
-  return store.plan !== "semilla";
+  return getEffectivePlan(store) !== "semilla";
+}
+
+/**
+ * Retorna la cantidad máxima de banners que la tienda puede publicar según su plan efectivo (G9).
+ * - Semilla: 0 banners (solo portada estática básica si aplica)
+ * - Emprendedor: 1 banner de portada
+ * - Pro: carrusel de hasta 3 banners
+ * - Ilimitado: carrusel de hasta 5 banners
+ * @param store Objeto de la tienda.
+ */
+export function getMaxAllowedBanners(store: Store): number {
+  const plan = getEffectivePlan(store);
+  if (plan === "semilla") return 0;
+  if (plan === "emprendedor") return 1;
+  if (plan === "pro") return 3;
+  return 5;
 }
 
 /**

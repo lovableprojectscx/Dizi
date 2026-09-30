@@ -720,10 +720,10 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 onChange={(e) => setRenewPlan(e.target.value as PlanId)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium"
               >
-                <option value="semilla">Semilla (Gratis)</option>
-                <option value="emprendedor">Emprendedor (S/ 19.90/mes)</option>
-                <option value="pro">Pro (S/ 39.90/mes)</option>
-                <option value="ilimitado">Ilimitado (S/ 69.90/mes)</option>
+                <option value="semilla">{PLANS.semilla.name} (Gratis)</option>
+                <option value="emprendedor">{PLANS.emprendedor.name} (S/ {PLANS.emprendedor.price.toFixed(2)}/mes)</option>
+                <option value="pro">{PLANS.pro.name} (S/ {PLANS.pro.price.toFixed(2)}/mes)</option>
+                <option value="ilimitado">{PLANS.ilimitado.name} (S/ {PLANS.ilimitado.price.toFixed(2)}/mes)</option>
               </select>
             </div>
 
@@ -849,10 +849,10 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 onChange={(e) => setChangePlanPlan(e.target.value as PlanId)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium"
               >
-                <option value="semilla">Semilla (Gratis)</option>
-                <option value="emprendedor">Emprendedor (S/ 19.90/mes)</option>
-                <option value="pro">Pro (S/ 39.90/mes)</option>
-                <option value="ilimitado">Ilimitado (S/ 69.90/mes)</option>
+                <option value="semilla">{PLANS.semilla.name} (Gratis)</option>
+                <option value="emprendedor">{PLANS.emprendedor.name} (S/ {PLANS.emprendedor.price.toFixed(2)}/mes)</option>
+                <option value="pro">{PLANS.pro.name} (S/ {PLANS.pro.price.toFixed(2)}/mes)</option>
+                <option value="ilimitado">{PLANS.ilimitado.name} (S/ {PLANS.ilimitado.price.toFixed(2)}/mes)</option>
               </select>
             </div>
 
