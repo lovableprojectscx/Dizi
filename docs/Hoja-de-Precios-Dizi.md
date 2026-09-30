@@ -1,4 +1,4 @@
-> ⚠️ **OBSOLETO / CON ERRORES desde 2026-09-25** — no usar como referencia. Ver `../../../INFORMACIÓN NECESARIA/04-TECNICA/FUENTE-DE-VERDAD.md` §6.
+> ⚠️ **OBSOLETO / CON ERRORES desde 2026-09-25** — no usar como referencia. Ver documento oficial vigente: `INFORMACIÓN NECESARIA/02-NEGOCIO/comercial/Hoja-de-Precios-Dizi.md` y `../../../INFORMACIÓN NECESARIA/04-TECNICA/FUENTE-DE-VERDAD.md` §6.
 
 # DIZI — Hoja de Precios y Estructura Comercial Regular (Agosto 2026)
 
@@ -29,5 +29,6 @@ Este documento fija la estructura tarifaria regular de DIZI que reemplaza los pr
 ---
 
 ## 3. Garantía y Resguardo de Clientes Actuales
-- Todos los clientes registrados con tarifas anteriores congelan su precio durante 12 meses.
+- Un solo precio para todos (nuevos y antiguos): rige la tarifa vigente. No hay precio congelado ni precio fundador (decisión de Jack, 30 sep 2026). Consultar documento oficial: `INFORMACIÓN NECESARIA/02-NEGOCIO/comercial/Hoja-de-Precios-Dizi.md`.
 - El modelo visual configurado por el usuario no se degrada automáticamente al vencer el plan, manteniendo la identidad del comercio.
+

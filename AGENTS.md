@@ -1,7 +1,7 @@
 # AGENTS.md — Reglas de trabajo en DIZI
 
 Rige para cualquier agente (Antigravity, Claude u otro) que lea, cambie o documente este proyecto.
-Última actualización: 25 sep 2026 · Responsable: Jack (Idenza).
+Última actualización: 30 sep 2026 · Responsable: Jack (Idenza).
 
 ## 0. Antes de empezar cualquier tarea
 
@@ -85,3 +85,15 @@ Un archivo `INFORME-<tema>-<fecha>.md` en `encargos/` con:
 - Cualquier acción irreversible (borrar datos, rotar claves que usa la web en vivo, cambiar dominio).
 - Si una prueba de regresión falla después de un cambio: **revertir primero**, reportar después.
 - Si el encargo pide algo que contradice este archivo.
+
+## 9. Lecciones aprendidas
+
+1. **Pegar la salida real del comando.** Nunca reescribirla ni poner números aproximados.
+2. **"HTTP 200" no prueba nada en esta app:** probar que la RPC devuelve datos y que la página muestra productos.
+3. **Una prueba con `if (isVisible)` que se salta el paso cuenta como fallida.**
+4. **Conteo residual canónico:** `zz-audit` en tiendas/usuarios = 0, invitaciones con `audit` = 0, fotos sueltas = 4.
+5. **Las invitaciones de prueba se borran;** nunca se reactivan.
+6. **Fotos:** borrar solo con la API de Storage, nunca con SQL sobre `storage.objects`.
+7. **Funciones:** `CREATE OR REPLACE`; nunca DROP+CREATE (se pierden permisos). `REVOKE` siempre también `FROM PUBLIC`.
+8. **Pruebas de verificación en modo celular** (`movil-android`), no escritorio.
+
