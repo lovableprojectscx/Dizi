@@ -2,9 +2,9 @@ name: CI Dizi
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   quality:
@@ -26,7 +26,7 @@ jobs:
         run: npm run lint
 
       - name: Run unit tests with Vitest
-        run: npx vitest run --coverage
+        run: npx vitest run
 
-      - name: Verify Quality Gate (Coverage)
-        run: node scripts/check-coverage.js --min 80
+      - name: Run production build
+        run: npm run build

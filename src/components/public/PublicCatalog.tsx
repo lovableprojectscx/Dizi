@@ -113,7 +113,6 @@ import {
   getEffectiveProductLimit,
   getEffectiveModel,
   isSubscriptionExpired,
-  modelGraceDaysLeft,
   PLANS,
   planAllowsPromoBar,
 } from "@/lib/types";
@@ -1384,7 +1383,6 @@ export function PublicCatalog({
   /* ── Subscription state ─────────────────────────── */
   const effectiveProductLimit = getEffectiveProductLimit(store);
   const isExpired = isSubscriptionExpired(store);
-  const modelDaysLeft = modelGraceDaysLeft(store);
 
   /* ── Theme setup ─────────────────────────────────── */
   const rawModelId = resolveRenderModel(isMockup ? (store.model || "minimalista") : getEffectiveModel(store));
@@ -1741,7 +1739,7 @@ export function PublicCatalog({
     iconName?: string,
   ) => {
     const buttonStyleId = store.bioButtonStyle || "pill-solid";
-    let { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
+    const { shape, type, radiusClass } = getButtonStyle(buttonStyleId);
 
     const customBg = overrideBg || store.bioButtonColor;
     const customText = overrideText || store.bioButtonTextColor;
@@ -9014,7 +9012,7 @@ function LibroReclamacionesModal({
     });
 
     // ── Guardar ────────────────────────────────────────────────
-    doc.save(`Reclamacion_${num.replace(/[°\s\/]/g, "_")}.pdf`);
+    doc.save(`Reclamacion_${num.replace(/[°\s/]/g, "_")}.pdf`);
   };
 
   const sBase: React.CSSProperties = {

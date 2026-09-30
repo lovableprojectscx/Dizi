@@ -11,6 +11,16 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
 }
 
+export function isFacebookHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host === "facebook.com" ||
+    host.endsWith(".facebook.com") ||
+    host === "fb.com" ||
+    host.endsWith(".fb.com")
+  );
+}
+
 export default async function handler(req: any, res: any) {
   // Allow CORS from local development
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -34,19 +44,27 @@ export default async function handler(req: any, res: any) {
     }
 
     const urlObj = new URL(cleanUrl);
-    if (!urlObj.hostname.includes("facebook.com")) {
+    if (!isFacebookHost(urlObj.hostname)) {
       return res
         .status(400)
-        .json({ error: "El enlace debe ser de una página de Facebook válida (facebook.com)." });
+        .json({ error: "El enlace debe ser de una página de Facebook válida (facebook.com o fb.com)." });
     }
 
     console.log("[scrape-fb] Fetching Facebook HTML for URL:", cleanUrl);
-    const fbRes = await fetch(cleanUrl, {
-      headers: {
-        "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_patched.php)",
-        "Accept-Language": "es-ES,es;q=0.9",
-      },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    let fbRes: Response;
+    try {
+      fbRes = await fetch(cleanUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_patched.php)",
+          "Accept-Language": "es-ES,es;q=0.9",
+        },
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!fbRes.ok) {
       console.error("[scrape-fb] FB response not ok:", fbRes.status);
@@ -95,12 +113,20 @@ export default async function handler(req: any, res: any) {
     const imageUrl = rawImageUrl.replace(/&amp;/g, "&");
 
     console.log("[scrape-fb] Fetching image bytes from CDN...");
-    const imgRes = await fetch(imageUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-    });
+    const imgController = new AbortController();
+    const imgTimeout = setTimeout(() => imgController.abort(), 8000);
+    let imgRes: Response;
+    try {
+      imgRes = await fetch(imageUrl, {
+        signal: imgController.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+      });
+    } finally {
+      clearTimeout(imgTimeout);
+    }
 
     if (!imgRes.ok) {
       console.error("[scrape-fb] CDN image fetch failed:", imgRes.status);
@@ -121,6 +147,9 @@ export default async function handler(req: any, res: any) {
     });
   } catch (err: any) {
     console.error("[scrape-fb] Error:", err);
+    if (err.name === "AbortError") {
+      return res.status(504).json({ error: "Tiempo de espera agotado al conectar con Facebook (timeout de 8s)." });
+    }
     return res.status(500).json({ error: `Error interno al procesar la página: ${err.message}` });
   }
 }

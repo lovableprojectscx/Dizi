@@ -12,6 +12,22 @@ import { defineConfig, devices } from "@playwright/test";
  *  - Captura final                     → test-results/<prueba>/*.png
  *  - Reporte HTML consolidado          → npm run test:e2e:report
  */
+function getBypassSecret(): string | undefined {
+  if (process.env.VERCEL_PROTECTION_BYPASS) return process.env.VERCEL_PROTECTION_BYPASS;
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) return process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  try {
+    const { execSync } = require("child_process");
+    const out = execSync('reg query "HKCU\\Environment" /v "VERCEL_AUTOMATION_BYPASS_SECRET"', {
+      stdio: ["pipe", "pipe", "ignore"],
+    }).toString();
+    const match = out.match(/REG_\w+\s+(\S+)/);
+    if (match) return match[1];
+  } catch {}
+  return undefined;
+}
+
+const vercelBypassToken = getBypassSecret();
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -25,15 +41,23 @@ export default defineConfig({
     screenshot: "on",
     locale: "es-PE",
     viewport: { width: 1280, height: 720 },
+    extraHTTPHeaders: vercelBypassToken
+      ? {
+          "x-vercel-protection-bypass": vercelBypassToken,
+          "x-vercel-set-bypass-cookie": "s_true",
+        }
+      : undefined,
   },
   projects: [
     { name: "chromium-escritorio", use: { ...devices["Desktop Chrome"] } },
     { name: "movil-android", use: { ...devices["Pixel 7"] } },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: process.env.PW_BASE_URL
+    ? undefined
+    : {
+        command: "npm run dev",
+        url: "http://localhost:5173",
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });

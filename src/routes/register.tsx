@@ -731,6 +731,11 @@ function RegisterPage() {
       const inviteArray = data as any[];
       if (error || !inviteArray || inviteArray.length === 0) {
         console.warn("[register] Invite no encontrado, expirado o ya usado:", error?.message);
+        import("sonner").then(({ toast }) => {
+          toast.warning("Esta invitación ya no es válida. Puedes crear tu tienda gratis igual.", {
+            duration: 6000,
+          });
+        });
       } else {
         const invite = inviteArray[0];
         setInvitePlan(invite.plan as PlanId);
@@ -1158,8 +1163,11 @@ function RegisterPage() {
           </div>
         )}
         {!inviteLoading && inviteToken && !invitePlan && (
-          <div className="w-full max-w-sm rounded-2xl bg-destructive text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-destructive/20 animate-bounce">
-            Enlace inválido o expirado — se aplicará plan Semilla
+          <div
+            data-testid="invalid-invite-banner"
+            className="w-full max-w-sm rounded-2xl bg-destructive text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-destructive/20 animate-bounce"
+          >
+            Esta invitación ya no es válida. Puedes crear tu tienda gratis igual.
           </div>
         )}
 

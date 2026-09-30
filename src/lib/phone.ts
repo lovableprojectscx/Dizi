@@ -124,7 +124,7 @@ export function normalizePhone(iso: string, input: string): string {
     return parsed.nationalNumber;
   }
 
-  let cleaned = input.replace(/[\s\-\.\(\)\+]/g, "");
+  let cleaned = input.replace(/[\s\-().+]/g, "");
   const country = getCountry(iso);
   if (country.dial && cleaned.startsWith(country.dial)) {
     const rest = cleaned.slice(country.dial.length);

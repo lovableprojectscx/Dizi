@@ -65,12 +65,6 @@ export const PLAN_DURATION_OPTIONS = [
 export const GRACE_DAYS = 3;
 
 /**
- * Días de gracia antes de revertir la plantilla de diseño personalizada
- * a la plantilla básica del plan semilla cuando la suscripción caduca.
- */
-export const MODEL_GRACE_DAYS = 15;
-
-/**
  * Nombre de la plantilla de diseño predeterminada asignada al plan semilla.
  */
 export const SEMILLA_MODEL = "minimalista";
@@ -417,19 +411,6 @@ export function isSubscriptionExpired(store: Store): boolean {
   return new Date(store.planExpiresAt) < new Date();
 }
 
-/**
- * Calcula cuántos días restan del periodo de gracia especial (15 días) para mantener la plantilla de diseño elegida.
- * @param store Objeto de la tienda.
- * @returns Días restantes de gracia de diseño, o null si el plan está vigente o es semilla.
- */
-export function modelGraceDaysLeft(store: Store): number | null {
-  if (store.plan === "semilla") return null;
-  if (!store.planExpiresAt) return null;
-  const since = daysSinceExpiry(store);
-  if (since === null || since <= 0) return null;
-  const remaining = MODEL_GRACE_DAYS - since;
-  return Math.max(0, remaining);
-}
 
 /**
  * Retorna el modelo de diseño que debe renderizarse actualmente en el catálogo público de la tienda.
