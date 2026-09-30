@@ -12,6 +12,22 @@ import { defineConfig, devices } from "@playwright/test";
  *  - Captura final                     → test-results/<prueba>/*.png
  *  - Reporte HTML consolidado          → npm run test:e2e:report
  */
+function getBypassSecret(): string | undefined {
+  if (process.env.VERCEL_PROTECTION_BYPASS) return process.env.VERCEL_PROTECTION_BYPASS;
+  if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) return process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  try {
+    const { execSync } = require("child_process");
+    const out = execSync('reg query "HKCU\\Environment" /v "VERCEL_AUTOMATION_BYPASS_SECRET"', {
+      stdio: ["pipe", "pipe", "ignore"],
+    }).toString();
+    const match = out.match(/REG_\w+\s+(\S+)/);
+    if (match) return match[1];
+  } catch {}
+  return undefined;
+}
+
+const vercelBypassToken = getBypassSecret();
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -25,9 +41,9 @@ export default defineConfig({
     screenshot: "on",
     locale: "es-PE",
     viewport: { width: 1280, height: 720 },
-    extraHTTPHeaders: (process.env.VERCEL_PROTECTION_BYPASS || process.env.VERCEL_AUTOMATION_BYPASS_SECRET)
+    extraHTTPHeaders: vercelBypassToken
       ? {
-          "x-vercel-protection-bypass": (process.env.VERCEL_PROTECTION_BYPASS || process.env.VERCEL_AUTOMATION_BYPASS_SECRET) as string,
+          "x-vercel-protection-bypass": vercelBypassToken,
           "x-vercel-set-bypass-cookie": "s_true",
         }
       : undefined,
