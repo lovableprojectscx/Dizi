@@ -65,6 +65,7 @@ test.describe("E2E FASE 1A: Teléfonos y Países en Registro, Catálogo y Config
     await emailInput.fill("zz-audit-pe-1@testdizi.com");
 
     await page.locator('input[type="password"]').fill("AuditPassword123!");
+    await page.locator('#acceptTerms').check();
 
     const submitBtn = page.locator('button:has-text("Lanzar mi Catálogo")');
     await expect(submitBtn).toBeEnabled();
@@ -108,6 +109,7 @@ test.describe("E2E FASE 1A: Teléfonos y Países en Registro, Catálogo y Config
     await page.locator('input[type="email"]').fill("zz-audit-ec-1@testdizi.com");
 
     await page.locator('input[type="password"]').fill("AuditPassword123!");
+    await page.locator('#acceptTerms').check();
 
     await page.locator('button:has-text("Lanzar mi Catálogo")').click();
     await page.waitForURL(/\/admin/, { timeout: 35000 });
@@ -155,6 +157,7 @@ test.describe("E2E FASE 1A: Teléfonos y Países en Registro, Catálogo y Config
     await page.locator('input[type="email"]').fill("zz-audit-ar-1@testdizi.com");
 
     await page.locator('input[type="password"]').fill("AuditPassword123!");
+    await page.locator('#acceptTerms').check();
 
     await page.locator('button:has-text("Lanzar mi Catálogo")').click();
     await page.waitForURL(/\/admin/, { timeout: 35000 });
