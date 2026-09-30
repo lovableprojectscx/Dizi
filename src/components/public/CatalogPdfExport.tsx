@@ -10,7 +10,7 @@ import { useState, useRef } from "react";
 import { Download, X, Loader2, Check, Palette, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Store, Product } from "@/lib/types";
+import { PLANS, type Store, type Product, getEffectivePlan } from "@/lib/types";
 import { formatPrice, buildWaUrl } from "@/lib/whatsapp";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { supabase } from "@/lib/supabase";
@@ -1235,7 +1235,7 @@ export function CatalogPdfExportButton({
             </div>
 
             {/* Contenido */}
-            {store.plan === "semilla" ? (
+            {getEffectivePlan(store) === "semilla" ? (
               <div className="p-6 text-center space-y-4">
                 <div className="mx-auto h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
                   <Lock className="h-6 w-6" />
@@ -1243,7 +1243,7 @@ export function CatalogPdfExportButton({
                 <div className="space-y-1.5">
                   <h3 className="font-bold text-base">Función Exclusiva para Planes de Paga</h3>
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                    La exportación de catálogo interactivo en formato PDF vectorial está disponible para tiendas en plan <strong>Emprendedor (S/ 19.90/mes)</strong>, <strong>Catálogo Pro</strong> o <strong>Ilimitado</strong>.
+                    La exportación de catálogo interactivo en formato PDF vectorial está disponible para tiendas en plan <strong>{PLANS.emprendedor.name} (S/ {PLANS.emprendedor.price.toFixed(2)}/mes)</strong>, <strong>{PLANS.pro.name}</strong> o <strong>{PLANS.ilimitado.name}</strong>.
                   </p>
                 </div>
                 <div className="pt-2 flex flex-col sm:flex-row gap-2 justify-center">

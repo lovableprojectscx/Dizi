@@ -39,6 +39,7 @@ import {
   Share2,
 } from "lucide-react";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
+import { PLANS } from "@/lib/types";
 
 /**
  * Definición de la ruta raíz `/` en TanStack Router con metadatos SEO y OpenGraph.
@@ -49,8 +50,7 @@ export const Route = createFileRoute("/")({
       { title: "Dizi — Tu negocio, ordenado y presentable en un solo link | Catálogos Digitales Perú" },
       {
         name: "description",
-        content:
-          "Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ 19.90.",
+        content: `Dizi convierte cada consulta de redes sociales en un pedido ordenado directo a tu WhatsApp. Catálogo web, Link en Bio y Libro de Reclamaciones desde S/ ${PLANS.emprendedor.price.toFixed(2)}.`,
       },
       {
         name: "keywords",
@@ -91,7 +91,7 @@ function LandingPage() {
       desc: "Categorías táctiles, especialidades de cocina y pedidos directos a tu WhatsApp.",
       badge: "Popular",
       category: "gastronomia",
-      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80",
+      image: "/images/landing/showcase-gastronomia.webp",
       accent: "border-orange-500/30 text-orange-600 dark:text-orange-400 bg-orange-500/10",
     },
     {
@@ -101,7 +101,7 @@ function LandingPage() {
       desc: "Estética delicada con esquinas suaves para florerías, arreglos y detalles.",
       badge: "Romántico",
       category: "boutique",
-      image: "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80",
+      image: "/images/landing/showcase-floreria.webp",
       accent: "border-pink-500/30 text-pink-600 dark:text-pink-400 bg-pink-500/10",
     },
     {
@@ -111,7 +111,7 @@ function LandingPage() {
       desc: "Paleta verde salvia refrescante para cosmética artesanal y productos naturales.",
       badge: "Ecológico",
       category: "eco",
-      image: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80",
+      image: "/images/landing/showcase-belleza.webp",
       accent: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
     },
     {
@@ -121,7 +121,7 @@ function LandingPage() {
       desc: "Formato 3:4 vertical inspirado en catálogos de moda con fotos de alta calidad.",
       badge: "Tendencia",
       category: "boutique",
-      image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80",
+      image: "/images/landing/showcase-moda.webp",
       accent: "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10",
     },
     {
@@ -131,7 +131,7 @@ function LandingPage() {
       desc: "Lista horizontal minimalista Net-a-Porter para marcas exclusivas.",
       badge: "Lujo",
       category: "luxe",
-      image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80",
+      image: "/images/landing/showcase-cosmetica.webp",
       accent: "border-slate-500/30 text-slate-700 dark:text-slate-300 bg-slate-500/10",
     },
     {
@@ -141,7 +141,7 @@ function LandingPage() {
       desc: "Bloques asimétricos interactivos en cuadrícula para gadgets y tecnología.",
       badge: "Moderno",
       category: "tech",
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80",
+      image: "/images/landing/showcase-tecnologia.webp",
       accent: "border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10",
     },
   ];
@@ -408,7 +408,7 @@ function LandingPage() {
                   {/* Banner de Portada de Tienda */}
                   <div className="relative h-20 -mx-3 -mt-5 mb-2 overflow-hidden bg-muted">
                     <img
-                      src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=500&q=80"
+                      src="/images/landing/mockup-banner.webp"
                       alt="Grano & Miga Cover"
                       className="h-full w-full object-cover"
                     />
@@ -447,7 +447,7 @@ function LandingPage() {
                     <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
-                          src="https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=300&q=80"
+                          src="/images/landing/mockup-prod-1.webp"
                           alt="Café Latte"
                           className="h-full w-full object-cover"
                         />
@@ -461,7 +461,7 @@ function LandingPage() {
                     <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
-                          src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=300&q=80"
+                          src="/images/landing/mockup-prod-2.webp"
                           alt="Croissant"
                           className="h-full w-full object-cover"
                         />
@@ -475,7 +475,7 @@ function LandingPage() {
                     <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
-                          src="https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=300&q=80"
+                          src="/images/landing/mockup-prod-3.webp"
                           alt="Cheesecake"
                           className="h-full w-full object-cover"
                         />
@@ -489,7 +489,7 @@ function LandingPage() {
                     <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
                       <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
                         <img
-                          src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=300&q=80"
+                          src="/images/landing/mockup-prod-4.webp"
                           alt="Espresso"
                           className="h-full w-full object-cover"
                         />
@@ -597,7 +597,7 @@ function LandingPage() {
               Catálogo Web + Link en Bio + Libro de Reclamaciones
             </h2>
             <p className="text-sm text-muted-foreground">
-              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú desde S/ 19.90 / mes.
+              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú desde S/ {PLANS.emprendedor.price.toFixed(2)} / mes.
             </p>
           </div>
 
@@ -802,26 +802,20 @@ function LandingPage() {
                 </span>
                 <h3 className="text-xl font-bold text-foreground">Plan Semilla</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ 0</span>
+                  <span className="text-3xl font-black text-foreground">S/ {PLANS.semilla.price}</span>
                   <span className="text-xs text-muted-foreground">/mes</span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span className="font-bold">Hasta 20 Productos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Las 15 Estructuras de Diseño</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Carrito directo a WhatsApp</span>
-                  </li>
+                  {PLANS.semilla.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span className={i === 0 ? "font-bold" : ""}>{feat}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
-                <Link to="/register">Crear Cuenta Gratis</Link>
+                <Link to="/register" search={{ plan: "semilla" }}>Crear Cuenta Gratis</Link>
               </Button>
             </div>
 
@@ -834,29 +828,23 @@ function LandingPage() {
                 <h3 className="text-xl font-bold text-foreground">Emprendedor</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-foreground">
-                    {isAnnual ? "S/ 179" : "S/ 19.90"}
+                    {isAnnual ? `S/ ${PLANS.emprendedor.annualPrice}` : `S/ ${PLANS.emprendedor.price.toFixed(2)}`}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {isAnnual ? "/año (S/ 14.90/m)" : "/mes"}
+                    {isAnnual ? `/año (S/ ${(PLANS.emprendedor.annualPrice / 12).toFixed(2)}/m)` : "/mes"}
                   </span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span className="font-bold text-primary">Hasta 100 Productos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Exportación Catálogo PDF</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Sin Marca de Agua Dizi</span>
-                  </li>
+                  {PLANS.emprendedor.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span className={i === 0 ? "font-bold text-primary" : ""}>{feat}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
-                <Link to="/register">Elegir Emprendedor</Link>
+                <Link to="/register" search={{ plan: "emprendedor" }}>Elegir Emprendedor</Link>
               </Button>
             </div>
 
@@ -873,33 +861,23 @@ function LandingPage() {
                 <h3 className="text-xl font-bold text-foreground">Catálogo Pro</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-foreground">
-                    {isAnnual ? "S/ 359" : "S/ 39.90"}
+                    {isAnnual ? `S/ ${PLANS.pro.annualPrice}` : `S/ ${PLANS.pro.price.toFixed(2)}`}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {isAnnual ? "/año (S/ 29.90/m)" : "/mes"}
+                    {isAnnual ? `/año (S/ ${(PLANS.pro.annualPrice / 12).toFixed(2)}/m)` : "/mes"}
                   </span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1 font-medium">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span className="font-bold text-primary">Hasta 300 Productos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Carrusel 3 Banners</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Página Link en Bio</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Estadísticas de Clics</span>
-                  </li>
+                  {PLANS.pro.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span className={i === 0 ? "font-bold text-primary" : ""}>{feat}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <Button asChild className="w-full font-extrabold text-xs rounded-xl h-10 shadow-md active:scale-95">
-                <Link to="/register">Elegir Plan Pro</Link>
+                <Link to="/register" search={{ plan: "pro" }}>Elegir Plan Pro</Link>
               </Button>
             </div>
 
@@ -912,29 +890,23 @@ function LandingPage() {
                 <h3 className="text-xl font-bold text-foreground">Ilimitado</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-black text-foreground">
-                    {isAnnual ? "S/ 629" : "S/ 69.90"}
+                    {isAnnual ? `S/ ${PLANS.ilimitado.annualPrice}` : `S/ ${PLANS.ilimitado.price.toFixed(2)}`}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {isAnnual ? "/año (S/ 52.40/m)" : "/mes"}
+                    {isAnnual ? `/año (S/ ${(PLANS.ilimitado.annualPrice / 12).toFixed(2)}/m)` : "/mes"}
                   </span>
                 </div>
                 <ul className="space-y-2.5 text-xs text-foreground pt-1">
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span className="font-bold">Hasta 1,000 Productos</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Carrusel 5 Banners</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                    <span>Soporte Prioritario 24/7</span>
-                  </li>
+                  {PLANS.ilimitado.features.map((feat, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                      <span className={i === 0 ? "font-bold" : ""}>{feat}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
               <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
-                <Link to="/register">Elegir Ilimitado</Link>
+                <Link to="/register" search={{ plan: "ilimitado" }}>Elegir Ilimitado</Link>
               </Button>
             </div>
           </div>

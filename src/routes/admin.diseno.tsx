@@ -29,13 +29,16 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { type PlanId } from "@/lib/types";
+import { type PlanId, getEffectivePlan, getMaxAllowedBanners } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
-import { CatalogPdfExportButton } from "@/components/public/CatalogPdfExport";
+import { lazy, Suspense } from "react";
+const CatalogPdfExportButton = lazy(() =>
+  import("@/components/public/CatalogPdfExport").then((m) => ({ default: m.CatalogPdfExportButton }))
+);
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 
@@ -162,7 +165,8 @@ function DisenoUnificadoPage() {
 
   if (!store) return null;
 
-  const currentPlanLevel = PLAN_LEVELS[store.plan] ?? 0;
+  const effectivePlan = getEffectivePlan(store);
+  const currentPlanLevel = PLAN_LEVELS[effectivePlan] ?? 0;
 
   // Estado principal de navegación entre las 3 secciones
   const [activeSection, setActiveSection] = useState<"estructura" | "tema" | "modulos">("estructura");
@@ -278,7 +282,7 @@ function DisenoUnificadoPage() {
 
   // Multi-banner support (up to 5 banners based on plan)
   const bannerList = bannerImage ? bannerImage.split("|||").filter(Boolean) : [];
-  const maxAllowedBanners = store.plan === "semilla" ? 0 : store.plan === "emprendedor" ? 1 : store.plan === "pro" ? 3 : 5;
+  const maxAllowedBanners = getMaxAllowedBanners(store);
 
   const handleAddBanner = async (file: File, indexToReplace?: number) => {
     if (file.size > 50 * 1024 * 1024) {
@@ -292,7 +296,7 @@ function DisenoUnificadoPage() {
         currentList[indexToReplace] = webpDataUrl;
       } else {
         if (maxAllowedBanners > 0 && currentList.length >= maxAllowedBanners) {
-          toast.error(`Tu plan actual (${store.plan.toUpperCase()}) permite un máximo de ${maxAllowedBanners} banner(s).`);
+          toast.error(`Tu plan actual (${effectivePlan.toUpperCase()}) permite un máximo de ${maxAllowedBanners} banner(s).`);
           return;
         }
         currentList.push(webpDataUrl);
@@ -946,11 +950,11 @@ function DisenoUnificadoPage() {
                         <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
                           Banners en Portada
                           <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[9px] font-extrabold py-0.5">
-                            {store.plan === "semilla"
+                            {effectivePlan === "semilla"
                               ? "0 Banners (Plan Semilla)"
-                              : store.plan === "emprendedor"
+                              : effectivePlan === "emprendedor"
                                 ? "1 Banner Max"
-                                : store.plan === "pro"
+                                : effectivePlan === "pro"
                                   ? "Carrusel 3 Banners"
                                   : "Carrusel 5 Banners"}
                           </Badge>
@@ -1087,7 +1091,9 @@ function DisenoUnificadoPage() {
                   </div>
                   <div className="flex items-center gap-2 self-end sm:self-auto">
                     {currentPlanLevel >= 1 ? (
-                      <CatalogPdfExportButton store={store} variant="admin" />
+                      <Suspense fallback={null}>
+                        <CatalogPdfExportButton store={store} variant="admin" />
+                      </Suspense>
                     ) : (
                       <Link to="/admin/plan">
                         <Button size="sm" variant="outline" className="text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold gap-1">

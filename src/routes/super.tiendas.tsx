@@ -537,7 +537,17 @@ function TenantsPage() {
                     </TableCell>
 
                     <TableCell>
-                      <PlanBadge plan={s.plan} />
+                      <div className="flex flex-col gap-1 items-start">
+                        <PlanBadge plan={s.plan} />
+                        {s.requestedPlan && s.requestedPlan !== s.plan && (
+                          <span
+                            className="inline-flex items-center text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold border border-blue-200 dark:border-blue-800"
+                            title={`El comercio solicitó el plan ${s.requestedPlan} en el registro`}
+                          >
+                            Pide: {PLANS[s.requestedPlan as PlanId]?.name || s.requestedPlan}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
 
                     <TableCell>
@@ -664,8 +674,16 @@ function TenantsPage() {
                 <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider">
                   Plan
                 </span>
-                <div className="mt-1">
+                <div className="mt-1 flex flex-col gap-1 items-start">
                   <PlanBadge plan={s.plan} />
+                  {s.requestedPlan && s.requestedPlan !== s.plan && (
+                    <span
+                      className="inline-flex items-center text-[10px] bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 px-1.5 py-0.5 rounded font-bold border border-blue-200 dark:border-blue-800"
+                      title={`El comercio solicitó el plan ${s.requestedPlan} en el registro`}
+                    >
+                      Pide: {PLANS[s.requestedPlan as PlanId]?.name || s.requestedPlan}
+                    </span>
+                  )}
                 </div>
               </div>
               <div>

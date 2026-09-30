@@ -46,11 +46,9 @@ const Tiktok = ({ className }: { className?: string }) => (
   </svg>
 );
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures } from "@/lib/types";
+import { type QuickLink, getBioLinksLimit, canUsePremiumBioFeatures, getEffectivePlan } from "@/lib/types";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import { cn } from "@/lib/utils";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
@@ -835,9 +833,14 @@ function LinkBioPage() {
       }
       return;
     }
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       try {
         if (!mapElement) return;
+
+        // Dynamic import of Leaflet and its stylesheet to isolate vendor-leaflet from public bundle
+        const LModule = await import("leaflet");
+        const L = (LModule as any).default || LModule;
+        await import("leaflet/dist/leaflet.css");
 
         // Clear previous stale Leaflet DOM indicators if ref got out of sync
         if (mapElement.classList.contains("leaflet-container")) {
@@ -1180,7 +1183,7 @@ function LinkBioPage() {
                           <Label className="text-xs font-bold text-muted-foreground uppercase tracking-wider block opacity-70">
                             Enlaces de tu Bio-Link
                           </Label>
-                          {store && store.plan === "semilla" && (
+                          {store && getEffectivePlan(store) === "semilla" && (
                             <span className="text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-200/50 font-bold uppercase tracking-wider">
                               {customLinks.length}/{getBioLinksLimit(store)} Enlaces
                             </span>
@@ -1300,7 +1303,7 @@ function LinkBioPage() {
                             </div>
 
                             {store &&
-                            store.plan === "semilla" &&
+                            getEffectivePlan(store) === "semilla" &&
                             customLinks.length >= getBioLinksLimit(store) ? (
                               <div className="flex flex-col items-end gap-1.5 w-full sm:w-auto shrink-0">
                                 <Button
@@ -1321,7 +1324,7 @@ function LinkBioPage() {
                                 onClick={async () => {
                                   if (
                                     store &&
-                                    store.plan === "semilla" &&
+                                    getEffectivePlan(store) === "semilla" &&
                                     customLinks.length >= getBioLinksLimit(store)
                                   ) {
                                     toast.error(

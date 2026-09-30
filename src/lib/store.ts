@@ -165,6 +165,8 @@ const mapStoreFromDB = (row: any): Store => {
     promoBarTextColor: row.promo_bar_text_color ?? null,
     promoBarIsMarquee: row.promo_bar_is_marquee ?? false,
     onboardingCompleted: row.onboarding_completed ?? false,
+    termsAcceptedAt: row.terms_accepted_at ?? null,
+    requestedPlan: row.requested_plan ?? null,
     categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
     products: (row.products || [])
       .map((p: any) => ({
@@ -630,7 +632,12 @@ export const useApp = create<AppState>()(
           }
         }
 
-        set((s) => ({ stores: [...s.stores, store] }));
+        const finalStoredStore: Store = {
+          ...store,
+          plan: "semilla",
+          requestedPlan: store.requestedPlan || (store.plan !== "semilla" ? store.plan : null),
+        };
+        set((s) => ({ stores: [...s.stores, finalStoredStore] }));
       },
 
       addInvite: async ({
