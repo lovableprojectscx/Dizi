@@ -100,6 +100,16 @@ export default defineConfig(({ mode }) => {
     build: {
       target: "es2020",
       chunkSizeWarningLimit: 600,
+      modulePreload: {
+        resolveDependencies(filename, deps) {
+          return deps.filter(
+            (dep) =>
+              !dep.includes("vendor-pdf") &&
+              !dep.includes("vendor-charts") &&
+              !dep.includes("vendor-leaflet")
+          );
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks(id) {

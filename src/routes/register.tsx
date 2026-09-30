@@ -1025,8 +1025,6 @@ function RegisterPage() {
           return undefined;
         })();
 
-        const finalPlanToPass = (requestedPlan && requestedPlan !== "semilla" ? requestedPlan : plan) as PlanId;
-
         await addStore({
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
@@ -1034,7 +1032,7 @@ function RegisterPage() {
           phone: storePhone,
           countryCode: phoneCountryDial,
           countryIso: phoneCountryIso,
-          plan: finalPlanToPass,
+          plan: invitePlan ?? "semilla",
           requestedPlan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : undefined,
           termsAcceptedAt: new Date().toISOString(),
           active: true,

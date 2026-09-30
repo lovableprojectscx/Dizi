@@ -586,6 +586,7 @@ export const useApp = create<AppState>()(
         if (store.brandColor) initialUpdates.brand_color = store.brandColor;
         if (store.niche) initialUpdates.niche = store.niche;
         if (store.referredBy) initialUpdates.referred_by = store.referredBy;
+        if (store.requestedPlan) initialUpdates.requested_plan = store.requestedPlan;
 
         if (Object.keys(initialUpdates).length > 0) {
           const { error: updateError } = await supabase
@@ -634,8 +635,8 @@ export const useApp = create<AppState>()(
 
         const finalStoredStore: Store = {
           ...store,
-          plan: "semilla",
-          requestedPlan: store.requestedPlan || (store.plan !== "semilla" ? store.plan : null),
+          plan: store.plan || "semilla",
+          requestedPlan: store.requestedPlan || undefined,
         };
         set((s) => ({ stores: [...s.stores, finalStoredStore] }));
       },
