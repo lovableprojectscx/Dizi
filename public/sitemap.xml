@@ -5,7 +5,7 @@
   <!-- Landing Page -->
   <url>
     <loc>https://dizi.idenza.site/</loc>
-    <lastmod>2026-05-28</lastmod>
+    <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es-PE" href="https://dizi.idenza.site/"/>
@@ -14,7 +14,7 @@
   <!-- Novedades / Blog -->
   <url>
     <loc>https://dizi.idenza.site/novedades</loc>
-    <lastmod>2026-05-28</lastmod>
+    <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -22,25 +22,25 @@
   <!-- Registro -->
   <url>
     <loc>https://dizi.idenza.site/register</loc>
-    <lastmod>2026-05-28</lastmod>
+    <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Login -->
+  <!-- Términos de Servicio -->
   <url>
-    <loc>https://dizi.idenza.site/login</loc>
-    <lastmod>2026-05-28</lastmod>
+    <loc>https://dizi.idenza.site/terminos</loc>
+    <lastmod>2026-09-30</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
   </url>
 
   <!-- Política de Privacidad -->
   <url>
     <loc>https://dizi.idenza.site/privacidad</loc>
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
+    <lastmod>2026-09-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
   </url>
 
 </urlset>
