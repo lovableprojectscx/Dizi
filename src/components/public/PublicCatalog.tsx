@@ -123,6 +123,7 @@ import { getOptimizedImageUrl, getThumbnailUrl } from "@/lib/image-utils";
 import { ImageZoomModal } from "./ImageZoomModal";
 
 const EMPTY_CART: any[] = [];
+const NO_IMAGE_PLACEHOLDER = "/images/sin-foto.svg";
 
 function InfiniteScrollSentinel({
   hasMore,
@@ -3223,7 +3224,7 @@ export function PublicCatalog({
                                     <img
                                       src={getOptimizedImageUrl(
                                         getThumbnailUrl(p.image) ||
-                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                        NO_IMAGE_PLACEHOLDER,
                                         400
                                       )}
                                       alt={p.name}
@@ -3236,7 +3237,7 @@ export function PublicCatalog({
                                       onError={(e) => {
                                         const el = e.target as HTMLImageElement;
                                         el.onerror = null;
-                                        el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                        el.src = NO_IMAGE_PLACEHOLDER;
                                       }}
                                     />
                                     {p.isOnSale && (
@@ -3352,7 +3353,7 @@ export function PublicCatalog({
                     <img
                       src={getOptimizedImageUrl(
                         getThumbnailUrl(p.image) ||
-                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                        NO_IMAGE_PLACEHOLDER,
                         400
                       )}
                       alt={p.name}
@@ -3362,7 +3363,7 @@ export function PublicCatalog({
                       onError={(e) => {
                         const el = e.target as HTMLImageElement;
                         el.onerror = null;
-                        el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                        el.src = NO_IMAGE_PLACEHOLDER;
                       }}
                     />
                     {/* Gradient overlay suave */}
@@ -3664,7 +3665,7 @@ export function PublicCatalog({
                             <img
                               src={getOptimizedImageUrl(
                                 getThumbnailUrl(p.image) ||
-                                "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80",
+                                NO_IMAGE_PLACEHOLDER,
                                 400
                               )}
                               alt={p.name}
@@ -3674,7 +3675,7 @@ export function PublicCatalog({
                               onError={(e) => {
                                 const el = e.target as HTMLImageElement;
                                 el.onerror = null;
-                                el.src = p.image || "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80";
+                                el.src = NO_IMAGE_PLACEHOLDER;
                               }}
                             />
                             {p.isOnSale && (
@@ -3886,7 +3887,7 @@ export function PublicCatalog({
                       <img
                         src={getOptimizedImageUrl(
                           getThumbnailUrl(p.image) ||
-                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                          NO_IMAGE_PLACEHOLDER,
                           200
                         )}
                         alt={p.name}
@@ -3896,7 +3897,7 @@ export function PublicCatalog({
                         onError={(e) => {
                           const el = e.target as HTMLImageElement;
                           el.onerror = null;
-                          el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                          el.src = NO_IMAGE_PLACEHOLDER;
                         }}
                       />
                       {p.isOnSale && (
@@ -3998,14 +3999,14 @@ export function PublicCatalog({
                     <img
                       src={getOptimizedImageUrl(
                         filtered[0].image ||
-                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                        NO_IMAGE_PLACEHOLDER,
                         800
                       )}
                       alt={filtered[0].name}
                       className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                          NO_IMAGE_PLACEHOLDER;
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
@@ -4076,7 +4077,7 @@ export function PublicCatalog({
                         <img
                           src={getOptimizedImageUrl(
                             getThumbnailUrl(p.image) ||
-                            "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                            NO_IMAGE_PLACEHOLDER,
                             400
                           )}
                           alt={p.name}
@@ -4087,7 +4088,7 @@ export function PublicCatalog({
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
                             el.onerror = null;
-                            el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                            el.src = NO_IMAGE_PLACEHOLDER;
                           }}
                         />
                         {p.isOnSale && (
@@ -4145,14 +4146,14 @@ export function PublicCatalog({
                         <img
                           src={getOptimizedImageUrl(
                             p.image ||
-                              "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85",
+                              NO_IMAGE_PLACEHOLDER,
                             1200
                           )}
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           onError={(e) => {
                             (e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=85";
+                              NO_IMAGE_PLACEHOLDER;
                           }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
@@ -4219,7 +4220,7 @@ export function PublicCatalog({
                           <img
                             src={getOptimizedImageUrl(
                               getThumbnailUrl(p.image) ||
-                                "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80",
+                                NO_IMAGE_PLACEHOLDER,
                               400,
                             )}
                             alt={p.name}
@@ -4227,9 +4228,7 @@ export function PublicCatalog({
                             loading="lazy"
                             decoding="async"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                p.image ||
-                                "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80";
+                              (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
                             }}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
@@ -4290,7 +4289,7 @@ export function PublicCatalog({
                 {filtered.map((p, i) => {
                   const isWide = i % 3 === 0;
                   const fallback =
-                    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80";
+                    NO_IMAGE_PLACEHOLDER;
                   return (
                     <React.Fragment key={p.id}>
                       <article
@@ -4315,7 +4314,7 @@ export function PublicCatalog({
                         onError={(e) => {
                           const el = e.target as HTMLImageElement;
                           el.onerror = null;
-                          el.src = p.image || fallback;
+                          el.src = fallback;
                         }}
                       />
                       {/* Gradient overlay suave */}
@@ -4423,7 +4422,7 @@ export function PublicCatalog({
               <div className="space-y-3">
                 {(() => {
                   const fallback =
-                    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80";
+                    NO_IMAGE_PLACEHOLDER;
                   const groups: (typeof filtered)[] = [];
                   for (let i = 0; i < filtered.length; i += 3)
                     groups.push(filtered.slice(i, i + 3));
@@ -4539,7 +4538,7 @@ export function PublicCatalog({
                               onError={(e) => {
                                 const el = e.target as HTMLImageElement;
                                 el.onerror = null;
-                                el.src = p.image || fallback;
+                                el.src = fallback;
                               }}
                             />
                             <div
@@ -4594,7 +4593,7 @@ export function PublicCatalog({
               >
                 {filtered.map((p, i) => {
                   const fallback =
-                    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80";
+                    NO_IMAGE_PLACEHOLDER;
                   const slantRight = "polygon(0 0, 100% 0, 100% 88%, 0 100%)";
                   const slantLeft = "polygon(0 0, 100% 0, 100% 100%, 0 88%)";
                   return (
@@ -4621,7 +4620,7 @@ export function PublicCatalog({
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
                             el.onerror = null;
-                            el.src = p.image || fallback;
+                            el.src = fallback;
                           }}
                         />
                         {p.isOnSale && (
@@ -4717,7 +4716,7 @@ export function PublicCatalog({
               >
                 {filtered.map((p, idx) => {
                   const fallback =
-                    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                    NO_IMAGE_PLACEHOLDER;
                   return (
                     <React.Fragment key={p.id}>
                       <article
@@ -4744,7 +4743,7 @@ export function PublicCatalog({
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
                             el.onerror = null;
-                            el.src = p.image || fallback;
+                            el.src = fallback;
                           }}
                         />
                         {/* Subtle vignette */}
@@ -5051,7 +5050,7 @@ export function PublicCatalog({
                                   <img
                                     src={getOptimizedImageUrl(
                                       getThumbnailUrl(p.image) ||
-                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                        NO_IMAGE_PLACEHOLDER,
                                       500,
                                     )}
                                     alt={p.name}
@@ -5061,7 +5060,7 @@ export function PublicCatalog({
                                     onError={(e) => {
                                       const el = e.target as HTMLImageElement;
                                       el.onerror = null;
-                                      el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                      el.src = NO_IMAGE_PLACEHOLDER;
                                     }}
                                   />
                                   <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
@@ -5294,7 +5293,7 @@ export function PublicCatalog({
                                     <img
                                       src={getOptimizedImageUrl(
                                         getThumbnailUrl(p.image) ||
-                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                          NO_IMAGE_PLACEHOLDER,
                                         400,
                                       )}
                                       alt={p.name}
@@ -5304,7 +5303,7 @@ export function PublicCatalog({
                                       onError={(e) => {
                                         const el = e.target as HTMLImageElement;
                                         el.onerror = null;
-                                        el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                        el.src = NO_IMAGE_PLACEHOLDER;
                                       }}
                                     />
                                     {p.isOnSale && (
@@ -5739,7 +5738,7 @@ export function PublicCatalog({
                                       <img
                                         src={getOptimizedImageUrl(
                                           getThumbnailUrl(p.image) ||
-                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                          NO_IMAGE_PLACEHOLDER,
                                           400
                                         )}
                                         alt={p.name}
@@ -5749,7 +5748,7 @@ export function PublicCatalog({
                                         onError={(e) => {
                                           const el = e.target as HTMLImageElement;
                                           el.onerror = null;
-                                          el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                          el.src = NO_IMAGE_PLACEHOLDER;
                                         }}
                                       />
                                       <div
@@ -6023,7 +6022,7 @@ export function PublicCatalog({
                                         <img
                                           src={getOptimizedImageUrl(
                                             getThumbnailUrl(p.image) ||
-                                            "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                            NO_IMAGE_PLACEHOLDER,
                                             400
                                           )}
                                           alt={p.name}
@@ -6033,7 +6032,7 @@ export function PublicCatalog({
                                           onError={(e) => {
                                             const el = e.target as HTMLImageElement;
                                             el.onerror = null;
-                                            el.src = p.image || "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                            el.src = NO_IMAGE_PLACEHOLDER;
                                           }}
                                         />
                                         {p.isOnSale && (
@@ -6473,7 +6472,7 @@ export function PublicCatalog({
                                   <img
                                     src={getOptimizedImageUrl(
                                       getThumbnailUrl(p.image) ||
-                                      "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                      NO_IMAGE_PLACEHOLDER,
                                       400
                                     )}
                                     alt={p.name}
@@ -6481,9 +6480,7 @@ export function PublicCatalog({
                                     loading="lazy"
                                     decoding="async"
                                     onError={(e) => {
-                                      (e.target as HTMLImageElement).src =
-                                        p.image ||
-                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                      (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
                                     }}
                                   />
                                   {/* Floating Badge inside image container */}
@@ -6894,7 +6891,7 @@ export function PublicCatalog({
                                     <img
                                       src={getOptimizedImageUrl(
                                         getThumbnailUrl(p.image) ||
-                                        "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80",
+                                        NO_IMAGE_PLACEHOLDER,
                                         400
                                       )}
                                       alt={p.name}
@@ -6902,9 +6899,7 @@ export function PublicCatalog({
                                       loading="lazy"
                                       decoding="async"
                                       onError={(e) => {
-                                        (e.target as HTMLImageElement).src =
-                                          p.image ||
-                                          "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=600&q=80";
+                                        (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
                                       }}
                                     />
                                     {p.isOnSale && (
@@ -7134,7 +7129,7 @@ export function PublicCatalog({
                         <img
                           src={getOptimizedImageUrl(
                             getThumbnailUrl(p.image) ||
-                            "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                            NO_IMAGE_PLACEHOLDER,
                             400
                           )}
                           alt={p.name}
@@ -7145,7 +7140,7 @@ export function PublicCatalog({
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
                             el.onerror = null;
-                            el.src = p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                            el.src = NO_IMAGE_PLACEHOLDER;
                           }}
                         />
                         {p.isOnSale && (
@@ -7230,7 +7225,7 @@ export function PublicCatalog({
                           <img
                             src={getOptimizedImageUrl(
                               getThumbnailUrl(p.image) ||
-                              "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80",
+                              NO_IMAGE_PLACEHOLDER,
                               400
                             )}
                             alt={p.name}
@@ -7241,7 +7236,7 @@ export function PublicCatalog({
                             onError={(e) => {
                               const el = e.target as HTMLImageElement;
                               el.onerror = null;
-                              el.src = p.image || "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=600&q=80";
+                              el.src = NO_IMAGE_PLACEHOLDER;
                             }}
                           />
                           {p.isOnSale && (
@@ -7628,7 +7623,7 @@ export function PublicCatalog({
                     style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src =
-                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=200&q=70";
+                        NO_IMAGE_PLACEHOLDER;
                     }}
                   />
                   <div className="flex-1 min-w-0">
@@ -7989,7 +7984,7 @@ export function PublicCatalog({
                 <img
                   src={getOptimizedImageUrl(
                     getThumbnailUrl(displayedImage) ||
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=400&q=70",
+                    NO_IMAGE_PLACEHOLDER,
                     400
                   )}
                   alt=""
@@ -7997,14 +7992,14 @@ export function PublicCatalog({
                   aria-hidden="true"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85";
+                      NO_IMAGE_PLACEHOLDER;
                   }}
                 />
 
                 <img
                   src={getOptimizedImageUrl(
                     displayedImage ||
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85",
+                    NO_IMAGE_PLACEHOLDER,
                     800
                   )}
                   alt={viewingProduct.name}
@@ -8016,7 +8011,7 @@ export function PublicCatalog({
                   decoding="async"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src =
-                      "https://images.unsplash.com/photo-1560343090-f0409e92791a?auto=format&fit=crop&w=800&q=85";
+                      NO_IMAGE_PLACEHOLDER;
                   }}
                 />
 
