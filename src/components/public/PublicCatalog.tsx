@@ -1858,6 +1858,10 @@ export function PublicCatalog({
   const hasPriceFilter = store.priceFilterEnabled && priceMin < priceMax;
 
   /* ── Derived data ────────────────────────────────── */
+  const hasNoProductsAtAll = useMemo(() => {
+    return productsWithImages.filter((p) => p.visible && !p.isSample).length === 0;
+  }, [productsWithImages]);
+
   const rawFiltered = useMemo(() => {
     const products = productsWithImages;
 
@@ -3132,7 +3136,25 @@ export function PublicCatalog({
                 )}
               </div>
             )}
-            {filtered.length === 0 && cfg.layout !== "bite" && cfg.layout !== "bloom" ? (
+            {hasNoProductsAtAll ? (
+              <div className="py-20 px-4 text-center flex flex-col items-center justify-center gap-3">
+                <p className="text-muted-foreground text-sm font-medium">
+                  Esta tienda está preparando su catálogo
+                </p>
+                {store.phone && (
+                  <a
+                    href={buildWaUrl(store.phone, `Hola, me gustaría consultar sobre los productos de ${store.name}.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => incClicks(store.id)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-white text-xs font-bold transition-all shadow"
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
+                    Contactar por WhatsApp
+                  </a>
+                )}
+              </div>
+            ) : filtered.length === 0 && cfg.layout !== "bite" && cfg.layout !== "bloom" ? (
               <div className="py-20 text-center text-muted-foreground text-sm">
                 No encontramos productos.
               </div>
@@ -8339,20 +8361,6 @@ export function PublicCatalog({
         </SheetContent>
       </Sheet>
 
-      {/* Floating Badge for Plan Semilla stores */}
-      {effectivePlan === "semilla" && !isMockup && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-          <a
-            href={`https://dizi.idenza.site/register?ref=${store.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur border border-zinc-200 dark:border-zinc-800 shadow-md text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
-          >
-            <span>Crea tu catálogo gratis con</span>
-            <span className="text-primary font-black tracking-tight font-sans">Dizi</span>
-          </a>
-        </div>
-      )}
 
       {/* ── In-App Browser Help Modal (TikTok/Instagram) ── */}
       {showInAppHelpModal && (
