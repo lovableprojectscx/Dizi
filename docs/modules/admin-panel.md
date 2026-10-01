@@ -58,8 +58,8 @@ Es uno de los módulos más completos de la plataforma, encargado de:
 4. **Reordenamiento Táctil y Arrastre (`swapProductsOrder`)**:
    - Permite arrastrar productos para alterar su posición en el catálogo.
    - Aplica actualización optimista inmediata en la UI y sincroniza con Supabase mediante un temporizador *debounce* de 1 segundo.
-5. **Limpieza de Productos de Demostración (`isSample`)**:
-   - Cuando el usuario crea su primer producto real, el sistema elimina automáticamente los productos de ejemplo precargados para evitar confusión.
+5. **Catálogo Limpio y Compatibilidad (`isSample`)**:
+   - Desde la Fase 3A, las tiendas nuevas nacen completamente limpias sin productos de ejemplo (0 productos). Se mantiene el seguro de compatibilidad retroactiva para tiendas existentes.
 
 ---
 

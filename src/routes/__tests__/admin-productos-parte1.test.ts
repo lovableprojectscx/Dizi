@@ -195,4 +195,29 @@ describe("Parte 1: Catálogo de Productos y Carga Masiva", () => {
       expect(getOptimizedImageUrl(urlWithQuery)).toBe("https://xyz.supabase.co/storage/v1/object/public/images/logo.webp");
     });
   });
+
+  describe("7. Estado Vacío del Catálogo (Fase 3A)", () => {
+    it("identifica tienda con 0 productos para mostrar estado vacío claro", () => {
+      const storeProducts: Product[] = [];
+      const hasNoProducts = storeProducts.length === 0;
+      expect(hasNoProducts).toBe(true);
+
+      const hasReachedLimit = storeProducts.length >= PLANS.semilla.maxProducts;
+      expect(hasReachedLimit).toBe(false);
+    });
+
+    it("diferencia catálogo vacío de búsqueda sin resultados", () => {
+      const allProducts: Product[] = [
+        { id: "1", name: "Polo Azul", price: 50, visible: true },
+      ];
+      const query = "Zapatos";
+      const filtered = allProducts.filter((p) => p.name.toLowerCase().includes(query.toLowerCase()));
+
+      const hasNoProductsAtAll = allProducts.length === 0;
+      const hasSearchNoResults = !hasNoProductsAtAll && filtered.length === 0;
+
+      expect(hasNoProductsAtAll).toBe(false);
+      expect(hasSearchNoResults).toBe(true);
+    });
+  });
 });

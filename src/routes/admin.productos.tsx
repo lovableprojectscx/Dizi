@@ -2203,105 +2203,180 @@ function ProductsPage() {
             </div>
           </div>
 
-          {/* ── BARRA DE BÚSQUEDA Y FILTRO DE PRODUCTOS ── */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/60 p-3 rounded-2xl shadow-xs">
-            {/* Input de Búsqueda por Nombre o Descripción */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar producto por nombre..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-9 h-10 text-xs rounded-xl border-border/60 bg-background focus-visible:ring-primary font-medium"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors p-1"
-                  title="Limpiar búsqueda"
+          {store.products.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border/80 bg-card/40 p-8 sm:p-12 text-center flex flex-col items-center justify-center gap-4 my-2">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <Package className="h-6 w-6" />
+              </div>
+              <div className="max-w-sm space-y-1">
+                <h3 className="font-bold text-base text-foreground">Aún no tienes productos</h3>
+                <p className="text-xs text-muted-foreground">
+                  Comienza agregando tu primer producto individual o sube varias fotos a la vez.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={handleBulkButtonClick}
+                  className="gap-1.5 font-bold text-xs h-9 sm:h-10 px-4 border-dashed border-primary/50 text-primary hover:bg-primary/5 hover:border-primary rounded-xl cursor-pointer"
                 >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
+                  <Images className="h-4 w-4 text-primary shrink-0" />
+                  Carga Rápida por Fotos
+                </Button>
+                <Button
+                  onClick={openNew}
+                  disabled={reachedLimit}
+                  className="font-bold text-xs h-9 sm:h-10 px-4 gap-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-xs cursor-pointer"
+                >
+                  {reachedLimit ? (
+                    <Lock className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Plus className="h-4 w-4 shrink-0" />
+                  )}
+                  Nuevo Producto
+                </Button>
+              </div>
             </div>
-
-            {/* Selector de Filtro por Categoría */}
-            <div className="w-full sm:w-60 shrink-0">
-              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="h-10 text-xs rounded-xl border-border/60 bg-background font-medium">
-                  <SelectValue placeholder="Todas las categorías" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas las categorías ({store.products.length})</SelectItem>
-                  {store.categories.map((cat) => {
-                    const { label } = parseCategoryName(cat.name);
-                    const count = store.products.filter((p) => p.categoryId === cat.id).length;
-                    return (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {label} ({count})
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Banner: productos ocultos por vencimiento */}
-          {hiddenByExpiry > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
-              <div className="text-amber-500 mt-0.5 shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+          ) : (
+            <>
+              {/* ── BARRA DE BÚSQUEDA Y FILTRO DE PRODUCTOS ── */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-card border border-border/60 p-3 rounded-2xl shadow-xs">
+                {/* Input de Búsqueda por Nombre o Descripción */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar producto por nombre..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-9 h-10 text-xs rounded-xl border-border/60 bg-background focus-visible:ring-primary font-medium"
                   />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-amber-800 text-sm">
-                  {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto
-                  {hiddenByExpiry > 1 ? "s" : ""} en tu catálogo público
-                </p>
-                <p className="text-sm text-amber-700 mt-0.5">
-                  Tu suscripción venció. El plan Semilla permite hasta {effectiveLimit} productos
-                  visibles. Tus productos están guardados — renueva para mostrarlos todos de nuevo.
-                </p>
-                <a
-                  href={buildWaUrl(DIZI_SUPPORT_PHONE, `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
-                >
-                  Renovar plan por WhatsApp
-                </a>
-              </div>
-            </div>
-          )}
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground transition-colors p-1"
+                      title="Limpiar búsqueda"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
 
-          {/* Tabla desktop */}
-          <div className="hidden md:block border rounded-xl bg-card overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Foto</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Precio</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Visible</TableHead>
-                  <TableHead className="w-24">Orden</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+                {/* Selector de Filtro por Categoría */}
+                <div className="w-full sm:w-60 shrink-0">
+                  <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                    <SelectTrigger className="h-10 text-xs rounded-xl border-border/60 bg-background font-medium">
+                      <SelectValue placeholder="Todas las categorías" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas las categorías ({store.products.length})</SelectItem>
+                      {store.categories.map((cat) => {
+                        const { label } = parseCategoryName(cat.name);
+                        const count = store.products.filter((p) => p.categoryId === cat.id).length;
+                        return (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {label} ({count})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Banner: productos ocultos por vencimiento */}
+              {hiddenByExpiry > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+                  <div className="text-amber-500 mt-0.5 shrink-0">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-amber-800 text-sm">
+                      {hiddenByExpiry} producto{hiddenByExpiry > 1 ? "s" : ""} oculto
+                      {hiddenByExpiry > 1 ? "s" : ""} en tu catálogo público
+                    </p>
+                    <p className="text-sm text-amber-700 mt-0.5">
+                      Tu suscripción venció. El plan Semilla permite hasta {effectiveLimit} productos
+                      visibles. Tus productos están guardados — renueva para mostrarlos todos de nuevo.
+                    </p>
+                    <a
+                      href={buildWaUrl(DIZI_SUPPORT_PHONE, `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-semibold text-white hover:bg-amber-700 transition-colors"
+                    >
+                      Renovar plan por WhatsApp
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabla desktop */}
+              <div className="hidden md:block border rounded-xl bg-card overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-16">Foto</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Precio</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead>Visible</TableHead>
+                      <TableHead className="w-24">Orden</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((p, idx) => {
+                      const catInfo = categoryMap.get(p.categoryId) || { label: "Sin categoría", iconKey: "" };
+                      return (
+                        <ProductTableRow
+                          key={p.id}
+                          p={p}
+                          idx={idx}
+                          totalCount={store.products.length}
+                          storeModel={store.model}
+                          categoryLabel={catInfo.label}
+                          categoryIconKey={catInfo.iconKey}
+                          onEdit={handleOpenEdit}
+                          onDelete={handleConfirmDelete}
+                          onToggle={handleToggleVisible}
+                          onSwap={handleSwapOrder}
+                        />
+                      );
+                    })}
+                    {filteredProducts.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="text-center text-sm text-muted-foreground py-10"
+                        >
+                          No se encontraron productos que coincidan con la búsqueda.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Cards móvil */}
+              <div className="flex flex-col gap-3 md:hidden">
+                {filteredProducts.length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-10">
+                    No se encontraron productos que coincidan con la búsqueda.
+                  </p>
+                )}
                 {filteredProducts.map((p, idx) => {
                   const catInfo = categoryMap.get(p.categoryId) || { label: "Sin categoría", iconKey: "" };
                   return (
-                    <ProductTableRow
+                    <ProductMobileCard
                       key={p.id}
                       p={p}
                       idx={idx}
@@ -2316,50 +2391,9 @@ function ProductsPage() {
                     />
                   );
                 })}
-                {filteredProducts.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="text-center text-sm text-muted-foreground py-10"
-                    >
-                      {store.products.length === 0
-                        ? "Aún no tienes productos. Crea el primero."
-                        : "No se encontraron productos que coincidan con la búsqueda."}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Cards móvil */}
-          <div className="flex flex-col gap-3 md:hidden">
-            {filteredProducts.length === 0 && (
-              <p className="text-center text-sm text-muted-foreground py-10">
-                {store.products.length === 0
-                  ? "Aún no tienes productos. Crea el primero."
-                  : "No se encontraron productos que coincidan con la búsqueda."}
-              </p>
-            )}
-            {filteredProducts.map((p, idx) => {
-              const catInfo = categoryMap.get(p.categoryId) || { label: "Sin categoría", iconKey: "" };
-              return (
-                <ProductMobileCard
-                  key={p.id}
-                  p={p}
-                  idx={idx}
-                  totalCount={store.products.length}
-                  storeModel={store.model}
-                  categoryLabel={catInfo.label}
-                  categoryIconKey={catInfo.iconKey}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleConfirmDelete}
-                  onToggle={handleToggleVisible}
-                  onSwap={handleSwapOrder}
-                />
-              );
-            })}
-          </div>
+              </div>
+            </>
+          )}
         </TabsContent>
 
         {/* ── CATEGORIES TAB CONTENT ── */}

@@ -274,8 +274,7 @@ function AyudaPage() {
             <h3>El límite de tu plan</h3>
             <p>
               Cada plan permite una cantidad de productos. Al llegar al tope, el botón{" "}
-              <strong>Nuevo Producto</strong> se bloquea con un candado. Los productos de ejemplo no
-              cuentan.
+              <strong>Nuevo Producto</strong> se bloquea con un candado.
             </p>
           </Chapter>
 
@@ -582,10 +581,10 @@ function AyudaPage() {
               3 y recorta la imagen a esa medida antes de subirla.
             </p>
 
-            <h3>"No aparecen mis productos, veo otros"</h3>
+            <h3>"¿Por qué mi catálogo nuevo no tiene productos?"</h3>
             <p>
-              Son los productos de ejemplo con los que nace toda cuenta nueva. Desaparecen solos al
-              cargar tu primer producto real.
+              Tu catálogo nace limpio y listo para que agregues directamente tus propios productos
+              reales mediante "Nuevo Producto" o "Carga Rápida por Fotos".
             </p>
           </Chapter>
         </div>
