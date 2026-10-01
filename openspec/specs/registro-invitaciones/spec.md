@@ -10,7 +10,7 @@ Permitir que cualquier negocio cree su tienda gratis, y que el superadmin regale
 ### Requisito: Registro abierto (F10)
 Cualquier persona DEBE poder registrarse en `/register` sin invitación, en 3 pasos (negocio, diseño, cuenta), eligiendo país
 (21 países), un slug libre (`check_slug_available`) y cualquier diseño. La tienda se crea con la RPC `initialize_store`
-en plan Semilla con 3 productos de ejemplo.
+en plan Semilla con catálogo limpio sin productos de ejemplo (Fase 3A).
 
 #### Escenario: Registro sin invitación
 - **Dado** un visitante en `/register`
