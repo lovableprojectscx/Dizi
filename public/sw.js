@@ -11,10 +11,11 @@ const IMAGE_DOMAINS = [
 ];
 
 const PRECACHE_ASSETS = [
-  "/images/Icono.png",
-  "/images/Logo.png",
+  "/images/favicon-32.png",
+  "/images/apple-touch-icon.png",
+  "/images/icono-96.webp",
+  "/images/logo-dizi.webp",
   "/images/dizi_ad_brand_3d.webp",
-  "/images/og-image.png",
 ];
 
 // Instalar Service Worker y precachear assets estáticos esenciales

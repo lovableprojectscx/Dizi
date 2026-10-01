@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "sonner";
+import { loadFontOnDemand } from "@/lib/fonts";
 import {
   Globe,
   MapPin,
@@ -818,6 +819,10 @@ function LinkBioPage() {
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
+
+  useEffect(() => {
+    loadFontOnDemand(bioTypography);
+  }, [bioTypography]);
 
   /* Leaflet map */
   useEffect(() => {

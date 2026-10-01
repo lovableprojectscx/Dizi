@@ -208,8 +208,10 @@ function LoginPage() {
         <div className="w-full max-w-md bg-background rounded-3xl border shadow-xl p-8 relative overflow-hidden">
           <div className="text-center mb-8 relative">
             <img
-              src="/images/Icono.png"
+              src="/images/icono-96.webp"
               alt="Dizi Icon"
+              width="64"
+              height="64"
               className="mx-auto h-16 w-16 object-contain mb-4"
             />
             <h1 className="text-2xl font-bold tracking-tight">Bienvenido de nuevo</h1>

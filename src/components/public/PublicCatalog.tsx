@@ -12,6 +12,7 @@
 
 import { resolveRenderModel } from "@/lib/design-catalog";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
+import { loadFontOnDemand } from "@/lib/fonts";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -1111,8 +1112,12 @@ function DiziNativeAdCard({
       >
         <div className="h-16 w-16 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-sm animate-pulse bg-white p-2">
           <img
-            src="/images/Icono.png"
+            src="/images/icono-96.webp"
             alt="Dizi"
+            width="64"
+            height="64"
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-contain"
           />
         </div>
@@ -1150,8 +1155,12 @@ function DiziNativeAdCard({
       >
         <div className="h-10 w-10 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0 shadow-xs bg-white p-1.5">
           <img
-            src="/images/Icono.png"
+            src="/images/icono-96.webp"
             alt="Dizi"
+            width="40"
+            height="40"
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-contain"
           />
         </div>
@@ -1424,6 +1433,37 @@ export function PublicCatalog({
     mapTypographyClass(store.catalogTypography) ?? defaultTypographyClass;
 
   const isSerif = finalTypographyClass === "typography-serif";
+
+  // Carga bajo demanda de tipografías especiales (Paso 2 - FASE 3B)
+  useEffect(() => {
+    if (mode === "bio") {
+      loadFontOnDemand(store.bioTypography);
+    } else {
+      if (finalTypographyClass === "typography-serif" || cfg.layout === "editorial") {
+        loadFontOnDemand("serif");
+      }
+      if (finalTypographyClass === "typography-rounded") {
+        loadFontOnDemand("rounded");
+      } else if (finalTypographyClass === "typography-modern") {
+        loadFontOnDemand("modern");
+      }
+    }
+  }, [mode, store.bioTypography, finalTypographyClass, cfg.layout]);
+
+  if (typeof document !== "undefined") {
+    if (mode === "bio") {
+      loadFontOnDemand(store.bioTypography);
+    } else {
+      if (finalTypographyClass === "typography-serif" || cfg.layout === "editorial") {
+        loadFontOnDemand("serif");
+      }
+      if (finalTypographyClass === "typography-rounded") {
+        loadFontOnDemand("rounded");
+      } else if (finalTypographyClass === "typography-modern") {
+        loadFontOnDemand("modern");
+      }
+    }
+  }
 
   const defaultCardStyle = isPremiumModel && store.niche === "floreria" ? "curved" : "standard";
   const cStyle = store.cardStyle || defaultCardStyle;

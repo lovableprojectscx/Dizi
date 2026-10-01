@@ -56,7 +56,7 @@ function TerminosPage() {
               <ArrowLeft className="w-4 h-4" /> Volver al inicio
             </Link>
           </Button>
-          <img src="/images/Icono.png" alt="Dizi" className="h-8 w-8 object-contain" />
+          <img src="/images/icono-96.webp" alt="Dizi" width="32" height="32" className="h-8 w-8 object-contain" />
         </div>
       </div>
 

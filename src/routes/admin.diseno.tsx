@@ -3,6 +3,7 @@ import { useApp } from "@/lib/store";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { convertImageToWebP } from "@/lib/image-utils";
+import { loadFontOnDemand } from "@/lib/fonts";
 import {
   Lock,
   Check,
@@ -248,6 +249,10 @@ function DisenoUnificadoPage() {
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
+
+  useEffect(() => {
+    loadFontOnDemand(typography);
+  }, [typography]);
 
   // Aplicar un Preset de Tema
   const handleApplyPreset = (preset: ThemePreset) => {

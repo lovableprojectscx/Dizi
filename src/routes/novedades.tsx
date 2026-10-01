@@ -419,7 +419,7 @@ function NovedadesPage() {
             Volver al inicio
           </Link>
           <div className="flex items-center">
-            <img src="/images/Logo.png" alt="Dizi" className="h-10 w-auto object-contain" />
+            <img src="/images/logo-dizi.webp" alt="Dizi" width="93" height="40" className="h-10 w-auto object-contain" />
           </div>
           <Link to="/login" className="text-sm font-medium text-primary hover:underline">
             Iniciar Sesión
@@ -547,7 +547,7 @@ function NovedadesPage() {
       {/* Footer */}
       <footer className="border-t py-8 mt-8 text-center text-sm text-muted-foreground">
         <div className="flex items-center justify-center mb-2">
-          <img src="/images/Logo.png" alt="Dizi" className="h-8 w-auto object-contain" />
+          <img src="/images/logo-dizi.webp" alt="Dizi" width="74" height="32" loading="lazy" decoding="async" className="h-8 w-auto object-contain" />
         </div>
         © {new Date().getFullYear()} Dizi Development · Digitalizando el Perú
       </footer>

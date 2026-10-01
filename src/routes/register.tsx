@@ -1154,8 +1154,10 @@ function RegisterPage() {
           <span className="text-sm font-semibold">Inicio</span>
         </Link>
         <img
-          src="/images/Icono.png"
+          src="/images/icono-96.webp"
           alt="Dizi"
+          width="32"
+          height="32"
           className="h-8 w-8 object-contain transition-transform hover:rotate-12 duration-300"
         />
       </div>

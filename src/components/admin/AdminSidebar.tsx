@@ -64,8 +64,8 @@ export function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-border/60 pb-3">
         <Link to="/admin/dashboard" className="flex items-center gap-2 px-3 py-2 hover:opacity-90 transition-opacity">
-          <img src="/images/dizi-logo-principal-color.png" alt="Dizi" className="h-8 w-auto object-contain group-data-[collapsible=icon]:hidden" />
-          <img src="/images/dizi-isotipo-color.png" alt="Dizi" className="h-8 w-8 object-contain hidden group-data-[collapsible=icon]:block" />
+          <img src="/images/logo-dizi.webp" alt="Dizi" width="74" height="32" className="h-8 w-auto object-contain group-data-[collapsible=icon]:hidden" />
+          <img src="/images/icono-96.webp" alt="Dizi" width="32" height="32" className="h-8 w-8 object-contain hidden group-data-[collapsible=icon]:block" />
         </Link>
       </SidebarHeader>
 

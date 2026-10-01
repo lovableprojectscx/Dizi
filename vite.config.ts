@@ -113,7 +113,19 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes("node_modules/jspdf") || id.includes("node_modules/html2canvas")) {
+            if (
+              id.includes("preload-helper") ||
+              id.includes("node_modules/clsx") ||
+              id.includes("node_modules/tailwind-merge")
+            ) {
+              return "vendor-core";
+            }
+            if (
+              id.includes("node_modules/jspdf") ||
+              id.includes("node_modules/html2canvas") ||
+              id.includes("node_modules/canvg") ||
+              id.includes("node_modules/dompurify")
+            ) {
               return "vendor-pdf";
             }
             if (id.includes("node_modules/recharts")) {

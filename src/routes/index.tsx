@@ -181,8 +181,10 @@ function LandingPage() {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
             <img
-              src="/images/dizi-logo-principal-color.png"
+              src="/images/logo-dizi.webp"
               alt="Dizi Catálogos Digitales"
+              width="102"
+              height="44"
               className="h-8 sm:h-11 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </Link>
@@ -410,6 +412,10 @@ function LandingPage() {
                     <img
                       src="/images/landing/mockup-banner.webp"
                       alt="Grano & Miga Cover"
+                      width="320"
+                      height="80"
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
@@ -449,6 +455,10 @@ function LandingPage() {
                         <img
                           src="/images/landing/mockup-prod-1.webp"
                           alt="Café Latte"
+                          width="120"
+                          height="64"
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -463,6 +473,10 @@ function LandingPage() {
                         <img
                           src="/images/landing/mockup-prod-2.webp"
                           alt="Croissant"
+                          width="120"
+                          height="64"
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -477,6 +491,10 @@ function LandingPage() {
                         <img
                           src="/images/landing/mockup-prod-3.webp"
                           alt="Cheesecake"
+                          width="120"
+                          height="64"
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -491,6 +509,10 @@ function LandingPage() {
                         <img
                           src="/images/landing/mockup-prod-4.webp"
                           alt="Espresso"
+                          width="120"
+                          height="64"
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover"
                         />
                       </div>
@@ -1011,8 +1033,12 @@ function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex flex-col items-center md:items-start gap-2">
               <img
-                src="/images/dizi-logo-principal-color.png"
+                src="/images/logo-dizi.webp"
                 alt="Dizi Logo"
+                width="74"
+                height="32"
+                loading="lazy"
+                decoding="async"
                 className="h-8 w-auto object-contain"
               />
               <p className="text-[11px] text-muted-foreground text-center md:text-left">
