@@ -58,7 +58,10 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 ## 5. Reglas para cambiar el código
 
 - Rama de trabajo desde `master`, un cambio lógico por commit, mensaje en español que diga el porqué.
-- Correr antes de entregar: `npx vitest run`, `npm run build`. Reportar el resultado real (pasan/fallan y cuáles).
+- Correr antes de entregar: `npm run lint`, `npx vitest run`, `npm run build`. Reportar el resultado real (pasan/fallan y cuáles).
+- Después de cada push, verificar que GitHub Actions quede en verde.
+
+
 - No subir a git: `.env`, `scratch/`, `*.bak`, `playwright-report/`, `test-results/`, `dist/`.
 - **Una regla de negocio vive en un solo lugar.** Si se toca un límite o precio, listar todos los lugares donde
   hoy está duplicado (ver FUENTE-DE-VERDAD §4) y decir cuáles se cambiaron.
@@ -100,5 +103,7 @@ Un archivo `INFORME-<tema>-<fecha>.md` en `encargos/` con:
 8. **Pruebas de verificación en modo celular** (`movil-android`), no escritorio.
 9. **Si git push falla por autenticación,** avisa a Jack que renueve el permiso con `git credential-manager github login`. Nunca pidas ni guardes un token o contraseña en archivos o chats.
 10. **Nunca borrar datos de producción con filtros amplios (%texto%); solo por ID o por patrón exacto de prueba.**
+11. **Después de cada push, verificar que GitHub Actions quede en verde.**
+
 
 

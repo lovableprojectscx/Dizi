@@ -72,7 +72,8 @@ describe("G1: Unificación de Precios Canónicos (Single Source of Truth)", () =
     const violations: { file: string; line: number; text: string }[] = [];
 
     // Regex que busca precios textuales o números aislados de precios, ignorando coordenadas SVG o códigos hexadecimales (#f06292)
-    const priceRegex = /(?<![#a-zA-Z0-9_\-\.])(19\.90|39\.90|69\.90|179|359|629)(?![a-zA-Z0-9_\-\.])/;
+    const priceRegex = /(?<![#a-zA-Z0-9_\-.])(19\.90|39\.90|69\.90|179|359|629)(?![a-zA-Z0-9_\-.])/;
+
 
     for (const file of files) {
       const content = fs.readFileSync(file, "utf8");

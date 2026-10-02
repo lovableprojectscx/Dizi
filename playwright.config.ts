@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { execSync } from "child_process";
 
 /**
  * Configuración de pruebas E2E - Dizi (IS-489)
@@ -16,7 +17,6 @@ function getBypassSecret(): string | undefined {
   if (process.env.VERCEL_PROTECTION_BYPASS) return process.env.VERCEL_PROTECTION_BYPASS;
   if (process.env.VERCEL_AUTOMATION_BYPASS_SECRET) return process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
   try {
-    const { execSync } = require("child_process");
     const out = execSync('reg query "HKCU\\Environment" /v "VERCEL_AUTOMATION_BYPASS_SECRET"', {
       stdio: ["pipe", "pipe", "ignore"],
     }).toString();
