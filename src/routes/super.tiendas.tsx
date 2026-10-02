@@ -57,6 +57,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { SuperRefreshButton } from "@/components/super/SuperRefreshButton";
 
 /**
  * Definición de la ruta `/super/tiendas` en TanStack Router.
@@ -272,6 +273,7 @@ function TenantsPage() {
             de Dizi.
           </p>
         </div>
+        <SuperRefreshButton />
       </div>
 
       {/* Grid de Stats Rápido */}

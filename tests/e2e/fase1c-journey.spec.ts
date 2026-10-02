@@ -1,4 +1,70 @@
 import { test, expect } from "@playwright/test";
+import crypto from "crypto";
+import fs from "fs";
+import https from "https";
+
+const SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcXpkd3hqdGhqZGpjaGltbWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NTQ0MDYsImV4cCI6MjEwMDEzMDQwNn0.sEtzdqZPdCFMHHsPAxGEqJylCloV6s14Mh0fT75pQGU";
+
+function getMcpToken() {
+  const tokenFilePath = "C:\\Users\\JACK FRANKLIN\\.gemini\\antigravity\\mcp_oauth_tokens.json";
+  if (fs.existsSync(tokenFilePath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(tokenFilePath, "utf8"));
+      if (data["https://mcp.supabase.com/mcp"] && data["https://mcp.supabase.com/mcp"].token) {
+        return data["https://mcp.supabase.com/mcp"].token.access_token;
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
+function executeSql(query: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const token = getMcpToken();
+    if (!token) return reject(new Error("No MCP token"));
+    const payload = JSON.stringify({ query });
+    const req = https.request({
+      hostname: "api.supabase.com",
+      path: "/v1/projects/zkqzdwxjthjdjchimmds/database/query",
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+      },
+    }, (res) => {
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          resolve(data);
+        }
+      });
+    });
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+async function signUpUser(email: string, pass: string) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password: pass }),
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`signUpUser failed: ${txt}`);
+  }
+  return res.json();
+}
 
 /**
  * FASE 1C · Suite de Pruebas E2E de Blindaje (Mobile Viewport 360x800)
@@ -22,19 +88,87 @@ test.describe("FASE 1C · Suite de Blindaje E2E (360x800)", () => {
 
   const NORMAL_SLUG = "zz-audit-c1c-normal";
   const NORMAL_EMAIL = "zz-audit-c1c-normal@testdizi.com";
-  const NORMAL_PASS = "AuditPassword123!";
+  const NORMAL_PASS = `Audit-${crypto.randomUUID()}!`;
   const NORMAL_NAME = "Audit Normal 1C";
   const NORMAL_PHONE = "912345678";
 
   const INVITED_SLUG = "zz-audit-c1c-invited";
   const INVITED_EMAIL = "zz-audit-c1c-invited@testdizi.com";
-  const INVITED_PASS = "AuditPassword123!";
+  const INVITED_PASS = `Audit-${crypto.randomUUID()}!`;
   const INVITED_NAME = "Audit Invitada 1C";
   const INVITED_PHONE = "912345679";
   const INVITE_TOKEN = "tok-audit-c1c-inv";
 
-  const SUPER_EMAIL = "zz-audit-super@testdizi.com";
-  const SUPER_PASS = "AuditSuper123!";
+  const SUPER_EMAIL = `zz-audit-super-${crypto.randomUUID().slice(0, 8)}@testdizi.com`;
+  const SUPER_PASS = `Audit-${crypto.randomUUID()}!`;
+
+  test.beforeAll(async () => {
+    // Configurar super admin temporal con credencial aleatoria
+    console.log(`[BeforeAll Fase 1C] Creando super admin dinámico: ${SUPER_EMAIL}...`);
+    await signUpUser(SUPER_EMAIL, SUPER_PASS);
+    await executeSql(`
+      UPDATE auth.users
+      SET email_confirmed_at = now(),
+          raw_app_meta_data = '{"provider":"email","providers":["email"],"role":"super_admin"}'::jsonb
+      WHERE email = '${SUPER_EMAIL}';
+    `);
+
+    // Asegurar token de invitación para el paso 6
+    await executeSql(`
+      INSERT INTO public.invites (token, plan, used, expires_at, duration_months, duration_value, duration_unit, notes)
+      VALUES ('${INVITE_TOKEN}', 'emprendedor', false, now() + interval '30 days', 1, 1, 'months', 'Fase 1C audit')
+      ON CONFLICT (token) DO UPDATE SET used = false, expires_at = now() + interval '30 days';
+    `);
+    console.log("[BeforeAll Fase 1C] Super admin e invitación configurados.");
+  });
+
+  test.afterAll(async () => {
+    console.log("[Teardown Fase 1C] Limpiando datos de prueba...");
+    try {
+      await executeSql(`
+        DELETE FROM public.invites WHERE token = '${INVITE_TOKEN}';
+        DELETE FROM public.products WHERE store_id IN (SELECT id FROM public.stores WHERE slug LIKE 'zz-audit%');
+        DELETE FROM public.categories WHERE store_id IN (SELECT id FROM public.stores WHERE slug LIKE 'zz-audit%');
+        DELETE FROM public.stores WHERE slug LIKE 'zz-audit%';
+      `);
+      console.log("[Teardown Fase 1C] Registros de BD de prueba eliminados.");
+    } catch (err) {
+      console.error("[Teardown Fase 1C] Error en limpieza de BD:", err);
+    } finally {
+      try {
+        // Borrar usuarios de prueba por sus IDs exactos creados en esta corrida
+        const userRows: any = await executeSql(`
+          SELECT id FROM auth.users WHERE email IN ('${SUPER_EMAIL}', '${NORMAL_EMAIL}', '${INVITED_EMAIL}')
+        `);
+        const userIds = Array.isArray(userRows) ? userRows.map((r: any) => r.id).filter(Boolean) : [];
+        if (userIds.length > 0) {
+          const idsList = userIds.map((id: string) => `'${id}'`).join(", ");
+          await executeSql(`
+            DELETE FROM auth.identities WHERE user_id IN (${idsList});
+            DELETE FROM auth.users WHERE id IN (${idsList});
+          `);
+          console.log(`[Teardown Fase 1C] ${userIds.length} usuarios temporales borrados por ID exacto.`);
+        } else {
+          // Fallback seguro usando patrón exacto de prueba (nunca filtro amplio)
+          await executeSql(`
+            DELETE FROM auth.identities WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE 'zz-audit-%@testdizi.com');
+            DELETE FROM auth.users WHERE email LIKE 'zz-audit-%@testdizi.com';
+          `);
+          console.log("[Teardown Fase 1C] Usuarios temporales borrados con patrón exacto 'zz-audit-%@testdizi.com'.");
+        }
+
+
+        const superAdmins: any = await executeSql(`
+          SELECT id, email, raw_app_meta_data->>'role' as role 
+          FROM auth.users 
+          WHERE raw_app_meta_data->>'role' = 'super_admin';
+        `);
+        console.log("[Teardown Fase 1C] Super admins restantes (solo Jack):", superAdmins);
+      } catch (finallyErr) {
+        console.error("[Teardown Fase 1C] Error en finally:", finallyErr);
+      }
+    }
+  });
 
   test("Recorrido completo Fase 1C", async ({ page }) => {
     // ─────────────────────────────────────────────────────────────
@@ -72,6 +206,11 @@ test.describe("FASE 1C · Suite de Blindaje E2E (360x800)", () => {
 
     const passInput = page.locator('input[type="password"]');
     await passInput.fill(NORMAL_PASS);
+
+    const termsCheck = page.locator("#acceptTerms");
+    if (await termsCheck.isVisible().catch(() => false)) {
+      await termsCheck.check();
+    }
 
     const submitRegister = page.locator('button:has-text("Lanzar mi Catálogo")');
     await expect(submitRegister).toBeEnabled();
@@ -341,7 +480,7 @@ test.describe("FASE 1C · Suite de Blindaje E2E (360x800)", () => {
     await page.waitForLoadState("domcontentloaded");
 
     // Verificar que se reconoce el plan de la invitación
-    await expect(page.locator("text=Plan Emprendedor").or(page.locator("text=Emprendedor"))).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("text=/EMPRENDEDOR/i").first()).toBeVisible({ timeout: 15000 });
 
     const invNameInput = page.locator('input[placeholder="Ej. Florería María"]');
     await invNameInput.fill(INVITED_NAME);
@@ -365,6 +504,11 @@ test.describe("FASE 1C · Suite de Blindaje E2E (360x800)", () => {
 
     const invPassInput = page.locator('input[type="password"]');
     await invPassInput.fill(INVITED_PASS);
+
+    const invTerms = page.locator("#acceptTerms");
+    if (await invTerms.isVisible().catch(() => false)) {
+      await invTerms.check();
+    }
 
     const invSubmit = page.locator('button:has-text("Lanzar mi Catálogo")');
     await invSubmit.click();

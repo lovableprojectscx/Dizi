@@ -14,6 +14,8 @@ import {
   useRouterState,
   useNavigate,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useApp } from "@/lib/store";
 import {
   Sidebar,
   SidebarContent,
@@ -88,6 +90,28 @@ const items = [
 function SuperLayout() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const navigate = useNavigate();
+  const fetchData = useApp((s) => s.fetchData);
+
+  useEffect(() => {
+    if (path === "/super/login") return;
+
+    // Al montar en rutas super admin, fetchData(true) forzado
+    fetchData(true);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const last = useApp.getState().lastFetched;
+        if (!last || Date.now() - last > 5 * 60 * 1000) {
+          fetchData(true);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [path === "/super/login", fetchData]);
 
   const handleLogout = async () => {
     await signOut();

@@ -283,6 +283,79 @@ if (typeof window !== "undefined") {
   });
 }
 
+/**
+ * Extrae la ruta relativa de un archivo en Supabase Storage (bucket 'images'),
+ * validando que pertenezca estrictamente al subdirectorio del comercio (`${storeId}/`).
+ */
+export function extractStoragePath(url: string | null | undefined, storeId: string): string | null {
+  if (!url || typeof url !== "string") return null;
+  if (!url.includes("/public/images/")) return null;
+  const parts = url.split("/public/images/");
+  if (parts.length < 2) return null;
+  const cleanPath = decodeURIComponent(parts[1].split("?")[0]);
+  if (!cleanPath.startsWith(`${storeId}/`)) return null;
+  return cleanPath;
+}
+
+/**
+ * Obtiene el conjunto de todas las rutas de Supabase Storage que permanecen activamente
+ * referenciadas por cualquiera de los campos de imagen de la tienda tras aplicar el parche.
+ * Protege contra el borrado accidental de fotos compartidas (ej. cuando `bioLogo` se sincroniza
+ * con `store.logo`, o `bioBanner` con `store.bannerImage`).
+ */
+export function getActiveReferencedPaths(store: Record<string, any>, storeId: string): Set<string> {
+  const referenced = new Set<string>();
+  const add = (val: any) => {
+    if (!val) return;
+    if (typeof val === "string") {
+      const p = extractStoragePath(val, storeId);
+      if (p) referenced.add(p);
+    }
+  };
+
+  // 1. logo
+  add(store.logo);
+
+  // 2. bioLogo / bio_logo
+  add(store.bioLogo);
+  add(store.bio_logo);
+
+  // 3. bioBanner / bio_banner
+  add(store.bioBanner);
+  add(store.bio_banner);
+
+  // 4. bioBgImage / bio_bg_image
+  add(store.bioBgImage);
+  add(store.bio_bg_image);
+
+  // 5. bannerImage / banner_image (partes separadas por '|||')
+  const bannerImgStr = store.bannerImage || store.banner_image;
+  if (typeof bannerImgStr === "string") {
+    bannerImgStr.split("|||");
+    bannerImgStr.split("|||").forEach((part: string) => add(part.trim()));
+  }
+
+  // 6. banners (array)
+  if (Array.isArray(store.banners)) {
+    store.banners.forEach((b: any) => add(b));
+  }
+
+  return referenced;
+}
+
+/**
+ * Filtra la lista de archivos candidatos a eliminar, descartando aquellos que continúen
+ * siendo referenciados en cualquier campo de la tienda tras la actualización.
+ */
+export function filterSafeFilesToDelete(
+  filesToDelete: string[],
+  storeAfterPatch: Record<string, any>,
+  storeId: string
+): string[] {
+  const activePaths = getActiveReferencedPaths(storeAfterPatch, storeId);
+  return Array.from(new Set(filesToDelete)).filter((filePath) => !activePaths.has(filePath));
+}
+
 export const useApp = create<AppState>()(
   persist(
     (set, get) => ({
@@ -347,14 +420,27 @@ export const useApp = create<AppState>()(
 
       updateStore: async (id, patch) => {
         const updatedPatch = { ...patch };
+        const currentStore = get().stores.find((st) => st.id === id);
+        const filesToDelete: string[] = [];
 
-        // Subir logo si es base64
+        // Subir logo si es base64 con nombre único timestamped
         if (patch.logo && patch.logo.startsWith("data:")) {
           try {
-            updatedPatch.logo = await uploadBase64ToStorage(patch.logo, `${id}/logo.webp`);
+            const timestamp = Date.now();
+            const newUrl = await uploadBase64ToStorage(patch.logo, `${id}/logo_${timestamp}.webp`);
+            updatedPatch.logo = newUrl;
+
+            const oldPath = extractStoragePath(currentStore?.logo, id);
+            const newPath = extractStoragePath(newUrl, id);
+            if (oldPath && oldPath !== newPath) {
+              filesToDelete.push(oldPath);
+            }
           } catch (uploadErr) {
             console.error("[updateStore] Logo upload failed, falling back to base64", uploadErr);
           }
+        } else if (patch.logo === null && currentStore?.logo) {
+          const oldPath = extractStoragePath(currentStore.logo, id);
+          if (oldPath) filesToDelete.push(oldPath);
         }
 
         // Subir bannerImage si es base64 (soporta múltiples imágenes separadas por |||)
@@ -383,49 +469,82 @@ export const useApp = create<AppState>()(
           }
         }
 
-        // Subir bioLogo si es base64
+        // Subir bioLogo si es base64 con nombre único timestamped
         if (patch.bioLogo && patch.bioLogo.startsWith("data:")) {
           try {
-            updatedPatch.bioLogo = await uploadBase64ToStorage(
+            const timestamp = Date.now();
+            const newUrl = await uploadBase64ToStorage(
               patch.bioLogo,
-              `${id}/bio_logo.webp`,
+              `${id}/bio_logo_${timestamp}.webp`,
             );
+            updatedPatch.bioLogo = newUrl;
+
+            const oldPath = extractStoragePath(currentStore?.bioLogo, id);
+            const newPath = extractStoragePath(newUrl, id);
+            if (oldPath && oldPath !== newPath) {
+              filesToDelete.push(oldPath);
+            }
           } catch (uploadErr) {
             console.error(
               "[updateStore] Bio Logo upload failed, falling back to base64",
               uploadErr,
             );
           }
+        } else if (patch.bioLogo === null && currentStore?.bioLogo) {
+          const oldPath = extractStoragePath(currentStore.bioLogo, id);
+          if (oldPath) filesToDelete.push(oldPath);
         }
 
-        // Subir bioBanner si es base64
+        // Subir bioBanner si es base64 con nombre único timestamped
         if (patch.bioBanner && patch.bioBanner.startsWith("data:")) {
           try {
-            updatedPatch.bioBanner = await uploadBase64ToStorage(
+            const timestamp = Date.now();
+            const newUrl = await uploadBase64ToStorage(
               patch.bioBanner,
-              `${id}/bio_banner.webp`,
+              `${id}/bio_banner_${timestamp}.webp`,
             );
+            updatedPatch.bioBanner = newUrl;
+
+            const oldPath = extractStoragePath(currentStore?.bioBanner, id);
+            const newPath = extractStoragePath(newUrl, id);
+            if (oldPath && oldPath !== newPath) {
+              filesToDelete.push(oldPath);
+            }
           } catch (uploadErr) {
             console.error(
               "[updateStore] Bio Banner upload failed, falling back to base64",
               uploadErr,
             );
           }
+        } else if (patch.bioBanner === null && currentStore?.bioBanner) {
+          const oldPath = extractStoragePath(currentStore.bioBanner, id);
+          if (oldPath) filesToDelete.push(oldPath);
         }
 
-        // Subir bioBgImage si es base64
+        // Subir bioBgImage si es base64 con nombre único timestamped
         if (patch.bioBgImage && patch.bioBgImage.startsWith("data:")) {
           try {
-            updatedPatch.bioBgImage = await uploadBase64ToStorage(
+            const timestamp = Date.now();
+            const newUrl = await uploadBase64ToStorage(
               patch.bioBgImage,
-              `${id}/bio_bg.webp`,
+              `${id}/bio_bg_${timestamp}.webp`,
             );
+            updatedPatch.bioBgImage = newUrl;
+
+            const oldPath = extractStoragePath(currentStore?.bioBgImage, id);
+            const newPath = extractStoragePath(newUrl, id);
+            if (oldPath && oldPath !== newPath) {
+              filesToDelete.push(oldPath);
+            }
           } catch (uploadErr) {
             console.error(
               "[updateStore] Bio Background Image upload failed, falling back to base64",
               uploadErr,
             );
           }
+        } else if (patch.bioBgImage === null && currentStore?.bioBgImage) {
+          const oldPath = extractStoragePath(currentStore.bioBgImage, id);
+          if (oldPath) filesToDelete.push(oldPath);
         }
 
         const dbPatch: any = {};
@@ -538,6 +657,28 @@ export const useApp = create<AppState>()(
               .update(dbPatch)
               .eq("id", id);
             if (updateError) throw updateError;
+          }
+
+          // Tras guardar con éxito la URL nueva en stores, borrar archivos previos que ya no estén en uso
+          if (filesToDelete.length > 0) {
+            const storeAfterPatch = { ...(currentStore || {}), ...updatedPatch };
+            const safeFiles = filterSafeFilesToDelete(filesToDelete, storeAfterPatch, id);
+            if (safeFiles.length > 0) {
+              try {
+                const { error: removeErr } = await supabase.storage
+                  .from("images")
+                  .remove(safeFiles);
+                if (removeErr) {
+                  console.warn("[updateStore] Error al eliminar imágenes previas de storage:", removeErr);
+                } else {
+                  console.log("[updateStore] Imágenes previas eliminadas de storage:", safeFiles);
+                }
+              } catch (cleanErr) {
+                console.warn("[updateStore] Excepción al eliminar imágenes previas de storage:", cleanErr);
+              }
+            } else {
+              console.log("[updateStore] Archivos retenidos: siguen en uso en otros campos de la tienda.");
+            }
           }
 
           set((s) => ({

@@ -41,6 +41,8 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 - **Nunca** usar `service_role` ni la contraseña de `postgres` desde código que corre en el navegador.
 - Datos personales de clientes (teléfono, correo, RUC, dirección) se enmascaran en cualquier informe.
 - No tocar tiendas de clientes reales para probar. Las pruebas usan tiendas con slug `zz-audit-*` y se borran al final.
+- **Nunca borrar datos de producción con filtros amplios (%texto%); solo por ID o por patrón exacto de prueba.**
+
 
 ## 4. Reglas para cambiar la base de datos
 
@@ -97,4 +99,6 @@ Un archivo `INFORME-<tema>-<fecha>.md` en `encargos/` con:
 7. **Funciones:** `CREATE OR REPLACE`; nunca DROP+CREATE (se pierden permisos). `REVOKE` siempre también `FROM PUBLIC`.
 8. **Pruebas de verificación en modo celular** (`movil-android`), no escritorio.
 9. **Si git push falla por autenticación,** avisa a Jack que renueve el permiso con `git credential-manager github login`. Nunca pidas ni guardes un token o contraseña en archivos o chats.
+10. **Nunca borrar datos de producción con filtros amplios (%texto%); solo por ID o por patrón exacto de prueba.**
+
 

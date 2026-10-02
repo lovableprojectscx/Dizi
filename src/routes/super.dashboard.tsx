@@ -29,10 +29,10 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { lazy, Suspense } from "react";
 const SuperDashboardCharts = lazy(() => import("@/components/super/SuperDashboardCharts"));
 import { cn } from "@/lib/utils";
+import { SuperRefreshButton } from "@/components/super/SuperRefreshButton";
 
 /**
  * Definición de la ruta `/super/dashboard` en TanStack Router.
@@ -226,6 +226,7 @@ function SuperDashboard() {
         </div>
 
         <div className="flex items-center gap-2">
+          <SuperRefreshButton />
           <Button variant="outline" size="sm" asChild className="h-9">
             <Link to="/super/tiendas">
               <StoreIcon className="w-4 h-4 mr-1.5" />
