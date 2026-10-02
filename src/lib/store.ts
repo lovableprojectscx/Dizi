@@ -54,7 +54,7 @@ export function invalidateStorePublicCache(slug?: string | null) {
  * @param row Fila devuelta por la consulta de Supabase.
  * @returns Objeto `Store` normalizado y sanitizado.
  */
-const mapStoreFromDB = (row: any): Store => {
+export const mapStoreFromDB = (row: any): Store => {
   const isDarkVal = row.is_dark ?? (row.bg_color ? hexLuminance(row.bg_color) < 0.35 : false);
 
   // Sanitizar colores desalineados guardados anteriormente en la BD
@@ -167,6 +167,7 @@ const mapStoreFromDB = (row: any): Store => {
     onboardingCompleted: row.onboarding_completed ?? false,
     termsAcceptedAt: row.terms_accepted_at ?? null,
     requestedPlan: row.requested_plan ?? null,
+    showFeatured: row.show_featured ?? true,
     categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
     products: (row.products || [])
       .map((p: any) => ({
@@ -649,6 +650,8 @@ export const useApp = create<AppState>()(
         if (updatedPatch.borderRadius !== undefined) dbPatch.border_radius = updatedPatch.borderRadius;
         if (updatedPatch.imgShape !== undefined) dbPatch.img_shape = updatedPatch.imgShape;
         if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
+        if (updatedPatch.showFeatured !== undefined)
+          dbPatch.show_featured = updatedPatch.showFeatured;
 
         try {
           if (Object.keys(dbPatch).length > 0) {

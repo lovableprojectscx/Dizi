@@ -11,6 +11,7 @@ import { Download, X, Loader2, Check, Palette, Lock, Sparkles } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PLANS, type Store, type Product, getEffectivePlan } from "@/lib/types";
+import { cleanDescription } from "@/lib/products";
 import { formatPrice, buildWaUrl } from "@/lib/whatsapp";
 import { formatPhoneDisplay } from "@/lib/phone";
 import { supabase } from "@/lib/supabase";
@@ -841,12 +842,13 @@ export async function generateCatalogPdf(
       doc.text(nameLines.slice(0, 2), textX, nameY);
 
       // Descripción (más legible)
-      if (prod.description) {
+      const cleanedDesc = cleanDescription(prod.description);
+      if (cleanedDesc) {
         setFont("normal");
         doc.setFontSize(6.5);
         doc.setTextColor(t.subtext);
         const maxLines = isNordico ? 4 : 2; // Más líneas en Nórdico por el ancho
-        const descLines = doc.splitTextToSize(safe(prod.description), textW);
+        const descLines = doc.splitTextToSize(safe(cleanedDesc), textW);
         doc.text(descLines.slice(0, maxLines), textX, descY);
       }
 

@@ -123,6 +123,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl, getThumbnailUrl } from "@/lib/image-utils";
+import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 
 const EMPTY_CART: any[] = [];
@@ -3789,22 +3790,33 @@ export function PublicCatalog({
                                 >
                                   {p.name}
                                 </h3>
-                                {p.description && (
-                                  <p
-                                    style={{ color: "var(--foreground-muted)" }}
-                                    className="text-xs sm:text-sm font-serif italic leading-relaxed"
-                                  >
-                                    {p.description.split(".")[0]}.
-                                  </p>
-                                )}
-                                {p.description && p.description.includes(".") && (
-                                  <p
-                                    style={{ color: "var(--foreground-muted)", opacity: 0.85 }}
-                                    className="text-xs sm:text-sm leading-relaxed font-sans pt-1"
-                                  >
-                                    {p.description.split(".").slice(1).join(".")}
-                                  </p>
-                                )}
+                                {(() => {
+                                  const cleanedDesc = cleanDescription(p.description);
+                                  if (!cleanedDesc) return null;
+                                  const parts = cleanedDesc.split(".");
+                                  const firstSentence = parts[0] ? `${parts[0]}.` : "";
+                                  const rest = parts.slice(1).join(".").trim();
+                                  return (
+                                    <>
+                                      {firstSentence && (
+                                        <p
+                                          style={{ color: "var(--foreground-muted)" }}
+                                          className="text-xs sm:text-sm font-serif italic leading-relaxed"
+                                        >
+                                          {firstSentence}
+                                        </p>
+                                      )}
+                                      {rest && (
+                                        <p
+                                          style={{ color: "var(--foreground-muted)", opacity: 0.85 }}
+                                          className="text-xs sm:text-sm leading-relaxed font-sans pt-1"
+                                        >
+                                          {rest}
+                                        </p>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </div>
 
@@ -3987,9 +3999,9 @@ export function PublicCatalog({
                         >
                           {p.name}
                         </h3>
-                        {p.description && (
+                        {cleanDescription(p.description) && (
                           <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
-                            {p.description}
+                            {cleanDescription(p.description)}
                           </p>
                         )}
                       </div>
@@ -4819,8 +4831,8 @@ export function PublicCatalog({
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
-                          loading={i < 4 ? "eager" : "lazy"}
-                          fetchPriority={i < 2 ? "high" : "auto"}
+                          loading={idx < 4 ? "eager" : "lazy"}
+                          fetchPriority={idx < 2 ? "high" : "auto"}
                           decoding="async"
                           onError={(e) => {
                             const el = e.target as HTMLImageElement;
@@ -5012,6 +5024,7 @@ export function PublicCatalog({
 
                 {/* 2. Spotlight Carousel (Featured Products) */}
                 {(() => {
+                  if (store.showFeatured === false) return null;
                   if (activeCat !== "all" || query.trim() !== "") return null;
                   let isSaleOnly = false;
                   let isFallback = false;
@@ -5156,7 +5169,7 @@ export function PublicCatalog({
                                     {p.name}
                                   </h4>
                                   <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-4 min-h-8">
-                                    {(p.description || "").replace(/#destacado/g, "").trim()}
+                                    {cleanDescription(p.description)}
                                   </p>
                                 </div>
                               </div>
@@ -5402,9 +5415,9 @@ export function PublicCatalog({
                                     <h4 style={{ color: "var(--card-foreground)" }} className="font-extrabold text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-5 min-h-10">
                                       {p.name}
                                     </h4>
-                                    {p.description && (
+                                    {cleanDescription(p.description) && (
                                       <p style={{ color: "var(--muted-foreground)" }} className="text-[11px] line-clamp-2 leading-4 min-h-8">
-                                        {p.description}
+                                        {cleanDescription(p.description)}
                                       </p>
                                     )}
                                   </div>
@@ -5687,6 +5700,7 @@ export function PublicCatalog({
 
                     {/* 2. Spotlight Carousel (Featured Products) */}
                     {(() => {
+                      if (store.showFeatured === false) return null;
                       if (activeCat !== "all" || query.trim() !== "") return null;
 
                       let isFallback = false;
@@ -5865,7 +5879,7 @@ export function PublicCatalog({
                                         {p.name}
                                       </h4>
                                       <p className="text-[11px] text-[var(--muted-foreground)] line-clamp-2 leading-4 min-h-8 font-sans">
-                                        {(p.description || "").replace(/#destacado/g, "").trim()}
+                                        {cleanDescription(p.description)}
                                       </p>
                                     </div>
                                   </div>
@@ -6147,9 +6161,9 @@ export function PublicCatalog({
                                         >
                                           {p.name}
                                         </h4>
-                                        {p.description && (
+                                        {cleanDescription(p.description) && (
                                           <p style={{ color: "var(--muted-foreground)" }} className="text-[11px] line-clamp-2 h-7 leading-normal font-sans">
-                                            {p.description}
+                                            {cleanDescription(p.description)}
                                           </p>
                                         )}
                                       </div>
@@ -6409,6 +6423,7 @@ export function PublicCatalog({
 
                 {/* 2. Spotlight Carousel (Featured Products) */}
                 {(() => {
+                  if (store.showFeatured === false) return null;
                   if (activeCat !== "all" || query.trim() !== "") return null;
 
                   let isFallback = false;
@@ -6598,9 +6613,7 @@ export function PublicCatalog({
                                     {p.name}
                                   </h4>
                                   {(() => {
-                                    const cleanDesc = (p.description || "")
-                                      .replace(/#destacado/g, "")
-                                      .trim();
+                                    const cleanDesc = cleanDescription(p.description);
                                     return (
                                       <>
                                         <p
@@ -7014,15 +7027,15 @@ export function PublicCatalog({
                                     >
                                       {p.name}
                                     </h4>
-                                    {p.description && (
+                                    {cleanDescription(p.description) && (
                                       <p
                                         style={{ color: "var(--muted-foreground)" }}
                                         className="text-[11px] line-clamp-2 leading-4 min-h-8 font-sans"
                                       >
-                                        {p.description}
+                                        {cleanDescription(p.description)}
                                       </p>
                                     )}
-                                    {p.description && p.description.trim().length > 50 && (
+                                    {cleanDescription(p.description).length > 50 && (
                                       <span
                                         className="inline-flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider font-sans opacity-80 group-hover:opacity-100 transition-opacity"
                                         style={{ color: "var(--primary)" }}
@@ -8032,7 +8045,7 @@ export function PublicCatalog({
           </SheetTitle>
           <SheetDescription className="sr-only">
             {viewingProduct && viewingProduct.description
-              ? viewingProduct.description
+              ? cleanDescription(viewingProduct.description)
               : "Detalle del producto seleccionado."}
           </SheetDescription>
           {viewingProduct && (() => {
@@ -8262,7 +8275,7 @@ export function PublicCatalog({
                   )}
 
                   {/* Description */}
-                  {viewingProduct.description && (
+                  {cleanDescription(viewingProduct.description) && (
                     <div>
                       <p
                         className={cn(
@@ -8282,7 +8295,7 @@ export function PublicCatalog({
                           opacity: effectiveIsDark ? 0.85 : 0.75,
                         }}
                       >
-                        {viewingProduct.description}
+                        {cleanDescription(viewingProduct.description)}
                       </p>
                     </div>
                   )}

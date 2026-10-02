@@ -3,6 +3,7 @@ import {
   isPlaceholderOrFilename,
   isProductIncomplete,
   getIncompleteReason,
+  cleanDescription,
 } from "../products";
 
 describe("isPlaceholderOrFilename", () => {
@@ -92,5 +93,32 @@ describe("getIncompleteReason", () => {
     expect(getIncompleteReason({ name: "IMG 8090", price: 50 })).toBe("nombre");
     expect(getIncompleteReason({ name: "Vestido", price: null })).toBe("precio");
     expect(getIncompleteReason({ name: "Vestido", price: 50 })).toBe(null);
+  });
+});
+
+describe("cleanDescription (Fase 3E)", () => {
+  it("elimina #destacado en minúsculas, mayúsculas y mixto", () => {
+    expect(cleanDescription("Hamburguesa con queso #destacado")).toBe("Hamburguesa con queso");
+    expect(cleanDescription("Arreglo floral #DESTACADO")).toBe("Arreglo floral");
+    expect(cleanDescription("#Destacado Postre artesanal")).toBe("Postre artesanal");
+    expect(cleanDescription("Combo #destacado familiar")).toBe("Combo  familiar");
+  });
+
+  it("elimina múltiples ocurrencias si existieran", () => {
+    expect(cleanDescription("Producto #destacado de prueba #DESTACADO")).toBe("Producto  de prueba");
+  });
+
+  it("devuelve cadena vacía si solo contiene #destacado o es nulo/vacío", () => {
+    expect(cleanDescription("#destacado")).toBe("");
+    expect(cleanDescription("   #DESTACADO   ")).toBe("");
+    expect(cleanDescription("")).toBe("");
+    expect(cleanDescription(null)).toBe("");
+    expect(cleanDescription(undefined)).toBe("");
+  });
+
+  it("mantiene intactas las descripciones ordinarias", () => {
+    expect(cleanDescription("Polo 100% algodón pima con cuello redondo")).toBe(
+      "Polo 100% algodón pima con cuello redondo"
+    );
   });
 });

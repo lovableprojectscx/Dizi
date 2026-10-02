@@ -355,6 +355,8 @@ export interface Store {
   promoBarTextColor?: string | null;
   /** Activa el efecto de marquesina (texto desplazándose horizontalmente) */
   promoBarIsMarquee?: boolean;
+  /** Muestra u oculta la sección de productos destacados/ofertas en los diseños compatibles */
+  showFeatured?: boolean;
   /** Categorías pertenecientes a la tienda */
   categories: Category[];
   /** Productos pertenecientes a la tienda */

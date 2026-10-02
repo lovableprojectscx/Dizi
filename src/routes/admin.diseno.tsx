@@ -43,6 +43,8 @@ const CatalogPdfExportButton = lazy(() =>
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 
+const FEATURED_COMPATIBLE_STRUCTURES = ["bite", "nature", "bloom_general", "bloom_floral"];
+
 /**
  * @file admin.diseno.tsx
  * @description Estudio de diseño y personalización de apariencia del catálogo (/admin/diseno).
@@ -216,6 +218,7 @@ function DisenoUnificadoPage() {
   const [promoBarBgColor, setPromoBarBgColor] = useState<string>(store.promoBarBgColor || "");
   const [promoBarTextColor, setPromoBarTextColor] = useState<string>(store.promoBarTextColor || "");
   const [promoBarIsMarquee, setPromoBarIsMarquee] = useState<boolean>(store.promoBarIsMarquee || false);
+  const [showFeatured, setShowFeatured] = useState<boolean>(store.showFeatured !== false);
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
@@ -246,6 +249,7 @@ function DisenoUnificadoPage() {
       setPromoBarBgColor(store.promoBarBgColor || "");
       setPromoBarTextColor(store.promoBarTextColor || "");
       setPromoBarIsMarquee(store.promoBarIsMarquee || false);
+      setShowFeatured(store.showFeatured !== false);
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
@@ -347,6 +351,7 @@ function DisenoUnificadoPage() {
         promoBarBgColor: promoBarBgColor || null,
         promoBarTextColor: promoBarTextColor || null,
         promoBarIsMarquee,
+        showFeatured,
       } as any);
 
       toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
@@ -382,6 +387,7 @@ function DisenoUnificadoPage() {
     promoBarBgColor: promoBarBgColor,
     promoBarTextColor: promoBarTextColor,
     promoBarIsMarquee: promoBarIsMarquee,
+    showFeatured: showFeatured,
   };
 
   return (
@@ -545,6 +551,41 @@ function DisenoUnificadoPage() {
                   );
                 })}
               </div>
+
+              {/* Interruptor de destacados al inicio para diseños compatibles */}
+              {FEATURED_COMPATIBLE_STRUCTURES.includes(selectedStructure) && (
+                <div className="pt-2 border-t border-zinc-200/80 animate-in fade-in duration-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-4.5 w-4.5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                          Mostrar sección de destacados al inicio
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                            Carrusel
+                          </Badge>
+                        </h4>
+                        <p className="text-[11px] text-zinc-500">
+                          Carrusel con tus productos destacados u ofertas, arriba del catálogo.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showFeatured}
+                          onChange={(e) => setShowFeatured(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -782,6 +823,39 @@ function DisenoUnificadoPage() {
               </div>
 
               <div className="space-y-3">
+                {/* Carrusel de Destacados (Solo para bite, nature, bloom_general, bloom_floral) */}
+                {FEATURED_COMPATIBLE_STRUCTURES.includes(selectedStructure) && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3 animate-in fade-in duration-200">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                        <Sparkles className="h-4.5 w-4.5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                          Mostrar sección de destacados al inicio
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                            Carrusel
+                          </Badge>
+                        </h4>
+                        <p className="text-[11px] text-zinc-550">
+                          Carrusel con tus productos destacados u ofertas, arriba del catálogo.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showFeatured}
+                          onChange={(e) => setShowFeatured(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 {/* 0. Cintillo Promocional / Barra de Anuncios (Envío Gratis) */}
                 <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

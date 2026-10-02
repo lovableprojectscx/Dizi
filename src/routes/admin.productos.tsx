@@ -306,9 +306,19 @@ const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
   ],
 };
 
-import { modelSupportsCategoryIcons } from "@/lib/design-catalog";
+import { modelSupportsCategoryIcons, resolveStructureId } from "@/lib/design-catalog";
 
 const isPremiumModel = (model?: string) => modelSupportsCategoryIcons(model);
+
+const supportsFeaturedProducts = (model?: string, niche?: string) => {
+  const structureId = resolveStructureId(model, niche);
+  return (
+    structureId === "bite" ||
+    structureId === "nature" ||
+    structureId === "bloom_general" ||
+    structureId === "bloom_floral"
+  );
+};
 
 const getNicheLabel = (model?: string) => {
   return "Ícono de la Categoría";
@@ -780,7 +790,7 @@ function SingleProductDialog({
                   />
                 </div>
 
-                {isPremiumModel(store.model) && (
+                {supportsFeaturedProducts(store.model, store.niche) && (
                   <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-xs text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
@@ -1288,6 +1298,7 @@ interface ProductTableRowProps {
   idx: number;
   totalCount: number;
   storeModel?: string;
+  storeNiche?: string;
   categoryLabel: string;
   categoryIconKey?: string;
   onEdit: (p: Product) => void;
@@ -1301,6 +1312,7 @@ const ProductTableRow = React.memo(function ProductTableRow({
   idx,
   totalCount,
   storeModel,
+  storeNiche,
   categoryLabel,
   categoryIconKey,
   onEdit,
@@ -1346,7 +1358,7 @@ const ProductTableRow = React.memo(function ProductTableRow({
               Incompleto
             </Badge>
           )}
-          {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
+          {supportsFeaturedProducts(storeModel, storeNiche) && p.description?.includes("#destacado") && (
             <Badge
               variant="outline"
               className="text-[10px] py-0 px-1.5 border-orange-500 text-orange-600 bg-orange-50 shrink-0"
@@ -1456,6 +1468,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
   idx,
   totalCount,
   storeModel,
+  storeNiche,
   categoryLabel,
   categoryIconKey,
   onEdit,
@@ -1493,7 +1506,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
               Incompleto
             </span>
           )}
-          {isPremiumModel(storeModel) && p.description?.includes("#destacado") && (
+          {supportsFeaturedProducts(storeModel, storeNiche) && p.description?.includes("#destacado") && (
             <span className="shrink-0 text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-200 px-1 rounded">
               ⭐ Destacado
             </span>
@@ -2343,6 +2356,7 @@ function ProductsPage() {
                           idx={idx}
                           totalCount={store.products.length}
                           storeModel={store.model}
+                          storeNiche={store.niche}
                           categoryLabel={catInfo.label}
                           categoryIconKey={catInfo.iconKey}
                           onEdit={handleOpenEdit}
@@ -2382,6 +2396,7 @@ function ProductsPage() {
                       idx={idx}
                       totalCount={store.products.length}
                       storeModel={store.model}
+                      storeNiche={store.niche}
                       categoryLabel={catInfo.label}
                       categoryIconKey={catInfo.iconKey}
                       onEdit={handleOpenEdit}

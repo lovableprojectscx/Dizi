@@ -58,3 +58,12 @@ export function getIncompleteReason(
   if (badPrice) return "precio";
   return null;
 }
+
+/**
+ * Limpia el tag interno `#destacado` de la descripción del producto
+ * para su visualización pública en el catálogo o exportación a PDF.
+ */
+export function cleanDescription(desc?: string | null): string {
+  if (!desc) return "";
+  return desc.replace(/#destacado/gi, "").trim();
+}

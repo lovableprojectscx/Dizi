@@ -231,6 +231,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       promoBarBgColor: data.promo_bar_bg_color ?? undefined,
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
+      showFeatured: data.show_featured ?? true,
       totalProductsCount: data.total_products_count !== undefined ? Number(data.total_products_count) : (productsWithImages?.length || 0),
       categories: (data.categories || []).map((c: any) => ({
         id: c.id,
