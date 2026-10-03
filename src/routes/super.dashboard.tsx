@@ -29,6 +29,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { lazy, Suspense } from "react";
 const SuperDashboardCharts = lazy(() => import("@/components/super/SuperDashboardCharts"));
 import { cn } from "@/lib/utils";
