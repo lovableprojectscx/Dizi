@@ -44,11 +44,6 @@ test.describe("Rotación de Claves Supabase - Verificación en Producción", () 
         req.apiKey?.startsWith("sb_publishable_"),
         `Petición a ${req.url} no usó sb_publishable_. Clave detectada: ${req.apiKey?.slice(0, 15)}...`
       ).toBe(true);
-
-      expect(
-        req.apiKey?.startsWith("eyJhbGciOi"),
-        `Petición a ${req.url} usó la clave JWT antigua.`
-      ).toBe(false);
     }
 
     console.log(`[Network OK] ${supabaseRequests.length} peticiones verificadas con apikey sb_publishable_...`);
