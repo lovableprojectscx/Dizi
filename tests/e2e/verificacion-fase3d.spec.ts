@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import https from "https";
 const SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InprcXpkd3hqdGhqZGpjaGltbWRzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NTQ0MDYsImV4cCI6MjEwMDEzMDQwNn0.sEtzdqZPdCFMHHsPAxGEqJylCloV6s14Mh0fT75pQGU";
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || "";
 
 async function signUpUser(email: string, pass: string) {
   const res = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
