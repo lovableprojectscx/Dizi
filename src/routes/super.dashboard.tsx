@@ -186,7 +186,7 @@ function SuperDashboard() {
     .slice(0, 5)
     .map((s) => ({
       name: s.name.length > 15 ? s.name.substring(0, 13) + "..." : s.name,
-      Clicks: s.whatsappClicks,
+      clicks: s.whatsappClicks,
     }))
     .reverse(); // Reverse for horizontal chart rendering (top at the bottom of the list renders at the top of the chart)
 

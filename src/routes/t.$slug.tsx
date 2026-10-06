@@ -11,6 +11,7 @@ import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
+import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
 import type { Store } from "@/lib/types";
 
 /**
@@ -84,9 +85,12 @@ export const Route = createFileRoute("/t/$slug")({
 
     const canonicalUrl = `https://dizi.idenza.site/t/${params.slug}${targetProductId ? `?p=${targetProductId}` : ""}`;
 
-    const preloadImage =
-      (store?.bannerImage ? getValidImageUrl(store.bannerImage.split("|||")[0]) : null) ||
-      (store?.products?.[0]?.image ? getValidImageUrl(store.products[0].image) : null);
+    const firstBanner = store?.bannerImage ? store.bannerImage.split("|||")[0].trim() : null;
+    const firstProductImg = store?.products?.[0]?.image ? store.products[0].image.trim() : null;
+    const preloadTarget =
+      (firstBanner ? toCdnUrl(firstBanner) : null) ||
+      (firstProductImg ? getThumbnailUrl(firstProductImg) : null);
+    const preloadImage = preloadTarget ? getValidImageUrl(preloadTarget) : null;
 
     return {
       meta: [

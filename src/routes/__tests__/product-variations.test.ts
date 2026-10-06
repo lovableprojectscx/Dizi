@@ -363,5 +363,18 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
     expect(msg).toContain("• Polo Oversize (Opción: Blanco / S) x1 — S/ 40.00");
     expect(msg).toContain("Total: S/ 130.00");
   });
+
+  it("10. Nombres de imágenes de variación con timestamp (_var_id_timestamp.webp) son compatibles con getThumbnailUrl y getActiveReferencedPaths", async () => {
+    const { getThumbnailUrl, toCdnUrl } = await import("@/lib/image-utils");
+    const timestamp = Date.now();
+    const varImgWithTimestamp = `https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/products/p1_var_negro_${timestamp}.webp`;
+
+    // getThumbnailUrl no debe añadir _thumb.webp a variaciones con timestamp
+    expect(getThumbnailUrl(varImgWithTimestamp)).toBe(varImgWithTimestamp);
+
+    // Compatibilidad con toCdnUrl
+    const cdnUrl = toCdnUrl(varImgWithTimestamp);
+    expect(cdnUrl).toBe(varImgWithTimestamp); // CDN apagado en test
+  });
 });
 

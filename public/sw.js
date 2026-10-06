@@ -8,6 +8,7 @@ const CACHE_NAME = "dizi-images-v1";
 const IMAGE_DOMAINS = [
   "zkqzdwxjthjdjchimmds.supabase.co",
   "supabase.co",
+  "b-cdn.net",
 ];
 
 const PRECACHE_ASSETS = [
@@ -45,10 +46,13 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Interceptar peticiones GET de imágenes de Supabase Storage, API del catálogo o imágenes estáticas locales
+  // Interceptar peticiones GET de imágenes de Supabase Storage, CDN Bunny, API del catálogo o imágenes estáticas locales
+  const isCdnImage = url.hostname.endsWith("b-cdn.net");
   const isSupabaseImage =
     IMAGE_DOMAINS.some((domain) => url.hostname.endsWith(domain)) &&
     url.pathname.includes("/storage/v1/object/public/images/");
+
+  const isRemoteImage = isSupabaseImage || isCdnImage;
 
   const isSupabaseApi =
     IMAGE_DOMAINS.some((domain) => url.hostname.endsWith(domain)) &&
@@ -61,14 +65,14 @@ self.addEventListener("fetch", (event) => {
     url.pathname.endsWith(".jpeg") ||
     url.pathname.endsWith(".svg");
 
-  if (event.request.method === "GET" && (isSupabaseImage || isSupabaseApi || isLocalImage)) {
+  if (event.request.method === "GET" && (isRemoteImage || isSupabaseApi || isLocalImage)) {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         const cachedResponse = await cache.match(event.request);
 
         // 1. Estrategia Cache-First pura para imágenes:
         // Si la imagen ya existe en la caché local del dispositivo, responder directamente sin enviar peticiones de red de fondo (0 bytes Egress).
-        if (isSupabaseImage || isLocalImage) {
+        if (isRemoteImage || isLocalImage) {
           if (cachedResponse) {
             return cachedResponse;
           }

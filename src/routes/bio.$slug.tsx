@@ -10,6 +10,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
+import { toCdnUrl } from "@/lib/image-utils";
 import type { Store } from "@/lib/types";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 
@@ -90,12 +91,12 @@ export const Route = createFileRoute("/bio/$slug")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
       ],
-      links: image
+      links: image && !image.includes("og-image.png")
         ? [
             {
               rel: "preload",
               as: "image",
-              href: image,
+              href: toCdnUrl(image),
               fetchPriority: "high",
             },
           ]

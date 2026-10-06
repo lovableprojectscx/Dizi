@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { X, ZoomIn, ZoomOut, RotateCcw, ArrowDown } from "lucide-react";
-import { getOptimizedImageUrl } from "@/lib/image-utils";
+import { getOptimizedImageUrl, toSupabaseUrl } from "@/lib/image-utils";
 
 /**
  * Propiedades del visor modal de zoom de imagen.
@@ -304,7 +304,7 @@ export function ImageZoomModal({ isOpen, onClose, src, alt, title }: ImageZoomMo
 
         <img
           ref={imgRef}
-          src={imgError ? src : highResUrl}
+          src={imgError ? toSupabaseUrl(src) : highResUrl}
           alt={alt || "Imagen ampliada"}
           onLoad={() => setIsLoaded(true)}
           onError={() => {

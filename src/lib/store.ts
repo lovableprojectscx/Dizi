@@ -341,6 +341,16 @@ export function getActiveReferencedPaths(store: Record<string, any>, storeId: st
     store.banners.forEach((b: any) => add(b));
   }
 
+  // 7. products & product variations
+  if (Array.isArray(store.products)) {
+    store.products.forEach((pr: any) => {
+      add(pr.image);
+      if (Array.isArray(pr.variations)) {
+        pr.variations.forEach((v: any) => add(v.image));
+      }
+    });
+  }
+
   return referenced;
 }
 
@@ -453,20 +463,40 @@ export const useApp = create<AppState>()(
               parts.map(async (part: string, index: number) => {
                 if (part.startsWith("data:")) {
                   const uniqueId = Math.random().toString(36).slice(2, 6);
+                  const timestamp = Date.now();
                   return await uploadBase64ToStorage(
                     part,
-                    `${id}/banners/banner_${index}_${uniqueId}.webp`,
+                    `${id}/banners/banner_${index}_${uniqueId}_${timestamp}.webp`,
                   );
                 }
                 return part;
               }),
             );
             (updatedPatch as any).bannerImage = uploadedParts.filter(Boolean).join("|||");
+
+            // Comparar con banners anteriores para limpiar los que fueron reemplazados
+            const oldBannerStr = currentStore?.bannerImage || currentStore?.banner_image;
+            if (typeof oldBannerStr === "string") {
+              const oldParts = oldBannerStr.split("|||").map((b: string) => b.trim()).filter(Boolean);
+              for (const oldPart of oldParts) {
+                const oldPath = extractStoragePath(oldPart, id);
+                if (oldPath) filesToDelete.push(oldPath);
+              }
+            }
           } catch (uploadErr) {
             console.error(
               "[updateStore] Banner upload failed, falling back to original",
               uploadErr,
             );
+          }
+        } else if (patchAny.bannerImage === null) {
+          const oldBannerStr = currentStore?.bannerImage || currentStore?.banner_image;
+          if (typeof oldBannerStr === "string") {
+            const oldParts = oldBannerStr.split("|||").map((b: string) => b.trim()).filter(Boolean);
+            for (const oldPart of oldParts) {
+              const oldPath = extractStoragePath(oldPart, id);
+              if (oldPath) filesToDelete.push(oldPath);
+            }
           }
         }
 
@@ -1054,14 +1084,24 @@ export const useApp = create<AppState>()(
         }
 
         let finalVariations = product.variations || [];
+        const oldVarFilesToDelete: string[] = [];
         if (finalVariations.length > 0) {
           finalVariations = await Promise.all(
             finalVariations.map(async (v) => {
               if (v.image && v.image.startsWith("data:")) {
                 try {
                   const uniqueVarId = v.id || Math.random().toString(36).slice(2, 7);
-                  const varPath = `${storeId}/products/${prodId}_var_${uniqueVarId}.webp`;
+                  const timestamp = Date.now();
+                  const varPath = `${storeId}/products/${prodId}_var_${uniqueVarId}_${timestamp}.webp`;
                   const uploadedVarUrl = await uploadBase64ToStorage(v.image, varPath);
+
+                  // Detectar si existía una imagen previa para esta variación para limpiarla
+                  const prevVar = existingProduct?.variations?.find((oldV: any) => oldV.id === v.id);
+                  if (prevVar?.image && prevVar.image !== uploadedVarUrl) {
+                    const oldPath = extractStoragePath(prevVar.image, storeId);
+                    if (oldPath) oldVarFilesToDelete.push(oldPath);
+                  }
+
                   return { ...v, id: v.id || uniqueVarId, image: uploadedVarUrl };
                 } catch (varUploadErr) {
                   console.error("[upsertProduct] Error subiendo imagen de variación:", varUploadErr);
@@ -1071,6 +1111,17 @@ export const useApp = create<AppState>()(
               return v;
             }),
           );
+
+          // Limpiar imágenes de variaciones que fueron removidas de la lista
+          if (Array.isArray(existingProduct?.variations)) {
+            for (const oldV of existingProduct.variations) {
+              const stillExists = finalVariations.some((newV) => newV.id === oldV.id);
+              if (!stillExists && oldV.image) {
+                const oldPath = extractStoragePath(oldV.image, storeId);
+                if (oldPath) oldVarFilesToDelete.push(oldPath);
+              }
+            }
+          }
         }
 
         const p = {
@@ -1141,6 +1192,18 @@ export const useApp = create<AppState>()(
             throw error;
           }
 
+          // Tras guardar con éxito el producto, limpiar imágenes de variaciones reemplazadas
+          if (oldVarFilesToDelete.length > 0) {
+            const storeAfterProductUpdate = {
+              ...(st || {}),
+              products: (st?.products || []).map((pr) => (pr.id === prodId ? p : pr)),
+            };
+            const safeVarFiles = filterSafeFilesToDelete(oldVarFilesToDelete, storeAfterProductUpdate, storeId);
+            if (safeVarFiles.length > 0) {
+              supabase.storage.from("images").remove(safeVarFiles).catch(() => {});
+            }
+          }
+
           set((s) => ({
             stores: s.stores.map((st) => {
               if (st.id !== storeId) return st;
@@ -1200,6 +1263,24 @@ export const useApp = create<AppState>()(
               }
             } catch (err) {
               console.error("[deleteProduct] Falló la eliminación de la imagen en storage:", err);
+            }
+          }
+
+          // Eliminar imágenes físicas de variaciones si existían
+          if (product && Array.isArray(product.variations)) {
+            try {
+              const varFilesToRemove: string[] = [];
+              for (const v of product.variations) {
+                if (v.image) {
+                  const p = extractStoragePath(v.image, storeId);
+                  if (p) varFilesToRemove.push(p);
+                }
+              }
+              if (varFilesToRemove.length > 0) {
+                supabase.storage.from("images").remove(varFilesToRemove).catch(() => {});
+              }
+            } catch (err) {
+              console.warn("[deleteProduct] Falló la eliminación de imágenes de variación:", err);
             }
           }
 

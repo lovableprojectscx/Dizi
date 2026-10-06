@@ -115,4 +115,67 @@ describe("HOTFIX: Manejador resiliente de errores de imagen y fallback en cascad
     const handleImageErrorCalls = code.match(/handleImageError\(/g) || [];
     expect(handleImageErrorCalls.length).toBeGreaterThanOrEqual(24);
   });
+
+  it("5. Mismo <img> con dos listas distintas seguidas (cambio de variación por React) -> cada una recorre su cadena completa", () => {
+    const list1_thumb = "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/p1_v1_thumb.webp";
+    const list1_orig = "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/p1_v1.webp";
+    const list1 = [list1_thumb, list1_orig, NO_IMAGE_PLACEHOLDER];
+
+    const list2_thumb = "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/p1_v2_thumb.webp";
+    const list2_orig = "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/p1_v2.webp";
+    const list2 = [list2_thumb, list2_orig, NO_IMAGE_PLACEHOLDER];
+
+    const img = createMockImg(list1_thumb);
+
+    // Lista 1: recorre paso 1 y paso 2
+    handleImageError({ currentTarget: img } as any, list1);
+    expect(img.src).toBe(list1_orig);
+    expect(img.getAttribute("data-img-step")).toBe("1");
+
+    handleImageError({ currentTarget: img } as any, list1);
+    expect(img.src).toContain(NO_IMAGE_PLACEHOLDER);
+    expect(img.getAttribute("data-img-step")).toBe("2");
+
+    // React reutiliza el mismo elemento <img> para una variación distinta
+    // img.src se actualiza a list2_thumb, pero el atributo data-img-step anterior era "2"
+    img.src = list2_thumb;
+
+    // Primer fallo de la lista 2: debe avanzar a list2_orig (paso 1), NO saltársela ni ir directo a placeholder
+    handleImageError({ currentTarget: img } as any, list2);
+    expect(img.src).toBe(list2_orig);
+    expect(img.getAttribute("data-img-step")).toBe("1");
+
+    // Segundo fallo de la lista 2: avanza a placeholder
+    handleImageError({ currentTarget: img } as any, list2);
+    expect(img.src).toContain(NO_IMAGE_PLACEHOLDER);
+    expect(img.getAttribute("data-img-step")).toBe("2");
+  });
+
+  it("6. Manejador con la cadena de 4 intentos: [miniatura CDN -> miniatura Supabase -> original Supabase -> placeholder]", () => {
+    const cdnThumb = "https://dizifotos.b-cdn.net/s_demo/products/p1_thumb.webp";
+    const supThumb = "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/products/p1_thumb.webp";
+    const supOrig = "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/s_demo/products/p1.webp";
+    const chain = [cdnThumb, supThumb, supOrig, NO_IMAGE_PLACEHOLDER];
+
+    const img = createMockImg(cdnThumb);
+
+    // 1er intento: falla CDN -> pasa a miniatura de Supabase
+    handleImageError({ currentTarget: img } as any, chain);
+    expect(img.src).toBe(supThumb);
+    expect(img.getAttribute("data-img-step")).toBe("1");
+
+    // 2do intento: falla miniatura Supabase -> pasa a original Supabase
+    handleImageError({ currentTarget: img } as any, chain);
+    expect(img.src).toBe(supOrig);
+    expect(img.getAttribute("data-img-step")).toBe("2");
+
+    // 3er intento: falla original Supabase -> pasa al placeholder
+    handleImageError({ currentTarget: img } as any, chain);
+    expect(img.src).toContain(NO_IMAGE_PLACEHOLDER);
+    expect(img.getAttribute("data-img-step")).toBe("3");
+
+    // 4to intento: placeholder no genera bucle
+    handleImageError({ currentTarget: img } as any, chain);
+    expect(img.src).toContain(NO_IMAGE_PLACEHOLDER);
+  });
 });

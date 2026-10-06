@@ -122,7 +122,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { getOptimizedImageUrl, getThumbnailUrl, handleImageError } from "@/lib/image-utils";
+import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } from "@/lib/image-utils";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 
@@ -1697,7 +1697,7 @@ export function PublicCatalog({
     } else if (bioTheme === "custom") {
       const isCustomImage = !!store.bioBgImage && effectivePlan !== "semilla";
       if (isCustomImage) {
-        background = `url(${store.bioBgImage})`;
+        background = `url(${toCdnUrl(store.bioBgImage)})`;
         isDark = true;
         cardBg = "rgba(255, 255, 255, 0.08)";
         borderCol = "rgba(255, 255, 255, 0.15)";
@@ -8166,7 +8166,7 @@ export function PublicCatalog({
                             >
                               {v.image && (
                                 <img
-                                  src={v.image}
+                                  src={toCdnUrl(v.image)}
                                   alt={v.name}
                                   className="w-5 h-5 rounded-md object-cover border border-zinc-200 dark:border-zinc-700"
                                   onError={(e) => {
