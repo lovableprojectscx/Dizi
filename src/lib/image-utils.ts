@@ -245,3 +245,97 @@ export function getThumbnailUrl(url: string | null | undefined): string {
   return cleanUrl;
 }
 
+/**
+ * Ruta del placeholder neutro cuando una imagen no existe o falla su carga.
+ */
+export const NO_IMAGE_PLACEHOLDER = "/images/sin-foto.svg";
+
+/**
+ * Limpia y normaliza la lista de candidatos de imagen para evitar bucles:
+ * - Filtra valores nulos, indefinidos y cadenas vacías.
+ * - Deduplica preservando el orden original.
+ * - Limpia query params de URLs de Supabase Storage para evitar redundancias.
+ * - Preserva Data URLs en base64 y URLs externas.
+ * - Garantiza que NO_IMAGE_PLACEHOLDER esté siempre al final de la lista.
+ */
+export function cleanImageCandidates(candidates: (string | null | undefined)[]): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  for (const c of candidates) {
+    if (!c || typeof c !== "string") continue;
+    let trimmed = c.trim();
+    if (!trimmed) continue;
+    // Si es URL de Supabase con query params, limpiarla igual que getOptimizedImageUrl
+    if (trimmed.includes("/storage/v1/object/public/images/") && trimmed.includes("?")) {
+      trimmed = trimmed.split("?")[0].trim();
+    }
+    if (seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    result.push(trimmed);
+  }
+
+  // Asegurar que NO_IMAGE_PLACEHOLDER esté presente exactamente una vez al final
+  if (seen.has(NO_IMAGE_PLACEHOLDER)) {
+    const withoutPlaceholder = result.filter((url) => url !== NO_IMAGE_PLACEHOLDER);
+    withoutPlaceholder.push(NO_IMAGE_PLACEHOLDER);
+    return withoutPlaceholder;
+  } else {
+    result.push(NO_IMAGE_PLACEHOLDER);
+    return result;
+  }
+}
+
+/**
+ * Manejador unificado y resiliente de fallos de carga de imágenes (onError).
+ * Recibe una lista de candidatos ordenados por prioridad:
+ *   [miniatura, original, NO_IMAGE_PLACEHOLDER]
+ * Avanza paso a paso registrando el índice en el atributo `data-img-step` del <img>.
+ * Al llegar al placeholder deja de manejar para evitar cualquier bucle infinito.
+ */
+export function handleImageError(
+  event: React.SyntheticEvent<HTMLImageElement, Event> | Event | { currentTarget?: any; target?: any },
+  candidates: (string | null | undefined)[]
+): void {
+  const img = ((event as any)?.currentTarget || (event as any)?.target) as HTMLImageElement | null;
+  if (!img) return;
+
+  const cleanCandidates = cleanImageCandidates(candidates);
+  if (cleanCandidates.length === 0) return;
+
+  // Si la imagen actual ya contiene o termina en sin-foto.svg, detener cualquier bucle
+  const currentSrc = img.src || "";
+  if (currentSrc.includes(NO_IMAGE_PLACEHOLDER) || currentSrc.endsWith("sin-foto.svg")) {
+    img.onerror = null;
+    return;
+  }
+
+  const stepAttr = img.getAttribute("data-img-step");
+  const nextStep = stepAttr !== null ? parseInt(stepAttr, 10) + 1 : 1;
+
+  // Si ya nos encontrábamos en el placeholder o más allá
+  if (stepAttr !== null) {
+    const prevStep = parseInt(stepAttr, 10);
+    if (prevStep >= 0 && prevStep < cleanCandidates.length) {
+      if (cleanCandidates[prevStep] === NO_IMAGE_PLACEHOLDER) {
+        img.onerror = null;
+        return;
+      }
+    }
+  }
+
+  if (nextStep >= cleanCandidates.length) {
+    img.onerror = null;
+    return;
+  }
+
+  const nextUrl = cleanCandidates[nextStep];
+  img.setAttribute("data-img-step", String(nextStep));
+
+  if (nextUrl === NO_IMAGE_PLACEHOLDER) {
+    img.onerror = null;
+  }
+
+  img.src = nextUrl;
+}
+

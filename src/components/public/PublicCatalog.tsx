@@ -122,7 +122,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { getOptimizedImageUrl, getThumbnailUrl } from "@/lib/image-utils";
+import { getOptimizedImageUrl, getThumbnailUrl, handleImageError } from "@/lib/image-utils";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 
@@ -3300,11 +3300,7 @@ export function PublicCatalog({
                                       style={{
                                         borderRadius: `${cfg.imgRounded || "0.5rem"} ${cfg.imgRounded || "0.5rem"} 0 0`,
                                       }}
-                                      onError={(e) => {
-                                        const el = e.target as HTMLImageElement;
-                                        el.onerror = null;
-                                        el.src = NO_IMAGE_PLACEHOLDER;
-                                      }}
+                                      onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                     />
                                     {p.isOnSale && (
                                       <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
@@ -3427,11 +3423,7 @@ export function PublicCatalog({
                       loading={index < 4 ? "eager" : "lazy"}
                       fetchPriority={index < 2 ? "high" : "auto"}
                       decoding="async"
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement;
-                        el.onerror = null;
-                        el.src = NO_IMAGE_PLACEHOLDER;
-                      }}
+                      onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                     />
                     {/* Gradient overlay suave */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
@@ -3742,11 +3734,7 @@ export function PublicCatalog({
                               loading={index < 4 ? "eager" : "lazy"}
                               fetchPriority={index < 2 ? "high" : "auto"}
                               decoding="async"
-                              onError={(e) => {
-                                const el = e.target as HTMLImageElement;
-                                el.onerror = null;
-                                el.src = NO_IMAGE_PLACEHOLDER;
-                              }}
+                              onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                             />
                             {p.isOnSale && (
                               <span
@@ -3976,11 +3964,7 @@ export function PublicCatalog({
                         loading={idx < 4 ? "eager" : "lazy"}
                         fetchPriority={idx < 2 ? "high" : "auto"}
                         decoding="async"
-                        onError={(e) => {
-                          const el = e.target as HTMLImageElement;
-                          el.onerror = null;
-                          el.src = NO_IMAGE_PLACEHOLDER;
-                        }}
+                        onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                       />
                       {p.isOnSale && (
                         <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow-xs">
@@ -4089,10 +4073,7 @@ export function PublicCatalog({
                       loading="eager"
                       fetchPriority="high"
                       decoding="async"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          NO_IMAGE_PLACEHOLDER;
-                      }}
+                      onError={(e) => handleImageError(e, [filtered[0].image, NO_IMAGE_PLACEHOLDER])}
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
                     {filtered[0].isOnSale && (
@@ -4171,11 +4152,7 @@ export function PublicCatalog({
                           fetchPriority={idx < 1 ? "high" : "auto"}
                           decoding="async"
                           style={{ borderRadius: cfg.imgRounded }}
-                          onError={(e) => {
-                            const el = e.target as HTMLImageElement;
-                            el.onerror = null;
-                            el.src = NO_IMAGE_PLACEHOLDER;
-                          }}
+                          onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                         />
                         {p.isOnSale && (
                           <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
@@ -4237,10 +4214,7 @@ export function PublicCatalog({
                           )}
                           alt={p.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              NO_IMAGE_PLACEHOLDER;
-                          }}
+                          onError={(e) => handleImageError(e, [p.image, NO_IMAGE_PLACEHOLDER])}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
                         {p.isOnSale && (
@@ -4314,9 +4288,7 @@ export function PublicCatalog({
                             loading={pi === 0 ? "eager" : "lazy"}
                             fetchPriority={pi === 0 && pidx === 0 ? "high" : "auto"}
                             decoding="async"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
-                            }}
+                            onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                           {p.isOnSale && (
@@ -4399,11 +4371,7 @@ export function PublicCatalog({
                         loading={i < 4 ? "eager" : "lazy"}
                         fetchPriority={i < 2 ? "high" : "auto"}
                         decoding="async"
-                        onError={(e) => {
-                          const el = e.target as HTMLImageElement;
-                          el.onerror = null;
-                          el.src = fallback;
-                        }}
+                        onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                       />
                       {/* Gradient overlay suave */}
                       <div
@@ -4539,11 +4507,7 @@ export function PublicCatalog({
                             loading={gi === 0 ? "eager" : "lazy"}
                             fetchPriority={gi === 0 ? "high" : "auto"}
                             decoding="async"
-                            onError={(e) => {
-                              const el = e.target as HTMLImageElement;
-                              el.onerror = null;
-                              el.src = group[0].image || fallback;
-                            }}
+                            onError={(e) => handleImageError(e, [getThumbnailUrl(group[0].image), group[0].image, NO_IMAGE_PLACEHOLDER])}
                           />
                           <div
                             className="absolute inset-0"
@@ -4627,11 +4591,7 @@ export function PublicCatalog({
                               loading={gi === 0 ? "eager" : "lazy"}
                               fetchPriority={gi === 0 && pidx === 0 ? "high" : "auto"}
                               decoding="async"
-                              onError={(e) => {
-                                const el = e.target as HTMLImageElement;
-                                el.onerror = null;
-                                el.src = fallback;
-                              }}
+                              onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                             />
                             <div
                               className="absolute inset-0"
@@ -4710,11 +4670,7 @@ export function PublicCatalog({
                           loading={i < 4 ? "eager" : "lazy"}
                           fetchPriority={i < 2 ? "high" : "auto"}
                           decoding="async"
-                          onError={(e) => {
-                            const el = e.target as HTMLImageElement;
-                            el.onerror = null;
-                            el.src = fallback;
-                          }}
+                          onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                         />
                         {p.isOnSale && (
                           <span
@@ -4834,11 +4790,7 @@ export function PublicCatalog({
                           loading={idx < 4 ? "eager" : "lazy"}
                           fetchPriority={idx < 2 ? "high" : "auto"}
                           decoding="async"
-                          onError={(e) => {
-                            const el = e.target as HTMLImageElement;
-                            el.onerror = null;
-                            el.src = fallback;
-                          }}
+                          onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                         />
                         {/* Subtle vignette */}
                         <div
@@ -5153,11 +5105,7 @@ export function PublicCatalog({
                                     loading={idx < 3 ? "eager" : "lazy"}
                                     fetchPriority={idx === 0 ? "high" : "auto"}
                                     decoding="async"
-                                    onError={(e) => {
-                                      const el = e.target as HTMLImageElement;
-                                      el.onerror = null;
-                                      el.src = NO_IMAGE_PLACEHOLDER;
-                                    }}
+                                    onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                   />
                                   <div className="absolute top-2 left-2 bg-[var(--primary)] text-[var(--primary-foreground)] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg">
                                     Destacado
@@ -5397,11 +5345,7 @@ export function PublicCatalog({
                                       loading={index < 4 ? "eager" : "lazy"}
                                       fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
-                                      onError={(e) => {
-                                        const el = e.target as HTMLImageElement;
-                                        el.onerror = null;
-                                        el.src = NO_IMAGE_PLACEHOLDER;
-                                      }}
+                                      onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                     />
                                     {p.isOnSale && (
                                       <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg z-10">
@@ -5844,11 +5788,7 @@ export function PublicCatalog({
                                         loading={idx < 3 ? "eager" : "lazy"}
                                         fetchPriority={idx === 0 ? "high" : "auto"}
                                         decoding="async"
-                                        onError={(e) => {
-                                          const el = e.target as HTMLImageElement;
-                                          el.onerror = null;
-                                          el.src = NO_IMAGE_PLACEHOLDER;
-                                        }}
+                                        onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                       />
                                       <div
                                         style={{
@@ -6129,11 +6069,7 @@ export function PublicCatalog({
                                           loading={idx < 4 ? "eager" : "lazy"}
                                           fetchPriority={idx < 2 ? "high" : "auto"}
                                           decoding="async"
-                                          onError={(e) => {
-                                            const el = e.target as HTMLImageElement;
-                                            el.onerror = null;
-                                            el.src = NO_IMAGE_PLACEHOLDER;
-                                          }}
+                                          onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                         />
                                         {p.isOnSale && (
                                           <span
@@ -6581,9 +6517,7 @@ export function PublicCatalog({
                                     loading={idx < 3 ? "eager" : "lazy"}
                                     fetchPriority={idx === 0 ? "high" : "auto"}
                                     decoding="async"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
-                                    }}
+                                    onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                   />
                                   {/* Floating Badge inside image container */}
                                   <div
@@ -6999,9 +6933,7 @@ export function PublicCatalog({
                                       loading={index < 4 ? "eager" : "lazy"}
                                       fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = NO_IMAGE_PLACEHOLDER;
-                                      }}
+                                      onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                                     />
                                     {p.isOnSale && (
                                       <span
@@ -7239,11 +7171,7 @@ export function PublicCatalog({
                           fetchPriority={index < 2 ? "high" : "auto"}
                           decoding="async"
                           style={{ borderRadius: `${cfg.imgRounded} ${cfg.imgRounded} 0 0` }}
-                          onError={(e) => {
-                            const el = e.target as HTMLImageElement;
-                            el.onerror = null;
-                            el.src = NO_IMAGE_PLACEHOLDER;
-                          }}
+                          onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                         />
                         {p.isOnSale && (
                           <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
@@ -7336,11 +7264,7 @@ export function PublicCatalog({
                             fetchPriority={index < 2 ? "high" : "auto"}
                             decoding="async"
                             style={{ borderRadius: cfg.imgRounded }}
-                            onError={(e) => {
-                              const el = e.target as HTMLImageElement;
-                              el.onerror = null;
-                              el.src = NO_IMAGE_PLACEHOLDER;
-                            }}
+                            onError={(e) => handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])}
                           />
                           {p.isOnSale && (
                             <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
@@ -7724,10 +7648,7 @@ export function PublicCatalog({
                     alt={l.product.name}
                     className="h-12 w-12 object-cover shrink-0"
                     style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        NO_IMAGE_PLACEHOLDER;
-                    }}
+                    onError={(e) => handleImageError(e, [itemImg, l.product.image, NO_IMAGE_PLACEHOLDER])}
                   />
                   <div className="flex-1 min-w-0">
                     <p
@@ -8093,10 +8014,7 @@ export function PublicCatalog({
                   alt=""
                   className="absolute inset-0 h-full w-full object-cover blur-2xl opacity-90 select-none pointer-events-none scale-110"
                   aria-hidden="true"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      NO_IMAGE_PLACEHOLDER;
-                  }}
+                  onError={(e) => handleImageError(e, [getThumbnailUrl(displayedImage), displayedImage, NO_IMAGE_PLACEHOLDER])}
                 />
 
                 <img
@@ -8112,10 +8030,7 @@ export function PublicCatalog({
                     if (imgUrl) setZoomImage({ src: imgUrl, title: selectedVariation ? `${viewingProduct.name} (${selectedVariation.name})` : viewingProduct.name });
                   }}
                   decoding="async"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      NO_IMAGE_PLACEHOLDER;
-                  }}
+                  onError={(e) => handleImageError(e, [displayedImage, NO_IMAGE_PLACEHOLDER])}
                 />
 
                 {/* Floating Zoom Indicator Button (Lupa) */}

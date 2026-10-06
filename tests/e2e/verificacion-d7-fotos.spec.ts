@@ -44,15 +44,28 @@ test.describe("D7: Verificación de fotos en 7 tiendas demo en modo celular (360
       const images = page.locator("img");
       await expect(images.first()).toBeVisible({ timeout: 15000 });
 
+      // Scroll para resolver imágenes lazy y permitir que el fallback cargue
+      for (const img of await images.all()) {
+        await img.scrollIntoViewIfNeeded();
+      }
+      await page.waitForTimeout(500);
+
       // Evaluar todas las imágenes de la página: ninguna debe apuntar a Unsplash
       const imgSources = await images.evaluateAll((imgs: HTMLImageElement[]) => imgs.map(i => i.src));
       const unsplashImages = imgSources.filter(src => src.includes("unsplash.com"));
       expect(unsplashImages).toEqual([]);
 
+      // Hotfix: Garantizar que ninguna imagen muestra el placeholder sin-foto.svg
+      const sinFotoImages = imgSources.filter(src => src.includes("sin-foto.svg"));
+      expect(
+        sinFotoImages,
+        `[t/${store.slug}] Se detectaron ${sinFotoImages.length} imágenes mostrando sin-foto.svg.`
+      ).toEqual([]);
+
       // Debe haber al menos una imagen servida desde Supabase Storage
       const supabaseImages = imgSources.filter(src => src.includes("supabase.co/storage/v1/object/public/images"));
       expect(supabaseImages.length).toBeGreaterThan(0);
-      console.log(`[t/${store.slug}] OK: ${supabaseImages.length} fotos de Supabase Storage, 0 de Unsplash.`);
+      console.log(`[t/${store.slug}] OK: ${supabaseImages.length} fotos de Supabase Storage, 0 de Unsplash, 0 sin-foto.svg.`);
     });
 
     test(`[Bio-Link /bio/] ${store.slug} renderiza fotos desde Supabase Storage (0 Unsplash)`, async ({ page }) => {
@@ -71,15 +84,28 @@ test.describe("D7: Verificación de fotos en 7 tiendas demo en modo celular (360
       const images = page.locator("img");
       await expect(images.first()).toBeVisible({ timeout: 15000 });
 
+      // Scroll para resolver imágenes lazy
+      for (const img of await images.all()) {
+        await img.scrollIntoViewIfNeeded();
+      }
+      await page.waitForTimeout(500);
+
       // Evaluar todas las imágenes de la página: ninguna debe apuntar a Unsplash
       const imgSources = await images.evaluateAll((imgs: HTMLImageElement[]) => imgs.map(i => i.src));
       const unsplashImages = imgSources.filter(src => src.includes("unsplash.com"));
       expect(unsplashImages).toEqual([]);
 
+      // Hotfix: Garantizar que ninguna imagen muestra el placeholder sin-foto.svg
+      const sinFotoImages = imgSources.filter(src => src.includes("sin-foto.svg"));
+      expect(
+        sinFotoImages,
+        `[bio/${store.slug}] Se detectaron ${sinFotoImages.length} imágenes mostrando sin-foto.svg.`
+      ).toEqual([]);
+
       // Debe haber imágenes de logo/banners o productos servidas desde Supabase Storage
       const supabaseImages = imgSources.filter(src => src.includes("supabase.co/storage/v1/object/public/images"));
       expect(supabaseImages.length).toBeGreaterThan(0);
-      console.log(`[bio/${store.slug}] OK: ${supabaseImages.length} fotos de Supabase Storage, 0 de Unsplash.`);
+      console.log(`[bio/${store.slug}] OK: ${supabaseImages.length} fotos de Supabase Storage, 0 de Unsplash, 0 sin-foto.svg.`);
     });
   }
 });
