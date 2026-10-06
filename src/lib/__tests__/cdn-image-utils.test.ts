@@ -103,4 +103,37 @@ describe("CDN Bunny (Pull Zone) - toCdnUrl, toSupabaseUrl y getThumbnailUrl", ()
     const supThumb = `${SUPABASE_STORAGE_IMAGES_PREFIX}s_ahorro/products/p1_thumb.webp`;
     expect(cleaned).toEqual([cdnThumb, supThumb, supOrig, NO_IMAGE_PLACEHOLDER]);
   });
+
+  it("9. CSP en vercel.json: b-cdn.net está incluido en img-src y en connect-src para fetch() del service worker", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const vercelConfigPath = path.resolve(__dirname, "../../../vercel.json");
+    const content = fs.readFileSync(vercelConfigPath, "utf-8");
+    const vercelJson = JSON.parse(content);
+
+    const allHeaders = (vercelJson.headers || []).flatMap((h: any) => h.headers || []);
+    const cspHeader = allHeaders.find(
+      (h: any) => h.key === "Content-Security-Policy-Report-Only" || h.key === "Content-Security-Policy",
+    );
+    expect(cspHeader).toBeDefined();
+
+    const cspValue: string = cspHeader.value;
+    const directives = Object.fromEntries(
+      cspValue
+        .split(";")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .map((d) => {
+          const [name, ...vals] = d.split(/\s+/);
+          return [name, vals.join(" ")];
+        }),
+    );
+
+    // img-src debe incluir *.b-cdn.net
+    expect(directives["img-src"]).toContain("https://*.b-cdn.net");
+
+    // connect-src debe incluir *.b-cdn.net (necesario para fetch() en sw.js)
+    expect(directives["connect-src"]).toContain("https://*.b-cdn.net");
+  });
 });
+

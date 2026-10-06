@@ -376,5 +376,53 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
     const cdnUrl = toCdnUrl(varImgWithTimestamp);
     expect(cdnUrl).toBe(varImgWithTimestamp); // CDN apagado en test
   });
+
+  it("11. deleteProduct: una variación que comparte imagen con otro producto no se borra (filterSafeFilesToDelete)", async () => {
+    const { filterSafeFilesToDelete, extractStoragePath } = await import("@/lib/store");
+    const storeId = "s_demo";
+    const sharedVarImg = `https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/${storeId}/products/shared_var_img_123.webp`;
+    const uniqueVarImg = `https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/${storeId}/products/unique_var_img_456.webp`;
+
+    const productToDelete = {
+      id: "prod_delete",
+      name: "Producto A",
+      variations: [
+        { id: "v1", name: "Rojo", image: sharedVarImg },
+        { id: "v2", name: "Azul", image: uniqueVarImg },
+      ],
+    };
+
+    const remainingProduct = {
+      id: "prod_keep",
+      name: "Producto B",
+      variations: [
+        { id: "v3", name: "Rojo Mismo Tono", image: sharedVarImg },
+      ],
+    };
+
+    const mockStore = {
+      id: storeId,
+      products: [productToDelete, remainingProduct],
+    };
+
+    // Al eliminar prod_delete, deleteProduct construye la tienda sin prod_delete
+    const storeWithoutDeleted = {
+      ...mockStore,
+      products: mockStore.products.filter((p) => p.id !== productToDelete.id),
+    };
+
+    const varFilesToRemove = [
+      extractStoragePath(sharedVarImg, storeId)!,
+      extractStoragePath(uniqueVarImg, storeId)!,
+    ];
+
+    const safeFiles = filterSafeFilesToDelete(varFilesToRemove, storeWithoutDeleted, storeId);
+
+    // sharedVarImg sigue referenciada en prod_keep -> NO se borra
+    expect(safeFiles).not.toContain(`${storeId}/products/shared_var_img_123.webp`);
+    // uniqueVarImg ya no está referenciada en ningún producto -> SÍ se borra de manera segura
+    expect(safeFiles).toEqual([`${storeId}/products/unique_var_img_456.webp`]);
+  });
 });
+
 

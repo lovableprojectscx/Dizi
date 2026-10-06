@@ -1266,7 +1266,7 @@ export const useApp = create<AppState>()(
             }
           }
 
-          // Eliminar imágenes físicas de variaciones si existían
+          // Eliminar imágenes físicas de variaciones si existían (protegiendo las compartidas con otros productos)
           if (product && Array.isArray(product.variations)) {
             try {
               const varFilesToRemove: string[] = [];
@@ -1277,7 +1277,14 @@ export const useApp = create<AppState>()(
                 }
               }
               if (varFilesToRemove.length > 0) {
-                supabase.storage.from("images").remove(varFilesToRemove).catch(() => {});
+                const storeWithoutDeletedProduct = {
+                  ...(store || {}),
+                  products: (store?.products || []).filter((p) => p.id !== productId),
+                };
+                const safeVarFiles = filterSafeFilesToDelete(varFilesToRemove, storeWithoutDeletedProduct, storeId);
+                if (safeVarFiles.length > 0) {
+                  supabase.storage.from("images").remove(safeVarFiles).catch(() => {});
+                }
               }
             } catch (err) {
               console.warn("[deleteProduct] Falló la eliminación de imágenes de variación:", err);
