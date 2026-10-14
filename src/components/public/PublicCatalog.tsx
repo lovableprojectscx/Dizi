@@ -126,7 +126,6 @@ import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } fro
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 import {
-  categorySlug,
   cleanCategoryName,
   findCategoryByParam,
   getCategorySlug,
@@ -2312,7 +2311,7 @@ export function PublicCatalog({
       typeof window !== "undefined" && window.location?.origin
         ? window.location.origin
         : undefined;
-    const productUrl = buildStoreUrl(store.slug, { p: product.id }, { origin });
+    const productUrl = buildStoreUrl(store.slug, { p: product.id, origin });
     const shareData = {
       title: `${product.name} — ${store.name}`,
       text: `Mira ${product.name} en ${store.name}: ${formatPrice(product.price)}`,
@@ -2363,7 +2362,7 @@ export function PublicCatalog({
       typeof window !== "undefined" && window.location?.origin
         ? window.location.origin
         : undefined;
-    const categoryUrl = buildStoreUrl(store.slug, { c: catSlug }, { origin });
+    const categoryUrl = buildStoreUrl(store.slug, { c: catSlug, origin });
     const shareData = {
       title: `${catName} — ${store.name}`,
       text: `Mira ${catName} en ${store.name}`,

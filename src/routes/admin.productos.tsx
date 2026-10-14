@@ -2007,7 +2007,7 @@ function ProductsPage() {
   const copyCategoryLink = (c: Category) => {
     const slug = getCategorySlug(store.categories, c);
     const origin = typeof window !== "undefined" ? window.location.origin : undefined;
-    const url = buildStoreUrl(store.slug, { c: slug }, { origin });
+    const url = buildStoreUrl(store.slug, { c: slug, origin });
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(url);
       toast.success("¡Link de la categoría copiado!");
