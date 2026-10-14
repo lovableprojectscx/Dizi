@@ -12,6 +12,7 @@ import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
+import { findCategoryByParam, cleanCategoryName } from "@/lib/category-link";
 import type { Store } from "@/lib/types";
 
 /**
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/t/$slug")({
   head: ({ params, loaderData, search }: any) => {
     const store = loaderData?.store;
     const targetProductId = (search as any)?.p || (search as any)?.producto;
+    const targetCatParam = (search as any)?.c || (search as any)?.categoria;
     const product = store?.products?.find((p: any) => p.id === targetProductId);
 
     const getValidImageUrl = (url?: string | null) => {
@@ -72,6 +74,8 @@ export const Route = createFileRoute("/t/$slug")({
       getValidImageUrl(store?.logo) ||
       "https://dizi.idenza.site/images/og-image.png";
 
+    let canonicalUrl = `https://dizi.idenza.site/t/${params.slug}`;
+
     if (product) {
       title = `${product.name} — ${store?.name || params.slug}`;
       if (product.price) {
@@ -81,9 +85,24 @@ export const Route = createFileRoute("/t/$slug")({
         product.description ||
         `Mira ${product.name} en el catálogo digital de ${store?.name || params.slug}. Pedidos por WhatsApp.`;
       image = getValidImageUrl(product.image) || image;
-    }
+      canonicalUrl = `https://dizi.idenza.site/t/${params.slug}?p=${encodeURIComponent(targetProductId)}`;
+    } else if (targetCatParam && store?.categories) {
+      const matchedCat = findCategoryByParam(store.categories, targetCatParam);
+      if (matchedCat) {
+        const catName = matchedCat.id === "sale" ? "Ofertas" : cleanCategoryName(matchedCat.name);
+        title = `${catName} — ${store?.name || params.slug}`;
+        description = `Mira ${catName} en el catálogo de ${store?.name || params.slug}. Pedidos por WhatsApp.`;
+        canonicalUrl = `https://dizi.idenza.site/t/${params.slug}?c=${encodeURIComponent(targetCatParam)}`;
 
-    const canonicalUrl = `https://dizi.idenza.site/t/${params.slug}${targetProductId ? `?p=${targetProductId}` : ""}`;
+        const catProd =
+          matchedCat.id === "sale"
+            ? store.products?.find((p: any) => p.isOnSale && p.image)
+            : store.products?.find((p: any) => p.categoryId === matchedCat.id && p.image);
+        if (catProd?.image) {
+          image = getValidImageUrl(catProd.image) || image;
+        }
+      }
+    }
 
     const firstBanner = store?.bannerImage ? store.bannerImage.split("|||")[0].trim() : null;
     const firstProductImg = store?.products?.[0]?.image ? store.products[0].image.trim() : null;

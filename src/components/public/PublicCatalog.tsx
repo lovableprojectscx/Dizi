@@ -125,6 +125,13 @@ import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } from "@/lib/image-utils";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
+import {
+  categorySlug,
+  cleanCategoryName,
+  findCategoryByParam,
+  getCategorySlug,
+  buildStoreUrl,
+} from "@/lib/category-link";
 
 const EMPTY_CART: any[] = [];
 const NO_IMAGE_PLACEHOLDER = "/images/sin-foto.svg";
@@ -1273,7 +1280,18 @@ export function PublicCatalog({
   const effectivePlan = getEffectivePlan(store);
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
-  const [activeCat, setActiveCat] = useState<string>("all");
+  const [activeCat, setActiveCat] = useState<string>(() => {
+    if (typeof window !== "undefined" && mode === "catalog") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const catParam = urlParams.get("c") || urlParams.get("categoria");
+      if (catParam && store.categories) {
+        const found = findCategoryByParam(store.categories, catParam);
+        if (found) return found.id;
+      }
+    }
+    return "all";
+  });
+  const isFirstCatRender = useRef(true);
   const [cartOpen, setCartOpen] = useState(false);
   const [isLookbookCatOpen, setIsLookbookCatOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
@@ -2293,8 +2311,8 @@ export function PublicCatalog({
     const origin =
       typeof window !== "undefined" && window.location?.origin
         ? window.location.origin
-        : "https://dizi.idenza.site";
-    const productUrl = `${origin}/t/${store.slug}?p=${product.id}`;
+        : undefined;
+    const productUrl = buildStoreUrl(store.slug, { p: product.id }, { origin });
     const shareData = {
       title: `${product.name} — ${store.name}`,
       text: `Mira ${product.name} en ${store.name}: ${formatPrice(product.price)}`,
@@ -2320,19 +2338,179 @@ export function PublicCatalog({
     }
   };
 
-  /* Auto-abrir producto especifico si la URL contiene el parametro ?p=ID o ?producto=ID */
-  useEffect(() => {
-    if (typeof window !== "undefined" && store.products && store.products.length > 0) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetProductId = urlParams.get("p") || urlParams.get("producto");
-      if (targetProductId) {
-        const found = store.products.find((prod) => prod.id === targetProductId);
-        if (found) {
-          setViewingProduct(found);
+  /* Compartir Enlace Directo de la Categoría Activa */
+  const handleShareCategory = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (activeCat === "all") return;
+
+    let catName = "";
+    let catSlug = "";
+
+    if (activeCat === "sale") {
+      catName = "Ofertas";
+      catSlug = "ofertas";
+    } else {
+      const catObj = store.categories?.find((c) => c.id === activeCat);
+      if (!catObj) return;
+      catName = cleanCategoryName(catObj.name);
+      catSlug = getCategorySlug(store.categories || [], catObj);
+    }
+
+    const origin =
+      typeof window !== "undefined" && window.location?.origin
+        ? window.location.origin
+        : undefined;
+    const categoryUrl = buildStoreUrl(store.slug, { c: catSlug }, { origin });
+    const shareData = {
+      title: `${catName} — ${store.name}`,
+      text: `Mira ${catName} en ${store.name}`,
+      url: categoryUrl,
+    };
+
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast.success("¡Enlace compartido!");
+      } catch (err: any) {
+        if (err?.name !== "AbortError") {
+          navigator.clipboard.writeText(categoryUrl);
+          toast.success("¡Enlace de la categoría copiado!");
         }
       }
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(categoryUrl);
+      toast.success("¡Enlace de la categoría copiado al portapapeles!");
+    } else {
+      fallbackCopy(categoryUrl);
+      toast.success("¡Enlace copiado!");
     }
-  }, [store.products]);
+  };
+
+  /* Sincronización de categoría inicial al montar desde URL ?c= o ?categoria= */
+  useEffect(() => {
+    if (typeof window === "undefined" || mode !== "catalog" || isMockup) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get("c") || urlParams.get("categoria");
+    if (!catParam) return;
+
+    const found = findCategoryByParam(store.categories || [], catParam);
+    if (found) {
+      setActiveCat(found.id);
+      setTimeout(() => {
+        const el = document.getElementById("catalogo");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 150);
+    } else {
+      setActiveCat("all");
+      setTimeout(() => {
+        toast("Esa categoría ya no está disponible", { icon: "ℹ️" });
+      }, 300);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("c");
+      url.searchParams.delete("categoria");
+      window.history.replaceState(null, "", url.toString());
+    }
+  }, []);
+
+  /* Sincronización de URL al cambiar de categoría (history.replaceState) */
+  useEffect(() => {
+    if (isFirstCatRender.current) {
+      isFirstCatRender.current = false;
+      return;
+    }
+    if (mode !== "catalog" || isMockup || typeof window === "undefined") return;
+
+    const url = new URL(window.location.href);
+    if (activeCat === "all") {
+      url.searchParams.delete("c");
+      url.searchParams.delete("categoria");
+    } else if (activeCat === "sale") {
+      url.searchParams.set("c", "ofertas");
+      url.searchParams.delete("categoria");
+    } else {
+      const catObj = store.categories?.find((c) => c.id === activeCat);
+      if (catObj) {
+        const slug = getCategorySlug(store.categories || [], catObj);
+        url.searchParams.set("c", slug);
+        url.searchParams.delete("categoria");
+      }
+    }
+    window.history.replaceState(null, "", url.toString());
+  }, [activeCat, mode, isMockup, store.categories]);
+
+  /* Auto-abrir producto específico si la URL contiene ?p=ID o ?producto=ID (con carga bajo demanda si está >24) */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetProductId = urlParams.get("p") || urlParams.get("producto");
+    if (!targetProductId) return;
+
+    const localFound =
+      allProducts.find((prod) => prod.id === targetProductId) ||
+      store.products?.find((prod) => prod.id === targetProductId);
+
+    if (localFound) {
+      setViewingProduct(localFound);
+      return;
+    }
+
+    let isCancelled = false;
+    const fetchTargetProduct = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, name, price, category_id, image, description, is_on_sale, original_price, visible, is_sample, sort_order, variations, created_at")
+          .eq("id", targetProductId)
+          .eq("store_id", store.id)
+          .eq("visible", true)
+          .maybeSingle();
+
+        if (isCancelled) return;
+
+        if (error || !data || data.is_sample) {
+          toast("Ese producto ya no está disponible", { icon: "ℹ️" });
+          return;
+        }
+
+        const mappedProduct: Product = {
+          id: data.id,
+          name: data.name,
+          price: Number(data.price),
+          categoryId: data.category_id,
+          image: data.image || "",
+          description: data.description,
+          isOnSale: data.is_on_sale,
+          originalPrice: data.original_price ? Number(data.original_price) : undefined,
+          visible: data.visible,
+          isSample: data.is_sample,
+          sortOrder: data.sort_order !== null && data.sort_order !== undefined ? Number(data.sort_order) : 0,
+          variations: Array.isArray(data.variations) ? data.variations : [],
+          createdAt: data.created_at,
+        };
+
+        setAllProducts((prev) => {
+          if (prev.some((p) => p.id === mappedProduct.id)) return prev;
+          return [mappedProduct, ...prev];
+        });
+        setViewingProduct(mappedProduct);
+      } catch {
+        if (!isCancelled) {
+          toast("Ese producto ya no está disponible", { icon: "ℹ️" });
+        }
+      }
+    };
+
+    fetchTargetProduct();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [store.id, store.products]);
 
   /* ── Render ──────────────────────────────────────── */
   return (
@@ -3159,7 +3337,7 @@ export function PublicCatalog({
 
           {/* AREA PRINCIPAL */}
           <div className={cn("w-full", mode === "catalog" && "flex-1 min-w-0")}>
-            {mode === "bio" && (
+            {mode === "bio" ? (
               <div id="catalogo" className="pt-2 mb-6 scroll-mt-20">
                 {bioTypography === "serif" ? (
                   <h2 className="font-serif-editorial text-xl font-normal text-center text-foreground flex items-center justify-center gap-4">
@@ -3174,6 +3352,43 @@ export function PublicCatalog({
                     CATALOGO ONLINE
                     <span className="h-px w-8 bg-muted-foreground/30"></span>
                   </h2>
+                )}
+              </div>
+            ) : (
+              <div id="catalogo" className="scroll-mt-24">
+                {activeCat !== "all" && (
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
+                        {activeCat === "sale" ? (
+                          <>
+                            <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                            Ofertas
+                          </>
+                        ) : (
+                          cleanCategoryName(
+                            activeCategoryObj?.name ||
+                              store.categories.find((c) => c.id === activeCat)?.name ||
+                              "",
+                          )
+                        )}
+                      </h2>
+                      <span className="text-xs text-muted-foreground font-medium">
+                        ({filtered.length} {filtered.length === 1 ? "producto" : "productos"})
+                      </span>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleShareCategory}
+                      className="h-8 gap-1.5 rounded-full text-xs font-semibold px-3 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer"
+                    >
+                      <Share2 className="h-3.5 w-3.5" />
+                      <span>Compartir esta categoría</span>
+                    </Button>
+                  </div>
                 )}
               </div>
             )}
