@@ -464,4 +464,36 @@ test.describe("FASE 4B — Enlace directo de categoría /t/:slug/<categoria> (F3
 
     await page.screenshot({ path: "test-results/fase4b-12-refresco-carrera-resuelto.png", fullPage: false });
   });
+
+  test("13. Encabezado de categoría muestra el total real de productos (activeCategoryObj.productCount) y no solo los cargados", async ({ page }) => {
+    await page.goto("/t/jhoselynperu/manga-corta-cuello-uve");
+    await page.waitForLoadState("domcontentloaded");
+
+    const catalogHeader = page.locator("#catalogo");
+    await expect(catalogHeader).toBeAttached({ timeout: 15000 });
+
+    // Debe mostrar (18 productos) correspondiente al total real de la categoría
+    await expect(page.locator("text=(18 productos)").first()).toBeVisible({ timeout: 10000 });
+
+    await page.screenshot({ path: "test-results/fase4b-13-conteo-total-categoria.png", fullPage: false });
+  });
+
+  test("14. Coincidencia con tildes y mayúsculas: /pañuelos y /PAÑUELOS abren 'PAÑUELOS'", async ({ page }) => {
+    // 1. Con tilde en minúscula /t/jhoselynperu/pañuelos
+    await page.goto("/t/jhoselynperu/pañuelos");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator("#catalogo")).toBeAttached({ timeout: 15000 });
+    await expect(page.locator("button:has-text('Compartir esta categoría')")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=PAÑUELOS").first()).toBeVisible({ timeout: 10000 });
+
+    // 2. Con tilde en mayúscula /t/jhoselynperu/PAÑUELOS
+    await page.goto("/t/jhoselynperu/PAÑUELOS");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator("#catalogo")).toBeAttached({ timeout: 15000 });
+    await expect(page.locator("button:has-text('Compartir esta categoría')")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=PAÑUELOS").first()).toBeVisible({ timeout: 10000 });
+
+    await page.screenshot({ path: "test-results/fase4b-14-tildes-y-mayusculas.png", fullPage: false });
+  });
 });
+

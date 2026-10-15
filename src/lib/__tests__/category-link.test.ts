@@ -50,7 +50,28 @@ describe("findCategoryByParam (F25 / Fase 4A)", () => {
     // Slugs duplicados intencionales para verificar resolución
     { id: "c_dup_1", name: "Vestidos|sparkles" },
     { id: "c_dup_2", name: "Vestidos|shirt" },
+    { id: "c_panuelos", name: "PAÑUELOS|gem" },
   ];
+
+  it("normaliza el parámetro con categorySlug para que /pañuelos, /PAÑUELOS y /panuelos abran 'PAÑUELOS'", () => {
+    // Caso de uso explícito: /pañuelos y /PAÑUELOS abren categoría 'PAÑUELOS'
+    const matchLowerTilde = findCategoryByParam(categories, "pañuelos");
+    expect(matchLowerTilde).not.toBeNull();
+    expect(matchLowerTilde?.id).toBe("c_panuelos");
+
+    const matchUpperTilde = findCategoryByParam(categories, "PAÑUELOS");
+    expect(matchUpperTilde).not.toBeNull();
+    expect(matchUpperTilde?.id).toBe("c_panuelos");
+
+    const matchSlugDirect = findCategoryByParam(categories, "panuelos");
+    expect(matchSlugDirect).not.toBeNull();
+    expect(matchSlugDirect?.id).toBe("c_panuelos");
+
+    // Coincidencia con tildes en 'Cerámica 🇵🇪|flower'
+    expect(findCategoryByParam(categories, "cerámica")?.id).toBe("c_2");
+    expect(findCategoryByParam(categories, "CERÁMICA")?.id).toBe("c_2");
+    expect(findCategoryByParam(categories, "ceramica")?.id).toBe("c_2");
+  });
 
   it("encuentra categoría por slug", () => {
     const found = findCategoryByParam(categories, "flores-follajes");

@@ -31,3 +31,34 @@ describe("Opción 1: TanStack Router con parámetro opcional /t/$slug/{-$categor
     expect(lastMatch.params.categoria).toBe("flores-follajes");
   });
 });
+
+describe("vercel.json rewrite para /t/:slug/:categoria/ (Fase 4B)", () => {
+  it("contiene la regla con barra final /t/:slug/:categoria/ hacia /api/seo con c=:categoria antes de la regla sin barra", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const vercelJsonPath = path.resolve(process.cwd(), "vercel.json");
+    const vercelConfig = JSON.parse(fs.readFileSync(vercelJsonPath, "utf-8"));
+    const rewrites = vercelConfig.rewrites;
+
+    const trailingSlashRule = rewrites.find(
+      (r: any) => r.source === "/t/:slug/:categoria/"
+    );
+    expect(trailingSlashRule).toBeDefined();
+    expect(trailingSlashRule.destination).toBe(
+      "/api/seo?slug=:slug&type=catalog&c=:categoria"
+    );
+
+    const normalRule = rewrites.find(
+      (r: any) => r.source === "/t/:slug/:categoria"
+    );
+    expect(normalRule).toBeDefined();
+    expect(normalRule.destination).toBe(
+      "/api/seo?slug=:slug&type=catalog&c=:categoria"
+    );
+
+    const trailingIndex = rewrites.indexOf(trailingSlashRule);
+    const normalIndex = rewrites.indexOf(normalRule);
+    expect(trailingIndex).toBeLessThan(normalIndex);
+  });
+});
+

@@ -3436,9 +3436,17 @@ export function PublicCatalog({
                           )
                         )}
                       </h2>
-                      <span className="text-xs text-muted-foreground font-medium">
-                        ({filtered.length} {filtered.length === 1 ? "producto" : "productos"})
-                      </span>
+                      {(() => {
+                        const totalCatCount =
+                          activeCat === "sale"
+                            ? productsWithImages.filter((p) => p.isOnSale).length
+                            : (activeCategoryObj?.productCount ?? filtered.length);
+                        return (
+                          <span className="text-xs text-muted-foreground font-medium">
+                            ({totalCatCount} {totalCatCount === 1 ? "producto" : "productos"})
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <Button

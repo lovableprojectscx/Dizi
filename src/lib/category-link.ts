@@ -111,22 +111,25 @@ export function findCategoryByParam<T extends CategoryLike>(
 ): T | { id: "sale"; name: "Ofertas" } | null {
   if (!param || !param.trim()) return null;
   const p = param.trim();
+  const pSlug = categorySlug(p);
+  const pLower = p.toLowerCase();
 
-  if (p.toLowerCase() === "ofertas") {
+  if (pLower === "ofertas" || pSlug === "ofertas") {
     return { id: "sale", name: "Ofertas" };
   }
 
   const slugMap = getCategorySlugMap(categories);
 
-  // 1. Por slug
-  const matchBySlug = categories.find(
-    (c) => slugMap.get(c.id)?.toLowerCase() === p.toLowerCase()
-  );
+  // 1. Por slug (coincidencia con slug normalizado con categorySlug o param directo en minúsculas)
+  const matchBySlug = categories.find((c) => {
+    const catSlug = slugMap.get(c.id)?.toLowerCase();
+    return (pSlug && catSlug === pSlug) || catSlug === pLower;
+  });
   if (matchBySlug) return matchBySlug;
 
   // 2. Por ID directo
   const matchById = categories.find(
-    (c) => c.id.toLowerCase() === p.toLowerCase()
+    (c) => c.id.toLowerCase() === pLower
   );
   if (matchById) return matchById;
 

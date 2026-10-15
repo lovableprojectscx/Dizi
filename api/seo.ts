@@ -55,15 +55,19 @@ function findCategoryByParam(
 ): CategoryLike | { id: "sale"; name: "Ofertas" } | null {
   if (!param || !param.trim()) return null;
   const p = param.trim();
-  if (p.toLowerCase() === "ofertas") {
+  const pSlug = categorySlug(p);
+  const pLower = p.toLowerCase();
+
+  if (pLower === "ofertas" || pSlug === "ofertas") {
     return { id: "sale", name: "Ofertas" };
   }
   const slugMap = getCategorySlugMap(categories);
-  const matchBySlug = categories.find(
-    (c) => slugMap.get(c.id)?.toLowerCase() === p.toLowerCase(),
-  );
+  const matchBySlug = categories.find((c) => {
+    const catSlug = slugMap.get(c.id)?.toLowerCase();
+    return (pSlug && catSlug === pSlug) || catSlug === pLower;
+  });
   if (matchBySlug) return matchBySlug;
-  const matchById = categories.find((c) => c.id.toLowerCase() === p.toLowerCase());
+  const matchById = categories.find((c) => c.id.toLowerCase() === pLower);
   return matchById || null;
 }
 
