@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Route as CatalogRoute } from "@/routes/t.$slug";
+import { Route as CatalogRoute } from "@/routes/t.$slug.{-$categoria}";
 
 describe("Pruebas Unitarias del Catálogo Demo Creado: Valeria Boutique (Moda Mujer)", () => {
   const mockValeriaStore = {

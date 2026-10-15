@@ -58,7 +58,7 @@ test.describe("FASE 4A — Compartir categoría del catálogo (F25)", () => {
     await expect(catBtn).toBeVisible({ timeout: 5000 });
     await catBtn.click();
     await page.waitForTimeout(500);
-    expect(page.url()).toContain("c=flores-follajes");
+    expect(page.url()).toMatch(/(c=flores-follajes|\/flores-follajes)/);
 
     // 4. Volver a 'Todos' desde el drawer que sigue abierto
     const allBtn = page.locator("[role='dialog'] button:has-text('Todos')").first();
@@ -91,7 +91,7 @@ test.describe("FASE 4A — Compartir categoría del catálogo (F25)", () => {
     try {
       const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
       if (clipboardContent) {
-        expect(clipboardContent).toContain("/t/catalogo?c=flores-follajes");
+        expect(clipboardContent).toMatch(/\/t\/catalogo(\/|\?c=)flores-follajes/);
       }
     } catch {}
 
@@ -251,7 +251,7 @@ test.describe("FASE 4A — Compartir categoría del catálogo (F25)", () => {
     try {
       const clipboardContent = await page.evaluate(() => navigator.clipboard.readText());
       if (clipboardContent) {
-        expect(clipboardContent).toContain("/t/tienda-audit?c=flores-follajes");
+        expect(clipboardContent).toMatch(/\/t\/tienda-audit(\/|\?c=)flores-follajes/);
       }
     } catch {}
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Route as CatalogRoute } from "@/routes/t.$slug";
+import { Route as CatalogRoute } from "@/routes/t.$slug.{-$categoria}";
 import { Route as BioRoute } from "@/routes/bio.$slug";
 
 describe("Pruebas Unitarias de Meta Etiquetas Open Graph para Previsualizaciones de WhatsApp y Redes", () => {

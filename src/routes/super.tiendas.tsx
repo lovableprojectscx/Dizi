@@ -527,8 +527,8 @@ function TenantsPage() {
                             )}
                           </div>
                           <Link
-                            to="/t/$slug"
-                            params={{ slug: s.slug }}
+                            to="/t/$slug/{-$categoria}"
+                            params={{ slug: s.slug, categoria: undefined }}
                             target="_blank"
                             className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-0.5 mt-0.5 font-mono"
                           >
@@ -651,8 +651,8 @@ function TenantsPage() {
                     )}
                   </div>
                   <Link
-                    to="/t/$slug"
-                    params={{ slug: s.slug }}
+                    to="/t/$slug/{-$categoria}"
+                    params={{ slug: s.slug, categoria: undefined }}
                     target="_blank"
                     className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-0.5 mt-0.5"
                   >

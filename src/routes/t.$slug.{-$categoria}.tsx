@@ -12,7 +12,7 @@ import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
-import { findCategoryByParam, cleanCategoryName } from "@/lib/category-link";
+import { findCategoryByParam, cleanCategoryName, getCategorySlug } from "@/lib/category-link";
 import type { Store } from "@/lib/types";
 
 /**
@@ -32,19 +32,35 @@ export function getLocalStoreCache(slug: string): Store | null {
   }
 }
 
+export function isStoreCacheFresh(slug: string, maxAgeMs: number = 60_000): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const raw =
+      localStorage.getItem(`dizi_store_cache_${slug}`) ||
+      sessionStorage.getItem(`dizi_store_cache_${slug}`);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    const age = Date.now() - (parsed.verifiedAt || parsed.ts || 0);
+    return age < maxAgeMs;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Definición de la ruta de TanStack Router para `/t/$slug`.
  * Configura tiempos de retención en caché (`staleTime: 5 min`, `gcTime: 15 min`),
  * cargador de datos (`loader`), generador de metadatos SEO (`head`) y pantalla de error.
  */
-export const Route = createFileRoute("/t/$slug")({
+export const Route = createFileRoute("/t/$slug/{-$categoria}")({
   staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
   gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
   loader: async ({ params }) => {
     // Si existe copia guardada en caché local, devolverla de inmediato para renderizado instantáneo
     const cachedStore = getLocalStoreCache(params.slug);
     if (cachedStore) {
-      return { store: cachedStore, isFromCache: true };
+      const isFresh = isStoreCacheFresh(params.slug, 60_000);
+      return { store: cachedStore, isFromCache: !isFresh };
     }
 
     // Sin copia en caché: realizar carga directa con reintentos automáticos
@@ -54,7 +70,7 @@ export const Route = createFileRoute("/t/$slug")({
   head: ({ params, loaderData, search }: any) => {
     const store = loaderData?.store;
     const targetProductId = (search as any)?.p || (search as any)?.producto;
-    const targetCatParam = (search as any)?.c || (search as any)?.categoria;
+    const targetCatParam = params.categoria || (search as any)?.c || (search as any)?.categoria;
     const product = store?.products?.find((p: any) => p.id === targetProductId);
 
     const getValidImageUrl = (url?: string | null) => {
@@ -92,7 +108,9 @@ export const Route = createFileRoute("/t/$slug")({
         const catName = matchedCat.id === "sale" ? "Ofertas" : cleanCategoryName(matchedCat.name);
         title = `${catName} — ${store?.name || params.slug}`;
         description = `Mira ${catName} en el catálogo de ${store?.name || params.slug}. Pedidos por WhatsApp.`;
-        canonicalUrl = `https://dizi.idenza.site/t/${params.slug}?c=${encodeURIComponent(targetCatParam)}`;
+        const catSlug =
+          matchedCat.id === "sale" ? "ofertas" : getCategorySlug(store.categories, matchedCat);
+        canonicalUrl = `https://dizi.idenza.site/t/${params.slug}/${encodeURIComponent(catSlug)}`;
 
         const catProd =
           matchedCat.id === "sale"
@@ -308,7 +326,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
  * Valida si la tienda existe y se encuentra activa antes de renderizar `PublicCatalog`.
  */
 function StorePublic() {
-  const { slug } = Route.useParams();
+  const { slug, categoria } = Route.useParams();
   const loaderData = Route.useLoaderData();
   const [store, setStore] = useState<Store | null>(loaderData.store);
   const [showCachedNotice, setShowCachedNotice] = useState<boolean>(false);
@@ -378,7 +396,7 @@ function StorePublic() {
           <span>Mostrando la última versión guardada</span>
         </div>
       )}
-      <PublicCatalog store={store} mode="catalog" />
+      <PublicCatalog store={store} mode="catalog" initialCategory={categoria} />
     </>
   );
 }

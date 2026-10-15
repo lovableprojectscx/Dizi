@@ -152,8 +152,11 @@ export function buildStoreUrl(slug: string, options: BuildStoreUrlOptions = {}):
       ? window.location.origin
       : "https://dizi.idenza.site");
 
-  const cleanSlug = slug.replace(/^\/?t\//, "").replace(/^\//, "");
-  const url = new URL(`/t/${cleanSlug}`, origin);
+  const cleanSlug = slug.replace(/^\/?t\//, "").replace(/^\//, "").replace(/\/$/, "");
+  const basePath = options.c
+    ? `/t/${cleanSlug}/${encodeURIComponent(options.c)}`
+    : `/t/${cleanSlug}`;
+  const url = new URL(basePath, origin);
 
   let refToUse = options.ref;
   if (!refToUse && typeof window !== "undefined" && window.location?.search) {
@@ -166,10 +169,6 @@ export function buildStoreUrl(slug: string, options: BuildStoreUrlOptions = {}):
 
   if (refToUse) {
     url.searchParams.set("ref", refToUse);
-  }
-
-  if (options.c) {
-    url.searchParams.set("c", options.c);
   }
 
   if (options.p) {

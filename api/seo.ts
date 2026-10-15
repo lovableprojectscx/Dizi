@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { findCategoryByParam, cleanCategoryName } from "../src/lib/category-link";
+import { findCategoryByParam, cleanCategoryName, getCategorySlug } from "../src/lib/category-link";
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL ||
@@ -194,7 +194,9 @@ export default async function handler(req: any, res: any) {
                 const catName = matchedCat.id === "sale" ? "Ofertas" : cleanCategoryName(matchedCat.name);
                 title = `${catName} — ${store.name}`;
                 description = `Mira ${catName} en el catálogo de ${store.name}. Pedidos por WhatsApp.`;
-                canonicalUrl = `https://dizi.idenza.site/t/${slug}?c=${encodeURIComponent(targetCategoryParam)}`;
+                const catSlug =
+                  matchedCat.id === "sale" ? "ofertas" : getCategorySlug(categories, matchedCat);
+                canonicalUrl = `https://dizi.idenza.site/t/${slug}/${encodeURIComponent(catSlug)}`;
 
                 // Imagen: primer producto visible de la categoría (orden sort_order asc nulls last, created_at desc)
                 const prodFilter =

@@ -92,18 +92,18 @@ describe("findCategoryByParam (F25 / Fase 4A)", () => {
   });
 });
 
-describe("buildStoreUrl (F25 / Fase 4A)", () => {
+describe("buildStoreUrl (F25 / Fase 4A & F36 / Fase 4B)", () => {
   it("arma URLs sin parámetros adicionales", () => {
     const url = buildStoreUrl("catalogo", { origin: "https://dizi.site" });
     expect(url).toBe("https://dizi.site/t/catalogo");
   });
 
-  it("arma URLs con parámetro de categoría ?c=", () => {
+  it("arma URLs con categoría en formato de ruta /t/:slug/:c", () => {
     const url = buildStoreUrl("catalogo", {
       c: "flores-follajes",
       origin: "https://dizi.site",
     });
-    expect(url).toBe("https://dizi.site/t/catalogo?c=flores-follajes");
+    expect(url).toBe("https://dizi.site/t/catalogo/flores-follajes");
   });
 
   it("arma URLs con parámetro de producto ?p=", () => {
@@ -114,22 +114,38 @@ describe("buildStoreUrl (F25 / Fase 4A)", () => {
     expect(url).toBe("https://dizi.site/t/catalogo?p=prod_123");
   });
 
-  it("arma URLs con categoría y producto juntos", () => {
+  it("arma URLs con categoría en ruta y producto en query (?p=)", () => {
     const url = buildStoreUrl("catalogo", {
       c: "flores-follajes",
       p: "prod_123",
       origin: "https://dizi.site",
     });
-    expect(url).toBe("https://dizi.site/t/catalogo?c=flores-follajes&p=prod_123");
+    expect(url).toBe("https://dizi.site/t/catalogo/flores-follajes?p=prod_123");
   });
 
-  it("conserva el parámetro ref explícito", () => {
+  it("arma URLs para ofertas en ruta /t/:slug/ofertas", () => {
+    const url = buildStoreUrl("catalogo", {
+      c: "ofertas",
+      origin: "https://dizi.site",
+    });
+    expect(url).toBe("https://dizi.site/t/catalogo/ofertas");
+  });
+
+  it("codifica caracteres especiales, ñ y tildes en la ruta", () => {
+    const url = buildStoreUrl("catalogo", {
+      c: "diseño-otoño",
+      origin: "https://dizi.site",
+    });
+    expect(url).toBe("https://dizi.site/t/catalogo/dise%C3%B1o-oto%C3%B1o");
+  });
+
+  it("conserva el parámetro ref explícito en la query", () => {
     const url = buildStoreUrl("catalogo", {
       c: "ceramica",
       ref: "influencer1",
       origin: "https://dizi.site",
     });
-    expect(url).toBe("https://dizi.site/t/catalogo?ref=influencer1&c=ceramica");
+    expect(url).toBe("https://dizi.site/t/catalogo/ceramica?ref=influencer1");
   });
 
   it("usa fallback de dominio dizi.idenza.site si no hay origin provisto ni window", () => {

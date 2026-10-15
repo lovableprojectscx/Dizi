@@ -1271,20 +1271,42 @@ export function PublicCatalog({
   store,
   mode,
   isMockup = false,
+  initialCategory,
 }: {
   store: Store;
   mode: "catalog" | "bio";
   isMockup?: boolean;
+  initialCategory?: string;
 }) {
   const effectivePlan = getEffectivePlan(store);
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>(() => {
     if (typeof window !== "undefined" && mode === "catalog") {
-      const urlParams = new URLSearchParams(window.location.search);
-      const catParam = urlParams.get("c") || urlParams.get("categoria");
-      if (catParam && store.categories) {
-        const found = findCategoryByParam(store.categories, catParam);
+      let rawCat: string | null = null;
+      if (initialCategory) {
+        try {
+          rawCat = decodeURIComponent(initialCategory);
+        } catch {
+          rawCat = initialCategory;
+        }
+      } else {
+        const match = window.location.pathname.match(/^\/t\/[^/]+\/([^/]+)\/?$/i);
+        if (match && match[1]) {
+          try {
+            rawCat = decodeURIComponent(match[1]);
+          } catch {
+            rawCat = match[1];
+          }
+        }
+      }
+      if (!rawCat) {
+        const urlParams = new URLSearchParams(window.location.search);
+        rawCat = urlParams.get("c") || urlParams.get("categoria");
+      }
+
+      if (rawCat && store.categories) {
+        const found = findCategoryByParam(store.categories, rawCat);
         if (found) return found.id;
       }
     }
@@ -2388,14 +2410,40 @@ export function PublicCatalog({
     }
   };
 
-  /* Sincronización de categoría inicial al montar desde URL ?c= o ?categoria= */
+  /* Sincronización de categoría inicial al montar desde URL (/t/:slug/:cat o ?c=) */
   useEffect(() => {
     if (typeof window === "undefined" || mode !== "catalog" || isMockup) return;
-    const urlParams = new URLSearchParams(window.location.search);
-    const catParam = urlParams.get("c") || urlParams.get("categoria");
-    if (!catParam) return;
 
-    const found = findCategoryByParam(store.categories || [], catParam);
+    let rawCat: string | null = null;
+    let isFromRoutePath = false;
+
+    if (initialCategory) {
+      try {
+        rawCat = decodeURIComponent(initialCategory);
+      } catch {
+        rawCat = initialCategory;
+      }
+      isFromRoutePath = true;
+    } else {
+      const match = window.location.pathname.match(/^\/t\/[^/]+\/([^/]+)\/?$/i);
+      if (match && match[1]) {
+        try {
+          rawCat = decodeURIComponent(match[1]);
+        } catch {
+          rawCat = match[1];
+        }
+        isFromRoutePath = true;
+      }
+    }
+
+    if (!rawCat) {
+      const urlParams = new URLSearchParams(window.location.search);
+      rawCat = urlParams.get("c") || urlParams.get("categoria");
+    }
+
+    if (!rawCat) return;
+
+    const found = findCategoryByParam(store.categories || [], rawCat);
     if (found) {
       setActiveCat(found.id);
       setTimeout(() => {
@@ -2404,7 +2452,20 @@ export function PublicCatalog({
           el.scrollIntoView({ behavior: "smooth" });
         }
       }, 150);
+
+      // Si vino por query param (?c=), normalizar la barra de direcciones al formato de ruta /t/:slug/<cat>
+      if (!isFromRoutePath) {
+        const catSlug =
+          found.id === "sale" ? "ofertas" : getCategorySlug(store.categories || [], found);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("c");
+        url.searchParams.delete("categoria");
+        const cleanSlug = store.slug.replace(/^\/?t\//, "").replace(/^\//, "").replace(/\/$/, "");
+        url.pathname = `/t/${cleanSlug}/${encodeURIComponent(catSlug)}`;
+        window.history.replaceState(null, "", url.pathname + url.search);
+      }
     } else {
+      // Categoría inexistente: catálogo completo, aviso discreto y replaceState a /t/:slug conservando ?p=, ref, utm_*
       setActiveCat("all");
       setTimeout(() => {
         toast("Esa categoría ya no está disponible", { icon: "ℹ️" });
@@ -2412,9 +2473,11 @@ export function PublicCatalog({
       const url = new URL(window.location.href);
       url.searchParams.delete("c");
       url.searchParams.delete("categoria");
-      window.history.replaceState(null, "", url.toString());
+      const cleanSlug = store.slug.replace(/^\/?t\//, "").replace(/^\//, "").replace(/\/$/, "");
+      url.pathname = `/t/${cleanSlug}`;
+      window.history.replaceState(null, "", url.pathname + url.search);
     }
-  }, []);
+  }, [initialCategory, mode, isMockup, store.categories, store.slug]);
 
   /* Sincronización de URL al cambiar de categoría (history.replaceState) */
   useEffect(() => {
@@ -2425,22 +2488,23 @@ export function PublicCatalog({
     if (mode !== "catalog" || isMockup || typeof window === "undefined") return;
 
     const url = new URL(window.location.href);
+    url.searchParams.delete("c");
+    url.searchParams.delete("categoria");
+    const cleanSlug = store.slug.replace(/^\/?t\//, "").replace(/^\//, "").replace(/\/$/, "");
+
     if (activeCat === "all") {
-      url.searchParams.delete("c");
-      url.searchParams.delete("categoria");
+      url.pathname = `/t/${cleanSlug}`;
     } else if (activeCat === "sale") {
-      url.searchParams.set("c", "ofertas");
-      url.searchParams.delete("categoria");
+      url.pathname = `/t/${cleanSlug}/ofertas`;
     } else {
       const catObj = store.categories?.find((c) => c.id === activeCat);
       if (catObj) {
         const slug = getCategorySlug(store.categories || [], catObj);
-        url.searchParams.set("c", slug);
-        url.searchParams.delete("categoria");
+        url.pathname = `/t/${cleanSlug}/${encodeURIComponent(slug)}`;
       }
     }
-    window.history.replaceState(null, "", url.toString());
-  }, [activeCat, mode, isMockup, store.categories]);
+    window.history.replaceState(null, "", url.pathname + url.search);
+  }, [activeCat, mode, isMockup, store.categories, store.slug]);
 
   /* Auto-abrir producto específico si la URL contiene ?p=ID o ?producto=ID (con carga bajo demanda si está >24) */
   useEffect(() => {
@@ -7592,8 +7656,8 @@ export function PublicCatalog({
 
                   return (
                     <Link
-                      to="/t/$slug"
-                      params={{ slug: store.slug }}
+                      to="/t/$slug/{-$categoria}"
+                      params={{ slug: store.slug, categoria: undefined }}
                       className={cn(
                         "relative w-full max-w-md mx-auto p-1.5 pr-6 font-extrabold uppercase text-xs tracking-widest transition-all duration-300 flex items-center shadow-md hover:scale-[1.02] active:scale-[0.98] border select-none group overflow-hidden hover:shadow-[0_0_20px_var(--hover-glow)] cursor-pointer",
                         radiusClass,

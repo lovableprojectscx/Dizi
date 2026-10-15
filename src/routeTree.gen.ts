@@ -20,7 +20,6 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SuperIndexRouteImport } from './routes/super.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as TSlugRouteImport } from './routes/t.$slug'
 import { Route as SuperTiendasRouteImport } from './routes/super.tiendas'
 import { Route as SuperReferidosRouteImport } from './routes/super.referidos'
 import { Route as SuperPromocionesRouteImport } from './routes/super.promociones'
@@ -36,6 +35,7 @@ import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
 import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as TSlugChar123CategoriaChar125RouteImport } from './routes/t.$slug.{-$categoria}'
 
 const TerminosRoute = TerminosRouteImport.update({
   id: '/terminos',
@@ -91,11 +91,6 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
-} as any)
-const TSlugRoute = TSlugRouteImport.update({
-  id: '/t/$slug',
-  path: '/t/$slug',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const SuperTiendasRoute = SuperTiendasRouteImport.update({
   id: '/tiendas',
@@ -172,6 +167,12 @@ const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AdminRoute,
 } as any)
+const TSlugChar123CategoriaChar125Route =
+  TSlugChar123CategoriaChar125RouteImport.update({
+    id: '/t/$slug/{-$categoria}',
+    path: '/t/$slug/{-$categoria}',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -198,9 +199,9 @@ export interface FileRoutesByFullPath {
   '/super/promociones': typeof SuperPromocionesRoute
   '/super/referidos': typeof SuperReferidosRoute
   '/super/tiendas': typeof SuperTiendasRoute
-  '/t/$slug': typeof TSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/super/': typeof SuperIndexRoute
+  '/t/$slug/{-$categoria}': typeof TSlugChar123CategoriaChar125Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -225,9 +226,9 @@ export interface FileRoutesByTo {
   '/super/promociones': typeof SuperPromocionesRoute
   '/super/referidos': typeof SuperReferidosRoute
   '/super/tiendas': typeof SuperTiendasRoute
-  '/t/$slug': typeof TSlugRoute
   '/admin': typeof AdminIndexRoute
   '/super': typeof SuperIndexRoute
+  '/t/$slug/{-$categoria}': typeof TSlugChar123CategoriaChar125Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -255,9 +256,9 @@ export interface FileRoutesById {
   '/super/promociones': typeof SuperPromocionesRoute
   '/super/referidos': typeof SuperReferidosRoute
   '/super/tiendas': typeof SuperTiendasRoute
-  '/t/$slug': typeof TSlugRoute
   '/admin/': typeof AdminIndexRoute
   '/super/': typeof SuperIndexRoute
+  '/t/$slug/{-$categoria}': typeof TSlugChar123CategoriaChar125Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -286,9 +287,9 @@ export interface FileRouteTypes {
     | '/super/promociones'
     | '/super/referidos'
     | '/super/tiendas'
-    | '/t/$slug'
     | '/admin/'
     | '/super/'
+    | '/t/$slug/{-$categoria}'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -313,9 +314,9 @@ export interface FileRouteTypes {
     | '/super/promociones'
     | '/super/referidos'
     | '/super/tiendas'
-    | '/t/$slug'
     | '/admin'
     | '/super'
+    | '/t/$slug/{-$categoria}'
   id:
     | '__root__'
     | '/'
@@ -342,9 +343,9 @@ export interface FileRouteTypes {
     | '/super/promociones'
     | '/super/referidos'
     | '/super/tiendas'
-    | '/t/$slug'
     | '/admin/'
     | '/super/'
+    | '/t/$slug/{-$categoria}'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -358,7 +359,7 @@ export interface RootRouteChildren {
   SuperRoute: typeof SuperRouteWithChildren
   TerminosRoute: typeof TerminosRoute
   BioSlugRoute: typeof BioSlugRoute
-  TSlugRoute: typeof TSlugRoute
+  TSlugChar123CategoriaChar125Route: typeof TSlugChar123CategoriaChar125Route
 }
 
 declare module '@tanstack/react-router' {
@@ -439,13 +440,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
-    }
-    '/t/$slug': {
-      id: '/t/$slug'
-      path: '/t/$slug'
-      fullPath: '/t/$slug'
-      preLoaderRoute: typeof TSlugRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/super/tiendas': {
       id: '/super/tiendas'
@@ -552,6 +546,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCategoriasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/t/$slug/{-$categoria}': {
+      id: '/t/$slug/{-$categoria}'
+      path: '/t/$slug/{-$categoria}'
+      fullPath: '/t/$slug/{-$categoria}'
+      preLoaderRoute: typeof TSlugChar123CategoriaChar125RouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -614,7 +615,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuperRoute: SuperRouteWithChildren,
   TerminosRoute: TerminosRoute,
   BioSlugRoute: BioSlugRoute,
-  TSlugRoute: TSlugRoute,
+  TSlugChar123CategoriaChar125Route: TSlugChar123CategoriaChar125Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
