@@ -1,6 +1,71 @@
 import fs from "fs";
 import path from "path";
-import { findCategoryByParam, cleanCategoryName, getCategorySlug } from "../src/lib/category-link";
+
+interface CategoryLike {
+  id: string;
+  name: string;
+  icon?: string;
+  productCount?: number;
+}
+
+function cleanCategoryName(rawName?: string | null): string {
+  if (!rawName) return "";
+  return rawName.split("|")[0].trim();
+}
+
+function categorySlug(name?: string | null, fallbackId?: string): string {
+  if (!name || typeof name !== "string") {
+    return fallbackId || "";
+  }
+  let s = name.split("|")[0];
+  s = s.replace(/\p{Extended_Pictographic}/gu, "");
+  s = s.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}]/gu, "");
+  s = s.toLowerCase();
+  s = s.replace(/&/g, " ");
+  s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  s = s.replace(/[^a-z0-9]+/g, "-");
+  s = s.replace(/-+/g, "-").replace(/^-+|-+$/g, "");
+  return s || fallbackId || "";
+}
+
+function getCategorySlugMap(categories: CategoryLike[]): Map<string, string> {
+  const slugMap = new Map<string, string>();
+  const usedSlugs = new Set<string>();
+  for (const cat of categories) {
+    const rawSlug = categorySlug(cat.name, cat.id);
+    if (!rawSlug || usedSlugs.has(rawSlug.toLowerCase())) {
+      slugMap.set(cat.id, cat.id);
+      usedSlugs.add(cat.id.toLowerCase());
+    } else {
+      slugMap.set(cat.id, rawSlug);
+      usedSlugs.add(rawSlug.toLowerCase());
+    }
+  }
+  return slugMap;
+}
+
+function getCategorySlug(categories: CategoryLike[], category: CategoryLike): string {
+  const map = getCategorySlugMap(categories);
+  return map.get(category.id) || categorySlug(category.name, category.id) || category.id;
+}
+
+function findCategoryByParam(
+  categories: CategoryLike[],
+  param?: string | null,
+): CategoryLike | { id: "sale"; name: "Ofertas" } | null {
+  if (!param || !param.trim()) return null;
+  const p = param.trim();
+  if (p.toLowerCase() === "ofertas") {
+    return { id: "sale", name: "Ofertas" };
+  }
+  const slugMap = getCategorySlugMap(categories);
+  const matchBySlug = categories.find(
+    (c) => slugMap.get(c.id)?.toLowerCase() === p.toLowerCase(),
+  );
+  if (matchBySlug) return matchBySlug;
+  const matchById = categories.find((c) => c.id.toLowerCase() === p.toLowerCase());
+  return matchById || null;
+}
 
 const SUPABASE_URL =
   process.env.VITE_SUPABASE_URL ||
@@ -299,12 +364,25 @@ export default async function handler(req: any, res: any) {
 
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=600");
-      return res.status(200).send(html);
+      if (typeof res.status === "function") {
+        const s = res.status(200);
+        if (s && typeof s.send === "function") {
+          return s.send(html);
+        }
+      }
+      res.statusCode = 200;
+      return res.end(html);
     }
   } catch (err: any) {
     console.error("[SEO Middleware] Error serving HTML:", err);
   }
 
   // Fallback: If anything fails, redirect to home
-  return res.redirect("/");
+  if (typeof res.redirect === "function") {
+    return res.redirect("/");
+  }
+  if (typeof res.writeHead === "function") {
+    res.writeHead(302, { Location: "/" });
+  }
+  return res.end();
 }
