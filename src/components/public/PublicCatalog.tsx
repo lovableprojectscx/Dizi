@@ -2005,6 +2005,8 @@ export function PublicCatalog({
     return rawFiltered.slice(0, visibleLimit);
   }, [rawFiltered, visibleLimit]);
 
+  const isNarrowing = activeCat !== "all" || query.trim() !== "" || priceRange !== null;
+
   const activeCategoryObj = useMemo(() => {
     return store?.categories?.find((c) => c.id === activeCat);
   }, [store?.categories, activeCat]);
@@ -2505,6 +2507,230 @@ export function PublicCatalog({
     }
     window.history.replaceState(null, "", url.pathname + url.search);
   }, [activeCat, mode, isMockup, store.categories, store.slug]);
+
+  /* Desplazamiento al elegir categoría o link directo (Fase 4C) */
+  const prevCatScrollRef = useRef(activeCat);
+  useEffect(() => {
+    if (activeCat !== "all" && activeCat !== prevCatScrollRef.current) {
+      prevCatScrollRef.current = activeCat;
+      const timer = setTimeout(() => {
+        const el = document.getElementById("catalogo");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+    prevCatScrollRef.current = activeCat;
+  }, [activeCat]);
+
+  useEffect(() => {
+    if (
+      initialCategory ||
+      (typeof window !== "undefined" &&
+        window.location.pathname.match(/^\/t\/[^/]+\/[^/]+\/?$/i))
+    ) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById("catalogo");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [initialCategory]);
+
+  /* Barra de resultados unificada (Fase 4C - F37) */
+  const renderResultsBar = () => {
+    // Si no está filtrando o si no hay resultados coincidentes, no mostrar la barra
+    if (!isNarrowing || rawFiltered.length === 0) return null;
+
+    const totalCatCount =
+      activeCat === "sale"
+        ? productsWithImages.filter((p) => p.isOnSale).length
+        : (activeCategoryObj?.productCount ?? rawFiltered.length);
+
+    const catName =
+      activeCat === "sale"
+        ? "Ofertas"
+        : cleanCategoryName(
+            activeCategoryObj?.name ||
+              store.categories?.find((c) => c.id === activeCat)?.name ||
+              "",
+          );
+
+    const handleClearCategory = (e?: React.MouseEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setActiveCat("all");
+    };
+
+    const handleClearQuery = (e?: React.MouseEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setQuery("");
+    };
+
+    const handleClearPrice = (e?: React.MouseEvent) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      setPriceRange(null);
+    };
+
+    return (
+      <div
+        data-testid="results-bar"
+        className="mb-4 flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60 animate-in fade-in duration-200"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Categoría activa */}
+          {activeCat !== "all" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
+                {activeCat === "sale" ? (
+                  <>
+                    <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                    Ofertas
+                  </>
+                ) : (
+                  catName
+                )}
+              </h2>
+              <span className="text-xs text-muted-foreground font-medium">
+                ({totalCatCount} {totalCatCount === 1 ? "producto" : "productos"})
+              </span>
+              <button
+                type="button"
+                onClick={handleClearCategory}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-all cursor-pointer"
+                title="Quitar filtro de categoría"
+              >
+                <X className="h-3.5 w-3.5" />
+                <span>Ver todo</span>
+              </button>
+            </div>
+          )}
+
+          {/* Separador si hay categoría y además búsqueda o precio */}
+          {activeCat !== "all" && (query.trim() || priceRange) && (
+            <span className="text-muted-foreground/40 hidden sm:inline">·</span>
+          )}
+
+          {/* Búsqueda activa */}
+          {query.trim() && (
+            <div className="inline-flex items-center gap-1.5 bg-muted/80 px-2.5 py-1 rounded-full text-xs font-medium text-foreground">
+              <span>
+                {rawFiltered.length} {rawFiltered.length === 1 ? "resultado" : "resultados"} para &laquo;{query.trim()}&raquo;
+              </span>
+              <button
+                type="button"
+                onClick={handleClearQuery}
+                className="text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted transition-all cursor-pointer"
+                title="Borrar búsqueda"
+                aria-label="Borrar búsqueda"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Filtro de precio activo */}
+          {priceRange && (
+            <div className="inline-flex items-center gap-1.5 bg-muted/80 px-2.5 py-1 rounded-full text-xs font-medium text-foreground">
+              <span>Filtro de precio activo</span>
+              <button
+                type="button"
+                onClick={handleClearPrice}
+                className="text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-muted transition-all cursor-pointer"
+                title="Quitar filtro de precio"
+                aria-label="Quitar filtro de precio"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Botón compartir categoría (solo si hay categoría activa) */}
+        {activeCat !== "all" && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleShareCategory}
+            className="h-8 gap-1.5 rounded-full text-xs font-semibold px-3 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span>Compartir esta categoría</span>
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  /* Vista Sin Resultados (Fase 4C - F37) */
+  const renderNoResults = () => {
+    const searchTerm = query.trim();
+    const waMsg = searchTerm
+      ? `Hola, busco: ${searchTerm}`
+      : `Hola, me gustaría consultar sobre los productos de ${store.name}`;
+    const waUrl = store.phone ? buildWaUrl(store.phone, waMsg) : null;
+
+    const handleClearAll = () => {
+      setQuery("");
+      setActiveCat("all");
+      setPriceRange(null);
+    };
+
+    return (
+      <div
+        data-testid="no-results-view"
+        className="py-16 px-4 text-center flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200"
+      >
+        <div className="p-3 rounded-full bg-muted/50 text-muted-foreground mb-1">
+          <Search className="h-6 w-6" />
+        </div>
+        <p className="text-base sm:text-lg font-bold text-foreground max-w-md">
+          {searchTerm ? (
+            <>No encontramos &ldquo;{searchTerm}&rdquo;</>
+          ) : (
+            <>No encontramos productos con los filtros seleccionados</>
+          )}
+        </p>
+        <p className="text-xs sm:text-sm text-muted-foreground max-w-sm">
+          Prueba con otras palabras o escríbenos directamente para ayudarte a conseguirlo.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClearAll}
+            className="rounded-full px-5 py-2 text-xs font-semibold cursor-pointer"
+          >
+            Ver todo
+          </Button>
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => incClicks(store.id)}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+            >
+              <WhatsAppIcon className="h-4 w-4" />
+              <span>Pregúntanos por WhatsApp</span>
+            </a>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   /* Auto-abrir producto específico si la URL contiene ?p=ID o ?producto=ID (con carga bajo demanda si está >24) */
   useEffect(() => {
@@ -3193,7 +3419,7 @@ export function PublicCatalog({
       )}
 
       {/* ── Hero Banner (Only for Elite/Banner models) ── */}
-      {modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
+      {!isNarrowing && modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
         <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-zinc-950">
           {/* Blurred background image to avoid letterboxes, while keeping main banner fully visible */}
           <img
@@ -3419,48 +3645,11 @@ export function PublicCatalog({
               </div>
             ) : (
               <div id="catalogo" className="scroll-mt-24">
-                {activeCat !== "all" && (
-                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border/60">
-                    <div className="flex items-center gap-2">
-                      <h2 className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
-                        {activeCat === "sale" ? (
-                          <>
-                            <Flame className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
-                            Ofertas
-                          </>
-                        ) : (
-                          cleanCategoryName(
-                            activeCategoryObj?.name ||
-                              store.categories.find((c) => c.id === activeCat)?.name ||
-                              "",
-                          )
-                        )}
-                      </h2>
-                      {(() => {
-                        const totalCatCount =
-                          activeCat === "sale"
-                            ? productsWithImages.filter((p) => p.isOnSale).length
-                            : (activeCategoryObj?.productCount ?? filtered.length);
-                        return (
-                          <span className="text-xs text-muted-foreground font-medium">
-                            ({totalCatCount} {totalCatCount === 1 ? "producto" : "productos"})
-                          </span>
-                        );
-                      })()}
-                    </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleShareCategory}
-                      className="h-8 gap-1.5 rounded-full text-xs font-semibold px-3 shadow-xs hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer"
-                    >
-                      <Share2 className="h-3.5 w-3.5" />
-                      <span>Compartir esta categoría</span>
-                    </Button>
-                  </div>
-                )}
+                {cfg.layout !== "bite" &&
+                  cfg.layout !== "bloom" &&
+                  cfg.layout !== "nature" &&
+                  cfg.layout !== "lookbook" &&
+                  renderResultsBar()}
               </div>
             )}
             {hasNoProductsAtAll ? (
@@ -3481,10 +3670,12 @@ export function PublicCatalog({
                   </a>
                 )}
               </div>
-            ) : filtered.length === 0 && cfg.layout !== "bite" && cfg.layout !== "bloom" ? (
-              <div className="py-20 text-center text-muted-foreground text-sm">
-                No encontramos productos.
-              </div>
+            ) : filtered.length === 0 &&
+              cfg.layout !== "bite" &&
+              cfg.layout !== "bloom" &&
+              cfg.layout !== "nature" &&
+              cfg.layout !== "lookbook" ? (
+              renderNoResults()
             ) : mode === "bio" ? (
               <div className="w-full">
                 <div className="max-w-md mx-auto mb-6 px-1">
@@ -3761,7 +3952,7 @@ export function PublicCatalog({
               /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
               <div className="space-y-16 sm:space-y-24 select-none">
                 {/* 1. Editorial Cover Section */}
-                {mode === "catalog" && (
+                {!isNarrowing && mode === "catalog" && (
                   <header
                     className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden border-b animate-in fade-in duration-700"
                     style={{ borderBottomColor: "var(--border)", backgroundColor: "var(--card)" }}
@@ -3983,9 +4174,13 @@ export function PublicCatalog({
                   </div>
                 )}
 
-                {/* 2. Product List */}
-                <div className="space-y-20 sm:space-y-28">
-                  {filtered.map((p, index) => {
+                {renderResultsBar()}
+                {filtered.length === 0 ? (
+                  renderNoResults()
+                ) : (
+                  /* 2. Product List */
+                  <div className="space-y-20 sm:space-y-28">
+                    {filtered.map((p, index) => {
                     const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
                     const cartItem = cart.find((item) => item.productId === p.id);
                     const qty = cartItem ? cartItem.qty : 0;
@@ -4220,6 +4415,7 @@ export function PublicCatalog({
                     );
                   })}
                 </div>
+                )}
               </div>
             ) : cfg.layout === "editorial" ? (
               /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
@@ -4333,7 +4529,7 @@ export function PublicCatalog({
             ) : cfg.layout === "hero" ? (
               /* ── HERO layout: first product is 2-col featured, rest are small grid */
               <div className="space-y-3">
-                {filtered.length > 0 && (
+                {!isNarrowing && filtered.length > 0 && (
                   <article
                     className={cn(
                       "relative overflow-hidden cursor-pointer group col-span-2",
@@ -4407,7 +4603,7 @@ export function PublicCatalog({
                       : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
                   )}
                 >
-                  {filtered.slice(1).map((p, idx) => (
+                  {(!isNarrowing ? filtered.slice(1) : filtered).map((p, idx) => (
                     <article
                       key={p.id}
                       className={cn(
@@ -5142,7 +5338,7 @@ export function PublicCatalog({
               /* ── BITE PREMIUM RESTAURANT LAYOUT ── */
               <div className="space-y-8 select-none">
                 {/* 1. Cover Banner Carousel */}
-                {(() => {
+                {!isNarrowing && (() => {
                   const banners = activeBanners;
                   return (
                     <div
@@ -5261,7 +5457,7 @@ export function PublicCatalog({
                 })()}
 
                 {/* 2. Spotlight Carousel (Featured Products) */}
-                {(() => {
+                {!isNarrowing && (() => {
                   if (store.showFeatured === false) return null;
                   if (activeCat !== "all" || query.trim() !== "") return null;
                   let isSaleOnly = false;
@@ -5553,23 +5749,28 @@ export function PublicCatalog({
 
                 {/* 4. Product Grid */}
                 <div className="space-y-4">
-                  <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
-                    {activeCat === "all"
-                      ? "Nuestros Productos"
-                      : parseCategoryName(
-                          store.categories.find((c) => c.id === activeCat)?.name ?? "",
-                        ).label}
-                  </h3>
+                  {renderResultsBar()}
+                  {!isNarrowing && (
+                    <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
+                      {activeCat === "all"
+                        ? "Nuestros Productos"
+                        : parseCategoryName(
+                            store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                          ).label}
+                    </h3>
+                  )}
                   {(() => {
                     const gridProducts =
                       activeCat === "all"
-                        ? filtered.filter(
-                            (p) =>
-                              !(
-                                p.description?.includes("#destacado") ||
-                                p.name?.includes("#destacado")
-                              ),
-                          )
+                        ? (!isNarrowing
+                            ? filtered.filter(
+                                (p) =>
+                                  !(
+                                    p.description?.includes("#destacado") ||
+                                    p.name?.includes("#destacado")
+                                  ),
+                              )
+                            : filtered)
                         : filtered;
 
                     if (gridProducts.length === 0) {
@@ -5583,11 +5784,7 @@ export function PublicCatalog({
                           </div>
                         );
                       }
-                      return (
-                        <div style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--muted-foreground)" }} className="text-center py-12 border rounded-3xl text-xs">
-                          No hay productos en esta categoría.
-                        </div>
-                      );
+                      return renderNoResults();
                     }
 
                     return (
@@ -5740,7 +5937,7 @@ export function PublicCatalog({
                     </div>
 
                     {/* 1. Fluid Nature Banner */}
-                    {(() => {
+                    {!isNarrowing && (() => {
                       const banners = activeBanners;
                       return (
                         <div className="relative w-full z-10">
@@ -5929,7 +6126,7 @@ export function PublicCatalog({
                     })()}
 
                     {/* 2. Spotlight Carousel (Featured Products) */}
-                    {(() => {
+                    {!isNarrowing && (() => {
                       if (store.showFeatured === false) return null;
                       if (activeCat !== "all" || query.trim() !== "") return null;
 
@@ -6250,26 +6447,31 @@ export function PublicCatalog({
 
                     {/* 4. Product Grid */}
                     <div className="space-y-4 relative z-10">
-                      <h3
-                        style={{ color: "var(--muted-foreground)" }}
-                        className="text-xs font-bold uppercase tracking-widest text-left"
-                      >
-                        {activeCat === "all"
-                          ? "Nuestros Productos"
-                          : parseCategoryName(
-                              store.categories.find((c) => c.id === activeCat)?.name ?? "",
-                            ).label}
-                      </h3>
+                      {renderResultsBar()}
+                      {!isNarrowing && (
+                        <h3
+                          style={{ color: "var(--muted-foreground)" }}
+                          className="text-xs font-bold uppercase tracking-widest text-left"
+                        >
+                          {activeCat === "all"
+                            ? "Nuestros Productos"
+                            : parseCategoryName(
+                                store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                              ).label}
+                        </h3>
+                      )}
                       {(() => {
                         const gridProducts =
                           activeCat === "all"
-                            ? filtered.filter(
-                                (p) =>
-                                  !(
-                                    p.description?.includes("#destacado") ||
-                                    p.name?.includes("#destacado")
-                                  ),
-                              )
+                            ? (!isNarrowing
+                                ? filtered.filter(
+                                    (p) =>
+                                      !(
+                                        p.description?.includes("#destacado") ||
+                                        p.name?.includes("#destacado")
+                                      ),
+                                  )
+                                : filtered)
                             : filtered;
 
                         if (gridProducts.length === 0) {
@@ -6283,17 +6485,7 @@ export function PublicCatalog({
                               </div>
                             );
                           }
-                          return (
-                            <div
-                              style={{
-                                borderColor: "var(--border)",
-                                backgroundColor: "color-mix(in srgb, var(--card) 60%, transparent)",
-                              }}
-                              className="text-center py-12 text-xs text-stone-400 border rounded-[2rem]"
-                            >
-                              No hay productos botánicos en esta categoría.
-                            </div>
-                          );
+                          return renderNoResults();
                         }
 
                         return (
@@ -6493,7 +6685,7 @@ export function PublicCatalog({
                 )}
 
                 {/* 1. Cover Banner Carousel */}
-                {(() => {
+                {!isNarrowing && (() => {
                   const banners = activeBanners;
                   const defaultBannerStyle = store.niche === "floreria" ? "curved" : "framed";
                   const bStyle = store.bannerStyle || defaultBannerStyle;
@@ -6644,7 +6836,7 @@ export function PublicCatalog({
                 })()}
 
                 {/* 2. Spotlight Carousel (Featured Products) */}
-                {(() => {
+                {!isNarrowing && (() => {
                   if (store.showFeatured === false) return null;
                   if (activeCat !== "all" || query.trim() !== "") return null;
 
@@ -7133,26 +7325,31 @@ export function PublicCatalog({
 
                 {/* 4. Product Grid */}
                 <div className="space-y-4 relative z-10">
-                  <h3
-                    style={{ color: "var(--muted-foreground)" }}
-                    className="text-xs font-bold uppercase tracking-widest text-left"
-                  >
-                    {activeCat === "all"
-                      ? "Nuestros Productos"
-                      : parseCategoryName(
-                          store.categories.find((c) => c.id === activeCat)?.name ?? "",
-                        ).label}
-                  </h3>
+                  {renderResultsBar()}
+                  {!isNarrowing && (
+                    <h3
+                      style={{ color: "var(--muted-foreground)" }}
+                      className="text-xs font-bold uppercase tracking-widest text-left"
+                    >
+                      {activeCat === "all"
+                        ? "Nuestros Productos"
+                        : parseCategoryName(
+                            store.categories.find((c) => c.id === activeCat)?.name ?? "",
+                          ).label}
+                    </h3>
+                  )}
                   {(() => {
                     const gridProducts =
                       activeCat === "all"
-                        ? filtered.filter(
-                            (p) =>
-                              !(
-                                p.description?.includes("#destacado") ||
-                                p.name?.includes("#destacado")
-                              ),
-                          )
+                        ? (!isNarrowing
+                            ? filtered.filter(
+                                (p) =>
+                                  !(
+                                    p.description?.includes("#destacado") ||
+                                    p.name?.includes("#destacado")
+                                  ),
+                              )
+                            : filtered)
                         : filtered;
 
                     if (gridProducts.length === 0) {
@@ -7166,16 +7363,7 @@ export function PublicCatalog({
                           </div>
                         );
                       }
-                      return (
-                        <div
-                          style={{ backgroundColor: "var(--card)", borderColor: "var(--border)", color: "var(--muted-foreground)" }}
-                          className="text-center py-12 text-xs border rounded-3xl shadow-xs"
-                        >
-                          {store.niche === "floreria"
-                            ? "No hay arreglos florales en esta categoría."
-                            : "No hay productos en esta categoría."}
-                        </div>
-                      );
+                      return renderNoResults();
                     }
 
                     return (
@@ -7352,7 +7540,7 @@ export function PublicCatalog({
               /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
               <div className="space-y-4">
                 {/* Banner de portada */}
-                {(() => {
+                {!isNarrowing && (() => {
                   const bStyle = store.bannerStyle || "framed";
                   const borderVal =
                     bStyle === "direct"
