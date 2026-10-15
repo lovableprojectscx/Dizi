@@ -240,4 +240,126 @@ test.describe("FASE 4B — Enlace directo de categoría /t/:slug/<categoria> (F3
 
     await page.screenshot({ path: "test-results/fase4b-09-jhoselynperu-ruta.png", fullPage: false });
   });
+
+  test("10. Cargar más productos con scroll, cambiar de categoría y volver: los productos siguen ahí y no hay petición get_public_store", async ({ page }) => {
+    let getPublicStoreCalls = 0;
+    page.on("request", (req) => {
+      const url = req.url();
+      if (url.includes("/rpc/get_public_store?") || url.endsWith("/rpc/get_public_store")) {
+        getPublicStoreCalls++;
+      }
+    });
+
+    await page.goto("/t/catalogo");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator("#catalogo")).toBeAttached({ timeout: 15000 });
+    await page.waitForTimeout(2000);
+
+    const initialStoreCalls = getPublicStoreCalls;
+    expect(initialStoreCalls).toBeGreaterThan(0);
+
+    // Esperar los primeros artículos en pantalla (visibleLimit arranca en 12)
+    await expect.poll(async () => page.locator("article").count(), { timeout: 10000 }).toBeGreaterThanOrEqual(12);
+
+    // Hacer scroll al final de la página para activar la carga infinita (incrementa visibleLimit a 24+)
+    for (let i = 0; i < 3; i++) {
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(800);
+    }
+
+    // Comprobar que se cargaron más productos (> 12 artículos en pantalla)
+    await expect.poll(async () => page.locator("article").count(), { timeout: 15000 }).toBeGreaterThan(12);
+    const countAfterScroll = await page.locator("article").count();
+
+    // Cambiar a categoría "Flores & follajes"
+    const filtrosBtn = page.locator("button:has-text('Filtros')").first();
+    await expect(filtrosBtn).toBeVisible({ timeout: 10000 });
+    await filtrosBtn.click();
+    await page.waitForTimeout(400);
+
+    const catBtn = page.locator("[role='dialog'] button:has-text('Flores & follajes')").first();
+    await expect(catBtn).toBeVisible({ timeout: 5000 });
+    await catBtn.click();
+    await page.waitForTimeout(500);
+    expect(page.url()).toContain("/t/catalogo/flores-follajes");
+
+    // Volver a "Todos"
+    const allBtn = page.locator("[role='dialog'] button:has-text('Todos')").first();
+    await expect(allBtn).toBeVisible({ timeout: 5000 });
+    await allBtn.click();
+    await page.waitForTimeout(500);
+    expect(page.url()).toMatch(/\/t\/catalogo(?:\?.*)?$/);
+
+    // Al volver a hacer scroll en "Todos", los productos ya en memoria se revelan inmediatamente
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(500);
+    const finalArticleCount = await page.locator("article").count();
+    expect(finalArticleCount).toBe(countAfterScroll);
+
+    // Verificar que no hubo nuevas llamadas a get_public_store
+    expect(getPublicStoreCalls).toBe(initialStoreCalls);
+
+    await page.screenshot({ path: "test-results/fase4b-10-scroll-productos-preservados.png", fullPage: false });
+  });
+
+  test("11. Simular >60 s transcurridos y cambiar de categoría: 0 peticiones get_public_store", async ({ page }) => {
+    let getPublicStoreCalls = 0;
+    page.on("request", (req) => {
+      const url = req.url();
+      if (url.includes("/rpc/get_public_store?") || url.endsWith("/rpc/get_public_store")) {
+        getPublicStoreCalls++;
+      }
+    });
+
+    await page.goto("/t/catalogo");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator("#catalogo")).toBeAttached({ timeout: 15000 });
+    await page.waitForTimeout(2000);
+
+    const initialStoreCalls = getPublicStoreCalls;
+    expect(initialStoreCalls).toBeGreaterThan(0);
+
+    // Simular que pasaron más de 60 segundos envejeciendo los timestamps de la caché local a 2 minutos atrás
+    await page.evaluate(() => {
+      const twoMinutesAgo = Date.now() - 120_000;
+      const raw = localStorage.getItem("dizi_store_cache_catalogo");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        parsed.ts = twoMinutesAgo;
+        parsed.verifiedAt = twoMinutesAgo;
+        localStorage.setItem("dizi_store_cache_catalogo", JSON.stringify(parsed));
+      }
+      const rawSession = sessionStorage.getItem("dizi_store_cache_catalogo");
+      if (rawSession) {
+        const parsedSession = JSON.parse(rawSession);
+        parsedSession.ts = twoMinutesAgo;
+        parsedSession.verifiedAt = twoMinutesAgo;
+        sessionStorage.setItem("dizi_store_cache_catalogo", JSON.stringify(parsedSession));
+      }
+    });
+
+    // Cambiar a categoría "Flores & follajes"
+    const filtrosBtn = page.locator("button:has-text('Filtros')").first();
+    await expect(filtrosBtn).toBeVisible({ timeout: 10000 });
+    await filtrosBtn.click();
+    await page.waitForTimeout(400);
+
+    const catBtn = page.locator("[role='dialog'] button:has-text('Flores & follajes')").first();
+    await expect(catBtn).toBeVisible({ timeout: 5000 });
+    await catBtn.click();
+    await page.waitForTimeout(500);
+    expect(page.url()).toContain("/t/catalogo/flores-follajes");
+
+    // Cambiar a "Todos"
+    const allBtn = page.locator("[role='dialog'] button:has-text('Todos')").first();
+    await expect(allBtn).toBeVisible({ timeout: 5000 });
+    await allBtn.click();
+    await page.waitForTimeout(500);
+    expect(page.url()).toMatch(/\/t\/catalogo(?:\?.*)?$/);
+
+    // Cero peticiones adicionales a get_public_store a pesar de haber pasado >60 s
+    expect(getPublicStoreCalls).toBe(initialStoreCalls);
+
+    await page.screenshot({ path: "test-results/fase4b-11-simulacion-60s-cero-egress.png", fullPage: false });
+  });
 });

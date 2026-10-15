@@ -5,7 +5,7 @@
  * configuración dinámica de meta tags para SEO / Open Graph y renderizado del catálogo interactivo.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
@@ -32,21 +32,6 @@ export function getLocalStoreCache(slug: string): Store | null {
   }
 }
 
-export function isStoreCacheFresh(slug: string, maxAgeMs: number = 60_000): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const raw =
-      localStorage.getItem(`dizi_store_cache_${slug}`) ||
-      sessionStorage.getItem(`dizi_store_cache_${slug}`);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    const age = Date.now() - (parsed.verifiedAt || parsed.ts || 0);
-    return age < maxAgeMs;
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Definición de la ruta de TanStack Router para `/t/$slug`.
  * Configura tiempos de retención en caché (`staleTime: 5 min`, `gcTime: 15 min`),
@@ -59,8 +44,7 @@ export const Route = createFileRoute("/t/$slug/{-$categoria}")({
     // Si existe copia guardada en caché local, devolverla de inmediato para renderizado instantáneo
     const cachedStore = getLocalStoreCache(params.slug);
     if (cachedStore) {
-      const isFresh = isStoreCacheFresh(params.slug, 60_000);
-      return { store: cachedStore, isFromCache: !isFresh };
+      return { store: cachedStore, isFromCache: true };
     }
 
     // Sin copia en caché: realizar carga directa con reintentos automáticos
@@ -331,10 +315,26 @@ function StorePublic() {
   const [store, setStore] = useState<Store | null>(loaderData.store);
   const [showCachedNotice, setShowCachedNotice] = useState<boolean>(false);
 
-  useEffect(() => {
-    setStore(loaderData.store);
+  // Rastrear el slug para que cambiar sólo de categoría no reemplace 'store'
+  // ni reinicie los productos cargados bajo demanda en PublicCatalog
+  const currentSlugRef = useRef<string>(slug);
+  const refreshedStoreSlugsRef = useRef<Set<string>>(
+    new Set(!loaderData.isFromCache ? [slug] : [])
+  );
 
-    if (loaderData.isFromCache) {
+  useEffect(() => {
+    // Actualizar store SOLO si el slug cambió (navegación a otra tienda)
+    if (currentSlugRef.current !== slug) {
+      currentSlugRef.current = slug;
+      setStore(loaderData.store);
+      if (!loaderData.isFromCache) {
+        refreshedStoreSlugsRef.current.add(slug);
+      }
+    }
+
+    // Refresco en segundo plano: SOLO una vez por tienda y visita
+    if (loaderData.isFromCache && !refreshedStoreSlugsRef.current.has(slug)) {
+      refreshedStoreSlugsRef.current.add(slug);
       let isMounted = true;
       fetchStoreBySlug(slug)
         .then((freshStore) => {
