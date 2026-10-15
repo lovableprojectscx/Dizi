@@ -42,6 +42,7 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 - Datos personales de clientes (teléfono, correo, RUC, dirección) se enmascaran en cualquier informe.
 - No tocar tiendas de clientes reales para probar. Las pruebas usan tiendas con slug `zz-audit-*` y se borran al final.
 - **Nunca borrar datos de producción con filtros amplios (%texto%); solo por ID o por patrón exacto de prueba.**
+- **Prohibido ejecutar `git credential fill`, `credential-wincred`, `cmdkey` o cualquier comando que lea credenciales guardadas.** Si un push pide autenticación, detenerse de inmediato y avisar a Jack; el push lo realiza Jack directamente.
 
 
 ## 4. Reglas para cambiar la base de datos
@@ -101,7 +102,7 @@ Un archivo `INFORME-<tema>-<fecha>.md` en `encargos/` con:
 6. **Fotos:** borrar solo con la API de Storage, nunca con SQL sobre `storage.objects`.
 7. **Funciones:** `CREATE OR REPLACE`; nunca DROP+CREATE (se pierden permisos). `REVOKE` siempre también `FROM PUBLIC`.
 8. **Pruebas de verificación en modo celular** (`movil-android`), no escritorio.
-9. **Si git push falla por autenticación,** avisa a Jack que renueve el permiso con `git credential-manager github login`. Nunca pidas ni guardes un token o contraseña en archivos o chats.
+9. **Si git push pide autenticación:** detenerse de inmediato y avisar a Jack; el push lo hace Jack directamente. Prohibido ejecutar comandos como `git credential fill`, `credential-wincred`, `cmdkey` o cualquier comando que lea credenciales guardadas. Nunca pidas ni guardes un token o contraseña en archivos o chats.
 10. **Nunca borrar datos de producción con filtros amplios (%texto%); solo por ID o por patrón exacto de prueba.**
 11. **Después de cada push, verificar que GitHub Actions quede en verde.**
 
