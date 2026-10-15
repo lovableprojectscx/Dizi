@@ -503,6 +503,24 @@ function AyudaPage() {
               en el chat, como siempre.
             </Warn>
 
+            <h3>Cómo compartir una categoría específica</h3>
+            <p>
+              Puedes enviar un enlace directo a una categoría de tu catálogo (por ejemplo, solo a tus "Bebidas", "Flores" u "Ofertas"):
+            </p>
+            <Steps
+              items={[
+                <>
+                  <strong>Desde tu catálogo público:</strong> Al hacer clic en cualquier categoría, pulsa el botón <em>"Compartir esta categoría"</em> en la cabecera para compartirla por WhatsApp o copiar el enlace directo.
+                </>,
+                <>
+                  <strong>Desde tu panel de administración:</strong> En <em>Productos &gt; Categorías</em>, pulsa el botón <em>"Copiar link"</em> junto a la categoría que quieras compartir.
+                </>,
+                <>
+                  Al abrir el enlace, tus clientes verán de inmediato solo los productos de esa categoría, con una vista previa atractiva (título y foto) en WhatsApp y redes sociales.
+                </>,
+              ]}
+            />
+
             <h3>Catálogo en PDF</h3>
             <p>
               En los planes de pago puedes descargar tu catálogo en PDF. Útil para mandarlo a

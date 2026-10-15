@@ -10,6 +10,14 @@
       "destination": "/api/seo?slug=:slug&type=bio"
     },
     {
+      "source": "/t/:slug/:categoria/",
+      "destination": "/api/seo?slug=:slug&type=catalog&c=:categoria"
+    },
+    {
+      "source": "/t/:slug/:categoria",
+      "destination": "/api/seo?slug=:slug&type=catalog&c=:categoria"
+    },
+    {
       "source": "/t/:slug",
       "destination": "/api/seo?slug=:slug&type=catalog"
     },

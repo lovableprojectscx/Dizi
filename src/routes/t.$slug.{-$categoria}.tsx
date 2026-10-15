@@ -5,13 +5,14 @@
  * configuración dinámica de meta tags para SEO / Open Graph y renderizado del catálogo interactivo.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
+import { findCategoryByParam, cleanCategoryName, getCategorySlug } from "@/lib/category-link";
 import type { Store } from "@/lib/types";
 
 /**
@@ -36,7 +37,7 @@ export function getLocalStoreCache(slug: string): Store | null {
  * Configura tiempos de retención en caché (`staleTime: 5 min`, `gcTime: 15 min`),
  * cargador de datos (`loader`), generador de metadatos SEO (`head`) y pantalla de error.
  */
-export const Route = createFileRoute("/t/$slug")({
+export const Route = createFileRoute("/t/$slug/{-$categoria}")({
   staleTime: 5 * 60 * 1000, // 5 minutos de caché en memoria TanStack Router
   gcTime: 15 * 60 * 1000, // 15 minutos antes de recolectar basura
   loader: async ({ params }) => {
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/t/$slug")({
   head: ({ params, loaderData, search }: any) => {
     const store = loaderData?.store;
     const targetProductId = (search as any)?.p || (search as any)?.producto;
+    const targetCatParam = params.categoria || (search as any)?.c || (search as any)?.categoria;
     const product = store?.products?.find((p: any) => p.id === targetProductId);
 
     const getValidImageUrl = (url?: string | null) => {
@@ -72,6 +74,8 @@ export const Route = createFileRoute("/t/$slug")({
       getValidImageUrl(store?.logo) ||
       "https://dizi.idenza.site/images/og-image.png";
 
+    let canonicalUrl = `https://dizi.idenza.site/t/${params.slug}`;
+
     if (product) {
       title = `${product.name} — ${store?.name || params.slug}`;
       if (product.price) {
@@ -81,9 +85,26 @@ export const Route = createFileRoute("/t/$slug")({
         product.description ||
         `Mira ${product.name} en el catálogo digital de ${store?.name || params.slug}. Pedidos por WhatsApp.`;
       image = getValidImageUrl(product.image) || image;
-    }
+      canonicalUrl = `https://dizi.idenza.site/t/${params.slug}?p=${encodeURIComponent(targetProductId)}`;
+    } else if (targetCatParam && store?.categories) {
+      const matchedCat = findCategoryByParam(store.categories, targetCatParam);
+      if (matchedCat) {
+        const catName = matchedCat.id === "sale" ? "Ofertas" : cleanCategoryName(matchedCat.name);
+        title = `${catName} — ${store?.name || params.slug}`;
+        description = `Mira ${catName} en el catálogo de ${store?.name || params.slug}. Pedidos por WhatsApp.`;
+        const catSlug =
+          matchedCat.id === "sale" ? "ofertas" : getCategorySlug(store.categories, matchedCat);
+        canonicalUrl = `https://dizi.idenza.site/t/${params.slug}/${encodeURIComponent(catSlug)}`;
 
-    const canonicalUrl = `https://dizi.idenza.site/t/${params.slug}${targetProductId ? `?p=${targetProductId}` : ""}`;
+        const catProd =
+          matchedCat.id === "sale"
+            ? store.products?.find((p: any) => p.isOnSale && p.image)
+            : store.products?.find((p: any) => p.categoryId === matchedCat.id && p.image);
+        if (catProd?.image) {
+          image = getValidImageUrl(catProd.image) || image;
+        }
+      }
+    }
 
     const firstBanner = store?.bannerImage ? store.bannerImage.split("|||")[0].trim() : null;
     const firstProductImg = store?.products?.[0]?.image ? store.products[0].image.trim() : null;
@@ -289,35 +310,62 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
  * Valida si la tienda existe y se encuentra activa antes de renderizar `PublicCatalog`.
  */
 function StorePublic() {
-  const { slug } = Route.useParams();
+  const { slug, categoria } = Route.useParams();
   const loaderData = Route.useLoaderData();
   const [store, setStore] = useState<Store | null>(loaderData.store);
   const [showCachedNotice, setShowCachedNotice] = useState<boolean>(false);
 
+  // Rastrear el estado de montaje del componente para no descartar
+  // peticiones en vuelo ante re-renders o StrictMode
+  const isMountedRef = useRef(true);
   useEffect(() => {
-    setStore(loaderData.store);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-    if (loaderData.isFromCache) {
-      let isMounted = true;
+  // Rastrear el slug para que cambiar sólo de categoría no reemplace 'store'
+  // ni reinicie los productos cargados bajo demanda en PublicCatalog
+  const currentSlugRef = useRef<string>(slug);
+  const refreshedStoreSlugsRef = useRef<Set<string>>(
+    new Set(!loaderData.isFromCache ? [slug] : [])
+  );
+
+  // Sincronizar store SOLO cuando cambia de tienda (slug diferente)
+  useEffect(() => {
+    if (currentSlugRef.current !== slug) {
+      currentSlugRef.current = slug;
+      setStore(loaderData.store);
+      if (!loaderData.isFromCache) {
+        refreshedStoreSlugsRef.current.add(slug);
+      }
+    }
+  }, [slug, loaderData.store, loaderData.isFromCache]);
+
+  // Refresco en segundo plano: SOLO depende de [slug]
+  // para que cambiar de categoría mientras la petición está en vuelo NO aborte la actualización
+  const isFromCacheRef = useRef<boolean>(loaderData.isFromCache);
+  isFromCacheRef.current = loaderData.isFromCache;
+
+  useEffect(() => {
+    if (isFromCacheRef.current && !refreshedStoreSlugsRef.current.has(slug)) {
+      refreshedStoreSlugsRef.current.add(slug);
       fetchStoreBySlug(slug)
         .then((freshStore) => {
-          if (!isMounted) return;
+          if (!isMountedRef.current) return;
           if (freshStore) {
             setStore(freshStore);
             setShowCachedNotice(false);
           }
         })
         .catch((err) => {
-          if (!isMounted) return;
+          if (!isMountedRef.current) return;
           console.warn("[StorePublic] Falló refresco en segundo plano; mostrando versión guardada:", err);
           setShowCachedNotice(true);
         });
-
-      return () => {
-        isMounted = false;
-      };
     }
-  }, [slug, loaderData.isFromCache, loaderData.store]);
+  }, [slug]);
 
   if (!store) {
     return (
@@ -359,7 +407,7 @@ function StorePublic() {
           <span>Mostrando la última versión guardada</span>
         </div>
       )}
-      <PublicCatalog store={store} mode="catalog" />
+      <PublicCatalog store={store} mode="catalog" initialCategory={categoria} />
     </>
   );
 }

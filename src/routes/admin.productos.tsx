@@ -101,11 +101,13 @@ import {
   Coffee,
   Beer,
   Croissant,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
 import { convertImageToWebP } from "@/lib/image-utils";
+import { getCategorySlug, buildStoreUrl } from "@/lib/category-link";
 
 /**
  * @file admin.productos.tsx
@@ -2002,6 +2004,31 @@ function ProductsPage() {
     setEditDialogOpen(true);
   };
 
+  const copyCategoryLink = (c: Category) => {
+    const slug = getCategorySlug(store.categories, c);
+    const origin = typeof window !== "undefined" ? window.location.origin : undefined;
+    const url = buildStoreUrl(store.slug, { c: slug, origin });
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      toast.success("¡Link de la categoría copiado!");
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        toast.success("¡Link de la categoría copiado!");
+      } catch {
+        toast.error("No se pudo copiar el enlace");
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const openNew = () => {
     if (reachedLimit) {
       toast.error("Has alcanzado el límite de tu plan");
@@ -2580,6 +2607,16 @@ function ProductsPage() {
                       {count} producto{count !== 1 ? "s" : ""}
                     </p>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => copyCategoryLink(c)}
+                    title="Copiar link directo a esta categoría"
+                    className="gap-1.5 h-8 text-xs font-semibold px-2 sm:px-3 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Copiar link</span>
+                  </Button>
                   <Button size="icon" variant="ghost" onClick={() => startEditCategory(c)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
