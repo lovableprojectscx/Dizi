@@ -315,6 +315,16 @@ function StorePublic() {
   const [store, setStore] = useState<Store | null>(loaderData.store);
   const [showCachedNotice, setShowCachedNotice] = useState<boolean>(false);
 
+  // Rastrear el estado de montaje del componente para no descartar
+  // peticiones en vuelo ante re-renders o StrictMode
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Rastrear el slug para que cambiar sólo de categoría no reemplace 'store'
   // ni reinicie los productos cargados bajo demanda en PublicCatalog
   const currentSlugRef = useRef<string>(slug);
@@ -322,8 +332,8 @@ function StorePublic() {
     new Set(!loaderData.isFromCache ? [slug] : [])
   );
 
+  // Sincronizar store SOLO cuando cambia de tienda (slug diferente)
   useEffect(() => {
-    // Actualizar store SOLO si el slug cambió (navegación a otra tienda)
     if (currentSlugRef.current !== slug) {
       currentSlugRef.current = slug;
       setStore(loaderData.store);
@@ -331,30 +341,31 @@ function StorePublic() {
         refreshedStoreSlugsRef.current.add(slug);
       }
     }
+  }, [slug, loaderData.store, loaderData.isFromCache]);
 
-    // Refresco en segundo plano: SOLO una vez por tienda y visita
-    if (loaderData.isFromCache && !refreshedStoreSlugsRef.current.has(slug)) {
+  // Refresco en segundo plano: SOLO depende de [slug]
+  // para que cambiar de categoría mientras la petición está en vuelo NO aborte la actualización
+  const isFromCacheRef = useRef<boolean>(loaderData.isFromCache);
+  isFromCacheRef.current = loaderData.isFromCache;
+
+  useEffect(() => {
+    if (isFromCacheRef.current && !refreshedStoreSlugsRef.current.has(slug)) {
       refreshedStoreSlugsRef.current.add(slug);
-      let isMounted = true;
       fetchStoreBySlug(slug)
         .then((freshStore) => {
-          if (!isMounted) return;
+          if (!isMountedRef.current) return;
           if (freshStore) {
             setStore(freshStore);
             setShowCachedNotice(false);
           }
         })
         .catch((err) => {
-          if (!isMounted) return;
+          if (!isMountedRef.current) return;
           console.warn("[StorePublic] Falló refresco en segundo plano; mostrando versión guardada:", err);
           setShowCachedNotice(true);
         });
-
-      return () => {
-        isMounted = false;
-      };
     }
-  }, [slug, loaderData.isFromCache, loaderData.store]);
+  }, [slug]);
 
   if (!store) {
     return (

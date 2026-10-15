@@ -362,4 +362,106 @@ test.describe("FASE 4B — Enlace directo de categoría /t/:slug/<categoria> (F3
 
     await page.screenshot({ path: "test-results/fase4b-11-simulacion-60s-cero-egress.png", fullPage: false });
   });
+
+  test("12. Refresco en segundo plano no se aborta si el usuario cambia de categoría durante la petición", async ({ page }) => {
+    // 1. Inyectar en localStorage un store viejo con un nombre/precio identificable
+    await page.addInitScript(() => {
+      const oldStore = {
+        id: "s_race_test",
+        slug: "catalogo",
+        name: "ADORNIA | WE HOME",
+        phone: "51999888777",
+        countryCode: "51",
+        countryIso: "PE",
+        plan: "pro",
+        active: true,
+        isPublished: true,
+        categories: [
+          { id: "cat-1", name: "Flores & follajes|flower" },
+        ],
+        products: [
+          {
+            id: "p-race-1",
+            name: "Producto Precio Viejo",
+            price: 50.00,
+            categoryId: "cat-1",
+            image: "",
+            visible: true,
+          },
+        ],
+      };
+      const cachePayload = {
+        store: oldStore,
+        ts: Date.now() - 300_000,
+        verifiedAt: Date.now() - 300_000,
+      };
+      localStorage.setItem("dizi_store_cache_catalogo", JSON.stringify(cachePayload));
+      sessionStorage.setItem("dizi_store_cache_catalogo", JSON.stringify(cachePayload));
+    });
+
+    // 2. Interceptar get_public_store retrasando la respuesta 2 segundos y devolviendo datos frescos
+    await page.route("**/rest/v1/rpc/get_public_store*", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const freshData = {
+        id: "s_race_test",
+        slug: "catalogo",
+        name: "ADORNIA | WE HOME",
+        phone: "51999888777",
+        country_code: "51",
+        country_iso: "PE",
+        plan: "pro",
+        active: true,
+        is_published: true,
+        categories: [
+          { id: "cat-1", name: "Flores & follajes|flower" },
+        ],
+        products: [
+          {
+            id: "p-race-1",
+            name: "Producto Precio Fresco",
+            price: 189.90,
+            category_id: "cat-1",
+            image: "https://example.com/flower.jpg",
+            visible: true,
+          },
+        ],
+      };
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(freshData),
+      });
+    });
+
+    // 3. Abrir la tienda (lee caché viejo inmediatamente)
+    await page.goto("/t/catalogo");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(page.locator("text=Producto Precio Viejo").first()).toBeVisible({ timeout: 5000 });
+
+    // 4. Cambiar de categoría a los 0.5 s (mientras la petición de fondo sigue en vuelo)
+    await page.waitForTimeout(500);
+    const filtrosBtn = page.locator("button:has-text('Filtros')").first();
+    await expect(filtrosBtn).toBeVisible({ timeout: 5000 });
+    await filtrosBtn.click();
+    await page.waitForTimeout(300);
+
+    const catBtn = page.locator("[role='dialog'] button:has-text('Flores & follajes')").first();
+    await expect(catBtn).toBeVisible({ timeout: 5000 });
+    await catBtn.click();
+    await page.waitForTimeout(400);
+    expect(page.url()).toContain("/t/catalogo/flores-follajes");
+
+    // Cerrar el drawer de filtros para que el grid de productos sea visible
+    const applyBtn = page.locator("[role='dialog'] button:has-text('Ver')").first();
+    await expect(applyBtn).toBeVisible({ timeout: 5000 });
+    await applyBtn.click();
+    await page.waitForTimeout(400);
+
+    // 5. Al responder la petición de 2 s, el dato fresco DEBE mostrarse (no fue abortado por el cambio de categoría)
+    await expect(page.locator("text=Producto Precio Fresco").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=S/ 189.90").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=Producto Precio Viejo")).not.toBeVisible();
+
+    await page.screenshot({ path: "test-results/fase4b-12-refresco-carrera-resuelto.png", fullPage: false });
+  });
 });
