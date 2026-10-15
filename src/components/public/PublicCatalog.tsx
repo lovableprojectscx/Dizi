@@ -2541,8 +2541,9 @@ export function PublicCatalog({
   }, [initialCategory]);
 
   /* Barra de resultados unificada (Fase 4C - F37) */
-  const UnifiedResultsBar = () => {
-    if (!isNarrowing) return null;
+  const renderResultsBar = () => {
+    // Si no está filtrando o si no hay resultados coincidentes, no mostrar la barra
+    if (!isNarrowing || rawFiltered.length === 0) return null;
 
     const totalCatCount =
       activeCat === "sale"
@@ -2674,7 +2675,7 @@ export function PublicCatalog({
   };
 
   /* Vista Sin Resultados (Fase 4C - F37) */
-  const NoResultsView = () => {
+  const renderNoResults = () => {
     const searchTerm = query.trim();
     const waMsg = searchTerm
       ? `Hola, busco: ${searchTerm}`
@@ -3647,7 +3648,8 @@ export function PublicCatalog({
                 {cfg.layout !== "bite" &&
                   cfg.layout !== "bloom" &&
                   cfg.layout !== "nature" &&
-                  cfg.layout !== "lookbook" && <UnifiedResultsBar />}
+                  cfg.layout !== "lookbook" &&
+                  renderResultsBar()}
               </div>
             )}
             {hasNoProductsAtAll ? (
@@ -3673,7 +3675,7 @@ export function PublicCatalog({
               cfg.layout !== "bloom" &&
               cfg.layout !== "nature" &&
               cfg.layout !== "lookbook" ? (
-              <NoResultsView />
+              renderNoResults()
             ) : mode === "bio" ? (
               <div className="w-full">
                 <div className="max-w-md mx-auto mb-6 px-1">
@@ -4172,9 +4174,9 @@ export function PublicCatalog({
                   </div>
                 )}
 
-                <UnifiedResultsBar />
+                {renderResultsBar()}
                 {filtered.length === 0 ? (
-                  <NoResultsView />
+                  renderNoResults()
                 ) : (
                   /* 2. Product List */
                   <div className="space-y-20 sm:space-y-28">
@@ -5747,7 +5749,7 @@ export function PublicCatalog({
 
                 {/* 4. Product Grid */}
                 <div className="space-y-4">
-                  <UnifiedResultsBar />
+                  {renderResultsBar()}
                   {!isNarrowing && (
                     <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
                       {activeCat === "all"
@@ -5782,7 +5784,7 @@ export function PublicCatalog({
                           </div>
                         );
                       }
-                      return <NoResultsView />;
+                      return renderNoResults();
                     }
 
                     return (
@@ -6445,7 +6447,7 @@ export function PublicCatalog({
 
                     {/* 4. Product Grid */}
                     <div className="space-y-4 relative z-10">
-                      <UnifiedResultsBar />
+                      {renderResultsBar()}
                       {!isNarrowing && (
                         <h3
                           style={{ color: "var(--muted-foreground)" }}
@@ -6483,7 +6485,7 @@ export function PublicCatalog({
                               </div>
                             );
                           }
-                          return <NoResultsView />;
+                          return renderNoResults();
                         }
 
                         return (
@@ -7323,7 +7325,7 @@ export function PublicCatalog({
 
                 {/* 4. Product Grid */}
                 <div className="space-y-4 relative z-10">
-                  <UnifiedResultsBar />
+                  {renderResultsBar()}
                   {!isNarrowing && (
                     <h3
                       style={{ color: "var(--muted-foreground)" }}
@@ -7361,7 +7363,7 @@ export function PublicCatalog({
                           </div>
                         );
                       }
-                      return <NoResultsView />;
+                      return renderNoResults();
                     }
 
                     return (

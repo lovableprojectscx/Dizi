@@ -226,6 +226,10 @@ test.describe("FASE 4C — Modo resultados al filtrar (F37)", () => {
     await expect(noResults).toBeVisible({ timeout: 5000 });
     await expect(noResults).toContainText("palabrainexistentexyz123");
 
+    // Verificar que la barra de resultados NO se muestra cuando hay 0 resultados (solo NoResultsView)
+    const resultsBar = page.locator("[data-testid='results-bar']");
+    await expect(resultsBar).toHaveCount(0);
+
     // Botón Ver todo
     const verTodoBtn = noResults.locator("button:has-text('Ver todo')");
     await expect(verTodoBtn).toBeVisible();
