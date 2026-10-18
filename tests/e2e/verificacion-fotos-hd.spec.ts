@@ -31,6 +31,14 @@ test.describe("FOTOS-HD (F38) — Calidad y resolución por tipo de imagen", () 
   const setupMockSession = async (page: any) => {
     // Interceptar llamadas a storage y API de Supabase para evitar llamadas remotas
     await page.route("**/storage/v1/object/**", async (route: any) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "image/webp",
+          body: Buffer.from("UklGRkAAAABXRUJQVlA4IDQAAADwAQCdASoBAAEAAQAcJaACdLoB+AA/vl2gAA==", "base64"),
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
         contentType: "application/json",
