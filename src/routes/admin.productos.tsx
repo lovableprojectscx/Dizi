@@ -1915,10 +1915,8 @@ function ProductsPage() {
       setBulkDrafts([...updatedDrafts]);
 
       try {
-        const [webpDataUrl, thumbDataUrl] = await Promise.all([
-          convertImageToWebP(draft.file, "product"),
-          convertImageToWebP(draft.file, "thumb"),
-        ]);
+        const webpDataUrl = await convertImageToWebP(draft.file, "product");
+        const thumbDataUrl = await convertImageToWebP(draft.file, "thumb");
         const cleanPrice = draft.price.replace(",", ".");
         const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
 

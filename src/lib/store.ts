@@ -1131,6 +1131,7 @@ export const useApp = create<AppState>()(
           ...product,
           id: prodId,
           image: imageUrl,
+          thumbnail: undefined,
           price: cleanPrice,
           originalPrice: cleanOriginalPrice,
           description: product.description || undefined,
@@ -1623,34 +1624,41 @@ export const useApp = create<AppState>()(
     }),
     {
       name: "dizi-catalogos-v2",
-      partialize: (state) => ({
-        // Guardamos las URLs reales (http) en local storage para carga instantánea,
-        // pero omitimos los base64 temporales si quedara alguno para no desbordar los 5MB
-        stores: state.stores.map((st) => ({
-          ...st,
-          logo: st.logo?.startsWith("data:") ? undefined : st.logo,
-          bannerImage: st.bannerImage
-            ? st.bannerImage
-                .split("|||")
-                .map((img) => (img.startsWith("data:") ? "" : img))
-                .filter(Boolean)
-                .join("|||") || undefined
-            : undefined,
-          bioLogo: st.bioLogo?.startsWith("data:") ? undefined : st.bioLogo,
-          bioBanner: st.bioBanner?.startsWith("data:") ? undefined : st.bioBanner,
-          bioBgImage: st.bioBgImage?.startsWith("data:") ? undefined : st.bioBgImage,
-          products: st.products.map((p) => ({
-            ...p,
-            image: p.image?.startsWith("data:") ? undefined : p.image,
-          })),
-        })),
-        currentStoreId: state.currentStoreId,
-        impersonatedBy: state.impersonatedBy,
-        lastFetched: state.lastFetched,
-      }),
+      partialize: partializeAppState,
     },
   ),
 );
+
+/**
+ * Función de serialización para localStorage que excluye cualquier dato binario base64 (data:).
+ * Previene el desbordamiento de la cuota de 5 MB de localStorage.
+ */
+export function partializeAppState(state: AppState) {
+  return {
+    stores: state.stores.map((st) => ({
+      ...st,
+      logo: st.logo?.startsWith("data:") ? undefined : st.logo,
+      bannerImage: st.bannerImage
+        ? st.bannerImage
+            .split("|||")
+            .map((img) => (img.startsWith("data:") ? "" : img))
+            .filter(Boolean)
+            .join("|||") || undefined
+        : undefined,
+      bioLogo: st.bioLogo?.startsWith("data:") ? undefined : st.bioLogo,
+      bioBanner: st.bioBanner?.startsWith("data:") ? undefined : st.bioBanner,
+      bioBgImage: st.bioBgImage?.startsWith("data:") ? undefined : st.bioBgImage,
+      products: st.products.map((p) => ({
+        ...p,
+        image: p.image?.startsWith("data:") ? undefined : p.image,
+        thumbnail: p.thumbnail?.startsWith("data:") ? undefined : p.thumbnail,
+      })),
+    })),
+    currentStoreId: state.currentStoreId,
+    impersonatedBy: state.impersonatedBy,
+    lastFetched: state.lastFetched,
+  };
+}
 
 /**
  * Representa un artículo añadido al carrito de compras de una tienda.

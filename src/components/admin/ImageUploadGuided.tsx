@@ -140,10 +140,8 @@ export function ImageUploadGuided({
     setConverting(true);
     setRatioStatus(null);
     try {
-      const [webpDataUrl, thumbDataUrl] = await Promise.all([
-        convertImageToWebP(file, "product"),
-        convertImageToWebP(file, "thumb"),
-      ]);
+      const webpDataUrl = await convertImageToWebP(file, "product");
+      const thumbDataUrl = await convertImageToWebP(file, "thumb");
       onChange(webpDataUrl, thumbDataUrl);
       // Check ratio after setting — use an Image object
       const img = new Image();

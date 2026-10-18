@@ -169,10 +169,8 @@ export function OnboardingWizard() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const [webp, thumb] = await Promise.all([
-        convertImageToWebP(file, "product"),
-        convertImageToWebP(file, "thumb"),
-      ]);
+      const webp = await convertImageToWebP(file, "product");
+      const thumb = await convertImageToWebP(file, "thumb");
       setProductImage(webp);
       setProductThumb(thumb);
       toast.success("Imagen del producto cargada correctamente");
