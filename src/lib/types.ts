@@ -165,6 +165,8 @@ export interface Product {
   categoryId: string;
   /** URL pública de la imagen principal del producto (alojada en Supabase Storage) */
   image: string;
+  /** Data URL de la miniatura optimizada generada desde el archivo original */
+  thumbnail?: string;
   /** Descripción detallada del producto (ingredientes, materiales, instrucciones) */
   description?: string;
   /** Indica si el producto se encuentra en oferta o promoción destacada */

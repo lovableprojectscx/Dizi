@@ -138,12 +138,14 @@ export function OnboardingWizard() {
     }
   };
 
+  const [productThumb, setProductThumb] = useState<string>("");
+
   // Image Upload helpers
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const webp = await convertImageToWebP(file);
+      const webp = await convertImageToWebP(file, "logo");
       setLogoBase64(webp);
       toast.success("Logo cargado correctamente");
     } catch (err) {
@@ -155,7 +157,7 @@ export function OnboardingWizard() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const webp = await convertImageToWebP(file);
+      const webp = await convertImageToWebP(file, "banner");
       setBannerBase64(webp);
       toast.success("Banner cargado correctamente");
     } catch (err) {
@@ -167,8 +169,12 @@ export function OnboardingWizard() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      const webp = await convertImageToWebP(file);
+      const [webp, thumb] = await Promise.all([
+        convertImageToWebP(file, "product"),
+        convertImageToWebP(file, "thumb"),
+      ]);
       setProductImage(webp);
+      setProductThumb(thumb);
       toast.success("Imagen del producto cargada correctamente");
     } catch (err) {
       toast.error("Error al procesar la imagen del producto");
@@ -236,6 +242,7 @@ export function OnboardingWizard() {
         price: productPrice ? parseFloat(productPrice) : null,
         categoryId: firstCategory.id,
         image: productImage,
+        thumbnail: productThumb,
         visible: true,
       });
 

@@ -22,8 +22,8 @@ import { cn } from "@/lib/utils";
 interface ImageUploadGuidedProps {
   /** Valor actual de la imagen (URL o Data URL) */
   value: string;
-  /** Callback para actualizar la imagen procesada */
-  onChange: (v: string) => void;
+  /** Callback para actualizar la imagen procesada y opcionalmente su miniatura generada del original */
+  onChange: (v: string, thumb?: string) => void;
   /** Especificación de proporciones de la plantilla activa */
   spec: ImageSpec;
   /** Etiqueta descriptiva del campo */
@@ -95,7 +95,7 @@ export function ImageUploadGuided({
 
     setImporting(true);
     try {
-      const webpDataUrl = await convertImageUrlToWebP(trimmed);
+      const webpDataUrl = await convertImageUrlToWebP(trimmed, "product");
       onChange(webpDataUrl);
       toast.success("¡Imagen importada y optimizada con éxito!");
       setImportWarning(null);
@@ -140,8 +140,11 @@ export function ImageUploadGuided({
     setConverting(true);
     setRatioStatus(null);
     try {
-      const webpDataUrl = await convertImageToWebP(file);
-      onChange(webpDataUrl);
+      const [webpDataUrl, thumbDataUrl] = await Promise.all([
+        convertImageToWebP(file, "product"),
+        convertImageToWebP(file, "thumb"),
+      ]);
+      onChange(webpDataUrl, thumbDataUrl);
       // Check ratio after setting — use an Image object
       const img = new Image();
       img.onload = () => checkRatioAfterLoad(img);

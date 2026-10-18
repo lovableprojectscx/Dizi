@@ -43,6 +43,7 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 - No tocar tiendas de clientes reales para probar. Las pruebas usan tiendas con slug `zz-audit-*` y se borran al final.
 - **Nunca borrar datos de producción con filtros amplios (%texto%); solo por ID o por patrón exacto de prueba.**
 - **Prohibido ejecutar `git credential fill`, `credential-wincred`, `cmdkey` o cualquier comando que lea credenciales guardadas.** Si un push pide autenticación, detenerse de inmediato y avisar a Jack; el push lo realiza Jack directamente.
+- **Prohibido buscar archivos fuera de la carpeta del proyecto y de la ruta indicada en el encargo.** Si un archivo no está en la ruta indicada, detenerse de inmediato y preguntar a Jack, sin buscar en ningún otro lugar del sistema.
 
 
 ## 4. Reglas para cambiar la base de datos

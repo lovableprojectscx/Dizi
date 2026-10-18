@@ -17,7 +17,7 @@ import type {
   SubscriptionStatus,
 } from "./types";
 import { supabase, uploadBase64ToStorage } from "./supabase";
-import { createThumbnailFromBase64 } from "./image-utils";
+import { createThumbnailFromBase64, IMAGE_PRESETS } from "./image-utils";
 import { toast } from "sonner";
 import { hexLuminance } from "./utils";
 import { getUserRole } from "./auth";
@@ -475,7 +475,7 @@ export const useApp = create<AppState>()(
             (updatedPatch as any).bannerImage = uploadedParts.filter(Boolean).join("|||");
 
             // Comparar con banners anteriores para limpiar los que fueron reemplazados
-            const oldBannerStr = currentStore?.bannerImage || currentStore?.banner_image;
+            const oldBannerStr = currentStore?.bannerImage || (currentStore as any)?.banner_image;
             if (typeof oldBannerStr === "string") {
               const oldParts = oldBannerStr.split("|||").map((b: string) => b.trim()).filter(Boolean);
               for (const oldPart of oldParts) {
@@ -490,7 +490,7 @@ export const useApp = create<AppState>()(
             );
           }
         } else if (patchAny.bannerImage === null) {
-          const oldBannerStr = currentStore?.bannerImage || currentStore?.banner_image;
+          const oldBannerStr = currentStore?.bannerImage || (currentStore as any)?.banner_image;
           if (typeof oldBannerStr === "string") {
             const oldParts = oldBannerStr.split("|||").map((b: string) => b.trim()).filter(Boolean);
             for (const oldPart of oldParts) {
@@ -1017,7 +1017,7 @@ export const useApp = create<AppState>()(
         const existingProduct = st?.products.find((pr) => pr.id === prodId);
         const oldImage = existingProduct?.image;
 
-        // Si la imagen es un base64, subirla a Supabase Storage (imagen HD 800px + miniatura 400px en paralelo)
+        // Si la imagen es un base64, subirla a Supabase Storage (imagen HD 1600px + miniatura 600px en paralelo)
         if (imageUrl && imageUrl.startsWith("data:")) {
           const timestamp = Date.now();
           const newImagePath = `${storeId}/products/${prodId}_${timestamp}.webp`;
@@ -1026,7 +1026,10 @@ export const useApp = create<AppState>()(
           try {
             const rawBase64 = imageUrl;
             const uploadMainPromise = uploadBase64ToStorage(rawBase64, newImagePath);
-            const uploadThumbPromise = createThumbnailFromBase64(rawBase64, 400, 0.70)
+            const thumbBase64Promise = product.thumbnail && typeof product.thumbnail === "string" && product.thumbnail.startsWith("data:")
+              ? Promise.resolve(product.thumbnail)
+              : createThumbnailFromBase64(rawBase64, IMAGE_PRESETS.thumb.maxDimension, IMAGE_PRESETS.thumb.quality);
+            const uploadThumbPromise = thumbBase64Promise
               .then((thumbBase64) => uploadBase64ToStorage(thumbBase64, newThumbPath))
               .catch((thumbErr) => {
                 console.warn("[upsertProduct] Fallback: No se pudo subir _thumb.webp, la cuadrícula usará la imagen HD", thumbErr);
