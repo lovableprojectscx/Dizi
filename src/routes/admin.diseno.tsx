@@ -299,7 +299,7 @@ function DisenoUnificadoPage() {
       return;
     }
     try {
-      const webpDataUrl = await convertImageToWebP(file);
+      const webpDataUrl = await convertImageToWebP(file, "banner");
       const currentList = [...bannerList];
       if (typeof indexToReplace === "number" && indexToReplace < currentList.length) {
         currentList[indexToReplace] = webpDataUrl;

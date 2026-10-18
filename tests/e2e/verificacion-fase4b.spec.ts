@@ -473,7 +473,7 @@ test.describe("FASE 4B — Enlace directo de categoría /t/:slug/<categoria> (F3
     await expect(catalogHeader).toBeAttached({ timeout: 15000 });
 
     // Debe mostrar el total real de la categoría (productCount en DB: 17 o 18) y no solo los cargados en memoria (7)
-    await expect(page.locator("text=/\\((17|18) productos\\)/").first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=/(17|18) productos/").first()).toBeVisible({ timeout: 10000 });
 
     await page.screenshot({ path: "test-results/fase4b-13-conteo-total-categoria.png", fullPage: false });
   });

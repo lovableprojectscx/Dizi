@@ -585,7 +585,7 @@ function SingleProductDialog({
       return;
     }
     try {
-      const webpData = await convertImageToWebP(file);
+      const webpData = await convertImageToWebP(file, "product");
       handleVarChange(index, "image", webpData);
       toast.success("Foto de variante cargada");
     } catch {
@@ -744,7 +744,7 @@ function SingleProductDialog({
               </div>
               <ImageUploadGuided
                 value={editing.image}
-                onChange={(image) => setEditing((prev) => ({ ...prev, image }))}
+                onChange={(image, thumb) => setEditing((prev) => ({ ...prev, image, ...(thumb ? { thumbnail: thumb } : {}) }))}
                 spec={imageSpec}
                 label=""
               />
@@ -1816,7 +1816,7 @@ function ProductsPage() {
       return;
     }
     try {
-      const webpData = await convertImageToWebP(file);
+      const webpData = await convertImageToWebP(file, "product");
       handleBulkVarChange(varIdx, "image", webpData);
       toast.success("Foto de variante cargada");
     } catch {
@@ -1915,7 +1915,8 @@ function ProductsPage() {
       setBulkDrafts([...updatedDrafts]);
 
       try {
-        const webpDataUrl = await convertImageToWebP(draft.file);
+        const webpDataUrl = await convertImageToWebP(draft.file, "product");
+        const thumbDataUrl = await convertImageToWebP(draft.file, "thumb");
         const cleanPrice = draft.price.replace(",", ".");
         const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
 
@@ -1929,6 +1930,7 @@ function ProductsPage() {
           price: parsedPrice,
           categoryId: draft.categoryId,
           image: webpDataUrl,
+          thumbnail: thumbDataUrl,
           description: draft.description || undefined,
           variations: cleanVariations,
           visible: true,
