@@ -67,7 +67,9 @@ function ConfigPage() {
   const [empresaRuc, setEmpresaRuc] = useState(store?.empresaRuc ?? "");
   const [empresaRazonSocial, setEmpresaRazonSocial] = useState(store?.empresaRazonSocial ?? "");
   const [empresaDireccion, setEmpresaDireccion] = useState(store?.empresaDireccion ?? "");
-  const [showDiziBranding, setShowDiziBranding] = useState(store?.showDiziBranding ?? true);
+  const [showDiziBranding, setShowDiziBranding] = useState(
+    store?.showDiziBranding ?? (store ? getEffectivePlan(store) === "semilla" : false)
+  );
 
   const [copiedCatalog, setCopiedCatalog] = useState(false);
   const [copiedBio, setCopiedBio] = useState(false);
@@ -89,7 +91,9 @@ function ConfigPage() {
       setEmpresaRuc(store.empresaRuc ?? "");
       setEmpresaRazonSocial(store.empresaRazonSocial ?? "");
       setEmpresaDireccion(store.empresaDireccion ?? "");
-      setShowDiziBranding(store.showDiziBranding ?? true);
+      setShowDiziBranding(
+        store.showDiziBranding ?? (getEffectivePlan(store) === "semilla")
+      );
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);

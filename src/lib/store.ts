@@ -139,7 +139,7 @@ export const mapStoreFromDB = (row: any): Store => {
     locationLng: row.location_lng ? Number(row.location_lng) : undefined,
     locationAddress: row.location_address ?? undefined,
     showMap: row.show_map ?? true,
-    showDiziBranding: row.show_dizi_branding ?? true,
+    showDiziBranding: row.show_dizi_branding ?? (row.plan === "semilla" ? true : false),
     referredBy: row.referred_by ?? null,
     referralRewarded: row.referral_rewarded ?? false,
     quickLinks: row.quick_links ?? [],
