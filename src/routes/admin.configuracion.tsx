@@ -198,7 +198,7 @@ function ConfigPage() {
       return;
     }
     try {
-      const webpDataUrl = await convertImageToWebP(file);
+      const webpDataUrl = await convertImageToWebP(file, "logo");
       setLogo(webpDataUrl);
       toast.info("Logo cargado. Haz clic en Guardar para confirmar.");
     } catch {

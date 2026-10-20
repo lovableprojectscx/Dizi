@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
 import {
+  IMAGE_PRESETS,
   convertImageToWebP,
   convertImageUrlToWebP,
   createThumbnailFromBase64,
@@ -8,7 +9,7 @@ import {
   getThumbnailUrl,
 } from "../image-utils";
 
-describe("Pruebas unitarias de image-utils.ts", () => {
+describe("Pruebas unitarias de image-utils.ts con IMAGE_PRESETS", () => {
   let createdCanvases: any[] = [];
   let canvasContext: any = null;
 
@@ -76,7 +77,6 @@ describe("Pruebas unitarias de image-utils.ts", () => {
   });
 
   beforeEach(() => {
-    // Reseteamos las variables de prueba antes de cada test
     mockWidth = 1000;
     mockHeight = 800;
     shouldFail = false;
@@ -88,96 +88,128 @@ describe("Pruebas unitarias de image-utils.ts", () => {
     vi.restoreAllMocks();
   });
 
-  it("debe convertir una imagen dentro de los límites de dimensión sin redimensionar", async () => {
-    mockWidth = 600;
-    mockHeight = 400;
-    shouldFail = false;
+  it("debe exportar la configuración correcta de IMAGE_PRESETS", () => {
+    expect(IMAGE_PRESETS.product).toEqual({ maxDimension: 1600, quality: 0.80 });
+    expect(IMAGE_PRESETS.thumb).toEqual({ maxDimension: 600, quality: 0.78 });
+    expect(IMAGE_PRESETS.banner).toEqual({ maxDimension: 1920, quality: 0.80 });
+    expect(IMAGE_PRESETS.logo).toEqual({ maxDimension: 512, quality: 0.90 });
+  });
 
-    const file = new File([""], "test.png", { type: "image/png" });
-    const result = await convertImageToWebP(file);
+  it("debe redimensionar la imagen proporcionalmente con preset 'product' (máx 1600)", async () => {
+    mockWidth = 3200;
+    mockHeight = 2000;
+    const file = new File([""], "product.png", { type: "image/png" });
+    await convertImageToWebP(file, "product");
 
-    expect(result).toContain("data:image/webp;base64,mockedData");
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas).toBeDefined();
+    expect(drawingCanvas.width).toBe(1600);
+    expect(drawingCanvas.height).toBe(1000);
+  });
 
-    // Buscamos el canvas en el que se dibujó la imagen (el que tiene dimensiones asignadas)
+  it("debe redimensionar la imagen proporcionalmente con preset 'banner' (máx 1920)", async () => {
+    mockWidth = 3840;
+    mockHeight = 1200;
+    const file = new File([""], "banner.png", { type: "image/png" });
+    await convertImageToWebP(file, "banner");
+
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas).toBeDefined();
+    expect(drawingCanvas.width).toBe(1920);
+    expect(drawingCanvas.height).toBe(600);
+  });
+
+  it("debe redimensionar la imagen proporcionalmente con preset 'logo' (máx 512)", async () => {
+    mockWidth = 1024;
+    mockHeight = 1024;
+    const file = new File([""], "logo.png", { type: "image/png" });
+    await convertImageToWebP(file, "logo");
+
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas).toBeDefined();
+    expect(drawingCanvas.width).toBe(512);
+    expect(drawingCanvas.height).toBe(512);
+  });
+
+  it("debe redimensionar la imagen proporcionalmente con preset 'thumb' (máx 600)", async () => {
+    mockWidth = 1200;
+    mockHeight = 800;
+    const file = new File([""], "thumb.png", { type: "image/png" });
+    await convertImageToWebP(file, "thumb");
+
     const drawingCanvas = createdCanvases.find((c) => c.width > 0);
     expect(drawingCanvas).toBeDefined();
     expect(drawingCanvas.width).toBe(600);
     expect(drawingCanvas.height).toBe(400);
   });
 
-  it("debe redimensionar la imagen proporcionalmente si el ancho supera MAX_DIMENSION (800)", async () => {
-    mockWidth = 3000;
-    mockHeight = 1500;
-    shouldFail = false;
-
-    const file = new File([""], "test.png", { type: "image/png" });
-    await convertImageToWebP(file);
+  it("nunca debe agrandar si la foto es más chica que el límite de dimensión", async () => {
+    mockWidth = 400;
+    mockHeight = 300;
+    const file = new File([""], "small.png", { type: "image/png" });
+    await convertImageToWebP(file, "product"); // límite 1600
 
     const drawingCanvas = createdCanvases.find((c) => c.width > 0);
     expect(drawingCanvas).toBeDefined();
-    // 3000 -> 800, alto = 1500 * 800 / 3000 = 400
-    expect(drawingCanvas.width).toBe(800);
-    expect(drawingCanvas.height).toBe(400);
-  });
-
-  it("debe redimensionar la imagen proporcionalmente si el alto supera MAX_DIMENSION (800)", async () => {
-    mockWidth = 1500;
-    mockHeight = 3000;
-    shouldFail = false;
-
-    const file = new File([""], "test.png", { type: "image/png" });
-    await convertImageToWebP(file);
-
-    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
-    expect(drawingCanvas).toBeDefined();
-    // 3000 -> 800, ancho = 1500 * 800 / 3000 = 400
-    expect(drawingCanvas.height).toBe(800);
     expect(drawingCanvas.width).toBe(400);
+    expect(drawingCanvas.height).toBe(300);
   });
 
-  it("debe fallar si la imagen no se puede cargar", async () => {
-    shouldFail = true;
-
-    const file = new File([""], "bad.png", { type: "image/png" });
-    const promise = convertImageToWebP(file);
-
-    await expect(promise).rejects.toThrow("No se pudo leer la imagen");
-  });
-
-  it("debe crear miniatura WebP de 400px a partir de File", async () => {
-    mockWidth = 1200;
-    mockHeight = 900;
+  it("debe crear miniatura WebP de 600px a partir del File original con createThumbnailWebP", async () => {
+    mockWidth = 2400;
+    mockHeight = 1600;
     const file = new File([""], "photo.png", { type: "image/png" });
     const result = await createThumbnailWebP(file);
     expect(result).toContain("data:image/webp;base64,mockedData");
     const drawingCanvas = createdCanvases.find((c) => c.width > 0);
-    expect(drawingCanvas.width).toBe(400);
+    expect(drawingCanvas.width).toBe(600);
+    expect(drawingCanvas.height).toBe(400);
   });
 
-  it("debe crear miniatura WebP de 400px a partir de base64 Data URL con createThumbnailFromBase64", async () => {
+  it("debe crear miniatura WebP de 600px a partir de base64 Data URL con createThumbnailFromBase64", async () => {
     mockWidth = 1200;
     mockHeight = 600;
     const base64 = "data:image/webp;base64,mockDataUrlOriginal";
-    const result = await createThumbnailFromBase64(base64, 400, 0.70);
+    const result = await createThumbnailFromBase64(base64);
     expect(result).toContain("data:image/webp;base64,mockedData");
     const drawingCanvas = createdCanvases.find((c) => c.width > 0);
-    expect(drawingCanvas.width).toBe(400);
-    expect(drawingCanvas.height).toBe(200);
+    expect(drawingCanvas.width).toBe(600);
+    expect(drawingCanvas.height).toBe(300);
   });
 
-  it("debe retornar inmediatamente la URL si ya es una data URL", async () => {
+  it("debe conservar el tamaño en createThumbnailFromBase64 si la imagen es menor a 600px (no agrandar)", async () => {
+    mockWidth = 350;
+    mockHeight = 250;
+    const base64 = "data:image/webp;base64,smallThumb";
+    await createThumbnailFromBase64(base64);
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas.width).toBe(350);
+    expect(drawingCanvas.height).toBe(250);
+  });
+
+  it("debe fallar si la imagen no se puede cargar", async () => {
+    shouldFail = true;
+    const file = new File([""], "bad.png", { type: "image/png" });
+    const promise = convertImageToWebP(file);
+    await expect(promise).rejects.toThrow("No se pudo leer la imagen");
+  });
+
+  it("debe retornar inmediatamente la URL si ya es una data URL en convertImageUrlToWebP", async () => {
     const dataUrl = "data:image/png;base64,alreadyConverted";
     const result = await convertImageUrlToWebP(dataUrl);
     expect(result).toBe(dataUrl);
   });
 
-  it("debe descargar y convertir una URL externa a WebP", async () => {
-    mockWidth = 500;
-    mockHeight = 500;
+  it("debe descargar y convertir una URL externa a WebP usando preset", async () => {
+    mockWidth = 2000;
+    mockHeight = 1000;
     shouldFail = false;
 
-    const result = await convertImageUrlToWebP("https://example.com/image.jpg");
+    const result = await convertImageUrlToWebP("https://example.com/image.jpg", "product");
     expect(result).toContain("data:image/webp;base64,mockedData");
+    const drawingCanvas = createdCanvases.find((c) => c.width > 0);
+    expect(drawingCanvas.width).toBe(1600);
+    expect(drawingCanvas.height).toBe(800);
   });
 
   describe("getOptimizedImageUrl", () => {
@@ -216,4 +248,3 @@ describe("Pruebas unitarias de image-utils.ts", () => {
     });
   });
 });
-

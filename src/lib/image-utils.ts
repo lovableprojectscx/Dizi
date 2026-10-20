@@ -6,8 +6,17 @@
  * y construye URLs con transformaciones de tamaño para el CDN de Supabase Storage.
  */
 
-const MAX_DIMENSION = 800; // px máximo en cualquier lado (optimizado para carga HD súper rápida en móviles a ~35KB)
-const WEBP_QUALITY = 0.75; // 0.75 = nitidez cristalina reduciendo el peso de fotos de 10MB a solo ~35KB-45KB
+export const IMAGE_PRESETS = {
+  product: { maxDimension: 1600, quality: 0.80 },
+  thumb: { maxDimension: 600, quality: 0.78 },
+  banner: { maxDimension: 1920, quality: 0.80 },
+  logo: { maxDimension: 512, quality: 0.90 },
+} as const;
+
+export type ImagePresetType = keyof typeof IMAGE_PRESETS;
+
+export const MAX_DIMENSION = IMAGE_PRESETS.product.maxDimension;
+export const WEBP_QUALITY = IMAGE_PRESETS.product.quality;
 
 let _isWebpSupported: boolean | null = null;
 
@@ -28,13 +37,29 @@ function isWebpSupported(): boolean {
 
 /**
  * Convierte un File de imagen a WebP (o JPEG fallback) y lo devuelve como data URL.
- * Redimensiona si algún lado supera maxDimension, manteniendo la proporción y máxima nitidez.
+ * Redimensiona según el preset indicado manteniendo la proporción y máxima nitidez.
+ * Si la foto original es más pequeña que maxDimension, conserva su tamaño original (nunca agranda).
  */
 export function convertImageToWebP(
   file: File,
-  maxDimension: number = MAX_DIMENSION,
+  preset: ImagePresetType | number = "product",
   qualityOverride?: number
 ): Promise<string> {
+  let maxDimension: number;
+  let defaultQuality: number;
+
+  if (typeof preset === "string" && preset in IMAGE_PRESETS) {
+    const config = IMAGE_PRESETS[preset as ImagePresetType];
+    maxDimension = config.maxDimension;
+    defaultQuality = config.quality;
+  } else if (typeof preset === "number") {
+    maxDimension = preset;
+    defaultQuality = IMAGE_PRESETS.product.quality;
+  } else {
+    maxDimension = IMAGE_PRESETS.product.maxDimension;
+    defaultQuality = IMAGE_PRESETS.product.quality;
+  }
+
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
@@ -42,7 +67,7 @@ export function convertImageToWebP(
     img.onload = () => {
       let { width, height } = img;
 
-      // Redimensionar si es muy grande
+      // Redimensionar solo si algún lado supera maxDimension (nunca agrandar)
       if (width > maxDimension || height > maxDimension) {
         if (width > height) {
           height = Math.round((height * maxDimension) / width);
@@ -72,7 +97,7 @@ export function convertImageToWebP(
       URL.revokeObjectURL(objectUrl);
 
       const format = isWebpSupported() ? "image/webp" : "image/jpeg";
-      const quality = qualityOverride ?? (format === "image/webp" ? WEBP_QUALITY : 0.88);
+      const quality = qualityOverride ?? (format === "image/webp" ? defaultQuality : 0.88);
       const webpDataUrl = canvas.toDataURL(format, quality);
       resolve(webpDataUrl);
     };
@@ -87,21 +112,21 @@ export function convertImageToWebP(
 }
 
 /**
- * Genera una miniatura ligera en WebP (máx 400px, ~12KB–15KB) a partir de un archivo File.
+ * Genera una miniatura ligera en WebP (preset 'thumb': máx 600px, q0.78) a partir de un archivo File original.
  * Preserva nitidez cristalina en recuadros pequeños de la grilla.
  */
 export function createThumbnailWebP(file: File): Promise<string> {
-  return convertImageToWebP(file, 400, 0.70);
+  return convertImageToWebP(file, "thumb");
 }
 
 /**
- * Genera una miniatura ligera en WebP (máx 400px, calidad 0.70, ~12KB–15KB) a partir de un base64 Data URL.
- * Usado al guardar productos para crear el asset complementario `_thumb.webp`.
+ * Genera una miniatura ligera en WebP a partir de un base64 Data URL.
+ * Usado como respaldo al guardar productos si no se dispone del File original.
  */
 export function createThumbnailFromBase64(
   base64Data: string,
-  maxDimension: number = 400,
-  quality: number = 0.70
+  maxDimension: number = IMAGE_PRESETS.thumb.maxDimension,
+  quality: number = IMAGE_PRESETS.thumb.quality
 ): Promise<string> {
   return new Promise((resolve) => {
     if (!base64Data || !base64Data.startsWith("data:")) {
@@ -113,6 +138,7 @@ export function createThumbnailFromBase64(
     img.onload = () => {
       let { width, height } = img;
 
+      // Nunca agrandar
       if (width > maxDimension || height > maxDimension) {
         if (width > height) {
           height = Math.round((height * maxDimension) / width);
@@ -158,7 +184,26 @@ export function createThumbnailFromBase64(
  * Intenta cargar una URL de imagen externa, la redimensiona y la convierte a WebP (o JPEG fallback) como base64 Data URL.
  * Usa crossOrigin = "anonymous" para intentar saltar restricciones CORS si el origen lo permite.
  */
-export function convertImageUrlToWebP(url: string): Promise<string> {
+export function convertImageUrlToWebP(
+  url: string,
+  preset: ImagePresetType | number = "product",
+  qualityOverride?: number
+): Promise<string> {
+  let maxDimension: number;
+  let defaultQuality: number;
+
+  if (typeof preset === "string" && preset in IMAGE_PRESETS) {
+    const config = IMAGE_PRESETS[preset as ImagePresetType];
+    maxDimension = config.maxDimension;
+    defaultQuality = config.quality;
+  } else if (typeof preset === "number") {
+    maxDimension = preset;
+    defaultQuality = IMAGE_PRESETS.product.quality;
+  } else {
+    maxDimension = IMAGE_PRESETS.product.maxDimension;
+    defaultQuality = IMAGE_PRESETS.product.quality;
+  }
+
   return new Promise((resolve, reject) => {
     // Si ya es un base64 Data URL, resolver inmediatamente
     if (url.startsWith("data:")) {
@@ -172,14 +217,14 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
     img.onload = () => {
       let { width, height } = img;
 
-      // Redimensionar si es muy grande
-      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+      // Redimensionar solo si es mayor (nunca agrandar)
+      if (width > maxDimension || height > maxDimension) {
         if (width > height) {
-          height = Math.round((height * MAX_DIMENSION) / width);
-          width = MAX_DIMENSION;
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
         } else {
-          width = Math.round((width * MAX_DIMENSION) / height);
-          height = MAX_DIMENSION;
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
         }
       }
 
@@ -200,7 +245,7 @@ export function convertImageUrlToWebP(url: string): Promise<string> {
 
       try {
         const format = isWebpSupported() ? "image/webp" : "image/jpeg";
-        const quality = format === "image/webp" ? WEBP_QUALITY : 0.88;
+        const quality = qualityOverride ?? (format === "image/webp" ? defaultQuality : 0.88);
         const webpDataUrl = canvas.toDataURL(format, quality);
         resolve(webpDataUrl);
       } catch (err) {
