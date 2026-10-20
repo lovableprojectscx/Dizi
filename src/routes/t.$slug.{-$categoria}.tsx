@@ -211,6 +211,9 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       niche: data.niche ?? "general",
       catalogTypography: data.catalog_typography ?? "sans",
       cardStyle: data.card_style ?? "standard",
+      accentColor: data.accent_color ?? null,
+      borderRadius: data.border_radius ?? null,
+      imgShape: data.img_shape ?? null,
       ownerId: data.owner_id,
       active: data.active,
       isPublished: data.is_published,
@@ -238,6 +241,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       bioBanner: data.bio_banner ?? undefined,
       bioTheme: data.bio_theme ?? "default",
       bioTypography: data.bio_typography ?? "sans",
+      bioShowCatalogButton: data.bio_show_catalog_button ?? null,
       bioButtonStyle:
         data.bio_button_style === "rounded-full"
           ? "pill-solid"
@@ -248,7 +252,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       bioBgColor: data.bio_bg_color ?? undefined,
       bannerTagline: data.banner_tagline,
       bannerBottomTag: data.banner_bottom_tag,
-      showDiziBranding: data.show_dizi_branding ?? true,
+      showDiziBranding: data.show_dizi_branding ?? (data.plan === "semilla" ? true : false),
       promoBarEnabled: data.promo_bar_enabled ?? false,
       promoBarText: data.promo_bar_text ?? "",
       promoBarActionType: data.promo_bar_action_type ?? "none",

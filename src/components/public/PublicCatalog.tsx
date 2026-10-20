@@ -2233,7 +2233,7 @@ export function PublicCatalog({
   const total = cartLines.reduce((a, l) => a + (l.effectivePrice || 0) * l.qty, 0);
 
   const appendDiziSignature = (text: string) => {
-    const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? true);
+    const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? false);
     if (!showBranding) return text;
     if (effectivePlan === "semilla") {
       return `${text}\n\n_Catálogo creado gratis con Dizi: dizi.idenza.site_`;
@@ -7960,7 +7960,7 @@ export function PublicCatalog({
 
       {/* ── Footer Branding Dizi ─────────────────────── */}
       {(() => {
-        const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? true);
+        const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? false);
         if (!showBranding) return null;
 
         const isSemilla = effectivePlan === "semilla";

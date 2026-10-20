@@ -30,7 +30,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { type PlanId, getEffectivePlan, getMaxAllowedBanners } from "@/lib/types";
+import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -380,7 +380,7 @@ function DisenoUnificadoPage() {
     bannerTagline: bannerTagline,
     bannerBottomTag: bannerBottomTag,
     bannerStyle: bannerStyle,
-    promoBarEnabled: promoBarEnabled,
+    promoBarEnabled: planAllowsPromoBar(store) ? promoBarEnabled : false,
     promoBarText: promoBarText,
     promoBarActionType: promoBarActionType,
     promoBarActionValue: promoBarActionValue,
@@ -869,6 +869,11 @@ function DisenoUnificadoPage() {
                           <Badge className="bg-orange-100 text-orange-800 border-orange-200 text-[9px] font-extrabold py-0.5">
                             Barra Superior
                           </Badge>
+                          {!planAllowsPromoBar(store) && (
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                              Disponible en Pro
+                            </Badge>
+                          )}
                         </h4>
                         <p className="text-[11px] text-zinc-550">
                           Muestra un anuncio superior en el catálogo (Envío gratis, descuentos, avisos importantes).
@@ -876,19 +881,27 @@ function DisenoUnificadoPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 self-end sm:self-auto">
-                      <label className="relative inline-flex items-center cursor-pointer">
+                      {!planAllowsPromoBar(store) && (
+                        <Link to="/admin/plan">
+                          <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                            Ampliar Plan
+                          </Button>
+                        </Link>
+                      )}
+                      <label className={cn("relative inline-flex items-center", planAllowsPromoBar(store) ? "cursor-pointer" : "cursor-not-allowed opacity-60")}>
                         <input
                           type="checkbox"
-                          checked={promoBarEnabled}
+                          checked={planAllowsPromoBar(store) && promoBarEnabled}
+                          disabled={!planAllowsPromoBar(store)}
                           onChange={(e) => setPromoBarEnabled(e.target.checked)}
-                          className="sr-only peer"
+                          className="sr-only peer disabled:cursor-not-allowed"
                         />
                         <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
                       </label>
                     </div>
                   </div>
 
-                  {promoBarEnabled && (
+                  {planAllowsPromoBar(store) && promoBarEnabled && (
                     <div className="pt-3 border-t border-zinc-200/80 space-y-3 animate-in fade-in duration-200">
                       <div className="space-y-1">
                         <label className="font-bold text-xs text-zinc-800">Texto del Anuncio / Oferta</label>
@@ -999,7 +1012,11 @@ function DisenoUnificadoPage() {
                     <div>
                       <h4 className="font-bold text-xs text-zinc-900">Marca de Agua Dizi</h4>
                       <p className="text-[11px] text-zinc-550">
-                        {currentPlanLevel === 0 ? "Visible al pie en Plan Semilla" : "Oculta automáticamente en tu plan activo"}
+                        {currentPlanLevel === 0
+                          ? "Visible al pie en Plan Semilla"
+                          : (store?.showDiziBranding ?? false)
+                            ? "Visible en tu catálogo (puedes ocultarla en Configuración)"
+                            : "Oculta automáticamente en tu plan activo"}
                       </p>
                     </div>
                   </div>
@@ -1011,9 +1028,22 @@ function DisenoUnificadoPage() {
                         </Button>
                       </Link>
                     ) : (
-                      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
-                        ✓ Oculta (Marca Propia)
-                      </Badge>
+                      <>
+                        {(store?.showDiziBranding ?? false) ? (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] font-bold">
+                            Visible
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-bold">
+                            ✓ Oculta (Marca Propia)
+                          </Badge>
+                        )}
+                        <Link to="/admin/configuracion">
+                          <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                            Configuración
+                          </Button>
+                        </Link>
+                      </>
                     )}
                   </div>
                 </div>
