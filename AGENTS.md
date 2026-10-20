@@ -45,6 +45,7 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 - **Prohibido ejecutar `git credential fill`, `credential-wincred`, `cmdkey` o cualquier comando que lea credenciales guardadas.** Si un push pide autenticación, detenerse de inmediato y avisar a Jack; el push lo realiza Jack directamente.
 - **Prohibido leer archivos `.env` o exponer/pegar claves (incluso públicas o de anon) en comandos, scripts, terminales o informes.** Para consultar o verificar datos reales de la base de datos o APIs, pedírselo a Jack o inspeccionar a través de la aplicación/tests autorizados.
 - **Prohibido buscar archivos fuera de la carpeta del proyecto y de la ruta indicada en el encargo.** Si un archivo no está en la ruta indicada, detenerse de inmediato y preguntar a Jack, sin buscar en ningún otro lugar del sistema.
+- **Prohibido leer perfiles, almacenamiento, cookies, LevelDB, logs o procesos de los navegadores del usuario para obtener sesiones o tokens. Si se necesita sesión, se le pide a Jack que la inicie.**
 
 
 ## 4. Reglas para cambiar la base de datos
