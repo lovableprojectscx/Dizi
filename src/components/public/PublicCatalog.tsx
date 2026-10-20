@@ -123,6 +123,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } from "@/lib/image-utils";
+import { PortadaEstandar } from "./PortadaEstandar";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 import {
@@ -3418,31 +3419,15 @@ export function PublicCatalog({
         </section>
       )}
 
-      {/* ── Hero Banner (Only for Elite/Banner models) ── */}
-      {!isNarrowing && modelId === "elite" && activeBanners.length > 0 && mode === "catalog" && (
-        <section className="relative w-full h-[60vh] min-h-[400px] flex items-center justify-center overflow-hidden bg-zinc-950">
-          {/* Blurred background image to avoid letterboxes, while keeping main banner fully visible */}
-          <img
-            src={getOptimizedImageUrl(activeBanners[0], 1200)}
-            alt={store.bannerTitle || store.name}
-            className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-1000"
-            loading="eager"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-black/10 md:bg-black/35" />
-
-          <div className="relative z-10 text-center px-4 max-w-3xl animate-in zoom-in slide-in-from-bottom-8 duration-700">
-            {store.bannerTitle && (
-              <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase mb-4 drop-shadow-2xl">
-                {store.bannerTitle}
-              </h1>
-            )}
-            <div className="h-1 w-20 bg-white mx-auto mb-6" />
-            <p className="text-white/90 text-sm md:text-lg font-medium tracking-widest uppercase drop-shadow-md">
-              Explora nuestra colección exclusiva
-            </p>
-          </div>
-        </section>
+      {/* ── Portada Estándar (Layout Grid: Grilla Simétrica, minimalista, clásico, nature_mint, elite y portada) ── */}
+      {!isNarrowing && cfg.layout === "grid" && mode === "catalog" && (
+        <PortadaEstandar
+          activeBanners={activeBanners}
+          bannerTitle={store.bannerTitle}
+          bannerTagline={store.bannerTagline}
+          bannerBottomTag={store.bannerBottomTag}
+          isNarrowing={isNarrowing}
+        />
       )}
 
       {/* ── Filtros post-banner: solo modelos con hero ──────────── */}
