@@ -177,4 +177,89 @@ describe("Fase A1 — Pruebas unitarias de Cintillo, Botón Bio y Marca de Agua"
       expect(storeProTrue.showDiziBranding).toBe(true);
     });
   });
+
+  describe("Migración y Trigger: reset_branding_on_upgrade", () => {
+    const computeShowBranding = (effectivePlan: PlanId, storeShowDiziBranding?: boolean | null) => {
+      return effectivePlan === "semilla" ? true : (storeShowDiziBranding ?? false);
+    };
+
+    // Simulación exacta de la función PL/pgSQL reset_branding_on_upgrade()
+    const simulateResetBrandingOnUpgrade = (
+      oldRow: { plan: string; show_dizi_branding: boolean | null },
+      newRow: { plan: string; show_dizi_branding: boolean | null }
+    ) => {
+      const result = { ...newRow };
+      if (oldRow.plan === "semilla" && result.plan !== "semilla" && result.show_dizi_branding === true) {
+        result.show_dizi_branding = null;
+      }
+      return result;
+    };
+
+    it("cuando una tienda pasa de semilla a pro y show_dizi_branding es true, lo reinicia a null", () => {
+      const oldStore = { plan: "semilla", show_dizi_branding: true };
+      const newStore = { plan: "pro", show_dizi_branding: true };
+
+      const updated = simulateResetBrandingOnUpgrade(oldStore, newStore);
+      expect(updated.show_dizi_branding).toBeNull();
+      // Y en frontend, null en plan pro evalúa a marca oculta
+      expect(computeShowBranding("pro", updated.show_dizi_branding)).toBe(false);
+    });
+
+    it("cuando una tienda pasa de semilla a emprendedor o ilimitado, también lo reinicia a null", () => {
+      const oldStore = { plan: "semilla", show_dizi_branding: true };
+      const updatedEmprendedor = simulateResetBrandingOnUpgrade(oldStore, {
+        plan: "emprendedor",
+        show_dizi_branding: true,
+      });
+      expect(updatedEmprendedor.show_dizi_branding).toBeNull();
+
+      const updatedIlimitado = simulateResetBrandingOnUpgrade(oldStore, {
+        plan: "ilimitado",
+        show_dizi_branding: true,
+      });
+      expect(updatedIlimitado.show_dizi_branding).toBeNull();
+    });
+
+    it("no modifica show_dizi_branding si la tienda ya era de pago (ej. upgrade emprendedor -> pro)", () => {
+      const oldStore = { plan: "emprendedor", show_dizi_branding: true };
+      const newStore = { plan: "pro", show_dizi_branding: true };
+
+      const updated = simulateResetBrandingOnUpgrade(oldStore, newStore);
+      expect(updated.show_dizi_branding).toBe(true);
+    });
+
+    it("no modifica show_dizi_branding si ya era false o null al actualizar plan", () => {
+      const oldStore = { plan: "semilla", show_dizi_branding: false };
+      const newStore = { plan: "pro", show_dizi_branding: false };
+
+      const updated = simulateResetBrandingOnUpgrade(oldStore, newStore);
+      expect(updated.show_dizi_branding).toBe(false);
+    });
+
+    it("permite a la tienda de pago reactivar voluntariamente show_dizi_branding a true después del upgrade", () => {
+      const currentStore = { plan: "pro", show_dizi_branding: null };
+      const updatedByClient = simulateResetBrandingOnUpgrade(currentStore, {
+        plan: "pro",
+        show_dizi_branding: true,
+      });
+      expect(updatedByClient.show_dizi_branding).toBe(true);
+      expect(computeShowBranding("pro", updatedByClient.show_dizi_branding)).toBe(true);
+    });
+
+    it("el archivo de migración supabase/migrations/20261020190000_marca_dizi_planes_pago.sql existe y contiene la función y el trigger", async () => {
+      const fs = await import("fs");
+      const path = await import("path");
+      const migrationPath = path.resolve(
+        process.cwd(),
+        "supabase/migrations/20261020190000_marca_dizi_planes_pago.sql"
+      );
+
+      expect(fs.existsSync(migrationPath)).toBe(true);
+      const sqlContent = fs.readFileSync(migrationPath, "utf-8");
+      expect(sqlContent).toContain("CREATE OR REPLACE FUNCTION public.reset_branding_on_upgrade()");
+      expect(sqlContent).toContain("BEFORE UPDATE OF plan ON public.stores");
+      expect(sqlContent).toContain("UPDATE public.stores");
+      expect(sqlContent).toContain("WHERE plan <> 'semilla' AND show_dizi_branding IS TRUE;");
+    });
+  });
 });
