@@ -35,13 +35,36 @@ export function PortadaEstandar({
 
   const hasMultiple = banners.length > 1;
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isTouchPaused, setIsTouchPaused] = useState(false);
+  const touchPauseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Pausa el avance automático unos segundos tras swipe con el dedo
+  const pauseAutoAdvanceOnSwipe = () => {
+    if (touchPauseTimeoutRef.current) {
+      clearTimeout(touchPauseTimeoutRef.current);
+    }
+    setIsTouchPaused(true);
+    touchPauseTimeoutRef.current = setTimeout(() => {
+      setIsTouchPaused(false);
+    }, 6000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (touchPauseTimeoutRef.current) {
+        clearTimeout(touchPauseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Swipe en celular
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // Avance automático respetando prefers-reduced-motion
+  const isPaused = isHovered || isTouchPaused;
+
+  // Avance automático respetando prefers-reduced-motion y pausas
   useEffect(() => {
     if (!hasMultiple) return;
 
@@ -81,9 +104,11 @@ export function PortadaEstandar({
     if (diff > minSwipeDistance) {
       // Deslizar izquierda -> siguiente banner
       setCurrentIndex((prev) => (prev + 1) % banners.length);
+      pauseAutoAdvanceOnSwipe();
     } else if (diff < -minSwipeDistance) {
       // Deslizar derecha -> banner anterior
       setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+      pauseAutoAdvanceOnSwipe();
     }
 
     touchStartX.current = null;
@@ -104,8 +129,8 @@ export function PortadaEstandar({
         "relative w-full aspect-[3/1] overflow-hidden bg-zinc-950 select-none",
         className
       )}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -118,8 +143,8 @@ export function PortadaEstandar({
             key={idx}
             data-testid={`portada-slide-${idx}`}
             className={cn(
-              "absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out",
-              isCurrent ? "opacity-100 z-0 pointer-events-auto" : "opacity-0 -z-10 pointer-events-none"
+              "absolute inset-0 w-full h-full z-0 transition-opacity duration-700 ease-in-out",
+              isCurrent ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             )}
             aria-hidden={!isCurrent}
           >
@@ -127,8 +152,8 @@ export function PortadaEstandar({
               src={getOptimizedImageUrl(bannerUrl, 1200)}
               alt={cleanTitle || `Banner ${idx + 1}`}
               className="w-full h-full object-cover object-center"
-              loading={idx === 0 ? "eager" : "lazy"}
-              fetchPriority={idx === 0 ? "high" : "auto"}
+              loading="eager"
+              fetchPriority={idx === 0 ? "high" : "low"}
               decoding={idx === 0 ? "sync" : "async"}
             />
           </div>
@@ -201,7 +226,7 @@ export function PortadaEstandar({
                 aria-label={`Ver banner ${idx + 1} de ${banners.length}`}
                 aria-current={isSelected ? "true" : undefined}
                 className={cn(
-                  "h-1.5 rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden",
+                  "h-1.5 rounded-full transition-all duration-300 cursor-pointer focus:outline-hidden focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black",
                   isSelected ? "w-4 sm:w-5 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
                 )}
               />

@@ -3,7 +3,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PortadaEstandar } from "../PortadaEstandar";
 
-describe("PortadaEstandar Component (Fase A2)", () => {
+describe("PortadaEstandar Component (Arreglos de Carrusel)", () => {
   const sampleBanners = [
     "https://storage.example.com/banner1.webp",
     "https://storage.example.com/banner2.webp",
@@ -37,17 +37,18 @@ describe("PortadaEstandar Component (Fase A2)", () => {
       expect(html).toContain('data-testid="portada-estandar"');
       expect(html).toContain("aspect-[3/1]");
 
-      // Imagen única con optimización a 1200, eager y high priority
+      // Imagen única con optimización a 1200, eager, high priority y decoding sync
       expect(html).toContain("banner1.webp");
       expect(html).toContain('loading="eager"');
       expect(html).toMatch(/fetchpriority="high"/i);
+      expect(html).toContain('decoding="sync"');
       expect(html).toContain("object-cover object-center");
 
       // No debe contener paginación (dots)
       expect(html).not.toContain('data-testid="portada-dots"');
     });
 
-    it("con 3 banners: renderiza los 3 slides, primera eager y las demás lazy, y puntos de carrusel", () => {
+    it("con 3 banners: todos los banners con loading eager, fetchPriority high en el primero y low en el resto, decoding async en el resto", () => {
       const html = renderToStaticMarkup(
         <PortadaEstandar activeBanners={sampleBanners} />
       );
@@ -55,17 +56,30 @@ describe("PortadaEstandar Component (Fase A2)", () => {
       expect(html).toContain('data-testid="portada-estandar"');
       expect(html).toContain("aspect-[3/1]");
 
-      // 3 slides
+      // 3 slides presentes en el DOM
       expect(html).toContain('data-testid="portada-slide-0"');
       expect(html).toContain('data-testid="portada-slide-1"');
       expect(html).toContain('data-testid="portada-slide-2"');
 
-      // Primera imagen eager/high
-      expect(html).toContain('loading="eager"');
-      expect(html).toMatch(/fetchpriority="high"/i);
+      // Extraer todas las etiquetas <img> del carrusel
+      const imgTags = html.match(/<img[^>]+>/g) || [];
+      expect(imgTags).toHaveLength(3);
 
-      // Las demás lazy
-      expect(html).toContain('loading="lazy"');
+      // Regla de optimización Fase B: NUNCA lazy para evitar pantallazo negro en vuelta inicial
+      imgTags.forEach((img) => {
+        expect(img).toContain('loading="eager"');
+        expect(img).not.toContain('loading="lazy"');
+      });
+
+      // Primer banner: fetchPriority="high" y decoding="sync"
+      expect(imgTags[0]).toMatch(/fetchpriority="high"/i);
+      expect(imgTags[0]).toContain('decoding="sync"');
+
+      // Banners 2..N: fetchPriority="low" y decoding="async"
+      expect(imgTags[1]).toMatch(/fetchpriority="low"/i);
+      expect(imgTags[1]).toContain('decoding="async"');
+      expect(imgTags[2]).toMatch(/fetchpriority="low"/i);
+      expect(imgTags[2]).toContain('decoding="async"');
 
       // Puntos de navegación
       expect(html).toContain('data-testid="portada-dots"');
@@ -75,7 +89,34 @@ describe("PortadaEstandar Component (Fase A2)", () => {
     });
   });
 
-  describe("2. Renderizado de Textos y Degradado Sutil (con y sin cada texto)", () => {
+  describe("2. Transición y Accesibilidad (Fase B)", () => {
+    it("mantiene z-index fijo (z-0) y transición suave de opacidad sin cambiar a -z-10 inmediato", () => {
+      const html = renderToStaticMarkup(
+        <PortadaEstandar activeBanners={sampleBanners} />
+      );
+
+      // Ambas diapositivas (activa e inactiva) comparten z-0 para no desaparecer tras el fondo
+      expect(html).not.toContain("-z-10");
+      expect(html).toContain("transition-opacity duration-700 ease-in-out");
+
+      // Slide activo (índice 0 inicial)
+      expect(html).toContain('data-testid="portada-slide-0" class="absolute inset-0 w-full h-full z-0 transition-opacity duration-700 ease-in-out opacity-100 pointer-events-auto"');
+
+      // Slide inactivo (índice 1)
+      expect(html).toContain('data-testid="portada-slide-1" class="absolute inset-0 w-full h-full z-0 transition-opacity duration-700 ease-in-out opacity-0 pointer-events-none"');
+    });
+
+    it("los puntos del carrusel tienen foco visible por teclado (focus-visible:ring)", () => {
+      const html = renderToStaticMarkup(
+        <PortadaEstandar activeBanners={sampleBanners} />
+      );
+
+      expect(html).toContain("focus-visible:ring-2");
+      expect(html).toContain("focus-visible:ring-white");
+    });
+  });
+
+  describe("3. Renderizado de Textos y Degradado Sutil (con y sin cada texto)", () => {
     it("con todos los textos: renderiza etiqueta arriba, título y subtítulo con degradado", () => {
       const html = renderToStaticMarkup(
         <PortadaEstandar
@@ -159,7 +200,7 @@ describe("PortadaEstandar Component (Fase A2)", () => {
     });
   });
 
-  describe("3. Modo Resultados (isNarrowing)", () => {
+  describe("4. Modo Resultados (isNarrowing)", () => {
     it("se oculta completamente en modo resultados (isNarrowing=true), retornando null / cadena vacía", () => {
       const htmlNarrowing = renderToStaticMarkup(
         <PortadaEstandar
