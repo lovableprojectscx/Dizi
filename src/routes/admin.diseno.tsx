@@ -40,10 +40,8 @@ import { lazy, Suspense } from "react";
 const CatalogPdfExportButton = lazy(() =>
   import("@/components/public/CatalogPdfExport").then((m) => ({ default: m.CatalogPdfExportButton }))
 );
-import { DESIGN_STRUCTURES, StructureDef, resolveStructureId } from "@/lib/design-catalog";
+import { DESIGN_STRUCTURES, StructureDef, resolveStructureId, getDesignSpec } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
-
-const FEATURED_COMPATIBLE_STRUCTURES = ["bite", "nature", "bloom_general", "bloom_floral"];
 
 /**
  * @file admin.diseno.tsx
@@ -180,6 +178,7 @@ function DisenoUnificadoPage() {
   const [selectedStructure, setSelectedStructure] = useState<string>(
     resolveStructureId(store.model, store.niche)
   );
+  const currentSpec = getDesignSpec(selectedStructure, store.niche);
 
   // 2. Estado del Tema (Los 10 atributos finos)
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
@@ -553,7 +552,7 @@ function DisenoUnificadoPage() {
               </div>
 
               {/* Interruptor de destacados al inicio para diseños compatibles */}
-              {FEATURED_COMPATIBLE_STRUCTURES.includes(selectedStructure) && (
+              {currentSpec.destacados && (
                 <div className="pt-2 border-t border-zinc-200/80 animate-in fade-in duration-200">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">
                     <div className="flex items-center gap-3">
@@ -706,108 +705,101 @@ function DisenoUnificadoPage() {
                     </select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="font-bold text-xs text-zinc-800">Estilo de Tarjeta</label>
-                    <select
-                      value={cardStyle}
-                      onChange={(e) => setCardStyle(e.target.value as any)}
-                      className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
-                    >
-                      <option value="standard">Estándar (Con Borde)</option>
-                      <option value="flat">Flat (Plana Sin Sombra)</option>
-                      <option value="shadow">Shadow (Sombra Elevada)</option>
-                      <option value="curved">Curved (Esquinas Curvadas)</option>
-                    </select>
-                  </div>
+                  {currentSpec.temaEditable.includes("tarjeta") && (
+                    <div className="space-y-2">
+                      <label className="font-bold text-xs text-zinc-800">Estilo de Tarjeta</label>
+                      <select
+                        value={cardStyle}
+                        onChange={(e) => setCardStyle(e.target.value as any)}
+                        className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                      >
+                        <option value="standard">Estándar (Con Borde)</option>
+                        <option value="flat">Flat (Plana Sin Sombra)</option>
+                        <option value="shadow">Shadow (Sombra Elevada)</option>
+                        <option value="curved">Curved (Esquinas Curvadas)</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
-                {/* Radio de Esquinas & Modo Oscuro */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="font-bold text-xs text-zinc-800">Radio de Esquinas</label>
-                      <span className="text-xs font-bold text-primary">{borderRadius}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="24"
-                      value={parseInt(borderRadius) || 12}
-                      onChange={(e) => setBorderRadius(`${e.target.value}px`)}
-                      className="w-full accent-primary"
-                    />
+                {/* Modo Oscuro */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl border bg-zinc-50/50">
+                  <div className="flex items-center gap-2">
+                    {isDark ? <Moon className="h-4 w-4 text-purple-600" /> : <Sun className="h-4 w-4 text-amber-500" />}
+                    <span className="font-bold text-xs text-zinc-800">Modo Oscuro</span>
                   </div>
-
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl border bg-zinc-50/50">
-                    <div className="flex items-center gap-2">
-                      {isDark ? <Moon className="h-4 w-4 text-purple-600" /> : <Sun className="h-4 w-4 text-amber-500" />}
-                      <span className="font-bold text-xs text-zinc-800">Modo Oscuro</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={isDark}
-                      onChange={(e) => {
-                        const nextDark = e.target.checked;
-                        setIsDark(nextDark);
-                        if (nextDark) {
-                          setBgColor("#09090b");
-                          setCardBg("#18181b");
-                          setTextColor("#f4f4f5");
-                          setAccentColor("#27272a");
-                        } else {
-                          setBgColor("#ffffff");
-                          setCardBg("#ffffff");
-                          setTextColor("#18181b");
-                          setAccentColor("#e2e8f0");
-                        }
-                      }}
-                      className="h-4 w-4 rounded accent-primary cursor-pointer"
-                    />
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isDark}
+                    onChange={(e) => {
+                      const nextDark = e.target.checked;
+                      setIsDark(nextDark);
+                      if (nextDark) {
+                        setBgColor("#09090b");
+                        setCardBg("#18181b");
+                        setTextColor("#f4f4f5");
+                        setAccentColor("#27272a");
+                      } else {
+                        setBgColor("#ffffff");
+                        setCardBg("#ffffff");
+                        setTextColor("#18181b");
+                        setAccentColor("#e2e8f0");
+                      }
+                    }}
+                    className="h-4 w-4 rounded accent-primary cursor-pointer"
+                  />
                 </div>
 
                 {/* Textos y Leyendas del Banner / Portada */}
-                <div className="pt-6 border-t border-zinc-200 space-y-4">
-                  <div className="flex items-center gap-2">
-                    <Image className="h-4 w-4 text-blue-600" />
-                    <h3 className="font-extrabold text-sm text-zinc-900">Textos y Leyendas de Portada</h3>
+                {currentSpec.textosPortada.length > 0 && (
+                  <div className="pt-6 border-t border-zinc-200 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Image className="h-4 w-4 text-blue-600" />
+                      <h3 className="font-extrabold text-sm text-zinc-900">Textos y Leyendas de Portada</h3>
+                    </div>
+
+                    <div className="space-y-3 bg-zinc-50/50 p-4 rounded-2xl border">
+                      {currentSpec.textosPortada.includes("titulo") && (
+                        <div className="space-y-1">
+                          <label className="font-bold text-xs text-zinc-800">Título Principal del Banner</label>
+                          <input
+                            type="text"
+                            value={bannerTitle}
+                            onChange={(e) => setBannerTitle(e.target.value)}
+                            placeholder="Ej: Colección Primavera 2026"
+                            className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                          />
+                        </div>
+                      )}
+
+                      {currentSpec.textosPortada.includes("subtitulo") && (
+                        <div className="space-y-1">
+                          <label className="font-bold text-xs text-zinc-800">Subtítulo / Mensaje Promocional (Tagline)</label>
+                          <input
+                            type="text"
+                            value={bannerTagline}
+                            onChange={(e) => setBannerTagline(e.target.value)}
+                            placeholder="Ej: Envíos gratis a todo el Perú en compras mayores a S/ 100"
+                            className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                          />
+                        </div>
+                      )}
+
+                      {currentSpec.textosPortada.includes("etiqueta") && (
+                        <div className="space-y-1">
+                          <label className="font-bold text-xs text-zinc-800">Etiqueta Inferior del Banner</label>
+                          <input
+                            type="text"
+                            value={bannerBottomTag}
+                            onChange={(e) => setBannerBottomTag(e.target.value)}
+                            placeholder="Ej: Oferta por tiempo limitado"
+                            className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="space-y-3 bg-zinc-50/50 p-4 rounded-2xl border">
-                    <div className="space-y-1">
-                      <label className="font-bold text-xs text-zinc-800">Título Principal del Banner</label>
-                      <input
-                        type="text"
-                        value={bannerTitle}
-                        onChange={(e) => setBannerTitle(e.target.value)}
-                        placeholder="Ej: Colección Primavera 2026"
-                        className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-bold text-xs text-zinc-800">Subtítulo / Mensaje Promocional (Tagline)</label>
-                      <input
-                        type="text"
-                        value={bannerTagline}
-                        onChange={(e) => setBannerTagline(e.target.value)}
-                        placeholder="Ej: Envíos gratis a todo el Perú en compras mayores a S/ 100"
-                        className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="font-bold text-xs text-zinc-800">Etiqueta Inferior del Banner</label>
-                      <input
-                        type="text"
-                        value={bannerBottomTag}
-                        onChange={(e) => setBannerBottomTag(e.target.value)}
-                        placeholder="Ej: Oferta por tiempo limitado"
-                        className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
-                      />
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -823,8 +815,8 @@ function DisenoUnificadoPage() {
               </div>
 
               <div className="space-y-3">
-                {/* Carrusel de Destacados (Solo para bite, nature, bloom_general, bloom_floral) */}
-                {FEATURED_COMPATIBLE_STRUCTURES.includes(selectedStructure) && (
+                {/* Carrusel de Destacados */}
+                {currentSpec.destacados && (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3 animate-in fade-in duration-200">
                     <div className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
@@ -1049,117 +1041,152 @@ function DisenoUnificadoPage() {
                 </div>
 
                 {/* 2. Banners en Portada (Hasta 5 Banners según Plan) */}
-                <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {currentSpec.portada === "ninguna" ? (
+                  <div className="p-4 rounded-2xl border border-zinc-200/80 bg-zinc-50/50 space-y-2">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                        <Image className="h-4.5 w-4.5 text-blue-600" />
+                      <div className="h-9 w-9 rounded-xl bg-zinc-100 flex items-center justify-center shrink-0">
+                        <Image className="h-4.5 w-4.5 text-zinc-400" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
-                          Banners en Portada
-                          <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[9px] font-extrabold py-0.5">
-                            {effectivePlan === "semilla"
-                              ? "0 Banners (Plan Semilla)"
-                              : effectivePlan === "emprendedor"
-                                ? "1 Banner Max"
-                                : effectivePlan === "pro"
-                                  ? "Carrusel 3 Banners"
-                                  : "Carrusel 5 Banners"}
-                          </Badge>
-                        </h4>
-                        <p className="text-[11px] text-zinc-550">
-                          {maxAllowedBanners === 0
-                            ? "El Plan Semilla no incluye imágenes personalizadas en portada. Actualiza a Emprendedor (1 banner) o Pro/Ilimitado (hasta 5 en carrusel)."
-                            : `Gestiona hasta ${maxAllowedBanners} banner(s) para la portada de tu catálogo. (${bannerList.length}/${maxAllowedBanners} subidos)`}
+                        <h4 className="font-bold text-xs text-zinc-900">Banners en Portada</h4>
+                        <p className="text-xs text-zinc-600 mt-1">
+                          Este diseño no usa portada. Si quieres mostrar banners, elige un diseño con portada:
                         </p>
-                        <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg w-fit shadow-2xs">
-                          <span className="text-amber-600">📐 Tamaño recomendado:</span>
-                          <span className="font-black text-amber-950">1200 × 400 px</span>
-                          <span className="text-amber-700 font-normal hidden sm:inline">(Formato panorámico 3:1)</span>
-                        </div>
+                        <p className="text-xs font-semibold text-zinc-800 mt-0.5">
+                          Grilla Simétrica, Portada con Banner, Bloom Estándar, Bloom Floral, Bite, Nature o Lookbook.
+                        </p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      {maxAllowedBanners > 0 && bannerList.length < maxAllowedBanners && (
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleAddBanner(file);
-                            }}
-                            className="hidden"
-                          />
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-bold text-zinc-700 shadow-xs transition">
-                            <Upload className="h-3.5 w-3.5 text-primary" />
-                            + Agregar Banner ({bannerList.length + 1}/{maxAllowedBanners})
-                          </span>
-                        </label>
-                      )}
-                      {currentPlanLevel < 3 && (
-                        <Link to="/admin/plan">
-                          <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
-                            Ampliar Plan
-                          </Button>
-                        </Link>
-                      )}
                     </div>
                   </div>
-
-                  {/* Banner Gallery Grid */}
-                  {bannerList.length > 0 && (
-                    <div className="pt-3 border-t border-zinc-200/80 space-y-2">
-                      <p className="text-xs font-bold text-zinc-800">
-                        Imágenes Cargadas ({bannerList.length} de {maxAllowedBanners})
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {bannerList.map((url, idx) => (
-                          <div
-                            key={idx}
-                            className="relative rounded-2xl border border-zinc-200 bg-white p-2.5 space-y-2 group shadow-xs hover:border-primary/40 transition"
-                          >
-                            <div className="relative aspect-[16/7] w-full rounded-xl overflow-hidden bg-zinc-100 border border-zinc-100">
-                              <img
-                                src={url}
-                                alt={`Banner ${idx + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold">
-                                Banner #{idx + 1}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center justify-between pt-1">
-                              <label className="cursor-pointer text-[10px] text-zinc-600 font-bold hover:text-primary transition flex items-center gap-1">
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleAddBanner(file, idx);
-                                  }}
-                                  className="hidden"
-                                />
-                                <Upload className="h-3 w-3" /> Reemplazar
-                              </label>
-
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveBanner(idx)}
-                                className="text-[10px] text-red-600 hover:text-red-700 font-bold flex items-center gap-1"
-                              >
-                                <Trash2 className="h-3 w-3" /> Eliminar
-                              </button>
-                            </div>
+                ) : (
+                  <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                          <Image className="h-4.5 w-4.5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                            Banners en Portada
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[9px] font-extrabold py-0.5">
+                              {effectivePlan === "semilla"
+                                ? "0 Banners (Plan Semilla)"
+                                : effectivePlan === "emprendedor"
+                                  ? "1 Banner Max"
+                                  : effectivePlan === "pro"
+                                    ? "Carrusel 3 Banners"
+                                    : "Carrusel 5 Banners"}
+                            </Badge>
+                          </h4>
+                          <p className="text-[11px] text-zinc-550">
+                            {maxAllowedBanners === 0
+                              ? "El Plan Semilla no incluye imágenes personalizadas en portada. Actualiza a Emprendedor (1 banner) o Pro/Ilimitado (hasta 5 en carrusel)."
+                              : `Gestiona hasta ${maxAllowedBanners} banner(s) para la portada de tu catálogo. (${bannerList.length}/${maxAllowedBanners} subidos)`}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg w-fit shadow-2xs">
+                            <span className="text-amber-600">📐 Tamaño recomendado:</span>
+                            <span className="font-black text-amber-950">1200 × 400 px</span>
+                            <span className="text-amber-700 font-normal hidden sm:inline">(Formato panorámico 3:1)</span>
                           </div>
-                        ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        {maxAllowedBanners > 0 && bannerList.length < maxAllowedBanners && (
+                          <label className="cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleAddBanner(file);
+                              }}
+                              className="hidden"
+                            />
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-xs font-bold text-zinc-700 shadow-xs transition">
+                              <Upload className="h-3.5 w-3.5 text-primary" />
+                              + Agregar Banner ({bannerList.length + 1}/{maxAllowedBanners})
+                            </span>
+                          </label>
+                        )}
+                        {currentPlanLevel < 3 && (
+                          <Link to="/admin/plan">
+                            <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                              Ampliar Plan
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
-                  )}
-                </div>
+
+                    {/* Selector de Corte del Banner (solo si spec.corteBanner) */}
+                    {currentSpec.corteBanner && (
+                      <div className="pt-3 border-t border-zinc-200/80 space-y-1.5">
+                        <label className="font-bold text-xs text-zinc-800">Corte del Banner</label>
+                        <select
+                          value={bannerStyle}
+                          onChange={(e) => setBannerStyle(e.target.value as any)}
+                          className="w-full sm:w-64 h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                        >
+                          <option value="framed">Con Margen (Enmarcado)</option>
+                          <option value="direct">Directo (Ancho Completo)</option>
+                          <option value="curved">Curvado (Bordes Suaves)</option>
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Banner Gallery Grid */}
+                    {bannerList.length > 0 && (
+                      <div className="pt-3 border-t border-zinc-200/80 space-y-2">
+                        <p className="text-xs font-bold text-zinc-800">
+                          Imágenes Cargadas ({bannerList.length} de {maxAllowedBanners})
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                          {bannerList.map((url, idx) => (
+                            <div
+                              key={idx}
+                              className="relative rounded-2xl border border-zinc-200 bg-white p-2.5 space-y-2 group shadow-xs hover:border-primary/40 transition"
+                            >
+                              <div className="relative aspect-[16/7] w-full rounded-xl overflow-hidden bg-zinc-100 border border-zinc-100">
+                                <img
+                                  src={url}
+                                  alt={`Banner ${idx + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-white text-[9px] font-bold">
+                                  Banner #{idx + 1}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center justify-between pt-1">
+                                <label className="cursor-pointer text-[10px] text-zinc-600 font-bold hover:text-primary transition flex items-center gap-1">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) handleAddBanner(file, idx);
+                                    }}
+                                    className="hidden"
+                                  />
+                                  <Upload className="h-3 w-3" /> Reemplazar
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveBanner(idx)}
+                                  className="text-[10px] text-red-600 hover:text-red-700 font-bold flex items-center gap-1"
+                                >
+                                  <Trash2 className="h-3 w-3" /> Eliminar
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 3. Buscador Inteligente */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3">

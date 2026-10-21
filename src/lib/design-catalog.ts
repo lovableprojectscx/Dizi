@@ -1,9 +1,9 @@
 /**
  * @file design-catalog.ts
  * @description Catálogo de estructuras y plantillas de diseño visual para las tiendas de DIZI.
- * Define los modelos arquitectónicos (Grilla, Overlay, Hero, Magazine, Tiles, Spotlight, Arch, etc.),
- * sus paletas de color y estilos tipográficos predeterminados, módulos compatibles y función
- * de resolución de modelo en tiempo de ejecución (`resolveRenderModel`).
+ * Define la Ficha Única de Diseño (DesignSpec), modelos arquitectónicos (Grilla, Overlay,
+ * Hero, Magazine, Tiles, Spotlight, Arch, etc.), sus paletas de color y estilos predeterminados,
+ * y funciones de resolución en tiempo de ejecución (`getDesignSpec`, `resolveRenderModel`, `resolveStructureId`).
  */
 
 /**
@@ -33,11 +33,306 @@ export interface StructureThemeDefaults {
 }
 
 /**
+ * Los 15 identificadores oficiales de diseño en DIZI.
+ */
+export type OfficialDesignId =
+  | "grid"
+  | "overlay"
+  | "hero"
+  | "spotlight"
+  | "editorial"
+  | "tiles"
+  | "magazine"
+  | "diagonal"
+  | "arch"
+  | "banner_grid"
+  | "bloom_general"
+  | "bloom_floral"
+  | "bite"
+  | "nature"
+  | "lookbook";
+
+export type CoverTextField = "titulo" | "subtitulo" | "etiqueta";
+
+export type EditableThemeField =
+  | "colores"
+  | "tipografia"
+  | "tarjeta"
+  | "formaFoto"
+  | "radio"
+  | "oscuro";
+
+/**
+ * Ficha técnica única de especificación de diseño DIZI (DesignSpec).
+ * Única fuente de verdad para panel, catálogo, documentación y pruebas automáticas.
+ */
+export interface DesignSpec {
+  /** Identificador único oficial de la estructura */
+  id: OfficialDesignId;
+  /** Nombre comercial en el panel */
+  nombre: string;
+  /** Familia arquitectónica */
+  familia: "estandar" | "premium";
+  /** Si pinta portada y tipo (carrusel o ninguna) */
+  portada: "ninguna" | "carrusel";
+  /** Qué textos sobre la portada dibuja el catálogo y solicita el panel */
+  textosPortada: CoverTextField[];
+  /** Si inventa textos de ejemplo cuando la tienda no escribe */
+  textosDeEjemplo: boolean;
+  /** Si respeta corte de banner (directo / con margen / curvado) */
+  corteBanner: boolean;
+  /** Si soporta carrusel de productos destacados */
+  destacados: boolean;
+  /** Si dibuja íconos de categoría */
+  iconosCategoria: boolean;
+  /** Qué controles de tema muestra el panel y respeta el catálogo */
+  temaEditable: EditableThemeField[];
+  /** Modo oscuro por defecto de fábrica */
+  oscuroDeFabrica: boolean;
+  /** Rubro o nicho sugerido (informativo) */
+  rubroSugerido: string;
+  /** Si está activo en el selector del panel */
+  enSelector: boolean;
+}
+
+/**
+ * Diccionario de fichas técnicas para los 15 diseños oficiales.
+ * Refleja estrictamente el comportamiento real en tiempo de ejecución (N1).
+ */
+export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
+  grid: {
+    id: "grid",
+    nombre: "Grilla Simétrica",
+    familia: "estandar",
+    portada: "carrusel",
+    textosPortada: ["titulo", "subtitulo", "etiqueta"],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "General / Comercio",
+    enSelector: true,
+  },
+  overlay: {
+    id: "overlay",
+    nombre: "Overlay Visual",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Moda / Calzado",
+    enSelector: true,
+  },
+  hero: {
+    id: "hero",
+    nombre: "Hero Panorámico",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Bienestar / Ecológico",
+    enSelector: true,
+  },
+  spotlight: {
+    id: "spotlight",
+    nombre: "Enfoque Spotlight",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Joyería / Boutique",
+    enSelector: true,
+  },
+  editorial: {
+    id: "editorial",
+    nombre: "Estilo Editorial",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Corporativo / Marcas Premium",
+    enSelector: true,
+  },
+  tiles: {
+    id: "tiles",
+    nombre: "Mosaico Tiles",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: true,
+    rubroSugerido: "Tecnología / Accesorios",
+    enSelector: true,
+  },
+  magazine: {
+    id: "magazine",
+    nombre: "Revista Magazine",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: true,
+    rubroSugerido: "Noche / Tendencias",
+    enSelector: true,
+  },
+  diagonal: {
+    id: "diagonal",
+    nombre: "Diagonal Dynamic",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: true,
+    rubroSugerido: "Deportes / Juventud",
+    enSelector: true,
+  },
+  arch: {
+    id: "arch",
+    nombre: "Arch Studio",
+    familia: "estandar",
+    portada: "ninguna",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Diseño / Arte / Belleza",
+    enSelector: true,
+  },
+  banner_grid: {
+    id: "banner_grid",
+    nombre: "Portada con Banner",
+    familia: "estandar",
+    portada: "carrusel",
+    textosPortada: ["titulo", "subtitulo", "etiqueta"],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Promociones / Marcas con Banner",
+    enSelector: true,
+  },
+  bloom_general: {
+    id: "bloom_general",
+    nombre: "Bloom Estándar Premium",
+    familia: "premium",
+    portada: "carrusel",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: true,
+    destacados: true,
+    iconosCategoria: true,
+    temaEditable: ["colores", "tipografia", "tarjeta", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Multipropósito Premium",
+    enSelector: true,
+  },
+  bloom_floral: {
+    id: "bloom_floral",
+    nombre: "Bloom Floral",
+    familia: "premium",
+    portada: "carrusel",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: true,
+    destacados: true,
+    iconosCategoria: true,
+    temaEditable: ["colores", "tipografia", "tarjeta", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Florería / Regalos",
+    enSelector: true,
+  },
+  bite: {
+    id: "bite",
+    nombre: "Bite Gastronómico",
+    familia: "premium",
+    portada: "carrusel",
+    textosPortada: [],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: true,
+    iconosCategoria: true,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: true,
+    rubroSugerido: "Gastronomía / Restobar",
+    enSelector: true,
+  },
+  nature: {
+    id: "nature",
+    nombre: "Nature Orgánico",
+    familia: "premium",
+    portada: "carrusel",
+    textosPortada: ["titulo", "subtitulo", "etiqueta"],
+    textosDeEjemplo: true,
+    corteBanner: false,
+    destacados: true,
+    iconosCategoria: true,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Salud / Orgánico",
+    enSelector: true,
+  },
+  lookbook: {
+    id: "lookbook",
+    nombre: "Lookbook Moda",
+    familia: "premium",
+    portada: "carrusel",
+    textosPortada: ["titulo", "subtitulo", "etiqueta"],
+    textosDeEjemplo: true,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Moda / Colecciones",
+    enSelector: true,
+  },
+};
+
+/**
  * Definición completa de una plantilla o estructura de diseño disponible en DIZI.
  */
 export interface StructureDef {
   /** Identificador único de la plantilla */
-  id: string;
+  id: OfficialDesignId;
   /** Nombre comercial visible para el comerciante */
   name: string;
   /** Descripción del estilo y público objetivo */
@@ -45,25 +340,12 @@ export interface StructureDef {
   /** Imagen de previsualización para el catálogo de plantillas */
   previewImage?: string;
   /** Tipo de distribución geométrica aplicada en la UI */
-  layout:
-    | "grid"
-    | "overlay"
-    | "editorial"
-    | "hero"
-    | "magazine"
-    | "tiles"
-    | "spotlight"
-    | "diagonal"
-    | "arch"
-    | "banner_grid"
-    | "bloom_general"
-    | "bloom_floral"
-    | "bite"
-    | "nature"
-    | "lookbook";
+  layout: OfficialDesignId;
   /** Paleta y estilos por defecto */
   defaultTheme: StructureThemeDefaults;
-  /** Módulos y funcionalidades compatibles con esta estructura */
+  /** Ficha técnica única de especificación */
+  spec: DesignSpec;
+  /** @deprecated Reemplazado por spec. Mantenido por retrocompatibilidad */
   supportedModules: string[];
   /** Rubro o nicho comercial sugerido */
   suggestedNiche?: string;
@@ -90,8 +372,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.grid,
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "General / Comercio",
+    supportsCategoryIcons: false,
   },
   {
     id: "overlay",
@@ -111,8 +395,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "shadow",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.overlay,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Moda / Calzado",
+    supportsCategoryIcons: false,
   },
   {
     id: "hero",
@@ -132,8 +418,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.hero,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Bienestar / Ecológico",
+    supportsCategoryIcons: false,
   },
   {
     id: "spotlight",
@@ -153,8 +441,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "shadow",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.spotlight,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Joyería / Boutique",
+    supportsCategoryIcons: false,
   },
   {
     id: "editorial",
@@ -174,8 +464,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "flat",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.editorial,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Corporativo / Marcas Premium",
+    supportsCategoryIcons: false,
   },
   {
     id: "tiles",
@@ -184,20 +476,21 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     previewImage: "/images/designs/grid-compact.webp",
     layout: "tiles",
     defaultTheme: {
-      brandColor: "#7c3aed",
-      bgColor: "#f5f3ff",
-      textColor: "#2e1065",
-      cardBg: "#ffffff",
-      accentColor: "#ddd6fe",
+      brandColor: "#a855f7",
+      bgColor: "#0d0d1a",
+      textColor: "#f4f4f5",
+      cardBg: "#1a1040",
+      accentColor: "#2d1b6e",
       borderRadius: "16px",
       imgShape: "rounded",
-      isDark: false,
+      isDark: true,
       typography: "modern",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.tiles,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Tecnología / Accesorios",
-    supportsCategoryIcons: true,
+    supportsCategoryIcons: false,
   },
   {
     id: "magazine",
@@ -217,8 +510,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "flat",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.magazine,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Noche / Tendencias",
+    supportsCategoryIcons: false,
   },
   {
     id: "diagonal",
@@ -227,19 +522,21 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     previewImage: "/images/designs/retail-cards.webp",
     layout: "diagonal",
     defaultTheme: {
-      brandColor: "#2563eb",
-      bgColor: "#eff6ff",
-      textColor: "#1e3a8a",
-      cardBg: "#ffffff",
-      accentColor: "#bfdbfe",
+      brandColor: "#faec45",
+      bgColor: "#0d1117",
+      textColor: "#f4f4f5",
+      cardBg: "#1c2128",
+      accentColor: "#21262d",
       borderRadius: "12px",
       imgShape: "rounded",
-      isDark: false,
+      isDark: true,
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.diagonal,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Deportes / Juventud",
+    supportsCategoryIcons: false,
   },
   {
     id: "arch",
@@ -259,8 +556,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "curved",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.arch,
+    supportedModules: ["watermark", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Diseño / Arte / Belleza",
+    supportsCategoryIcons: false,
   },
   {
     id: "banner_grid",
@@ -280,8 +579,10 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.banner_grid,
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Promociones / Marcas con Banner",
+    supportsCategoryIcons: false,
   },
   {
     id: "bloom_general",
@@ -301,6 +602,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "sans",
       cardStyle: "standard",
     },
+    spec: DESIGN_SPECS.bloom_general,
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Multipropósito Premium",
     supportsCategoryIcons: true,
@@ -323,6 +625,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "curved",
     },
+    spec: DESIGN_SPECS.bloom_floral,
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Florería / Regalos",
     supportsCategoryIcons: true,
@@ -345,6 +648,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "modern",
       cardStyle: "standard",
     },
+    spec: DESIGN_SPECS.bite,
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Gastronomía / Restobar",
     supportsCategoryIcons: true,
@@ -367,6 +671,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "standard",
     },
+    spec: DESIGN_SPECS.nature,
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
     suggestedNiche: "Salud / Orgánico",
     supportsCategoryIcons: true,
@@ -389,16 +694,17 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       typography: "serif",
       cardStyle: "flat",
     },
-    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
+    spec: DESIGN_SPECS.lookbook,
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "dualButton", "analytics"],
     suggestedNiche: "Moda / Colecciones",
+    supportsCategoryIcons: false,
   },
 ];
 
 /* ─────────────────────────────────────────────────────────
-   ADAPTADORES — Modulo 2.5
+   ADAPTADORES — Módulo 2.5
    Puente entre los ids unificados y lo que el render y los
-   datos historicos entienden. Repuesto tras perdida por
-   corrupcion de archivo el 30/07/2026.
+   datos históricos entienden.
    ───────────────────────────────────────────────────────── */
 
 /** Traduce un id de estructura unificada al id que MODEL_CONFIGS de PublicCatalog sabe renderizar. */
@@ -426,23 +732,7 @@ export function resolveRenderModel(structureId: string | null | undefined): stri
   return RENDER_MODEL_MAP[structureId] ?? structureId;
 }
 
-export function modelSupportsCategoryIcons(structureOrModelId: string | null | undefined): boolean {
-  if (!structureOrModelId) return false;
-  const struct = DESIGN_STRUCTURES.find(
-    (s) => s.id === structureOrModelId || s.layout === structureOrModelId
-  );
-  if (struct?.supportsCategoryIcons) return true;
-
-  const renderModel = resolveRenderModel(structureOrModelId);
-  return (
-    renderModel === "bite" ||
-    renderModel === "bloom" ||
-    renderModel === "nature" ||
-    renderModel === "aurora"
-  );
-}
-
-/** Traduce un model historico (+ niche) a su estructura unificada, para preseleccionar en el panel. */
+/** Traduce un model histórico (+ niche) a su estructura unificada. */
 const LEGACY_STRUCTURE_MAP: Record<string, string> = {
   minimalista: "grid",
   clasico: "grid",
@@ -452,7 +742,7 @@ const LEGACY_STRUCTURE_MAP: Record<string, string> = {
   nocturno: "overlay",
   sunset_glow: "overlay",
   eco: "hero",
-  elite: "hero",
+  elite: "banner_grid",
   boutique: "spotlight",
   corporativo: "editorial",
   aurora: "tiles",
@@ -469,11 +759,32 @@ const LEGACY_STRUCTURE_MAP: Record<string, string> = {
 export function resolveStructureId(
   modelId: string | null | undefined,
   niche?: string | null,
-): string {
+): OfficialDesignId {
   if (!modelId) return "grid";
   // bloom histórico: se desambigua por el rubro
   if (modelId === "bloom") return niche === "floreria" ? "bloom_floral" : "bloom_general";
   // Ya es un id unificado (de las 15 estructuras)
-  if (DESIGN_STRUCTURES.some((s) => s.id === modelId)) return modelId;
-  return LEGACY_STRUCTURE_MAP[modelId] ?? "grid";
+  if (modelId in DESIGN_SPECS) return modelId as OfficialDesignId;
+  return (LEGACY_STRUCTURE_MAP[modelId] as OfficialDesignId) ?? "grid";
+}
+
+/**
+ * Obtiene la ficha única de diseño (DesignSpec) para cualquier ID de estructura,
+ * modelo render o modelo histórico.
+ */
+export function getDesignSpec(
+  modelOrStructureId: string | null | undefined,
+  niche?: string | null,
+): DesignSpec {
+  const structureId = resolveStructureId(modelOrStructureId, niche);
+  return DESIGN_SPECS[structureId] ?? DESIGN_SPECS.grid;
+}
+
+/**
+ * Consulta si un diseño o estructura soporta íconos en categorías.
+ * Lee directamente de la ficha única (DesignSpec).
+ */
+export function modelSupportsCategoryIcons(structureOrModelId: string | null | undefined): boolean {
+  if (!structureOrModelId) return false;
+  return getDesignSpec(structureOrModelId).iconosCategoria;
 }

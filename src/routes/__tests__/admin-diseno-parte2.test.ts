@@ -59,14 +59,14 @@ describe("Parte 2: Motor de Diseño, Banners y Live Preview", () => {
   });
 
   describe("2. Compatibilidad con Iconos de Categoría", () => {
-    it("habilita iconos de categoría en plantillas optimizadas (bite, bloom, nature, aurora)", () => {
+    it("habilita iconos de categoría en plantillas optimizadas (bite, bloom, nature)", () => {
       expect(modelSupportsCategoryIcons("bite")).toBe(true);
       expect(modelSupportsCategoryIcons("bloom_floral")).toBe(true);
       expect(modelSupportsCategoryIcons("nature")).toBe(true);
-      expect(modelSupportsCategoryIcons("tiles")).toBe(true);
     });
 
-    it("deshabilita iconos de categoría en plantillas de cuadrícula estándar", () => {
+    it("deshabilita iconos de categoría en plantillas que no los dibujan (grid, editorial, tiles)", () => {
+      expect(modelSupportsCategoryIcons("tiles")).toBe(false);
       expect(modelSupportsCategoryIcons("grid")).toBe(false);
       expect(modelSupportsCategoryIcons("editorial")).toBe(false);
     });
