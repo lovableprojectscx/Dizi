@@ -308,19 +308,11 @@ const NICHE_ICONS: Record<string, { key: string; label: string }[]> = {
   ],
 };
 
-import { modelSupportsCategoryIcons, resolveStructureId } from "@/lib/design-catalog";
+import { getDesignSpec, modelSupportsCategoryIcons, resolveStructureId } from "@/lib/design-catalog";
 
-const isPremiumModel = (model?: string) => modelSupportsCategoryIcons(model);
+const isPremiumModel = (model?: string, niche?: string) => getDesignSpec(model, niche).iconosCategoria;
 
-const supportsFeaturedProducts = (model?: string, niche?: string) => {
-  const structureId = resolveStructureId(model, niche);
-  return (
-    structureId === "bite" ||
-    structureId === "nature" ||
-    structureId === "bloom_general" ||
-    structureId === "bloom_floral"
-  );
-};
+const supportsFeaturedProducts = (model?: string, niche?: string) => getDesignSpec(model, niche).destacados;
 
 const getNicheLabel = (model?: string) => {
   return "Ícono de la Categoría";

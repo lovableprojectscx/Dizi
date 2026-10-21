@@ -10,7 +10,7 @@
  *    de ubicación física y vitrina de productos destacados.
  */
 
-import { resolveRenderModel } from "@/lib/design-catalog";
+import { resolveRenderModel, getDesignSpec } from "@/lib/design-catalog";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { loadFontOnDemand } from "@/lib/fonts";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
@@ -1436,7 +1436,9 @@ export function PublicCatalog({
   const isExpired = isSubscriptionExpired(store);
 
   /* ── Theme setup ─────────────────────────────────── */
-  const rawModelId = resolveRenderModel(isMockup ? (store.model || "minimalista") : getEffectiveModel(store));
+  const effectiveModel = isMockup ? (store.model || "minimalista") : getEffectiveModel(store);
+  const spec = getDesignSpec(effectiveModel, store.niche);
+  const rawModelId = resolveRenderModel(effectiveModel);
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
   const showDesktopSidebar = mode === "catalog" && !isMockup;
@@ -3419,8 +3421,8 @@ export function PublicCatalog({
         </section>
       )}
 
-      {/* ── Portada Estándar (Layout Grid: Grilla Simétrica, minimalista, clásico, nature_mint, elite y portada) ── */}
-      {!isNarrowing && cfg.layout === "grid" && mode === "catalog" && (
+      {/* ── Portada Estándar (diseños estándar con portada activa) ── */}
+      {!isNarrowing && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
         <PortadaEstandar
           activeBanners={activeBanners}
           bannerTitle={store.bannerTitle}
@@ -5443,7 +5445,7 @@ export function PublicCatalog({
 
                 {/* 2. Spotlight Carousel (Featured Products) */}
                 {!isNarrowing && (() => {
-                  if (store.showFeatured === false) return null;
+                  if (!spec.destacados || store.showFeatured === false) return null;
                   if (activeCat !== "all" || query.trim() !== "") return null;
                   let isSaleOnly = false;
                   let isFallback = false;
@@ -6112,7 +6114,7 @@ export function PublicCatalog({
 
                     {/* 2. Spotlight Carousel (Featured Products) */}
                     {!isNarrowing && (() => {
-                      if (store.showFeatured === false) return null;
+                      if (!spec.destacados || store.showFeatured === false) return null;
                       if (activeCat !== "all" || query.trim() !== "") return null;
 
                       let isFallback = false;
@@ -6822,7 +6824,7 @@ export function PublicCatalog({
 
                 {/* 2. Spotlight Carousel (Featured Products) */}
                 {!isNarrowing && (() => {
-                  if (store.showFeatured === false) return null;
+                  if (!spec.destacados || store.showFeatured === false) return null;
                   if (activeCat !== "all" || query.trim() !== "") return null;
 
                   let isFallback = false;
@@ -8700,9 +8702,7 @@ export function PublicCatalog({
                         const { label, iconKey } = parseCategoryName(cat.name);
                         return (
                           <>
-                            {(cfg.layout === "bite" ||
-                              cfg.layout === "bloom" ||
-                              cfg.layout === "nature") &&
+                            {spec.iconosCategoria &&
                               iconKey && (
                                 <CategoryIcon iconKey={iconKey} className="h-3.5 w-3.5 shrink-0" />
                               )}
