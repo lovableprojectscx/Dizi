@@ -20,6 +20,7 @@ import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
+import { getDesignSpec, ALL_MODELS, PALETTE_VARIANT_MODELS } from "@/lib/design-catalog";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -684,7 +685,7 @@ function RegisterPage() {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState("general");
-  const [selectedModel, setSelectedModel] = useState("minimalista");
+  const [selectedModel, setSelectedModel] = useState("grid");
   const [brandColor, setBrandColor] = useState("");
   const [loading, setLoading] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
@@ -772,158 +773,6 @@ function RegisterPage() {
     { id: "servicios", name: "Servicios Profesionales" },
   ];
 
-  // Modelos sincronizados exactamente con admin.diseno.tsx
-  const ALL_MODELS = [
-    // Semilla (0)
-    {
-      id: "minimalista",
-      layout: "grid",
-      name: "Minimalista",
-      desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",
-      planLevel: 0,
-      niches: ["general", "ropa", "bisuteria", "floreria"],
-      p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false },
-    },
-    {
-      id: "clasico",
-      layout: "grid",
-      name: "Clásico Cálido",
-      desc: "Tipografía serif y tonos terrosos. Artesanías.",
-      planLevel: 0,
-      niches: ["general", "servicios", "comida", "floreria"],
-      p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false },
-    },
-    {
-      id: "vibrante",
-      layout: "overlay",
-      name: "Vibrante",
-      desc: "Cards portrait con texto sobre gradiente. Instagram.",
-      planLevel: 0,
-      niches: ["comida", "ropa", "general"],
-      p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false },
-    },
-    {
-      id: "eco",
-      layout: "hero",
-      name: "Eco Hero",
-      desc: "Banner hero panorámico + galería circular.",
-      planLevel: 0,
-      niches: ["servicios", "general", "floreria"],
-      p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false },
-    },
-    // Emprendedor (1)
-    {
-      id: "nature_mint",
-      layout: "grid",
-      name: "Nature Mint",
-      desc: "Verde teal fresco. Salud, bienestar y cafés.",
-      planLevel: 1,
-      niches: ["servicios", "general", "floreria"],
-      p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false },
-    },
-    // Pro (2)
-    {
-      id: "nocturno",
-      layout: "overlay",
-      name: "Nocturno",
-      desc: "Dark mode de alto impacto con overlay oscuro.",
-      planLevel: 2,
-      niches: ["tech", "ropa"],
-      p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true },
-    },
-    {
-      id: "elite",
-      layout: "hero",
-      name: "Elite ✦",
-      desc: "Banner cinematográfico. Identidad visual fuerte.",
-      planLevel: 2,
-      niches: ["general", "ropa", "tech"],
-      p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false },
-    },
-    {
-      id: "boutique",
-      layout: "spotlight",
-      name: "Boutique",
-      desc: "1 producto estrella grande + 2 apilados. Farfetch.",
-      planLevel: 2,
-      niches: ["ropa", "bisuteria"],
-      p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false },
-    },
-    {
-      id: "corporativo",
-      layout: "editorial",
-      name: "Corporativo Azul",
-      desc: "Lista horizontal profesional. Servicios.",
-      planLevel: 2,
-      niches: ["servicios"],
-      p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false },
-    },
-    {
-      id: "aurora",
-      layout: "tiles",
-      name: "Aurora Glass",
-      desc: "Tiles glassmorphism con degradado cósmico.",
-      planLevel: 2,
-      niches: ["tech", "bisuteria"],
-      p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true },
-    },
-    // Ilimitado (3)
-    {
-      id: "dark_fashion",
-      layout: "magazine",
-      name: "Dark Fashion",
-      desc: "Revista editorial oscura. Banners full-width.",
-      planLevel: 3,
-      niches: ["ropa"],
-      p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true },
-    },
-    {
-      id: "slash",
-      layout: "diagonal",
-      name: "Slash Diagonal",
-      desc: "Cortes diagonales de alto impacto. Estilo Nike.",
-      planLevel: 3,
-      niches: ["ropa", "tech"],
-      p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true },
-    },
-    {
-      id: "arch_studio",
-      layout: "arch",
-      name: "Arch Studio",
-      desc: "Marcos en arco. Tipografía ligera y elegante.",
-      planLevel: 3,
-      niches: ["servicios", "general", "floreria"],
-      p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false },
-    },
-    {
-      id: "portada",
-      layout: "banner_grid",
-      name: "Portada con Banner",
-      desc: "Banner personalizable + catálogo en grid 2 columnas.",
-      planLevel: 3,
-      niches: ["general", "floreria", "comida"],
-      p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false },
-    },
-    {
-      id: "sunset_glow",
-      layout: "overlay",
-      name: "Sunset Glow",
-      desc: "Degradado atardecer con cards portrait flotantes.",
-      planLevel: 3,
-      niches: ["ropa", "bisuteria", "floreria"],
-      p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true },
-    },
-    {
-      id: "forest_deep",
-      layout: "grid",
-      name: "Forest Deep",
-      desc: "Bosque oscuro. Fotográfico y orgánico.",
-      planLevel: 3,
-      niches: ["servicios", "general"],
-      p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true },
-    },
-  ];
-
   const models = ALL_MODELS.map((m) => ({
     ...m,
     locked: false,
@@ -934,7 +783,7 @@ function RegisterPage() {
     // Al cambiar nicho, seleccionar el primer modelo sugerido para ese nicho
     const first = ALL_MODELS.find((m) => m.niches.includes(selectedNiche));
     if (first) setSelectedModel(first.id);
-    else setSelectedModel("minimalista");
+    else setSelectedModel("grid");
   }, [selectedNiche]);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -1025,6 +874,10 @@ function RegisterPage() {
           return undefined;
         })();
 
+        const officialModel = PALETTE_VARIANT_MODELS.has(selectedModel)
+          ? selectedModel
+          : getDesignSpec(selectedModel, selectedNiche).id;
+
         await addStore({
           id: newStoreId,
           slug: storeLink || `tienda-${Date.now()}`,
@@ -1039,7 +892,7 @@ function RegisterPage() {
           isPublished: true,
           createdAt: new Date().toISOString().split("T")[0],
           whatsappClicks: 0,
-          model: selectedModel as any,
+          model: officialModel as any,
           brandColor: brandColor || undefined,
           ownerId: userId,
           niche: selectedNiche,

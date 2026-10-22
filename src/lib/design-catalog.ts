@@ -788,3 +788,252 @@ export function modelSupportsCategoryIcons(structureOrModelId: string | null | u
   if (!structureOrModelId) return false;
   return getDesignSpec(structureOrModelId).iconosCategoria;
 }
+
+/**
+ * Conjunto de modelos que corresponden a variantes de paleta / diseño no migrados.
+ * En el registro conservan su identificador histórico (clasico, nature_mint, nocturno, etc.)
+ * sin alterar columnas de paleta en la base de datos (se resolverán en N3).
+ */
+export const PALETTE_VARIANT_MODELS = new Set<string>([
+  "clasico",
+  "nature_mint",
+  "nocturno",
+  "sunset_glow",
+  "forest_deep",
+]);
+
+/**
+ * Variantes de paleta para asociar a los presets cromáticos finos
+ * al registrar una tienda nueva o seleccionar presets.
+ */
+export const PALETTE_PRESETS_BY_MODEL: Record<
+  string,
+  {
+    brandColor: string;
+    bgColor: string;
+    textColor: string;
+    cardBg: string;
+    accentColor: string;
+    borderRadius: string;
+    imgShape: "square" | "rounded" | "circle";
+    isDark: boolean;
+    catalogTypography: "sans" | "serif" | "rounded" | "modern";
+    cardStyle: "standard" | "flat" | "shadow" | "curved";
+  }
+> = {
+  clasico: {
+    brandColor: "#92400e",
+    bgColor: "#fdfaf5",
+    textColor: "#451a03",
+    cardBg: "#fef9ef",
+    accentColor: "#fef3c7",
+    borderRadius: "6px",
+    imgShape: "square",
+    isDark: false,
+    catalogTypography: "serif",
+    cardStyle: "standard",
+  },
+  nature_mint: {
+    brandColor: "#0d9488",
+    bgColor: "#f0fefb",
+    textColor: "#134e4a",
+    cardBg: "#ffffff",
+    accentColor: "#99f6e4",
+    borderRadius: "24px",
+    imgShape: "rounded",
+    isDark: false,
+    catalogTypography: "sans",
+    cardStyle: "standard",
+  },
+  nocturno: {
+    brandColor: "#818cf8",
+    bgColor: "#0f172a",
+    textColor: "#f8fafc",
+    cardBg: "#1e293b",
+    accentColor: "#312e81",
+    borderRadius: "16px",
+    imgShape: "rounded",
+    isDark: true,
+    catalogTypography: "modern",
+    cardStyle: "shadow",
+  },
+  sunset_glow: {
+    brandColor: "#fb923c",
+    bgColor: "#1a0a2e",
+    textColor: "#faf5ff",
+    cardBg: "#2e1065",
+    accentColor: "#581c87",
+    borderRadius: "20px",
+    imgShape: "rounded",
+    isDark: true,
+    catalogTypography: "modern",
+    cardStyle: "shadow",
+  },
+  forest_deep: {
+    brandColor: "#4ade80",
+    bgColor: "#0d1f0f",
+    textColor: "#f0fdf4",
+    cardBg: "#142e17",
+    accentColor: "#166534",
+    borderRadius: "16px",
+    imgShape: "rounded",
+    isDark: true,
+    catalogTypography: "sans",
+    cardStyle: "shadow",
+  },
+};
+
+/**
+ * Catálogo de modelos ofrecidos en el registro (/register).
+ * Modelos con IDs oficiales y variantes de paleta.
+ */
+export const ALL_MODELS = [
+  // Semilla (0)
+  {
+    id: "grid",
+    layout: "grid",
+    name: "Minimalista",
+    desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",
+    planLevel: 0,
+    niches: ["general", "ropa", "bisuteria", "floreria"],
+    p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false },
+  },
+  {
+    id: "clasico",
+    layout: "grid",
+    name: "Clásico Cálido",
+    desc: "Tipografía serif y tonos terrosos. Artesanías.",
+    planLevel: 0,
+    niches: ["general", "servicios", "comida", "floreria"],
+    p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false },
+  },
+  {
+    id: "overlay",
+    layout: "overlay",
+    name: "Vibrante",
+    desc: "Cards portrait con texto sobre gradiente. Instagram.",
+    planLevel: 0,
+    niches: ["comida", "ropa", "general"],
+    p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false },
+  },
+  {
+    id: "hero",
+    layout: "hero",
+    name: "Eco Hero",
+    desc: "Banner hero panorámico + galería circular.",
+    planLevel: 0,
+    niches: ["servicios", "general", "floreria"],
+    p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false },
+  },
+  // Emprendedor (1)
+  {
+    id: "nature_mint",
+    layout: "grid",
+    name: "Nature Mint",
+    desc: "Verde teal fresco. Salud, bienestar y cafés.",
+    planLevel: 1,
+    niches: ["servicios", "general", "floreria"],
+    p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false },
+  },
+  // Pro (2)
+  {
+    id: "nocturno",
+    layout: "overlay",
+    name: "Nocturno",
+    desc: "Dark mode de alto impacto con overlay oscuro.",
+    planLevel: 2,
+    niches: ["tech", "ropa"],
+    p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true },
+  },
+  {
+    id: "banner_grid",
+    layout: "hero",
+    name: "Elite ✦",
+    desc: "Banner cinematográfico. Identidad visual fuerte.",
+    planLevel: 2,
+    niches: ["general", "ropa", "tech"],
+    p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false },
+  },
+  {
+    id: "spotlight",
+    layout: "spotlight",
+    name: "Boutique",
+    desc: "1 producto estrella grande + 2 apilados. Farfetch.",
+    planLevel: 2,
+    niches: ["ropa", "bisuteria"],
+    p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false },
+  },
+  {
+    id: "editorial",
+    layout: "editorial",
+    name: "Corporativo Azul",
+    desc: "Lista horizontal profesional. Servicios.",
+    planLevel: 2,
+    niches: ["servicios"],
+    p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false },
+  },
+  {
+    id: "tiles",
+    layout: "tiles",
+    name: "Aurora Glass",
+    desc: "Tiles glassmorphism con degradado cósmico.",
+    planLevel: 2,
+    niches: ["tech", "bisuteria"],
+    p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true },
+  },
+  // Ilimitado (3)
+  {
+    id: "magazine",
+    layout: "magazine",
+    name: "Dark Fashion",
+    desc: "Revista editorial oscura. Banners full-width.",
+    planLevel: 3,
+    niches: ["ropa"],
+    p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true },
+  },
+  {
+    id: "diagonal",
+    layout: "diagonal",
+    name: "Slash Diagonal",
+    desc: "Cortes diagonales de alto impacto. Estilo Nike.",
+    planLevel: 3,
+    niches: ["ropa", "tech"],
+    p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true },
+  },
+  {
+    id: "arch",
+    layout: "arch",
+    name: "Arch Studio",
+    desc: "Marcos en arco. Tipografía ligera y elegante.",
+    planLevel: 3,
+    niches: ["servicios", "general", "floreria"],
+    p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false },
+  },
+  {
+    id: "portada",
+    layout: "banner_grid",
+    name: "Portada con Banner",
+    desc: "Banner personalizable + catálogo en grid 2 columnas.",
+    planLevel: 3,
+    niches: ["general", "floreria", "comida"],
+    p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false },
+  },
+  {
+    id: "sunset_glow",
+    layout: "overlay",
+    name: "Sunset Glow",
+    desc: "Degradado atardecer con cards portrait flotantes.",
+    planLevel: 3,
+    niches: ["ropa", "bisuteria", "floreria"],
+    p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true },
+  },
+  {
+    id: "forest_deep",
+    layout: "grid",
+    name: "Forest Deep",
+    desc: "Bosque oscuro. Fotográfico y orgánico.",
+    planLevel: 3,
+    niches: ["servicios", "general"],
+    p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true },
+  },
+];
