@@ -64,8 +64,7 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 - Rama de trabajo desde `master`, un cambio lógico por commit, mensaje en español que diga el porqué.
 - Correr antes de entregar: `npm run lint`, `npx vitest run`, `npm run build`. Reportar el resultado real (pasan/fallan y cuáles).
 - Después de cada push, verificar que GitHub Actions quede en verde.
-
-
+- Ningún cambio puede alterar cómo se ve el catálogo público de una tienda existente sin el OK de Jack, tienda por tienda. Si un análisis muestra tiendas afectadas, el agente se detiene y las lista antes de seguir.
 - No subir a git: `.env`, `scratch/`, `*.bak`, `playwright-report/`, `test-results/`, `dist/`.
 - **Una regla de negocio vive en un solo lugar.** Si se toca un límite o precio, listar todos los lugares donde
   hoy está duplicado (ver FUENTE-DE-VERDAD §4) y decir cuáles se cambiaron.

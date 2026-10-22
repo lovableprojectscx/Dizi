@@ -10,7 +10,7 @@
  *    de ubicación física y vitrina de productos destacados.
  */
 
-import { resolveRenderModel, getDesignSpec } from "@/lib/design-catalog";
+import { resolveRenderModel, getDesignSpec, TIENDAS_CON_ESTILO_ANTERIOR } from "@/lib/design-catalog";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { loadFontOnDemand } from "@/lib/fonts";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
@@ -1467,17 +1467,21 @@ export function PublicCatalog({
     }
   };
 
-  // TODO: quitar excepción temporal para slug 'jhoselynperu' tras confirmación con la clienta
-  const hasCustomTypographyException =
-    store.slug === "jhoselynperu" &&
-    Boolean(store.catalogTypography && store.catalogTypography !== "sans");
+  const isTiendaEstiloAnterior = Boolean(store.slug && TIENDAS_CON_ESTILO_ANTERIOR.has(store.slug));
 
-  const resolvedTypography = spec.estiloFijo
-    ? (hasCustomTypographyException ? store.catalogTypography : spec.estiloFijo.tipografia)
-    : (store.catalogTypography ?? (isPremiumModel && (store.niche === "floreria" || modelId === "nature") ? "serif" : "sans"));
+  const defaultTypographyClass =
+    isPremiumModel && (store.niche === "floreria" || modelId === "nature")
+      ? "typography-serif"
+      : "typography-sans";
+
+  const resolvedTypography = isTiendaEstiloAnterior
+    ? (store.catalogTypography ?? (isPremiumModel && (store.niche === "floreria" || modelId === "nature") ? "serif" : "sans"))
+    : (spec.estiloFijo
+      ? spec.estiloFijo.tipografia
+      : (store.catalogTypography ?? (isPremiumModel && (store.niche === "floreria" || modelId === "nature") ? "serif" : "sans")));
 
   const finalTypographyClass =
-    mapTypographyClass(resolvedTypography) ?? "typography-sans";
+    mapTypographyClass(resolvedTypography) ?? (isTiendaEstiloAnterior ? defaultTypographyClass : "typography-sans");
 
   const isSerif = finalTypographyClass === "typography-serif";
 
@@ -1513,7 +1517,9 @@ export function PublicCatalog({
   }
 
   const defaultCardStyle = isPremiumModel && store.niche === "floreria" ? "curved" : "standard";
-  const cStyle = spec.estiloFijo ? spec.estiloFijo.tarjeta : (store.cardStyle || defaultCardStyle);
+  const cStyle = isTiendaEstiloAnterior
+    ? (store.cardStyle || defaultCardStyle)
+    : (spec.estiloFijo ? spec.estiloFijo.tarjeta : (store.cardStyle || defaultCardStyle));
 
   const isCurvedStyle = cStyle === "curved";
   const isFloristBloom = isCurvedStyle;
@@ -5900,6 +5906,7 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "nature" ? (
               (() => {
+                const nicheTags = getNicheTaglines(store.niche);
                 return (
                   /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
                   <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
@@ -6052,66 +6059,145 @@ export function PublicCatalog({
                           </div>
 
                           {/* Overlapping editorial card details */}
-                          <div
-                            style={{
-                              backgroundColor:
-                                "color-mix(in srgb, var(--card) 95%, transparent)",
-                              borderColor: "var(--border)",
-                            }}
-                            className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
-                          >
-                            <div className="space-y-1.5">
-                              {store.bannerTagline && (
-                                <span
-                                  style={{ color: "var(--muted-foreground)" }}
-                                  className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
+                          {(() => {
+                            if (isTiendaEstiloAnterior) {
+                              const finalTagline = store.bannerTagline || nicheTags.tagline;
+                              const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
+                              const finalTitle = store.bannerTitle || "Abraza la pureza de la naturaleza";
+
+                              return (
+                                <div
+                                  style={{
+                                    backgroundColor:
+                                      "color-mix(in srgb, var(--card) 95%, transparent)",
+                                    borderColor: "var(--border)",
+                                  }}
+                                  className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
                                 >
-                                  {store.bannerTagline}
-                                </span>
-                              )}
-                              <h2
-                                style={{ color: "var(--foreground)" }}
-                                className="text-xl sm:text-2xl font-serif font-normal leading-snug"
-                              >
-                                {store.bannerTitle || store.name}
-                              </h2>
-                              {store.bioDescription && (
-                                <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
-                                  {store.bioDescription}
-                                </p>
-                              )}
-                            </div>
-                            <div className="pt-3 flex gap-2 items-center justify-between">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  document
-                                    .getElementById("nature-coleccion")
-                                    ?.scrollIntoView({ behavior: "smooth" });
-                                }}
+                                  <div className="space-y-1.5">
+                                    <span
+                                      style={{ color: "var(--muted-foreground)" }}
+                                      className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
+                                    >
+                                      {finalTagline}
+                                    </span>
+                                    <h2
+                                      style={{ color: "var(--foreground)" }}
+                                      className="text-xl sm:text-2xl font-serif font-normal leading-snug"
+                                    >
+                                      {finalTitle}
+                                    </h2>
+                                    {store.bioDescription && (
+                                      <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
+                                        {store.bioDescription}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="pt-3 flex gap-2 items-center justify-between">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        document
+                                          .getElementById("nature-coleccion")
+                                          ?.scrollIntoView({ behavior: "smooth" });
+                                      }}
+                                      style={{
+                                        backgroundColor: "var(--primary)",
+                                        color: "var(--primary-foreground)",
+                                      }}
+                                      className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                                    >
+                                      {nicheTags.buttonText}
+                                    </button>
+                                    {/* Decorative small organic element */}
+                                    <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
+                                      <Leaf
+                                        style={{
+                                          color:
+                                            "color-mix(in srgb, var(--primary) 60%, transparent)",
+                                        }}
+                                        className="h-3.5 w-3.5"
+                                      />{" "}
+                                      {finalBottomTag}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            // Reglas N3a para tiendas nuevas / otras
+                            const showNatureTagline = spec.textosPortada.includes("subtitulo") && Boolean(store.bannerTagline);
+                            const showNatureTitle = spec.textosPortada.includes("titulo") && Boolean(store.bannerTitle || store.name);
+                            const showNatureDesc = Boolean(store.bioDescription);
+                            const hasNatureCardContent = showNatureTagline || showNatureTitle || showNatureDesc;
+
+                            if (!hasNatureCardContent) return null;
+
+                            return (
+                              <div
                                 style={{
-                                  backgroundColor: "var(--primary)",
-                                  color: "var(--primary-foreground)",
+                                  backgroundColor:
+                                    "color-mix(in srgb, var(--card) 95%, transparent)",
+                                  borderColor: "var(--border)",
                                 }}
-                                className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                                className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
                               >
-                                Ver Catálogo
-                              </button>
-                              {/* Decorative small organic element */}
-                              {store.bannerBottomTag && (
-                                <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
-                                  <Leaf
-                                    style={{
-                                      color:
-                                        "color-mix(in srgb, var(--primary) 60%, transparent)",
+                                <div className="space-y-1.5">
+                                  {showNatureTagline && (
+                                    <span
+                                      style={{ color: "var(--muted-foreground)" }}
+                                      className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
+                                    >
+                                      {store.bannerTagline}
+                                    </span>
+                                  )}
+                                  {showNatureTitle && (
+                                    <h2
+                                      style={{ color: "var(--foreground)" }}
+                                      className="text-xl sm:text-2xl font-serif font-normal leading-snug"
+                                    >
+                                      {store.bannerTitle || store.name}
+                                    </h2>
+                                  )}
+                                  {showNatureDesc && (
+                                    <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
+                                      {store.bioDescription}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="pt-3 flex gap-2 items-center justify-between">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      document
+                                        .getElementById("nature-coleccion")
+                                        ?.scrollIntoView({ behavior: "smooth" });
                                     }}
-                                    className="h-3.5 w-3.5"
-                                  />{" "}
-                                  {store.bannerBottomTag}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                                    style={{
+                                      backgroundColor: "var(--primary)",
+                                      color: "var(--primary-foreground)",
+                                    }}
+                                    className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                                  >
+                                    Ver Catálogo
+                                  </button>
+                                  {/* Decorative small organic element */}
+                                  {spec.textosPortada.includes("etiqueta") && store.bannerBottomTag && (
+                                    <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
+                                      <Leaf
+                                        style={{
+                                          color:
+                                            "color-mix(in srgb, var(--primary) 60%, transparent)",
+                                        }}
+                                        className="h-3.5 w-3.5"
+                                      />{" "}
+                                      {store.bannerBottomTag}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })()}
@@ -6168,7 +6254,7 @@ export function PublicCatalog({
                                   : "Ofertas Especiales"
                                 : isFallback
                                   ? "Recomendaciones"
-                                  : "Productos Destacados"}
+                                  : (isTiendaEstiloAnterior ? nicheTags.featuredTitle : "Productos Destacados")}
                             </h3>
                             {featuredProducts.length > 1 && (
                               <>
@@ -6281,6 +6367,16 @@ export function PublicCatalog({
                                     {/* Info */}
                                     <div className="space-y-1 text-left px-1">
                                       {(() => {
+                                        if (isTiendaEstiloAnterior) {
+                                          return (
+                                            <span
+                                              style={{ color: "var(--muted-foreground)" }}
+                                              className="text-[9px] font-bold uppercase tracking-wider font-sans block"
+                                            >
+                                              {nicheTags.productTagline}
+                                            </span>
+                                          );
+                                        }
                                         const catName = store.categories?.find((c) => c.id === p.categoryId)?.name;
                                         return catName ? (
                                           <span
@@ -6560,6 +6656,16 @@ export function PublicCatalog({
                                       {/* Info */}
                                       <div className="p-3.5 pt-1 space-y-1 text-left">
                                         {(() => {
+                                          if (isTiendaEstiloAnterior) {
+                                            return (
+                                              <span
+                                                style={{ color: "var(--muted-foreground)" }}
+                                                className="text-[8px] font-black uppercase tracking-widest block font-sans"
+                                              >
+                                                {nicheTags.productTag}
+                                              </span>
+                                            );
+                                          }
                                           const catName = store.categories?.find((c) => c.id === p.categoryId)?.name;
                                           return catName ? (
                                             <span
@@ -6689,11 +6795,13 @@ export function PublicCatalog({
                 {!isNarrowing && (() => {
                   const banners = activeBanners;
                   const defaultBannerStyle = store.niche === "floreria" ? "curved" : "framed";
-                  const bStyle = spec.estiloFijo ? spec.estiloFijo.corteBanner : (store.bannerStyle || defaultBannerStyle);
+                  const bStyle = isTiendaEstiloAnterior
+                    ? (store.bannerStyle || defaultBannerStyle)
+                    : (spec.estiloFijo ? spec.estiloFijo.corteBanner : (store.bannerStyle || defaultBannerStyle));
                   const showBloomTitle = spec.textosPortada.includes("titulo") && Boolean(store.bannerTitle);
                   const showBloomTagline = spec.textosPortada.includes("subtitulo") && Boolean(store.bannerTagline);
                   const showBloomBottomTag = spec.textosPortada.includes("etiqueta") && Boolean(store.bannerBottomTag);
-                  const hasBloomTexts = showBloomTitle || showBloomTagline || showBloomBottomTag;
+                  const hasBloomTexts = !isTiendaEstiloAnterior && (showBloomTitle || showBloomTagline || showBloomBottomTag);
 
                   return (
                     <div
