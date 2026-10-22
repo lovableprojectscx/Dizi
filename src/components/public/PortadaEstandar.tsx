@@ -9,6 +9,7 @@ export interface PortadaEstandarProps {
   bannerBottomTag?: string | null;
   isNarrowing?: boolean;
   className?: string;
+  containerClassName?: string;
 }
 
 /**
@@ -28,6 +29,7 @@ export function PortadaEstandar({
   bannerBottomTag,
   isNarrowing = false,
   className,
+  containerClassName,
 }: PortadaEstandarProps) {
   const banners = (activeBanners || []).filter(
     (b): b is string => typeof b === "string" && b.trim().length > 0
@@ -122,20 +124,21 @@ export function PortadaEstandar({
   const hasTexts = Boolean(cleanBottomTag || cleanTitle || cleanTagline);
 
   return (
-    <section
-      aria-label="Portada del catálogo"
-      data-testid="portada-estandar"
-      className={cn(
-        "relative w-full aspect-[3/1] overflow-hidden bg-zinc-950 select-none",
-        className
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Imágenes del carrusel */}
+    <div className={cn("w-full md:max-w-7xl md:mx-auto md:px-4 md:mt-4 lg:mt-6", containerClassName)}>
+      <section
+        aria-label="Portada del catálogo"
+        data-testid="portada-estandar"
+        className={cn(
+          "relative w-full aspect-[3/1] overflow-hidden bg-zinc-950 select-none md:rounded-2xl",
+          className
+        )}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Imágenes del carrusel */}
       {banners.map((bannerUrl, idx) => {
         const isCurrent = idx === currentIndex;
         return (
@@ -235,5 +238,6 @@ export function PortadaEstandar({
         </div>
       )}
     </section>
+  </div>
   );
 }

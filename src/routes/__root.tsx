@@ -29,9 +29,39 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+export function isNetworkError(error: unknown): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    return true;
+  }
+  if (!error) return false;
+
+  const msg = (
+    typeof error === "string"
+      ? error
+      : (error as any)?.message || (error as any)?.toString?.() || ""
+  ).toLowerCase();
+
+  const name = ((error as any)?.name || "").toLowerCase();
+
+  return (
+    name === "chunkloaderror" ||
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("network error") ||
+    msg.includes("network request failed") ||
+    msg.includes("load failed") ||
+    msg.includes("loading chunk") ||
+    msg.includes("dynamically imported module") ||
+    msg.includes("importing a module script failed") ||
+    msg.includes("err_internet_disconnected") ||
+    msg.includes("err_connection_")
+  );
+}
+
+export function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const isNetwork = isNetworkError(error);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -39,12 +69,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Esta página no pudo cargarse
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground leading-normal">
-          {error?.message || "Algo salió mal por nuestro lado."}
-        </p>
-        <p className="mt-1 text-[11px] text-muted-foreground/60">
-          Si estás en Wi-Fi de Claro/Movistar, intenta desactivarlo y usar tus datos móviles.
-        </p>
+        {isNetwork ? (
+          <>
+            <p className="mt-2 text-sm text-muted-foreground leading-normal">
+              No pudimos conectar con el servidor o cargar los recursos necesarios. Revisa tu conexión a internet.
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Si estás en Wi-Fi de Claro/Movistar, intenta desactivarlo y usar tus datos móviles.
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground leading-normal">
+            Algo falló al cargar esta página. Toca Reintentar; si sigue pasando, escríbenos.
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={async () => {
@@ -56,13 +94,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Reintentar
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
+            Ir al inicio
           </a>
         </div>
       </div>

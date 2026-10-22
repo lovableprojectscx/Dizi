@@ -159,14 +159,12 @@ function ColorSwatch({
   );
 }
 
-function DisenoUnificadoPage() {
+export function DisenoUnificadoPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
   const update = useApp((s) => s.updateStore);
 
-  if (!store) return null;
-
-  const effectivePlan = getEffectivePlan(store);
+  const effectivePlan = store ? getEffectivePlan(store) : "semilla";
   const currentPlanLevel = PLAN_LEVELS[effectivePlan] ?? 0;
 
   // Estado principal de navegación entre las 3 secciones
@@ -175,11 +173,11 @@ function DisenoUnificadoPage() {
   const [loadedStoreId, setLoadedStoreId] = useState<string | null>(null);
 
   // 1. Estructura seleccionada (mapeando modelos legados como boutique a spotlight)
-  const currentStoreStructureId = resolveStructureId(store.model, store.niche);
+  const currentStoreStructureId = resolveStructureId(store?.model, store?.niche);
   const [selectedStructure, setSelectedStructure] = useState<string>(
     currentStoreStructureId
   );
-  const currentSpec = getDesignSpec(selectedStructure, store.niche);
+  const currentSpec = getDesignSpec(selectedStructure, store?.niche);
 
   // Estructuras visibles: solo las oficiales activas en selector (enSelector: true),
   // más la estructura actual si la tienda ya usa un diseño oculto (Paso 3 N3a).
@@ -191,42 +189,42 @@ function DisenoUnificadoPage() {
 
   // 2. Estado del Tema (Los 10 atributos finos)
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
-  const [brandColor, setBrandColor] = useState<string>(store.brandColor || "#4f46e5");
-  const [bgColor, setBgColor] = useState<string>((store as any).bgColor || "#ffffff");
-  const [textColor, setTextColor] = useState<string>(store.textColor || "#1e293b");
-  const [cardBg, setCardBg] = useState<string>((store as any).cardBg || "#f8fafc");
-  const [accentColor, setAccentColor] = useState<string>((store as any).accentColor || "#e0e7ff");
-  const [borderRadius, setBorderRadius] = useState<string>((store as any).borderRadius || "12px");
-  const [imgShape, setImgShape] = useState<"square" | "rounded" | "circle">((store as any).imgShape || "rounded");
-  const [isDark, setIsDark] = useState<boolean>((store as any).isDark || false);
+  const [brandColor, setBrandColor] = useState<string>(store?.brandColor || "#4f46e5");
+  const [bgColor, setBgColor] = useState<string>((store as any)?.bgColor || "#ffffff");
+  const [textColor, setTextColor] = useState<string>(store?.textColor || "#1e293b");
+  const [cardBg, setCardBg] = useState<string>((store as any)?.cardBg || "#f8fafc");
+  const [accentColor, setAccentColor] = useState<string>((store as any)?.accentColor || "#e0e7ff");
+  const [borderRadius, setBorderRadius] = useState<string>((store as any)?.borderRadius || "12px");
+  const [imgShape, setImgShape] = useState<"square" | "rounded" | "circle">((store as any)?.imgShape || "rounded");
+  const [isDark, setIsDark] = useState<boolean>((store as any)?.isDark || false);
   const [typography, setTypography] = useState<"sans" | "serif" | "rounded" | "modern">(
-    store.catalogTypography || "sans"
+    store?.catalogTypography || "sans"
   );
   const [cardStyle, setCardStyle] = useState<"standard" | "flat" | "shadow" | "curved">(
-    store.cardStyle || "standard"
+    store?.cardStyle || "standard"
   );
 
   // 3. Portada, Banners y Cintillo
-  const originalBannerImage = (store as any).bannerImage || "";
+  const originalBannerImage = (store as any)?.bannerImage || "";
   const hasMultipleBanners = originalBannerImage.includes("|||");
   const [bannerImage, setBannerImage] = useState<string>(originalBannerImage);
-  const [bannerTitle, setBannerTitle] = useState<string>((store as any).bannerTitle || "");
-  const [bannerTagline, setBannerTagline] = useState<string>(store.bannerTagline || "");
-  const [bannerBottomTag, setBannerBottomTag] = useState<string>(store.bannerBottomTag || "");
+  const [bannerTitle, setBannerTitle] = useState<string>((store as any)?.bannerTitle || "");
+  const [bannerTagline, setBannerTagline] = useState<string>(store?.bannerTagline || "");
+  const [bannerBottomTag, setBannerBottomTag] = useState<string>(store?.bannerBottomTag || "");
   const [bannerStyle, setBannerStyle] = useState<"direct" | "framed" | "curved">(
-    (store as any).bannerStyle || "framed"
+    (store as any)?.bannerStyle || "framed"
   );
 
-  const [promoBarEnabled, setPromoBarEnabled] = useState<boolean>(store.promoBarEnabled || false);
-  const [promoBarText, setPromoBarText] = useState<string>(store.promoBarText || "");
+  const [promoBarEnabled, setPromoBarEnabled] = useState<boolean>(store?.promoBarEnabled || false);
+  const [promoBarText, setPromoBarText] = useState<string>(store?.promoBarText || "");
   const [promoBarActionType, setPromoBarActionType] = useState<"none" | "product" | "category" | "url" | "coupon" | "cart">(
-    store.promoBarActionType || "none"
+    store?.promoBarActionType || "none"
   );
-  const [promoBarActionValue, setPromoBarActionValue] = useState<string>(store.promoBarActionValue || "");
-  const [promoBarBgColor, setPromoBarBgColor] = useState<string>(store.promoBarBgColor || "");
-  const [promoBarTextColor, setPromoBarTextColor] = useState<string>(store.promoBarTextColor || "");
-  const [promoBarIsMarquee, setPromoBarIsMarquee] = useState<boolean>(store.promoBarIsMarquee || false);
-  const [showFeatured, setShowFeatured] = useState<boolean>(store.showFeatured !== false);
+  const [promoBarActionValue, setPromoBarActionValue] = useState<string>(store?.promoBarActionValue || "");
+  const [promoBarBgColor, setPromoBarBgColor] = useState<string>(store?.promoBarBgColor || "");
+  const [promoBarTextColor, setPromoBarTextColor] = useState<string>(store?.promoBarTextColor || "");
+  const [promoBarIsMarquee, setPromoBarIsMarquee] = useState<boolean>(store?.promoBarIsMarquee || false);
+  const [showFeatured, setShowFeatured] = useState<boolean>(store?.showFeatured !== false);
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
@@ -265,6 +263,15 @@ function DisenoUnificadoPage() {
   useEffect(() => {
     loadFontOnDemand(typography);
   }, [typography]);
+
+  // Si no hay tienda aún, mostrar estado de carga seguro DESPUÉS de registrar todos los hooks
+  if (!store) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   // Aplicar un Preset de Tema
   const handleApplyPreset = (preset: ThemePreset) => {

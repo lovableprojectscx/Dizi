@@ -1470,8 +1470,7 @@ export function PublicCatalog({
   // TODO: quitar excepción temporal para slug 'jhoselynperu' tras confirmación con la clienta
   const hasCustomTypographyException =
     store.slug === "jhoselynperu" &&
-    Boolean(store.catalogTypography && store.catalogTypography !== "sans") &&
-    !(typeof window !== "undefined" && new URLSearchParams(window.location.search).has("forzar_serif_fijo"));
+    Boolean(store.catalogTypography && store.catalogTypography !== "sans");
 
   const resolvedTypography = spec.estiloFijo
     ? (hasCustomTypographyException ? store.catalogTypography : spec.estiloFijo.tipografia)
