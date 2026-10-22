@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { convertImageToWebP } from "@/lib/image-utils";
 import { loadFontOnDemand } from "@/lib/fonts";
@@ -175,10 +175,19 @@ function DisenoUnificadoPage() {
   const [loadedStoreId, setLoadedStoreId] = useState<string | null>(null);
 
   // 1. Estructura seleccionada (mapeando modelos legados como boutique a spotlight)
+  const currentStoreStructureId = resolveStructureId(store.model, store.niche);
   const [selectedStructure, setSelectedStructure] = useState<string>(
-    resolveStructureId(store.model, store.niche)
+    currentStoreStructureId
   );
   const currentSpec = getDesignSpec(selectedStructure, store.niche);
+
+  // Estructuras visibles: solo las oficiales activas en selector (enSelector: true),
+  // más la estructura actual si la tienda ya usa un diseño oculto (Paso 3 N3a).
+  const visibleStructures = useMemo(() => {
+    return DESIGN_STRUCTURES.filter(
+      (struct) => struct.spec.enSelector || struct.id === currentStoreStructureId
+    );
+  }, [currentStoreStructureId]);
 
   // 2. Estado del Tema (Los 10 atributos finos)
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
@@ -440,7 +449,7 @@ function DisenoUnificadoPage() {
           )}
         >
           <LayoutGrid className={cn("h-5 w-5 sm:h-4 sm:w-4 shrink-0", activeSection === "estructura" ? "text-primary" : "text-zinc-500")} />
-          <span className="leading-tight">1. Estructura ({DESIGN_STRUCTURES.length})</span>
+          <span className="leading-tight">1. Estructura ({visibleStructures.length})</span>
         </button>
 
         <button
@@ -487,12 +496,19 @@ function DisenoUnificadoPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {DESIGN_STRUCTURES.map((struct) => {
+                {visibleStructures.map((struct) => {
                   const isActive = selectedStructure === struct.id;
                   return (
                     <div
                       key={struct.id}
-                      onClick={() => setSelectedStructure(struct.id)}
+                      onClick={() => {
+                        setSelectedStructure(struct.id);
+                        if (struct.spec.estiloFijo) {
+                          setTypography(struct.spec.estiloFijo.tipografia);
+                          setCardStyle(struct.spec.estiloFijo.tarjeta);
+                          setBannerStyle(struct.spec.estiloFijo.corteBanner);
+                        }
+                      }}
                       className={cn(
                         "relative rounded-2xl border-2 p-4 cursor-pointer transition-all duration-200 flex flex-col justify-between group",
                         isActive
@@ -520,7 +536,14 @@ function DisenoUnificadoPage() {
                         )}
 
                         <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="font-extrabold text-xs text-zinc-900">{struct.name}</h4>
+                          <div className="flex flex-col">
+                            <h4 className="font-extrabold text-xs text-zinc-900">{struct.name}</h4>
+                            {!struct.spec.enSelector && (
+                              <span className="text-[10px] font-normal text-amber-600">
+                                (ya no disponible para nuevas tiendas)
+                              </span>
+                            )}
+                          </div>
                           {isActive && (
                             <Badge className="bg-primary text-white border-none text-[8px] font-extrabold py-0.5 px-2">
                               SELECCIONADA
@@ -690,37 +713,45 @@ function DisenoUnificadoPage() {
                 </div>
 
                 {/* Tipografía & Estilo de Tarjeta */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="font-bold text-xs text-zinc-800">Tipografía</label>
-                    <select
-                      value={typography}
-                      onChange={(e) => setTypography(e.target.value as any)}
-                      className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
-                    >
-                      <option value="sans">Sans-serif Moderna (Limpia)</option>
-                      <option value="serif">Serif Elegante (Editorial)</option>
-                      <option value="rounded">Rounded Amigable (Suave)</option>
-                      <option value="modern">Modern Monospace (Geométrica)</option>
-                    </select>
+                {currentSpec.estiloFijo ? (
+                  <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 text-xs font-medium text-zinc-600">
+                    Este diseño tiene su propio estilo; puedes cambiar los colores
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {currentSpec.temaEditable.includes("tipografia") && (
+                      <div className="space-y-2">
+                        <label className="font-bold text-xs text-zinc-800">Tipografía</label>
+                        <select
+                          value={typography}
+                          onChange={(e) => setTypography(e.target.value as any)}
+                          className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                        >
+                          <option value="sans">Sans-serif Moderna (Limpia)</option>
+                          <option value="serif">Serif Elegante (Editorial)</option>
+                          <option value="rounded">Rounded Amigable (Suave)</option>
+                          <option value="modern">Modern Monospace (Geométrica)</option>
+                        </select>
+                      </div>
+                    )}
 
-                  {currentSpec.temaEditable.includes("tarjeta") && (
-                    <div className="space-y-2">
-                      <label className="font-bold text-xs text-zinc-800">Estilo de Tarjeta</label>
-                      <select
-                        value={cardStyle}
-                        onChange={(e) => setCardStyle(e.target.value as any)}
-                        className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
-                      >
-                        <option value="standard">Estándar (Con Borde)</option>
-                        <option value="flat">Flat (Plana Sin Sombra)</option>
-                        <option value="shadow">Shadow (Sombra Elevada)</option>
-                        <option value="curved">Curved (Esquinas Curvadas)</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
+                    {currentSpec.temaEditable.includes("tarjeta") && (
+                      <div className="space-y-2">
+                        <label className="font-bold text-xs text-zinc-800">Estilo de Tarjeta</label>
+                        <select
+                          value={cardStyle}
+                          onChange={(e) => setCardStyle(e.target.value as any)}
+                          className="w-full h-10 rounded-xl border border-input bg-white px-3 text-xs font-semibold"
+                        >
+                          <option value="standard">Estándar (Con Borde)</option>
+                          <option value="flat">Flat (Plana Sin Sombra)</option>
+                          <option value="shadow">Shadow (Sombra Elevada)</option>
+                          <option value="curved">Curved (Esquinas Curvadas)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Modo Oscuro */}
                 <div className="flex items-center justify-between p-3.5 rounded-2xl border bg-zinc-50/50">
@@ -1119,8 +1150,8 @@ function DisenoUnificadoPage() {
                       </div>
                     </div>
 
-                    {/* Selector de Corte del Banner (solo si spec.corteBanner) */}
-                    {currentSpec.corteBanner && (
+                    {/* Selector de Corte del Banner (solo si spec.corteBanner y no tiene estiloFijo) */}
+                    {currentSpec.corteBanner && !currentSpec.estiloFijo && (
                       <div className="pt-3 border-t border-zinc-200/80 space-y-1.5">
                         <label className="font-bold text-xs text-zinc-800">Corte del Banner</label>
                         <select

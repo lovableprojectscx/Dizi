@@ -476,6 +476,169 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
     );
   }
 
+  // BLOOM: carrusel con margen + grilla limpia
+  if (m.layout === "bloom_general" || m.layout === "bloom") {
+    return (
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
+        <Header />
+        <div className="px-1.5 pt-1 shrink-0">
+          <div
+            className="relative w-full overflow-hidden rounded-xl"
+            style={{
+              height: "36px",
+              background: `linear-gradient(135deg, ${accent}dd, ${accent}55)`,
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-1 left-2">
+              <div className="h-1 rounded-full w-12 bg-white/90" />
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-1 px-1.5 py-1 flex-1">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="rounded-lg p-1 flex gap-1 items-center"
+              style={{ backgroundColor: card, border: `1px solid ${accent}22` }}
+            >
+              <div className="w-5 h-5 rounded-md" style={{ backgroundColor: `${accent}44` }} />
+              <div className="space-y-0.5 flex-1">
+                <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: muted }} />
+                <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // NATURE: banner orgánico + tarjeta flotante
+  if (m.layout === "nature") {
+    return (
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
+        <Header />
+        <div className="px-1.5 pt-0.5 shrink-0">
+          <div
+            className="relative w-full overflow-hidden rounded-t-xl"
+            style={{
+              height: "28px",
+              background: `linear-gradient(135deg, ${accent}ee, #a7f3d0)`,
+            }}
+          />
+          <div
+            className="relative -mt-2.5 mx-1 rounded-xl p-1 shadow-sm flex items-center justify-between"
+            style={{ backgroundColor: card, border: `1px solid ${accent}33` }}
+          >
+            <div className="space-y-0.5">
+              <div className="h-1 rounded-full w-14" style={{ backgroundColor: accent }} />
+              <div className="h-0.5 rounded-full w-8" style={{ backgroundColor: muted }} />
+            </div>
+            <div className="w-3 h-3 rounded-full flex items-center justify-center text-[5px]" style={{ backgroundColor: `${accent}22`, color: accent }}>
+              🌿
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-1 px-1.5 pt-1 flex-1">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="rounded-xl p-1 flex flex-col items-center gap-0.5"
+              style={{ backgroundColor: card, border: `1px solid ${accent}22` }}
+            >
+              <div className="w-full aspect-[4/3] rounded-lg" style={{ backgroundColor: `${accent}33` }} />
+              <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: muted }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // LOOKBOOK: editorial de alta costura, tarjetas flat
+  if (m.layout === "lookbook") {
+    return (
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
+        <Header />
+        <div className="px-1 pt-0.5 shrink-0">
+          <div
+            className="relative w-full overflow-hidden"
+            style={{
+              height: "34px",
+              background: `linear-gradient(180deg, #18181b, #09090b)`,
+              borderBottom: `1px solid ${accent}33`,
+            }}
+          >
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="h-0.5 w-10 bg-white/40 mb-0.5" />
+              <div className="h-1 w-16 bg-white/90" />
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-1 px-1.5 py-1 flex-1">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex-1 flex flex-col gap-0.5">
+              <div className="w-full aspect-[3/4]" style={{ backgroundColor: card, border: `1px solid #27272a` }} />
+              <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: muted }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // BITE: gastronómico oscuro con acento culinario
+  if (m.layout === "bite") {
+    return (
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
+        <Header />
+        <div className="px-1.5 pt-1 shrink-0">
+          <div
+            className="relative w-full overflow-hidden rounded-xl"
+            style={{
+              height: "30px",
+              background: `linear-gradient(135deg, ${accent}cc, #7c2d12)`,
+            }}
+          >
+            <div className="absolute bottom-1 left-2 flex items-center gap-1">
+              <div className="h-1 rounded-full w-12 bg-white/90" />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-1 px-1.5 py-1 flex-1">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="rounded-lg p-1 flex items-center justify-between"
+              style={{ backgroundColor: card, border: `1px solid ${accent}33` }}
+            >
+              <div className="flex items-center gap-1">
+                <div className="w-5 h-5 rounded-md" style={{ backgroundColor: `${accent}55` }} />
+                <div className="h-0.5 rounded-full w-10" style={{ backgroundColor: muted }} />
+              </div>
+              <div className="h-1.5 rounded px-1 flex items-center text-[5px] font-bold" style={{ backgroundColor: accent, color: "#fff" }}>
+                S/ 25
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // ARCH: marcos en arco
   if (m.layout === "arch") {
     return (
