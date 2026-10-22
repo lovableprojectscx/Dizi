@@ -168,9 +168,9 @@ describe("Pruebas unitarias de Reglas de Suscripción (types.ts)", () => {
       expect(getEffectiveModel(store)).toBe("boutique");
     });
 
-    it("debe retornar 'minimalista' por defecto únicamente si el modelo de la tienda es nulo o indefinido", () => {
+    it("debe retornar 'grid' por defecto únicamente si el modelo de la tienda es nulo o indefinido", () => {
       const store = createMockStore("semilla", undefined, "");
-      expect(getEffectiveModel(store)).toBe("minimalista");
+      expect(getEffectiveModel(store)).toBe("grid");
     });
   });
 

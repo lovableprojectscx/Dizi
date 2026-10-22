@@ -758,6 +758,15 @@ export const useApp = create<AppState>()(
         // Guardar campos iniciales complementarios tras la inicialización RPC exitosa
         const initialUpdates: any = {};
         if (store.brandColor) initialUpdates.brand_color = store.brandColor;
+        if (store.bgColor) initialUpdates.bg_color = store.bgColor;
+        if (store.textColor) initialUpdates.text_color = store.textColor;
+        if (store.cardBg) initialUpdates.card_bg = store.cardBg;
+        if (store.accentColor) initialUpdates.accent_color = store.accentColor;
+        if (store.catalogTypography) initialUpdates.catalog_typography = store.catalogTypography;
+        if (store.cardStyle) initialUpdates.card_style = store.cardStyle;
+        if (store.borderRadius) initialUpdates.border_radius = store.borderRadius;
+        if (store.imgShape) initialUpdates.img_shape = store.imgShape;
+        if (store.isDark !== undefined && store.isDark !== null) initialUpdates.is_dark = store.isDark;
         if (store.niche) initialUpdates.niche = store.niche;
         if (store.referredBy) initialUpdates.referred_by = store.referredBy;
         if (store.requestedPlan) initialUpdates.requested_plan = store.requestedPlan;

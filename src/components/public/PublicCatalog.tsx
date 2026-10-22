@@ -1436,7 +1436,7 @@ export function PublicCatalog({
   const isExpired = isSubscriptionExpired(store);
 
   /* ── Theme setup ─────────────────────────────────── */
-  const effectiveModel = isMockup ? (store.model || "minimalista") : getEffectiveModel(store);
+  const effectiveModel = isMockup ? (store.model || "grid") : getEffectiveModel(store);
   const spec = getDesignSpec(effectiveModel, store.niche);
   const rawModelId = resolveRenderModel(effectiveModel);
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;

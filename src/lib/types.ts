@@ -121,7 +121,7 @@ export const GRACE_DAYS = 3;
 /**
  * Nombre de la plantilla de diseño predeterminada asignada al plan semilla.
  */
-export const SEMILLA_MODEL = "minimalista";
+export const SEMILLA_MODEL = "grid";
 
 /**
  * Representa una categoría de productos dentro de una tienda.
@@ -685,10 +685,11 @@ export const LAYOUT_IMAGE_SPECS: Record<string, ImageSpec> = {
  * @param store Objeto de la tienda.
  */
 export function getImageSpec(store: Store): ImageSpec {
-  const rawModel = store.model || "minimalista";
+  const rawModel = store.model || "grid";
   const model = rawModel === "portada" ? "banner_grid" : rawModel;
 
   const LAYOUT_MAP: Record<string, string> = {
+    grid: "grid",
     minimalista: "grid",
     clasico: "grid",
     nature_mint: "grid",
