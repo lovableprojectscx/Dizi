@@ -9,7 +9,7 @@ import {
 } from "../design-catalog";
 import { SEMILLA_MODEL, getImageSpec } from "../types";
 import type { Store, Product, Category } from "../types";
-import { ALL_MODELS, PALETTE_PRESETS_BY_MODEL } from "../design-catalog";
+import { ALL_MODELS, PALETTE_VARIANT_MODELS } from "../design-catalog";
 import { useApp } from "../store";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 
@@ -172,7 +172,7 @@ describe("Encargo N2 — Nombres Oficiales de Diseño y Migración Segura", () =
     }
   });
 
-  describe("3. Registro (register.tsx): catálogo de modelos y guardado de IDs oficiales con paleta", () => {
+  describe("3. Registro (register.tsx): catálogo de modelos y reglas de guardado", () => {
     it("ALL_MODELS expone IDs oficiales y variantes de paleta reconocidas", () => {
       expect(ALL_MODELS.length).toBeGreaterThanOrEqual(10);
       for (const m of ALL_MODELS) {
@@ -194,73 +194,113 @@ describe("Encargo N2 — Nombres Oficiales de Diseño y Migración Segura", () =
       }
     });
 
-    it("variantes de paleta (clasico, nature_mint, nocturno) definen colores finos y tipografía", () => {
-      // Clásico Cálido
-      expect(getDesignSpec("clasico").id).toBe("grid");
-      expect(PALETTE_PRESETS_BY_MODEL.clasico).toBeDefined();
-      expect(PALETTE_PRESETS_BY_MODEL.clasico.bgColor).toBe("#fdfaf5");
-      expect(PALETTE_PRESETS_BY_MODEL.clasico.textColor).toBe("#451a03");
-      expect(PALETTE_PRESETS_BY_MODEL.clasico.catalogTypography).toBe("serif");
+    it("PALETTE_VARIANT_MODELS reconoce clasico, nature_mint, nocturno, sunset_glow y forest_deep", () => {
+      expect(PALETTE_VARIANT_MODELS.has("clasico")).toBe(true);
+      expect(PALETTE_VARIANT_MODELS.has("nature_mint")).toBe(true);
+      expect(PALETTE_VARIANT_MODELS.has("nocturno")).toBe(true);
+      expect(PALETTE_VARIANT_MODELS.has("sunset_glow")).toBe(true);
+      expect(PALETTE_VARIANT_MODELS.has("forest_deep")).toBe(true);
 
-      // Nature Mint
-      expect(getDesignSpec("nature_mint").id).toBe("grid");
-      expect(PALETTE_PRESETS_BY_MODEL.nature_mint).toBeDefined();
-      expect(PALETTE_PRESETS_BY_MODEL.nature_mint.bgColor).toBe("#f0fefb");
-      expect(PALETTE_PRESETS_BY_MODEL.nature_mint.brandColor).toBe("#0d9488");
-      expect(PALETTE_PRESETS_BY_MODEL.nature_mint.textColor).toBe("#134e4a");
-
-      // Nocturno
-      expect(getDesignSpec("nocturno").id).toBe("overlay");
-      expect(PALETTE_PRESETS_BY_MODEL.nocturno).toBeDefined();
-      expect(PALETTE_PRESETS_BY_MODEL.nocturno.bgColor).toBe("#0f172a");
-      expect(PALETTE_PRESETS_BY_MODEL.nocturno.textColor).toBe("#f8fafc");
-      expect(PALETTE_PRESETS_BY_MODEL.nocturno.isDark).toBe(true);
-      expect(PALETTE_PRESETS_BY_MODEL.nocturno.catalogTypography).toBe("modern");
+      // Los IDs oficiales puros NO son variantes de paleta
+      expect(PALETTE_VARIANT_MODELS.has("grid")).toBe(false);
+      expect(PALETTE_VARIANT_MODELS.has("overlay")).toBe(false);
+      expect(PALETTE_VARIANT_MODELS.has("hero")).toBe(false);
+      expect(PALETTE_VARIANT_MODELS.has("arch")).toBe(false);
+      expect(PALETTE_VARIANT_MODELS.has("banner_grid")).toBe(false);
     });
 
-    it("addStore persiste el ID oficial y las columnas de tema cuando se selecciona una paleta", async () => {
-      const selectedModel = "clasico";
-      const spec = getDesignSpec(selectedModel);
-      const officialModel = spec.id; // 'grid'
-      const palette = PALETTE_PRESETS_BY_MODEL[selectedModel];
+    it("Regla 1 (Variantes de paleta): guarda el ID viejo tal cual y NO escribe columnas de paleta", async () => {
+      const variantsToTest = ["clasico", "nature_mint", "nocturno"] as const;
 
-      await useApp.getState().addStore({
-        id: "store_paleta_clasico",
-        slug: "tienda-paleta-clasico",
-        name: "Tienda Clásica",
-        phone: "987654321",
-        countryCode: "51",
-        countryIso: "PE",
-        plan: "semilla",
-        termsAcceptedAt: new Date().toISOString(),
-        active: true,
-        isPublished: true,
-        createdAt: "2026-10-21",
-        whatsappClicks: 0,
-        model: officialModel as any,
-        brandColor: palette.brandColor,
-        bgColor: palette.bgColor,
-        textColor: palette.textColor,
-        cardBg: palette.cardBg,
-        accentColor: palette.accentColor,
-        borderRadius: palette.borderRadius,
-        imgShape: palette.imgShape,
-        isDark: palette.isDark,
-        catalogTypography: palette.catalogTypography,
-        cardStyle: palette.cardStyle,
-        categories: [],
-        products: [],
-      });
+      for (const selectedModel of variantsToTest) {
+        const officialModel = PALETTE_VARIANT_MODELS.has(selectedModel)
+          ? selectedModel
+          : getDesignSpec(selectedModel).id;
 
-      const store = useApp.getState().stores.find((s) => s.id === "store_paleta_clasico");
-      expect(store).toBeDefined();
-      expect(store?.model).toBe("grid"); // ID oficial guardado
-      expect(store?.bgColor).toBe("#fdfaf5");
-      expect(store?.textColor).toBe("#451a03");
-      expect(store?.cardBg).toBe("#fef9ef");
-      expect(store?.brandColor).toBe("#92400e");
-      expect(store?.catalogTypography).toBe("serif");
-      expect(store?.isDark).toBe(false);
+        const storeId = `store_test_${selectedModel}`;
+        await useApp.getState().addStore({
+          id: storeId,
+          slug: `tienda-test-${selectedModel}`,
+          name: `Tienda ${selectedModel}`,
+          phone: "987654321",
+          countryCode: "51",
+          countryIso: "PE",
+          plan: "semilla",
+          termsAcceptedAt: new Date().toISOString(),
+          active: true,
+          isPublished: true,
+          createdAt: "2026-10-21",
+          whatsappClicks: 0,
+          model: officialModel as any,
+          categories: [],
+          products: [],
+        });
+
+        const store = useApp.getState().stores.find((s) => s.id === storeId);
+        expect(store).toBeDefined();
+        // Guarda el ID viejo tal cual
+        expect(store?.model).toBe(selectedModel);
+        // NO escribe columnas de paleta (quedan undefined tal como antes de N2)
+        expect(store?.bgColor).toBeUndefined();
+        expect(store?.textColor).toBeUndefined();
+        expect(store?.cardBg).toBeUndefined();
+        expect(store?.accentColor).toBeUndefined();
+        expect(store?.borderRadius).toBeUndefined();
+        expect(store?.imgShape).toBeUndefined();
+        expect(store?.isDark).toBeUndefined();
+        expect(store?.catalogTypography).toBeUndefined();
+        expect(store?.cardStyle).toBeUndefined();
+      }
+    });
+
+    it("Regla 2 (Opciones oficiales): guarda el ID oficial y NO escribe columnas de paleta", async () => {
+      const officialOptionsToTest: Array<{ selectedModel: string; expectedSavedModel: string }> = [
+        { selectedModel: "grid", expectedSavedModel: "grid" },
+        { selectedModel: "overlay", expectedSavedModel: "overlay" },
+        { selectedModel: "hero", expectedSavedModel: "hero" },
+        { selectedModel: "arch", expectedSavedModel: "arch" },
+        { selectedModel: "portada", expectedSavedModel: "banner_grid" },
+      ];
+
+      for (const opt of officialOptionsToTest) {
+        const officialModel = PALETTE_VARIANT_MODELS.has(opt.selectedModel)
+          ? opt.selectedModel
+          : getDesignSpec(opt.selectedModel).id;
+
+        const storeId = `store_test_oficial_${opt.selectedModel}`;
+        await useApp.getState().addStore({
+          id: storeId,
+          slug: `tienda-test-oficial-${opt.selectedModel}`,
+          name: `Tienda ${opt.selectedModel}`,
+          phone: "987654321",
+          countryCode: "51",
+          countryIso: "PE",
+          plan: "semilla",
+          termsAcceptedAt: new Date().toISOString(),
+          active: true,
+          isPublished: true,
+          createdAt: "2026-10-21",
+          whatsappClicks: 0,
+          model: officialModel as any,
+          categories: [],
+          products: [],
+        });
+
+        const store = useApp.getState().stores.find((s) => s.id === storeId);
+        expect(store).toBeDefined();
+        // Guarda el ID oficial (ej: portada -> banner_grid, grid -> grid)
+        expect(store?.model).toBe(opt.expectedSavedModel);
+        // NO escribe columnas de paleta
+        expect(store?.bgColor).toBeUndefined();
+        expect(store?.textColor).toBeUndefined();
+        expect(store?.cardBg).toBeUndefined();
+        expect(store?.accentColor).toBeUndefined();
+        expect(store?.borderRadius).toBeUndefined();
+        expect(store?.imgShape).toBeUndefined();
+        expect(store?.isDark).toBeUndefined();
+        expect(store?.catalogTypography).toBeUndefined();
+        expect(store?.cardStyle).toBeUndefined();
+      }
     });
   });
 });

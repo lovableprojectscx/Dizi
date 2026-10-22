@@ -790,6 +790,19 @@ export function modelSupportsCategoryIcons(structureOrModelId: string | null | u
 }
 
 /**
+ * Conjunto de modelos que corresponden a variantes de paleta / diseño no migrados.
+ * En el registro conservan su identificador histórico (clasico, nature_mint, nocturno, etc.)
+ * sin alterar columnas de paleta en la base de datos (se resolverán en N3).
+ */
+export const PALETTE_VARIANT_MODELS = new Set<string>([
+  "clasico",
+  "nature_mint",
+  "nocturno",
+  "sunset_glow",
+  "forest_deep",
+]);
+
+/**
  * Variantes de paleta para asociar a los presets cromáticos finos
  * al registrar una tienda nueva o seleccionar presets.
  */

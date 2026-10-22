@@ -20,7 +20,7 @@ import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
-import { getDesignSpec, ALL_MODELS, PALETTE_PRESETS_BY_MODEL } from "@/lib/design-catalog";
+import { getDesignSpec, ALL_MODELS, PALETTE_VARIANT_MODELS } from "@/lib/design-catalog";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -874,9 +874,9 @@ function RegisterPage() {
           return undefined;
         })();
 
-        const spec = getDesignSpec(selectedModel, selectedNiche);
-        const officialModel = spec.id;
-        const palette = PALETTE_PRESETS_BY_MODEL[selectedModel];
+        const officialModel = PALETTE_VARIANT_MODELS.has(selectedModel)
+          ? selectedModel
+          : getDesignSpec(selectedModel, selectedNiche).id;
 
         await addStore({
           id: newStoreId,
@@ -893,16 +893,7 @@ function RegisterPage() {
           createdAt: new Date().toISOString().split("T")[0],
           whatsappClicks: 0,
           model: officialModel as any,
-          brandColor: brandColor || palette?.brandColor || undefined,
-          bgColor: palette?.bgColor,
-          textColor: palette?.textColor,
-          cardBg: palette?.cardBg,
-          accentColor: palette?.accentColor,
-          borderRadius: palette?.borderRadius,
-          imgShape: palette?.imgShape,
-          isDark: palette ? palette.isDark : (spec.oscuroDeFabrica ? true : undefined),
-          catalogTypography: palette?.catalogTypography,
-          cardStyle: palette?.cardStyle,
+          brandColor: brandColor || undefined,
           ownerId: userId,
           niche: selectedNiche,
           planExpiresAt,
