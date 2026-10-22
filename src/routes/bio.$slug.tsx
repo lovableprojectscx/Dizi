@@ -219,6 +219,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       showFeatured: data.show_featured ?? true,
+      sellers: Array.isArray(data.sellers) ? data.sellers : [],
       totalProductsCount: data.total_products_count !== undefined ? Number(data.total_products_count) : (productsWithImages?.length || 0),
       categories: (data.categories || []).map((c: any) => ({
         id: c.id,

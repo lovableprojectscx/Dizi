@@ -639,10 +639,20 @@ export async function generateCatalogPdf(
   doc.setFontSize(10);
   doc.setTextColor(t.text);
 
+  const extraActiveSellers = (store.sellers || []).filter((s) => s.active && s.phone);
+  const sellerPhoneLines: string[] = extraActiveSellers.length > 0
+    ? [
+        `${store.name}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
+        ...extraActiveSellers.map((s) => `${s.name}: ${formatPhoneDisplay(s.phone, s.countryIso || store.countryIso)}`),
+      ]
+    : store.phone
+      ? [`WhatsApp: ${formatPhoneDisplay(store.phone, store.countryIso)}`]
+      : [];
+
   const summaryItems = [
     `${visibleProds.length} productos`,
     `${cats.length} categorias`,
-    store.phone ? `WhatsApp: ${formatPhoneDisplay(store.phone, store.countryIso)}` : null,
+    ...sellerPhoneLines,
   ].filter(Boolean);
 
   summaryItems.forEach((item, i) => {
@@ -967,7 +977,16 @@ export async function generateCatalogPdf(
   doc.setFontSize(10);
   doc.text("Envianos un mensaje por WhatsApp", PAGE_W / 2, PAGE_H / 2, { align: "center" });
 
-  if (store.phone) {
+  if (extraActiveSellers.length > 0) {
+    const allBackSellers = [
+      `${store.name}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
+      ...extraActiveSellers.map((s) => `${s.name}: ${formatPhoneDisplay(s.phone, s.countryIso || store.countryIso)}`),
+    ];
+    doc.setFontSize(11);
+    allBackSellers.forEach((line, idx) => {
+      doc.text(line, PAGE_W / 2, PAGE_H / 2 + 10 + idx * 6, { align: "center" });
+    });
+  } else if (store.phone) {
     doc.setFontSize(13);
     doc.text(formatPhoneDisplay(store.phone, store.countryIso), PAGE_W / 2, PAGE_H / 2 + 12, { align: "center" });
   }

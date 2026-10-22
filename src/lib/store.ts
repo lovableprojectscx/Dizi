@@ -168,6 +168,7 @@ export const mapStoreFromDB = (row: any): Store => {
     termsAcceptedAt: row.terms_accepted_at ?? null,
     requestedPlan: row.requested_plan ?? null,
     showFeatured: row.show_featured ?? true,
+    sellers: Array.isArray(row.sellers) ? row.sellers : [],
     categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
     products: (row.products || [])
       .map((p: any) => ({
@@ -682,6 +683,8 @@ export const useApp = create<AppState>()(
         if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
         if (updatedPatch.showFeatured !== undefined)
           dbPatch.show_featured = updatedPatch.showFeatured;
+        if (updatedPatch.sellers !== undefined)
+          dbPatch.sellers = updatedPatch.sellers;
 
         try {
           if (Object.keys(dbPatch).length > 0) {

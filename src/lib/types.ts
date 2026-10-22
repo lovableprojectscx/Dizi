@@ -41,6 +41,17 @@ export interface Plan {
 }
 
 /**
+ * Estructura de un vendedor asociado a la tienda (F39).
+ */
+export interface Seller {
+  id: string;
+  name: string;
+  phone: string;
+  countryIso?: string;
+  active: boolean;
+}
+
+/**
  * Catálogo de planes disponibles en el sistema con sus límites y precios oficiales.
  * Fuente única de verdad técnica y comercial (G1 y G9).
  */
@@ -82,6 +93,7 @@ export const PLANS: Record<PlanId, Plan> = {
     annualPrice: 359,
     features: [
       "Hasta 300 productos",
+      "Varios vendedores (hasta 3)",
       "Carrusel de 3 banners",
       "Cintillo de anuncios",
       "Todo lo de Emprendedor",
@@ -95,6 +107,7 @@ export const PLANS: Record<PlanId, Plan> = {
     annualPrice: 629,
     features: [
       "Hasta 1,000 productos",
+      "Varios vendedores (hasta 5)",
       "Carrusel de 5 banners",
       "Soporte prioritario 24/7",
       "Todo lo de Pro",
@@ -359,6 +372,8 @@ export interface Store {
   promoBarIsMarquee?: boolean;
   /** Muestra u oculta la sección de productos destacados/ofertas en los diseños compatibles */
   showFeatured?: boolean;
+  /** Lista de vendedores secundarios registrados en la tienda (F39) */
+  sellers?: Seller[];
   /** Categorías pertenecientes a la tienda */
   categories: Category[];
   /** Productos pertenecientes a la tienda */
@@ -555,6 +570,22 @@ export function getMaxAllowedBanners(store: Store): number {
 export function planAllowsPromoBar(store: Store): boolean {
   const plan = getEffectivePlan(store);
   return plan === "pro" || plan === "ilimitado";
+}
+
+/**
+ * Retorna el límite máximo de vendedores permitido para la tienda según su plan efectivo (F39),
+ * contando el número principal de la tienda.
+ * - Semilla: 1 (solo el principal)
+ * - Emprendedor: 1 (solo el principal)
+ * - Pro: hasta 3 (principal + hasta 2 extras)
+ * - Ilimitado: hasta 5 (principal + hasta 4 extras)
+ * @param store Objeto de la tienda o registro con plan y fecha de vencimiento.
+ */
+export function getMaxSellers(store: Store | { plan: PlanId; planExpiresAt?: string | null }): number {
+  const plan = getEffectivePlan(store as Store);
+  if (plan === "ilimitado") return 5;
+  if (plan === "pro") return 3;
+  return 1;
 }
 
 // ─── Especificaciones de imagen por layout ───────────────────────────────────

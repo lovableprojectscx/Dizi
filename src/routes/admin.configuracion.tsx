@@ -1,11 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
-import { getEffectivePlan } from "@/lib/types";
+import { getEffectivePlan, getMaxSellers, type Seller } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -22,6 +24,9 @@ import {
   Check,
   Globe,
   Sliders,
+  Users,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { convertImageToWebP } from "@/lib/image-utils";
 import { PhoneInput } from "@/components/PhoneInput";
@@ -70,6 +75,7 @@ function ConfigPage() {
   const [showDiziBranding, setShowDiziBranding] = useState(
     store?.showDiziBranding ?? (store ? getEffectivePlan(store) === "semilla" : false)
   );
+  const [sellers, setSellers] = useState<Seller[]>(store?.sellers || []);
 
   const [copiedCatalog, setCopiedCatalog] = useState(false);
   const [copiedBio, setCopiedBio] = useState(false);
@@ -94,9 +100,35 @@ function ConfigPage() {
       setShowDiziBranding(
         store.showDiziBranding ?? (getEffectivePlan(store) === "semilla")
       );
+      setSellers(store.sellers || []);
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
+
+  const maxTotalSellers = store ? getMaxSellers(store) : 1;
+  const maxExtraSellers = Math.max(0, maxTotalSellers - 1);
+  const canAddSeller = sellers.length < maxExtraSellers;
+  const effectivePlan = store ? getEffectivePlan(store) : "semilla";
+
+  const handleAddSeller = () => {
+    if (!canAddSeller) return;
+    const newSeller: Seller = {
+      id: `seller_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: "",
+      phone: "",
+      countryIso: store?.countryIso || "PE",
+      active: true,
+    };
+    setSellers([...sellers, newSeller]);
+  };
+
+  const handleUpdateSeller = (id: string, patch: Partial<Seller>) => {
+    setSellers(sellers.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  };
+
+  const handleDeleteSeller = (id: string) => {
+    setSellers(sellers.filter((s) => s.id !== id));
+  };
 
   if (!store) return null;
 
@@ -165,6 +197,22 @@ function ConfigPage() {
       return;
     }
 
+    for (const s of sellers) {
+      if (!s.name.trim()) {
+        toast.error("Cada vendedor debe tener un nombre");
+        return;
+      }
+      if (s.name.trim().length > 40) {
+        toast.error("El nombre del vendedor no puede exceder 40 caracteres");
+        return;
+      }
+      const sDigits = toWhatsAppDigits(s.countryIso || "PE", s.phone);
+      if (!sDigits || sDigits.length < 6 || sDigits.length > 15) {
+        toast.error(`El teléfono del vendedor "${s.name}" no es válido.`);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       await update(store.id, {
@@ -180,6 +228,13 @@ function ConfigPage() {
         empresaRazonSocial: empresaRazonSocial.trim() || undefined,
         empresaDireccion: empresaDireccion.trim() || undefined,
         showDiziBranding: showDiziBranding,
+        sellers: sellers.map((s) => ({
+          id: s.id,
+          name: s.name.trim(),
+          phone: toWhatsAppDigits(s.countryIso || "PE", s.phone),
+          countryIso: s.countryIso || "PE",
+          active: s.active,
+        })),
       });
 
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
@@ -592,6 +647,186 @@ function ConfigPage() {
                     className="h-10"
                   />
                 </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Sección Vendedores (F39: WhatsApp Múltiple) ── */}
+      <Card className="border border-border/60 shadow-xs rounded-2xl overflow-hidden">
+        <CardContent className="p-5 sm:p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary shrink-0" />
+              <div>
+                <h2 className="text-xs sm:text-sm font-bold tracking-tight text-foreground uppercase tracking-wider flex items-center gap-2">
+                  Vendedores (WhatsApp Múltiple)
+                  {maxExtraSellers === 0 ? (
+                    <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                      Disponible en Pro
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] font-bold">
+                      Hasta {maxTotalSellers} vendedores
+                    </Badge>
+                  )}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Permite a tus clientes elegir con qué vendedor comunicarse antes de abrir WhatsApp.
+                </p>
+              </div>
+            </div>
+            {maxExtraSellers === 0 && (
+              <Link to="/admin/plan">
+                <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                  Ampliar Plan
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {/* Vendedor Principal */}
+          <div className="p-3.5 rounded-xl border border-border/50 bg-muted/20 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-foreground">
+                  {name || store.name || "Tienda"}
+                </span>
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">
+                  Principal
+                </Badge>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">
+                +{countryCode} {phone}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Utiliza el número principal configurado en Información General.
+            </p>
+          </div>
+
+          {/* Lista de vendedores extra */}
+          {sellers.length > 0 && (
+            <div className="space-y-4 pt-1">
+              {sellers.map((s, index) => (
+                <div
+                  key={s.id}
+                  data-testid={`admin-seller-card-${s.id}`}
+                  className="p-4 rounded-xl border border-border/60 bg-card space-y-3 relative shadow-2xs"
+                >
+                  <div className="flex items-center justify-between border-b border-border/30 pb-2.5">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      Vendedor #{index + 2}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <Label htmlFor={`seller-active-${s.id}`} className="text-xs text-muted-foreground cursor-pointer">
+                          {s.active ? "Activo" : "Inactivo"}
+                        </Label>
+                        <Switch
+                          id={`seller-active-${s.id}`}
+                          checked={s.active}
+                          onCheckedChange={(checked) =>
+                            handleUpdateSeller(s.id, { active: checked })
+                          }
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteSeller(s.id)}
+                        className="h-7 w-7 text-destructive hover:bg-destructive/10 cursor-pointer"
+                        title="Eliminar vendedor"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">
+                        Nombre del vendedor
+                      </Label>
+                      <Input
+                        value={s.name}
+                        onChange={(e) =>
+                          handleUpdateSeller(s.id, { name: e.target.value })
+                        }
+                        placeholder="Ej: Dianis"
+                        maxLength={40}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-muted-foreground">
+                        WhatsApp
+                      </Label>
+                      <PhoneInput
+                        value={s.phone}
+                        countryIso={s.countryIso || "PE"}
+                        onChange={({ digits, countryIso: iso }) => {
+                          handleUpdateSeller(s.id, {
+                            phone: digits,
+                            countryIso: iso,
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Botón Agregar o Banner de Actualización */}
+          <div className="pt-1">
+            {canAddSeller ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddSeller}
+                className="gap-1.5 text-xs font-bold h-9 w-full sm:w-auto cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>
+                  Agregar vendedor ({sellers.length}/{maxExtraSellers})
+                </span>
+              </Button>
+            ) : maxExtraSellers === 0 ? (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs">
+                <div>
+                  <p className="font-bold">¿Tienes un equipo de ventas?</p>
+                  <p className="text-[11px] opacity-90 mt-0.5">
+                    Actualiza al plan Catálogo Pro para agregar hasta 3 vendedores y repartir tus pedidos.
+                  </p>
+                </div>
+                <Link to="/admin/plan" className="shrink-0">
+                  <Button size="sm" className="h-8 text-xs font-bold gap-1">
+                    Ampliar Plan
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-muted/40 border border-border/60 text-xs">
+                <div>
+                  <p className="font-bold">Límite alcanzado ({maxTotalSellers} vendedores en total)</p>
+                  {effectivePlan === "pro" && (
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Amplía a Ilimitado para habilitar hasta 5 vendedores en tu catálogo.
+                    </p>
+                  )}
+                </div>
+                {effectivePlan === "pro" && (
+                  <Link to="/admin/plan" className="shrink-0">
+                    <Button size="sm" variant="outline" className="h-8 text-xs font-bold">
+                      Ampliar Plan
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
           </div>
