@@ -173,12 +173,12 @@ describe("Encargo N2 — Nombres Oficiales de Diseño y Migración Segura", () =
   });
 
   describe("3. Registro (register.tsx): catálogo de modelos y reglas de guardado", () => {
-    it("ALL_MODELS expone exactamente los 7 diseños oficiales activos (N3a)", () => {
-      expect(ALL_MODELS.length).toBe(7);
+    it("ALL_MODELS expone exactamente los 8 diseños oficiales activos (con diagonal)", () => {
+      expect(ALL_MODELS.length).toBe(8);
       for (const m of ALL_MODELS) {
         const spec = getDesignSpec(m.id);
         expect(spec).toBeDefined();
-        // Cada modelo en el registro mapea a uno de los 7 IDs oficiales activos
+        // Cada modelo en el registro mapea a uno de los 8 IDs oficiales activos
         expect([
           "grid",
           "overlay",
@@ -187,6 +187,7 @@ describe("Encargo N2 — Nombres Oficiales de Diseño y Migración Segura", () =
           "lookbook",
           "bloom_general",
           "bite",
+          "diagonal",
         ]).toContain(spec.id);
       }
     });

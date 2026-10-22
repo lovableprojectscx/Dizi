@@ -229,7 +229,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: true,
     rubroSugerido: "Deportes / Juventud",
-    enSelector: false,
+    enSelector: true,
   },
   arch: {
     id: "arch",
@@ -834,6 +834,16 @@ export const PALETTE_VARIANT_MODELS = new Set<string>([
 ]);
 
 /**
+ * Tiendas existentes antes de N3a (22 oct 2026). Conservan su apariencia anterior. Solo Jack decide sacar una de aquí.
+ */
+export const TIENDAS_CON_ESTILO_ANTERIOR = new Set<string>([
+  "jhoselynperu",
+  "onfeet",
+  "aura-botanicals",
+  "emessentials",
+]);
+
+/**
  * Variantes de paleta para asociar a los presets cromáticos finos
  * al registrar una tienda nueva o seleccionar presets.
  */
@@ -945,6 +955,15 @@ export const ALL_MODELS = [
     planLevel: 0,
     niches: ["servicios", "general", "floreria", "bisuteria"],
     p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false },
+  },
+  {
+    id: "diagonal",
+    layout: "diagonal",
+    name: "Diagonal Dynamic",
+    desc: "Cortes en diagonal y ángulos dinámicos. Ideal para deportes y energía.",
+    planLevel: 0,
+    niches: ["general", "ropa", "tech", "servicios"],
+    p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true },
   },
   {
     id: "nature",

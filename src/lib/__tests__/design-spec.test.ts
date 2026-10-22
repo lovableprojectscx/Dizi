@@ -155,7 +155,7 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
       }
     });
 
-    it("verifica enSelector según N3a: exactamente 7 en selector y 8 ocultos", () => {
+    it("verifica enSelector: exactamente 8 en selector y 7 ocultos (con diagonal activo)", () => {
       const enSelectorExpected: OfficialDesignId[] = [
         "nature",
         "lookbook",
@@ -164,6 +164,7 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
         "grid",
         "arch",
         "overlay",
+        "diagonal",
       ];
       for (const id of ALL_OFFICIAL_IDS) {
         const spec = DESIGN_SPECS[id];
@@ -540,9 +541,9 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
       expect(html.includes("100% Garantía de frescura")).toBe(true);
     });
 
-    it("el catálogo ALL_MODELS de registro ofrece exactamente los 7 diseños oficiales con enSelector: true", () => {
-      expect(ALL_MODELS).toHaveLength(7);
-      const expectedIds = ["grid", "overlay", "arch", "nature", "lookbook", "bloom_general", "bite"];
+    it("el catálogo ALL_MODELS de registro ofrece exactamente los 8 diseños oficiales con enSelector: true", () => {
+      expect(ALL_MODELS).toHaveLength(8);
+      const expectedIds = ["grid", "overlay", "arch", "nature", "lookbook", "bloom_general", "bite", "diagonal"];
       const actualIds = ALL_MODELS.map((m) => m.id);
       expect(actualIds.sort()).toEqual(expectedIds.sort());
 
@@ -553,14 +554,14 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
       }
     });
 
-    it("el selector de admin.diseno muestra 7 estructuras si la tienda usa oficial, o 8 si usa oculta", () => {
+    it("el selector de admin.diseno muestra 8 estructuras si la tienda usa oficial, o 9 si usa oculta", () => {
       // Tienda con diseño oficial activo
       const officialModel = "nature";
       const officialStructId = resolveStructureId(officialModel);
       const visibleOfficial = DESIGN_STRUCTURES.filter(
         (s) => s.spec.enSelector || s.id === officialStructId
       );
-      expect(visibleOfficial).toHaveLength(7);
+      expect(visibleOfficial).toHaveLength(8);
 
       // Tienda con diseño legado/oculto (ej: tiles)
       const hiddenModel = "tiles";
@@ -568,7 +569,7 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
       const visibleHidden = DESIGN_STRUCTURES.filter(
         (s) => s.spec.enSelector || s.id === hiddenStructId
       );
-      expect(visibleHidden).toHaveLength(8);
+      expect(visibleHidden).toHaveLength(9);
       const hiddenItem = visibleHidden.find((s) => s.id === "tiles");
       expect(hiddenItem).toBeDefined();
       expect(hiddenItem?.spec.enSelector).toBe(false);
