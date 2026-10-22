@@ -1467,13 +1467,18 @@ export function PublicCatalog({
     }
   };
 
-  const defaultTypographyClass =
-    isPremiumModel && (store.niche === "floreria" || modelId === "nature")
-      ? "typography-serif"
-      : "typography-sans";
+  // TODO: quitar excepción temporal para slug 'jhoselynperu' tras confirmación con la clienta
+  const hasCustomTypographyException =
+    store.slug === "jhoselynperu" &&
+    Boolean(store.catalogTypography && store.catalogTypography !== "sans") &&
+    !(typeof window !== "undefined" && new URLSearchParams(window.location.search).has("forzar_serif_fijo"));
+
+  const resolvedTypography = spec.estiloFijo
+    ? (hasCustomTypographyException ? store.catalogTypography : spec.estiloFijo.tipografia)
+    : (store.catalogTypography ?? (isPremiumModel && (store.niche === "floreria" || modelId === "nature") ? "serif" : "sans"));
 
   const finalTypographyClass =
-    mapTypographyClass(store.catalogTypography) ?? defaultTypographyClass;
+    mapTypographyClass(resolvedTypography) ?? "typography-sans";
 
   const isSerif = finalTypographyClass === "typography-serif";
 
@@ -1509,7 +1514,7 @@ export function PublicCatalog({
   }
 
   const defaultCardStyle = isPremiumModel && store.niche === "floreria" ? "curved" : "standard";
-  const cStyle = store.cardStyle || defaultCardStyle;
+  const cStyle = spec.estiloFijo ? spec.estiloFijo.tarjeta : (store.cardStyle || defaultCardStyle);
 
   const isCurvedStyle = cStyle === "curved";
   const isFloristBloom = isCurvedStyle;
@@ -3990,21 +3995,24 @@ export function PublicCatalog({
                         />
                       )}
 
-                      <span
-                        style={{ color: "var(--primary)" }}
-                        className="block text-[9px] sm:text-[10px] font-black tracking-[0.3em] uppercase font-sans"
-                      >
-                        {store.bannerTagline || "COLECCIÓN EXCLUSIVA"}
-                      </span>
+                      {store.bannerTagline && (
+                        <span
+                          style={{ color: "var(--primary)" }}
+                          className="block text-[9px] sm:text-[10px] font-black tracking-[0.3em] uppercase font-sans"
+                        >
+                          {store.bannerTagline}
+                        </span>
+                      )}
 
                       <h1 className="text-3xl md:text-4.5xl lg:text-5xl font-serif font-light tracking-wide leading-tight uppercase text-white max-w-md mx-auto">
                         {store.bannerTitle || store.name}
                       </h1>
 
-                      <p className="text-xs sm:text-sm font-serif italic leading-relaxed text-white/80 max-w-sm mx-auto">
-                        {store.bannerBottomTag ||
-                          "Piezas exclusivas seleccionadas con un diseño atemporal."}
-                      </p>
+                      {store.bannerBottomTag && (
+                        <p className="text-xs sm:text-sm font-serif italic leading-relaxed text-white/80 max-w-sm mx-auto">
+                          {store.bannerBottomTag}
+                        </p>
+                      )}
 
                       <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2">
                         {filtered.length > 0 && (
@@ -5893,7 +5901,6 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "nature" ? (
               (() => {
-                const nicheTags = getNicheTaglines(store.niche);
                 return (
                   /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
                   <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
@@ -6046,68 +6053,66 @@ export function PublicCatalog({
                           </div>
 
                           {/* Overlapping editorial card details */}
-                          {(() => {
-                            const finalTagline = store.bannerTagline || nicheTags.tagline;
-                            const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
-                            return (
-                              <div
-                                style={{
-                                  backgroundColor:
-                                    "color-mix(in srgb, var(--card) 95%, transparent)",
-                                  borderColor: "var(--border)",
-                                }}
-                                className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
+                          <div
+                            style={{
+                              backgroundColor:
+                                "color-mix(in srgb, var(--card) 95%, transparent)",
+                              borderColor: "var(--border)",
+                            }}
+                            className="relative -mt-14 mx-4 z-20 backdrop-blur-md border rounded-[2rem] p-5 sm:p-6 shadow-md text-left flex flex-col justify-between"
+                          >
+                            <div className="space-y-1.5">
+                              {store.bannerTagline && (
+                                <span
+                                  style={{ color: "var(--muted-foreground)" }}
+                                  className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
+                                >
+                                  {store.bannerTagline}
+                                </span>
+                              )}
+                              <h2
+                                style={{ color: "var(--foreground)" }}
+                                className="text-xl sm:text-2xl font-serif font-normal leading-snug"
                               >
-                                <div className="space-y-1.5">
-                                  <span
-                                    style={{ color: "var(--muted-foreground)" }}
-                                    className="text-[9px] sm:text-[10px] font-bold tracking-widest uppercase font-sans"
-                                  >
-                                    {finalTagline}
-                                  </span>
-                                  <h2
-                                    style={{ color: "var(--foreground)" }}
-                                    className="text-xl sm:text-2xl font-serif font-normal leading-snug"
-                                  >
-                                    {store.bannerTitle || `Abraza la pureza de la naturaleza`}
-                                  </h2>
-                                  {store.bioDescription && (
-                                    <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
-                                      {store.bioDescription}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="pt-3 flex gap-2 items-center justify-between">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      document
-                                        .getElementById("nature-coleccion")
-                                        ?.scrollIntoView({ behavior: "smooth" });
-                                    }}
+                                {store.bannerTitle || store.name}
+                              </h2>
+                              {store.bioDescription && (
+                                <p style={{ color: "var(--muted-foreground)" }} className="text-xs line-clamp-2 leading-relaxed">
+                                  {store.bioDescription}
+                                </p>
+                              )}
+                            </div>
+                            <div className="pt-3 flex gap-2 items-center justify-between">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  document
+                                    .getElementById("nature-coleccion")
+                                    ?.scrollIntoView({ behavior: "smooth" });
+                                }}
+                                style={{
+                                  backgroundColor: "var(--primary)",
+                                  color: "var(--primary-foreground)",
+                                }}
+                                className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
+                              >
+                                Ver Catálogo
+                              </button>
+                              {/* Decorative small organic element */}
+                              {store.bannerBottomTag && (
+                                <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
+                                  <Leaf
                                     style={{
-                                      backgroundColor: "var(--primary)",
-                                      color: "var(--primary-foreground)",
+                                      color:
+                                        "color-mix(in srgb, var(--primary) 60%, transparent)",
                                     }}
-                                    className="inline-block text-[9px] font-bold uppercase tracking-widest px-4 py-2 rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition font-sans cursor-pointer"
-                                  >
-                                    {nicheTags.buttonText}
-                                  </button>
-                                  {/* Decorative small organic element */}
-                                  <span style={{ color: "var(--muted-foreground)" }} className="text-xs italic flex items-center gap-1.5 font-serif">
-                                    <Leaf
-                                      style={{
-                                        color:
-                                          "color-mix(in srgb, var(--primary) 60%, transparent)",
-                                      }}
-                                      className="h-3.5 w-3.5"
-                                    />{" "}
-                                    {finalBottomTag}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })()}
+                                    className="h-3.5 w-3.5"
+                                  />{" "}
+                                  {store.bannerBottomTag}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       );
                     })()}
@@ -6164,7 +6169,7 @@ export function PublicCatalog({
                                   : "Ofertas Especiales"
                                 : isFallback
                                   ? "Recomendaciones"
-                                  : nicheTags.featuredTitle}
+                                  : "Productos Destacados"}
                             </h3>
                             {featuredProducts.length > 1 && (
                               <>
@@ -6276,12 +6281,17 @@ export function PublicCatalog({
                                     </div>
                                     {/* Info */}
                                     <div className="space-y-1 text-left px-1">
-                                      <span
-                                        style={{ color: "var(--muted-foreground)" }}
-                                        className="text-[9px] font-bold uppercase tracking-wider font-sans block"
-                                      >
-                                        {nicheTags.productTagline}
-                                      </span>
+                                      {(() => {
+                                        const catName = store.categories?.find((c) => c.id === p.categoryId)?.name;
+                                        return catName ? (
+                                          <span
+                                            style={{ color: "var(--muted-foreground)" }}
+                                            className="text-[9px] font-bold uppercase tracking-wider font-sans block truncate"
+                                          >
+                                            {catName}
+                                          </span>
+                                        ) : null;
+                                      })()}
                                       <h4
                                         style={{ color: "var(--foreground)" }}
                                         className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-2 leading-snug min-h-[2.5rem]"
@@ -6550,12 +6560,17 @@ export function PublicCatalog({
                                       </div>
                                       {/* Info */}
                                       <div className="p-3.5 pt-1 space-y-1 text-left">
-                                        <span
-                                          style={{ color: "var(--muted-foreground)" }}
-                                          className="text-[8px] font-black uppercase tracking-widest block font-sans"
-                                        >
-                                          {nicheTags.productTag}
-                                        </span>
+                                        {(() => {
+                                          const catName = store.categories?.find((c) => c.id === p.categoryId)?.name;
+                                          return catName ? (
+                                            <span
+                                              style={{ color: "var(--muted-foreground)" }}
+                                              className="text-[8px] font-black uppercase tracking-widest block font-sans truncate"
+                                            >
+                                              {catName}
+                                            </span>
+                                          ) : null;
+                                        })()}
                                         <h4
                                           style={{ color: "var(--foreground)" }}
                                           className="font-serif font-normal text-sm group-hover:text-[var(--primary)] transition-colors line-clamp-1"
@@ -6675,7 +6690,12 @@ export function PublicCatalog({
                 {!isNarrowing && (() => {
                   const banners = activeBanners;
                   const defaultBannerStyle = store.niche === "floreria" ? "curved" : "framed";
-                  const bStyle = store.bannerStyle || defaultBannerStyle;
+                  const bStyle = spec.estiloFijo ? spec.estiloFijo.corteBanner : (store.bannerStyle || defaultBannerStyle);
+                  const showBloomTitle = spec.textosPortada.includes("titulo") && Boolean(store.bannerTitle);
+                  const showBloomTagline = spec.textosPortada.includes("subtitulo") && Boolean(store.bannerTagline);
+                  const showBloomBottomTag = spec.textosPortada.includes("etiqueta") && Boolean(store.bannerBottomTag);
+                  const hasBloomTexts = showBloomTitle || showBloomTagline || showBloomBottomTag;
+
                   return (
                     <div
                       className={cn(
@@ -6719,6 +6739,32 @@ export function PublicCatalog({
                                 </div>
                               ))}
                             </div>
+
+                            {/* Textos de portada Bloom (Paso 2 N3a) */}
+                            {hasBloomTexts && (
+                              <div className="absolute inset-0 z-20 flex flex-col justify-end p-5 sm:p-7 pointer-events-none bg-gradient-to-t from-black/75 via-black/25 to-transparent">
+                                {showBloomTagline && (
+                                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-white/90 drop-shadow mb-1 font-sans">
+                                    {store.bannerTagline}
+                                  </span>
+                                )}
+                                {showBloomTitle && (
+                                  <h2
+                                    className={cn(
+                                      "text-xl sm:text-3xl font-medium tracking-tight text-white drop-shadow-md",
+                                      isSerif ? "font-serif" : "font-sans font-bold"
+                                    )}
+                                  >
+                                    {store.bannerTitle}
+                                  </h2>
+                                )}
+                                {showBloomBottomTag && (
+                                  <p className="text-xs sm:text-sm text-white/85 drop-shadow mt-1 italic font-serif">
+                                    {store.bannerBottomTag}
+                                  </p>
+                                )}
+                              </div>
+                            )}
 
                             {/* Manual controls (Arrows) */}
                             {banners.length > 1 && (

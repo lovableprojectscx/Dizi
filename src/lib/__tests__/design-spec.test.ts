@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   DESIGN_SPECS,
   DESIGN_STRUCTURES,
+  ALL_MODELS,
   getDesignSpec,
   resolveStructureId,
   resolveRenderModel,
@@ -106,20 +107,77 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
       }
     });
 
-    it("verifica temaEditable: tarjeta solo en Bloom; colores, tipografía y oscuro en todos", () => {
+    it("verifica temaEditable según N3a: lookbook, bite, bloom_floral y nature solo colores; bloom_general todos; demás sin tarjeta", () => {
+      const fixedColorOnly: OfficialDesignId[] = ["lookbook", "bite", "bloom_floral", "nature"];
+      for (const id of fixedColorOnly) {
+        const spec = DESIGN_SPECS[id];
+        expect(spec.temaEditable).toEqual(["colores"]);
+      }
+
+      expect(DESIGN_SPECS.bloom_general.temaEditable).toEqual(["colores", "tipografia", "tarjeta", "oscuro"]);
+
+      const standardOther = ALL_OFFICIAL_IDS.filter(
+        (id) => !fixedColorOnly.includes(id) && id !== "bloom_general"
+      );
+      for (const id of standardOther) {
+        const spec = DESIGN_SPECS[id];
+        expect(spec.temaEditable).toEqual(["colores", "tipografia", "oscuro"]);
+      }
+    });
+
+    it("verifica estiloFijo según N3a para plantillas con estilo visual inmutable", () => {
+      expect(DESIGN_SPECS.lookbook.estiloFijo).toEqual({
+        tipografia: "serif",
+        tarjeta: "flat",
+        corteBanner: "direct",
+      });
+      expect(DESIGN_SPECS.bite.estiloFijo).toEqual({
+        tipografia: "sans",
+        tarjeta: "standard",
+        corteBanner: "framed",
+      });
+      expect(DESIGN_SPECS.bloom_floral.estiloFijo).toEqual({
+        tipografia: "serif",
+        tarjeta: "curved",
+        corteBanner: "curved",
+      });
+      expect(DESIGN_SPECS.nature.estiloFijo).toEqual({
+        tipografia: "serif",
+        tarjeta: "curved",
+        corteBanner: "curved",
+      });
+
+      const withoutFixed = ALL_OFFICIAL_IDS.filter(
+        (id) => !["lookbook", "bite", "bloom_floral", "nature"].includes(id)
+      );
+      for (const id of withoutFixed) {
+        expect(DESIGN_SPECS[id].estiloFijo).toBeUndefined();
+      }
+    });
+
+    it("verifica enSelector según N3a: exactamente 7 en selector y 8 ocultos", () => {
+      const enSelectorExpected: OfficialDesignId[] = [
+        "nature",
+        "lookbook",
+        "bloom_general",
+        "bite",
+        "grid",
+        "arch",
+        "overlay",
+      ];
       for (const id of ALL_OFFICIAL_IDS) {
         const spec = DESIGN_SPECS[id];
-        expect(spec.temaEditable).toContain("colores");
-        expect(spec.temaEditable).toContain("tipografia");
-        expect(spec.temaEditable).toContain("oscuro");
-        expect(spec.temaEditable).not.toContain("formaFoto");
-        expect(spec.temaEditable).not.toContain("radio");
-
-        if (id === "bloom_general" || id === "bloom_floral") {
-          expect(spec.temaEditable).toContain("tarjeta");
+        if (enSelectorExpected.includes(id)) {
+          expect(spec.enSelector, `${id} debe tener enSelector=true`).toBe(true);
         } else {
-          expect(spec.temaEditable).not.toContain("tarjeta");
+          expect(spec.enSelector, `${id} debe tener enSelector=false`).toBe(false);
         }
+      }
+    });
+
+    it("verifica textosDeEjemplo: false en todos los 15 diseños", () => {
+      for (const id of ALL_OFFICIAL_IDS) {
+        expect(DESIGN_SPECS[id].textosDeEjemplo).toBe(false);
       }
     });
   });
@@ -348,6 +406,172 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
         const spec = getDesignSpec(id);
         expect(spec.portada).toBe("carrusel");
       }
+    });
+  });
+
+  describe("5. Decisiones Jack N3a — Estilo Fijo, Textos y Selector", () => {
+    const makeStoreWithStyle = (
+      model: string,
+      typography = "sans",
+      cardStyle = "standard",
+      extra: Partial<Store> = {}
+    ): Store =>
+      ({
+        id: "store-test-n3a",
+        name: "Tienda Moda & Gourmet",
+        slug: "tienda-n3a",
+        model,
+        niche: "general",
+        plan: "pro",
+        catalogTypography: typography,
+        cardStyle: cardStyle,
+        bannerImage: "https://storage.example.com/banner-n3a.webp",
+        bannerTitle: "Colección Exclusiva 2026",
+        bannerTagline: "Piezas Limitadas",
+        bannerBottomTag: "Edición Limitada",
+        categories: [{ id: "cat-1", name: "Cat Principal" } as Category],
+        products: [
+          {
+            id: "prod-1",
+            name: "Producto 1",
+            price: 50,
+            categoryId: "cat-1",
+            image: "https://storage.example.com/prod1.webp",
+            visible: true,
+          } as Product,
+        ],
+        ...extra,
+      } as unknown as Store);
+
+    it("el estilo fijo en PublicCatalog ignora los valores guardados de catalogTypography y cardStyle", () => {
+      // Lookbook: fijado a serif y flat
+      const lookbookStore = makeStoreWithStyle("lookbook", "sans", "curved");
+      const lookbookHtml = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: lookbookStore, isMockup: true, mode: "catalog" })
+      );
+      expect(lookbookHtml.includes("typography-serif")).toBe(true);
+      expect(lookbookHtml.includes("typography-sans")).toBe(false);
+
+      // Bite: fijado a sans y standard
+      const biteStore = makeStoreWithStyle("bite", "serif", "curved");
+      const biteHtml = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: biteStore, isMockup: true, mode: "catalog" })
+      );
+      expect(biteHtml.includes("typography-sans")).toBe(true);
+
+      // Nature con catalogTypography default 'sans': se fuerza a su estilo fijo 'serif'
+      const natureSansStore = makeStoreWithStyle("nature", "sans", "standard");
+      const natureSansHtml = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: natureSansStore, isMockup: true, mode: "catalog" })
+      );
+      expect(natureSansHtml.includes("typography-serif")).toBe(true);
+    });
+
+    it("excepción temporal jhoselynperu: si catalogTypography guardado es distinto de 'sans', se respeta", () => {
+      // Tienda jhoselynperu eligió 'modern' a propósito
+      const jhoselynStore = makeStoreWithStyle("nature", "modern", "curved", {
+        slug: "jhoselynperu",
+        name: "Jhoselyn Joyería",
+      });
+      const html = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: jhoselynStore, isMockup: true, mode: "catalog" })
+      );
+      // Debe conservar modern y no cambiar a serif
+      expect(html.includes("typography-modern")).toBe(true);
+      expect(html.includes("typography-serif")).toBe(false);
+    });
+
+    it("sin textos inventados en Nature ni Lookbook cuando los campos están vacíos", () => {
+      const emptyNatureStore = makeStoreWithStyle("nature", "sans", "standard", {
+        bannerTitle: undefined,
+        bannerTagline: undefined,
+        bannerBottomTag: undefined,
+        name: "Aura Botanicals",
+      });
+      const natureHtml = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: emptyNatureStore, isMockup: true, mode: "catalog" })
+      );
+      // No debe contener textos inventados
+      expect(natureHtml.includes("Abraza la pureza de la naturaleza")).toBe(false);
+      expect(natureHtml.includes("Cosmética Natural & Cuidado Orgánico")).toBe(false);
+      expect(natureHtml.includes("Hecho con Amor")).toBe(false);
+      // Debe usar el nombre propio de la tienda
+      expect(natureHtml.includes("Aura Botanicals")).toBe(true);
+
+      const emptyLookbookStore = makeStoreWithStyle("lookbook", "serif", "flat", {
+        bannerTitle: undefined,
+        bannerTagline: undefined,
+        bannerBottomTag: undefined,
+        name: "Florería Demo",
+      });
+      const lookbookHtml = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: emptyLookbookStore, isMockup: true, mode: "catalog" })
+      );
+      expect(lookbookHtml.includes("COLECCIÓN EXCLUSIVA")).toBe(false);
+      expect(lookbookHtml.includes("Piezas exclusivas seleccionadas con un diseño atemporal.")).toBe(false);
+      expect(lookbookHtml.includes("Florería Demo")).toBe(true);
+    });
+
+    it("Bloom Estándar pinta solo su título sobre el banner", () => {
+      const bloomGeneralStore = makeStoreWithStyle("bloom_general", "sans", "standard", {
+        bannerTitle: "Distribuidores autorizados de Crocs 🐊",
+        bannerTagline: "TAGLINE_IGNORADO",
+        bannerBottomTag: "ETIQUETA_IGNORADA",
+      });
+      const html = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: bloomGeneralStore, isMockup: true, mode: "catalog" })
+      );
+      expect(html.includes("Distribuidores autorizados de Crocs 🐊")).toBe(true);
+      expect(html.includes("TAGLINE_IGNORADO")).toBe(false);
+      expect(html.includes("ETIQUETA_IGNORADA")).toBe(false);
+    });
+
+    it("Bloom Floral pinta título, subtítulo y etiqueta si están presentes", () => {
+      const bloomFloralStore = makeStoreWithStyle("bloom_floral", "serif", "curved", {
+        bannerTitle: "Flores Frescas Cada Día",
+        bannerTagline: "Envío express a Lima",
+        bannerBottomTag: "100% Garantía de frescura",
+      });
+      const html = renderToStaticMarkup(
+        React.createElement(PublicCatalog, { store: bloomFloralStore, isMockup: true, mode: "catalog" })
+      );
+      expect(html.includes("Flores Frescas Cada Día")).toBe(true);
+      expect(html.includes("Envío express a Lima")).toBe(true);
+      expect(html.includes("100% Garantía de frescura")).toBe(true);
+    });
+
+    it("el catálogo ALL_MODELS de registro ofrece exactamente los 7 diseños oficiales con enSelector: true", () => {
+      expect(ALL_MODELS).toHaveLength(7);
+      const expectedIds = ["grid", "overlay", "arch", "nature", "lookbook", "bloom_general", "bite"];
+      const actualIds = ALL_MODELS.map((m) => m.id);
+      expect(actualIds.sort()).toEqual(expectedIds.sort());
+
+      // Todos los modelos en ALL_MODELS deben tener enSelector=true en DESIGN_SPECS
+      for (const model of ALL_MODELS) {
+        const spec = DESIGN_SPECS[model.id as OfficialDesignId];
+        expect(spec.enSelector).toBe(true);
+      }
+    });
+
+    it("el selector de admin.diseno muestra 7 estructuras si la tienda usa oficial, o 8 si usa oculta", () => {
+      // Tienda con diseño oficial activo
+      const officialModel = "nature";
+      const officialStructId = resolveStructureId(officialModel);
+      const visibleOfficial = DESIGN_STRUCTURES.filter(
+        (s) => s.spec.enSelector || s.id === officialStructId
+      );
+      expect(visibleOfficial).toHaveLength(7);
+
+      // Tienda con diseño legado/oculto (ej: tiles)
+      const hiddenModel = "tiles";
+      const hiddenStructId = resolveStructureId(hiddenModel);
+      const visibleHidden = DESIGN_STRUCTURES.filter(
+        (s) => s.spec.enSelector || s.id === hiddenStructId
+      );
+      expect(visibleHidden).toHaveLength(8);
+      const hiddenItem = visibleHidden.find((s) => s.id === "tiles");
+      expect(hiddenItem).toBeDefined();
+      expect(hiddenItem?.spec.enSelector).toBe(false);
     });
   });
 });

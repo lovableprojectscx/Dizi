@@ -63,6 +63,15 @@ export type EditableThemeField =
   | "oscuro";
 
 /**
+ * Configuración de estilo visual fijo para plantillas con diseño inmutable.
+ */
+export interface FixedDesignStyle {
+  tipografia: "sans" | "serif" | "rounded" | "modern";
+  tarjeta: "standard" | "flat" | "shadow" | "curved";
+  corteBanner: "direct" | "framed" | "curved";
+}
+
+/**
  * Ficha técnica única de especificación de diseño DIZI (DesignSpec).
  * Única fuente de verdad para panel, catálogo, documentación y pruebas automáticas.
  */
@@ -93,6 +102,8 @@ export interface DesignSpec {
   rubroSugerido: string;
   /** Si está activo en el selector del panel */
   enSelector: boolean;
+  /** Estilo inmutable fijado por diseño (Paso 1 N3a: tipografía, tarjeta y corte) */
+  estiloFijo?: FixedDesignStyle;
 }
 
 /**
@@ -143,7 +154,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: false,
     rubroSugerido: "Bienestar / Ecológico",
-    enSelector: true,
+    enSelector: false,
   },
   spotlight: {
     id: "spotlight",
@@ -158,7 +169,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: false,
     rubroSugerido: "Joyería / Boutique",
-    enSelector: true,
+    enSelector: false,
   },
   editorial: {
     id: "editorial",
@@ -173,7 +184,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: false,
     rubroSugerido: "Corporativo / Marcas Premium",
-    enSelector: true,
+    enSelector: false,
   },
   tiles: {
     id: "tiles",
@@ -188,7 +199,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: true,
     rubroSugerido: "Tecnología / Accesorios",
-    enSelector: true,
+    enSelector: false,
   },
   magazine: {
     id: "magazine",
@@ -203,7 +214,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: true,
     rubroSugerido: "Noche / Tendencias",
-    enSelector: true,
+    enSelector: false,
   },
   diagonal: {
     id: "diagonal",
@@ -218,7 +229,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: true,
     rubroSugerido: "Deportes / Juventud",
-    enSelector: true,
+    enSelector: false,
   },
   arch: {
     id: "arch",
@@ -248,14 +259,14 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores", "tipografia", "oscuro"],
     oscuroDeFabrica: false,
     rubroSugerido: "Promociones / Marcas con Banner",
-    enSelector: true,
+    enSelector: false,
   },
   bloom_general: {
     id: "bloom_general",
     nombre: "Bloom Estándar Premium",
     familia: "premium",
     portada: "carrusel",
-    textosPortada: [],
+    textosPortada: ["titulo"],
     textosDeEjemplo: false,
     corteBanner: true,
     destacados: true,
@@ -270,15 +281,20 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     nombre: "Bloom Floral",
     familia: "premium",
     portada: "carrusel",
-    textosPortada: [],
+    textosPortada: ["titulo", "subtitulo", "etiqueta"],
     textosDeEjemplo: false,
     corteBanner: true,
     destacados: true,
     iconosCategoria: true,
-    temaEditable: ["colores", "tipografia", "tarjeta", "oscuro"],
+    temaEditable: ["colores"],
     oscuroDeFabrica: false,
     rubroSugerido: "Florería / Regalos",
-    enSelector: true,
+    enSelector: false,
+    estiloFijo: {
+      tipografia: "serif",
+      tarjeta: "curved",
+      corteBanner: "curved",
+    },
   },
   bite: {
     id: "bite",
@@ -290,10 +306,15 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     corteBanner: false,
     destacados: true,
     iconosCategoria: true,
-    temaEditable: ["colores", "tipografia", "oscuro"],
+    temaEditable: ["colores"],
     oscuroDeFabrica: true,
     rubroSugerido: "Gastronomía / Restobar",
     enSelector: true,
+    estiloFijo: {
+      tipografia: "sans",
+      tarjeta: "standard",
+      corteBanner: "framed",
+    },
   },
   nature: {
     id: "nature",
@@ -301,14 +322,19 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     familia: "premium",
     portada: "carrusel",
     textosPortada: ["titulo", "subtitulo", "etiqueta"],
-    textosDeEjemplo: true,
+    textosDeEjemplo: false,
     corteBanner: false,
     destacados: true,
     iconosCategoria: true,
-    temaEditable: ["colores", "tipografia", "oscuro"],
+    temaEditable: ["colores"],
     oscuroDeFabrica: false,
     rubroSugerido: "Salud / Orgánico",
     enSelector: true,
+    estiloFijo: {
+      tipografia: "serif",
+      tarjeta: "curved",
+      corteBanner: "curved",
+    },
   },
   lookbook: {
     id: "lookbook",
@@ -316,14 +342,19 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     familia: "premium",
     portada: "carrusel",
     textosPortada: ["titulo", "subtitulo", "etiqueta"],
-    textosDeEjemplo: true,
+    textosDeEjemplo: false,
     corteBanner: false,
     destacados: false,
     iconosCategoria: false,
-    temaEditable: ["colores", "tipografia", "oscuro"],
+    temaEditable: ["colores"],
     oscuroDeFabrica: false,
     rubroSugerido: "Moda / Colecciones",
     enSelector: true,
+    estiloFijo: {
+      tipografia: "serif",
+      tarjeta: "flat",
+      corteBanner: "direct",
+    },
   },
 };
 
@@ -645,7 +676,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       borderRadius: "16px",
       imgShape: "rounded",
       isDark: true,
-      typography: "modern",
+      typography: "sans",
       cardStyle: "standard",
     },
     spec: DESIGN_SPECS.bite,
@@ -669,7 +700,7 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
       imgShape: "rounded",
       isDark: false,
       typography: "serif",
-      cardStyle: "standard",
+      cardStyle: "curved",
     },
     spec: DESIGN_SPECS.nature,
     supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "featured", "dualButton", "analytics"],
@@ -885,155 +916,70 @@ export const PALETTE_PRESETS_BY_MODEL: Record<
 
 /**
  * Catálogo de modelos ofrecidos en el registro (/register).
- * Modelos con IDs oficiales y variantes de paleta.
+ * Exclusivamente los 7 diseños oficiales activos (N3a - Decisión de Jack).
  */
 export const ALL_MODELS = [
-  // Semilla (0)
   {
     id: "grid",
     layout: "grid",
-    name: "Minimalista",
+    name: "Grilla Simétrica",
     desc: "Rejilla limpia 2 columnas. Moderno y atemporal.",
     planLevel: 0,
-    niches: ["general", "ropa", "bisuteria", "floreria"],
+    niches: ["general", "ropa", "bisuteria", "floreria", "tech", "servicios"],
     p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false },
-  },
-  {
-    id: "clasico",
-    layout: "grid",
-    name: "Clásico Cálido",
-    desc: "Tipografía serif y tonos terrosos. Artesanías.",
-    planLevel: 0,
-    niches: ["general", "servicios", "comida", "floreria"],
-    p: { bg: "#fdfaf5", card: "#fef9ef", accent: "#92400e", dark: false },
   },
   {
     id: "overlay",
     layout: "overlay",
-    name: "Vibrante",
-    desc: "Cards portrait con texto sobre gradiente. Instagram.",
+    name: "Overlay Visual",
+    desc: "Cards portrait con texto sobre gradiente. Estilo dinámico.",
     planLevel: 0,
-    niches: ["comida", "ropa", "general"],
+    niches: ["ropa", "comida", "general", "bisuteria"],
     p: { bg: "#fff7ed", card: "#ffffff", accent: "#ea580c", dark: false },
-  },
-  {
-    id: "hero",
-    layout: "hero",
-    name: "Eco Hero",
-    desc: "Banner hero panorámico + galería circular.",
-    planLevel: 0,
-    niches: ["servicios", "general", "floreria"],
-    p: { bg: "#f0fdf4", card: "#ffffff", accent: "#16a34a", dark: false },
-  },
-  // Emprendedor (1)
-  {
-    id: "nature_mint",
-    layout: "grid",
-    name: "Nature Mint",
-    desc: "Verde teal fresco. Salud, bienestar y cafés.",
-    planLevel: 1,
-    niches: ["servicios", "general", "floreria"],
-    p: { bg: "#f0fefb", card: "#ffffff", accent: "#0d9488", dark: false },
-  },
-  // Pro (2)
-  {
-    id: "nocturno",
-    layout: "overlay",
-    name: "Nocturno",
-    desc: "Dark mode de alto impacto con overlay oscuro.",
-    planLevel: 2,
-    niches: ["tech", "ropa"],
-    p: { bg: "#0f172a", card: "#1e293b", accent: "#818cf8", dark: true },
-  },
-  {
-    id: "banner_grid",
-    layout: "hero",
-    name: "Elite ✦",
-    desc: "Banner cinematográfico. Identidad visual fuerte.",
-    planLevel: 2,
-    niches: ["general", "ropa", "tech"],
-    p: { bg: "#ffffff", card: "#ffffff", accent: "#1e1e1e", dark: false },
-  },
-  {
-    id: "spotlight",
-    layout: "spotlight",
-    name: "Boutique",
-    desc: "1 producto estrella grande + 2 apilados. Farfetch.",
-    planLevel: 2,
-    niches: ["ropa", "bisuteria"],
-    p: { bg: "#faf9f7", card: "#f5efe8", accent: "#9333ea", dark: false },
-  },
-  {
-    id: "editorial",
-    layout: "editorial",
-    name: "Corporativo Azul",
-    desc: "Lista horizontal profesional. Servicios.",
-    planLevel: 2,
-    niches: ["servicios"],
-    p: { bg: "#eff6ff", card: "#ffffff", accent: "#1d4ed8", dark: false },
-  },
-  {
-    id: "tiles",
-    layout: "tiles",
-    name: "Aurora Glass",
-    desc: "Tiles glassmorphism con degradado cósmico.",
-    planLevel: 2,
-    niches: ["tech", "bisuteria"],
-    p: { bg: "#0d0d1a", card: "#1a1040", accent: "#a855f7", dark: true },
-  },
-  // Ilimitado (3)
-  {
-    id: "magazine",
-    layout: "magazine",
-    name: "Dark Fashion",
-    desc: "Revista editorial oscura. Banners full-width.",
-    planLevel: 3,
-    niches: ["ropa"],
-    p: { bg: "#111111", card: "#1c1c1c", accent: "#f5f5f5", dark: true },
-  },
-  {
-    id: "diagonal",
-    layout: "diagonal",
-    name: "Slash Diagonal",
-    desc: "Cortes diagonales de alto impacto. Estilo Nike.",
-    planLevel: 3,
-    niches: ["ropa", "tech"],
-    p: { bg: "#0d1117", card: "#1c2128", accent: "#faec45", dark: true },
   },
   {
     id: "arch",
     layout: "arch",
     name: "Arch Studio",
     desc: "Marcos en arco. Tipografía ligera y elegante.",
-    planLevel: 3,
-    niches: ["servicios", "general", "floreria"],
+    planLevel: 0,
+    niches: ["servicios", "general", "floreria", "bisuteria"],
     p: { bg: "#faf9f6", card: "#f4f2ed", accent: "#9c6b4e", dark: false },
   },
   {
-    id: "portada",
-    layout: "banner_grid",
-    name: "Portada con Banner",
-    desc: "Banner personalizable + catálogo en grid 2 columnas.",
-    planLevel: 3,
-    niches: ["general", "floreria", "comida"],
-    p: { bg: "#ffffff", card: "#f8fafc", accent: "#FF823A", dark: false },
+    id: "nature",
+    layout: "nature",
+    name: "Nature Orgánico",
+    desc: "Cálido y orgánico con portada carrusel y tarjetas cápsula.",
+    planLevel: 0,
+    niches: ["servicios", "general", "floreria", "comida"],
+    p: { bg: "#fafaf7", card: "#ffffff", accent: "#16a34a", dark: false },
   },
   {
-    id: "sunset_glow",
-    layout: "overlay",
-    name: "Sunset Glow",
-    desc: "Degradado atardecer con cards portrait flotantes.",
-    planLevel: 3,
-    niches: ["ropa", "bisuteria", "floreria"],
-    p: { bg: "#1a0a2e", card: "#2d1040", accent: "#fb923c", dark: true },
+    id: "lookbook",
+    layout: "lookbook",
+    name: "Lookbook Moda",
+    desc: "Editorial de alta costura con portada, tipografía serif y tarjetas planas.",
+    planLevel: 0,
+    niches: ["ropa", "bisuteria", "general"],
+    p: { bg: "#09090b", card: "#18181b", accent: "#ffffff", dark: true },
   },
   {
-    id: "forest_deep",
-    layout: "grid",
-    name: "Forest Deep",
-    desc: "Bosque oscuro. Fotográfico y orgánico.",
-    planLevel: 3,
-    niches: ["servicios", "general"],
-    p: { bg: "#0d1f0f", card: "#1a2e1c", accent: "#4ade80", dark: true },
+    id: "bloom_general",
+    layout: "bloom_general",
+    name: "Bloom Estándar",
+    desc: "Multipropósito flexible con carrusel de portada, título y destacados.",
+    planLevel: 0,
+    niches: ["general", "comida", "ropa", "tech", "servicios", "floreria", "bisuteria"],
+    p: { bg: "#ffffff", card: "#f8fafc", accent: "#4f46e5", dark: false },
+  },
+  {
+    id: "bite",
+    layout: "bite",
+    name: "Bite Gastronómico",
+    desc: "Especial para restaurantes y bares. Fondo oscuro de fábrica.",
+    planLevel: 0,
+    niches: ["comida", "servicios", "general"],
+    p: { bg: "#0c0a09", card: "#1c1917", accent: "#f97316", dark: true },
   },
 ];
