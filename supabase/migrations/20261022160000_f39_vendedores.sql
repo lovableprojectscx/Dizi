@@ -12,9 +12,12 @@
 --      mediante jsonb_array_elements(...) WITH ORDINALITY.
 -- ==============================================================================
 
--- 1. Añadir columna sellers
+-- 1. Añadir columnas sellers y main_seller_name
 ALTER TABLE public.stores
   ADD COLUMN IF NOT EXISTS sellers jsonb NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE public.stores
+  ADD COLUMN IF NOT EXISTS main_seller_name text;
 
 -- 2. Función y Trigger de Validación en el Servidor
 CREATE OR REPLACE FUNCTION public.validate_store_sellers()
@@ -36,7 +39,14 @@ DECLARE
   effective_plan text;
   max_sellers int;
 BEGIN
-  -- Solo validar cuando se inserte o cuando sellers cambie de valor
+  -- Validar main_seller_name si viene provisto (opcional, 1 a 40 caracteres)
+  IF NEW.main_seller_name IS NOT NULL THEN
+    IF length(trim(NEW.main_seller_name)) < 1 OR length(NEW.main_seller_name) > 40 THEN
+      RAISE EXCEPTION 'El nombre del vendedor principal debe tener entre 1 y 40 caracteres.' USING ERRCODE = '22023';
+    END IF;
+  END IF;
+
+  -- Solo validar sellers cuando se inserte o cuando sellers cambie de valor
   IF TG_OP = 'UPDATE' AND (NEW.sellers IS NOT DISTINCT FROM OLD.sellers) THEN
     RETURN NEW;
   END IF;
@@ -133,7 +143,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_validate_store_sellers ON public.stores;
 CREATE TRIGGER trg_validate_store_sellers
-BEFORE INSERT OR UPDATE OF sellers ON public.stores
+BEFORE INSERT OR UPDATE OF sellers, main_seller_name ON public.stores
 FOR EACH ROW
 EXECUTE FUNCTION public.validate_store_sellers();
 
@@ -214,6 +224,7 @@ BEGIN
     'id', store_row.id,
     'slug', store_row.slug,
     'name', store_row.name,
+    'main_seller_name', store_row.main_seller_name,
     'phone', store_row.phone,
     'country_code', store_row.country_code,
     'country_iso', COALESCE(store_row.country_iso, 'PE'),
@@ -349,4 +360,5 @@ GRANT EXECUTE ON FUNCTION public.get_public_store(text, integer, integer) TO ano
 -- DROP TRIGGER IF EXISTS trg_validate_store_sellers ON public.stores;
 -- DROP FUNCTION IF EXISTS public.validate_store_sellers();
 -- ALTER TABLE public.stores DROP COLUMN IF EXISTS sellers;
+-- ALTER TABLE public.stores DROP COLUMN IF EXISTS main_seller_name;
 -- (Recrear get_public_store sin el bloque 'sellers')

@@ -640,9 +640,10 @@ export async function generateCatalogPdf(
   doc.setTextColor(t.text);
 
   const extraActiveSellers = (store.sellers || []).filter((s) => s.active && s.phone);
+  const mainSellerDisplayName = store.mainSellerName?.trim() || store.name;
   const sellerPhoneLines: string[] = extraActiveSellers.length > 0
     ? [
-        `${store.name}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
+        `${mainSellerDisplayName}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
         ...extraActiveSellers.map((s) => `${s.name}: ${formatPhoneDisplay(s.phone, s.countryIso || store.countryIso)}`),
       ]
     : store.phone
@@ -978,8 +979,9 @@ export async function generateCatalogPdf(
   doc.text("Envianos un mensaje por WhatsApp", PAGE_W / 2, PAGE_H / 2, { align: "center" });
 
   if (extraActiveSellers.length > 0) {
+    const mainSellerDisplayName = store.mainSellerName?.trim() || store.name;
     const allBackSellers = [
-      `${store.name}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
+      `${mainSellerDisplayName}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
       ...extraActiveSellers.map((s) => `${s.name}: ${formatPhoneDisplay(s.phone, s.countryIso || store.countryIso)}`),
     ];
     doc.setFontSize(11);

@@ -372,6 +372,8 @@ export interface Store {
   promoBarIsMarquee?: boolean;
   /** Muestra u oculta la sección de productos destacados/ofertas en los diseños compatibles */
   showFeatured?: boolean;
+  /** Nombre personalizado opcional para el vendedor principal (por defecto el nombre de la tienda) */
+  mainSellerName?: string | null;
   /** Lista de vendedores secundarios registrados en la tienda (F39) */
   sellers?: Seller[];
   /** Categorías pertenecientes a la tienda */

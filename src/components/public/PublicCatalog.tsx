@@ -1349,7 +1349,7 @@ export function PublicCatalog({
   const activeSellers: SellerOption[] = useMemo(() => {
     const mainOption: SellerOption = {
       id: "main",
-      name: store.name,
+      name: store.mainSellerName?.trim() || store.name,
       phone: store.phone,
       countryIso: store.countryIso,
       isMain: true,
@@ -1364,7 +1364,7 @@ export function PublicCatalog({
         isMain: false,
       }));
     return extras.length > 0 ? [mainOption, ...extras] : [];
-  }, [store.name, store.phone, store.countryIso, store.sellers]);
+  }, [store.name, store.mainSellerName, store.phone, store.countryIso, store.sellers]);
 
   const hasMultipleSellers = activeSellers.length > 1;
 
@@ -2379,11 +2379,17 @@ export function PublicCatalog({
       total > 0
         ? `${formatPrice(total)}${hasQuoteItems ? " + artículos a cotizar" : ""}`
         : "A consultar";
-    const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
     incClicks(store.id);
 
-    const signedMsg = appendDiziSignature(msg);
-    openWhatsAppAction(signedMsg, true);
+    if (hasMultipleSellers) {
+      const orderBody = `quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const signedMsg = appendDiziSignature(orderBody);
+      openWhatsAppAction(signedMsg, true);
+    } else {
+      const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const signedMsg = appendDiziSignature(msg);
+      openWhatsAppAction(signedMsg, true);
+    }
   };
 
   const consultProduct = (name: string, id?: string) => {
@@ -2406,10 +2412,14 @@ export function PublicCatalog({
 
   const supportClick = () => {
     incClicks(store.id);
-    const msg = `Hola ${store.name}, tengo una consulta.`;
-    const signedMsg = appendDiziSignature(msg);
-
-    openWhatsAppAction(signedMsg, false);
+    if (hasMultipleSellers) {
+      const signedMsg = appendDiziSignature("tengo una consulta.");
+      openWhatsAppAction(signedMsg, false);
+    } else {
+      const msg = `Hola ${store.name}, tengo una consulta.`;
+      const signedMsg = appendDiziSignature(msg);
+      openWhatsAppAction(signedMsg, false);
+    }
   };
 
   /* Compartir Enlace Directo del Producto (Web Share API + Copiar al Portapapeles) */
@@ -9191,7 +9201,7 @@ export function PublicCatalog({
                 className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <WhatsAppIcon className="h-4 w-4" />
-                Intentar continuar
+                {pendingOrderSeller?.name ? `Escribir a ${pendingOrderSeller.name}` : "Intentar continuar"}
               </button>
             </div>
           </div>

@@ -75,6 +75,7 @@ function ConfigPage() {
   const [showDiziBranding, setShowDiziBranding] = useState(
     store?.showDiziBranding ?? (store ? getEffectivePlan(store) === "semilla" : false)
   );
+  const [mainSellerName, setMainSellerName] = useState(store?.mainSellerName || "");
   const [sellers, setSellers] = useState<Seller[]>(store?.sellers || []);
 
   const [copiedCatalog, setCopiedCatalog] = useState(false);
@@ -100,6 +101,7 @@ function ConfigPage() {
       setShowDiziBranding(
         store.showDiziBranding ?? (getEffectivePlan(store) === "semilla")
       );
+      setMainSellerName(store.mainSellerName || "");
       setSellers(store.sellers || []);
       setLoadedStoreId(store.id);
     }
@@ -197,6 +199,11 @@ function ConfigPage() {
       return;
     }
 
+    if (mainSellerName.trim().length > 40) {
+      toast.error("El nombre del vendedor principal no puede exceder 40 caracteres");
+      return;
+    }
+
     for (const s of sellers) {
       if (!s.name.trim()) {
         toast.error("Cada vendedor debe tener un nombre");
@@ -228,6 +235,7 @@ function ConfigPage() {
         empresaRazonSocial: empresaRazonSocial.trim() || undefined,
         empresaDireccion: empresaDireccion.trim() || undefined,
         showDiziBranding: showDiziBranding,
+        mainSellerName: mainSellerName.trim() || undefined,
         sellers: sellers.map((s) => ({
           id: s.id,
           name: s.name.trim(),
@@ -687,11 +695,11 @@ function ConfigPage() {
           </div>
 
           {/* Vendedor Principal */}
-          <div className="p-3.5 rounded-xl border border-border/50 bg-muted/20 space-y-1.5">
+          <div className="p-4 rounded-xl border border-border/50 bg-muted/20 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-foreground">
-                  {name || store.name || "Tienda"}
+                  {mainSellerName.trim() || name || store.name || "Tienda"}
                 </span>
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-bold">
                   Principal
@@ -701,9 +709,22 @@ function ConfigPage() {
                 +{countryCode} {phone}
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Utiliza el número principal configurado en Información General.
-            </p>
+            <div className="space-y-1.5 pt-1">
+              <Label htmlFor="main-seller-name" className="text-xs font-semibold text-foreground">
+                Nombre del vendedor principal
+              </Label>
+              <Input
+                id="main-seller-name"
+                value={mainSellerName}
+                onChange={(e) => setMainSellerName(e.target.value.slice(0, 40))}
+                placeholder={name || store.name || "Nombre del vendedor"}
+                className="h-9 text-xs max-w-sm bg-card"
+                maxLength={40}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Por defecto, se usa el nombre de la tienda ({name || store.name || "Tienda"}).
+              </p>
+            </div>
           </div>
 
           {/* Lista de vendedores extra */}

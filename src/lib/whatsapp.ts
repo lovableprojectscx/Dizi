@@ -14,9 +14,13 @@ export function buildWaUrl(phone: string, message?: string): string {
 }
 
 /**
- * Construye el mensaje personalizado para un vendedor específico (F39),
- * saludando por su nombre: "Hola ${nombre}, ..." y evitando duplicar "Hola".
- * @param sellerName Nombre del vendedor o tienda
+ * Construye el mensaje personalizado para un vendedor específico (F39).
+ * Saluda por el nombre: "Hola Dianis, ..."
+ *
+ * Regla: Solo quita "Hola" + puntuación opcional (",", "!", ":") y espacios siguientes.
+ * Nunca remueve palabras posteriores para no alterar nombres de tienda, pronombres ("me"), etc.
+ *
+ * @param sellerName Nombre del vendedor (ej: "Dianis")
  * @param message Mensaje base
  */
 export function buildSellerMessage(sellerName: string, message?: string): string {
@@ -27,22 +31,19 @@ export function buildSellerMessage(sellerName: string, message?: string): string
   const trimmed = message.trim();
   if (!cleanName) return trimmed;
 
-  // Si empieza con "Hola" (seguido opcionalmente de coma, exclamación, espacio o nombre anterior)
-  const holaRegex = /^hola(?:\s*[,!:]|\s+[A-Za-z0-9ÁÉÍÓÚáéíóúñÑ_.-]+[,!:]?)?\s*/i;
-  if (holaRegex.test(trimmed)) {
-    const rest = trimmed.replace(holaRegex, "").trim();
-    if (!rest) {
-      return `Hola ${cleanName}`;
-    }
-    const firstChar = rest.charAt(0);
-    const isUpper = firstChar === firstChar.toUpperCase() && firstChar !== firstChar.toLowerCase();
-    const formattedRest = isUpper ? firstChar.toLowerCase() + rest.slice(1) : rest;
-    return `Hola ${cleanName}, ${formattedRest}`;
+  // Solo quita "Hola" + puntuación opcional (",", "!", ":") y espacios siguientes
+  const holaRegex = /^hola\s*[,!:]?\s*/i;
+  const rest = holaRegex.test(trimmed)
+    ? trimmed.replace(holaRegex, "").trim()
+    : trimmed;
+
+  if (!rest) {
+    return `Hola ${cleanName}`;
   }
 
-  const firstChar = trimmed.charAt(0);
+  const firstChar = rest.charAt(0);
   const isUpper = firstChar === firstChar.toUpperCase() && firstChar !== firstChar.toLowerCase();
-  const formattedRest = isUpper ? firstChar.toLowerCase() + trimmed.slice(1) : trimmed;
+  const formattedRest = isUpper ? firstChar.toLowerCase() + rest.slice(1) : rest;
   return `Hola ${cleanName}, ${formattedRest}`;
 }
 
