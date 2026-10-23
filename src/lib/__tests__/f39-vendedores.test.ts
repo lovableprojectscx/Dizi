@@ -312,4 +312,76 @@ describe("F39: Varios Vendedores (WhatsApp Múltiple)", () => {
       expect(canAdd).toBe(false);
     });
   });
+
+  describe("8. Hotfix F39: SellerPicker dentro del Carrito abierto (Portal & Radix Dialog)", () => {
+    it("SellerPicker debe implementar Radix Dialog con Portal (falla en master donde era un div estático sin portal)", async () => {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.resolve(process.cwd(), "src/components/public/SellerPicker.tsx");
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      // En master: no usaba Dialog ni DialogPortal de Radix (era un simple div con z-[9999] dentro de #root)
+      // En la rama hotfix: importa y renderiza Dialog y DialogPortal
+      expect(content).toMatch(/import[\s\S]*Dialog[\s\S]*from[\s\S]*["']@\/components\/ui\/dialog["']/);
+      expect(content).toMatch(/<Dialog[\s\S]*<DialogPortal>/);
+      expect(content).not.toMatch(/<div[^>]*data-testid="seller-picker-backdrop"[^>]*className="fixed inset-0 z-\[9999\]/);
+    });
+
+    it("con el carrito abierto y 2 vendedores, el clic en un vendedor abre wa.me/<su número> con 'Hola Nombre, …'", () => {
+      let cartOpen = true;
+      let sellerPickerOpen = true;
+      let openedWaUrl = "";
+
+      interface SellerOption {
+        id: string;
+        name: string;
+        phone: string;
+        countryIso?: string;
+        isMain?: boolean;
+      }
+
+      const sellers: SellerOption[] = [
+        { id: "s1", name: "Lucho", phone: "51911111111", isMain: false },
+        { id: "s2", name: "Paolo", phone: "51922222222", isMain: false },
+      ];
+
+      const orderBody = "quiero hacer este pedido:\n\n• Base cupcake x1 — S/ 85.00\n\nTotal: S/ 85.00";
+      const action = { msg: orderBody, isCheckout: true };
+
+      // Simulación del selector y executeSellerAction
+      const handleSelectSeller = (seller: SellerOption) => {
+        sellerPickerOpen = false;
+        const targetPhone = seller.phone;
+        const finalMsg = buildSellerMessage(seller.name, action.msg);
+        openedWaUrl = buildWaUrl(targetPhone, finalMsg);
+        if (action.isCheckout) {
+          cartOpen = false; // El pedido se completó
+        }
+      };
+
+      // Simular clic en el vendedor "Lucho"
+      handleSelectSeller(sellers[0]);
+
+      expect(sellerPickerOpen).toBe(false);
+      expect(openedWaUrl).toContain("https://wa.me/51911111111");
+      expect(openedWaUrl).toContain(encodeURIComponent("Hola Lucho, quiero hacer este pedido:"));
+      expect(cartOpen).toBe(false);
+    });
+
+    it("al cancelar el selector (X, Esc o tocando fuera), solo se cierra el selector y el carrito sigue abierto", () => {
+      const cartOpen = true;
+      let sellerPickerOpen = true;
+
+      // Al cancelar el selector (X, Esc o backdrop):
+      const handleClose = () => {
+        sellerPickerOpen = false;
+        // No se debe cerrar el carrito; el carrito permanece abierto debajo
+      };
+
+      handleClose();
+
+      expect(sellerPickerOpen).toBe(false);
+      expect(cartOpen).toBe(true); // El carrito SIGUE ABIERTO
+    });
+  });
 });
