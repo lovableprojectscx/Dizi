@@ -168,6 +168,16 @@ export const mapStoreFromDB = (row: any): Store => {
     termsAcceptedAt: row.terms_accepted_at ?? null,
     requestedPlan: row.requested_plan ?? null,
     showFeatured: row.show_featured ?? true,
+    mainSellerName: row.main_seller_name ?? undefined,
+    sellers: Array.isArray(row.sellers)
+      ? row.sellers.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          phone: s.phone,
+          countryIso: s.country_iso ?? s.countryIso ?? "PE",
+          active: s.active ?? true,
+        }))
+      : [],
     categories: (row.categories || []).map((c: any) => ({ id: c.id, name: c.name })),
     products: (row.products || [])
       .map((p: any) => ({
@@ -682,6 +692,17 @@ export const useApp = create<AppState>()(
         if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
         if (updatedPatch.showFeatured !== undefined)
           dbPatch.show_featured = updatedPatch.showFeatured;
+        if (updatedPatch.mainSellerName !== undefined)
+          dbPatch.main_seller_name = updatedPatch.mainSellerName ? updatedPatch.mainSellerName.trim() : null;
+        if (updatedPatch.sellers !== undefined) {
+          dbPatch.sellers = updatedPatch.sellers.map((s) => ({
+            id: s.id,
+            name: s.name,
+            phone: s.phone,
+            country_iso: s.countryIso || (s as any).country_iso || "PE",
+            active: s.active ?? true,
+          }));
+        }
 
         try {
           if (Object.keys(dbPatch).length > 0) {

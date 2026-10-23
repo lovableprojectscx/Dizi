@@ -107,7 +107,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { useApp, useCart } from "@/lib/store";
-import { buildWaUrl, formatPrice } from "@/lib/whatsapp";
+import { buildWaUrl, formatPrice, buildSellerMessage } from "@/lib/whatsapp";
 import { toast } from "sonner";
 import type { Store, Product, ProductVariation } from "@/lib/types";
 import {
@@ -126,6 +126,7 @@ import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } fro
 import { PortadaEstandar } from "./PortadaEstandar";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
+import { SellerPicker, type SellerOption } from "./SellerPicker";
 import {
   cleanCategoryName,
   findCategoryByParam,
@@ -1337,6 +1338,103 @@ export function PublicCatalog({
     }
   });
 
+  /* ── Varios Vendedores (F39) ── */
+  const [sellerPickerOpen, setSellerPickerOpen] = useState(false);
+  const [sellerPickerAction, setSellerPickerAction] = useState<{
+    msg: string;
+    isCheckout?: boolean;
+  } | null>(null);
+  const [pendingOrderSeller, setPendingOrderSeller] = useState<SellerOption | null>(null);
+
+  const activeSellers: SellerOption[] = useMemo(() => {
+    const mainOption: SellerOption = {
+      id: "main",
+      name: store.mainSellerName?.trim() || store.name,
+      phone: store.phone,
+      countryIso: store.countryIso,
+      isMain: true,
+    };
+    const extras: SellerOption[] = (store.sellers || [])
+      .filter((s) => s.active && s.phone)
+      .map((s) => ({
+        id: s.id,
+        name: s.name,
+        phone: s.phone,
+        countryIso: s.countryIso,
+        isMain: false,
+      }));
+    return extras.length > 0 ? [mainOption, ...extras] : [];
+  }, [store.name, store.mainSellerName, store.phone, store.countryIso, store.sellers]);
+
+  const hasMultipleSellers = activeSellers.length > 1;
+
+  const executeSellerAction = (
+    seller: SellerOption,
+    action: { msg: string; isCheckout?: boolean },
+  ) => {
+    const targetPhone = seller.phone || store.phone;
+    const finalMsg = buildSellerMessage(seller.name, action.msg);
+
+    if (action.isCheckout) {
+      if (isInAppBrowser()) {
+        setPendingOrderMsg(finalMsg);
+        setPendingOrderSeller(seller);
+        setCartOpen(false);
+        setViewingProduct(null);
+        setShowInAppHelpModal(true);
+      } else {
+        const waUrl = buildWaUrl(targetPhone, finalMsg);
+        setSuccessOrderUrl(waUrl);
+        window.open(waUrl, "_blank");
+        cartClear(store.id);
+        setCartOpen(false);
+        setViewingProduct(null);
+        setShowSuccessModal(true);
+      }
+    } else {
+      if (isInAppBrowser()) {
+        setPendingOrderMsg(finalMsg);
+        setPendingOrderSeller(seller);
+        setShowInAppHelpModal(true);
+      } else {
+        window.open(buildWaUrl(targetPhone, finalMsg), "_blank");
+      }
+    }
+  };
+
+  const openWhatsAppAction = (msg: string, isCheckout?: boolean) => {
+    if (hasMultipleSellers) {
+      setSellerPickerAction({ msg, isCheckout });
+      setSellerPickerOpen(true);
+    } else {
+      if (isCheckout) {
+        if (isInAppBrowser()) {
+          setPendingOrderMsg(msg);
+          setPendingOrderSeller(null);
+          setCartOpen(false);
+          setViewingProduct(null);
+          setShowInAppHelpModal(true);
+        } else {
+          const waUrl = buildWaUrl(store.phone, msg);
+          setSuccessOrderUrl(waUrl);
+          window.open(waUrl, "_blank");
+          cartClear(store.id);
+          setCartOpen(false);
+          setViewingProduct(null);
+          setShowSuccessModal(true);
+        }
+      } else {
+        if (isInAppBrowser()) {
+          setPendingOrderMsg(msg);
+          setPendingOrderSeller(null);
+          setShowInAppHelpModal(true);
+        } else {
+          window.open(buildWaUrl(store.phone, msg), "_blank");
+        }
+      }
+    }
+  };
+
   const fallbackCopy = (text: string) => {
     const textArea = document.createElement("textarea");
     textArea.value = text;
@@ -2281,24 +2379,16 @@ export function PublicCatalog({
       total > 0
         ? `${formatPrice(total)}${hasQuoteItems ? " + artículos a cotizar" : ""}`
         : "A consultar";
-    const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
     incClicks(store.id);
 
-    const signedMsg = appendDiziSignature(msg);
-
-    if (isInAppBrowser()) {
-      setPendingOrderMsg(signedMsg);
-      setCartOpen(false);
-      setViewingProduct(null);
-      setShowInAppHelpModal(true);
+    if (hasMultipleSellers) {
+      const orderBody = `quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const signedMsg = appendDiziSignature(orderBody);
+      openWhatsAppAction(signedMsg, true);
     } else {
-      const waUrl = buildWaUrl(store.phone, signedMsg);
-      setSuccessOrderUrl(waUrl);
-      window.open(waUrl, "_blank");
-      cartClear(store.id);
-      setCartOpen(false);
-      setViewingProduct(null);
-      setShowSuccessModal(true);
+      const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const signedMsg = appendDiziSignature(msg);
+      openWhatsAppAction(signedMsg, true);
     }
   };
 
@@ -2310,12 +2400,7 @@ export function PublicCatalog({
     setCartOpen(false);
     setViewingProduct(null);
 
-    if (isInAppBrowser()) {
-      setPendingOrderMsg(signedMsg);
-      setShowInAppHelpModal(true);
-    } else {
-      window.open(buildWaUrl(store.phone, signedMsg), "_blank");
-    }
+    openWhatsAppAction(signedMsg, false);
   };
 
   const scrollToLocation = () => {
@@ -2327,14 +2412,13 @@ export function PublicCatalog({
 
   const supportClick = () => {
     incClicks(store.id);
-    const msg = `Hola ${store.name}, tengo una consulta.`;
-    const signedMsg = appendDiziSignature(msg);
-
-    if (isInAppBrowser()) {
-      setPendingOrderMsg(signedMsg);
-      setShowInAppHelpModal(true);
+    if (hasMultipleSellers) {
+      const signedMsg = appendDiziSignature("tengo una consulta.");
+      openWhatsAppAction(signedMsg, false);
     } else {
-      window.open(buildWaUrl(store.phone, signedMsg), "_blank");
+      const msg = `Hola ${store.name}, tengo una consulta.`;
+      const signedMsg = appendDiziSignature(msg);
+      openWhatsAppAction(signedMsg, false);
     }
   };
 
@@ -2731,9 +2815,17 @@ export function PublicCatalog({
           {waUrl && (
             <a
               href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => incClicks(store.id)}
+              target={hasMultipleSellers ? undefined : "_blank"}
+              rel={hasMultipleSellers ? undefined : "noopener noreferrer"}
+              onClick={(e) => {
+                if (hasMultipleSellers) {
+                  e.preventDefault();
+                  incClicks(store.id);
+                  openWhatsAppAction(waMsg, false);
+                } else {
+                  incClicks(store.id);
+                }
+              }}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
             >
               <WhatsAppIcon className="h-4 w-4" />
@@ -3271,7 +3363,13 @@ export function PublicCatalog({
                       d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z"
                     />
                   </svg>,
-                  () => incClicks(store.id),
+                  hasMultipleSellers
+                    ? (e) => {
+                        e.preventDefault();
+                        incClicks(store.id);
+                        openWhatsAppAction("Hola, me gustaría consultar sobre los productos.", false);
+                      }
+                    : () => incClicks(store.id),
                 )}
 
               {/* 2. NUESTRA UBICACIÓN (Si tiene coordenadas) */}
@@ -3657,9 +3755,17 @@ export function PublicCatalog({
                 {store.phone && (
                   <a
                     href={buildWaUrl(store.phone, `Hola, me gustaría consultar sobre los productos de ${store.name}.`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => incClicks(store.id)}
+                    target={hasMultipleSellers ? undefined : "_blank"}
+                    rel={hasMultipleSellers ? undefined : "noopener noreferrer"}
+                    onClick={(e) => {
+                      if (hasMultipleSellers) {
+                        e.preventDefault();
+                        incClicks(store.id);
+                        openWhatsAppAction(`Hola, me gustaría consultar sobre los productos de ${store.name}.`, false);
+                      } else {
+                        incClicks(store.id);
+                      }
+                    }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-white text-xs font-bold transition-all shadow"
                   >
                     <WhatsAppIcon className="h-4 w-4" />
@@ -9078,7 +9184,8 @@ export function PublicCatalog({
               </button>
               <button
                 onClick={() => {
-                  const waUrl = buildWaUrl(store.phone, pendingOrderMsg);
+                  const targetPhone = pendingOrderSeller?.phone || store.phone;
+                  const waUrl = buildWaUrl(targetPhone, pendingOrderMsg);
                   setSuccessOrderUrl(waUrl);
                   window.open(waUrl, "_blank");
                   setShowInAppHelpModal(false);
@@ -9094,7 +9201,7 @@ export function PublicCatalog({
                 className="flex-[1.5] h-12 rounded-2xl font-bold text-xs transition hover:opacity-90 flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <WhatsAppIcon className="h-4 w-4" />
-                Intentar continuar
+                {pendingOrderSeller?.name ? `Escribir a ${pendingOrderSeller.name}` : "Intentar continuar"}
               </button>
             </div>
           </div>
@@ -9224,6 +9331,23 @@ export function PublicCatalog({
         onClose={() => setZoomImage(null)}
         src={zoomImage?.src || ""}
         title={zoomImage?.title}
+      />
+
+      {/* ── Selector de Vendedores (F39) ───────────────────────────────── */}
+      <SellerPicker
+        open={sellerPickerOpen}
+        onClose={() => {
+          setSellerPickerOpen(false);
+          setSellerPickerAction(null);
+        }}
+        sellers={activeSellers}
+        onSelectSeller={(seller) => {
+          setSellerPickerOpen(false);
+          if (sellerPickerAction) {
+            executeSellerAction(seller, sellerPickerAction);
+            setSellerPickerAction(null);
+          }
+        }}
       />
     </div>
   );

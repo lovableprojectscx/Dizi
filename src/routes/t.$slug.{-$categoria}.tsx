@@ -261,6 +261,16 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       showFeatured: data.show_featured ?? true,
+      mainSellerName: data.main_seller_name ?? undefined,
+      sellers: Array.isArray(data.sellers)
+        ? data.sellers.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            phone: s.phone,
+            countryIso: s.country_iso ?? s.countryIso ?? "PE",
+            active: s.active ?? true,
+          }))
+        : [],
       totalProductsCount: data.total_products_count !== undefined ? Number(data.total_products_count) : (productsWithImages?.length || 0),
       categories: (data.categories || []).map((c: any) => ({
         id: c.id,
