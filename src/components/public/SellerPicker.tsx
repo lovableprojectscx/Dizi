@@ -62,7 +62,7 @@ export function SellerPicker({
             borderColor: "var(--border)",
             color: "var(--foreground)",
           }}
-          className="fixed z-50 inset-x-0 bottom-0 mx-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 border-t sm:border rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 focus:outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom sm:data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-bottom sm:data-[state=open]:zoom-in-95"
+          className="fixed z-50 inset-x-0 bottom-0 mx-auto sm:mx-0 sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 border-t sm:border rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 focus:outline-none duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-bottom sm:data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-bottom sm:data-[state=open]:zoom-in-95"
         >
           {/* Barra superior de arrastre en móvil */}
           <div className="w-12 h-1 bg-muted rounded-full mx-auto sm:hidden -mt-1 mb-2" />
