@@ -312,4 +312,19 @@ describe("F39: Varios Vendedores (WhatsApp Múltiple)", () => {
       expect(canAdd).toBe(false);
     });
   });
+
+  describe("8. Hotfix F39: SellerPicker dentro del Carrito abierto (Portal & Radix Dialog)", () => {
+    it("SellerPicker debe implementar Radix Dialog con Portal (falla en master donde era un div estático sin portal)", async () => {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.resolve(process.cwd(), "src/components/public/SellerPicker.tsx");
+      const content = fs.readFileSync(filePath, "utf-8");
+
+      // En master: no usaba Dialog ni DialogPortal de Radix (era un simple div con z-[9999] dentro de #root)
+      // En la rama hotfix: importa y renderiza Dialog y DialogPortal
+      expect(content).toMatch(/import[\s\S]*Dialog[\s\S]*from[\s\S]*["']@\/components\/ui\/dialog["']/);
+      expect(content).toMatch(/<Dialog[\s\S]*<DialogPortal>/);
+      expect(content).not.toMatch(/<div[^>]*data-testid="seller-picker-backdrop"[^>]*className="fixed inset-0 z-\[9999\]/);
+    });
+  });
 });
