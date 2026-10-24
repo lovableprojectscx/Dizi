@@ -26,6 +26,7 @@ import { Route as SuperPromocionesRouteImport } from './routes/super.promociones
 import { Route as SuperLoginRouteImport } from './routes/super.login'
 import { Route as SuperDashboardRouteImport } from './routes/super.dashboard'
 import { Route as BioSlugRouteImport } from './routes/bio.$slug'
+import { Route as AdminVendedoresRouteImport } from './routes/admin.vendedores'
 import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaciones'
 import { Route as AdminProductosRouteImport } from './routes/admin.productos'
 import { Route as AdminPlanRouteImport } from './routes/admin.plan'
@@ -122,6 +123,11 @@ const BioSlugRoute = BioSlugRouteImport.update({
   path: '/bio/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVendedoresRoute = AdminVendedoresRouteImport.update({
+  id: '/vendedores',
+  path: '/vendedores',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminReclamacionesRoute = AdminReclamacionesRouteImport.update({
   id: '/reclamaciones',
   path: '/reclamaciones',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
+  '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
+  '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
+  '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/login': typeof SuperLoginRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
+    | '/admin/vendedores'
     | '/bio/$slug'
     | '/super/dashboard'
     | '/super/login'
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
+    | '/admin/vendedores'
     | '/bio/$slug'
     | '/super/dashboard'
     | '/super/login'
@@ -337,6 +348,7 @@ export interface FileRouteTypes {
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
+    | '/admin/vendedores'
     | '/bio/$slug'
     | '/super/dashboard'
     | '/super/login'
@@ -483,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BioSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/vendedores': {
+      id: '/admin/vendedores'
+      path: '/vendedores'
+      fullPath: '/admin/vendedores'
+      preLoaderRoute: typeof AdminVendedoresRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/reclamaciones': {
       id: '/admin/reclamaciones'
       path: '/reclamaciones'
@@ -566,6 +585,7 @@ interface AdminRouteChildren {
   AdminPlanRoute: typeof AdminPlanRoute
   AdminProductosRoute: typeof AdminProductosRoute
   AdminReclamacionesRoute: typeof AdminReclamacionesRoute
+  AdminVendedoresRoute: typeof AdminVendedoresRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -579,6 +599,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPlanRoute: AdminPlanRoute,
   AdminProductosRoute: AdminProductosRoute,
   AdminReclamacionesRoute: AdminReclamacionesRoute,
+  AdminVendedoresRoute: AdminVendedoresRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 

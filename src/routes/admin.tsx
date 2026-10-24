@@ -34,7 +34,10 @@ import {
   ExternalLink,
   LifeBuoy,
   ChevronRight,
+  Users,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { getEffectivePlan } from "@/lib/types";
 import {
   Sheet,
   SheetContent,
@@ -95,6 +98,7 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isMoreActive =
     pathname === "/admin/diseno" ||
+    pathname === "/admin/vendedores" ||
     pathname === "/admin/plan" ||
     pathname === "/admin/reclamaciones" ||
     pathname.startsWith("/ayuda");
@@ -323,6 +327,30 @@ function AdminLayout() {
                     <div>
                       <p className="text-sm font-semibold text-foreground">Diseño del Catálogo</p>
                       <p className="text-xs text-muted-foreground">Estilos, temas visuales y plantillas</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
+                <Link
+                  to="/admin/vendedores"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-teal-100 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">Vendedores</p>
+                        {store && (getEffectivePlan(store) === "semilla" || getEffectivePlan(store) === "emprendedor") ? (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                            Disponible en Pro
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <p className="text-xs text-muted-foreground">WhatsApp múltiple y turnos de atención</p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />

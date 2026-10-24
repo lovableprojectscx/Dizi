@@ -31,7 +31,16 @@ import {
   Link2,
   Sparkles,
   LifeBuoy,
+  Users,
 } from "lucide-react";
+import { getEffectivePlan } from "@/lib/types";
+
+interface NavItem {
+  title: string;
+  url: string;
+  icon: any;
+  badge?: string;
+}
 
 /**
  * Componente de barra lateral interactiva del panel de administración.
@@ -41,18 +50,27 @@ export function AdminSidebar() {
   const storeId = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === storeId));
 
-  const section1 = [
+  const section1: NavItem[] = [
     { title: "Inicio", url: "/admin/dashboard", icon: Home },
     { title: "Productos", url: "/admin/productos", icon: Package },
   ];
 
-  const section2 = [
+  const section2: NavItem[] = [
     { title: "Link en Bio", url: "/admin/link-bio", icon: Link2 },
     { title: "Diseño", url: "/admin/diseno", icon: Palette },
   ];
 
-  const section3 = [
+  const effectivePlan = store ? getEffectivePlan(store) : "semilla";
+  const isPro = effectivePlan === "pro" || effectivePlan === "ilimitado";
+
+  const section3: NavItem[] = [
     { title: "Configuración", url: "/admin/configuracion", icon: Settings },
+    {
+      title: "Vendedores",
+      url: "/admin/vendedores",
+      icon: Users,
+      badge: !isPro ? "Pro" : undefined,
+    },
     ...(store?.libroReclamacionesActivo
       ? [{ title: "Reclamaciones", url: "/admin/reclamaciones", icon: ClipboardList }]
       : []),
@@ -82,9 +100,16 @@ export function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={it.url}>
                     <SidebarMenuButton asChild isActive={active}>
-                      <Link to={it.url} className="flex items-center gap-2">
-                        <it.icon className="h-4 w-4" />
-                        <span>{it.title}</span>
+                      <Link to={it.url} className="flex items-center justify-between gap-2 w-full">
+                        <div className="flex items-center gap-2">
+                          <it.icon className="h-4 w-4" />
+                          <span>{it.title}</span>
+                        </div>
+                        {it.badge && (
+                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 rounded border border-amber-200/60 group-data-[collapsible=icon]:hidden">
+                            {it.badge}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -106,9 +131,16 @@ export function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={it.url}>
                     <SidebarMenuButton asChild isActive={active}>
-                      <Link to={it.url} className="flex items-center gap-2">
-                        <it.icon className="h-4 w-4" />
-                        <span>{it.title}</span>
+                      <Link to={it.url} className="flex items-center justify-between gap-2 w-full">
+                        <div className="flex items-center gap-2">
+                          <it.icon className="h-4 w-4" />
+                          <span>{it.title}</span>
+                        </div>
+                        {it.badge && (
+                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 rounded border border-amber-200/60 group-data-[collapsible=icon]:hidden">
+                            {it.badge}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -130,9 +162,16 @@ export function AdminSidebar() {
                 return (
                   <SidebarMenuItem key={it.url}>
                     <SidebarMenuButton asChild isActive={active}>
-                      <Link to={it.url} className="flex items-center gap-2">
-                        <it.icon className="h-4 w-4" />
-                        <span>{it.title}</span>
+                      <Link to={it.url} className="flex items-center justify-between gap-2 w-full">
+                        <div className="flex items-center gap-2">
+                          <it.icon className="h-4 w-4" />
+                          <span>{it.title}</span>
+                        </div>
+                        {it.badge && (
+                          <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 rounded border border-amber-200/60 group-data-[collapsible=icon]:hidden">
+                            {it.badge}
+                          </span>
+                        )}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

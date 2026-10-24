@@ -126,7 +126,8 @@ import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } fro
 import { PortadaEstandar } from "./PortadaEstandar";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
-import { SellerPicker, type SellerOption } from "./SellerPicker";
+import { SellerPicker } from "./SellerPicker";
+import { resolveActiveSellers, type SellerOption } from "@/lib/sellers";
 import {
   cleanCategoryName,
   findCategoryByParam,
@@ -1346,25 +1347,10 @@ export function PublicCatalog({
   } | null>(null);
   const [pendingOrderSeller, setPendingOrderSeller] = useState<SellerOption | null>(null);
 
-  const activeSellers: SellerOption[] = useMemo(() => {
-    const mainOption: SellerOption = {
-      id: "main",
-      name: store.mainSellerName?.trim() || store.name,
-      phone: store.phone,
-      countryIso: store.countryIso,
-      isMain: true,
-    };
-    const extras: SellerOption[] = (store.sellers || [])
-      .filter((s) => s.active && s.phone)
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        phone: s.phone,
-        countryIso: s.countryIso,
-        isMain: false,
-      }));
-    return extras.length > 0 ? [mainOption, ...extras] : [];
-  }, [store.name, store.mainSellerName, store.phone, store.countryIso, store.sellers]);
+  const activeSellers: SellerOption[] = useMemo(
+    () => resolveActiveSellers(store),
+    [store.name, store.mainSellerName, store.mainSellerActive, store.phone, store.countryIso, store.sellers],
+  );
 
   const hasMultipleSellers = activeSellers.length > 1;
 
@@ -1407,15 +1393,20 @@ export function PublicCatalog({
       setSellerPickerAction({ msg, isCheckout });
       setSellerPickerOpen(true);
     } else {
+      const single = activeSellers.length === 1 ? activeSellers[0] : null;
+      const isSingleExtra = single && !single.isMain;
+      const targetPhone = (isSingleExtra && single.phone) ? single.phone : store.phone;
+      const finalMsg = msg;
+
       if (isCheckout) {
         if (isInAppBrowser()) {
-          setPendingOrderMsg(msg);
-          setPendingOrderSeller(null);
+          setPendingOrderMsg(finalMsg);
+          setPendingOrderSeller(single);
           setCartOpen(false);
           setViewingProduct(null);
           setShowInAppHelpModal(true);
         } else {
-          const waUrl = buildWaUrl(store.phone, msg);
+          const waUrl = buildWaUrl(targetPhone, finalMsg);
           setSuccessOrderUrl(waUrl);
           window.open(waUrl, "_blank");
           cartClear(store.id);
@@ -1425,11 +1416,11 @@ export function PublicCatalog({
         }
       } else {
         if (isInAppBrowser()) {
-          setPendingOrderMsg(msg);
-          setPendingOrderSeller(null);
+          setPendingOrderMsg(finalMsg);
+          setPendingOrderSeller(single);
           setShowInAppHelpModal(true);
         } else {
-          window.open(buildWaUrl(store.phone, msg), "_blank");
+          window.open(buildWaUrl(targetPhone, finalMsg), "_blank");
         }
       }
     }
@@ -2381,9 +2372,17 @@ export function PublicCatalog({
         : "A consultar";
     incClicks(store.id);
 
+    const single = activeSellers.length === 1 ? activeSellers[0] : null;
+    const isSingleExtra = single && !single.isMain;
+
     if (hasMultipleSellers) {
       const orderBody = `quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
       const signedMsg = appendDiziSignature(orderBody);
+      openWhatsAppAction(signedMsg, true);
+    } else if (isSingleExtra) {
+      const orderBody = `quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const msg = buildSellerMessage(single.name, orderBody);
+      const signedMsg = appendDiziSignature(msg);
       openWhatsAppAction(signedMsg, true);
     } else {
       const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
@@ -2394,7 +2393,17 @@ export function PublicCatalog({
 
   const consultProduct = (name: string, id?: string) => {
     incClicks(store.id);
-    const msg = `Hola, me interesa el producto: ${name}`;
+    const single = activeSellers.length === 1 ? activeSellers[0] : null;
+    const isSingleExtra = single && !single.isMain;
+
+    let msg: string;
+    if (hasMultipleSellers) {
+      msg = `me interesa el producto: ${name}`;
+    } else if (isSingleExtra) {
+      msg = buildSellerMessage(single.name, `me interesa el producto: ${name}`);
+    } else {
+      msg = `Hola, me interesa el producto: ${name}`;
+    }
     const signedMsg = appendDiziSignature(msg);
 
     setCartOpen(false);
@@ -2412,8 +2421,15 @@ export function PublicCatalog({
 
   const supportClick = () => {
     incClicks(store.id);
+    const single = activeSellers.length === 1 ? activeSellers[0] : null;
+    const isSingleExtra = single && !single.isMain;
+
     if (hasMultipleSellers) {
       const signedMsg = appendDiziSignature("tengo una consulta.");
+      openWhatsAppAction(signedMsg, false);
+    } else if (isSingleExtra) {
+      const msg = buildSellerMessage(single.name, "tengo una consulta.");
+      const signedMsg = appendDiziSignature(msg);
       openWhatsAppAction(signedMsg, false);
     } else {
       const msg = `Hola ${store.name}, tengo una consulta.`;
@@ -2774,10 +2790,16 @@ export function PublicCatalog({
   /* Vista Sin Resultados (Fase 4C - F37) */
   const renderNoResults = () => {
     const searchTerm = query.trim();
-    const waMsg = searchTerm
-      ? `Hola, busco: ${searchTerm}`
-      : `Hola, me gustaría consultar sobre los productos de ${store.name}`;
-    const waUrl = store.phone ? buildWaUrl(store.phone, waMsg) : null;
+    const single = activeSellers.length === 1 ? activeSellers[0] : null;
+    const isSingleExtra = single && !single.isMain;
+    const targetPhone = (isSingleExtra && single.phone) ? single.phone : store.phone;
+    const waBaseMsg = searchTerm
+      ? `busco: ${searchTerm}`
+      : `me gustaría consultar sobre los productos de ${store.name}`;
+    const waMsg = isSingleExtra
+      ? buildSellerMessage(single.name, waBaseMsg)
+      : (searchTerm ? `Hola, busco: ${searchTerm}` : `Hola, me gustaría consultar sobre los productos de ${store.name}`);
+    const waUrl = targetPhone ? buildWaUrl(targetPhone, waMsg) : null;
 
     const handleClearAll = () => {
       setQuery("");
@@ -2821,7 +2843,7 @@ export function PublicCatalog({
                 if (hasMultipleSellers) {
                   e.preventDefault();
                   incClicks(store.id);
-                  openWhatsAppAction(waMsg, false);
+                  openWhatsAppAction(waBaseMsg, false);
                 } else {
                   incClicks(store.id);
                 }
@@ -3346,31 +3368,39 @@ export function PublicCatalog({
             <div className="flex flex-col gap-2.5 pt-4 max-w-md mx-auto w-full px-2">
               {/* 1. PEDIR POR WHATSAPP */}
               {store.phone &&
-                renderBioButton(
-                  buildWaUrl(store.phone),
-                  "Pedir por WhatsApp",
-                  "#25D366",
-                  "#128C7E",
-                  "#ffffff",
-                  "whatsapp",
-                  <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
-                    <path
-                      fill="#25D366"
-                      d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2z"
-                    />
-                    <path
-                      fill="#FFF"
-                      d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z"
-                    />
-                  </svg>,
-                  hasMultipleSellers
-                    ? (e) => {
-                        e.preventDefault();
-                        incClicks(store.id);
-                        openWhatsAppAction("Hola, me gustaría consultar sobre los productos.", false);
-                      }
-                    : () => incClicks(store.id),
-                )}
+                (() => {
+                  const single = activeSellers.length === 1 ? activeSellers[0] : null;
+                  const isSingleExtra = single && !single.isMain;
+                  const bioPhone = (isSingleExtra && single.phone) ? single.phone : store.phone;
+                  const bioMsg = isSingleExtra
+                    ? buildSellerMessage(single.name, "me gustaría consultar sobre los productos.")
+                    : "Hola, me gustaría consultar sobre los productos.";
+                  return renderBioButton(
+                    buildWaUrl(bioPhone, bioMsg),
+                    "Pedir por WhatsApp",
+                    "#25D366",
+                    "#128C7E",
+                    "#ffffff",
+                    "whatsapp",
+                    <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none">
+                      <path
+                        fill="#25D366"
+                        d="M12.004 2C6.48 2 2 6.48 2 12.004c0 1.767.46 3.427 1.267 4.887L2 22l5.227-1.373A9.972 9.972 0 0 0 12.004 22c5.524 0 10.004-4.48 10.004-10.004C22.008 6.48 17.528 2 12.004 2z"
+                      />
+                      <path
+                        fill="#FFF"
+                        d="M12.004 3.15c-4.88 0-8.854 3.974-8.854 8.854 0 1.56.406 3.084 1.18 4.417L3.75 20.25l4.004-1.05a8.814 8.814 0 0 0 4.25 1.084c4.88 0 8.854-3.974 8.854-8.854S16.884 3.15 12.004 3.15zm4.846 11.233c-.23.633-1.34 1.167-1.854 1.25-.47.083-1.077.15-3.083-.683-2.56-1.06-4.226-3.67-4.353-3.84-.127-.17-.99-1.32-.99-2.52 0-1.2.62-1.78.84-2.02.22-.24.47-.3.63-.3.16 0 .32 0 .46.01.15.01.35-.06.55.42.2.49.69 1.68.75 1.8.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.25.32-.36.43-.12.13-.25.27-.1.53.15.26.66 1.09 1.41 1.76.97.87 1.79 1.14 2.05 1.27.26.13.41.11.56-.06.15-.17.65-.76.82-1.02.17-.26.34-.22.57-.13.23.09 1.47.69 1.72.82.25.13.42.19.48.3.06.11.06.63-.17 1.26z"
+                      />
+                    </svg>,
+                    hasMultipleSellers
+                      ? (e) => {
+                          e.preventDefault();
+                          incClicks(store.id);
+                          openWhatsAppAction("me gustaría consultar sobre los productos.", false);
+                        }
+                      : () => incClicks(store.id),
+                  );
+                })()}
 
               {/* 2. NUESTRA UBICACIÓN (Si tiene coordenadas) */}
               {store.showMap !== false &&
@@ -3752,26 +3782,35 @@ export function PublicCatalog({
                 <p className="text-muted-foreground text-sm font-medium">
                   Esta tienda está preparando su catálogo
                 </p>
-                {store.phone && (
-                  <a
-                    href={buildWaUrl(store.phone, `Hola, me gustaría consultar sobre los productos de ${store.name}.`)}
-                    target={hasMultipleSellers ? undefined : "_blank"}
-                    rel={hasMultipleSellers ? undefined : "noopener noreferrer"}
-                    onClick={(e) => {
-                      if (hasMultipleSellers) {
-                        e.preventDefault();
-                        incClicks(store.id);
-                        openWhatsAppAction(`Hola, me gustaría consultar sobre los productos de ${store.name}.`, false);
-                      } else {
-                        incClicks(store.id);
-                      }
-                    }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-white text-xs font-bold transition-all shadow"
-                  >
-                    <WhatsAppIcon className="h-4 w-4" />
-                    Contactar por WhatsApp
-                  </a>
-                )}
+                {store.phone &&
+                  (() => {
+                    const single = activeSellers.length === 1 ? activeSellers[0] : null;
+                    const isSingleExtra = single && !single.isMain;
+                    const targetPhone = (isSingleExtra && single.phone) ? single.phone : store.phone;
+                    const emptyMsg = isSingleExtra
+                      ? buildSellerMessage(single.name, `me gustaría consultar sobre los productos de ${store.name}.`)
+                      : `Hola, me gustaría consultar sobre los productos de ${store.name}.`;
+                    return (
+                      <a
+                        href={buildWaUrl(targetPhone, emptyMsg)}
+                        target={hasMultipleSellers ? undefined : "_blank"}
+                        rel={hasMultipleSellers ? undefined : "noopener noreferrer"}
+                        onClick={(e) => {
+                          if (hasMultipleSellers) {
+                            e.preventDefault();
+                            incClicks(store.id);
+                            openWhatsAppAction(`me gustaría consultar sobre los productos de ${store.name}.`, false);
+                          } else {
+                            incClicks(store.id);
+                          }
+                        }}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#1fb855] text-white text-xs font-bold transition-all shadow"
+                      >
+                        <WhatsAppIcon className="h-4 w-4" />
+                        Contactar por WhatsApp
+                      </a>
+                    );
+                  })()}
               </div>
             ) : filtered.length === 0 &&
               cfg.layout !== "bite" &&

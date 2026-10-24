@@ -640,10 +640,11 @@ export async function generateCatalogPdf(
   doc.setTextColor(t.text);
 
   const extraActiveSellers = (store.sellers || []).filter((s) => s.active && s.phone);
+  const isMainActive = store.mainSellerActive !== false;
   const mainSellerDisplayName = store.mainSellerName?.trim() || store.name;
   const sellerPhoneLines: string[] = extraActiveSellers.length > 0
     ? [
-        `${mainSellerDisplayName}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
+        ...(isMainActive && store.phone ? [`${mainSellerDisplayName}: ${formatPhoneDisplay(store.phone, store.countryIso)}`] : []),
         ...extraActiveSellers.map((s) => `${s.name}: ${formatPhoneDisplay(s.phone, s.countryIso || store.countryIso)}`),
       ]
     : store.phone
@@ -980,8 +981,9 @@ export async function generateCatalogPdf(
 
   if (extraActiveSellers.length > 0) {
     const mainSellerDisplayName = store.mainSellerName?.trim() || store.name;
+    const isMainActive = store.mainSellerActive !== false;
     const allBackSellers = [
-      `${mainSellerDisplayName}: ${formatPhoneDisplay(store.phone, store.countryIso)}`,
+      ...(isMainActive && store.phone ? [`${mainSellerDisplayName}: ${formatPhoneDisplay(store.phone, store.countryIso)}`] : []),
       ...extraActiveSellers.map((s) => `${s.name}: ${formatPhoneDisplay(s.phone, s.countryIso || store.countryIso)}`),
     ];
     doc.setFontSize(11);

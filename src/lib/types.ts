@@ -374,6 +374,8 @@ export interface Store {
   showFeatured?: boolean;
   /** Nombre personalizado opcional para el vendedor principal (por defecto el nombre de la tienda) */
   mainSellerName?: string | null;
+  /** Indica si el vendedor principal (número oficial de la tienda) está activo para recibir chats (F39b) */
+  mainSellerActive?: boolean;
   /** Lista de vendedores secundarios registrados en la tienda (F39) */
   sellers?: Seller[];
   /** Categorías pertenecientes a la tienda */
