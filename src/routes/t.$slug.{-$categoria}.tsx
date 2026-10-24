@@ -262,6 +262,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       showFeatured: data.show_featured ?? true,
       mainSellerName: data.main_seller_name ?? undefined,
+      mainSellerActive: data.main_seller_active !== undefined ? Boolean(data.main_seller_active) : true,
       sellers: Array.isArray(data.sellers)
         ? data.sellers.map((s: any) => ({
             id: s.id,

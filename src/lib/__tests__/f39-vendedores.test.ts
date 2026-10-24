@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { buildSellerMessage, buildWaUrl } from "../whatsapp";
 import { getMaxSellers, PLANS, type Store, type Seller } from "../types";
+import {
+  resolveActiveSellers,
+  resolveWhatsAppDispatch,
+  canToggleSeller,
+  resolvePublicStoreSellers,
+  normalizeMainSellerName,
+} from "../sellers";
 
 describe("F39: Varios Vendedores (WhatsApp Múltiple)", () => {
   describe("1. buildSellerMessage - Saludo y preservación de texto sin romper palabras", () => {
@@ -325,6 +332,172 @@ describe("F39: Varios Vendedores (WhatsApp Múltiple)", () => {
       expect(content).toMatch(/import[\s\S]*Dialog[\s\S]*from[\s\S]*["']@\/components\/ui\/dialog["']/);
       expect(content).toMatch(/<Dialog[\s\S]*<DialogPortal>/);
       expect(content).not.toMatch(/<div[^>]*data-testid="seller-picker-backdrop"[^>]*className="fixed inset-0 z-\[9999\]/);
+    });
+  });
+
+  describe("9. Encargo F39b: Página propia de vendedores y activación flexible", () => {
+    // Prueba 1: principal apagado + 1 extra → va directo al extra (saluda por nombre)
+    it("principal apagado + 1 extra → va directo al extra, sin selector y saludando por nombre", () => {
+      const storeMock: Partial<Store> = {
+        name: "MODA URBANA",
+        phone: "51999111222",
+        countryIso: "PE",
+        mainSellerActive: false,
+        sellers: [
+          {
+            id: "s1",
+            name: "Lucho",
+            phone: "51988776655",
+            countryIso: "PE",
+            active: true,
+          },
+        ],
+      };
+
+      const activeList = resolveActiveSellers(storeMock as Store);
+      expect(activeList).toHaveLength(1);
+      expect(activeList[0].id).toBe("s1");
+      expect(activeList[0].name).toBe("Lucho");
+      expect(activeList[0].isMain).toBe(false);
+
+      const dispatch = resolveWhatsAppDispatch(
+        storeMock as Store,
+        "quiero hacer este pedido:\n\n• Zapatilla x1\n\nTotal: S/ 150.00",
+      );
+
+      // Va directo sin abrir selector
+      expect(dispatch.requiresPicker).toBe(false);
+      // Destino es el teléfono de Lucho, no el principal
+      expect(dispatch.targetPhone).toBe("51988776655");
+      // Saluda por el nombre de Lucho
+      expect(dispatch.finalMessage).toContain("Hola Lucho, quiero hacer este pedido:");
+    });
+
+    // Comparativa: principal activo sin extras → va directo a la tienda sin saludo de vendedor
+    it("principal activo sin extras → va directo a la tienda sin alterar el saludo (identico a hoy)", () => {
+      const storeMock: Partial<Store> = {
+        name: "MODA URBANA",
+        phone: "51999111222",
+        countryIso: "PE",
+        mainSellerActive: true,
+        sellers: [],
+      };
+
+      const dispatch = resolveWhatsAppDispatch(
+        storeMock as Store,
+        "Hola MODA URBANA, quiero hacer este pedido:\n\n• Zapatilla x1\n\nTotal: S/ 150.00",
+      );
+
+      expect(dispatch.requiresPicker).toBe(false);
+      expect(dispatch.targetPhone).toBe("51999111222");
+      expect(dispatch.finalMessage).toBe(
+        "Hola MODA URBANA, quiero hacer este pedido:\n\n• Zapatilla x1\n\nTotal: S/ 150.00",
+      );
+    });
+
+    // Prueba 2: no se puede apagar el último activo
+    it("no se puede apagar el último activo (garantiza >= 1 vendedor activo)", () => {
+      // Caso 2.1: Solo está el principal activo
+      const storeOnlyMain: Partial<Store> = {
+        plan: "pro",
+        mainSellerActive: true,
+        sellers: [
+          { id: "s1", name: "Dianis", phone: "51935555485", active: false },
+        ],
+      };
+      const checkMainOff = canToggleSeller(storeOnlyMain as Store, "main", false);
+      expect(checkMainOff.ok).toBe(false);
+      expect(checkMainOff.error).toBe("Debe quedar al menos un vendedor activo.");
+
+      // Caso 2.2: Principal apagado y solo queda 1 extra activo
+      const storeOnlyOneExtra: Partial<Store> = {
+        plan: "pro",
+        mainSellerActive: false,
+        sellers: [
+          { id: "s1", name: "Dianis", phone: "51935555485", active: true },
+        ],
+      };
+      const checkExtraOff = canToggleSeller(storeOnlyOneExtra as Store, "s1", false);
+      expect(checkExtraOff.ok).toBe(false);
+      expect(checkExtraOff.error).toBe("Debe quedar al menos un vendedor activo.");
+
+      // Caso 2.3: Hay 2 activos -> apagar uno sí está permitido
+      const storeTwoActive: Partial<Store> = {
+        plan: "pro",
+        mainSellerActive: true,
+        sellers: [
+          { id: "s1", name: "Dianis", phone: "51935555485", active: true },
+        ],
+      };
+      expect(canToggleSeller(storeTwoActive as Store, "main", false).ok).toBe(true);
+      expect(canToggleSeller(storeTwoActive as Store, "s1", false).ok).toBe(true);
+    });
+
+    // Prueba 3: plan bajado a Semilla → usa el principal aunque estuviese apagado
+    it("plan bajado a Semilla → el catálogo usa el principal aunque esté apagado (no se queda sin WhatsApp)", () => {
+      const storeDowngraded: Partial<Store> = {
+        name: "BOUTIQUE BELLA",
+        phone: "51987654321",
+        plan: "semilla",
+        mainSellerActive: false, // Estaba apagado en BD
+        sellers: [
+          { id: "s1", name: "Dianis", phone: "51935555485", active: true },
+          { id: "s2", name: "Paolo", phone: "51939980472", active: true },
+        ],
+      };
+
+      // get_public_store fuerza mainSellerActive = true y sellers = []
+      const publicStoreView = resolvePublicStoreSellers(storeDowngraded as Store);
+      expect(publicStoreView.mainSellerActive).toBe(true);
+      expect(publicStoreView.sellers).toEqual([]);
+
+      // El catálogo público resultante solo tiene 1 vendedor (el principal)
+      const catalogActiveSellers = resolveActiveSellers({
+        ...storeDowngraded,
+        ...publicStoreView,
+      } as Store);
+      expect(catalogActiveSellers).toHaveLength(1);
+      expect(catalogActiveSellers[0].id).toBe("main");
+      expect(catalogActiveSellers[0].phone).toBe("51987654321");
+    });
+
+    // Prueba 4: el nombre vacío del principal se guarda como null
+    it("el nombre vacío del vendedor principal se normaliza como null para limpiar la base de datos", () => {
+      expect(normalizeMainSellerName("")).toBeNull();
+      expect(normalizeMainSellerName("   ")).toBeNull();
+      expect(normalizeMainSellerName(null)).toBeNull();
+      expect(normalizeMainSellerName(undefined)).toBeNull();
+      expect(normalizeMainSellerName("  Franklin  ")).toBe("Franklin");
+    });
+
+    // Prueba 5 (Ajuste Jack): tienda bajada a Semilla, con principal apagado y 2 extras, puede prender el principal
+    it("tienda bajada a Semilla con principal apagado y 2 extras activos: puede volver a prender el principal", () => {
+      const storeSemillaOverLimit: Partial<Store> = {
+        name: "TIENDA EN SEMILLA",
+        phone: "51911222333",
+        plan: "semilla",
+        mainSellerActive: false,
+        sellers: [
+          { id: "s1", name: "Dianis", phone: "51935555485", active: true },
+          { id: "s2", name: "Paolo", phone: "51939980472", active: true },
+        ],
+      };
+
+      // Prender el principal siempre está permitido
+      const checkTurnOnMain = canToggleSeller(storeSemillaOverLimit as Store, "main", true);
+      expect(checkTurnOnMain.ok).toBe(true);
+
+      // En cambio, prender un extra inactivo en este estado sí se bloquea
+      const storeWithInactiveExtra = {
+        ...storeSemillaOverLimit,
+        sellers: [
+          ...storeSemillaOverLimit.sellers!,
+          { id: "s3", name: "Extra", phone: "51900000000", active: false },
+        ],
+      };
+      const checkTurnOnExtra = canToggleSeller(storeWithInactiveExtra as Store, "s3", true);
+      expect(checkTurnOnExtra.ok).toBe(false);
+      expect(checkTurnOnExtra.error).toContain("El plan solo permite hasta 1 vendedor");
     });
   });
 });

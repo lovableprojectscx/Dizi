@@ -169,6 +169,7 @@ export const mapStoreFromDB = (row: any): Store => {
     requestedPlan: row.requested_plan ?? null,
     showFeatured: row.show_featured ?? true,
     mainSellerName: row.main_seller_name ?? undefined,
+    mainSellerActive: row.main_seller_active !== undefined ? Boolean(row.main_seller_active) : true,
     sellers: Array.isArray(row.sellers)
       ? row.sellers.map((s: any) => ({
           id: s.id,
@@ -694,6 +695,8 @@ export const useApp = create<AppState>()(
           dbPatch.show_featured = updatedPatch.showFeatured;
         if (updatedPatch.mainSellerName !== undefined)
           dbPatch.main_seller_name = updatedPatch.mainSellerName ? updatedPatch.mainSellerName.trim() : null;
+        if (updatedPatch.mainSellerActive !== undefined)
+          dbPatch.main_seller_active = Boolean(updatedPatch.mainSellerActive);
         if (updatedPatch.sellers !== undefined) {
           dbPatch.sellers = updatedPatch.sellers.map((s) => ({
             id: s.id,

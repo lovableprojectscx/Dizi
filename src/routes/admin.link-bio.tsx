@@ -877,7 +877,7 @@ function LinkBioPage() {
             setLocationLng(Number(latLng.lng.toFixed(6)));
           });
 
-          map.on("click", (e) => {
+          map.on("click", (e: any) => {
             marker.setLatLng(e.latlng);
             setLocationLat(Number(e.latlng.lat.toFixed(6)));
             setLocationLng(Number(e.latlng.lng.toFixed(6)));
