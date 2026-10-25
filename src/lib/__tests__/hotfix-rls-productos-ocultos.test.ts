@@ -61,7 +61,7 @@ describe("Hotfix de Seguridad RLS: products_public_select", () => {
       plan: "pro",
       active: true,
       isPublished: true,
-      categories: [{ id: "cat_1", name: "Principal", visible: true, productCount: 2 }],
+      categories: [{ id: "cat_1", name: "Principal", productCount: 2 }],
       products: [
         {
           id: "p_1",

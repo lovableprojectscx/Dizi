@@ -14,6 +14,7 @@ import { PLANS, type Store, type Product, getEffectivePlan } from "@/lib/types";
 import { cleanDescription } from "@/lib/products";
 import { formatPrice, buildWaUrl } from "@/lib/whatsapp";
 import { formatPhoneDisplay } from "@/lib/phone";
+import { getOfferBadgeText } from "@/lib/discount";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
@@ -843,7 +844,8 @@ export async function generateCatalogPdf(
         setFont("bold");
         doc.setFontSize(5.5);
         doc.setTextColor("#ffffff");
-        doc.text("OFERTA", badgeX + 7, badgeY + 3.2, { align: "center" });
+        const offerText = getOfferBadgeText(prod.price, prod.originalPrice, store.showDiscountPct).toUpperCase();
+        doc.text(offerText, badgeX + 7, badgeY + 3.2, { align: "center" });
       }
 
       // Nombre producto (más grande y destacado)
