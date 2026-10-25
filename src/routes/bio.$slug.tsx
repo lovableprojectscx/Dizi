@@ -219,6 +219,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       showFeatured: data.show_featured ?? true,
+      showDiscountPct: data.show_discount_pct ?? false,
       mainSellerName: data.main_seller_name ?? undefined,
       mainSellerActive: data.main_seller_active !== undefined ? Boolean(data.main_seller_active) : true,
       sellers: Array.isArray(data.sellers)

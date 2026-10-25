@@ -29,6 +29,7 @@ import {
   Upload,
   Trash2,
   X,
+  Percent,
 } from "lucide-react";
 import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -225,6 +226,7 @@ export function DisenoUnificadoPage() {
   const [promoBarTextColor, setPromoBarTextColor] = useState<string>(store?.promoBarTextColor || "");
   const [promoBarIsMarquee, setPromoBarIsMarquee] = useState<boolean>(store?.promoBarIsMarquee || false);
   const [showFeatured, setShowFeatured] = useState<boolean>(store?.showFeatured !== false);
+  const [showDiscountPct, setShowDiscountPct] = useState<boolean>(store?.showDiscountPct ?? false);
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
@@ -256,6 +258,7 @@ export function DisenoUnificadoPage() {
       setPromoBarTextColor(store.promoBarTextColor || "");
       setPromoBarIsMarquee(store.promoBarIsMarquee || false);
       setShowFeatured(store.showFeatured !== false);
+      setShowDiscountPct(store.showDiscountPct ?? false);
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
@@ -367,6 +370,7 @@ export function DisenoUnificadoPage() {
         promoBarTextColor: promoBarTextColor || null,
         promoBarIsMarquee,
         showFeatured,
+        showDiscountPct,
       } as any);
 
       toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
@@ -403,6 +407,7 @@ export function DisenoUnificadoPage() {
     promoBarTextColor: promoBarTextColor,
     promoBarIsMarquee: promoBarIsMarquee,
     showFeatured: showFeatured,
+    showDiscountPct: showDiscountPct,
   };
 
   return (
@@ -838,6 +843,37 @@ export function DisenoUnificadoPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Porcentaje de Descuento en Ofertas (F40) */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                      <Percent className="h-4.5 w-4.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                        Mostrar % de descuento en mis ofertas
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-sm">
+                          {showDiscountPct ? "-20%" : "Oferta"}
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-zinc-550">
+                        Cambia la etiqueta "Oferta" por el porcentaje exacto (ej. "-20%") en ofertas con al menos 5% de descuento.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showDiscountPct}
+                        onChange={(e) => setShowDiscountPct(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -885,6 +921,37 @@ export function DisenoUnificadoPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Porcentaje de Descuento en Ofertas (F40) */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                      <Percent className="h-4.5 w-4.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                        Mostrar % de descuento en mis ofertas
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-sm">
+                          {showDiscountPct ? "-20%" : "Oferta"}
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-zinc-550">
+                        Cambia la etiqueta "Oferta" por el porcentaje exacto (ej. "-20%") en ofertas con al menos 5% de descuento.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={showDiscountPct}
+                        onChange={(e) => setShowDiscountPct(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                    </label>
+                  </div>
+                </div>
 
                 {/* 0. Cintillo Promocional / Barra de Anuncios (Envío Gratis) */}
                 <div className="p-4 rounded-2xl border bg-zinc-50/50 space-y-4">

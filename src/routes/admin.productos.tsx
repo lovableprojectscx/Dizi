@@ -102,6 +102,8 @@ import {
   Beer,
   Croissant,
   Copy,
+  Percent,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
@@ -857,6 +859,52 @@ function SingleProductDialog({
                       />
                     </div>
                   </div>
+
+                  {/* Calculadora en vivo de descuento (F40) */}
+                  {(() => {
+                    const parsedPrice = parseFloat(priceInput);
+                    const parsedOrig = parseFloat(originalPriceInput);
+                    if (!parsedPrice || !parsedOrig || isNaN(parsedPrice) || isNaN(parsedOrig) || parsedOrig <= 0 || parsedPrice <= 0) {
+                      return null;
+                    }
+                    if (parsedOrig <= parsedPrice) {
+                      return (
+                        <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5">
+                          <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                          <span>El precio original debe ser mayor al precio de oferta para aplicar descuento.</span>
+                        </div>
+                      );
+                    }
+                    const diff = parsedOrig - parsedPrice;
+                    const pct = Math.floor((diff / parsedOrig) * 100);
+                    if (pct >= 80) {
+                      return (
+                        <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 font-medium">
+                            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span>Descuento: <strong className="font-bold">{pct}%</strong> · ahorras <strong className="font-bold">{formatPrice(diff)}</strong></span>
+                          </div>
+                          <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full shrink-0">
+                            ¿Seguro? Revisa el precio
+                          </span>
+                        </div>
+                      );
+                    }
+                    if (pct < 5) {
+                      return (
+                        <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs flex items-center gap-1.5">
+                          <Info className="h-4 w-4 shrink-0 text-slate-400" />
+                          <span>Descuento: {pct}% · ahorras {formatPrice(diff)} (con menos de 5% no se muestra la etiqueta).</span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-1.5 font-medium">
+                        <Percent className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                        <span>Descuento: <strong className="font-bold">{pct}%</strong> · ahorras <strong className="font-bold">{formatPrice(diff)}</strong></span>
+                      </div>
+                    );
+                  })()}
 
                   <div className="sm:col-span-2 space-y-1.5">
                     <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">

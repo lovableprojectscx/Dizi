@@ -134,6 +134,7 @@ import {
   getCategorySlug,
   buildStoreUrl,
 } from "@/lib/category-link";
+import { getOfferBadgeText, getDiscount } from "@/lib/discount";
 
 const EMPTY_CART: any[] = [];
 const NO_IMAGE_PLACEHOLDER = "/images/sin-foto.svg";
@@ -3923,7 +3924,7 @@ export function PublicCatalog({
                                     />
                                     {p.isOnSale && (
                                       <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow">
-                                        <Flame className="h-2.5 w-2.5" /> Oferta
+                                        <Flame className="h-2.5 w-2.5" /> {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
                                       </span>
                                     )}
                                     {/* Zoom Lupa Indicator Button */}
@@ -4048,7 +4049,7 @@ export function PublicCatalog({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                     {p.isOnSale && (
                       <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                        OFERTA
+                        {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct).toUpperCase()}
                       </span>
                     )}
                     {/* Text on image */}
@@ -4371,7 +4372,7 @@ export function PublicCatalog({
                                 }}
                                 className="absolute top-4 left-4 text-[9px] font-bold tracking-[0.2em] uppercase border px-3 py-1 shadow-xs"
                               >
-                                Oferta
+                                {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
                               </span>
                             )}
                           </div>
@@ -4595,7 +4596,7 @@ export function PublicCatalog({
                       />
                       {p.isOnSale && (
                         <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-full shadow-xs">
-                          OFERTA
+                          {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct).toUpperCase()}
                         </span>
                       )}
                     </div>
@@ -4705,7 +4706,7 @@ export function PublicCatalog({
                     <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent" />
                     {filtered[0].isOnSale && (
                       <span className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                        OFERTA
+                        {getOfferBadgeText(filtered[0].price, filtered[0].originalPrice, store.showDiscountPct).toUpperCase()}
                       </span>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 p-5">
@@ -4783,7 +4784,7 @@ export function PublicCatalog({
                         />
                         {p.isOnSale && (
                           <span className="absolute top-1.5 left-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                            OFERTA
+                            {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct).toUpperCase()}
                           </span>
                         )}
                       </div>
@@ -4846,7 +4847,9 @@ export function PublicCatalog({
                         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
                         {p.isOnSale && (
                           <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1">
-                            SALE
+                            {store.showDiscountPct && getDiscount(p.price, p.originalPrice)
+                              ? `-${getDiscount(p.price, p.originalPrice)?.pct}%`
+                              : "SALE"}
                           </span>
                         )}
                         <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between">
@@ -4920,7 +4923,9 @@ export function PublicCatalog({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
                           {p.isOnSale && (
                             <span className="absolute top-3 left-3 text-[9px] font-bold tracking-widest uppercase border border-white/50 text-white px-2 py-0.5">
-                              SALE
+                              {store.showDiscountPct && getDiscount(p.price, p.originalPrice)
+                                ? `-${getDiscount(p.price, p.originalPrice)?.pct}%`
+                                : "SALE"}
                             </span>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -5006,7 +5011,7 @@ export function PublicCatalog({
                       />
                       {p.isOnSale && (
                         <span className="absolute top-3 left-3 text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
-                          OFERTA
+                          {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct).toUpperCase()}
                         </span>
                       )}
                       {isWide ? (
@@ -5148,7 +5153,7 @@ export function PublicCatalog({
                               className="absolute top-3 left-3 text-[9px] font-black bg-red-500 text-white px-2 py-0.5"
                               style={{ borderRadius: cfg.cardRounded }}
                             >
-                              OFERTA
+                              {getOfferBadgeText(group[0].price, group[0].originalPrice, store.showDiscountPct).toUpperCase()}
                             </span>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -5304,7 +5309,7 @@ export function PublicCatalog({
                             className="absolute top-4 left-4 text-[10px] font-black tracking-widest uppercase px-3 py-1"
                             style={{ backgroundColor: "var(--primary)", color: "var(--primary-foreground)" }}
                           >
-                            OFERTA
+                            {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct).toUpperCase()}
                           </span>
                         )}
                       </div>
@@ -5432,7 +5437,9 @@ export function PublicCatalog({
                             className="absolute top-4 left-1/2 -translate-x-1/2 text-[9px] font-bold tracking-widest uppercase border text-white px-2 py-0.5 backdrop-blur-sm"
                             style={{ borderColor: "white", borderRadius: "999px" }}
                           >
-                            SALE
+                            {store.showDiscountPct && getDiscount(p.price, p.originalPrice)
+                              ? `-${getDiscount(p.price, p.originalPrice)?.pct}%`
+                              : "SALE"}
                           </span>
                         )}
                       </div>
@@ -5445,9 +5452,21 @@ export function PublicCatalog({
                         >
                           {p.name}
                         </h3>
-                        <p className="text-xs font-black" style={{ color: "var(--primary)" }}>
-                          {formatPrice(p.price)}
-                        </p>
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-black" style={{ color: "var(--primary)" }}>
+                            {formatPrice(p.price)}
+                          </span>
+                          {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                            <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through">
+                              {formatPrice(p.originalPrice)}
+                            </span>
+                          )}
+                          {store.showDiscountPct && getDiscount(p.price, p.originalPrice) && (
+                            <span className="text-[10px] font-bold" style={{ color: "var(--primary)" }}>
+                              -{getDiscount(p.price, p.originalPrice)?.pct}%
+                            </span>
+                          )}
+                        </div>
                         <div className="flex justify-center pt-1">
                           <button
                             onClick={(e) => {
@@ -5760,6 +5779,11 @@ export function PublicCatalog({
                                     p.originalPrice > p.price && (
                                       <span style={{ color: "var(--muted-foreground)" }} className="text-xs line-through block -mt-1">
                                         {formatPrice(p.originalPrice)}
+                                        {store.showDiscountPct && getDiscount(p.price, p.originalPrice) && (
+                                          <span className="ml-1 text-[11px] font-bold text-[var(--primary)] no-underline inline-block">
+                                            -{getDiscount(p.price, p.originalPrice)?.pct}%
+                                          </span>
+                                        )}
                                       </span>
                                     )}
                                 </div>
@@ -5977,7 +6001,7 @@ export function PublicCatalog({
                                     />
                                     {p.isOnSale && (
                                       <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-lg z-10">
-                                        Oferta
+                                        {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
                                       </span>
                                     )}
                                     
@@ -6503,7 +6527,9 @@ export function PublicCatalog({
                                         className="absolute bottom-3 left-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans"
                                       >
                                         {p.isOnSale
-                                          ? "Eco-Oferta"
+                                          ? (store.showDiscountPct && getDiscount(p.price, p.originalPrice)
+                                              ? `-${getDiscount(p.price, p.originalPrice)?.pct}%`
+                                              : "Eco-Oferta")
                                           : isFallback
                                             ? "Eco-Sugerencia"
                                             : "Destacado"}
@@ -6794,7 +6820,7 @@ export function PublicCatalog({
                                             }}
                                             className="absolute top-3 right-3 text-[8px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md z-10 font-sans"
                                           >
-                                            Oferta
+                                            {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
                                           </span>
                                         )}
                                       </div>
@@ -7291,7 +7317,7 @@ export function PublicCatalog({
                                     className="absolute bottom-3 left-3 z-10 text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-md font-sans"
                                   >
                                     {p.isOnSale
-                                      ? "Oferta"
+                                      ? getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)
                                       : isFallback
                                         ? "Recomendado"
                                         : "Destacado"}
@@ -7702,7 +7728,7 @@ export function PublicCatalog({
                                         }}
                                         className="absolute top-2.5 right-2.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow z-10"
                                       >
-                                        Oferta
+                                        {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
                                       </span>
                                     )}
                                   </div>
@@ -7934,7 +7960,7 @@ export function PublicCatalog({
                         />
                         {p.isOnSale && (
                           <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
-                            OFERTA
+                            {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct).toUpperCase()}
                           </span>
                         )}
                       </div>
@@ -8027,7 +8053,7 @@ export function PublicCatalog({
                           />
                           {p.isOnSale && (
                             <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
-                              <Flame className="h-2.5 w-2.5" /> Oferta
+                              <Flame className="h-2.5 w-2.5" /> {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
                             </span>
                           )}
                         </div>
@@ -8821,15 +8847,15 @@ export function PublicCatalog({
                 {viewingProduct.isOnSale &&
                   (cfg.layout === "magazine" ? (
                     <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1 backdrop-blur">
-                      OFERTA
+                      {getOfferBadgeText(displayedPrice, viewingProduct.originalPrice, store.showDiscountPct).toUpperCase()}
                     </span>
                   ) : cfg.layout === "overlay" ? (
                     <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                      OFERTA
+                      {getOfferBadgeText(displayedPrice, viewingProduct.originalPrice, store.showDiscountPct).toUpperCase()}
                     </span>
                   ) : (
                     <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
-                      <Flame className="h-3 w-3" /> Oferta
+                      <Flame className="h-3 w-3" /> {getOfferBadgeText(displayedPrice, viewingProduct.originalPrice, store.showDiscountPct)}
                     </span>
                   ))}
 
@@ -8851,7 +8877,7 @@ export function PublicCatalog({
                     >
                       {viewingProduct.name}
                     </h3>
-                    <div className="flex items-baseline gap-2 pt-0.5">
+                    <div className="flex items-baseline gap-2 pt-0.5 flex-wrap">
                       <span
                         className={cn(
                           "font-black text-2xl",
@@ -8865,9 +8891,20 @@ export function PublicCatalog({
                         viewingProduct.originalPrice &&
                         displayedPrice &&
                         viewingProduct.originalPrice > displayedPrice && (
-                          <span className="text-sm line-through text-muted-foreground font-normal">
-                            {formatPrice(viewingProduct.originalPrice)}
-                          </span>
+                          <>
+                            <span className="text-sm line-through text-muted-foreground font-normal">
+                              {formatPrice(viewingProduct.originalPrice)}
+                            </span>
+                            {store.showDiscountPct && (() => {
+                              const d = getDiscount(displayedPrice, viewingProduct.originalPrice);
+                              if (!d) return null;
+                              return (
+                                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md">
+                                  Ahorras {formatPrice(d.saved)}
+                                </span>
+                              );
+                            })()}
+                          </>
                         )}
                     </div>
                   </div>

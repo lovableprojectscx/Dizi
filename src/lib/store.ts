@@ -168,6 +168,7 @@ export const mapStoreFromDB = (row: any): Store => {
     termsAcceptedAt: row.terms_accepted_at ?? null,
     requestedPlan: row.requested_plan ?? null,
     showFeatured: row.show_featured ?? true,
+    showDiscountPct: row.show_discount_pct ?? false,
     mainSellerName: row.main_seller_name ?? undefined,
     mainSellerActive: row.main_seller_active !== undefined ? Boolean(row.main_seller_active) : true,
     sellers: Array.isArray(row.sellers)
@@ -693,6 +694,8 @@ export const useApp = create<AppState>()(
         if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
         if (updatedPatch.showFeatured !== undefined)
           dbPatch.show_featured = updatedPatch.showFeatured;
+        if (updatedPatch.showDiscountPct !== undefined)
+          dbPatch.show_discount_pct = updatedPatch.showDiscountPct;
         if (updatedPatch.mainSellerName !== undefined)
           dbPatch.main_seller_name = updatedPatch.mainSellerName ? updatedPatch.mainSellerName.trim() : null;
         if (updatedPatch.mainSellerActive !== undefined)
