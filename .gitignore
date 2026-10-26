@@ -42,6 +42,7 @@ dist-ssr
 scratch/
 supabase/.temp/
 AUTOMATIZAR PDF/
+imagen uso/
 ~$*.docx
 
 # Documentacion de negocio pesada (.docx, .pptx) vive fuera del repo; permitir docs markdown
