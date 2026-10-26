@@ -291,33 +291,30 @@ function LandingPage() {
       </header>
 
       {/* ── 2. SECCIÓN HERO DE ALTO IMPACTO (TIPOGRAFÍA ESTÁNDAR Y ESPACIADO HOLGADO) ── */}
-      <section className="relative overflow-hidden pt-10 sm:pt-20 pb-16 sm:pb-24 bg-gradient-to-b from-primary/[0.05] via-background to-background border-b border-border/30">
-        {/* Resplandor ambiente de fondo (Ambient Glow) */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-72 sm:w-[500px] h-72 sm:h-[500px] bg-gradient-to-tr from-primary/15 via-orange-500/10 to-amber-500/5 blur-[100px] rounded-full pointer-events-none z-0" />
-
+      <section className="relative overflow-hidden pt-8 sm:pt-20 pb-12 sm:pb-24 bg-gradient-to-b from-primary/[0.05] via-background to-background border-b border-border/30">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             {/* LADO IZQUIERDO: ESENCIA DE MARCA */}
-            <div className="lg:col-span-7 space-y-7 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
+            <div className="lg:col-span-7 space-y-5 sm:space-y-7 text-center lg:text-left animate-in fade-in slide-in-from-bottom duration-500">
               {/* Título Principal SEO + Frase de Marca */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.18]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.2] sm:leading-[1.18]">
                 Tu negocio, ordenado y presentable en{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
+                <span className="text-primary">
                   un solo link
                 </span>
               </h1>
 
-              {/* Subtítulo de Marca Empoderador (Tamaño Estándar Legible de 16px en Móvil) */}
-              <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+              {/* Subtítulo de Marca Empoderador */}
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
                 Tú ya sabes vender. Dizi solo hace que se note. Transforma las consultas de tus redes sociales en pedidos organizados directo a tu WhatsApp. Sin comisiones.
               </p>
 
               {/* Botones de Acción Espaciados */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-3.5 pt-1">
                 <Button
                   asChild
                   size="lg"
-                  className="w-full sm:w-auto h-13 sm:h-14 px-8 rounded-2xl font-black text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
+                  className="w-full sm:w-auto h-12 sm:h-14 px-8 rounded-2xl font-black text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
                 >
                   <Link to="/register">
                     Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
@@ -328,7 +325,7 @@ function LandingPage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="w-full sm:w-auto h-13 sm:h-14 px-7 rounded-2xl font-bold text-sm sm:text-base border-border text-foreground hover:bg-muted active:scale-95 gap-2 shadow-xs font-sans"
+                  className="w-full sm:w-auto h-12 sm:h-14 px-7 rounded-2xl font-bold text-sm sm:text-base border-border/80 text-foreground/90 hover:bg-muted active:scale-95 gap-2 shadow-xs font-sans"
                 >
                   <a href={getShowcaseUrl(SHOWCASE_LANDING_ITEM)} target="_blank" rel="noopener noreferrer">
                     <Smartphone className="h-4 w-4 text-primary" /> Ver Tienda de Ejemplo
@@ -337,53 +334,52 @@ function LandingPage() {
                 </Button>
               </div>
 
-              {/* Tarjeta de Demostración Compacta en Cristal (Solo Visible en Celulares para No Satúrar) */}
-              <div className="lg:hidden my-6 p-4 rounded-2xl bg-gradient-to-r from-primary/10 via-amber-500/10 to-emerald-500/10 border border-primary/20 backdrop-blur-md flex items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3 text-left">
-                  <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 text-primary">
-                    <Smartphone className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm font-extrabold text-foreground flex items-center gap-1.5">
-                      Catálogo Demo Activo <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">dizi.pe/grano-miga · Ejemplo real</p>
-                  </div>
+              {/* MOCKUP EN MÓVIL (VISIBLE EN CELULARES CON AIRE Y SOMBRA SUAVE) */}
+              <div className="lg:hidden my-6 px-1 flex justify-center animate-in fade-in zoom-in-95 duration-700">
+                <div className="relative w-full max-w-[320px] xs:max-w-[360px] mx-auto transition-transform active:scale-[0.99]">
+                  <picture>
+                    <source srcSet="/images/landing/hero-phones-mockup.webp" type="image/webp" />
+                    <img
+                      src="/images/landing/hero-phones-mockup.png"
+                      alt="Catálogo digital Dizi en smartphones"
+                      width="1400"
+                      height="967"
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                      className="w-full h-auto object-contain drop-shadow-xl"
+                    />
+                  </picture>
                 </div>
-                <Button asChild size="sm" variant="outline" className="h-8.5 px-3.5 text-xs font-bold rounded-xl border-primary/30 text-primary hover:bg-primary/10 shrink-0">
-                  <a href={getShowcaseUrl(SHOWCASE_LANDING_ITEM)} target="_blank" rel="noopener noreferrer">
-                    Ver Demo <ExternalLink className="ml-1 h-3 w-3" />
-                  </a>
-                </Button>
               </div>
 
-              {/* 3 Tarjetas de Beneficios Clave Aireadas (Tipografía Estándar 12px/11px) */}
-              <div className="pt-4 grid grid-cols-3 gap-2.5 sm:gap-4">
-                <div className="p-3 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2.5 sm:gap-3">
-                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
-                    <Zap className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+              {/* 3 Tarjetas de Beneficios Clave Aireadas (Horizontal en Celulares para Evitar Compresión) */}
+              <div className="pt-2 sm:pt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex items-center sm:items-start text-left gap-3 sm:gap-3.5">
+                  <div className="h-9 w-9 sm:h-9 sm:w-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                    <Zap className="h-4.5 w-4.5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs sm:text-sm font-bold text-foreground leading-tight">En 2 Minutos</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">Listo sin código</p>
                   </div>
                 </div>
 
-                <div className="p-3 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2.5 sm:gap-3">
-                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <MessageCircle className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex items-center sm:items-start text-left gap-3 sm:gap-3.5">
+                  <div className="h-9 w-9 sm:h-9 sm:w-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <MessageCircle className="h-4.5 w-4.5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs sm:text-sm font-bold text-foreground leading-tight">0% Comisión</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">Cobro directo</p>
                   </div>
                 </div>
 
-                <div className="p-3 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-2.5 sm:gap-3">
-                  <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                    <ShieldCheck className="h-4 w-4 sm:h-4.5 sm:w-4.5" />
+                <div className="p-3.5 sm:p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/60 shadow-xs flex items-center sm:items-start text-left gap-3 sm:gap-3.5">
+                  <div className="h-9 w-9 sm:h-9 sm:w-9 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
+                    <ShieldCheck className="h-4.5 w-4.5" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-xs sm:text-sm font-bold text-foreground leading-tight">100% Móvil</p>
                     <p className="text-[11px] text-muted-foreground mt-0.5">Sin descargar app</p>
                   </div>
@@ -391,147 +387,22 @@ function LandingPage() {
               </div>
             </div>
 
-            {/* LADO DERECHO: SIMULADOR DE IPHONE COMPLETO (SOLO EN ESCRITORIO / PANTALLAS GRANDES PARA EVITAR APLASTAMIENTO MÓVIL) */}
-            <div className="hidden lg:flex lg:col-span-5 justify-end">
-              <div className="relative w-full max-w-[340px] h-[550px] rounded-[2.8rem] bg-zinc-950 p-3 shadow-2xl ring-1 ring-zinc-800 border-4 border-zinc-900 overflow-hidden transition-transform duration-500 hover:scale-[1.02]">
-                {/* Altavoz y Cámara de iPhone */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-5 w-28 bg-zinc-950 rounded-b-2xl z-40 flex items-center justify-center">
-                  <div className="h-2 w-10 bg-zinc-800 rounded-full"></div>
-                </div>
-
-                {/* Badge Flotante "Verídico en Dizi" */}
-                <div className="absolute top-8 left-3 z-30 bg-black/80 backdrop-blur-md text-white text-[9px] font-extrabold px-2.5 py-1 rounded-full border border-white/20 flex items-center gap-1 shadow-lg">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  <span>Tu tienda en dizi.pe/tu-negocio</span>
-                </div>
-
-                {/* Pantalla Simulada de Tienda */}
-                <div className="h-full w-full rounded-[2.2rem] bg-card overflow-hidden flex flex-col justify-between pt-5 pb-3 px-3 text-left relative z-10 font-sans border border-border/30">
-                  {/* Banner de Portada de Tienda */}
-                  <div className="relative h-20 -mx-3 -mt-5 mb-2 overflow-hidden bg-muted">
-                    <img
-                      src="/images/landing/mockup-banner.webp"
-                      alt="Grano & Miga Cover"
-                      width="320"
-                      height="80"
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                    <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
-                      <span className="text-[11px] font-extrabold text-white tracking-wide truncate">
-                        Grano & Miga · Café
-                      </span>
-                      <span className="text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full shadow-xs">
-                        Abierto
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Buscador y Pestañas */}
-                  <div className="space-y-1.5 mb-1.5">
-                    <div className="flex items-center gap-1 bg-muted/60 p-1.5 rounded-xl border text-[10px] text-muted-foreground">
-                      <ShoppingBag className="h-3 w-3 text-primary shrink-0" />
-                      <span className="truncate">¿Qué deseas pedir hoy?</span>
-                    </div>
-                    <div className="flex gap-1 overflow-x-auto no-scrollbar">
-                      <span className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-primary text-primary-foreground shrink-0">
-                        Cafetería
-                      </span>
-                      <span className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
-                        Panadería
-                      </span>
-                      <span className="px-2 py-0.5 text-[9.5px] font-bold rounded-lg bg-muted text-muted-foreground shrink-0">
-                        Postres
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Grilla 2x2 Completa de Productos */}
-                  <div className="grid grid-cols-2 gap-1.5 flex-1 my-1 overflow-hidden">
-                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
-                      <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
-                        <img
-                          src="/images/landing/mockup-prod-1.webp"
-                          alt="Café Latte"
-                          width="120"
-                          height="64"
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="mt-1 space-y-0.5">
-                        <p className="text-[10px] font-bold text-foreground truncate">Latte Especial</p>
-                        <p className="text-[9.5px] font-black text-primary">S/ 12.00</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
-                      <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
-                        <img
-                          src="/images/landing/mockup-prod-2.webp"
-                          alt="Croissant"
-                          width="120"
-                          height="64"
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="mt-1 space-y-0.5">
-                        <p className="text-[10px] font-bold text-foreground truncate">Croissant Almendras</p>
-                        <p className="text-[9.5px] font-black text-primary">S/ 16.00</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
-                      <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
-                        <img
-                          src="/images/landing/mockup-prod-3.webp"
-                          alt="Cheesecake"
-                          width="120"
-                          height="64"
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="mt-1 space-y-0.5">
-                        <p className="text-[10px] font-bold text-foreground truncate">Cheesecake Berries</p>
-                        <p className="text-[9.5px] font-black text-primary">S/ 18.00</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-muted/40 border border-border/40 rounded-xl p-1.5 flex flex-col justify-between">
-                      <div className="h-16 w-full rounded-lg bg-muted relative overflow-hidden">
-                        <img
-                          src="/images/landing/mockup-prod-4.webp"
-                          alt="Espresso"
-                          width="120"
-                          height="64"
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="mt-1 space-y-0.5">
-                        <p className="text-[10px] font-bold text-foreground truncate">Espresso Doble</p>
-                        <p className="text-[9.5px] font-black text-primary">S/ 9.00</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Botón Flotante Carrito WhatsApp */}
-                  <div className="bg-[#25D366] text-white p-2.5 rounded-xl font-extrabold text-xs flex items-center justify-between shadow-md shrink-0 mt-1">
-                    <div className="flex items-center gap-1.5">
-                      <MessageCircle className="h-4 w-4 fill-white" />
-                      <span>Pedir por WhatsApp</span>
-                    </div>
-                    <span className="bg-white/20 px-2 py-0.5 rounded-md text-[10px]">S/ 55.00</span>
-                  </div>
-                </div>
+            {/* LADO DERECHO: MOCKUP REAL DE TIENDAS DIZI */}
+            <div className="hidden lg:flex lg:col-span-5 justify-center lg:justify-end items-center animate-in fade-in zoom-in-95 duration-700">
+              <div className="relative w-full max-w-[480px] transition-transform duration-500 hover:scale-[1.02]">
+                <picture>
+                  <source srcSet="/images/landing/hero-phones-mockup.webp" type="image/webp" />
+                  <img
+                    src="/images/landing/hero-phones-mockup.png"
+                    alt="Catálogo digital Dizi en smartphones"
+                    width="1400"
+                    height="967"
+                    loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
+                    className="w-full h-auto object-contain drop-shadow-2xl"
+                  />
+                </picture>
               </div>
             </div>
           </div>
@@ -668,7 +539,7 @@ function LandingPage() {
               15 Estructuras de Diseño Adaptables
             </h2>
 
-            <div className="flex flex-wrap items-center justify-center gap-1.5 pt-3 max-w-full px-2">
+            <div className="flex items-center gap-2 pt-3 max-w-full px-2 overflow-x-auto scrollbar-none sm:flex-wrap sm:justify-center py-1">
               <button
                 onClick={() => setActiveNiche("all")}
                 className={cn(
@@ -789,7 +660,7 @@ function LandingPage() {
             </p>
 
             {/* Toggle Mensual / Anual */}
-            <div className="flex items-center justify-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 pt-2">
               <span className={`text-xs font-bold ${!isAnnual ? "text-foreground font-black" : "text-muted-foreground"}`}>
                 Mensual
               </span>
