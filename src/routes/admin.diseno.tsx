@@ -31,7 +31,7 @@ import {
   X,
   Percent,
 } from "lucide-react";
-import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar } from "@/lib/types";
+import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar, planAllowsWholesale } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -227,6 +227,7 @@ export function DisenoUnificadoPage() {
   const [promoBarIsMarquee, setPromoBarIsMarquee] = useState<boolean>(store?.promoBarIsMarquee || false);
   const [showFeatured, setShowFeatured] = useState<boolean>(store?.showFeatured !== false);
   const [showDiscountPct, setShowDiscountPct] = useState<boolean>(store?.showDiscountPct ?? false);
+  const [wholesaleEnabled, setWholesaleEnabled] = useState<boolean>(store?.wholesaleEnabled ?? false);
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
@@ -259,6 +260,7 @@ export function DisenoUnificadoPage() {
       setPromoBarIsMarquee(store.promoBarIsMarquee || false);
       setShowFeatured(store.showFeatured !== false);
       setShowDiscountPct(store.showDiscountPct ?? false);
+      setWholesaleEnabled(store.wholesaleEnabled ?? false);
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
@@ -371,6 +373,7 @@ export function DisenoUnificadoPage() {
         promoBarIsMarquee,
         showFeatured,
         showDiscountPct,
+        wholesaleEnabled,
       } as any);
 
       toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
@@ -408,6 +411,7 @@ export function DisenoUnificadoPage() {
     promoBarIsMarquee: promoBarIsMarquee,
     showFeatured: showFeatured,
     showDiscountPct: showDiscountPct,
+    wholesaleEnabled: planAllowsWholesale(store) ? wholesaleEnabled : false,
   };
 
   return (
@@ -947,6 +951,47 @@ export function DisenoUnificadoPage() {
                         checked={showDiscountPct}
                         onChange={(e) => setShowDiscountPct(e.target.checked)}
                         className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Precios por mayor */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border bg-zinc-50/50 gap-3 animate-in fade-in duration-200">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                      <Layers className="h-4.5 w-4.5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                        Precios por mayor
+                        {!planAllowsWholesale(store) && (
+                          <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                            Disponible en Emprendedor
+                          </Badge>
+                        )}
+                      </h4>
+                      <p className="text-[11px] text-zinc-550">
+                        Permite definir escalas de precios por volumen en tus productos y aplicar descuentos automáticos en el carrito.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {!planAllowsWholesale(store) && (
+                      <Link to="/admin/plan">
+                        <Button size="sm" variant="ghost" className="text-xs h-8 text-primary font-bold">
+                          Ampliar Plan
+                        </Button>
+                      </Link>
+                    )}
+                    <label className={cn("relative inline-flex items-center", planAllowsWholesale(store) ? "cursor-pointer" : "cursor-not-allowed opacity-60")}>
+                      <input
+                        type="checkbox"
+                        checked={planAllowsWholesale(store) && wholesaleEnabled}
+                        disabled={!planAllowsWholesale(store)}
+                        onChange={(e) => setWholesaleEnabled(e.target.checked)}
+                        className="sr-only peer disabled:cursor-not-allowed"
                       />
                       <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
                     </label>

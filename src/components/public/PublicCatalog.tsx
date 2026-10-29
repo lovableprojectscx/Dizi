@@ -135,6 +135,10 @@ import {
   buildStoreUrl,
 } from "@/lib/category-link";
 import { getOfferBadgeText, getDiscount } from "@/lib/discount";
+import { WholesaleHint } from "./WholesaleHint";
+import { WholesaleTable } from "./WholesaleTable";
+import { WholesaleProgress } from "./WholesaleProgress";
+import { isStoreWholesaleEnabled, isWholesaleEligible, getUnitPrice } from "@/lib/wholesale";
 
 const EMPTY_CART: any[] = [];
 const NO_IMAGE_PLACEHOLDER = "/images/sin-foto.svg";
@@ -2185,6 +2189,7 @@ export function PublicCatalog({
             isSample: p.is_sample,
             sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
             variations: Array.isArray(p.variations) ? p.variations : [],
+            wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
             createdAt: p.created_at,
           }));
 
@@ -2300,6 +2305,7 @@ export function PublicCatalog({
             isSample: p.is_sample,
             sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
             variations: Array.isArray(p.variations) ? p.variations : [],
+            wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
             createdAt: p.created_at,
           }));
 
@@ -2318,22 +2324,48 @@ export function PublicCatalog({
   }, [query, activeCat, isMockup, store?.slug, allProducts.length, totalProductsCount]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
-  const cartLines = cart
-    .map((c) => {
-      const product = productsWithImages.find((p) => p.id === c.productId);
-      if (!product) return null;
-      const effectivePrice =
-        c.variationPrice !== null && c.variationPrice !== undefined
-          ? c.variationPrice
-          : product.price;
-      return {
-        ...c,
-        product,
-        effectivePrice,
-      };
-    })
-    .filter((l): l is NonNullable<typeof l> => l !== null);
+
+  // Cantidad total acumulada por producto (las variaciones suman juntas para el precio mayorista, RF-42.6)
+  const productQuantities = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const c of cart) {
+      map.set(c.productId, (map.get(c.productId) || 0) + c.qty);
+    }
+    return map;
+  }, [cart]);
+
+  const cartLines = useMemo(() => {
+    return cart
+      .map((c) => {
+        const product = productsWithImages.find((p) => p.id === c.productId);
+        if (!product) return null;
+        const basePrice =
+          c.variationPrice !== null && c.variationPrice !== undefined
+            ? c.variationPrice
+            : product.price;
+
+        const totalProductQty = productQuantities.get(c.productId) || c.qty;
+        const calc = getUnitPrice(product, totalProductQty, store);
+
+        // Si aplica precio por mayor, usamos el precio unitario del nivel alcanzado
+        const isWholesaleApplied = calc.isWholesaleApplied;
+        const effectivePrice = isWholesaleApplied ? calc.unitPrice : basePrice;
+
+        return {
+          ...c,
+          product,
+          basePrice,
+          effectivePrice,
+          totalProductQty,
+          isWholesaleApplied,
+        };
+      })
+      .filter((l): l is NonNullable<typeof l> => l !== null);
+  }, [cart, productsWithImages, productQuantities, store]);
+
   const total = cartLines.reduce((a, l) => a + (l.effectivePrice || 0) * l.qty, 0);
+  const regularTotal = cartLines.reduce((a, l) => a + (l.basePrice || 0) * l.qty, 0);
+  const totalSavings = Math.max(0, regularTotal - total);
 
   const appendDiziSignature = (text: string) => {
     const showBranding = effectivePlan === "semilla" ? true : (store.showDiziBranding ?? false);
@@ -2364,9 +2396,13 @@ export function PublicCatalog({
       .map((l) => {
         const itemPrice = l.effectivePrice ? l.effectivePrice * l.qty : null;
         const varSuffix = l.variationName ? ` (Opción: ${l.variationName})` : "";
+        if (l.isWholesaleApplied && l.effectivePrice) {
+          return `• ${l.product.name}${varSuffix} x${l.qty} — ${formatPrice(itemPrice)} (${l.qty} u. × ${formatPrice(l.effectivePrice)} precio por mayor)`;
+        }
         return `• ${l.product.name}${varSuffix} x${l.qty} — ${formatPrice(itemPrice)}`;
       })
       .join("\n");
+    const savingsMsg = totalSavings > 0 ? `\nAhorro por mayor: -${formatPrice(totalSavings)}` : "";
     const totalMsg =
       total > 0
         ? `${formatPrice(total)}${hasQuoteItems ? " + artículos a cotizar" : ""}`
@@ -2377,16 +2413,16 @@ export function PublicCatalog({
     const isSingleExtra = single && !single.isMain;
 
     if (hasMultipleSellers) {
-      const orderBody = `quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const orderBody = `quiero hacer este pedido:\n\n${lines}${savingsMsg}\n\nTotal: ${totalMsg}`;
       const signedMsg = appendDiziSignature(orderBody);
       openWhatsAppAction(signedMsg, true);
     } else if (isSingleExtra) {
-      const orderBody = `quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const orderBody = `quiero hacer este pedido:\n\n${lines}${savingsMsg}\n\nTotal: ${totalMsg}`;
       const msg = buildSellerMessage(single.name, orderBody);
       const signedMsg = appendDiziSignature(msg);
       openWhatsAppAction(signedMsg, true);
     } else {
-      const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}\n\nTotal: ${totalMsg}`;
+      const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}${savingsMsg}\n\nTotal: ${totalMsg}`;
       const signedMsg = appendDiziSignature(msg);
       openWhatsAppAction(signedMsg, true);
     }
@@ -2881,7 +2917,7 @@ export function PublicCatalog({
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, name, price, category_id, image, description, is_on_sale, original_price, visible, is_sample, sort_order, variations, created_at")
+          .select("id, name, price, category_id, image, description, is_on_sale, original_price, visible, is_sample, sort_order, variations, wholesale_tiers, created_at")
           .eq("id", targetProductId)
           .eq("store_id", store.id)
           .eq("visible", true)
@@ -2907,6 +2943,7 @@ export function PublicCatalog({
           isSample: data.is_sample,
           sortOrder: data.sort_order !== null && data.sort_order !== undefined ? Number(data.sort_order) : 0,
           variations: Array.isArray(data.variations) ? data.variations : [],
+          wholesaleTiers: Array.isArray(data.wholesale_tiers) ? data.wholesale_tiers : [],
           createdAt: data.created_at,
         };
 
@@ -3961,23 +3998,26 @@ export function PublicCatalog({
                                     </h3>
                                     <div className="flex items-center justify-between mt-1">
                                       <div>
-                                        <span
-                                          className={cn(
-                                            "text-sm font-black text-primary",
-                                            bioTypography === "serif" &&
-                                              "font-serif-editorial font-bold",
-                                          )}
-                                        >
-                                          {formatPrice(p.price)}
-                                        </span>
-                                        {p.isOnSale &&
-                                          p.originalPrice &&
-                                          p.price &&
-                                          p.originalPrice > p.price && (
-                                            <span className="text-[10px] text-muted-foreground line-through ml-1">
-                                              {formatPrice(p.originalPrice)}
-                                            </span>
-                                          )}
+                                        <div className="flex items-baseline gap-1">
+                                          <span
+                                            className={cn(
+                                              "text-sm font-black text-primary",
+                                              bioTypography === "serif" &&
+                                                "font-serif-editorial font-bold",
+                                            )}
+                                          >
+                                            {formatPrice(p.price)}
+                                          </span>
+                                          {p.isOnSale &&
+                                            p.originalPrice &&
+                                            p.price &&
+                                            p.originalPrice > p.price && (
+                                              <span className="text-[10px] text-muted-foreground line-through ml-1">
+                                                {formatPrice(p.originalPrice)}
+                                              </span>
+                                            )}
+                                        </div>
+                                        <WholesaleHint product={p} store={store} className="mt-0.5" />
                                       </div>
                                       <button
                                         onClick={(e) => handleAddToCart(p, e)}
@@ -4057,17 +4097,20 @@ export function PublicCatalog({
                       <p className="text-white text-xs font-semibold line-clamp-1 mb-1">{p.name}</p>
                       <div className="flex items-center justify-between gap-1">
                         <div>
-                          <span className="text-white font-black text-sm">
-                            {formatPrice(p.price)}
-                          </span>
-                          {p.isOnSale &&
-                            p.originalPrice &&
-                            p.price &&
-                            p.originalPrice > p.price && (
-                              <span className="text-white/50 text-[10px] line-through ml-1">
-                                {formatPrice(p.originalPrice)}
-                              </span>
-                            )}
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-white font-black text-sm">
+                              {formatPrice(p.price)}
+                            </span>
+                            {p.isOnSale &&
+                              p.originalPrice &&
+                              p.price &&
+                              p.originalPrice > p.price && (
+                                <span className="text-white/50 text-[10px] line-through ml-1">
+                                  {formatPrice(p.originalPrice)}
+                                </span>
+                              )}
+                          </div>
+                          <WholesaleHint product={p} store={store} variant="overlay" className="mt-0.5" />
                         </div>
                         <div className="flex gap-1">
                           <button
@@ -4466,6 +4509,7 @@ export function PublicCatalog({
                                       </span>
                                     )}
                                 </div>
+                                <WholesaleHint product={p} store={store} className="mt-1" />
                               </div>
 
                               {/* Dionelle-styled Counter & Checkout Block */}
@@ -4628,6 +4672,7 @@ export function PublicCatalog({
                                 {formatPrice(p.originalPrice)}
                               </span>
                             )}
+                          <WholesaleHint product={p} store={store} className="mt-0.5" />
                         </div>
                         <div className="flex gap-1.5 items-center shrink-0">
                           <button
@@ -4790,9 +4835,12 @@ export function PublicCatalog({
                       </div>
                       <div className="p-2.5 flex flex-col flex-1 gap-1.5" style={{ color: "var(--card-foreground)" }}>
                         <h3 style={{ color: "var(--card-foreground)" }} className="text-xs font-semibold line-clamp-2 flex-1">{p.name}</h3>
-                        <span className="text-sm font-black text-primary">
-                          {formatPrice(p.price)}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-black text-primary">
+                            {formatPrice(p.price)}
+                          </span>
+                          <WholesaleHint product={p} store={store} className="self-start" />
+                        </div>
                         <div className="flex gap-1.5">
                           <button
                             onClick={(e) => {
@@ -4860,9 +4908,12 @@ export function PublicCatalog({
                             <h3 className="text-white font-light text-2xl tracking-widest uppercase mb-1">
                               {p.name}
                             </h3>
-                            <span className="text-white font-black text-xl tracking-wider">
-                              {formatPrice(p.price)}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-white font-black text-xl tracking-wider">
+                                {formatPrice(p.price)}
+                              </span>
+                              <WholesaleHint product={p} store={store} variant="overlay" className="mt-1 self-start" />
+                            </div>
                           </div>
                           <div className="flex gap-2">
                             <button
@@ -4933,9 +4984,12 @@ export function PublicCatalog({
                               {p.name}
                             </h3>
                             <div className="flex items-center justify-between">
-                              <span className="text-white font-bold text-sm">
-                                {formatPrice(p.price)}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="text-white font-bold text-sm">
+                                  {formatPrice(p.price)}
+                                </span>
+                                <WholesaleHint product={p} store={store} variant="overlay" className="mt-0.5 self-start" />
+                              </div>
                               <div className="flex gap-1">
                                 <button
                                   onClick={(e) => {
@@ -5027,9 +5081,12 @@ export function PublicCatalog({
                             >
                               {p.name}
                             </h3>
-                            <span className="text-white/80 font-black text-xl">
-                              {formatPrice(p.price)}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-white/80 font-black text-xl">
+                                {formatPrice(p.price)}
+                              </span>
+                              <WholesaleHint product={p} store={store} variant="overlay" className="mt-0.5 self-start" />
+                            </div>
                           </div>
                           <div className="flex gap-2 shrink-0">
                             <button
@@ -5062,9 +5119,12 @@ export function PublicCatalog({
                             {p.name}
                           </h3>
                           <div className="flex items-center justify-between">
-                            <span className="text-white font-black text-sm">
-                              {formatPrice(p.price)}
-                            </span>
+                            <div className="flex flex-col">
+                              <span className="text-white font-black text-sm">
+                                {formatPrice(p.price)}
+                              </span>
+                              <WholesaleHint product={p} store={store} variant="overlay" className="mt-0.5 self-start" />
+                            </div>
                             <div className="flex gap-1">
                               <button
                                 onClick={(e) => {
@@ -5242,12 +5302,15 @@ export function PublicCatalog({
                                 {p.name}
                               </h3>
                               <div className="flex items-center justify-between">
-                                <span
-                                  className="text-xs font-black"
-                                  style={{ color: "var(--primary)" }}
-                                >
-                                  {formatPrice(p.price)}
-                                </span>
+                                <div className="flex flex-col">
+                                  <span
+                                    className="text-xs font-black"
+                                    style={{ color: "var(--primary)" }}
+                                  >
+                                    {formatPrice(p.price)}
+                                  </span>
+                                  <WholesaleHint product={p} store={store} className="mt-0.5" />
+                                </div>
                                 <button
                                   onClick={(e) => handleAddToCart(p, e)}
                                   className="h-6 w-6 flex items-center justify-center hover:opacity-90"
@@ -5334,20 +5397,23 @@ export function PublicCatalog({
                         </h3>
                         <div className="flex items-center justify-between">
                           <div>
-                            <span
-                              className="font-black text-xl"
-                              style={{ color: "var(--primary)" }}
-                            >
-                              {formatPrice(p.price)}
-                            </span>
-                            {p.isOnSale &&
-                              p.originalPrice &&
-                              p.price &&
-                              p.originalPrice > p.price && (
-                                <span className="text-xs line-through ml-2 opacity-40">
-                                  {formatPrice(p.originalPrice)}
-                                </span>
-                              )}
+                            <div className="flex items-baseline gap-2">
+                              <span
+                                className="font-black text-xl"
+                                style={{ color: "var(--primary)" }}
+                              >
+                                {formatPrice(p.price)}
+                              </span>
+                              {p.isOnSale &&
+                                p.originalPrice &&
+                                p.price &&
+                                p.originalPrice > p.price && (
+                                  <span className="text-xs line-through opacity-40">
+                                    {formatPrice(p.originalPrice)}
+                                  </span>
+                                )}
+                            </div>
+                            <WholesaleHint product={p} store={store} className="mt-1" />
                           </div>
                           <div className="flex gap-2">
                             <button
@@ -5452,20 +5518,23 @@ export function PublicCatalog({
                         >
                           {p.name}
                         </h3>
-                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                          <span className="text-xs font-black" style={{ color: "var(--primary)" }}>
-                            {formatPrice(p.price)}
-                          </span>
-                          {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
-                            <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through">
-                              {formatPrice(p.originalPrice)}
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-black" style={{ color: "var(--primary)" }}>
+                              {formatPrice(p.price)}
                             </span>
-                          )}
-                          {store.showDiscountPct && getDiscount(p.price, p.originalPrice) && (
-                            <span className="text-[10px] font-bold" style={{ color: "var(--primary)" }}>
-                              -{getDiscount(p.price, p.originalPrice)?.pct}%
-                            </span>
-                          )}
+                            {p.isOnSale && p.originalPrice && p.price && p.originalPrice > p.price && (
+                              <span style={{ color: "var(--muted-foreground)" }} className="text-[10px] line-through">
+                                {formatPrice(p.originalPrice)}
+                              </span>
+                            )}
+                            {store.showDiscountPct && getDiscount(p.price, p.originalPrice) && (
+                              <span className="text-[10px] font-bold" style={{ color: "var(--primary)" }}>
+                                -{getDiscount(p.price, p.originalPrice)?.pct}%
+                              </span>
+                            )}
+                          </div>
+                          <WholesaleHint product={p} store={store} className="mt-0.5" />
                         </div>
                         <div className="flex justify-center pt-1">
                           <button
@@ -5786,6 +5855,7 @@ export function PublicCatalog({
                                         )}
                                       </span>
                                     )}
+                                  <WholesaleHint product={p} store={store} className="mt-1" />
                                 </div>
                                 <button
                                   type="button"
@@ -6036,6 +6106,7 @@ export function PublicCatalog({
                                           {formatPrice(p.originalPrice)}
                                         </span>
                                       )}
+                                    <WholesaleHint product={p} store={store} className="mt-0.5" />
                                   </div>
                                   <button
                                     type="button"
@@ -6586,6 +6657,7 @@ export function PublicCatalog({
                                             {formatPrice(p.originalPrice)}
                                           </span>
                                         )}
+                                      <WholesaleHint product={p} store={store} className="mt-0.5" />
                                     </div>
                                     <div className="flex items-center gap-1.5 shrink-0">
                                       {/* Consult button */}
@@ -6879,6 +6951,7 @@ export function PublicCatalog({
                                               {formatPrice(p.originalPrice)}
                                             </span>
                                           )}
+                                        <WholesaleHint product={p} store={store} className="mt-0.5" />
                                       </div>
                                       {/* Buttons row */}
                                       <div className="flex items-center gap-1.5">
@@ -7379,6 +7452,7 @@ export function PublicCatalog({
                                         {formatPrice(p.originalPrice)}
                                       </span>
                                     )}
+                                  <WholesaleHint product={p} store={store} className="mt-0.5" />
                                 </div>
                                 <div className="flex items-center gap-1.5 shrink-0">
                                   {/* Consult button (Adapts to Brand Color) */}
@@ -7782,6 +7856,7 @@ export function PublicCatalog({
                                           {formatPrice(p.originalPrice)}
                                         </span>
                                       )}
+                                    <WholesaleHint product={p} store={store} className="mt-0.5" />
                                   </div>
                                   {/* Buttons row */}
                                   <div className="flex items-center gap-1.5">
@@ -7982,6 +8057,7 @@ export function PublicCatalog({
                                   {formatPrice(p.originalPrice)}
                                 </span>
                               )}
+                            <WholesaleHint product={p} store={store} className="mt-0.5" />
                           </div>
                           <button
                             onClick={(e) => {
@@ -8061,18 +8137,21 @@ export function PublicCatalog({
                           <h3 className="text-sm font-semibold leading-snug line-clamp-2 flex-1">
                             {p.name}
                           </h3>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-base font-black text-primary">
-                              {formatPrice(p.price)}
-                            </span>
-                            {p.isOnSale &&
-                              p.originalPrice &&
-                              p.price &&
-                              p.originalPrice > p.price && (
-                                <span className="text-[11px] text-muted-foreground line-through">
-                                  {formatPrice(p.originalPrice)}
-                                </span>
-                              )}
+                          <div className="flex flex-col gap-0.5">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-base font-black text-primary">
+                                {formatPrice(p.price)}
+                              </span>
+                              {p.isOnSale &&
+                                p.originalPrice &&
+                                p.price &&
+                                p.originalPrice > p.price && (
+                                  <span className="text-[11px] text-muted-foreground line-through">
+                                    {formatPrice(p.originalPrice)}
+                                  </span>
+                                )}
+                            </div>
+                            <WholesaleHint product={p} store={store} className="mt-0.5" />
                           </div>
                           <div className="flex gap-2 pt-1">
                             <button
@@ -8450,9 +8529,24 @@ export function PublicCatalog({
                         Opción: {l.variationName}
                       </span>
                     )}
-                    <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
-                      {formatPrice(l.effectivePrice)}
-                    </p>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
+                        {formatPrice(l.effectivePrice)}
+                      </p>
+                      {l.isWholesaleApplied && l.basePrice && (
+                        <span className="text-[10px] line-through text-muted-foreground">
+                          {formatPrice(l.basePrice)}
+                        </span>
+                      )}
+                    </div>
+                    {/* Indicador de precio por mayor o progreso */}
+                    <div className="mt-1">
+                      <WholesaleProgress
+                        product={l.product}
+                        totalProductQty={l.totalProductQty}
+                        store={store}
+                      />
+                    </div>
                   </div>
                   {/* Qty controls */}
                   <div className="flex items-center gap-1 shrink-0">
@@ -8502,6 +8596,26 @@ export function PublicCatalog({
             className="shrink-0 px-5 py-4 space-y-3"
             style={{ borderTop: `1px solid var(--border)`, backgroundColor: "var(--card)" }}
           >
+            {totalSavings > 0 && (
+              <div
+                className="space-y-1.5 pb-2 text-xs border-b"
+                style={{ borderColor: "var(--border)" }}
+              >
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <span>Subtotal regular</span>
+                  <span className="line-through">{formatPrice(regularTotal)}</span>
+                </div>
+                <div className="flex items-center justify-between font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="flex items-center gap-1.5">
+                    <span>Ahorro por mayor</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/15 border border-emerald-500/25">
+                      Aplicado
+                    </span>
+                  </span>
+                  <span>-{formatPrice(totalSavings)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span
                 className={cn(
@@ -8908,6 +9022,9 @@ export function PublicCatalog({
                         )}
                     </div>
                   </div>
+
+                  {/* Tabla de precios por mayor (RF-42.4) */}
+                  <WholesaleTable product={viewingProduct} store={store} />
 
                   {/* ── Variaciones / Opciones del Producto ── */}
                   {viewingProduct.variations && viewingProduct.variations.length > 0 && (

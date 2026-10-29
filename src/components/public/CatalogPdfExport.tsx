@@ -17,6 +17,7 @@ import { formatPhoneDisplay } from "@/lib/phone";
 import { getOfferBadgeText } from "@/lib/discount";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { isStoreWholesaleEnabled, isWholesaleEligible, getTiers } from "@/lib/wholesale";
 
 /* ─────────────────────────────────────────────────────────
    PDF STYLE THEMES
@@ -904,6 +905,18 @@ export async function generateCatalogPdf(
         doc.setFontSize(10);
         doc.setTextColor(t.accent);
         doc.text(safe(formatPrice(prod.price)), textX, priceY);
+      }
+
+      // Precios por mayor en PDF (RF-42.8)
+      if (isStoreWholesaleEnabled(store) && isWholesaleEligible(prod, store)) {
+        const tiers = getTiers(prod, store);
+        if (tiers.length > 0) {
+          const tierStr = tiers.map((tier) => `${tier.min_qty}+ ${formatPrice(tier.price)}`).join(" · ");
+          setFont("normal");
+          doc.setFontSize(5);
+          doc.setTextColor(t.subtext);
+          doc.text(safe(`Mayor: ${tierStr}`), textX, priceY + 3.2);
+        }
       }
 
       // ---- 4. DIBUJAR BOTÓN COMPRAR (WHATSAPP) ----

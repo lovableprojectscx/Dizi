@@ -7,11 +7,14 @@ import {
   PLANS,
   type Product,
   type ProductVariation,
+  type WholesaleTier,
   getEffectivePlan,
   getEffectiveProductLimit,
   isSubscriptionExpired,
   getImageSpec,
 } from "@/lib/types";
+import { WholesaleEditor } from "@/components/admin/WholesaleEditor";
+import { validateTiers } from "@/lib/wholesale";
 import { isProductIncomplete, isPlaceholderOrFilename } from "@/lib/products";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
@@ -521,6 +524,7 @@ function SingleProductDialog({
 }: SingleProductDialogProps) {
   const [editing, setEditing] = useState<Product>(product);
   const [variations, setVariations] = useState<ProductVariation[]>(product.variations || []);
+  const [wholesaleTiers, setWholesaleTiers] = useState<WholesaleTier[]>(product.wholesaleTiers || []);
   const [priceInput, setPriceInput] = useState("");
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
@@ -534,6 +538,7 @@ function SingleProductDialog({
         description: cleanDesc,
       });
       setVariations(product.variations || []);
+      setWholesaleTiers(product.wholesaleTiers || []);
       setPriceInput(
         product.price === null || product.price === undefined || product.price === 0
           ? ""
@@ -598,6 +603,7 @@ function SingleProductDialog({
         priceInput.trim() !== (product.price ? product.price.toString() : "") ||
         editing.image !== (product.image || "") ||
         JSON.stringify(variations) !== JSON.stringify(product.variations || []) ||
+        JSON.stringify(wholesaleTiers) !== JSON.stringify(product.wholesaleTiers || []) ||
         (editing.description || "").trim() !==
           ((product.description || "").replace(/#destacado/g, "").trim());
 
@@ -650,6 +656,21 @@ function SingleProductDialog({
       .map((v) => ({ ...v, name: v.name.trim() }))
       .filter((v) => v.name.length > 0);
 
+    // Si la tienda tiene precios por mayor activos y hay niveles configurados:
+    // Solo bloqueamos si hay errores estructurales (cantidades < 2, precios <= 0, etc.).
+    // Si la dueña bajó el precio por debajo de un nivel, se permite guardar (getTiers lo descarta en catálogo y WholesaleEditor muestra aviso).
+    if (store?.wholesaleEnabled && wholesaleTiers.length > 0) {
+      const validation = validateTiers(wholesaleTiers, parsedPrice, cleanVariations);
+      const isPriceOnlyMismatch =
+        !validation.valid &&
+        Boolean(validation.error?.includes("debe ser menor al precio normal del producto"));
+
+      if (!validation.valid && !isPriceOnlyMismatch) {
+        toast.error(validation.error || "Corrige los niveles de precio por mayor");
+        return;
+      }
+    }
+
     const isStillSampleName =
       Boolean(editing.isSample) &&
       (editing.name.trim().toLowerCase().startsWith("producto de ejemplo") ||
@@ -662,6 +683,7 @@ function SingleProductDialog({
       originalPrice: editing.isOnSale ? parsedOriginalPrice : null,
       description: rawDesc || undefined,
       variations: cleanVariations,
+      wholesaleTiers: wholesaleTiers,
       isSample: isStillSampleName,
     };
 
@@ -1109,6 +1131,17 @@ function SingleProductDialog({
                   </div>
                 )}
               </div>
+
+              {/* ── Precios por Mayor (F42) ── */}
+              {store?.wholesaleEnabled && (
+                <WholesaleEditor
+                  tiers={wholesaleTiers}
+                  onChange={setWholesaleTiers}
+                  productPrice={priceInput === "" ? null : parseFloat(priceInput.replace(",", "."))}
+                  variations={variations}
+                  disabled={saving}
+                />
+              )}
             </div>
           </div>
         </div>
