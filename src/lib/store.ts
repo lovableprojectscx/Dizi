@@ -169,6 +169,7 @@ export const mapStoreFromDB = (row: any): Store => {
     requestedPlan: row.requested_plan ?? null,
     showFeatured: row.show_featured ?? true,
     showDiscountPct: row.show_discount_pct ?? false,
+    wholesaleEnabled: row.wholesale_enabled ?? false,
     mainSellerName: row.main_seller_name ?? undefined,
     mainSellerActive: row.main_seller_active !== undefined ? Boolean(row.main_seller_active) : true,
     sellers: Array.isArray(row.sellers)
@@ -199,6 +200,7 @@ export const mapStoreFromDB = (row: any): Store => {
         sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
         tags: Array.isArray(p.tags) ? p.tags : [],
         variations: Array.isArray(p.variations) ? p.variations : [],
+        wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
         createdAt: p.created_at,
       }))
       .sort((a: any, b: any) => {
@@ -696,6 +698,8 @@ export const useApp = create<AppState>()(
           dbPatch.show_featured = updatedPatch.showFeatured;
         if (updatedPatch.showDiscountPct !== undefined)
           dbPatch.show_discount_pct = updatedPatch.showDiscountPct;
+        if (updatedPatch.wholesaleEnabled !== undefined)
+          dbPatch.wholesale_enabled = updatedPatch.wholesaleEnabled;
         if (updatedPatch.mainSellerName !== undefined)
           dbPatch.main_seller_name = updatedPatch.mainSellerName ? updatedPatch.mainSellerName.trim() : null;
         if (updatedPatch.mainSellerActive !== undefined)
@@ -1208,24 +1212,28 @@ export const useApp = create<AppState>()(
             sort_order: p.sortOrder,
             tags: p.tags || [],
             variations: p.variations || [],
+            wholesale_tiers: p.wholesaleTiers || [],
           };
 
           const { error } = await supabase.from("products").upsert(payload);
 
-          // Fallback resiliente: Si la columna 'variations' aún no está en el schema cache de Supabase,
-          // reintentamos sin 'variations' para que el usuario nunca vea un error bloqueante en pantalla.
+          // Fallback resiliente: Si la columna 'variations' o 'wholesale_tiers' aún no está en el schema cache de Supabase,
+          // reintentamos sin ellas para que el usuario nunca vea un error bloqueante en pantalla.
           if (
             error &&
             (error.message?.includes("variations") ||
+              error.message?.includes("wholesale_tiers") ||
               error.details?.includes("variations") ||
+              error.details?.includes("wholesale_tiers") ||
               error.code === "PGRST204" ||
-              (error as any).hint?.includes("variations"))
+              (error as any).hint?.includes("variations") ||
+              (error as any).hint?.includes("wholesale_tiers"))
           ) {
             console.warn(
-              "[upsertProduct] Columna 'variations' no detectada en schema cache de Supabase. Reintentando guardado compatible...",
+              "[upsertProduct] Columna nueva no detectada en schema cache de Supabase. Reintentando guardado compatible...",
               error.message
             );
-            const { variations, ...safePayload } = payload;
+            const { variations, wholesale_tiers, ...safePayload } = payload;
             const retryRes = await supabase.from("products").upsert(safePayload);
             if (retryRes.error) throw retryRes.error;
           } else if (error) {

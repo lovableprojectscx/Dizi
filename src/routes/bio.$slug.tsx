@@ -220,6 +220,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
       showFeatured: data.show_featured ?? true,
       showDiscountPct: data.show_discount_pct ?? false,
+      wholesaleEnabled: data.wholesale_enabled ?? false,
       mainSellerName: data.main_seller_name ?? undefined,
       mainSellerActive: data.main_seller_active !== undefined ? Boolean(data.main_seller_active) : true,
       sellers: Array.isArray(data.sellers)
@@ -251,6 +252,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
           isSample: p.is_sample,
           sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
           variations: Array.isArray(p.variations) ? p.variations : [],
+          wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
           createdAt: p.created_at,
         }))
         .sort((a: any, b: any) => {

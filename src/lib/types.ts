@@ -198,6 +198,18 @@ export interface Product {
   createdAt?: string;
   /** Lista opcional de variantes disponibles para este producto */
   variations?: ProductVariation[];
+  /** Escala de precios por mayor configurados para este producto (hasta 3 niveles) (F42) */
+  wholesaleTiers?: WholesaleTier[];
+}
+
+/**
+ * Nivel individual de precio por mayor para un producto (F42).
+ */
+export interface WholesaleTier {
+  /** Cantidad mínima de unidades requeridas para acceder a este precio (mínimo 2) */
+  min_qty: number;
+  /** Precio unitario con descuento por volumen */
+  price: number;
 }
 
 /**
@@ -374,6 +386,8 @@ export interface Store {
   showFeatured?: boolean;
   /** Muestra el porcentaje de descuento en las etiquetas de oferta (F40) */
   showDiscountPct?: boolean;
+  /** Activa el módulo y visualización de precios por mayor en el catálogo (F42) */
+  wholesaleEnabled?: boolean;
   /** Nombre personalizado opcional para el vendedor principal (por defecto el nombre de la tienda) */
   mainSellerName?: string | null;
   /** Indica si el vendedor principal (número oficial de la tienda) está activo para recibir chats (F39b) */
@@ -576,6 +590,15 @@ export function getMaxAllowedBanners(store: Store): number {
 export function planAllowsPromoBar(store: Store): boolean {
   const plan = getEffectivePlan(store);
   return plan === "pro" || plan === "ilimitado";
+}
+
+/**
+ * Determina si el plan efectivo de la tienda le permite activar precios por mayor (F42).
+ * Disponible en Emprendedor, Pro e Ilimitado (bloqueado en Semilla).
+ */
+export function planAllowsWholesale(store: Store): boolean {
+  const plan = getEffectivePlan(store);
+  return plan !== "semilla";
 }
 
 /**
