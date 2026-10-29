@@ -2,7 +2,22 @@ import { test, expect } from "@playwright/test";
 import path from "path";
 import fs from "fs";
 
-const CAPTURAS_DIR = path.resolve(process.cwd(), "capturas");
+function resolveCapturasDir(): string {
+  const parent = path.resolve(process.cwd(), "..");
+  try {
+    const entries = fs.readdirSync(parent);
+    const infoDir = entries.find((e) => e.startsWith("INFORMAC"));
+    if (infoDir) {
+      const target = path.join(parent, infoDir, "04-TECNICA", "encargos", "capturas-f42");
+      if (fs.existsSync(target)) return target;
+    }
+  } catch {}
+  const fallback = path.resolve(process.cwd(), "capturas");
+  if (!fs.existsSync(fallback)) fs.mkdirSync(fallback, { recursive: true });
+  return fallback;
+}
+
+const CAPTURAS_DIR = resolveCapturasDir();
 
 test.beforeAll(() => {
   if (!fs.existsSync(CAPTURAS_DIR)) {
@@ -327,8 +342,10 @@ test.describe("F42 · Evidencias Fotográficas de Precios por Mayor", () => {
     await cartButton.click();
     await page.waitForTimeout(600);
 
-    // Verificar precio mayorista aplicado y ahorro
-    await expect(page.locator("body")).toContainText("Precio x mayor: S/ 28.00 c/u");
+    // Verificar precio mayorista aplicado y ahorro solo en el resumen
+    await expect(page.locator("body")).toContainText("Precio x mayor: S/ 28 c/u · 3 u.");
+    const cartBodyText = await page.locator("body").innerText();
+    expect(cartBodyText).not.toContain("Ahorraste en este producto");
     await expect(page.locator("body")).toContainText("Ahorro por mayor");
     await expect(page.locator("body")).toContainText("-S/ 21.00");
     await expect(page.locator("body")).toContainText("S/ 84.00");

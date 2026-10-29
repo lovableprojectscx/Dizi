@@ -31,39 +31,26 @@ export const WholesaleProgress: React.FC<WholesaleProgressProps> = ({
 
   // Si ya se aplicó el precio por mayor
   if (unitCalc.isWholesaleApplied) {
+    const formattedPrice =
+      unitCalc.unitPrice % 1 === 0 ? unitCalc.unitPrice.toString() : unitCalc.unitPrice.toFixed(2);
+    const formattedTargetPrice =
+      next && next.targetPrice % 1 === 0 ? next.targetPrice.toString() : next?.targetPrice.toFixed(2);
+
     return (
       <div
-        className={cn("p-2.5 rounded-xl border text-xs space-y-1.5 transition-colors", className)}
+        className={cn("px-2.5 py-1.5 rounded-xl border text-xs space-y-1 transition-colors", className)}
         style={{
           backgroundColor: "color-mix(in srgb, #10b981 8%, var(--card))",
           borderColor: "color-mix(in srgb, #10b981 25%, var(--border))",
         }}
         aria-live="polite"
       >
-        <div className="flex items-center justify-between font-extrabold text-emerald-600 dark:text-emerald-400">
-          <div className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Precio x mayor: S/ {unitCalc.unitPrice.toFixed(2)} c/u</span>
-          </div>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/20">
-            {totalProductQty} u.
+        <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            Precio x mayor: S/ {formattedPrice} c/u · {totalProductQty} u.
           </span>
         </div>
-
-        {unitCalc.totalSavings > 0 && (
-          <div
-            className="flex items-center justify-between text-[11px] font-semibold pt-1 border-t"
-            style={{
-              color: "var(--foreground)",
-              borderColor: "color-mix(in srgb, #10b981 18%, transparent)",
-            }}
-          >
-            <span style={{ color: "var(--muted-foreground)" }}>Ahorraste en este producto:</span>
-            <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-              S/ {unitCalc.totalSavings.toFixed(2)}
-            </span>
-          </div>
-        )}
 
         {/* Sugerencia a un nivel aún mejor (solo si faltan 3 o menos) */}
         {next && next.shouldShowSuggestion && (
@@ -77,7 +64,9 @@ export const WholesaleProgress: React.FC<WholesaleProgressProps> = ({
             <Lightbulb className="w-3 h-3 text-amber-500 shrink-0" />
             <span>
               Agrega {next.missingUnits} u. más y pagas{" "}
-              <b className="font-bold text-emerald-600 dark:text-emerald-400">S/ {next.targetPrice.toFixed(2)} c/u</b>
+              <b className="font-bold text-emerald-600 dark:text-emerald-400">
+                S/ {formattedTargetPrice} c/u
+              </b>
             </span>
           </div>
         )}

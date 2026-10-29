@@ -235,4 +235,48 @@ describe("F42 · Precios por mayor (Motor de reglas wholesale.ts)", () => {
     expect(nextC?.missingUnits).toBe(2);
     expect(nextC?.shouldShowSuggestion).toBe(true);
   });
+
+  // 10. Revisión de Claude: un producto con un nivel a S/ 28 cuyo precio baja a S/ 27 se guarda, y el catálogo no aplica el nivel
+  it("un producto con un nivel a S/ 28 cuyo precio baja a S/ 27 se guarda, y el catálogo no aplica el nivel", () => {
+    // Producto con nivel a S/ 28 cuyo precio regular baja a S/ 27
+    const productoConNivel28: Product = {
+      ...poloBase,
+      price: 35,
+      wholesaleTiers: [{ min_qty: 3, price: 28 }],
+    };
+
+    const productoPrecioRebajado: Product = {
+      ...productoConNivel28,
+      price: 27,
+    };
+
+    // 1. Guardado permitido: la discrepancia es únicamente de precio frente al tier previo
+    const validation = validateTiers(
+      productoPrecioRebajado.wholesaleTiers || [],
+      productoPrecioRebajado.price,
+      productoPrecioRebajado.variations,
+    );
+    const isPriceOnlyMismatch =
+      !validation.valid &&
+      Boolean(validation.error?.includes("debe ser menor al precio normal del producto"));
+    expect(isPriceOnlyMismatch).toBe(true);
+
+    // 2. getTiers descarta el nivel porque 28 >= 27
+    const tiersEnCatalogo = getTiers(productoPrecioRebajado, storeEmprendedor);
+    expect(tiersEnCatalogo).toHaveLength(0);
+
+    // 3. No es elegible para mayorista al no tener niveles válidos inferiores al precio
+    expect(isWholesaleEligible(productoPrecioRebajado, storeEmprendedor)).toBe(false);
+
+    // 4. El catálogo no aplica el nivel: con 3 unidades cobra S/ 27 y ahorro S/ 0
+    const calc = getUnitPrice(productoPrecioRebajado, 3, storeEmprendedor);
+    expect(calc.isWholesaleApplied).toBe(false);
+    expect(calc.unitPrice).toBe(27);
+    expect(calc.totalSavings).toBe(0);
+    expect(calc.appliedTier).toBeNull();
+
+    // 5. El carrito no sugiere niveles inválidos
+    const next = getNextTier(productoPrecioRebajado, 2, storeEmprendedor);
+    expect(next).toBeNull();
+  });
 });

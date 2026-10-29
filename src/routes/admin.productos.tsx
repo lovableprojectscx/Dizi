@@ -656,10 +656,16 @@ function SingleProductDialog({
       .map((v) => ({ ...v, name: v.name.trim() }))
       .filter((v) => v.name.length > 0);
 
-    // Si la tienda tiene precios por mayor activos y hay niveles configurados, validar antes de guardar
+    // Si la tienda tiene precios por mayor activos y hay niveles configurados:
+    // Solo bloqueamos si hay errores estructurales (cantidades < 2, precios <= 0, etc.).
+    // Si la dueña bajó el precio por debajo de un nivel, se permite guardar (getTiers lo descarta en catálogo y WholesaleEditor muestra aviso).
     if (store?.wholesaleEnabled && wholesaleTiers.length > 0) {
       const validation = validateTiers(wholesaleTiers, parsedPrice, cleanVariations);
-      if (!validation.valid) {
+      const isPriceOnlyMismatch =
+        !validation.valid &&
+        Boolean(validation.error?.includes("debe ser menor al precio normal del producto"));
+
+      if (!validation.valid && !isPriceOnlyMismatch) {
         toast.error(validation.error || "Corrige los niveles de precio por mayor");
         return;
       }

@@ -56,3 +56,4 @@ docs/*
 # Evidencia de pruebas (se regenera en cada corrida)
 playwright-report/
 test-results/
+capturas/

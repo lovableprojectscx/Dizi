@@ -35,6 +35,11 @@ DECLARE
   var_elem jsonb;
   var_price numeric;
 BEGIN
+  -- Si es un UPDATE y wholesale_tiers no cambió, permitir (ej. cambio de precio del producto)
+  IF TG_OP = 'UPDATE' AND OLD.wholesale_tiers IS NOT DISTINCT FROM NEW.wholesale_tiers THEN
+    RETURN NEW;
+  END IF;
+
   -- Si wholesale_tiers es nulo o vacío, asignar default '[]' y permitir
   IF NEW.wholesale_tiers IS NULL THEN
     NEW.wholesale_tiers := '[]'::jsonb;
@@ -118,7 +123,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_validate_wholesale_tiers ON public.products;
 CREATE TRIGGER trg_validate_wholesale_tiers
-BEFORE INSERT OR UPDATE OF wholesale_tiers, price, variations
+BEFORE INSERT OR UPDATE OF wholesale_tiers
 ON public.products
 FOR EACH ROW
 EXECUTE FUNCTION public.validate_wholesale_tiers();

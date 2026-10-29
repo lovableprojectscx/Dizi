@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProductVariation, WholesaleTier } from "@/lib/types";
 import { hasDisparateVariationPrices, validateTiers } from "@/lib/wholesale";
+import { cn } from "@/lib/utils";
 
 interface WholesaleEditorProps {
   tiers: WholesaleTier[];
@@ -41,6 +42,15 @@ export const WholesaleEditor: React.FC<WholesaleEditorProps> = ({
   );
 
   const validation = validateTiers(tiers, basePrice, variations);
+
+  // Niveles que quedaron con precio >= precio base (ej. tras bajar el precio del producto)
+  const invalidPriceTiers =
+    basePrice !== null && basePrice > 0
+      ? tiers.filter((t) => typeof t.price === "number" && t.price >= basePrice)
+      : [];
+  const isOnlyPriceInvalid =
+    invalidPriceTiers.length > 0 &&
+    validation.error?.includes("debe ser menor al precio normal del producto");
 
   const handleAddTier = () => {
     if (tiers.length >= 3) return;
@@ -156,6 +166,23 @@ export const WholesaleEditor: React.FC<WholesaleEditorProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
+              {/* Aviso amarillo si hay niveles guardados que quedaron inválidos */}
+              {invalidPriceTiers.length > 0 && (
+                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/80 flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <span className="font-bold block">
+                      {invalidPriceTiers.length === 1
+                        ? "Un nivel de precio por mayor quedó inválido"
+                        : "Hay niveles de precio por mayor que quedaron inválidos"}
+                    </span>
+                    <span className="text-[11px] text-amber-800 dark:text-amber-300 block">
+                      El precio del producto es S/ {basePrice?.toFixed(2)}. Corrige o elimina los niveles que tengan precio igual o mayor para que el catálogo pueda aplicarlos.
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Lista de niveles */}
               {tiers.length === 0 ? (
                 <div className="p-4 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center space-y-2">
@@ -174,13 +201,19 @@ export const WholesaleEditor: React.FC<WholesaleEditorProps> = ({
               ) : (
                 <div className="space-y-2.5">
                   {tiers.map((tier, idx) => {
+                    const isTierPriceInvalid = basePrice !== null && basePrice > 0 && tier.price >= basePrice;
                     const savingsPerUnit = basePrice && basePrice > tier.price ? basePrice - tier.price : 0;
                     const savingsPct = basePrice && basePrice > 0 ? Math.round((savingsPerUnit / basePrice) * 100) : 0;
 
                     return (
                       <div
                         key={idx}
-                        className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 space-y-2"
+                        className={cn(
+                          "p-3 rounded-xl border space-y-2 transition-colors",
+                          isTierPriceInvalid
+                            ? "border-amber-300 dark:border-amber-700/80 bg-amber-50/50 dark:bg-amber-950/20"
+                            : "border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40"
+                        )}
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
@@ -235,13 +268,20 @@ export const WholesaleEditor: React.FC<WholesaleEditorProps> = ({
                           </div>
                         </div>
 
-                        {/* Ahorro calculado */}
+                        {/* Ahorro calculado o aviso de nivel inválido */}
                         <div className="flex items-center justify-between text-[11px] pt-0.5">
-                          <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                            {savingsPct > 0
-                              ? `Ahorro: -${savingsPct}% (S/ ${savingsPerUnit.toFixed(2)} c/u)`
-                              : "Sin ahorro frente al precio base"}
-                          </span>
+                          {isTierPriceInvalid ? (
+                            <span className="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                              Inválido: debe ser menor a S/ {basePrice?.toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                              {savingsPct > 0
+                                ? `Ahorro: -${savingsPct}% (S/ ${savingsPerUnit.toFixed(2)} c/u)`
+                                : "Sin ahorro frente al precio base"}
+                            </span>
+                          )}
                           <span className="text-muted-foreground text-[10px]">Pedidos ≥ {tier.min_qty} u.</span>
                         </div>
                       </div>
@@ -263,8 +303,8 @@ export const WholesaleEditor: React.FC<WholesaleEditorProps> = ({
                 </div>
               )}
 
-              {/* Mensaje de validación si hay error */}
-              {!validation.valid && (
+              {/* Mensaje de validación si hay error estructural no cubierto por el aviso de precio */}
+              {!validation.valid && !isOnlyPriceInvalid && (
                 <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 flex items-start gap-2 text-xs text-red-600 dark:text-red-400 font-medium">
                   <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>{validation.error}</span>
@@ -272,7 +312,7 @@ export const WholesaleEditor: React.FC<WholesaleEditorProps> = ({
               )}
 
               {/* SIMULADOR EN VIVO PARA EL COMERCIANTE (RF-42.2) */}
-              {tiers.length > 0 && validation.valid && (
+              {tiers.length > 0 && validation.valid && invalidPriceTiers.length === 0 && (
                 <div className="p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-2">
                   <div className="flex items-center justify-between text-xs font-extrabold text-indigo-950 dark:text-indigo-200">
                     <span className="flex items-center gap-1.5">

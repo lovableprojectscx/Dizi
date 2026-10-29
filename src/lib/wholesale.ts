@@ -41,19 +41,41 @@ export function isWholesaleEligible(
   if (product.price === null || product.price === undefined || product.price <= 0) return false;
   if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) return false;
   if (hasDisparateVariationPrices(product)) return false;
+
+  // Debe tener al menos un nivel con precio menor al precio regular del producto
+  const basePrice = Number(product.price);
+  const hasValidTier = product.wholesaleTiers.some(
+    (t) =>
+      typeof t.min_qty === "number" &&
+      typeof t.price === "number" &&
+      t.min_qty >= 2 &&
+      t.price > 0 &&
+      t.price < basePrice,
+  );
+  if (!hasValidTier) return false;
+
   return true;
 }
 
 /**
  * Obtiene los niveles válidos y ordenados ascendentemente por cantidad mínima.
+ * Descarta los niveles con price >= precio del producto.
  */
 export function getTiers(
   product: Product,
   store?: Store | { wholesaleEnabled?: boolean; plan?: string } | null,
 ): WholesaleTier[] {
   if (!isWholesaleEligible(product, store)) return [];
+  const basePrice = Number(product.price ?? 0);
   return [...(product.wholesaleTiers || [])]
-    .filter((t) => typeof t.min_qty === "number" && typeof t.price === "number" && t.min_qty >= 2 && t.price > 0)
+    .filter(
+      (t) =>
+        typeof t.min_qty === "number" &&
+        typeof t.price === "number" &&
+        t.min_qty >= 2 &&
+        t.price > 0 &&
+        t.price < basePrice,
+    )
     .sort((a, b) => a.min_qty - b.min_qty);
 }
 
