@@ -52,8 +52,7 @@ se consulta producción (`pg_get_functiondef`, `pg_policies`, `information_schem
 
 1. **Respaldo antes de cualquier cambio** en producción (ver encargo Fase 0). Sin respaldo verificado, no se toca.
 2. **Todo cambio de esquema, función o política va como archivo nuevo en `supabase/migrations/`**
-   con nombre `AAAAMMDDHHMMSS_descripcion.sql`, y se aplica con el CLI (`supabase db push` o `apply_migration`)
-   para que quede registrado. **Prohibido** aplicar SQL suelto en el SQL Editor o desde scripts de `scratch/`.
+   con nombre `AAAAMMDDHHMMSS_descripcion.sql`. Se aplica con `npx.cmd supabase db query --linked --file supabase/migrations/<archivo>.sql` y se registra con `npx.cmd supabase migration repair --status applied <versión>` (`db push` está bloqueado por el historial de septiembre: no lo uses) para que quede registrado. **Prohibido** aplicar SQL suelto en el SQL Editor o desde scripts de `scratch/`.
 3. Cada migración debe ser **idempotente** (`DROP ... IF EXISTS`, `CREATE OR REPLACE`) y traer al final,
    comentado, el SQL para revertirla.
 4. Funciones `SECURITY DEFINER` siempre con `SET search_path = public, pg_temp`.
