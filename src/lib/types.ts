@@ -79,6 +79,7 @@ export const PLANS: Record<PlanId, Plan> = {
     annualPrice: 179,
     features: [
       "Hasta 100 productos",
+      "Precios por mayor",
       "Sin marca ni publicidad de Dizi",
       "Catálogo en PDF",
       "1 banner de portada",

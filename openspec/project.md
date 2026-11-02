@@ -9,23 +9,25 @@ Dizi es una plataforma SaaS multi-tienda que permite a pequeños comercios perua
 - **Frontend:** React 19 + TypeScript + Vite 7, TanStack Router/Start (rutas por archivos), Zustand, Tailwind CSS v4 + shadcn/ui
 - **Backend:** Supabase (PostgreSQL + Auth + Storage), RPCs `SECURITY DEFINER`, 32 migraciones SQL versionadas en `supabase/migrations/`
 - **Despliegue:** Vercel (hosting + funciones `/api/seo`) y Supabase Cloud
-- **Pruebas:** Vitest (66 casos PU/PI), Playwright (5 escenarios E2E), pipeline CI en `.github/workflows/ci.yml` con quality gate de cobertura ≥ 80% (`scripts/check-coverage.js`)
+- **Pruebas:** Vitest (63 suites, 562 pruebas PU/PI), Playwright (escenarios E2E), pipeline CI en `.github/workflows/ci.yml`
+- **Gestión de especificaciones:** OpenSpec en `openspec/` con sincronización continua contra producción.
 
 ## Convenciones
 
 - Enfoque **spec-driven**: la especificación se escribe y aprueba antes que el código; todo cambio de comportamiento actualiza primero su spec.
-- Cada requisito tiene criterios de aceptación en formato **Given-When-Then (Gherkin)** de los que derivan los casos de prueba (matriz CP-01…CP-14 del informe IS-489).
+- Cada requisito tiene criterios de aceptación en formato **Given-When-Then (Gherkin)** de los que derivan los casos de prueba.
 - TypeScript estricto, ESLint + Prettier, commits convencionales.
 
 ## Estructura de especificaciones
 
-| Capacidad | Spec | Requisitos |
+| Capacidad | Spec | Requisitos cubiertos |
 |---|---|---|
-| Catálogo público | `specs/catalogo-publico/spec.md` | RF-01, RF-03 |
-| Pedidos por WhatsApp | `specs/pedidos-whatsapp/spec.md` | RF-02 |
+| Catálogo público | `specs/catalogo-publico/spec.md` | RF-01, RF-03, RF-35, RF-36, RF-37, RF-38, RF-40, RF-42 |
+| Pedidos por WhatsApp | `specs/pedidos-whatsapp/spec.md` | RF-02, RF-39, RF-39b, RF-42.7 |
+| Catálogo en PDF | `specs/catalogo-pdf/spec.md` | RF-21, RF-39, RF-40, RF-42.8 |
 | Registro por invitaciones | `specs/registro-invitaciones/spec.md` | RF-04 |
-| Planes y suscripciones | `specs/planes-suscripciones/spec.md` | RF-05, RF-06 |
-| Seguridad multi-tenant | `specs/seguridad-multitenant/spec.md` | RF-07, RF-08 |
+| Planes y suscripciones | `specs/planes-suscripciones/spec.md` | RF-05, RF-06, RF-39, RF-40, RF-42 |
+| Seguridad multi-tenant | `specs/seguridad-multitenant/spec.md` | RF-07, RF-08, Hotfix RLS (productos ocultos) |
 | Libro de Reclamaciones | `specs/libro-reclamaciones/spec.md` | RF-09 |
 | Bio-Link | `specs/bio-link/spec.md` | RF-10 |
-| Requisitos no funcionales | `specs/no-funcionales/spec.md` | RNF-01…RNF-05 |
+| Requisitos no funcionales | `specs/no-funcionales/spec.md` | RNF-01…RNF-05, RNF-42 |
