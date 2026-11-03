@@ -36,6 +36,7 @@ import {
   LogOut,
   BadgePercent,
   Users,
+  ClipboardList,
 } from "lucide-react";
 import { getActiveSession, getSessionSync, getUserRole, signOut } from "@/lib/auth";
 
@@ -79,6 +80,7 @@ const items = [
   { title: "Tiendas", url: "/super/tiendas", icon: StoreIcon },
   { title: "Promociones", url: "/super/promociones", icon: BadgePercent },
   { title: "Referidos", url: "/super/referidos", icon: Users },
+  { title: "Encuestas", url: "/super/encuestas", icon: ClipboardList },
 ];
 
 /**
