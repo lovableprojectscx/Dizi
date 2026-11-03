@@ -11,6 +11,7 @@
  */
 
 import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
 import { useEffect, useState, useMemo } from "react";
 import { useApp } from "@/lib/store";
 import {

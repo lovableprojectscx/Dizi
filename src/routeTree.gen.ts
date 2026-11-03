@@ -24,6 +24,7 @@ import { Route as SuperTiendasRouteImport } from './routes/super.tiendas'
 import { Route as SuperReferidosRouteImport } from './routes/super.referidos'
 import { Route as SuperPromocionesRouteImport } from './routes/super.promociones'
 import { Route as SuperLoginRouteImport } from './routes/super.login'
+import { Route as SuperEncuestasRouteImport } from './routes/super.encuestas'
 import { Route as SuperDashboardRouteImport } from './routes/super.dashboard'
 import { Route as BioSlugRouteImport } from './routes/bio.$slug'
 import { Route as AdminVendedoresRouteImport } from './routes/admin.vendedores'
@@ -31,6 +32,7 @@ import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaci
 import { Route as AdminProductosRouteImport } from './routes/admin.productos'
 import { Route as AdminPlanRouteImport } from './routes/admin.plan'
 import { Route as AdminLinkBioRouteImport } from './routes/admin.link-bio'
+import { Route as AdminEncuestaRouteImport } from './routes/admin.encuesta'
 import { Route as AdminDisenoPremiumRouteImport } from './routes/admin.diseno-premium'
 import { Route as AdminDisenoRouteImport } from './routes/admin.diseno'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
@@ -113,6 +115,11 @@ const SuperLoginRoute = SuperLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperEncuestasRoute = SuperEncuestasRouteImport.update({
+  id: '/encuestas',
+  path: '/encuestas',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperDashboardRoute = SuperDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -146,6 +153,11 @@ const AdminPlanRoute = AdminPlanRouteImport.update({
 const AdminLinkBioRoute = AdminLinkBioRouteImport.update({
   id: '/link-bio',
   path: '/link-bio',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEncuestaRoute = AdminEncuestaRouteImport.update({
+  id: '/encuesta',
+  path: '/encuesta',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminDisenoPremiumRoute = AdminDisenoPremiumRouteImport.update({
@@ -195,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
+  '/admin/encuesta': typeof AdminEncuestaRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
@@ -202,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
+  '/super/encuestas': typeof SuperEncuestasRoute
   '/super/login': typeof SuperLoginRoute
   '/super/promociones': typeof SuperPromocionesRoute
   '/super/referidos': typeof SuperReferidosRoute
@@ -223,6 +237,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
+  '/admin/encuesta': typeof AdminEncuestaRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
@@ -230,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
+  '/super/encuestas': typeof SuperEncuestasRoute
   '/super/login': typeof SuperLoginRoute
   '/super/promociones': typeof SuperPromocionesRoute
   '/super/referidos': typeof SuperReferidosRoute
@@ -254,6 +270,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/diseno': typeof AdminDisenoRoute
   '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
+  '/admin/encuesta': typeof AdminEncuestaRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
@@ -261,6 +278,7 @@ export interface FileRoutesById {
   '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
   '/super/dashboard': typeof SuperDashboardRoute
+  '/super/encuestas': typeof SuperEncuestasRoute
   '/super/login': typeof SuperLoginRoute
   '/super/promociones': typeof SuperPromocionesRoute
   '/super/referidos': typeof SuperReferidosRoute
@@ -286,6 +304,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/diseno'
     | '/admin/diseno-premium'
+    | '/admin/encuesta'
     | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
@@ -293,6 +312,7 @@ export interface FileRouteTypes {
     | '/admin/vendedores'
     | '/bio/$slug'
     | '/super/dashboard'
+    | '/super/encuestas'
     | '/super/login'
     | '/super/promociones'
     | '/super/referidos'
@@ -314,6 +334,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/diseno'
     | '/admin/diseno-premium'
+    | '/admin/encuesta'
     | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
@@ -321,6 +342,7 @@ export interface FileRouteTypes {
     | '/admin/vendedores'
     | '/bio/$slug'
     | '/super/dashboard'
+    | '/super/encuestas'
     | '/super/login'
     | '/super/promociones'
     | '/super/referidos'
@@ -344,6 +366,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/diseno'
     | '/admin/diseno-premium'
+    | '/admin/encuesta'
     | '/admin/link-bio'
     | '/admin/plan'
     | '/admin/productos'
@@ -351,6 +374,7 @@ export interface FileRouteTypes {
     | '/admin/vendedores'
     | '/bio/$slug'
     | '/super/dashboard'
+    | '/super/encuestas'
     | '/super/login'
     | '/super/promociones'
     | '/super/referidos'
@@ -481,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperLoginRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/encuestas': {
+      id: '/super/encuestas'
+      path: '/encuestas'
+      fullPath: '/super/encuestas'
+      preLoaderRoute: typeof SuperEncuestasRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/dashboard': {
       id: '/super/dashboard'
       path: '/dashboard'
@@ -528,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/link-bio'
       fullPath: '/admin/link-bio'
       preLoaderRoute: typeof AdminLinkBioRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/encuesta': {
+      id: '/admin/encuesta'
+      path: '/encuesta'
+      fullPath: '/admin/encuesta'
+      preLoaderRoute: typeof AdminEncuestaRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/diseno-premium': {
@@ -581,6 +619,7 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDisenoRoute: typeof AdminDisenoRoute
   AdminDisenoPremiumRoute: typeof AdminDisenoPremiumRoute
+  AdminEncuestaRoute: typeof AdminEncuestaRoute
   AdminLinkBioRoute: typeof AdminLinkBioRoute
   AdminPlanRoute: typeof AdminPlanRoute
   AdminProductosRoute: typeof AdminProductosRoute
@@ -595,6 +634,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDisenoRoute: AdminDisenoRoute,
   AdminDisenoPremiumRoute: AdminDisenoPremiumRoute,
+  AdminEncuestaRoute: AdminEncuestaRoute,
   AdminLinkBioRoute: AdminLinkBioRoute,
   AdminPlanRoute: AdminPlanRoute,
   AdminProductosRoute: AdminProductosRoute,
@@ -607,6 +647,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface SuperRouteChildren {
   SuperDashboardRoute: typeof SuperDashboardRoute
+  SuperEncuestasRoute: typeof SuperEncuestasRoute
   SuperLoginRoute: typeof SuperLoginRoute
   SuperPromocionesRoute: typeof SuperPromocionesRoute
   SuperReferidosRoute: typeof SuperReferidosRoute
@@ -616,6 +657,7 @@ interface SuperRouteChildren {
 
 const SuperRouteChildren: SuperRouteChildren = {
   SuperDashboardRoute: SuperDashboardRoute,
+  SuperEncuestasRoute: SuperEncuestasRoute,
   SuperLoginRoute: SuperLoginRoute,
   SuperPromocionesRoute: SuperPromocionesRoute,
   SuperReferidosRoute: SuperReferidosRoute,

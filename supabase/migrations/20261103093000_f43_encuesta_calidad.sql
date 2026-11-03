@@ -114,14 +114,19 @@ BEGIN
 
   v_is_super := (COALESCE(((auth.jwt() -> 'app_metadata'::text) ->> 'role'::text), ''::text) = 'super_admin'::text);
 
+  -- 1b. Validar versión de encuesta admitida (F43 v1: 2026-11)
+  IF p_version IS DISTINCT FROM '2026-11' THEN
+    RAISE EXCEPTION 'Versión de encuesta no válida.' USING ERRCODE = '22023';
+  END IF;
+
   -- 2. Validar que la tienda exista
   SELECT * INTO v_store FROM public.stores WHERE id = p_store_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Tienda no encontrada.' USING ERRCODE = '02000';
   END IF;
 
-  -- 3. Validar permisos: solo el dueño de la tienda o super_admin
-  IF v_store.owner_id != auth.uid() AND NOT v_is_super THEN
+  -- 3. Validar permisos: solo el dueño de la tienda o super_admin (maneja owner_id NULL con IS DISTINCT FROM)
+  IF (v_store.owner_id IS DISTINCT FROM auth.uid()) AND NOT v_is_super THEN
     RAISE EXCEPTION 'No autorizado. Solo el dueño de la tienda puede enviar la encuesta.' USING ERRCODE = '42501';
   END IF;
 

@@ -407,13 +407,13 @@ function EncuestaPage() {
                   </label>
                   <Textarea
                     value={answers[q.followUp.id] || ""}
-                    onChange={(e) => handleTextChange(q.followUp.id, e.target.value)}
+                    onChange={(e) => handleTextChange(q.followUp!.id, e.target.value)}
                     placeholder="Cuéntanos más detalles si deseas..."
-                    maxLength={q.followUp.maxLength}
+                    maxLength={q.followUp?.maxLength || 300}
                     className="min-h-[70px] rounded-xl text-xs sm:text-sm resize-none"
                   />
                   <div className="flex justify-end text-[11px] text-muted-foreground">
-                    <span>{(answers[q.followUp.id] || "").length}/{q.followUp.maxLength}</span>
+                    <span>{(answers[q.followUp.id] || "").length}/{q.followUp?.maxLength || 300}</span>
                   </div>
                 </div>
               )}
