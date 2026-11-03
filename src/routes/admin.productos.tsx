@@ -16,6 +16,7 @@ import {
 import { WholesaleEditor } from "@/components/admin/WholesaleEditor";
 import { validateTiers } from "@/lib/wholesale";
 import { isProductIncomplete, isPlaceholderOrFilename } from "@/lib/products";
+import { ProductConflictError } from "@/lib/product-sync";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
 import {
@@ -529,6 +530,7 @@ function SingleProductDialog({
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fetchProductFresh = useApp((s) => s.fetchProductFresh);
 
   useEffect(() => {
     if (open) {
@@ -698,6 +700,32 @@ function SingleProductDialog({
       }
     } catch (err: any) {
       console.error("[save product] Error:", err);
+      if (err instanceof ProductConflictError || err?.code === "PRODUCT_VERSION_CONFLICT") {
+        toast.error(
+          "Este producto se modificó desde otro dispositivo. Te mostramos la versión actual; revisa y vuelve a guardar.",
+          { duration: 6000 }
+        );
+        const fresh = err.freshProduct || (await fetchProductFresh(store.id, editing.id));
+        if (fresh) {
+          const cleanDesc = (fresh.description || "").replace(/#destacado/g, "").trim();
+          setEditing({
+            ...fresh,
+            description: cleanDesc,
+          });
+          setVariations(fresh.variations || []);
+          setWholesaleTiers(fresh.wholesaleTiers || []);
+          setPriceInput(
+            fresh.price === null || fresh.price === undefined || fresh.price === 0
+              ? ""
+              : fresh.price.toString()
+          );
+          setOriginalPriceInput(fresh.originalPrice ? fresh.originalPrice.toString() : "");
+          setIsFeatured(
+            fresh.description?.includes("#destacado") || fresh.name?.includes("#destacado") || false
+          );
+        }
+        return;
+      }
       const isLimitError =
         err?.code === "P0001" ||
         err?.message?.toLowerCase().includes("límite de productos") ||
@@ -1691,6 +1719,7 @@ function ProductsPage() {
   const swap = useApp((s) => s.swapProductsOrder);
   const upsertCategory = useApp((s) => s.upsertCategory);
   const deleteCategory = useApp((s) => s.deleteCategory);
+  const fetchProductFresh = useApp((s) => s.fetchProductFresh);
 
   const plan = PLANS[store.plan];
   const effectivePlan = PLANS[getEffectivePlan(store)];
@@ -1778,10 +1807,21 @@ function ProductsPage() {
     return map;
   }, [store.categories]);
 
-  const handleOpenEdit = useCallback((p: Product) => {
-    setEditingProduct(p);
-    setIsSingleDialogOpen(true);
-  }, []);
+  const handleOpenEdit = useCallback(
+    async (p: Product) => {
+      if (p.id) {
+        const fresh = await fetchProductFresh(store.id, p.id);
+        if (fresh) {
+          setEditingProduct(fresh);
+          setIsSingleDialogOpen(true);
+          return;
+        }
+      }
+      setEditingProduct(p);
+      setIsSingleDialogOpen(true);
+    },
+    [fetchProductFresh, store.id]
+  );
 
   const handleConfirmDelete = useCallback((p: Product) => {
     showConfirm({
@@ -2113,7 +2153,15 @@ function ProductsPage() {
     setIsSingleDialogOpen(true);
   };
 
-  const openEdit = (p: Product) => {
+  const openEdit = async (p: Product) => {
+    if (p.id) {
+      const fresh = await fetchProductFresh(store.id, p.id);
+      if (fresh) {
+        setEditingProduct(fresh);
+        setIsSingleDialogOpen(true);
+        return;
+      }
+    }
     setEditingProduct(p);
     setIsSingleDialogOpen(true);
   };

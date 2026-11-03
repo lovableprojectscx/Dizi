@@ -35,6 +35,7 @@ import {
   LifeBuoy,
   ChevronRight,
   Users,
+  Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getEffectivePlan } from "@/lib/types";
@@ -103,11 +104,29 @@ function AdminLayout() {
     pathname === "/admin/reclamaciones" ||
     pathname.startsWith("/ayuda");
 
+  const isValidating = useApp((s) => s.isValidating);
+
+  // RF-44.1 / RF-44.2 (SWR): Al entrar al panel, revalidar siempre en segundo plano
   useEffect(() => {
-    if (stores.length === 0 && !fetchError) {
-      fetchData();
-    }
-  }, [stores.length, fetchError, fetchData]);
+    fetchData(true);
+  }, [fetchData]);
+
+  // RF-44.1: Al volver a la pestaña (visible), si pasaron más de 60 s, consultar de nuevo
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        const lastFetched = useApp.getState().lastFetched;
+        if (!lastFetched || Date.now() - lastFetched > 60 * 1000) {
+          fetchData(true);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchData]);
 
   useEffect(() => {
     if (stores.length > 0 && !storeId) {
@@ -256,7 +275,19 @@ function AdminLayout() {
           <header className="hidden md:flex h-14 border-b items-center px-3 gap-3 bg-card sticky top-0 z-20">
             <SidebarTrigger />
             <div className="flex-1" />
+            {isValidating && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-2 select-none animate-pulse">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span>Actualizando…</span>
+              </div>
+            )}
           </header>
+          {isValidating && (
+            <div className="md:hidden fixed top-3 right-3 z-50 flex items-center gap-1.5 bg-background/90 backdrop-blur border shadow-sm px-2.5 py-1 rounded-full text-[11px] text-muted-foreground animate-pulse select-none">
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              <span>Actualizando…</span>
+            </div>
+          )}
           <main className="flex-1 p-4 md:p-6 bg-background pb-20 md:pb-6">
             <Outlet />
           </main>

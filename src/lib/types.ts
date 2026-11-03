@@ -201,6 +201,10 @@ export interface Product {
   variations?: ProductVariation[];
   /** Escala de precios por mayor configurados para este producto (hasta 3 niveles) (F42) */
   wholesaleTiers?: WholesaleTier[];
+  /** Número de versión incremental para control de concurrencia optimista (F44) */
+  version?: number;
+  /** Fecha y hora de última modificación del producto (F44) */
+  updatedAt?: string;
 }
 
 /**
