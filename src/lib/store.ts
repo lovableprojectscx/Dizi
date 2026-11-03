@@ -21,6 +21,7 @@ import { createThumbnailFromBase64, IMAGE_PRESETS } from "./image-utils";
 import { toast } from "sonner";
 import { hexLuminance } from "./utils";
 import { getUserRole } from "./auth";
+import { SURVEY_VERSION, type SurveyResponseRecord } from "./survey";
 
 /**
  * Invalida el cache público almacenado en `localStorage` y `sessionStorage` para una tienda.
@@ -282,6 +283,23 @@ interface AppState {
   incViews: (storeId: string) => void;
   /** Elimina definitivamente una tienda y sus datos en cascada */
   deleteStore: (storeId: string) => Promise<void>;
+  /** Envía las respuestas de la encuesta de calidad (F43) */
+  submitSurvey: (
+    storeId: string,
+    version: string,
+    answers: Record<string, any>
+  ) => Promise<SurveyResponseRecord>;
+  /** Obtiene la respuesta de encuesta guardada para la tienda actual y versión */
+  getMySurveyResponse: (
+    storeId: string,
+    version?: string
+  ) => Promise<SurveyResponseRecord | null>;
+  /** Lista todas las respuestas de encuestas con datos de tienda para super admin */
+  listSurveyResponses: () => Promise<SurveyResponseRecord[]>;
+  /** Aplica el beneficio de 15 días desde el panel super admin */
+  applySurveyReward: (responseId: string) => Promise<SurveyResponseRecord>;
+  /** Rechaza un beneficio desde el panel super admin */
+  rejectSurveyReward: (responseId: string) => Promise<SurveyResponseRecord>;
 }
 
 let productDebounceTimer: any = null;
@@ -1664,6 +1682,97 @@ export const useApp = create<AppState>()(
         } catch (error) {
           console.error("[incViews] Error:", error);
         }
+      },
+
+      submitSurvey: async (storeId, version, answers) => {
+        const { data, error } = await supabase.rpc("submit_survey", {
+          p_store_id: storeId,
+          p_version: version,
+          p_answers: answers,
+        });
+        if (error) {
+          console.error("[submitSurvey] Error:", error);
+          throw error;
+        }
+        return data as SurveyResponseRecord;
+      },
+
+      getMySurveyResponse: async (storeId, version = SURVEY_VERSION) => {
+        const { data, error } = await supabase
+          .from("survey_responses")
+          .select("*")
+          .eq("store_id", storeId)
+          .eq("survey_version", version)
+          .maybeSingle();
+        if (error) {
+          console.error("[getMySurveyResponse] Error:", error);
+          return null;
+        }
+        return data as SurveyResponseRecord | null;
+      },
+
+      listSurveyResponses: async () => {
+        const { data: responses, error: respError } = await supabase
+          .from("survey_responses")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (respError) {
+          console.error("[listSurveyResponses] Error:", respError);
+          throw respError;
+        }
+        if (!responses || responses.length === 0) return [];
+
+        const { data: storesData } = await supabase
+          .from("stores")
+          .select("id, slug, name, owner_id");
+
+        const storeMap = new Map<string, any>();
+        const ownerCountMap = new Map<string, number>();
+
+        if (storesData) {
+          for (const st of storesData) {
+            storeMap.set(st.id, st);
+            if (st.owner_id) {
+              ownerCountMap.set(st.owner_id, (ownerCountMap.get(st.owner_id) || 0) + 1);
+            }
+          }
+        }
+
+        return responses.map((r: any) => {
+          const st = storeMap.get(r.store_id);
+          const ownerId = st?.owner_id;
+          return {
+            ...r,
+            store_slug: st?.slug || r.store_id,
+            store_name: st?.name || "",
+            owner_id: ownerId,
+            owner_store_count: ownerId ? (ownerCountMap.get(ownerId) || 1) : 1,
+          } as SurveyResponseRecord;
+        });
+      },
+
+      applySurveyReward: async (responseId) => {
+        const { data, error } = await supabase.rpc("apply_survey_reward", {
+          p_response_id: responseId,
+        });
+        if (error) {
+          console.error("[applySurveyReward] Error:", error);
+          throw error;
+        }
+        await get().fetchData(true);
+        return data as SurveyResponseRecord;
+      },
+
+      rejectSurveyReward: async (responseId) => {
+        const { data, error } = await supabase.rpc("reject_survey_reward", {
+          p_response_id: responseId,
+        });
+        if (error) {
+          console.error("[rejectSurveyReward] Error:", error);
+          throw error;
+        }
+        return data as SurveyResponseRecord;
       },
     }),
     {
