@@ -82,12 +82,32 @@ test.describe("F44 · Sincronización segura del panel con 2 navegadores reales 
   async function setupBrowser(context: any, page: any, initialStoreState?: any) {
     const storeState = initialStoreState || {
       ...sharedDb.store,
-      products: sharedDb.products,
+      products: sharedDb.products.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        categoryId: p.category_id || p.categoryId,
+        image: p.image,
+        description: p.description,
+        isOnSale: p.is_on_sale ?? p.isOnSale ?? false,
+        originalPrice: p.original_price ?? p.originalPrice ?? null,
+        visible: p.visible ?? true,
+        isSample: p.is_sample ?? p.isSample ?? false,
+        sortOrder: p.sort_order ?? p.sortOrder ?? 1,
+        tags: p.tags ?? [],
+        variations: p.variations ?? [],
+        wholesaleTiers: p.wholesale_tiers ?? p.wholesaleTiers ?? [],
+        version: p.version ?? 1,
+        updatedAt: p.updated_at ?? p.updatedAt,
+      })),
     };
 
     await page.addInitScript(
       ({ session, store }) => {
-        localStorage.setItem("sb-zkqzdwxjthjdjchimmds-auth-token", JSON.stringify(session));
+        localStorage.setItem(
+          "sb-zkqzdwxjthjdjchimmds-auth-token",
+          JSON.stringify({ ...session, currentSession: session })
+        );
         localStorage.setItem(
           "dizi-catalogos-v2",
           JSON.stringify({
@@ -105,6 +125,15 @@ test.describe("F44 · Sincronización segura del panel con 2 navegadores reales 
     );
 
     await context.route("**/auth/v1/**", async (route: any) => {
+      const url = route.request().url();
+      if (url.includes("/user")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(sessionPayload.user),
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -296,6 +325,14 @@ test.describe("F44 · Sincronización segura del panel con 2 navegadores reales 
     const staleProduct = {
       ...sharedDb.products[0],
       name: "Vestido Sirena Azul Desactualizado",
+      categoryId: sharedDb.products[0].category_id,
+      originalPrice: sharedDb.products[0].original_price,
+      isOnSale: sharedDb.products[0].is_on_sale,
+      visible: sharedDb.products[0].visible,
+      isSample: sharedDb.products[0].is_sample,
+      sortOrder: sharedDb.products[0].sort_order,
+      wholesaleTiers: sharedDb.products[0].wholesale_tiers,
+      updatedAt: sharedDb.products[0].updated_at,
     };
 
     const staleStore = {
