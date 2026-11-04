@@ -1,38 +1,55 @@
 import { test, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import fs from "fs";
-import path from "path";
 
 /**
  * F44: Pruebas E2E contra la BASE DE DATOS REAL de Supabase (sin mocks de /rest/v1/*)
  * Tienda audit: zz-audit-sync
  * Escenarios: E1, E2, E9
+ *
+ * Variables de entorno requeridas:
+ * - E2E_SUPABASE_URL: URL del proyecto Supabase
+ * - E2E_SUPABASE_ANON_KEY: Clave pública (anon) del proyecto Supabase
+ * - E2E_EMAIL: Correo del usuario administrador de prueba
+ * - E2E_PASSWORD: Contraseña del usuario administrador de prueba
+ *
+ * Si falta cualquiera de estas variables, la suite se omite automáticamente (test.skip).
+ * Este archivo no lee archivos locales (.env) ni contiene credenciales en el código fuente.
  */
 
-function getSupabaseClient() {
-  const envPath = path.resolve(process.cwd(), ".env");
-  const envContent = fs.readFileSync(envPath, "utf-8");
-  const urlMatch = envContent.match(/VITE_SUPABASE_URL\s*=\s*(.*)/);
-  const keyMatch = envContent.match(/VITE_SUPABASE_ANON_KEY\s*=\s*(.*)/);
-  const supabaseUrl = urlMatch ? urlMatch[1].trim() : "";
-  const supabaseAnonKey = keyMatch ? keyMatch[1].trim() : "";
-  return createClient(supabaseUrl, supabaseAnonKey);
-}
+const supabaseUrl = process.env.E2E_SUPABASE_URL;
+const supabaseAnonKey = process.env.E2E_SUPABASE_ANON_KEY;
+const testEmail = process.env.E2E_EMAIL;
+const testPassword = process.env.E2E_PASSWORD;
+
+const hasRequiredEnv = Boolean(
+  supabaseUrl && supabaseAnonKey && testEmail && testPassword
+);
 
 test.describe("F44 · Pruebas con Base de Datos Real (zz-audit-sync)", () => {
+  test.skip(
+    !hasRequiredEnv,
+    "Pruebas omitidas: faltan variables de entorno requeridas (E2E_SUPABASE_URL, E2E_SUPABASE_ANON_KEY, E2E_EMAIL, E2E_PASSWORD)"
+  );
+
+  test.beforeEach(async () => {
+    test.skip(
+      !hasRequiredEnv,
+      "Pruebas omitidas: faltan variables de entorno requeridas (E2E_SUPABASE_URL, E2E_SUPABASE_ANON_KEY, E2E_EMAIL, E2E_PASSWORD)"
+    );
+  });
+
   const storeId = "zz-audit-sync-id";
   const storeSlug = "zz-audit-sync";
-  const testEmail = "zz-audit-sync@testdizi.com";
-  const testPassword = "TestPassword123!";
 
   let realSession: any = null;
   let supabase: any = null;
 
   test.beforeAll(async () => {
-    supabase = getSupabaseClient();
+    if (!hasRequiredEnv) return;
+    supabase = createClient(supabaseUrl!, supabaseAnonKey!);
     const { data, error } = await supabase.auth.signInWithPassword({
-      email: testEmail,
-      password: testPassword,
+      email: testEmail!,
+      password: testPassword!,
     });
     if (error || !data.session) {
       throw new Error(`Error autenticando usuario real de prueba: ${error?.message}`);
@@ -41,11 +58,22 @@ test.describe("F44 · Pruebas con Base de Datos Real (zz-audit-sync)", () => {
   });
 
   async function setupRealBrowser(context: any, page: any, customInitialStore?: any) {
+    let authStorageKey = "sb-zkqzdwxjthjdjchimmds-auth-token";
+    if (supabaseUrl) {
+      try {
+        const urlObj = new URL(supabaseUrl);
+        const ref = urlObj.hostname.split(".")[0];
+        if (ref) authStorageKey = `sb-${ref}-auth-token`;
+      } catch {
+        // mantener fallback
+      }
+    }
+
     await page.addInitScript(
-      ({ session, initialStore }) => {
+      ({ session, initialStore, storageKey }) => {
         // Inyectamos la sesión real obtenida de Supabase Auth
         localStorage.setItem(
-          "sb-zkqzdwxjthjdjchimmds-auth-token",
+          storageKey,
           JSON.stringify({ ...session, currentSession: session })
         );
 
@@ -64,7 +92,7 @@ test.describe("F44 · Pruebas con Base de Datos Real (zz-audit-sync)", () => {
           );
         }
       },
-      { session: realSession, initialStore: customInitialStore }
+      { session: realSession, initialStore: customInitialStore, storageKey: authStorageKey }
     );
   }
 
