@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { hexLuminance } from "./utils";
 import { getUserRole } from "./auth";
 import { SURVEY_VERSION, type SurveyResponseRecord } from "./survey";
+import { diffProduct, toDbPatch, ProductConflictError } from "./product-sync";
 
 /**
  * Invalida el cache público almacenado en `localStorage` y `sessionStorage` para una tienda.
@@ -203,6 +204,8 @@ export const mapStoreFromDB = (row: any): Store => {
         variations: Array.isArray(p.variations) ? p.variations : [],
         wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
         createdAt: p.created_at,
+        version: p.version !== null && p.version !== undefined ? Number(p.version) : 1,
+        updatedAt: p.updated_at,
       }))
       .sort((a: any, b: any) => {
         if ((a.sortOrder ?? 0) !== (b.sortOrder ?? 0)) {
@@ -231,9 +234,15 @@ interface AppState {
   fetchError: string | null;
   /** Timestamp de la última sincronización exitosa para control de caché */
   lastFetched: number | null;
+  /** Indica si hay una revalidación de datos en segundo plano activa (SWR, RF-44.1 / RF-44.2) */
+  isValidating?: boolean;
 
-  /** Carga las tiendas del usuario desde Supabase con caché de 5 minutos */
+  /** Carga las tiendas del usuario desde Supabase con caché y revalidación (SWR) */
   fetchData: (force?: boolean) => Promise<void>;
+  /** Obtiene la versión más reciente de un producto directamente de la base de datos (RF-44.3) */
+  fetchProductFresh: (storeId: string, productId: string) => Promise<Product | null>;
+  /** Fuerza la sincronización inmediata de debounces pendientes antes de recargar o revalidar (Riesgo 2) */
+  flushPendingDebounces: (storeId?: string) => Promise<void>;
   /** Cambia la tienda activa en el panel */
   setCurrentStore: (id: string | null) => void;
   /** Actualiza la configuración de una tienda, subiendo imágenes a Supabase Storage si son base64 */
@@ -248,12 +257,12 @@ interface AppState {
   cancelSubscription: (storeId: string, reason?: string) => Promise<void>;
   /** Extiende la vigencia del plan de una tienda en N meses adicionales */
   extendSubscription: (storeId: string, monthsToAdd: number) => Promise<void>;
-  /** Inserta o actualiza un producto con generación de miniatura paralela */
-  upsertProduct: (storeId: string, product: Product) => void;
+  /** Inserta o actualiza un producto con diffing y versión optimista */
+  upsertProduct: (storeId: string, product: Product, baseProduct?: Product) => Promise<void>;
   /** Elimina un producto y limpia sus imágenes en Supabase Storage */
   deleteProduct: (storeId: string, productId: string) => void;
   /** Alterna la visibilidad pública de un producto */
-  toggleProductVisible: (storeId: string, productId: string) => void;
+  toggleProductVisible: (storeId: string, productId: string, expectedVersion?: number) => Promise<void>;
   /** Intercambia el orden visual de dos productos con debounce de sincronización */
   swapProductsOrder: (storeId: string, index1: number, index2: number) => Promise<void>;
   /** Inserta o renombra una categoría de la tienda */
@@ -407,11 +416,99 @@ export const useApp = create<AppState>()(
       impersonatedBy: null,
       fetchError: null,
       lastFetched: null,
+      isValidating: false,
+
+      flushPendingDebounces: async (storeId?: string) => {
+        if (productDebounceTimer) {
+          clearTimeout(productDebounceTimer);
+          productDebounceTimer = null;
+        }
+        const entries = Array.from(pendingProductIds.entries()).filter(
+          ([_, sId]) => !storeId || sId === storeId
+        );
+        if (entries.length === 0) return;
+        for (const [pId] of entries) {
+          pendingProductIds.delete(pId);
+        }
+        const storesState = get().stores;
+        await Promise.all(
+          entries.map(async ([productId, sId]) => {
+            const currentStore = storesState.find((st) => st.id === sId);
+            const p = currentStore?.products.find((pr) => pr.id === productId);
+            if (!p) return;
+            const { data, error } = await supabase
+              .from("products")
+              .update({ sort_order: p.sortOrder })
+              .eq("id", p.id)
+              .eq("store_id", sId)
+              .select("version, updated_at");
+            if (!error && data && data.length > 0) {
+              p.version = data[0].version;
+              p.updatedAt = data[0].updated_at;
+            }
+          })
+        );
+      },
+
+      fetchProductFresh: async (storeId: string, productId: string) => {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("id", productId)
+          .eq("store_id", storeId)
+          .maybeSingle();
+
+        if (error || !data) {
+          console.error("[fetchProductFresh] Error al obtener producto fresco:", error);
+          return null;
+        }
+
+        const freshProd: Product = {
+          id: data.id,
+          name: data.name,
+          price: data.price !== null && data.price !== undefined ? Number(data.price) : null,
+          categoryId: data.category_id,
+          image: data.image,
+          description: data.description,
+          isOnSale: data.is_on_sale,
+          originalPrice:
+            data.original_price !== null && data.original_price !== undefined
+              ? Number(data.original_price)
+              : null,
+          visible: data.visible,
+          isSample: data.is_sample,
+          sortOrder:
+            data.sort_order !== null && data.sort_order !== undefined
+              ? Number(data.sort_order)
+              : 0,
+          tags: Array.isArray(data.tags) ? data.tags : [],
+          variations: Array.isArray(data.variations) ? data.variations : [],
+          wholesaleTiers: Array.isArray(data.wholesale_tiers) ? data.wholesale_tiers : [],
+          createdAt: data.created_at,
+          version: data.version !== null && data.version !== undefined ? Number(data.version) : 1,
+          updatedAt: data.updated_at,
+        };
+
+        set((state) => ({
+          stores: state.stores.map((s) => {
+            if (s.id !== storeId) return s;
+            const exists = s.products.some((p) => p.id === productId);
+            return {
+              ...s,
+              products: exists
+                ? s.products.map((p) => (p.id === productId ? freshProd : p))
+                : [...s.products, freshProd],
+            };
+          }),
+        }));
+
+        return freshProd;
+      },
 
       fetchData: async (force = false) => {
         const state = get();
-        
-        // Cache de 5 minutos para evitar consultas masivas innecesarias a la base de datos en cada navegación
+
+        // En Stale-While-Revalidate: si no es forzado y se consultó hace menos de 5 min, no bloquea
         if (
           !force &&
           state.stores.length > 0 &&
@@ -422,7 +519,10 @@ export const useApp = create<AppState>()(
           return;
         }
 
-        set({ fetchError: null });
+        // Antes de revalidar, descargar debounces pendientes (Riesgo 2)
+        await get().flushPendingDebounces();
+
+        set({ isValidating: true, fetchError: null });
         try {
           const { data: sessionData } = await supabase.auth.getSession();
           const user = sessionData?.session?.user;
@@ -451,11 +551,17 @@ export const useApp = create<AppState>()(
               currentStoreId: nextCurrentId,
               fetchError: null,
               lastFetched: Date.now(),
+              isValidating: false,
             });
+          } else {
+            set({ isValidating: false });
           }
         } catch (err: any) {
           console.error("[fetchData] Supabase error:", err);
-          set({ fetchError: err?.message || "Error de conexión con la base de datos." });
+          set({
+            fetchError: err?.message || "Error de conexión con la base de datos.",
+            isValidating: false,
+          });
         }
       },
 
@@ -1067,13 +1173,14 @@ export const useApp = create<AppState>()(
         }
       },
 
-      upsertProduct: async (storeId, product) => {
+      upsertProduct: async (storeId, product, baseProduct) => {
         const prodId = product.id || uid();
         let imageUrl = product.image;
 
         const st = useApp.getState().stores.find((s) => s.id === storeId);
         const existingProduct = st?.products.find((pr) => pr.id === prodId);
-        const oldImage = existingProduct?.image;
+        const base = baseProduct || existingProduct;
+        const oldImage = base?.image || existingProduct?.image;
 
         // Si la imagen es un base64, subirla a Supabase Storage (imagen HD 1600px + miniatura 600px en paralelo)
         if (imageUrl && imageUrl.startsWith("data:")) {
@@ -1185,7 +1292,7 @@ export const useApp = create<AppState>()(
           }
         }
 
-        const p = {
+        const p: Product = {
           ...product,
           id: prodId,
           image: imageUrl,
@@ -1196,6 +1303,8 @@ export const useApp = create<AppState>()(
           sortOrder: finalSortOrder !== undefined && finalSortOrder !== null ? finalSortOrder : 0,
           variations: finalVariations,
           createdAt: product.createdAt || new Date().toISOString(),
+          version: base?.version ?? existingProduct?.version ?? product.version ?? 1,
+          updatedAt: base?.updatedAt ?? existingProduct?.updatedAt ?? product.updatedAt,
         };
 
         try {
@@ -1215,47 +1324,84 @@ export const useApp = create<AppState>()(
             }
           }
 
-          const payload: any = {
-            id: p.id,
-            store_id: storeId,
-            category_id: p.categoryId || null,
-            name: p.name,
-            price: p.price,
-            original_price: p.originalPrice,
-            image: p.image,
-            description: p.description || null,
-            is_on_sale: p.isOnSale,
-            visible: p.visible,
-            is_sample: p.isSample,
-            sort_order: p.sortOrder,
-            tags: p.tags || [],
-            variations: p.variations || [],
-            wholesale_tiers: p.wholesaleTiers || [],
-          };
+          if (!exists) {
+            // Inserción de producto nuevo: se inserta la fila completa
+            const insertPayload: any = {
+              id: p.id,
+              store_id: storeId,
+              category_id: p.categoryId || null,
+              name: p.name,
+              price: p.price,
+              original_price: p.originalPrice,
+              image: p.image,
+              description: p.description || null,
+              is_on_sale: p.isOnSale,
+              visible: p.visible,
+              is_sample: p.isSample,
+              sort_order: p.sortOrder,
+              tags: p.tags || [],
+              variations: p.variations || [],
+              wholesale_tiers: p.wholesaleTiers || [],
+            };
 
-          const { error } = await supabase.from("products").upsert(payload);
+            const fromProducts = supabase.from("products") as any;
+            let insertError: any = null;
+            let insertedData: any = null;
 
-          // Fallback resiliente: Si la columna 'variations' o 'wholesale_tiers' aún no está en el schema cache de Supabase,
-          // reintentamos sin ellas para que el usuario nunca vea un error bloqueante en pantalla.
-          if (
-            error &&
-            (error.message?.includes("variations") ||
-              error.message?.includes("wholesale_tiers") ||
-              error.details?.includes("variations") ||
-              error.details?.includes("wholesale_tiers") ||
-              error.code === "PGRST204" ||
-              (error as any).hint?.includes("variations") ||
-              (error as any).hint?.includes("wholesale_tiers"))
-          ) {
-            console.warn(
-              "[upsertProduct] Columna nueva no detectada en schema cache de Supabase. Reintentando guardado compatible...",
-              error.message
-            );
-            const { variations, wholesale_tiers, ...safePayload } = payload;
-            const retryRes = await supabase.from("products").upsert(safePayload);
-            if (retryRes.error) throw retryRes.error;
-          } else if (error) {
-            throw error;
+            if (typeof fromProducts.insert === "function") {
+              const builder = fromProducts.insert(insertPayload);
+              if (typeof builder.select === "function") {
+                const res = await builder.select("version, updated_at").single();
+                insertError = res.error;
+                insertedData = res.data;
+              } else {
+                const res = await builder;
+                insertError = res.error;
+              }
+            } else if (typeof fromProducts.upsert === "function") {
+              const res = await fromProducts.upsert(insertPayload);
+              insertError = res.error;
+            }
+
+            if (insertError) throw insertError;
+
+            p.version = insertedData?.version ?? 1;
+            p.updatedAt = insertedData?.updated_at;
+          } else if (base || existingProduct) {
+            const targetBase = base || existingProduct!;
+            // Producto existente: calcular diferencia parcial contra la foto base (RF-44.4)
+            const diff = diffProduct(targetBase, p);
+
+            // Si hubo cambios, aplicar patch condicionado a la versión base (RF-44.5)
+            if (Object.keys(diff).length > 0) {
+              const patch = toDbPatch(diff);
+              const currentVersion = targetBase.version ?? 1;
+
+              const { data: updateData, error: updateError } = await supabase
+                .from("products")
+                .update(patch)
+                .eq("id", p.id)
+                .eq("store_id", storeId)
+                .eq("version", currentVersion)
+                .select("version, updated_at");
+
+              if (updateError) throw updateError;
+
+              // RF-44.5: Si se actualizaron 0 filas, hubo un conflicto de versión concurrente
+              if (!updateData || updateData.length === 0) {
+                const fresh = await get().fetchProductFresh(storeId, p.id);
+                throw new ProductConflictError(
+                  "Este producto se modificó desde otro dispositivo. Te mostramos la versión actual; revisa y vuelve a guardar.",
+                  fresh || undefined
+                );
+              }
+
+              p.version = updateData[0].version;
+              p.updatedAt = updateData[0].updated_at;
+            } else {
+              p.version = targetBase.version ?? 1;
+              p.updatedAt = targetBase.updatedAt;
+            }
           }
 
           // Tras guardar con éxito el producto, limpiar imágenes de variaciones reemplazadas
@@ -1375,19 +1521,35 @@ export const useApp = create<AppState>()(
         }
       },
 
-      toggleProductVisible: async (storeId, productId) => {
+      toggleProductVisible: async (storeId, productId, expectedVersion) => {
         const s = useApp.getState();
         const store = s.stores.find((st) => st.id === storeId);
         const product = store?.products.find((p) => p.id === productId);
         if (!product) return;
 
         const newVisible = !product.visible;
+        const currentVersion = expectedVersion !== undefined ? expectedVersion : (product.version ?? 1);
+
         try {
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from("products")
             .update({ visible: newVisible })
-            .eq("id", productId);
+            .eq("id", productId)
+            .eq("store_id", storeId)
+            .eq("version", currentVersion)
+            .select("version, updated_at");
+
           if (error) throw error;
+
+          if (!data || data.length === 0) {
+            await get().fetchProductFresh(storeId, productId);
+            throw new ProductConflictError(
+              "Este producto se modificó desde otro dispositivo. Te mostramos la versión actual; revisa y vuelve a guardar."
+            );
+          }
+
+          const nextVersion = data[0].version;
+          const nextUpdatedAt = data[0].updated_at;
 
           set((s) => ({
             stores: s.stores.map((st) =>
@@ -1395,7 +1557,9 @@ export const useApp = create<AppState>()(
                 ? {
                     ...st,
                     products: st.products.map((p) =>
-                      p.id === productId ? { ...p, visible: newVisible } : p,
+                      p.id === productId
+                        ? { ...p, visible: newVisible, version: nextVersion, updatedAt: nextUpdatedAt }
+                        : p,
                     ),
                   }
                 : st,
@@ -1403,9 +1567,13 @@ export const useApp = create<AppState>()(
           }));
 
           if (store?.slug) invalidateStorePublicCache(store.slug);
-        } catch (error) {
+        } catch (error: any) {
           console.error("[toggleProductVisible] Error:", error);
-          toast.error("Error al cambiar visibilidad");
+          if (error instanceof ProductConflictError || error?.code === "PRODUCT_VERSION_CONFLICT") {
+            toast.error(error.message, { duration: 6000 });
+          } else {
+            toast.error("Error al cambiar visibilidad");
+          }
         }
       },
 
@@ -1447,53 +1615,10 @@ export const useApp = create<AppState>()(
           }
         });
 
-        // Configurar el debounce para sincronizar con Supabase en segundo plano
+        // Configurar el debounce para sincronizar con Supabase en segundo plano (RF-44.7: solo sort_order)
         if (productDebounceTimer) clearTimeout(productDebounceTimer);
         productDebounceTimer = setTimeout(async () => {
-          const entries = Array.from(pendingProductIds.entries());
-          pendingProductIds.clear();
-
-          if (entries.length === 0) return;
-
-          const updates: any[] = [];
-          const storesState = useApp.getState().stores;
-
-          entries.forEach(([productId, sId]) => {
-            const currentStore = storesState.find((st) => st.id === sId);
-            const p = currentStore?.products.find((pr) => pr.id === productId);
-            if (p) {
-              updates.push({
-                id: p.id,
-                store_id: sId,
-                category_id: p.categoryId || null,
-                name: p.name,
-                price: p.price,
-                original_price: p.originalPrice,
-                image: p.image,
-                description: p.description || null,
-                is_on_sale: p.isOnSale,
-                visible: p.visible,
-                is_sample: p.isSample,
-                sort_order: p.sortOrder,
-              });
-            }
-          });
-
-          if (updates.length === 0) return;
-
-          try {
-            const { error } = await supabase.from("products").upsert(updates);
-            if (error) throw error;
-            console.log(
-              `[swapProductsOrder] Sincronizados ${updates.length} productos en base de datos.`,
-            );
-          } catch (err) {
-            console.error(
-              "[swapProductsOrder] Error al guardar orden de productos en Supabase:",
-              err,
-            );
-            toast.error("Error al guardar el nuevo orden en el servidor.");
-          }
+          await get().flushPendingDebounces(storeId);
         }, 1000);
       },
 
@@ -1777,6 +1902,18 @@ export const useApp = create<AppState>()(
     }),
     {
       name: "dizi-catalogos-v2",
+      version: 1,
+      migrate: (persistedState: any, version: number) => {
+        // RF-44.2: Descarta datos guardados de antes de F44 (versión 0 o sin versión)
+        if (version < 1) {
+          return {
+            ...persistedState,
+            stores: [],
+            lastFetched: null,
+          };
+        }
+        return persistedState;
+      },
       partialize: partializeAppState,
     },
   ),
