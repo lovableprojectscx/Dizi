@@ -121,6 +121,7 @@ import {
   getMaxAllowedBanners,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } from "@/lib/image-utils";
@@ -1310,6 +1311,8 @@ export function PublicCatalog({
   initialCategory?: string;
 }) {
   const effectivePlan = getEffectivePlan(store);
+  const isMobile = useIsMobile();
+  const isMobileCart = isMockup || isMobile;
   const [query, setQuery] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null);
   const [activeCat, setActiveCat] = useState<string>(() => {
@@ -8695,12 +8698,19 @@ export function PublicCatalog({
       {/* ── Cart Sheet ───────────────────────────────── */}
       <Sheet open={cartOpen} onOpenChange={setCartOpen}>
         <SheetContent
-          side="bottom"
-          className="h-[80vh] rounded-t-3xl p-0 flex flex-col border-0"
+          side={isMobileCart ? "bottom" : "right"}
+          className={cn(
+            finalIsDark ? "dark" : "",
+            "p-0 flex flex-col border-0",
+            isMobileCart
+              ? "h-[85vh] rounded-t-3xl"
+              : "h-full w-full sm:max-w-md md:max-w-[420px] rounded-none border-l shadow-2xl",
+          )}
           style={
             {
               backgroundColor: "var(--background)",
               color: "var(--foreground)",
+              borderColor: "var(--border)",
               ...themeVars,
             } as React.CSSProperties
           }
@@ -8711,7 +8721,7 @@ export function PublicCatalog({
           </SheetDescription>
           {/* Header */}
           <div
-            className="flex items-center gap-3 px-5 pt-5 pb-3 shrink-0"
+            className="flex items-center gap-3 px-5 pt-5 pb-3 shrink-0 pr-12"
             style={{ borderBottom: `1px solid var(--border)` }}
           >
             <ShoppingBag className="h-5 w-5 shrink-0" style={{ color: "var(--primary)" }} />

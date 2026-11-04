@@ -146,6 +146,8 @@ const STORES = [
       is_dark: true,
       isDark: true,
       brand_color: "#3b82f6",
+      bg_color: "#000000",
+      text_color: "#ffffff",
       card_style: "dark",
       model: "vitrina",
       total_products_count: 3,
@@ -160,6 +162,7 @@ const VIEWPORTS = [
   { name: "375px", width: 375, height: 812 },
   { name: "414px", width: 414, height: 896 },
   { name: "1280px", width: 1280, height: 800 },
+  { name: "1920px", width: 1920, height: 1080 },
 ];
 
 test.describe("F42.1 · Capturas DESPUÉS con línea del carrito mejorada y R5", () => {
