@@ -256,12 +256,12 @@ interface AppState {
   cancelSubscription: (storeId: string, reason?: string) => Promise<void>;
   /** Extiende la vigencia del plan de una tienda en N meses adicionales */
   extendSubscription: (storeId: string, monthsToAdd: number) => Promise<void>;
-  /** Inserta o actualiza un producto con generación de miniatura paralela */
-  upsertProduct: (storeId: string, product: Product) => void;
+  /** Inserta o actualiza un producto con diffing y versión optimista */
+  upsertProduct: (storeId: string, product: Product, baseProduct?: Product) => Promise<void>;
   /** Elimina un producto y limpia sus imágenes en Supabase Storage */
   deleteProduct: (storeId: string, productId: string) => void;
   /** Alterna la visibilidad pública de un producto */
-  toggleProductVisible: (storeId: string, productId: string) => void;
+  toggleProductVisible: (storeId: string, productId: string, expectedVersion?: number) => Promise<void>;
   /** Intercambia el orden visual de dos productos con debounce de sincronización */
   swapProductsOrder: (storeId: string, index1: number, index2: number) => Promise<void>;
   /** Inserta o renombra una categoría de la tienda */
@@ -1155,13 +1155,14 @@ export const useApp = create<AppState>()(
         }
       },
 
-      upsertProduct: async (storeId, product) => {
+      upsertProduct: async (storeId, product, baseProduct) => {
         const prodId = product.id || uid();
         let imageUrl = product.image;
 
         const st = useApp.getState().stores.find((s) => s.id === storeId);
         const existingProduct = st?.products.find((pr) => pr.id === prodId);
-        const oldImage = existingProduct?.image;
+        const base = baseProduct || existingProduct;
+        const oldImage = base?.image || existingProduct?.image;
 
         // Si la imagen es un base64, subirla a Supabase Storage (imagen HD 1600px + miniatura 600px en paralelo)
         if (imageUrl && imageUrl.startsWith("data:")) {
@@ -1284,8 +1285,8 @@ export const useApp = create<AppState>()(
           sortOrder: finalSortOrder !== undefined && finalSortOrder !== null ? finalSortOrder : 0,
           variations: finalVariations,
           createdAt: product.createdAt || new Date().toISOString(),
-          version: existingProduct?.version ?? product.version ?? 1,
-          updatedAt: existingProduct?.updatedAt ?? product.updatedAt,
+          version: base?.version ?? existingProduct?.version ?? product.version ?? 1,
+          updatedAt: base?.updatedAt ?? existingProduct?.updatedAt ?? product.updatedAt,
         };
 
         try {
@@ -1348,14 +1349,15 @@ export const useApp = create<AppState>()(
 
             p.version = insertedData?.version ?? 1;
             p.updatedAt = insertedData?.updated_at;
-          } else if (existingProduct) {
-            // Producto existente: calcular diferencia parcial (RF-44.4)
-            const diff = diffProduct(existingProduct, p);
+          } else if (base || existingProduct) {
+            const targetBase = base || existingProduct!;
+            // Producto existente: calcular diferencia parcial contra la foto base (RF-44.4)
+            const diff = diffProduct(targetBase, p);
 
-            // Si hubo cambios, aplicar patch condicionado a la versión (RF-44.5)
+            // Si hubo cambios, aplicar patch condicionado a la versión base (RF-44.5)
             if (Object.keys(diff).length > 0) {
               const patch = toDbPatch(diff);
-              const currentVersion = existingProduct.version ?? 1;
+              const currentVersion = targetBase.version ?? 1;
 
               const { data: updateData, error: updateError } = await supabase
                 .from("products")
@@ -1378,6 +1380,9 @@ export const useApp = create<AppState>()(
 
               p.version = updateData[0].version;
               p.updatedAt = updateData[0].updated_at;
+            } else {
+              p.version = targetBase.version ?? 1;
+              p.updatedAt = targetBase.updatedAt;
             }
           }
 
@@ -1498,14 +1503,14 @@ export const useApp = create<AppState>()(
         }
       },
 
-      toggleProductVisible: async (storeId, productId) => {
+      toggleProductVisible: async (storeId, productId, expectedVersion) => {
         const s = useApp.getState();
         const store = s.stores.find((st) => st.id === storeId);
         const product = store?.products.find((p) => p.id === productId);
         if (!product) return;
 
         const newVisible = !product.visible;
-        const currentVersion = product.version ?? 1;
+        const currentVersion = expectedVersion !== undefined ? expectedVersion : (product.version ?? 1);
 
         try {
           const { data, error } = await supabase

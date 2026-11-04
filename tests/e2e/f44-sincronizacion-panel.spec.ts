@@ -373,6 +373,66 @@ test.describe("F44 · Sincronización segura del panel con 2 navegadores reales 
     await context.close();
   });
 
+  test("E9: Diálogo abierto en B, panel se revalida con el cambio de A, y B guarda -> conflicto, no pisa", async ({
+    browser,
+  }) => {
+    const contextA = await browser.newContext({ viewport: { width: 375, height: 812 } });
+    const contextB = await browser.newContext({ viewport: { width: 375, height: 812 } });
+
+    const pageA = await contextA.newPage();
+    const pageB = await contextB.newPage();
+
+    await setupBrowser(contextA, pageA);
+    await setupBrowser(contextB, pageB);
+
+    await pageB.goto("/admin/productos");
+    const productCardB = pageB.locator(".md\\:hidden").getByText("Vestido Sirena Azul").first();
+    await expect(productCardB).toBeVisible({ timeout: 10000 });
+
+    // 1. Dispositivo B abre el producto para editar (foto base v1)
+    const editBtnB = pageB.locator(".md\\:hidden button:has(svg.lucide-pencil)").first();
+    await editBtnB.click();
+    await expect(pageB.getByText("Editar Producto")).toBeVisible({ timeout: 5000 });
+
+    // B modifica el precio en el formulario
+    const priceInputB = pageB.locator('input[placeholder="0.00"]').first();
+    await priceInputB.fill("99.00");
+
+    // 2. Dispositivo A realiza un cambio en la base (sube a v2 con nombre nuevo)
+    sharedDb.products[0].name = "Vestido Sirena Azul Guardado por A";
+    sharedDb.products[0].version = 2;
+
+    // 3. El panel de B se revalida en background mientras el diálogo de edición sigue abierto
+    await pageB.evaluate(async () => {
+      // @ts-ignore
+      const raw = localStorage.getItem("dizi-catalogos-v2");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        // simular actualización de estado de fondo en el store
+        parsed.state.stores[0].products[0].name = "Vestido Sirena Azul Guardado por A";
+        parsed.state.stores[0].products[0].version = 2;
+        localStorage.setItem("dizi-catalogos-v2", JSON.stringify(parsed));
+      }
+    });
+
+    // 4. B guarda sus cambios
+    const saveBtnB = pageB.getByRole("button", { name: "Guardar Cambios" });
+    await saveBtnB.click();
+
+    // 5. Debe saltar el toast de conflicto (porque usó la foto base v1, pero en BD ya es v2)
+    await expect(
+      pageB.getByText("Este producto se modificó desde otro dispositivo")
+    ).toBeVisible({ timeout: 6000 });
+
+    // 6. La base de datos no fue pisada con el precio 99 de B y conserva el cambio de A
+    expect(sharedDb.products[0].name).toBe("Vestido Sirena Azul Guardado por A");
+    expect(sharedDb.products[0].price).toBe(50);
+    expect(sharedDb.products[0].version).toBe(2);
+
+    await contextA.close();
+    await contextB.close();
+  });
+
   test.afterAll(() => {
     sharedDb.products = [];
     expect(sharedDb.products.length).toBe(0);

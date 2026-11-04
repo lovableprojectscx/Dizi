@@ -501,7 +501,7 @@ interface SingleProductDialogProps {
   product: Product;
   store: any;
   imageSpec: any;
-  onSave: (product: Product) => Promise<void>;
+  onSave: (product: Product, baseProduct?: Product) => Promise<void>;
   onCreateCategory: (name: string) => Promise<string | null>;
   showConfirm: (config: {
     title: string;
@@ -523,6 +523,7 @@ function SingleProductDialog({
   onCreateCategory,
   showConfirm,
 }: SingleProductDialogProps) {
+  const [baseSnapshot, setBaseSnapshot] = useState<Product>(product);
   const [editing, setEditing] = useState<Product>(product);
   const [variations, setVariations] = useState<ProductVariation[]>(product.variations || []);
   const [wholesaleTiers, setWholesaleTiers] = useState<WholesaleTier[]>(product.wholesaleTiers || []);
@@ -534,6 +535,7 @@ function SingleProductDialog({
 
   useEffect(() => {
     if (open) {
+      setBaseSnapshot(product);
       const cleanDesc = (product.description || "").replace(/#destacado/g, "").trim();
       setEditing({
         ...product,
@@ -551,7 +553,7 @@ function SingleProductDialog({
         product.description?.includes("#destacado") || product.name?.includes("#destacado") || false
       );
     }
-  }, [open, product]);
+  }, [open, product.id]);
 
   const handleAddVariation = () => {
     if (variations.length >= 10) {
@@ -691,7 +693,7 @@ function SingleProductDialog({
 
     setSaving(true);
     try {
-      await onSave(updatedProduct);
+      await onSave(updatedProduct, baseSnapshot);
       onOpenChange(false);
       if (isStillSampleName) {
         toast.info("Guardado. Sigue marcado como ejemplo porque conserva el nombre de muestra.");
@@ -707,6 +709,7 @@ function SingleProductDialog({
         );
         const fresh = err.freshProduct || (await fetchProductFresh(store.id, editing.id));
         if (fresh) {
+          setBaseSnapshot(fresh);
           const cleanDesc = (fresh.description || "").replace(/#destacado/g, "").trim();
           setEditing({
             ...fresh,
@@ -1406,7 +1409,7 @@ interface ProductTableRowProps {
   categoryIconKey?: string;
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
-  onToggle: (id: string) => void;
+  onToggle: (id: string, expectedVersion?: number) => void;
   onSwap: (fromIdx: number, toIdx: number) => void;
 }
 
@@ -1513,7 +1516,7 @@ const ProductTableRow = React.memo(function ProductTableRow({
         </div>
       </TableCell>
       <TableCell>
-        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id)} />
+        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id, p.version)} />
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-0.5">
@@ -1650,7 +1653,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
         </div>
       </div>
       <div className="flex flex-col items-center gap-2 shrink-0">
-        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id)} />
+        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id, p.version)} />
         <div className="flex gap-1 items-center">
           <div className="flex items-center gap-0.5 border border-border/60 rounded-md p-0.5 bg-muted/10">
             <Button
@@ -1833,8 +1836,8 @@ function ProductsPage() {
     });
   }, [del, store.id]);
 
-  const handleToggleVisible = useCallback((productId: string) => {
-    toggle(store.id, productId);
+  const handleToggleVisible = useCallback((productId: string, expectedVersion?: number) => {
+    toggle(store.id, productId, expectedVersion);
   }, [toggle, store.id]);
 
   const handleSwapOrder = useCallback((fromIdx: number, toIdx: number) => {
@@ -2166,8 +2169,8 @@ function ProductsPage() {
     setIsSingleDialogOpen(true);
   };
 
-  const handleSaveProduct = async (productToSave: Product) => {
-    await upsert(store.id, productToSave);
+  const handleSaveProduct = async (productToSave: Product, baseProduct?: Product) => {
+    await upsert(store.id, productToSave, baseProduct);
   };
 
   /* Crea categoría inline y devuelve el nuevo id */

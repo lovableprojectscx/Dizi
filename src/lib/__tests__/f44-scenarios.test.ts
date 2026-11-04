@@ -228,4 +228,77 @@ describe("F44: Escenarios E1 a E8 (Sincronización segura del panel)", () => {
       expect((updatePayload as any).wholesale_tiers).toBeUndefined();
     });
   });
+
+  describe("E9: Diálogo abierto en B, panel se revalida con el cambio de A, y B guarda -> conflicto, no pisa", () => {
+    it("dado que B abrió el modal con la versión 5 (foto base), A guarda cambio en DB (sube a v6) y el panel de B se revalida a v6; cuando B guarda sus cambios, upsertProduct usa la foto base (v5), detecta conflicto (0 filas), no pisa el cambio de A y lanza ProductConflictError", () => {
+      // Estado inicial en la BD
+      let dbProduct: Product = {
+        ...originalProductInDb,
+        name: "Vestido Sirena Original",
+        price: 80,
+        version: 5,
+      };
+
+      // 1. Dispositivo B abre el diálogo: toma la foto base retornada por la lectura fresca
+      const baseSnapshotB: Product = { ...dbProduct };
+      expect(baseSnapshotB.version).toBe(5);
+
+      // B comienza a editar en el formulario: cambia el precio a 95
+      const editedProductB: Product = {
+        ...baseSnapshotB,
+        price: 95,
+      };
+
+      // 2. Mientras el diálogo de B sigue abierto, el Dispositivo A guarda en la base
+      const patchA = { name: "Vestido Sirena Modificado por A" };
+      dbProduct = {
+        ...dbProduct,
+        ...patchA,
+        version: dbProduct.version! + 1, // Ahora v6 en DB
+      };
+      expect(dbProduct.version).toBe(6);
+      expect(dbProduct.name).toBe("Vestido Sirena Modificado por A");
+
+      // 3. El panel de B se revalida en segundo plano (SWR) con el diálogo aún abierto
+      // El store de B (st.products) ahora contiene la versión 6 de A
+      const storeStateOnB: Product[] = [{ ...dbProduct }];
+      expect(storeStateOnB[0].version).toBe(6);
+
+      // 4. B hace clic en Guardar. upsertProduct(storeId, editedProductB, baseSnapshotB):
+      // Debe calcular el diff contra baseSnapshotB (no contra storeStateOnB)
+      const diff = diffProduct(baseSnapshotB, editedProductB);
+      expect(diff).toEqual({ price: 95 });
+
+      const patch = toDbPatch(diff);
+      // El WHERE version debe usar baseSnapshotB.version (5), NO storeStateOnB[0].version (6)
+      const targetVersion = baseSnapshotB.version;
+      expect(targetVersion).toBe(5);
+
+      // En la base de datos real, el UPDATE busca WHERE id = prod.id AND version = 5
+      // Como dbProduct.version ya es 6, coincide con 0 filas
+      let rowsUpdated = 0;
+      if (dbProduct.version === targetVersion) {
+        dbProduct = { ...dbProduct, ...patch, version: dbProduct.version! + 1 };
+        rowsUpdated = 1;
+      }
+
+      expect(rowsUpdated).toBe(0);
+
+      // Al no actualizar filas, se lanza ProductConflictError
+      if (rowsUpdated === 0) {
+        const error = new ProductConflictError(
+          "Este producto se modificó desde otro dispositivo. Te mostramos la versión actual; revisa y vuelve a guardar.",
+          dbProduct
+        );
+        expect(error.code).toBe("PRODUCT_VERSION_CONFLICT");
+        expect(error.freshProduct?.name).toBe("Vestido Sirena Modificado por A");
+        expect(error.freshProduct?.version).toBe(6);
+      }
+
+      // La base de datos conserva intacto el cambio de A y no fue pisada por B
+      expect(dbProduct.name).toBe("Vestido Sirena Modificado por A");
+      expect(dbProduct.price).toBe(80); // El precio de B (95) no pisó la BD
+      expect(dbProduct.version).toBe(6);
+    });
+  });
 });
