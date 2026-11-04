@@ -14,7 +14,12 @@ import { execSync } from "child_process";
  * 2. Registro y borrado estricto por IDs (auth.identities, auth.users, stores).
  * 3. Inclusión de zz-audit-tienda-base para E14 en creación y borrado.
  * 4. Super admin mediante storageState leído desde process.env.SUPER_SESSION_PATH (sin SUPER_ADMIN_PASSWORD).
- * 5. Verificación de conteo residual canónico: auth y stores = 0, survey_responses = 0, invitaciones = 0, fotos sueltas = 4.
+ * 5. Blindaje de clientes reales:
+ *    - Acciones de Super Admin (Aplicar / Rechazar) actúan EXCLUSIVAMENTE sobre filas filtradas por código DZ
+ *      y tienda zz-audit-f43-*. Jamás pulsan la primera fila genérica ni filas de comercios reales.
+ *    - Validación estricta antes y después con SQL de solo lectura: el conteo y estados de survey_responses
+ *      de tiendas no-audit se mantienen 100% idénticos.
+ * 6. Verificación de conteo residual canónico: auth y stores = 0, survey_responses = 0, invitaciones = 0, fotos sueltas = 4.
  */
 
 const SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
@@ -26,6 +31,16 @@ const TEST_PASSWORD = "AuditPassword123!";
 // Registro de IDs para limpieza estricta
 const createdUserIds: string[] = [];
 const createdStoreIds: string[] = [];
+
+// Códigos DZ generados en las pruebas para validar en Super Admin
+let semillaRewardCode = "";
+let proRewardCode = "";
+
+// Línea base de encuestas reales (no zz-audit) para verificar que ninguna cambió de estado
+let initialRealTotal = 0;
+let initialRealAplicado = 0;
+let initialRealRechazado = 0;
+let initialRealPendiente = 0;
 
 // Definición de las 6 cuentas y tiendas requeridas
 const TEST_STORES = [
@@ -125,6 +140,28 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
       );
     }
 
+    // Registrar línea base de encuestas reales (no zz-audit)
+    const baselineRealSurveys = runRemoteSql(
+      `
+      SELECT 
+        count(*) FILTER (WHERE reward_status = 'aplicado') as aplicado,
+        count(*) FILTER (WHERE reward_status = 'rechazado') as rechazado,
+        count(*) FILTER (WHERE reward_status = 'pendiente') as pendiente,
+        count(*) as total
+      FROM public.survey_responses sr
+      JOIN public.stores s ON sr.store_id = s.id
+      WHERE s.slug NOT LIKE 'zz-audit-%';
+    `,
+      true
+    );
+    initialRealTotal = Number(baselineRealSurveys?.rows?.[0]?.total ?? 0);
+    initialRealAplicado = Number(baselineRealSurveys?.rows?.[0]?.aplicado ?? 0);
+    initialRealRechazado = Number(baselineRealSurveys?.rows?.[0]?.rechazado ?? 0);
+    initialRealPendiente = Number(baselineRealSurveys?.rows?.[0]?.pendiente ?? 0);
+    console.log(
+      `[BeforeAll F43] Línea base encuestas reales: Total=${initialRealTotal}, Aplicadas=${initialRealAplicado}, Rechazadas=${initialRealRechazado}, Pendientes=${initialRealPendiente}`
+    );
+
     console.log("[BeforeAll F43] Sembrando 6 usuarios y tiendas zz-audit con signUpUser...");
     for (const item of TEST_STORES) {
       const userId = await signUpUser(item.email, TEST_PASSWORD);
@@ -180,7 +217,7 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
         console.log(` -> ${createdUserIds.length} usuarios temporales eliminados por ID.`);
       }
 
-      // Borrar storageState de super admin
+      // Borrar storageState de super admin si existe
       if (SUPER_SESSION_PATH && fs.existsSync(SUPER_SESSION_PATH)) {
         try {
           fs.unlinkSync(SUPER_SESSION_PATH);
@@ -190,8 +227,38 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
         }
       }
 
+      // Verificación de integridad de respuestas reales (no zz-audit)
+      console.log("\n[Teardown F43] Verificando que ninguna encuesta real cambió de estado...");
+      const postCheckRealSurveys = runRemoteSql(
+        `
+        SELECT 
+          count(*) FILTER (WHERE reward_status = 'aplicado') as aplicado,
+          count(*) FILTER (WHERE reward_status = 'rechazado') as rechazado,
+          count(*) FILTER (WHERE reward_status = 'pendiente') as pendiente,
+          count(*) as total
+        FROM public.survey_responses sr
+        JOIN public.stores s ON sr.store_id = s.id
+        WHERE s.slug NOT LIKE 'zz-audit-%';
+      `,
+        true
+      );
+      const finalRealTotal = Number(postCheckRealSurveys?.rows?.[0]?.total ?? -1);
+      const finalRealAplicado = Number(postCheckRealSurveys?.rows?.[0]?.aplicado ?? -1);
+      const finalRealRechazado = Number(postCheckRealSurveys?.rows?.[0]?.rechazado ?? -1);
+      const finalRealPendiente = Number(postCheckRealSurveys?.rows?.[0]?.pendiente ?? -1);
+
+      console.log(` -> Total respuestas reales: ${finalRealTotal} (inicial: ${initialRealTotal})`);
+      console.log(` -> Aplicadas reales: ${finalRealAplicado} (inicial: ${initialRealAplicado})`);
+      console.log(` -> Rechazadas reales: ${finalRealRechazado} (inicial: ${initialRealRechazado})`);
+      console.log(` -> Pendientes reales: ${finalRealPendiente} (inicial: ${initialRealPendiente})`);
+
+      expect(finalRealTotal).toBe(initialRealTotal);
+      expect(finalRealAplicado).toBe(initialRealAplicado);
+      expect(finalRealRechazado).toBe(initialRealRechazado);
+      expect(finalRealPendiente).toBe(initialRealPendiente);
+
       // Conteo residual canónico (debe ser 0, 0, 0, 0, 4)
-      console.log("\n[Teardown F43] Ejecutando conteo residual canónico...");
+      console.log("\n[Teardown F43] Ejecutando conteo residual canónico de auditoría...");
       const residualUsers = runRemoteSql("SELECT count(*) FROM auth.users WHERE email LIKE 'zz-audit-%';", true);
       const countUsers = Number(residualUsers?.rows?.[0]?.count ?? -1);
 
@@ -280,6 +347,10 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
     const codeLocator = page.locator("text=/^DZ-[2-9A-Z]{6}$/");
     await expect(codeLocator).toBeVisible();
 
+    semillaRewardCode = (await codeLocator.textContent())?.trim() || "";
+    console.log(`[E1] Código DZ obtenido para Semilla: "${semillaRewardCode}"`);
+    expect(semillaRewardCode).toMatch(/^DZ-[2-9A-Z]{6}$/);
+
     const waLink = page.getByRole("link", { name: /Enviar por WhatsApp/i });
     await expect(waLink).toBeVisible();
     const href = await waLink.getAttribute("href");
@@ -320,7 +391,12 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
 
     // Beneficio Pro
     await expect(page.getByText("15 días más de tu plan")).toBeVisible({ timeout: 15000 });
-    await expect(page.locator("text=/^DZ-[2-9A-Z]{6}$/")).toBeVisible();
+    const proCodeLocator = page.locator("text=/^DZ-[2-9A-Z]{6}$/");
+    await expect(proCodeLocator).toBeVisible();
+
+    proRewardCode = (await proCodeLocator.textContent())?.trim() || "";
+    console.log(`[E3] Código DZ obtenido para Pro: "${proRewardCode}"`);
+    expect(proRewardCode).toMatch(/^DZ-[2-9A-Z]{6}$/);
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -391,23 +467,80 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
       );
     }
 
+    if (!semillaRewardCode || !proRewardCode) {
+      throw new Error(
+        `ERROR: Se requieren los códigos DZ generados en E1 ("${semillaRewardCode}") y E3 ("${proRewardCode}") antes de ejecutar las pruebas de Super Admin.`
+      );
+    }
+
     const context = await browser.newContext({ storageState: SUPER_SESSION_PATH });
     const page = await context.newPage();
+
+    // Aceptar automáticamente los diálogos window.confirm ("¿Confirmas aplicar...?")
+    page.on("dialog", (dialog) => dialog.accept());
 
     // Acceder al módulo de encuestas
     await page.goto("/super/encuestas");
     await expect(page.getByRole("heading", { name: "Encuestas de Calidad (F43)" })).toBeVisible({ timeout: 20000 });
 
-    // Aplicar premio a una respuesta pendiente
-    const applyBtn = page.getByRole("button", { name: "Aplicar premio" }).first();
-    await expect(applyBtn).toBeVisible({ timeout: 15000 });
+    const searchInput = page.locator('input[placeholder*="Buscar por código"]');
+    await expect(searchInput).toBeVisible({ timeout: 10000 });
+
+    // ─────────────────────────────────────────────────────────
+    // E9 / E10: Aplicar premio SOLO a la fila zz-audit-f43-semilla con su código
+    // ─────────────────────────────────────────────────────────
+    await searchInput.fill(semillaRewardCode);
+
+    // Localizar la fila que contenga estrictamente el código DZ y la tienda zz-audit
+    const semillaRow = page.locator("table tbody tr").filter({
+      has: page.locator(`text="${semillaRewardCode}"`),
+    }).filter({
+      has: page.locator('text="zz-audit-f43-semilla"'),
+    });
+
+    // Validar explícitamente que la fila está visible y pertenece a zz-audit ANTES de cualquier clic
+    await expect(semillaRow).toBeVisible({ timeout: 15000 });
+    await expect(semillaRow.locator('text="zz-audit-f43-semilla"')).toBeVisible();
+
+    const applyBtn = semillaRow.getByRole("button", { name: "Aplicar premio" });
+    await expect(applyBtn).toBeVisible({ timeout: 5000 });
+
+    // Clic SOLO dentro de la fila de zz-audit-f43-semilla
     await applyBtn.click();
 
-    // El estado debe cambiar a Aplicado y desaparecer el botón
-    await expect(page.getByText("Aplicado").first()).toBeVisible({ timeout: 15000 });
+    // El estado de esa fila debe cambiar a Aplicado y el botón desaparecer
+    await expect(semillaRow.getByText("Aplicado")).toBeVisible({ timeout: 15000 });
     await expect(applyBtn).not.toBeVisible();
 
-    // Exportar CSV
+    // ─────────────────────────────────────────────────────────
+    // E11: Rechazar premio SOLO a la fila zz-audit-f43-pro con su código
+    // ─────────────────────────────────────────────────────────
+    await searchInput.fill(proRewardCode);
+
+    const proRow = page.locator("table tbody tr").filter({
+      has: page.locator(`text="${proRewardCode}"`),
+    }).filter({
+      has: page.locator('text="zz-audit-f43-pro"'),
+    });
+
+    // Validar explícitamente que la fila está visible y pertenece a zz-audit ANTES de cualquier clic
+    await expect(proRow).toBeVisible({ timeout: 15000 });
+    await expect(proRow.locator('text="zz-audit-f43-pro"')).toBeVisible();
+
+    const rejectBtn = proRow.getByRole("button", { name: "Rechazar" });
+    await expect(rejectBtn).toBeVisible({ timeout: 5000 });
+
+    // Clic SOLO dentro de la fila de zz-audit-f43-pro
+    await rejectBtn.click();
+
+    // El estado de esa fila debe cambiar a Rechazado y el botón desaparecer
+    await expect(proRow.getByText("Rechazado")).toBeVisible({ timeout: 15000 });
+    await expect(rejectBtn).not.toBeVisible();
+
+    // ─────────────────────────────────────────────────────────
+    // E13: Exportar CSV
+    // ─────────────────────────────────────────────────────────
+    await searchInput.fill("");
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: /Exportar CSV/i }).click();
     const download = await downloadPromise;
