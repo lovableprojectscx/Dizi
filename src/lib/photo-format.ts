@@ -1,10 +1,14 @@
 /**
  * @file photo-format.ts
  * @description Única fuente de verdad para el cálculo y recomendación del formato
- * de fotos por tienda (RF-41.1, RF-41.2, RNF-41.2).
+ * de fotos por tienda (RF-41.1, RF-41.2, RNF-41.2, F41b).
+ * La matriz de formatos permitidos y proporciones base vive exclusivamente
+ * en `DESIGN_SPECS` (design-catalog.ts).
  */
 
-export type PhotoFormat = "square" | "portrait" | "contain";
+import { getDesignSpec, PhotoFormat } from "./design-catalog";
+
+export type { PhotoFormat };
 
 export interface PhotoAspect {
   ratio: string;
@@ -19,58 +23,54 @@ export interface StorePhotoFormatSource {
 }
 
 /**
- * Determina si un diseño o layout es flexible para el formato de fotos.
- * Solo Grilla ("grid", "minimalista", "clasico") y Bloom Estándar ("bloom_general",
- * o "bloom" cuando no es florería) permiten elegir formato (RF-41.2).
- * Todos los demás diseños ignoran el formato.
+ * Determina si un diseño o estructura es flexible para el formato de fotos.
+ * Lee directamente de la ficha técnica única `DESIGN_SPECS[id].formatosFoto` (F41b / RNF-41b.2).
  */
 export function isFlexiblePhotoLayout(
   layoutOrModel: string | null | undefined,
   niche?: string | null,
 ): boolean {
   if (!layoutOrModel) return false;
-  const l = layoutOrModel.trim().toLowerCase();
-
-  // Variantes y alias de Grilla
-  if (l === "grid" || l === "minimalista" || l === "clasico") return true;
-
-  // Bloom Estándar
-  if (l === "bloom_general") return true;
-  if (l === "bloom" && (niche || "").trim().toLowerCase() !== "floreria") return true;
-
-  return false;
+  const spec = getDesignSpec(layoutOrModel, niche);
+  return Boolean(spec.formatosFoto && spec.formatosFoto.length > 0);
 }
 
 /**
- * Resuelve la proporción de foto para una tienda y layout.
- * Es la ÚNICA fuente de verdad para el renderizado de fotos en catálogo (RNF-41.2).
+ * Resuelve la proporción de foto para una tienda y diseño.
+ * Es la ÚNICA fuente de verdad para el renderizado de fotos en catálogo (RNF-41.2, F41b).
+ * Resuelve siempre el ID oficial de la estructura mediante `getDesignSpec`.
  *
  * @param store Tienda (contiene photoFormat/photo_format, model, niche)
- * @param layout Layout efectivo a evaluar (opcional, si se omite usa store.model)
+ * @param layout Diseño o modelo a evaluar (opcional, si se omite usa store.model)
  * @returns { ratio, contain } o null si el diseño no es flexible (el diseño manda).
  */
 export function getPhotoAspect(
   store: StorePhotoFormatSource | null | undefined,
   layout?: string | null,
 ): PhotoAspect | null {
-  const effectiveLayout = (layout || store?.model || "grid").trim().toLowerCase();
-  const niche = store?.niche ?? null;
+  const modelToResolve = layout ?? store?.model;
+  const spec = getDesignSpec(modelToResolve, store?.niche);
 
-  if (!isFlexiblePhotoLayout(effectiveLayout, niche)) {
+  // Si el diseño no tiene formatos permitidos (no es flexible), el diseño manda (E7)
+  if (!spec.formatosFoto || spec.formatosFoto.length === 0) {
     return null;
   }
 
+  const baseRatio = spec.proporcionBase || "1/1";
   const format = (store?.photoFormat ?? store?.photo_format ?? null) as PhotoFormat | null;
 
-  // Si no hay formato explícito (NULL histórico):
-  // Grilla dibuja en 4/3 y Bloom en 1/1 (RF-41.1)
+  // Si no hay formato explícito (NULL histórico) (E1):
   if (!format) {
-    if (effectiveLayout === "grid" || effectiveLayout === "minimalista" || effectiveLayout === "clasico") {
-      return { ratio: "4/3", contain: false };
-    }
-    return { ratio: "1/1", contain: false };
+    return { ratio: baseRatio, contain: false };
   }
 
+  // RF-41b.3 / E3: Si el formato guardado no está permitido en el diseño actual,
+  // el catálogo se ve como "como hoy" (proporción base), sin borrar el valor guardado
+  if (!spec.formatosFoto.includes(format)) {
+    return { ratio: baseRatio, contain: false };
+  }
+
+  // Formato permitido en el diseño actual:
   switch (format) {
     case "square":
       return { ratio: "1/1", contain: false };
@@ -79,11 +79,7 @@ export function getPhotoAspect(
     case "contain":
       return { ratio: "1/1", contain: true };
     default:
-      // Fallback ante valores inesperados: comportarse como NULL histórico
-      if (effectiveLayout === "grid" || effectiveLayout === "minimalista" || effectiveLayout === "clasico") {
-        return { ratio: "4/3", contain: false };
-      }
-      return { ratio: "1/1", contain: false };
+      return { ratio: baseRatio, contain: false };
   }
 }
 
