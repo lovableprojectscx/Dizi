@@ -1558,7 +1558,7 @@ export function PublicCatalog({
   const rawModelId = resolveRenderModel(effectiveModel);
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
-  const photoAspect = getPhotoAspect(store, cfg.layout);
+  const photoAspect = getPhotoAspect(store, effectiveModel);
   const showDesktopSidebar = mode === "catalog" && !isMockup;
 
   const isPremiumModel =
@@ -4102,7 +4102,11 @@ export function PublicCatalog({
                   <article
                     key={p.id}
                     className="relative overflow-hidden cursor-pointer group"
-                    style={{ borderRadius: cfg.cardRounded, aspectRatio: "3/4", backgroundColor: "var(--card)" }}
+                    style={{
+                      borderRadius: cfg.cardRounded,
+                      aspectRatio: photoAspect?.ratio || "3/4",
+                      backgroundColor: "var(--card)",
+                    }}
                     onClick={() => setViewingProduct(p)}
                   >
                     <img
@@ -4112,7 +4116,10 @@ export function PublicCatalog({
                         400
                       )}
                       alt={p.name}
-                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      className={cn(
+                        "absolute inset-0 h-full w-full group-hover:scale-110 transition-transform duration-700",
+                        photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                      )}
                       loading={index < 4 ? "eager" : "lazy"}
                       fetchPriority={index < 2 ? "high" : "auto"}
                       decoding="async"
@@ -5387,14 +5394,17 @@ export function PublicCatalog({
                       <div
                         className="relative overflow-hidden"
                         style={{
-                          aspectRatio: "4/3",
+                          aspectRatio: photoAspect?.ratio || "4/3",
                           clipPath: i % 2 === 0 ? slantRight : slantLeft,
                         }}
                       >
                         <img
                           src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 400)}
                           alt={p.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          className={cn(
+                            "w-full h-full group-hover:scale-105 transition-transform duration-700",
+                            photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                          )}
                           loading={i < 4 ? "eager" : "lazy"}
                           fetchPriority={i < 2 ? "high" : "auto"}
                           decoding="async"
@@ -5507,7 +5517,7 @@ export function PublicCatalog({
                       <div
                         className="relative overflow-hidden w-full group-hover:scale-[1.02] transition-transform duration-500"
                         style={{
-                          aspectRatio: "3/4",
+                          aspectRatio: photoAspect?.ratio || "3/4",
                           borderRadius: "999px 999px 1rem 1rem", // arch top
                           border: cfg.cardBorder ? `1px solid var(--border)` : "none",
                           backgroundColor: "var(--card)",
@@ -5516,7 +5526,10 @@ export function PublicCatalog({
                         <img
                           src={getOptimizedImageUrl(getThumbnailUrl(p.image) || fallback, 400)}
                           alt={p.name}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          className={cn(
+                            "absolute inset-0 w-full h-full group-hover:scale-105 transition-transform duration-700",
+                            photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                          )}
                           style={{ borderRadius: "999px 999px 0.75rem 0.75rem" }}
                           loading={idx < 4 ? "eager" : "lazy"}
                           fetchPriority={idx < 2 ? "high" : "auto"}
@@ -5841,7 +5854,17 @@ export function PublicCatalog({
                             >
                               <div className="space-y-3">
                                 {/* Image */}
-                                <div style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }} className="relative aspect-square w-full rounded-2xl overflow-hidden border">
+                                <div
+                                  style={{
+                                    backgroundColor: "var(--muted)",
+                                    borderColor: "var(--border)",
+                                    aspectRatio: photoAspect?.ratio || "1/1",
+                                  }}
+                                  className={cn(
+                                    "relative w-full rounded-2xl overflow-hidden border",
+                                    !photoAspect && "aspect-square"
+                                  )}
+                                >
                                   <img
                                     src={getOptimizedImageUrl(
                                       getThumbnailUrl(p.image) ||
@@ -5849,7 +5872,10 @@ export function PublicCatalog({
                                       500,
                                     )}
                                     alt={p.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    className={cn(
+                                      "w-full h-full group-hover:scale-105 transition-transform duration-500",
+                                      photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                                    )}
                                     loading={idx < 3 ? "eager" : "lazy"}
                                     fetchPriority={idx === 0 ? "high" : "auto"}
                                     decoding="async"
@@ -6088,7 +6114,17 @@ export function PublicCatalog({
                               >
                                 <div>
                                   {/* 1:1 image */}
-                                  <div style={{ backgroundColor: "var(--muted)", borderColor: "var(--border)" }} className="relative overflow-hidden aspect-square rounded-2xl m-2 border">
+                                  <div
+                                    style={{
+                                      backgroundColor: "var(--muted)",
+                                      borderColor: "var(--border)",
+                                      aspectRatio: photoAspect?.ratio || "1/1",
+                                    }}
+                                    className={cn(
+                                      "relative overflow-hidden rounded-2xl m-2 border",
+                                      !photoAspect && "aspect-square"
+                                    )}
+                                  >
                                     <img
                                       src={getOptimizedImageUrl(
                                         getThumbnailUrl(p.image) ||
@@ -6096,7 +6132,10 @@ export function PublicCatalog({
                                         400,
                                       )}
                                       alt={p.name}
-                                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      className={cn(
+                                        "absolute inset-0 h-full w-full group-hover:scale-105 transition-transform duration-500",
+                                        photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                                      )}
                                       loading={index < 4 ? "eager" : "lazy"}
                                       fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
@@ -6608,8 +6647,12 @@ export function PublicCatalog({
                                         backgroundColor: "var(--muted)",
                                         borderColor:
                                           "color-mix(in srgb, var(--border) 40%, transparent)",
+                                        aspectRatio: photoAspect?.ratio || "1/1",
                                       }}
-                                      className="relative aspect-square w-full overflow-hidden rounded-[2rem] border"
+                                      className={cn(
+                                        "relative w-full overflow-hidden rounded-[2rem] border",
+                                        !photoAspect && "aspect-square"
+                                      )}
                                     >
                                       <img
                                         src={getOptimizedImageUrl(
@@ -6618,7 +6661,10 @@ export function PublicCatalog({
                                           400
                                         )}
                                         alt={p.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                        className={cn(
+                                          "w-full h-full group-hover:scale-105 transition-transform duration-700",
+                                          photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                                        )}
                                         loading={idx < 3 ? "eager" : "lazy"}
                                         fetchPriority={idx === 0 ? "high" : "auto"}
                                         decoding="async"
@@ -6897,9 +6943,11 @@ export function PublicCatalog({
                                           backgroundColor: "var(--muted)",
                                           borderColor:
                                             "color-mix(in srgb, var(--border) 30%, transparent)",
+                                          aspectRatio: photoAspect?.ratio || "1/1",
                                         }}
                                         className={cn(
-                                          "relative overflow-hidden aspect-square m-2.5 border transition-all duration-500",
+                                          "relative overflow-hidden m-2.5 border transition-all duration-500",
+                                          !photoAspect && "aspect-square",
                                           isEven
                                             ? "rounded-[2.5rem_0.75rem_2.5rem_0.75rem] group-hover:rounded-[2.25rem_1rem_2.25rem_1rem]"
                                             : "rounded-[0.75rem_2.5rem_0.75rem_2.5rem] group-hover:rounded-[1rem_2.25rem_1rem_2.25rem]",
@@ -6912,7 +6960,10 @@ export function PublicCatalog({
                                             400
                                           )}
                                           alt={p.name}
-                                          className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                          className={cn(
+                                            "absolute inset-0 h-full w-full group-hover:scale-105 transition-transform duration-700",
+                                            photoAspect?.contain ? "object-contain p-2" : "object-cover"
+                                          )}
                                           loading={idx < 4 ? "eager" : "lazy"}
                                           fetchPriority={idx < 2 ? "high" : "auto"}
                                           decoding="async"
@@ -8150,10 +8201,13 @@ export function PublicCatalog({
                         className="overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group text-left bg-[var(--card)]"
                         onClick={() => setViewingProduct(p)}
                       >
-                        {/* Foto 3:4 completa sin bordes ni radio grande */}
+                        {/* Foto de producto con proporción según formato */}
                         <div
-                          className="relative overflow-hidden bg-muted aspect-[3/4] w-full"
-                          style={{ borderRadius: "0px" }}
+                          className="relative overflow-hidden bg-muted w-full"
+                          style={{
+                            borderRadius: "0px",
+                            aspectRatio: photoAspect?.ratio || "3/4",
+                          }}
                         >
                           <img
                             src={getOptimizedImageUrl(
@@ -8161,7 +8215,10 @@ export function PublicCatalog({
                               400,
                             )}
                             alt={p.name}
-                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className={cn(
+                              "absolute inset-0 h-full w-full group-hover:scale-105 transition-transform duration-500",
+                              photoAspect?.contain ? "object-contain p-2" : "object-cover",
+                            )}
                             loading={index < 4 ? "eager" : "lazy"}
                             fetchPriority={index < 2 ? "high" : "auto"}
                             decoding="async"

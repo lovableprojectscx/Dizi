@@ -55,6 +55,11 @@ export type OfficialDesignId =
 
 export type CoverTextField = "titulo" | "subtitulo" | "etiqueta";
 
+/**
+ * Formato de visualización de fotos en catálogo (F41 / F41b).
+ */
+export type PhotoFormat = "square" | "portrait" | "contain";
+
 export type EditableThemeField =
   | "colores"
   | "tipografia"
@@ -105,6 +110,10 @@ export interface DesignSpec {
   enSelector: boolean;
   /** Estilo inmutable fijado por diseño (Paso 1 N3a: tipografía, tarjeta y corte) */
   estiloFijo?: FixedDesignStyle;
+  /** Formatos de foto permitidos en el diseño (F41b). Si se omite o está vacío, el diseño no es flexible */
+  formatosFoto?: PhotoFormat[];
+  /** Proporción histórica base del diseño cuando photo_format es NULL ("4/3", "3/4" o "1/1") (F41b) */
+  proporcionBase?: "4/3" | "3/4" | "1/1";
 }
 
 /**
@@ -126,6 +135,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "General / Comercio",
     enSelector: true,
+    formatosFoto: ["square", "portrait", "contain"],
+    proporcionBase: "4/3",
   },
   overlay: {
     id: "overlay",
@@ -141,6 +152,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Moda / Calzado",
     enSelector: true,
+    formatosFoto: ["square", "portrait"],
+    proporcionBase: "3/4",
   },
   hero: {
     id: "hero",
@@ -156,6 +169,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Bienestar / Ecológico",
     enSelector: false,
+    proporcionBase: "4/3",
   },
   spotlight: {
     id: "spotlight",
@@ -171,6 +185,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Joyería / Boutique",
     enSelector: false,
+    proporcionBase: "1/1",
   },
   editorial: {
     id: "editorial",
@@ -186,6 +201,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Corporativo / Marcas Premium",
     enSelector: false,
+    proporcionBase: "3/4",
   },
   tiles: {
     id: "tiles",
@@ -201,6 +217,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: true,
     rubroSugerido: "Tecnología / Accesorios",
     enSelector: false,
+    proporcionBase: "1/1",
   },
   magazine: {
     id: "magazine",
@@ -216,6 +233,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: true,
     rubroSugerido: "Noche / Tendencias",
     enSelector: false,
+    proporcionBase: "3/4",
   },
   diagonal: {
     id: "diagonal",
@@ -231,6 +249,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: true,
     rubroSugerido: "Deportes / Juventud",
     enSelector: true,
+    formatosFoto: ["square", "portrait"],
+    proporcionBase: "4/3",
   },
   arch: {
     id: "arch",
@@ -246,6 +266,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Diseño / Arte / Belleza",
     enSelector: true,
+    formatosFoto: ["square", "portrait"],
+    proporcionBase: "3/4",
   },
   banner_grid: {
     id: "banner_grid",
@@ -261,6 +283,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Promociones / Marcas con Banner",
     enSelector: false,
+    proporcionBase: "4/3",
   },
   bloom_general: {
     id: "bloom_general",
@@ -276,6 +299,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Multipropósito Premium",
     enSelector: true,
+    formatosFoto: ["square", "portrait", "contain"],
+    proporcionBase: "1/1",
   },
   bloom_floral: {
     id: "bloom_floral",
@@ -291,6 +316,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Florería / Regalos",
     enSelector: false,
+    proporcionBase: "1/1",
     estiloFijo: {
       tipografia: "serif",
       tarjeta: "curved",
@@ -311,6 +337,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: true,
     rubroSugerido: "Gastronomía / Restobar",
     enSelector: true,
+    formatosFoto: ["square", "portrait", "contain"],
+    proporcionBase: "1/1",
     estiloFijo: {
       tipografia: "sans",
       tarjeta: "standard",
@@ -331,6 +359,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Salud / Orgánico",
     enSelector: true,
+    formatosFoto: ["square", "portrait"],
+    proporcionBase: "1/1",
     estiloFijo: {
       tipografia: "serif",
       tarjeta: "curved",
@@ -351,6 +381,7 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Moda / Colecciones",
     enSelector: false,
+    proporcionBase: "3/4",
     estiloFijo: {
       tipografia: "serif",
       tarjeta: "flat",
@@ -371,6 +402,8 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     oscuroDeFabrica: false,
     rubroSugerido: "Moda / Ropa",
     enSelector: true,
+    formatosFoto: ["square", "portrait", "contain"],
+    proporcionBase: "3/4",
     estiloFijo: {
       tipografia: "sans",
       tarjeta: "flat",
