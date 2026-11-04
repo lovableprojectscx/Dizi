@@ -41,16 +41,21 @@ describe("Encargo N2 — Nombres Oficiales de Diseño y Migración Segura", () =
       expect(SEMILLA_MODEL).toBe("grid");
     });
 
-    it("getImageSpec para tienda con model 'grid' o sin model retorna ratio 1/1 (1000x1000)", () => {
+    it("getImageSpec para tienda con model 'grid' o sin model retorna ratio 4/3 según RF-41.9 (o 1/1 con photoFormat square)", () => {
       const gridStoreSpec = getImageSpec({ model: "grid" } as any);
-      expect(gridStoreSpec.ratio).toBe("1/1");
-      expect(gridStoreSpec.width).toBe(1000);
-      expect(gridStoreSpec.height).toBe(1000);
+      expect(gridStoreSpec.ratio).toBe("4/3");
+      expect(gridStoreSpec.width).toBe(1200);
+      expect(gridStoreSpec.height).toBe(900);
+
+      const gridStoreSquareSpec = getImageSpec({ model: "grid", photoFormat: "square" } as any);
+      expect(gridStoreSquareSpec.ratio).toBe("1/1");
+      expect(gridStoreSquareSpec.width).toBe(1000);
+      expect(gridStoreSquareSpec.height).toBe(1000);
 
       const defaultSpec = getImageSpec({} as any);
-      expect(defaultSpec.ratio).toBe("1/1");
-      expect(defaultSpec.width).toBe(1000);
-      expect(defaultSpec.height).toBe(1000);
+      expect(defaultSpec.ratio).toBe("4/3");
+      expect(defaultSpec.width).toBe(1200);
+      expect(defaultSpec.height).toBe(900);
     });
   });
 
@@ -184,7 +189,7 @@ describe("Encargo N2 — Nombres Oficiales de Diseño y Migración Segura", () =
           "overlay",
           "arch",
           "nature",
-          "lookbook",
+          "vitrina",
           "bloom_general",
           "bite",
           "diagonal",

@@ -21,6 +21,7 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
 import { getDesignSpec, ALL_MODELS, PALETTE_VARIANT_MODELS } from "@/lib/design-catalog";
+import { suggestPhotoFormat } from "@/lib/photo-format";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -562,6 +563,50 @@ function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
     );
   }
 
+  // VITRINA: retail tipo GAP, foto 3:4 limpia, 2 columnas
+  if (m.layout === "vitrina") {
+    return (
+      <div
+        className="w-full overflow-hidden flex flex-col"
+        style={{ backgroundColor: bg, height: "100px" }}
+      >
+        <Header />
+        <div className="grid grid-cols-2 gap-1 px-1.5 pt-1 flex-1">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex flex-col gap-0.5">
+              <div
+                className="w-full relative overflow-hidden"
+                style={{
+                  aspectRatio: "3/4",
+                  backgroundColor: card,
+                  border: `1px solid ${accent}22`,
+                }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      i === 0
+                        ? `linear-gradient(160deg, ${accent}88, ${accent}33)`
+                        : `linear-gradient(160deg, ${accent}44, ${accent}11)`,
+                  }}
+                />
+                <div
+                  className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full flex items-center justify-center text-[5px] text-white"
+                  style={{ backgroundColor: accent }}
+                >
+                  +
+                </div>
+              </div>
+              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
+              <div className="h-0.5 rounded-full w-2/5" style={{ backgroundColor: accent }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // LOOKBOOK: editorial de alta costura, tarjetas flat
   if (m.layout === "lookbook") {
     return (
@@ -1059,6 +1104,7 @@ function RegisterPage() {
           brandColor: brandColor || undefined,
           ownerId: userId,
           niche: selectedNiche,
+          photoFormat: suggestPhotoFormat(selectedNiche),
           planExpiresAt,
           subscriptionStatus:
             plan === "semilla"

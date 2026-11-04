@@ -172,6 +172,8 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       accentColor: data.accent_color ?? null,
       borderRadius: data.border_radius ?? null,
       imgShape: data.img_shape ?? null,
+      photoFormat: data.photo_format ?? null,
+      photo_format: data.photo_format ?? null,
       ownerId: data.owner_id,
       active: data.active,
       isPublished: data.is_published,

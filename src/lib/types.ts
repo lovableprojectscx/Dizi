@@ -4,6 +4,8 @@
  * para la plataforma DIZI (Catálogo Dinámico SAAS, Bio-Links y Gestión de Suscripciones).
  */
 
+import { getPhotoAspect, isFlexiblePhotoLayout } from "./photo-format";
+
 /**
  * Identificadores válidos para los planes de suscripción de DIZI.
  * - `semilla`: Plan básico/gratuito con funciones esenciales y límite de productos.
@@ -278,6 +280,10 @@ export interface Store {
   borderRadius?: string | null;
   /** Forma geométrica de las imágenes de producto (cuadrada, redondeada, circular) */
   imgShape?: "square" | "rounded" | "circle" | null;
+  /** Formato de recorte de fotos para Grilla y Bloom: "square" (1:1), "portrait" (3:4), "contain" (sin recorte), o null (histórico) (F41) */
+  photoFormat?: "square" | "portrait" | "contain" | null;
+  /** Compatibilidad snake_case directo desde base de datos (F41) */
+  photo_format?: "square" | "portrait" | "contain" | null;
   /** Modo oscuro activo para la visualización del catálogo */
   isDark?: boolean | null;
   /** Plan de suscripción contratado actualmente por la tienda */
@@ -647,11 +653,11 @@ export interface ImageSpec {
  */
 export const LAYOUT_IMAGE_SPECS: Record<string, ImageSpec> = {
   grid: {
-    ratio: "1/1",
-    width: 1000,
-    height: 1000,
-    label: "Cuadrada 1:1",
-    hint: "Este catálogo muestra productos en grilla cuadrada. Imágenes cuadradas se ven perfectas sin recorte.",
+    ratio: "4/3",
+    width: 1200,
+    height: 900,
+    label: "Horizontal 4:3",
+    hint: "Este catálogo muestra productos en proporción horizontal 4:3. Fotos horizontales se ven perfectas sin recorte.",
     tolerance: 0.15,
   },
   overlay: {
@@ -742,11 +748,51 @@ export const LAYOUT_IMAGE_SPECS: Record<string, ImageSpec> = {
     hint: "El diseño Bloom Floral muestra tarjetas cuadradas de alta calidad en grilla. Las imágenes cuadradas se ven perfectas.",
     tolerance: 0.15,
   },
+  bloom_general: {
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
+    label: "Cuadrada 1:1",
+    hint: "El diseño Bloom Estándar muestra tarjetas limpias con fotos cuadradas o según el formato elegido.",
+    tolerance: 0.15,
+  },
+  bloom_floral: {
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
+    label: "Cuadrada 1:1",
+    hint: "El diseño Bloom Floral muestra tarjetas cuadradas de alta calidad en grilla.",
+    tolerance: 0.15,
+  },
+  nature: {
+    ratio: "1/1",
+    width: 1000,
+    height: 1000,
+    label: "Cuadrada 1:1",
+    hint: "El diseño Nature Orgánico resalta tarjetas limpias con fotos cuadradas.",
+    tolerance: 0.15,
+  },
+  vitrina: {
+    ratio: "3/4",
+    width: 900,
+    height: 1200,
+    label: "Vertical 3:4",
+    hint: "El diseño Vitrina muestra fotos verticales 3:4 de borde a borde.",
+    tolerance: 0.12,
+  },
+  lookbook: {
+    ratio: "3/4",
+    width: 900,
+    height: 1200,
+    label: "Vertical 3:4",
+    hint: "El diseño Lookbook Moda resalta colecciones con fotos verticales 3:4.",
+    tolerance: 0.12,
+  },
 };
 
 /**
  * Obtiene la especificación de proporciones y dimensiones de imagen recomendada
- * según la plantilla de diseño configurada en la tienda.
+ * según la plantilla de diseño configurada en la tienda y su formato de foto (RF-41.9).
  * @param store Objeto de la tienda.
  */
 export function getImageSpec(store: Store): ImageSpec {
@@ -787,8 +833,61 @@ export function getImageSpec(store: Store): ImageSpec {
     editorial: "editorial",
     bite: "bite",
     bloom: "bloom",
+    bloom_general: "bloom_general",
+    bloom_floral: "bloom_floral",
+    nature: "nature",
+    vitrina: "vitrina",
+    lookbook: "lookbook",
   };
   const layout = LAYOUT_MAP[model] || "grid";
+
+  // En diseños flexibles (Grilla y Bloom Estándar), seguir el formato elegido por la tienda (RF-41.9)
+  if (isFlexiblePhotoLayout(layout, store.niche)) {
+    const aspect = getPhotoAspect(store, layout);
+    if (aspect) {
+      if (aspect.contain) {
+        return {
+          ratio: "1/1",
+          width: 1000,
+          height: 1000,
+          label: "Completa (sin recorte)",
+          hint: "La foto se muestra completa sin recorte, dentro del contenedor de la tarjeta.",
+          tolerance: 0.2,
+        };
+      }
+      if (aspect.ratio === "3/4") {
+        return {
+          ratio: "3/4",
+          width: 900,
+          height: 1200,
+          label: "Vertical 3:4",
+          hint: "Este catálogo muestra fotos verticales 3:4. Fotos verticales llenan la tarjeta sin recortes excesivos.",
+          tolerance: 0.12,
+        };
+      }
+      if (aspect.ratio === "1/1") {
+        return {
+          ratio: "1/1",
+          width: 1000,
+          height: 1000,
+          label: "Cuadrada 1:1",
+          hint: "Este catálogo muestra fotos cuadradas 1:1. Fotos cuadradas se ven perfectas.",
+          tolerance: 0.15,
+        };
+      }
+      if (aspect.ratio === "4/3") {
+        return {
+          ratio: "4/3",
+          width: 1200,
+          height: 900,
+          label: "Horizontal 4:3",
+          hint: "Este catálogo muestra fotos horizontales 4:3. Fotos horizontales se ven perfectas sin recortes arriba y abajo.",
+          tolerance: 0.15,
+        };
+      }
+    }
+  }
+
   return LAYOUT_IMAGE_SPECS[layout] || LAYOUT_IMAGE_SPECS["grid"];
 }
 

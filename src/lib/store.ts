@@ -114,6 +114,7 @@ export const mapStoreFromDB = (row: any): Store => {
     accentColor: row.accent_color ?? null,
     borderRadius: row.border_radius ?? null,
     imgShape: row.img_shape ?? null,
+    photoFormat: row.photo_format ?? null,
     isDark: isDarkVal,
     ownerId: row.owner_id,
     active: row.active,
@@ -817,6 +818,7 @@ export const useApp = create<AppState>()(
         if (updatedPatch.accentColor !== undefined) dbPatch.accent_color = updatedPatch.accentColor;
         if (updatedPatch.borderRadius !== undefined) dbPatch.border_radius = updatedPatch.borderRadius;
         if (updatedPatch.imgShape !== undefined) dbPatch.img_shape = updatedPatch.imgShape;
+        if (updatedPatch.photoFormat !== undefined) dbPatch.photo_format = updatedPatch.photoFormat;
         if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
         if (updatedPatch.showFeatured !== undefined)
           dbPatch.show_featured = updatedPatch.showFeatured;
@@ -921,6 +923,7 @@ export const useApp = create<AppState>()(
         if (store.cardStyle) initialUpdates.card_style = store.cardStyle;
         if (store.borderRadius) initialUpdates.border_radius = store.borderRadius;
         if (store.imgShape) initialUpdates.img_shape = store.imgShape;
+        if (store.photoFormat !== undefined && store.photoFormat !== null) initialUpdates.photo_format = store.photoFormat;
         if (store.isDark !== undefined && store.isDark !== null) initialUpdates.is_dark = store.isDark;
         if (store.niche) initialUpdates.niche = store.niche;
         if (store.referredBy) initialUpdates.referred_by = store.referredBy;

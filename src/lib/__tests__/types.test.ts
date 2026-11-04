@@ -257,8 +257,15 @@ describe("Pruebas unitarias de Especificaciones de Imagen (types.ts)", () => {
   };
 
   describe("getImageSpec", () => {
-    it("debe retornar especificación grid (1:1) para modelo minimalista", () => {
+    it("debe retornar especificación horizontal (4:3) para Grilla sin formato explícito (RF-41.9)", () => {
       const store = createMockStoreWithModel("minimalista");
+      const spec = getImageSpec(store);
+      expect(spec.ratio).toBe("4/3");
+      expect(spec.label).toBe("Horizontal 4:3");
+    });
+
+    it("debe retornar especificación cuadrada (1:1) para Grilla con photoFormat square", () => {
+      const store = { ...createMockStoreWithModel("minimalista"), photoFormat: "square" } as any;
       const spec = getImageSpec(store);
       expect(spec.ratio).toBe("1/1");
       expect(spec.label).toBe("Cuadrada 1:1");
