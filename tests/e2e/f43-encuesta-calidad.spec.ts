@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 import { execSync } from "child_process";
 
 /**
@@ -167,21 +168,21 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
       createdUserIds.push(userId);
       console.log(` -> Usuario creado: ${item.email} (ID: ${userId})`);
 
+      // Generar storeId determinístico y registrar antes de insertar
+      const storeId = crypto.randomUUID();
+      createdStoreIds.push(storeId);
+
       // Confirmar correo e insertar tienda vinculada al owner_id
       const storeInsertSql = `
         UPDATE auth.users SET email_confirmed_at = now() WHERE id = '${userId}';
         INSERT INTO public.stores (
           id, name, slug, phone, owner_id, plan, subscription_status, created_at, updated_at
         ) VALUES (
-          gen_random_uuid(), '${item.name}', '${item.slug}', '999000111', '${userId}', '${item.plan}', 'active', now(), now()
-        ) RETURNING id;
+          '${storeId}', '${item.name}', '${item.slug}', '999000111', '${userId}', '${item.plan}', 'active', now(), now()
+        );
       `;
-      const res = runRemoteSql(storeInsertSql, false);
-      const insertedStoreId = res?.rows?.[0]?.id;
-      if (insertedStoreId) {
-        createdStoreIds.push(insertedStoreId);
-        console.log(` -> Tienda creada: ${item.slug} (ID: ${insertedStoreId})`);
-      }
+      runRemoteSql(storeInsertSql, false);
+      console.log(` -> Tienda creada: ${item.slug} (ID: ${storeId})`);
     }
 
     console.log(`[BeforeAll F43] Siembra completa: ${createdUserIds.length} usuarios y ${createdStoreIds.length} tiendas.`);
