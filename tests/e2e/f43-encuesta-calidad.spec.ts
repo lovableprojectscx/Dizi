@@ -4,6 +4,7 @@ import path from "path";
 import os from "os";
 import crypto from "crypto";
 import { execSync } from "child_process";
+import { fileURLToPath } from "url";
 
 /**
  * @file f43-encuesta-calidad.spec.ts
@@ -26,6 +27,8 @@ import { execSync } from "child_process";
 const SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
 const SUPER_SESSION_PATH = process.env.SUPER_SESSION_PATH || "";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "../..");
 const SCRATCH_DIR = path.join(os.tmpdir(), "dizi-e2e-f43");
 const TEST_PASSWORD = "AuditPassword123!";
