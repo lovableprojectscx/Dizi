@@ -29,7 +29,9 @@ import {
   Eye,
   Clock,
   AlertCircle,
+  Gift,
 } from "lucide-react";
+import { canStoreTakeSurvey, SURVEY_VERSION, getRewardDescription } from "@/lib/survey";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import QRCode from "qrcode";
 import { toast } from "sonner";
@@ -118,6 +120,26 @@ function Dashboard() {
 
   const activeProducts = store.products.filter((p) => p.visible).length;
   const incompleteProductsCount = store.products.filter(isProductIncomplete).length;
+
+  const [surveyEligible, setSurveyEligible] = useState(false);
+  const getMySurveyResponse = useApp((s) => s.getMySurveyResponse);
+
+  useEffect(() => {
+    if (!store) return;
+    if (!canStoreTakeSurvey(store, false)) {
+      setSurveyEligible(false);
+      return;
+    }
+    let active = true;
+    getMySurveyResponse(store.id, SURVEY_VERSION).then((resp) => {
+      if (active) {
+        setSurveyEligible(!resp);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [store?.id, store?.plan, store?.slug, store?.subscriptionStatus, getMySurveyResponse]);
   const activeQr = shareTab === "catalog" ? catalogQr : bioQr;
   const activeUrl = shareTab === "catalog" ? catalogUrl : bioUrl;
 
@@ -167,6 +189,38 @@ function Dashboard() {
             >
               <Link to="/admin/productos">
                 Completar productos
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tarjeta de Encuesta de Calidad (RF-43.1) */}
+      {surveyEligible && (
+        <Card className="border border-emerald-300 dark:border-emerald-800/80 bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 dark:from-emerald-950/25 dark:via-teal-950/20 dark:to-emerald-950/25 shadow-xs rounded-2xl overflow-hidden">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 shadow-xs">
+                <Gift className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5 text-center sm:text-left">
+                <h3 className="text-xs sm:text-sm font-heading font-bold text-emerald-950 dark:text-emerald-200">
+                  Responde 7 preguntas y gana 15 días
+                </h3>
+                <p className="text-[11px] sm:text-xs text-emerald-800/80 dark:text-emerald-300/80">
+                  {store.plan === "semilla"
+                    ? "Completa la breve encuesta y recibe 15 días de prueba de Emprendedor."
+                    : "Completa la breve encuesta y suma 15 días más a tu plan actual."}
+                </p>
+              </div>
+            </div>
+            <Button
+              asChild
+              size="sm"
+              className="rounded-xl font-bold text-xs h-9 sm:h-10 w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shrink-0 cursor-pointer"
+            >
+              <Link to="/admin/encuesta">
+                Responder encuesta
               </Link>
             </Button>
           </CardContent>
