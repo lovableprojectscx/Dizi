@@ -48,8 +48,10 @@ export function buildSellerMessage(sellerName: string, message?: string): string
 }
 
 export function formatPrice(n?: number | null): string {
-  if (n === undefined || n === null || n === 0) {
+  if (n === undefined || n === null || n === 0 || isNaN(Number(n))) {
     return "A consultar";
   }
-  return `S/ ${n.toFixed(2)}`;
+  const parts = Number(n).toFixed(2).split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `S/ ${parts.join(".")}`;
 }

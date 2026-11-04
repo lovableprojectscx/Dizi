@@ -8742,92 +8742,112 @@ export function PublicCatalog({
               return (
                 <div
                   key={lineKey}
-                  className="flex items-center gap-3 p-2"
+                  className="p-3 space-y-2.5 transition-colors"
                   style={{
                     backgroundColor: "var(--card)",
                     border: `1px solid var(--border)`,
                     borderRadius: cfg.cardRounded,
                   }}
                 >
-                  <img
-                    src={getOptimizedImageUrl(itemImg, 200)}
-                    alt={l.product.name}
-                    className="h-12 w-12 object-cover shrink-0"
-                    style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
-                    onError={(e) => handleImageError(e, [itemImg, l.product.image, NO_IMAGE_PLACEHOLDER])}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        "text-sm font-bold truncate",
-                        cfg.headerStyle === "minimal" ? "tracking-wide uppercase text-xs" : "",
-                      )}
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      {l.product.name}
-                    </p>
-                    {l.variationName && (
-                      <span className="inline-flex items-center text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md mt-0.5 max-w-full truncate">
-                        Opción: {l.variationName}
-                      </span>
-                    )}
-                    <div className="flex items-baseline gap-1.5 mt-0.5">
-                      <p className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
-                        {formatPrice(l.effectivePrice)}
+                  {/* Fila 1: Foto (64px) + Info (nombre hasta 2 líneas, opción, precio unitario) + Papelera (>=36px) */}
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={getOptimizedImageUrl(itemImg, 200)}
+                      alt={l.product.name}
+                      className="h-16 w-16 object-cover shrink-0"
+                      style={{ borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "0.5rem" }}
+                      onError={(e) => handleImageError(e, [itemImg, l.product.image, NO_IMAGE_PLACEHOLDER])}
+                    />
+                    <div className="flex-1 min-w-0 pr-1">
+                      <p
+                        className={cn(
+                          "text-sm font-bold line-clamp-2 leading-snug",
+                          cfg.headerStyle === "minimal" ? "tracking-wide uppercase text-xs" : "",
+                        )}
+                        style={{ color: "var(--foreground)" }}
+                        title={l.product.name}
+                      >
+                        {l.product.name}
                       </p>
-                      {l.isWholesaleApplied && l.basePrice && (
-                        <span className="text-[10px] line-through text-muted-foreground">
-                          {formatPrice(l.basePrice)}
+                      {l.variationName && (
+                        <span className="inline-flex items-center text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md mt-1 max-w-full truncate">
+                          Opción: {l.variationName}
                         </span>
                       )}
+                      <div className="flex items-baseline gap-1.5 mt-1">
+                        <span className="text-xs font-semibold" style={{ color: "var(--primary)" }}>
+                          {formatPrice(l.effectivePrice)} <span className="text-[10px] font-normal text-muted-foreground">c/u</span>
+                        </span>
+                        {l.isWholesaleApplied && l.basePrice && (
+                          <span className="text-[10px] line-through text-muted-foreground">
+                            {formatPrice(l.basePrice)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {/* Indicador de precio por mayor o progreso */}
-                    <div className="mt-1">
+                    <button
+                      onClick={() => cartRemove(store.id, l.productId, l.variationId)}
+                      className="h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg transition hover:bg-muted/30 active:scale-95 shrink-0"
+                      style={{ color: "var(--muted-foreground)" }}
+                      aria-label={`Eliminar ${l.product.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Fila 2: Botones de cantidad (>=36px) a la izquierda y Subtotal de la línea a la derecha */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => cartSet(store.id, l.productId, l.qty - 1, l.variationId)}
+                        className="h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center transition hover:opacity-80 active:scale-95"
+                        style={{
+                          border: `1px solid var(--border)`,
+                          color: "var(--foreground)",
+                          borderRadius: cfg.cardRounded,
+                        }}
+                        aria-label="Disminuir cantidad"
+                      >
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span
+                        className="w-7 text-center text-sm font-black"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        {l.qty}
+                      </span>
+                      <button
+                        onClick={() => cartSet(store.id, l.productId, l.qty + 1, l.variationId)}
+                        className="h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center transition hover:opacity-80 active:scale-95"
+                        style={{
+                          border: `1px solid var(--border)`,
+                          color: "var(--foreground)",
+                          borderRadius: cfg.cardRounded,
+                        }}
+                        aria-label="Aumentar cantidad"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[10px] text-muted-foreground block leading-none mb-0.5">Subtotal</span>
+                      <span className="text-sm font-black" style={{ color: "var(--foreground)" }}>
+                        {formatPrice(l.effectivePrice != null ? l.effectivePrice * l.qty : null)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Fila 3: Aviso de precio por mayor a todo el ancho de la tarjeta */}
+                  {isWholesaleEligible(l.product, store) && (
+                    <div className="w-full pt-0.5">
                       <WholesaleProgress
                         product={l.product}
                         totalProductQty={l.totalProductQty}
                         store={store}
                       />
                     </div>
-                  </div>
-                  {/* Qty controls */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => cartSet(store.id, l.productId, l.qty - 1, l.variationId)}
-                      className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
-                      style={{
-                        border: `1px solid var(--border)`,
-                        color: "var(--foreground)",
-                        borderRadius: cfg.cardRounded,
-                      }}
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span
-                      className="w-6 text-center text-sm font-black"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      {l.qty}
-                    </span>
-                    <button
-                      onClick={() => cartSet(store.id, l.productId, l.qty + 1, l.variationId)}
-                      className="h-7 w-7 flex items-center justify-center transition hover:opacity-70"
-                      style={{
-                        border: `1px solid var(--border)`,
-                        color: "var(--foreground)",
-                        borderRadius: cfg.cardRounded,
-                      }}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => cartRemove(store.id, l.productId, l.variationId)}
-                    className="h-7 w-7 flex items-center justify-center transition hover:opacity-60"
-                    style={{ color: "var(--muted-foreground)" }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  )}
                 </div>
               );
             })}

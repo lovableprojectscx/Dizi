@@ -2,6 +2,7 @@ import React from "react";
 import { TrendingDown, Info } from "lucide-react";
 import { Product, Store } from "@/lib/types";
 import { getTiers, isWholesaleEligible } from "@/lib/wholesale";
+import { formatPrice } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 
 interface WholesaleTableProps {
@@ -66,11 +67,11 @@ export const WholesaleTable: React.FC<WholesaleTableProps> = ({ product, store, 
                   Desde {tier.min_qty} u.
                 </td>
                 <td className="py-2 font-black text-center" style={{ color: "var(--primary)" }}>
-                  S/ {tier.price.toFixed(2)}
+                  {formatPrice(tier.price)}
                 </td>
                 <td className="py-2 text-right">
                   <span className="inline-flex items-center text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    -{savingsPct}% (Ahorras S/ {savingsPerUnit.toFixed(2)})
+                    -{savingsPct}% (Ahorras {formatPrice(savingsPerUnit)})
                   </span>
                 </td>
               </tr>
