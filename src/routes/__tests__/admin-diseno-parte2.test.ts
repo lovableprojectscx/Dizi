@@ -10,9 +10,9 @@ import { hexLuminance } from "@/lib/utils";
 import { type PlanId } from "@/lib/types";
 
 describe("Parte 2: Motor de Diseño, Banners y Live Preview", () => {
-  describe("1. Las 15 Estructuras de Diseño Unificadas", () => {
-    it("contiene exactamente 15 estructuras de diseño registradas", () => {
-      expect(DESIGN_STRUCTURES).toHaveLength(15);
+  describe("1. Las Estructuras de Diseño Unificadas (16 oficiales con Vitrina)", () => {
+    it("contiene exactamente 16 estructuras de diseño registradas (15 anteriores + vitrina F41)", () => {
+      expect(DESIGN_STRUCTURES).toHaveLength(16);
     });
 
     it("todas las estructuras poseen configuración de tema por defecto válida", () => {

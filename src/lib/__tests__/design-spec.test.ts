@@ -31,12 +31,13 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
     "bite",
     "nature",
     "lookbook",
+    "vitrina",
   ];
 
-  describe("1. Integridad de la Ficha Única (15 diseños oficiales)", () => {
-    it("los 15 IDs oficiales tienen una ficha técnica completa y válida", () => {
-      expect(Object.keys(DESIGN_SPECS)).toHaveLength(15);
-      expect(DESIGN_STRUCTURES).toHaveLength(15);
+  describe("1. Integridad de la Ficha Única (16 diseños oficiales con Vitrina)", () => {
+    it("los 16 IDs oficiales tienen una ficha técnica completa y válida", () => {
+      expect(Object.keys(DESIGN_SPECS)).toHaveLength(16);
+      expect(DESIGN_STRUCTURES).toHaveLength(16);
 
       for (const id of ALL_OFFICIAL_IDS) {
         const spec = DESIGN_SPECS[id];
@@ -146,9 +147,14 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
         tarjeta: "curved",
         corteBanner: "curved",
       });
+      expect(DESIGN_SPECS.vitrina.estiloFijo).toEqual({
+        tipografia: "sans",
+        tarjeta: "flat",
+        corteBanner: "direct",
+      });
 
       const withoutFixed = ALL_OFFICIAL_IDS.filter(
-        (id) => !["lookbook", "bite", "bloom_floral", "nature"].includes(id)
+        (id) => !["lookbook", "bite", "bloom_floral", "nature", "vitrina"].includes(id)
       );
       for (const id of withoutFixed) {
         expect(DESIGN_SPECS[id].estiloFijo).toBeUndefined();
@@ -158,7 +164,7 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
     it("verifica enSelector: exactamente 8 en selector y 7 ocultos (con diagonal activo)", () => {
       const enSelectorExpected: OfficialDesignId[] = [
         "nature",
-        "lookbook",
+        "vitrina",
         "bloom_general",
         "bite",
         "grid",
@@ -176,7 +182,7 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
       }
     });
 
-    it("verifica textosDeEjemplo: false en todos los 15 diseños", () => {
+    it("verifica textosDeEjemplo: false en todos los 16 diseños", () => {
       for (const id of ALL_OFFICIAL_IDS) {
         expect(DESIGN_SPECS[id].textosDeEjemplo).toBe(false);
       }
@@ -543,7 +549,7 @@ describe("Encargo N1 — Ficha Única de Diseños (DesignSpec)", () => {
 
     it("el catálogo ALL_MODELS de registro ofrece exactamente los 8 diseños oficiales con enSelector: true", () => {
       expect(ALL_MODELS).toHaveLength(8);
-      const expectedIds = ["grid", "overlay", "arch", "nature", "lookbook", "bloom_general", "bite", "diagonal"];
+      const expectedIds = ["grid", "overlay", "arch", "nature", "vitrina", "bloom_general", "bite", "diagonal"];
       const actualIds = ALL_MODELS.map((m) => m.id);
       expect(actualIds.sort()).toEqual(expectedIds.sort());
 

@@ -50,7 +50,8 @@ export type OfficialDesignId =
   | "bloom_floral"
   | "bite"
   | "nature"
-  | "lookbook";
+  | "lookbook"
+  | "vitrina";
 
 export type CoverTextField = "titulo" | "subtitulo" | "etiqueta";
 
@@ -349,9 +350,29 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
     temaEditable: ["colores"],
     oscuroDeFabrica: false,
     rubroSugerido: "Moda / Colecciones",
-    enSelector: true,
+    enSelector: false,
     estiloFijo: {
       tipografia: "serif",
+      tarjeta: "flat",
+      corteBanner: "direct",
+    },
+  },
+  vitrina: {
+    id: "vitrina",
+    nombre: "Vitrina Boutique",
+    familia: "estandar",
+    portada: "carrusel",
+    textosPortada: ["titulo", "subtitulo", "etiqueta"],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Moda / Ropa",
+    enSelector: true,
+    estiloFijo: {
+      tipografia: "sans",
       tarjeta: "flat",
       corteBanner: "direct",
     },
@@ -730,6 +751,29 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     suggestedNiche: "Moda / Colecciones",
     supportsCategoryIcons: false,
   },
+  {
+    id: "vitrina",
+    name: "Vitrina Boutique",
+    description: "Diseño minimalista tipo GAP para moda y ropa. Fotos verticales 3:4 de borde a borde y carrito flotante.",
+    previewImage: "/images/designs/boutique.webp",
+    layout: "vitrina",
+    defaultTheme: {
+      brandColor: "#0f172a",
+      bgColor: "#ffffff",
+      textColor: "#0f172a",
+      cardBg: "#ffffff",
+      accentColor: "#f1f5f9",
+      borderRadius: "0px",
+      imgShape: "square",
+      isDark: false,
+      typography: "sans",
+      cardStyle: "flat",
+    },
+    spec: DESIGN_SPECS.vitrina,
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "dualButton", "analytics"],
+    suggestedNiche: "Moda / Ropa",
+    supportsCategoryIcons: false,
+  },
 ];
 
 /* ─────────────────────────────────────────────────────────
@@ -756,6 +800,7 @@ const RENDER_MODEL_MAP: Record<string, string> = {
   bite: "bite",
   nature: "nature",
   lookbook: "lookbook",
+  vitrina: "vitrina",
 };
 
 export function resolveRenderModel(structureId: string | null | undefined): string {
@@ -785,6 +830,7 @@ const LEGACY_STRUCTURE_MAP: Record<string, string> = {
   bite: "bite",
   nature: "nature",
   lookbook: "lookbook",
+  vitrina: "vitrina",
 };
 
 export function resolveStructureId(
@@ -975,13 +1021,13 @@ export const ALL_MODELS = [
     p: { bg: "#fafaf7", card: "#ffffff", accent: "#16a34a", dark: false },
   },
   {
-    id: "lookbook",
-    layout: "lookbook",
-    name: "Lookbook Moda",
-    desc: "Editorial de alta costura con portada, tipografía serif y tarjetas planas.",
+    id: "vitrina",
+    layout: "vitrina",
+    name: "Vitrina Boutique",
+    desc: "Minimalista tipo GAP para moda y ropa. Foto 3:4 completa y carrito flotante.",
     planLevel: 0,
     niches: ["ropa", "bisuteria", "general"],
-    p: { bg: "#09090b", card: "#18181b", accent: "#ffffff", dark: true },
+    p: { bg: "#ffffff", card: "#ffffff", accent: "#0f172a", dark: false },
   },
   {
     id: "bloom_general",

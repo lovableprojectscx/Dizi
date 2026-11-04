@@ -30,6 +30,7 @@ import {
   Trash2,
   X,
   Percent,
+  RotateCcw,
 } from "lucide-react";
 import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar, planAllowsWholesale } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ const CatalogPdfExportButton = lazy(() =>
 );
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId, getDesignSpec } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
+import { isFlexiblePhotoLayout, suggestPhotoFormat } from "@/lib/photo-format";
 
 /**
  * @file admin.diseno.tsx
@@ -228,11 +230,15 @@ export function DisenoUnificadoPage() {
   const [showFeatured, setShowFeatured] = useState<boolean>(store?.showFeatured !== false);
   const [showDiscountPct, setShowDiscountPct] = useState<boolean>(store?.showDiscountPct ?? false);
   const [wholesaleEnabled, setWholesaleEnabled] = useState<boolean>(store?.wholesaleEnabled ?? false);
+  const [photoFormat, setPhotoFormat] = useState<"square" | "portrait" | "contain" | null>(
+    store?.photoFormat ?? (store as any)?.photo_format ?? null
+  );
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
     if (store && loadedStoreId !== store.id) {
       setSelectedStructure(resolveStructureId(store.model, store.niche));
+      setPhotoFormat(store.photoFormat ?? (store as any).photo_format ?? null);
       setBrandColor(store.brandColor || "#4f46e5");
       setBgColor((store as any).bgColor || "#ffffff");
       setTextColor(store.textColor || "#1e293b");
@@ -349,6 +355,7 @@ export function DisenoUnificadoPage() {
     try {
       await update(store.id, {
         model: selectedStructure as any,
+        photoFormat: photoFormat,
         brandColor: brandColor || null,
         bgColor: bgColor || null,
         textColor: textColor || null,
@@ -387,6 +394,8 @@ export function DisenoUnificadoPage() {
   const previewStore = {
     ...store,
     model: selectedStructure,
+    photoFormat: photoFormat,
+    photo_format: photoFormat,
     brandColor: brandColor,
     bgColor: bgColor,
     textColor: textColor,
@@ -624,6 +633,133 @@ export function DisenoUnificadoPage() {
                   </div>
                 </div>
               )}
+
+              {/* Formato de Fotos del Catálogo (F41) - solo visible en Grilla y Bloom Estándar */}
+              {isFlexiblePhotoLayout(selectedStructure, store?.niche) && (() => {
+                const suggestedFormat = suggestPhotoFormat(store?.niche);
+                return (
+                  <div className="pt-4 border-t border-zinc-200/80 space-y-3 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                          Formato de fotos
+                          {photoFormat === null && (
+                            <Badge variant="outline" className="text-[10px] font-semibold text-zinc-500 bg-zinc-50 border-zinc-200">
+                              Ahora: como siempre
+                            </Badge>
+                          )}
+                        </h4>
+                        <p className="text-[11px] text-zinc-500">
+                          Elige cómo se ven las fotos en tu catálogo
+                        </p>
+                      </div>
+                      {photoFormat !== null && (
+                        <button
+                          type="button"
+                          onClick={() => setPhotoFormat(null)}
+                          className="text-[11px] font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Volver al original
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                      {/* Cuadrada */}
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFormat("square")}
+                        className={cn(
+                          "relative rounded-xl border-2 p-2 sm:p-3 text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5",
+                          photoFormat === "square"
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                            : "border-zinc-200 bg-white hover:border-zinc-300"
+                        )}
+                      >
+                        {suggestedFormat === "square" && (
+                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-xs">
+                            Sugerido para tu rubro
+                          </span>
+                        )}
+                        <div className={cn(
+                          "w-full h-11 sm:h-14 rounded-lg flex items-center justify-center transition-colors",
+                          photoFormat === "square" ? "bg-primary/10" : "bg-zinc-50"
+                        )}>
+                          <div className={cn(
+                            "w-7 h-7 sm:w-8 sm:h-8 rounded border-1.5 transition-colors shadow-2xs",
+                            photoFormat === "square" ? "border-primary bg-white" : "border-zinc-400 bg-white"
+                          )} />
+                        </div>
+                        <span className="font-bold text-xs text-zinc-900">Cuadrada</span>
+                      </button>
+
+                      {/* Vertical */}
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFormat("portrait")}
+                        className={cn(
+                          "relative rounded-xl border-2 p-2 sm:p-3 text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5",
+                          photoFormat === "portrait"
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                            : "border-zinc-200 bg-white hover:border-zinc-300"
+                        )}
+                      >
+                        {suggestedFormat === "portrait" && (
+                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[8px] sm:text-[9px] font-extrabold px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-xs">
+                            Sugerido para tu rubro
+                          </span>
+                        )}
+                        <div className={cn(
+                          "w-full h-11 sm:h-14 rounded-lg flex items-center justify-center transition-colors",
+                          photoFormat === "portrait" ? "bg-primary/10" : "bg-zinc-50"
+                        )}>
+                          <div className={cn(
+                            "w-5 h-7 sm:w-6 sm:h-8 rounded border-1.5 transition-colors shadow-2xs",
+                            photoFormat === "portrait" ? "border-primary bg-white" : "border-zinc-400 bg-white"
+                          )} />
+                        </div>
+                        <span className="font-bold text-xs text-zinc-900">Vertical</span>
+                      </button>
+
+                      {/* Completa */}
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFormat("contain")}
+                        className={cn(
+                          "relative rounded-xl border-2 p-2 sm:p-3 text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5",
+                          photoFormat === "contain"
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                            : "border-zinc-200 bg-white hover:border-zinc-300"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-full h-11 sm:h-14 rounded-lg flex items-center justify-center transition-colors",
+                          photoFormat === "contain" ? "bg-primary/10" : "bg-zinc-50"
+                        )}>
+                          <div className={cn(
+                            "w-8 h-7 sm:w-10 sm:h-8 rounded border-1.5 border-dashed flex items-center justify-center p-0.5 transition-colors",
+                            photoFormat === "contain" ? "border-primary bg-white/70" : "border-zinc-400 bg-white/70"
+                          )}>
+                            <div className={cn(
+                              "w-5 h-4 sm:w-6 sm:h-5 rounded-xs transition-colors",
+                              photoFormat === "contain" ? "bg-primary/30" : "bg-zinc-300"
+                            )} />
+                          </div>
+                        </div>
+                        <span className="font-bold text-xs text-zinc-900">Completa</span>
+                      </button>
+                    </div>
+
+                    {photoFormat === "contain" && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200/70 text-amber-900 text-[11px] flex items-center gap-2 animate-in fade-in duration-150">
+                        <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                        <span>Para que se vea profesional, usa fotos del mismo tamaño</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
 

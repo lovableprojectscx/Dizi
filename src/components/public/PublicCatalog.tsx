@@ -11,6 +11,7 @@
  */
 
 import { resolveRenderModel, getDesignSpec, TIENDAS_CON_ESTILO_ANTERIOR } from "@/lib/design-catalog";
+import { getPhotoAspect, PhotoAspect } from "@/lib/photo-format";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { loadFontOnDemand } from "@/lib/fonts";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
@@ -227,7 +228,8 @@ type ModelConfig = {
     | "bite"
     | "bloom"
     | "nature"
-    | "lookbook";
+    | "lookbook"
+    | "vitrina";
 };
 
 const MODEL_CONFIGS: Record<string, ModelConfig> = {
@@ -521,6 +523,21 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     cardBorder: false,
     headerStyle: "minimal",
     layout: "lookbook",
+  },
+  vitrina: {
+    vars: {
+      "--background": "#ffffff",
+      "--card": "#ffffff",
+      "--primary": "#0f172a",
+      "--border": "#f1f5f9",
+    } as any,
+    isDark: false,
+    imgRounded: "0px",
+    cardRounded: "0px",
+    cardShadow: "none",
+    cardBorder: false,
+    headerStyle: "clean",
+    layout: "vitrina",
   },
 
   sunset_glow: {
@@ -1099,13 +1116,14 @@ const isInAppBrowser = () => {
 };
 
 interface DiziNativeAdCardProps {
-  layout?: "grid" | "lookbook" | "editorial" | "bloom" | "nature" | "bite";
+  layout?: "grid" | "lookbook" | "editorial" | "bloom" | "nature" | "bite" | "vitrina";
   primaryColor?: string;
   slug?: string;
   cardRounded?: string;
   imgRounded?: string;
   cardShadow?: string;
   cardBorder?: boolean;
+  photoAspect?: PhotoAspect | null;
 }
 
 function DiziNativeAdCard({
@@ -1116,6 +1134,7 @@ function DiziNativeAdCard({
   imgRounded = "0.5rem",
   cardShadow = "shadow-sm",
   cardBorder = true,
+  photoAspect,
 }: DiziNativeAdCardProps) {
   const adLink = `https://dizi.idenza.site/register?ref=${slug}`;
 
@@ -1221,13 +1240,17 @@ function DiziNativeAdCard({
           className="relative overflow-hidden bg-muted flex items-center justify-center text-center border border-zinc-200/50 dark:border-zinc-800/50"
           style={{
             borderRadius: imgRounded,
-            aspectRatio: layout === "grid" ? "4/3" : "1/1",
+            aspectRatio: photoAspect ? photoAspect.ratio : layout === "grid" ? "4/3" : "1/1",
+            backgroundColor: photoAspect?.contain ? "var(--card)" : undefined,
           }}
         >
           <img
             src="/images/dizi_ad_brand_3d.webp"
             alt="Dizi Catálogos"
-            className="absolute inset-0 h-full w-full object-cover"
+            className={cn(
+              "absolute inset-0 h-full w-full",
+              photoAspect?.contain ? "object-contain p-2" : "object-cover"
+            )}
             loading="lazy"
             decoding="async"
           />
@@ -1535,6 +1558,7 @@ export function PublicCatalog({
   const rawModelId = resolveRenderModel(effectiveModel);
   const modelId = rawModelId === "portada" ? "elite" : rawModelId;
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
+  const photoAspect = getPhotoAspect(store, cfg.layout);
   const showDesktopSidebar = mode === "catalog" && !isMockup;
 
   const isPremiumModel =
@@ -1654,8 +1678,16 @@ export function PublicCatalog({
         ? "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border-none bg-[var(--card)] shadow-xl shadow-black/25 hover:shadow-2xl"
         : "w-[220px] sm:w-[280px] lg:w-[300px] shrink-0 snap-start p-3.5 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1 flex flex-col justify-between cursor-pointer group relative rounded-2xl border border-[var(--border)] bg-[var(--card)] hover:opacity-95 shadow-sm hover:shadow-md";
 
+  const bloomAspectClass =
+    photoAspect?.ratio === "3/4"
+      ? "aspect-[3/4]"
+      : photoAspect?.ratio === "4/3"
+        ? "aspect-[4/3]"
+        : "aspect-square";
+
   const featuredImgClass = cn(
-    "relative aspect-square w-full overflow-hidden",
+    "relative w-full overflow-hidden",
+    bloomAspectClass,
     isCurvedStyle
       ? "rounded-t-[7rem] rounded-b-[1.5rem] border"
       : cStyle === "shadow"
@@ -1673,7 +1705,8 @@ export function PublicCatalog({
           : "overflow-hidden flex flex-col justify-between cursor-pointer transition-all duration-300 group border border-[var(--border)] rounded-2xl bg-[var(--card)] hover:scale-[1.02] shadow-sm hover:shadow-md";
 
   const gridImgClass = cn(
-    "relative overflow-hidden aspect-square m-2",
+    "relative overflow-hidden m-2",
+    bloomAspectClass,
     isCurvedStyle
       ? "rounded-[2rem_0.5rem_2rem_0.5rem] border"
       : cStyle === "shadow"
@@ -6134,6 +6167,7 @@ export function PublicCatalog({
                                   imgRounded={cfg.imgRounded}
                                   cardShadow={cfg.cardShadow}
                                   cardBorder={cfg.cardBorder}
+                                  photoAspect={photoAspect}
                                 />
                               )}
                             </React.Fragment>
@@ -7363,10 +7397,10 @@ export function PublicCatalog({
                               <div className="space-y-3">
                                 {/* Curved image like flower petal / Standard rounded image */}
                                 <div
-                                  className={cn(
-                                    "relative aspect-square w-full overflow-hidden",
-                                    featuredImgClass,
-                                  )}
+                                  className={cn(featuredImgClass)}
+                                  style={{
+                                    backgroundColor: photoAspect?.contain ? "var(--card)" : undefined,
+                                  }}
                                 >
                                   <img
                                     src={getOptimizedImageUrl(
@@ -7375,7 +7409,12 @@ export function PublicCatalog({
                                       400
                                     )}
                                     alt={p.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 group-hover:rotate-1 transition-transform duration-700"
+                                    className={cn(
+                                      "w-full h-full transition-transform duration-700",
+                                      photoAspect?.contain
+                                        ? "object-contain p-2"
+                                        : "object-cover group-hover:scale-105 group-hover:rotate-1"
+                                    )}
                                     loading={idx < 3 ? "eager" : "lazy"}
                                     fetchPriority={idx === 0 ? "high" : "auto"}
                                     decoding="async"
@@ -7780,7 +7819,12 @@ export function PublicCatalog({
                               >
                                 <div>
                                   {/* Asymmetric or standard image wrapper */}
-                                  <div className={cn(gridImgClass)}>
+                                  <div
+                                    className={cn(gridImgClass)}
+                                    style={{
+                                      backgroundColor: photoAspect?.contain ? "var(--card)" : undefined,
+                                    }}
+                                  >
                                     <img
                                       src={getOptimizedImageUrl(
                                         getThumbnailUrl(p.image) ||
@@ -7788,7 +7832,12 @@ export function PublicCatalog({
                                         400
                                       )}
                                       alt={p.name}
-                                      className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      className={cn(
+                                        "absolute inset-0 h-full w-full transition-transform duration-500",
+                                        photoAspect?.contain
+                                          ? "object-contain p-2"
+                                          : "object-cover group-hover:scale-105"
+                                      )}
                                       loading={index < 4 ? "eager" : "lazy"}
                                       fetchPriority={index < 2 ? "high" : "auto"}
                                       decoding="async"
@@ -7912,6 +7961,7 @@ export function PublicCatalog({
                                   imgRounded={cfg.imgRounded}
                                   cardShadow={cfg.cardShadow}
                                   cardBorder={cfg.cardBorder}
+                                  photoAspect={photoAspect}
                                 />
                               )}
                             </React.Fragment>
@@ -8078,6 +8128,132 @@ export function PublicCatalog({
                   ))}
                 </div>
               </div>
+            ) : cfg.layout === "vitrina" ? (
+              /* ── VITRINA layout: minimalista tipo GAP para moda y ropa (RF-41.7) */
+              <div
+                className={cn(
+                  "grid gap-2.5 sm:gap-3",
+                  isMockup
+                    ? "grid-cols-2"
+                    : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+                )}
+              >
+                {filtered.map((p, index) => {
+                  const showAd = effectivePlan === "semilla" && !isMockup;
+                  const isAdPos = index === 4;
+                  const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+
+                  return (
+                    <React.Fragment key={p.id}>
+                      <article
+                        key={p.id}
+                        className="overflow-hidden flex flex-col cursor-pointer transition-all duration-200 group text-left bg-[var(--card)]"
+                        onClick={() => setViewingProduct(p)}
+                      >
+                        {/* Foto 3:4 completa sin bordes ni radio grande */}
+                        <div
+                          className="relative overflow-hidden bg-muted aspect-[3/4] w-full"
+                          style={{ borderRadius: "0px" }}
+                        >
+                          <img
+                            src={getOptimizedImageUrl(
+                              getThumbnailUrl(p.image) || NO_IMAGE_PLACEHOLDER,
+                              400,
+                            )}
+                            alt={p.name}
+                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading={index < 4 ? "eager" : "lazy"}
+                            fetchPriority={index < 2 ? "high" : "auto"}
+                            decoding="async"
+                            onError={(e) =>
+                              handleImageError(e, [getThumbnailUrl(p.image), p.image, NO_IMAGE_PLACEHOLDER])
+                            }
+                          />
+
+                          {/* Etiqueta de oferta -X% (F40) o badge si aplica */}
+                          {p.isOnSale && (
+                            <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+                              {getOfferBadgeText(p.price, p.originalPrice, store.showDiscountPct)}
+                            </span>
+                          )}
+
+                          {/* Carrito como ícono pequeño flotante sobre la foto (abajo a la derecha) */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddToCart(p, e);
+                            }}
+                            style={{
+                              backgroundColor: "var(--primary)",
+                              color: "var(--primary-foreground, #ffffff)",
+                            }}
+                            aria-label={`Agregar ${p.name} al carrito`}
+                            className="absolute bottom-2.5 right-2.5 h-8 w-8 rounded-full flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all duration-200 z-10 opacity-90 group-hover:opacity-100"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        {/* Debajo: solo nombre (peso normal font-normal) y precio, sin descripción */}
+                        <div className="pt-2 pb-1 px-0.5 flex flex-col gap-0.5">
+                          <h3 className="text-xs sm:text-sm font-normal text-[var(--foreground)] leading-snug line-clamp-1">
+                            {p.name}
+                          </h3>
+
+                          {/* Precios: precio tachado y precio en rojo si está en oferta */}
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            <span
+                              className={cn(
+                                "text-xs sm:text-sm font-semibold tracking-tight",
+                                p.isOnSale ? "text-red-600" : "text-[var(--foreground)]",
+                              )}
+                            >
+                              {formatPrice(p.price)}
+                            </span>
+                            {p.isOnSale && p.originalPrice && (
+                              <span className="text-[10px] sm:text-xs text-muted-foreground line-through">
+                                {formatPrice(p.originalPrice)}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Wholesale hint si la tienda y producto tienen precios por mayor */}
+                          <WholesaleHint product={p} store={store} className="mt-0.5" />
+                        </div>
+                      </article>
+
+                      {/* Publicidad de Dizi en Semilla */}
+                      {showAd && isAdPos && (
+                        <DiziNativeAdCard
+                          layout="grid"
+                          primaryColor={primaryColor}
+                          slug={store.slug}
+                          cardRounded="0px"
+                          imgRounded="0px"
+                          cardShadow="none"
+                          cardBorder={false}
+                          photoAspect={{ ratio: "3/4" }}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+
+                {/* Si la lista tiene <= 4 productos en Semilla, poner el anuncio al final */}
+                {effectivePlan === "semilla" && !isMockup && filtered.length > 0 && filtered.length <= 4 && (
+                  <DiziNativeAdCard
+                    layout="grid"
+                    primaryColor={primaryColor}
+                    slug={store.slug}
+                    cardRounded="0px"
+                    imgRounded="0px"
+                    cardShadow="none"
+                    cardBorder={false}
+                    photoAspect={{ ratio: "3/4" }}
+                  />
+                )}
+              </div>
             ) : (
               /* ── GRID layout: standard responsive grid */
               <div
@@ -8111,7 +8287,10 @@ export function PublicCatalog({
                       >
                         <div
                           className="relative overflow-hidden bg-muted"
-                          style={{ aspectRatio: "4/3" }}
+                          style={{
+                            aspectRatio: photoAspect?.ratio || "4/3",
+                            backgroundColor: photoAspect?.contain ? "var(--card)" : undefined,
+                          }}
                         >
                           <img
                             src={getOptimizedImageUrl(
@@ -8120,7 +8299,12 @@ export function PublicCatalog({
                               400
                             )}
                             alt={p.name}
-                            className="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className={cn(
+                              "absolute inset-0 h-full w-full transition-transform duration-500",
+                              photoAspect?.contain
+                                ? "object-contain p-2"
+                                : "object-cover group-hover:scale-105"
+                            )}
                             loading={index < 4 ? "eager" : "lazy"}
                             fetchPriority={index < 2 ? "high" : "auto"}
                             decoding="async"
@@ -8187,6 +8371,7 @@ export function PublicCatalog({
                           imgRounded={cfg.imgRounded}
                           cardShadow={cfg.cardShadow}
                           cardBorder={cfg.cardBorder}
+                          photoAspect={photoAspect}
                         />
                       )}
                     </React.Fragment>

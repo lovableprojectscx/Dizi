@@ -203,7 +203,7 @@ describe("Encargo — Restaurar Tiendas N3a, Diagonal al Selector y Regla AGENTS
 
     it("ALL_MODELS de registro expone exactamente 8 diseños", () => {
       expect(ALL_MODELS).toHaveLength(8);
-      const expectedIds = ["grid", "overlay", "arch", "diagonal", "nature", "lookbook", "bloom_general", "bite"];
+      const expectedIds = ["grid", "overlay", "arch", "diagonal", "nature", "vitrina", "bloom_general", "bite"];
       const actualIds = ALL_MODELS.map((m) => m.id);
       expect(actualIds.sort()).toEqual(expectedIds.sort());
     });
