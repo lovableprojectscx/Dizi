@@ -26,6 +26,7 @@ import { execSync } from "child_process";
 const SUPABASE_URL = "https://zkqzdwxjthjdjchimmds.supabase.co";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
 const SUPER_SESSION_PATH = process.env.SUPER_SESSION_PATH || "";
+const PROJECT_ROOT = path.resolve(__dirname, "../..");
 const SCRATCH_DIR = path.join(os.tmpdir(), "dizi-e2e-f43");
 const TEST_PASSWORD = "AuditPassword123!";
 
@@ -93,8 +94,13 @@ function runRemoteSql(sql: string, readOnly = false): any {
   try {
     const flag = readOnly ? "--read-only" : "--yes";
     const cmd = `npx.cmd supabase db query --remote ${flag} --file "${tempSqlFile}" --output-format json`;
-    const stdout = execSync(cmd, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    const stdout = execSync(cmd, { cwd: PROJECT_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
     try {
+      const startIdx = stdout.indexOf("{");
+      const endIdx = stdout.lastIndexOf("}");
+      if (startIdx !== -1 && endIdx !== -1 && endIdx >= startIdx) {
+        return JSON.parse(stdout.slice(startIdx, endIdx + 1));
+      }
       return JSON.parse(stdout);
     } catch {
       return stdout;
@@ -135,9 +141,9 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
   test.beforeAll(async () => {
     console.log("\n[BeforeAll F43] Verificando variables de entorno y sesión...");
 
-    if (!SUPABASE_ANON_KEY) {
+    if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("<") || SUPABASE_ANON_KEY.includes("tu clave")) {
       throw new Error(
-        "ERROR BLOQUEANTE: VITE_SUPABASE_ANON_KEY o SUPABASE_ANON_KEY no está definida en la terminal. Jack debe proporcionarla en el entorno."
+        'ERROR BLOQUEANTE: VITE_SUPABASE_ANON_KEY no es válida o contiene el texto de ejemplo "<tu clave anon>". Debes reemplazarlo por tu clave anon real (e.g. eyJhbGci...).'
       );
     }
 
