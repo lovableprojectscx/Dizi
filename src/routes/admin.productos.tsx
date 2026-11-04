@@ -16,6 +16,7 @@ import {
 import { WholesaleEditor } from "@/components/admin/WholesaleEditor";
 import { validateTiers } from "@/lib/wholesale";
 import { isProductIncomplete, isPlaceholderOrFilename } from "@/lib/products";
+import { ProductConflictError } from "@/lib/product-sync";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
 import {
@@ -500,7 +501,7 @@ interface SingleProductDialogProps {
   product: Product;
   store: any;
   imageSpec: any;
-  onSave: (product: Product) => Promise<void>;
+  onSave: (product: Product, baseProduct?: Product) => Promise<void>;
   onCreateCategory: (name: string) => Promise<string | null>;
   showConfirm: (config: {
     title: string;
@@ -522,6 +523,7 @@ function SingleProductDialog({
   onCreateCategory,
   showConfirm,
 }: SingleProductDialogProps) {
+  const [baseSnapshot, setBaseSnapshot] = useState<Product>(product);
   const [editing, setEditing] = useState<Product>(product);
   const [variations, setVariations] = useState<ProductVariation[]>(product.variations || []);
   const [wholesaleTiers, setWholesaleTiers] = useState<WholesaleTier[]>(product.wholesaleTiers || []);
@@ -529,9 +531,11 @@ function SingleProductDialog({
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [saving, setSaving] = useState(false);
+  const fetchProductFresh = useApp((s) => s.fetchProductFresh);
 
   useEffect(() => {
     if (open) {
+      setBaseSnapshot(product);
       const cleanDesc = (product.description || "").replace(/#destacado/g, "").trim();
       setEditing({
         ...product,
@@ -549,7 +553,7 @@ function SingleProductDialog({
         product.description?.includes("#destacado") || product.name?.includes("#destacado") || false
       );
     }
-  }, [open, product]);
+  }, [open, product.id]);
 
   const handleAddVariation = () => {
     if (variations.length >= 10) {
@@ -689,7 +693,7 @@ function SingleProductDialog({
 
     setSaving(true);
     try {
-      await onSave(updatedProduct);
+      await onSave(updatedProduct, baseSnapshot);
       onOpenChange(false);
       if (isStillSampleName) {
         toast.info("Guardado. Sigue marcado como ejemplo porque conserva el nombre de muestra.");
@@ -698,6 +702,33 @@ function SingleProductDialog({
       }
     } catch (err: any) {
       console.error("[save product] Error:", err);
+      if (err instanceof ProductConflictError || err?.code === "PRODUCT_VERSION_CONFLICT") {
+        toast.error(
+          "Este producto se modificó desde otro dispositivo. Te mostramos la versión actual; revisa y vuelve a guardar.",
+          { duration: 6000 }
+        );
+        const fresh = err.freshProduct || (await fetchProductFresh(store.id, editing.id));
+        if (fresh) {
+          setBaseSnapshot(fresh);
+          const cleanDesc = (fresh.description || "").replace(/#destacado/g, "").trim();
+          setEditing({
+            ...fresh,
+            description: cleanDesc,
+          });
+          setVariations(fresh.variations || []);
+          setWholesaleTiers(fresh.wholesaleTiers || []);
+          setPriceInput(
+            fresh.price === null || fresh.price === undefined || fresh.price === 0
+              ? ""
+              : fresh.price.toString()
+          );
+          setOriginalPriceInput(fresh.originalPrice ? fresh.originalPrice.toString() : "");
+          setIsFeatured(
+            fresh.description?.includes("#destacado") || fresh.name?.includes("#destacado") || false
+          );
+        }
+        return;
+      }
       const isLimitError =
         err?.code === "P0001" ||
         err?.message?.toLowerCase().includes("límite de productos") ||
@@ -1378,7 +1409,7 @@ interface ProductTableRowProps {
   categoryIconKey?: string;
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
-  onToggle: (id: string) => void;
+  onToggle: (id: string, expectedVersion?: number) => void;
   onSwap: (fromIdx: number, toIdx: number) => void;
 }
 
@@ -1485,7 +1516,7 @@ const ProductTableRow = React.memo(function ProductTableRow({
         </div>
       </TableCell>
       <TableCell>
-        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id)} />
+        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id, p.version)} />
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-0.5">
@@ -1622,7 +1653,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
         </div>
       </div>
       <div className="flex flex-col items-center gap-2 shrink-0">
-        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id)} />
+        <Switch checked={p.visible} onCheckedChange={() => onToggle(p.id, p.version)} />
         <div className="flex gap-1 items-center">
           <div className="flex items-center gap-0.5 border border-border/60 rounded-md p-0.5 bg-muted/10">
             <Button
@@ -1691,6 +1722,7 @@ function ProductsPage() {
   const swap = useApp((s) => s.swapProductsOrder);
   const upsertCategory = useApp((s) => s.upsertCategory);
   const deleteCategory = useApp((s) => s.deleteCategory);
+  const fetchProductFresh = useApp((s) => s.fetchProductFresh);
 
   const plan = PLANS[store.plan];
   const effectivePlan = PLANS[getEffectivePlan(store)];
@@ -1778,10 +1810,21 @@ function ProductsPage() {
     return map;
   }, [store.categories]);
 
-  const handleOpenEdit = useCallback((p: Product) => {
-    setEditingProduct(p);
-    setIsSingleDialogOpen(true);
-  }, []);
+  const handleOpenEdit = useCallback(
+    async (p: Product) => {
+      if (p.id) {
+        const fresh = await fetchProductFresh(store.id, p.id);
+        if (fresh) {
+          setEditingProduct(fresh);
+          setIsSingleDialogOpen(true);
+          return;
+        }
+      }
+      setEditingProduct(p);
+      setIsSingleDialogOpen(true);
+    },
+    [fetchProductFresh, store.id]
+  );
 
   const handleConfirmDelete = useCallback((p: Product) => {
     showConfirm({
@@ -1793,8 +1836,8 @@ function ProductsPage() {
     });
   }, [del, store.id]);
 
-  const handleToggleVisible = useCallback((productId: string) => {
-    toggle(store.id, productId);
+  const handleToggleVisible = useCallback((productId: string, expectedVersion?: number) => {
+    toggle(store.id, productId, expectedVersion);
   }, [toggle, store.id]);
 
   const handleSwapOrder = useCallback((fromIdx: number, toIdx: number) => {
@@ -2113,13 +2156,21 @@ function ProductsPage() {
     setIsSingleDialogOpen(true);
   };
 
-  const openEdit = (p: Product) => {
+  const openEdit = async (p: Product) => {
+    if (p.id) {
+      const fresh = await fetchProductFresh(store.id, p.id);
+      if (fresh) {
+        setEditingProduct(fresh);
+        setIsSingleDialogOpen(true);
+        return;
+      }
+    }
     setEditingProduct(p);
     setIsSingleDialogOpen(true);
   };
 
-  const handleSaveProduct = async (productToSave: Product) => {
-    await upsert(store.id, productToSave);
+  const handleSaveProduct = async (productToSave: Product, baseProduct?: Product) => {
+    await upsert(store.id, productToSave, baseProduct);
   };
 
   /* Crea categoría inline y devuelve el nuevo id */
