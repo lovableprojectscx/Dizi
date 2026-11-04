@@ -14,11 +14,11 @@ import { execSync } from "child_process";
  * 2. Registro y borrado estricto por IDs (auth.identities, auth.users, stores).
  * 3. Inclusión de zz-audit-tienda-base para E14 en creación y borrado.
  * 4. Super admin mediante storageState leído desde process.env.SUPER_SESSION_PATH (sin SUPER_ADMIN_PASSWORD).
- * 5. Blindaje de clientes reales:
- *    - Acciones de Super Admin (Aplicar / Rechazar) actúan EXCLUSIVAMENTE sobre filas filtradas por código DZ
- *      y tienda zz-audit-f43-*. Jamás pulsan la primera fila genérica ni filas de comercios reales.
- *    - Validación estricta antes y después con SQL de solo lectura: el conteo y estados de survey_responses
- *      de tiendas no-audit se mantienen 100% idénticos.
+ * 5. Blindaje estricto de clientes reales en producción:
+ *    - Acciones de Super Admin (Aplicar / Rechazar) filtran primero por el código DZ exacto y exigen coincidencia
+ *      estricta de exactamente 1 fila con la tienda zz-audit-f43-*. Jamás tocan respuestas de clientes reales.
+ *    - Validación estricta con SQL de solo lectura antes y después: el conteo y estados de survey_responses
+ *      de tiendas que no sean zz-audit se mantienen 100% idénticos.
  * 6. Verificación de conteo residual canónico: auth y stores = 0, survey_responses = 0, invitaciones = 0, fotos sueltas = 4.
  */
 
@@ -148,9 +148,8 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
         count(*) FILTER (WHERE reward_status = 'rechazado') as rechazado,
         count(*) FILTER (WHERE reward_status = 'pendiente') as pendiente,
         count(*) as total
-      FROM public.survey_responses sr
-      JOIN public.stores s ON sr.store_id = s.id
-      WHERE s.slug NOT LIKE 'zz-audit-%';
+      FROM public.survey_responses
+      WHERE store_id NOT IN (SELECT id FROM public.stores WHERE slug LIKE 'zz-audit-%');
     `,
       true
     );
@@ -236,9 +235,8 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
           count(*) FILTER (WHERE reward_status = 'rechazado') as rechazado,
           count(*) FILTER (WHERE reward_status = 'pendiente') as pendiente,
           count(*) as total
-        FROM public.survey_responses sr
-        JOIN public.stores s ON sr.store_id = s.id
-        WHERE s.slug NOT LIKE 'zz-audit-%';
+        FROM public.survey_responses
+        WHERE store_id NOT IN (SELECT id FROM public.stores WHERE slug LIKE 'zz-audit-%');
       `,
         true
       );
@@ -493,13 +491,14 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
 
     // Localizar la fila que contenga estrictamente el código DZ y la tienda zz-audit
     const semillaRow = page.locator("table tbody tr").filter({
-      has: page.locator(`text="${semillaRewardCode}"`),
+      hasText: semillaRewardCode,
     }).filter({
-      has: page.locator('text="zz-audit-f43-semilla"'),
+      hasText: "zz-audit-f43-semilla",
     });
 
-    // Validar explícitamente que la fila está visible y pertenece a zz-audit ANTES de cualquier clic
-    await expect(semillaRow).toBeVisible({ timeout: 15000 });
+    // Validar explícitamente que existe exactamente 1 fila y que pertenece a zz-audit ANTES de cualquier clic
+    await expect(semillaRow).toHaveCount(1, { timeout: 15000 });
+    await expect(semillaRow.locator(`text="${semillaRewardCode}"`)).toBeVisible();
     await expect(semillaRow.locator('text="zz-audit-f43-semilla"')).toBeVisible();
 
     const applyBtn = semillaRow.getByRole("button", { name: "Aplicar premio" });
@@ -518,13 +517,14 @@ test.describe("F43 · Encuesta de calidad (E2E movil-android)", () => {
     await searchInput.fill(proRewardCode);
 
     const proRow = page.locator("table tbody tr").filter({
-      has: page.locator(`text="${proRewardCode}"`),
+      hasText: proRewardCode,
     }).filter({
-      has: page.locator('text="zz-audit-f43-pro"'),
+      hasText: "zz-audit-f43-pro",
     });
 
-    // Validar explícitamente que la fila está visible y pertenece a zz-audit ANTES de cualquier clic
-    await expect(proRow).toBeVisible({ timeout: 15000 });
+    // Validar explícitamente que existe exactamente 1 fila y que pertenece a zz-audit ANTES de cualquier clic
+    await expect(proRow).toHaveCount(1, { timeout: 15000 });
+    await expect(proRow.locator(`text="${proRewardCode}"`)).toBeVisible();
     await expect(proRow.locator('text="zz-audit-f43-pro"')).toBeVisible();
 
     const rejectBtn = proRow.getByRole("button", { name: "Rechazar" });
