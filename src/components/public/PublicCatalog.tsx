@@ -9235,15 +9235,15 @@ export function PublicCatalog({
                 {/* Sale badge — style adapts to model */}
                 {viewingProduct.isOnSale &&
                   (cfg.layout === "magazine" ? (
-                    <span className="absolute top-4 left-4 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1 backdrop-blur">
+                    <span className="absolute top-4 left-4 z-20 text-[10px] font-bold tracking-[0.2em] uppercase border border-white/60 text-white px-3 py-1 backdrop-blur">
                       {getOfferBadgeText(displayedPrice, viewingProduct.originalPrice, store.showDiscountPct).toUpperCase()}
                     </span>
                   ) : cfg.layout === "overlay" ? (
-                    <span className="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                    <span className="absolute top-3 left-3 z-20 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
                       {getOfferBadgeText(displayedPrice, viewingProduct.originalPrice, store.showDiscountPct).toUpperCase()}
                     </span>
                   ) : (
-                    <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                    <span className="absolute top-3 left-3 z-20 inline-flex items-center gap-1 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
                       <Flame className="h-3 w-3" /> {getOfferBadgeText(displayedPrice, viewingProduct.originalPrice, store.showDiscountPct)}
                     </span>
                   ))}
@@ -9501,7 +9501,7 @@ export function PublicCatalog({
                     Consultar
                   </button>
                   <button
-                    className="flex-1 h-12 gap-2 font-bold text-sm flex items-center justify-center transition hover:opacity-90 shadow-lg"
+                    className="flex-1 h-12 gap-2 font-bold text-sm flex items-center justify-center whitespace-nowrap transition hover:opacity-90 shadow-lg"
                     style={{
                       borderRadius: cfg.cardRounded,
                       backgroundColor: "var(--primary)",
@@ -9528,8 +9528,8 @@ export function PublicCatalog({
                       setCartOpen(true);
                     }}
                   >
-                    <Plus className="h-4 w-4" />
-                    Añadir al carrito
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span>Añadir<span className="hidden min-[400px]:inline btn-cart-text-rest"> al carrito</span></span>
                   </button>
                 </div>
               </div>
