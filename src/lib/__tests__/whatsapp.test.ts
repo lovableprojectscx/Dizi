@@ -23,6 +23,14 @@ describe("formatPrice (RF-03)", () => {
     expect(formatPrice(0)).toBe("A consultar");
     expect(formatPrice(null)).toBe("A consultar");
   });
+
+  it("R5 (F42.1): separador de miles con coma para miles y punto para decimales", () => {
+    expect(formatPrice(4999)).toBe("S/ 4,999.00");
+    expect(formatPrice(1234.5)).toBe("S/ 1,234.50");
+    expect(formatPrice(89.9)).toBe("S/ 89.90");
+    expect(formatPrice(0)).toBe("A consultar");
+    expect(formatPrice(1000000)).toBe("S/ 1,000,000.00");
+  });
 });
 
 describe("buildWaUrl (RF-02)", () => {

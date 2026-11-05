@@ -14,7 +14,12 @@ const MOBILE_BREAKPOINT = 768;
  * @returns `true` si el ancho de pantalla es menor a 768px, `false` en caso contrario.
  */
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
+  const [isMobile, setIsMobile] = React.useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < MOBILE_BREAKPOINT;
+    }
+    return false;
+  });
 
   React.useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -26,5 +31,5 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
-  return !!isMobile;
+  return isMobile;
 }
