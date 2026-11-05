@@ -292,3 +292,16 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 320px;
 }
+
+/* ── F42.3: Botón Añadir al carrito adaptable en celular < 400px ── */
+@media (max-width: 399px) {
+  .btn-cart-text-rest {
+    display: none !important;
+  }
+}
+@media (min-width: 400px) {
+  .btn-cart-text-rest {
+    display: inline !important;
+  }
+}
+
