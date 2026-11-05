@@ -26,7 +26,7 @@ export const WholesaleTable: React.FC<WholesaleTableProps> = ({ product, store, 
 
   return (
     <div
-      className={cn("p-3.5 rounded-2xl border space-y-2.5 transition-colors", className)}
+      className={cn("p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl space-y-1.5 sm:space-y-2.5 transition-colors", className)}
       style={{
         backgroundColor: "color-mix(in srgb, var(--primary) 4%, var(--card))",
         borderColor: "color-mix(in srgb, var(--primary) 18%, var(--border))",
@@ -46,9 +46,9 @@ export const WholesaleTable: React.FC<WholesaleTableProps> = ({ product, store, 
               borderColor: "color-mix(in srgb, var(--border) 70%, transparent)",
             }}
           >
-            <th scope="col" className="py-1.5 font-bold">Cantidad</th>
-            <th scope="col" className="py-1.5 font-bold text-center">Precio c/u</th>
-            <th scope="col" className="py-1.5 font-bold text-right">Ahorro</th>
+            <th scope="col" className="py-1 sm:py-1.5 font-bold">Cantidad</th>
+            <th scope="col" className="py-1 sm:py-1.5 font-bold text-center">Precio c/u</th>
+            <th scope="col" className="py-1 sm:py-1.5 font-bold text-right">Ahorro</th>
           </tr>
         </thead>
         <tbody
@@ -63,14 +63,14 @@ export const WholesaleTable: React.FC<WholesaleTableProps> = ({ product, store, 
 
             return (
               <tr key={tier.min_qty} className="transition-colors hover:bg-black/5 dark:hover:bg-white/5">
-                <td className="py-2 font-bold" style={{ color: "var(--foreground)" }}>
+                <td className="py-1 sm:py-2 font-bold" style={{ color: "var(--foreground)" }}>
                   Desde {tier.min_qty} u.
                 </td>
-                <td className="py-2 font-black text-center" style={{ color: "var(--primary)" }}>
+                <td className="py-1 sm:py-2 font-black text-center" style={{ color: "var(--primary)" }}>
                   {formatPrice(tier.price)}
                 </td>
-                <td className="py-2 text-right">
-                  <span className="inline-flex items-center text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <td className="py-1 sm:py-2 text-right">
+                  <span className="inline-flex items-center text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     -{savingsPct}% (Ahorras {formatPrice(savingsPerUnit)})
                   </span>
                 </td>
@@ -81,7 +81,7 @@ export const WholesaleTable: React.FC<WholesaleTableProps> = ({ product, store, 
       </table>
 
       <p
-        className="text-[10px] leading-tight pt-1 flex items-center gap-1 border-t"
+        className="text-[9px] sm:text-[10px] leading-tight pt-1 flex items-center gap-1 border-t"
         style={{
           color: "var(--muted-foreground)",
           borderColor: "color-mix(in srgb, var(--border) 50%, transparent)",
