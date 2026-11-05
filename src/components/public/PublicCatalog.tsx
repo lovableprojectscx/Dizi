@@ -1350,7 +1350,14 @@ export function PublicCatalog({
   const [cartOpen, setCartOpen] = useState(false);
   const [isLookbookCatOpen, setIsLookbookCatOpen] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
-  const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<ProductVariation | null | undefined>(undefined);
+  const [optionsHighlighted, setOptionsHighlighted] = useState(false);
+  const optionsSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setSelectedVariation(undefined);
+    setOptionsHighlighted(false);
+  }, [viewingProduct?.id]);
   const [zoomImage, setZoomImage] = useState<{ src: string; title?: string } | null>(null);
   const [libroOpen, setLibroOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -9117,7 +9124,8 @@ export function PublicCatalog({
         onOpenChange={(v) => {
           if (!v) {
             setViewingProduct(null);
-            setSelectedVariation(null);
+            setSelectedVariation(undefined);
+            setOptionsHighlighted(false);
           }
         }}
       >
@@ -9149,16 +9157,10 @@ export function PublicCatalog({
 
             return (
             <div className="flex flex-col h-full md:flex-row md:overflow-hidden">
-              {/* Image — taller for overlay/magazine, shorter for editorial */}
+              {/* Image — adaptable height on mobile (R5), full height on desktop (R2) */}
               <div
-                className="relative shrink-0 bg-background overflow-hidden md:w-1/2 md:!h-full"
+                className="relative shrink-0 bg-background overflow-hidden w-full h-[32vh] max-h-[36vh] min-h-[160px] md:h-full md:max-h-none md:w-1/2"
                 style={{
-                  height:
-                    cfg.layout === "editorial"
-                      ? "200px"
-                      : cfg.layout === "overlay" || cfg.layout === "magazine"
-                        ? "320px"
-                        : "260px",
                   backgroundColor: "var(--background)",
                 }}
               >
@@ -9166,7 +9168,8 @@ export function PublicCatalog({
                 <button
                   onClick={() => {
                     setViewingProduct(null);
-                    setSelectedVariation(null);
+                    setSelectedVariation(undefined);
+                    setOptionsHighlighted(false);
                   }}
                   className="absolute top-4 right-4 z-50 h-10 w-10 flex items-center justify-center bg-black/20 backdrop-blur-md text-white hover:bg-black/40 transition-all shadow-md cursor-pointer md:hidden"
                   style={{ borderRadius: cfg.cardRounded }}
@@ -9247,9 +9250,9 @@ export function PublicCatalog({
 
               </div>
 
-              {/* Right Column: Content + Actions */}
-              <div className="flex-1 overflow-y-auto flex flex-col justify-between md:!h-full">
-                <div className="p-5 space-y-4">
+              {/* Right Column: Content + Actions (R1, R2) */}
+              <div className="flex-1 min-h-0 flex flex-col justify-between overflow-hidden md:w-1/2 md:!h-full">
+                <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-3.5 sm:space-y-4">
                   {/* Title & Price - Always rendered together in content section */}
                   <div className="space-y-1">
                     <h3
@@ -9300,7 +9303,13 @@ export function PublicCatalog({
 
                   {/* ── Variaciones / Opciones del Producto ── */}
                   {viewingProduct.variations && viewingProduct.variations.length > 0 && (
-                    <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+                    <div
+                      ref={optionsSectionRef}
+                      className={cn(
+                        "space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800 rounded-xl transition-all",
+                        optionsHighlighted && "ring-2 ring-primary ring-offset-2 p-2 bg-primary/5 animate-pulse"
+                      )}
+                    >
                       <p
                         className={cn(
                           "text-xs font-bold uppercase tracking-widest",
@@ -9316,7 +9325,10 @@ export function PublicCatalog({
                         {/* Opción Base / Principal */}
                         <button
                           type="button"
-                          onClick={() => setSelectedVariation(null)}
+                          onClick={() => {
+                            setSelectedVariation(null);
+                            setOptionsHighlighted(false);
+                          }}
                           className={cn(
                             "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer select-none",
                             selectedVariation === null
@@ -9341,7 +9353,10 @@ export function PublicCatalog({
                             <button
                               key={v.id}
                               type="button"
-                              onClick={() => setSelectedVariation(v)}
+                              onClick={() => {
+                                setSelectedVariation(v);
+                                setOptionsHighlighted(false);
+                              }}
                               className={cn(
                                 "flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs transition-all cursor-pointer select-none",
                                 isSelected
@@ -9440,10 +9455,14 @@ export function PublicCatalog({
                   
                 </div>
 
-                {/* Action footer — also themed */}
+                {/* Action footer — fixed at bottom (R1, R2, R3) */}
                 <div
-                  className="border-t px-4 sm:px-5 py-4 flex gap-2 sm:gap-3 shrink-0"
-                  style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                  className="border-t px-4 sm:px-5 py-3 sm:py-4 flex gap-2 sm:gap-3 shrink-0 z-10"
+                  style={{
+                    backgroundColor: "var(--card)",
+                    borderColor: "var(--border)",
+                    paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+                  }}
                 >
                   <button
                     type="button"
@@ -9474,7 +9493,8 @@ export function PublicCatalog({
                       const varSuffix = selectedVariation ? ` (Opción: ${selectedVariation.name})` : "";
                       consultProduct(`${viewingProduct.name}${varSuffix}`, viewingProduct.id);
                       setViewingProduct(null);
-                      setSelectedVariation(null);
+                      setSelectedVariation(undefined);
+                      setOptionsHighlighted(false);
                     }}
                   >
                     <WhatsAppIcon className="h-4 w-4" />
@@ -9495,9 +9515,16 @@ export function PublicCatalog({
                         : {}),
                     }}
                     onClick={() => {
+                      if (viewingProduct.variations && viewingProduct.variations.length > 0 && selectedVariation === undefined) {
+                        optionsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                        setOptionsHighlighted(true);
+                        setTimeout(() => setOptionsHighlighted(false), 2000);
+                        return;
+                      }
                       cartAdd(store.id, viewingProduct.id, selectedVariation || undefined);
                       setViewingProduct(null);
-                      setSelectedVariation(null);
+                      setSelectedVariation(undefined);
+                      setOptionsHighlighted(false);
                       setCartOpen(true);
                     }}
                   >
