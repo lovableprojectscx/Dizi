@@ -126,6 +126,9 @@ import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } from "@/lib/image-utils";
 import { PortadaEstandar } from "./PortadaEstandar";
+import { BrandCover } from "./BrandCover";
+import { ContactStripe } from "./ContactStripe";
+import { shouldShowBrandCover, shouldShowGridAd, shouldShowContactStripe } from "@/lib/brand-cover";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 import { SellerPicker } from "./SellerPicker";
@@ -3640,8 +3643,15 @@ export function PublicCatalog({
         </section>
       )}
 
+      {/* ── Portada de Marca (RF-45.1) cuando no hay portada con foto visible ── */}
+      {!isNarrowing && mode === "catalog" && shouldShowBrandCover(store) && spec.familia === "estandar" && (
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
+          <BrandCover store={store} model={spec.id} isDark={effectiveIsDark} />
+        </div>
+      )}
+
       {/* ── Portada Estándar (diseños estándar con portada activa) ── */}
-      {!isNarrowing && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
+      {!isNarrowing && !shouldShowBrandCover(store) && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
         <PortadaEstandar
           activeBanners={activeBanners}
           bannerTitle={store.bannerTitle}
@@ -3964,7 +3974,7 @@ export function PublicCatalog({
                   <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
                     {(() => {
                       const bioProducts = filtered.slice(0, 5);
-                      const showAd = effectivePlan === "semilla" && !isMockup;
+                      const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                       return (
                         <>
                           {bioProducts.map((p, index) => {
@@ -4423,7 +4433,7 @@ export function PublicCatalog({
                     const indexStr = `Nº ${(index + 1).toString().padStart(2, "0")}`;
                     const cartItem = cart.find((item) => item.productId === p.id);
                     const qty = cartItem ? cartItem.qty : 0;
-                    const showAd = effectivePlan === "semilla" && !isMockup;
+                    const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                     const isAdPos = index === 4;
                     const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
                     return (
@@ -5628,7 +5638,15 @@ export function PublicCatalog({
               <div className="space-y-8 select-none">
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
+                  if (shouldShowBrandCover(store)) {
+                    return (
+                      <div className="w-full">
+                        <BrandCover store={store} model="bite" isDark={effectiveIsDark} />
+                      </div>
+                    );
+                  }
                   const banners = activeBanners;
+                  if (banners.length === 0) return null;
                   return (
                     <div
                       style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
@@ -5724,23 +5742,7 @@ export function PublicCatalog({
                             </div>
                           )}
                         </>
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black relative">
-                          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#ea580c_1px,transparent_1px)] [background-size:16px_16px]" />
-                          <div className="relative z-10">
-                            <h2 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight drop-shadow-md">
-                              {store.name}
-                            </h2>
-                            <p className="text-xs text-[var(--primary)] font-bold uppercase tracking-widest mt-1">
-                              {store.niche === "hamburgueseria"
-                                ? "Premium Burger Experience"
-                                : store.niche === "cafeteria"
-                                  ? "Premium Coffee & Pastry"
-                                  : "Premium Gourmet Experience"}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                      ) : null}
                     </div>
                   );
                 })()}
@@ -6105,7 +6107,7 @@ export function PublicCatalog({
                         )}
                       >
                         {gridProducts.map((p, index) => {
-                          const showAd = effectivePlan === "semilla" && !isMockup;
+                          const showAd = shouldShowGridAd(gridProducts.length, effectivePlan, isMockup);
                           const isAdPos = index === 4;
                           const isLastNoAd =
                             index === gridProducts.length - 1 && gridProducts.length <= 4;
@@ -6261,7 +6263,15 @@ export function PublicCatalog({
 
                     {/* 1. Fluid Nature Banner */}
                     {!isNarrowing && (() => {
+                      if (shouldShowBrandCover(store)) {
+                        return (
+                          <div className="relative w-full z-10">
+                            <BrandCover store={store} model="nature" isDark={effectiveIsDark} />
+                          </div>
+                        );
+                      }
                       const banners = activeBanners;
+                      if (banners.length === 0) return null;
                       return (
                         <div className="relative w-full z-10">
                           {/* Image container: taller and curves in dynamically */}
@@ -6383,6 +6393,7 @@ export function PublicCatalog({
 
                           {/* Overlapping editorial card details */}
                           {(() => {
+                            if (shouldShowBrandCover(store)) return null;
                             if (isTiendaEstiloAnterior) {
                               const finalTagline = store.bannerTagline || nicheTags.tagline;
                               const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
@@ -6924,7 +6935,7 @@ export function PublicCatalog({
                           >
                             {gridProducts.map((p, idx) => {
                               const isEven = idx % 2 === 0;
-                              const showAd = effectivePlan === "semilla" && !isMockup;
+                              const showAd = shouldShowGridAd(gridProducts.length, effectivePlan, isMockup);
                               const isAdPos = idx === 4;
                               const isLastNoAd =
                                 idx === gridProducts.length - 1 && gridProducts.length <= 4;
@@ -7132,7 +7143,15 @@ export function PublicCatalog({
 
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
+                  if (shouldShowBrandCover(store)) {
+                    return (
+                      <div className="w-full">
+                        <BrandCover store={store} model="bloom" isDark={effectiveIsDark} />
+                      </div>
+                    );
+                  }
                   const banners = activeBanners;
+                  if (banners.length === 0) return null;
                   const defaultBannerStyle = store.niche === "floreria" ? "curved" : "framed";
                   const bStyle = isTiendaEstiloAnterior
                     ? (store.bannerStyle || defaultBannerStyle)
@@ -7275,40 +7294,7 @@ export function PublicCatalog({
                               </div>
                             )}
                           </>
-                        ) : (
-                          <div
-                            className={cn(
-                              "w-full h-full flex flex-col items-center justify-center p-6 text-center relative",
-                              "bg-gradient-to-br from-[var(--card)] via-[var(--card)] to-muted/20",
-                            )}
-                          >
-                            <div className="absolute inset-0 opacity-5 bg-[radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:20px_20px]" />
-                            <div className="relative z-10">
-                              <h2
-                                style={{ color: "var(--foreground)" }}
-                                className={cn(
-                                  "text-2xl sm:text-4xl font-normal tracking-wide",
-                                  isSerif ? "font-serif" : "font-sans font-bold",
-                                )}
-                              >
-                                {store.name}
-                              </h2>
-                              <p
-                                className="text-xs font-semibold uppercase tracking-widest mt-2 font-sans"
-                                style={{
-                                  color:
-                                    store.niche === "floreria"
-                                      ? "color-mix(in srgb, var(--primary) 80%, transparent)"
-                                      : "var(--primary)",
-                                }}
-                              >
-                                {store.niche === "floreria"
-                                  ? "Arreglos & Detalles Florales"
-                                  : "Catálogo Oficial"}
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   );
@@ -7861,7 +7847,7 @@ export function PublicCatalog({
                         )}
                       >
                         {gridProducts.map((p, index) => {
-                          const showAd = effectivePlan === "semilla" && !isMockup;
+                          const showAd = shouldShowGridAd(gridProducts.length, effectivePlan, isMockup);
                           const isAdPos = index === 4;
                           const isLastNoAd =
                             index === gridProducts.length - 1 && gridProducts.length <= 4;
@@ -8200,7 +8186,7 @@ export function PublicCatalog({
                 )}
               >
                 {filtered.map((p, index) => {
-                  const showAd = effectivePlan === "semilla" && !isMockup;
+                  const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                   const isAdPos = index === 4;
                   const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
 
@@ -8332,7 +8318,7 @@ export function PublicCatalog({
                 )}
               >
                 {filtered.map((p, index) => {
-                  const showAd = effectivePlan === "semilla" && !isMockup;
+                  const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                   const isAdPos = index === 4;
                   const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
 
@@ -8445,6 +8431,16 @@ export function PublicCatalog({
                   );
                 })}
               </div>
+            )}
+
+            {/* RF-45.6: Franja de contacto debajo de la grilla cuando hay 1 a 3 productos */}
+            {mode === "catalog" && shouldShowContactStripe(filtered.length) && (
+              <ContactStripe
+                phone={store.phone}
+                countryCode={store.countryCode}
+                storeName={store.name}
+                isDark={effectiveIsDark}
+              />
             )}
 
             {/* Sentinel de Carga Progresiva (Infinite Scroll) - Exclusivo del catálogo general */}

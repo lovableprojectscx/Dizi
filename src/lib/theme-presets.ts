@@ -145,3 +145,44 @@ export const THEME_PRESETS: ThemePreset[] = [
     },
   },
 ];
+
+/**
+ * RF-45.8: Sugiere 3 paletas predeterminadas por rubro para el flujo de registro.
+ */
+export function getSuggestedPresetsForNiche(niche?: string | null): ThemePreset[] {
+  const n = (niche || "").toLowerCase().trim();
+  if (n === "comida" || n === "gastronomia" || n === "restaurante") {
+    return [
+      THEME_PRESETS.find((p) => p.id === "calido")!,
+      THEME_PRESETS.find((p) => p.id === "vibrante")!,
+      THEME_PRESETS.find((p) => p.id === "claro")!,
+    ].filter(Boolean);
+  }
+  if (n === "ropa" || n === "moda" || n === "calzado") {
+    return [
+      THEME_PRESETS.find((p) => p.id === "claro")!,
+      THEME_PRESETS.find((p) => p.id === "vibrante")!,
+      THEME_PRESETS.find((p) => p.id === "nocturno")!,
+    ].filter(Boolean);
+  }
+  if (n === "tech" || n === "tecnologia" || n === "electronica") {
+    return [
+      THEME_PRESETS.find((p) => p.id === "nocturno")!,
+      THEME_PRESETS.find((p) => p.id === "claro")!,
+      THEME_PRESETS.find((p) => p.id === "atardecer")!,
+    ].filter(Boolean);
+  }
+  if (n === "floreria" || n === "flores" || n === "botanica" || n === "salud") {
+    return [
+      THEME_PRESETS.find((p) => p.id === "menta")!,
+      THEME_PRESETS.find((p) => p.id === "bosque")!,
+      THEME_PRESETS.find((p) => p.id === "claro")!,
+    ].filter(Boolean);
+  }
+  return [
+    THEME_PRESETS.find((p) => p.id === "claro")!,
+    THEME_PRESETS.find((p) => p.id === "calido")!,
+    THEME_PRESETS.find((p) => p.id === "nocturno")!,
+  ].filter(Boolean);
+}
+

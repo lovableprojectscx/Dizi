@@ -11,6 +11,8 @@
 import React, { useState } from "react";
 import { useApp } from "@/lib/store";
 import { convertImageToWebP } from "@/lib/image-utils";
+import { getMaxAllowedBanners } from "@/lib/types";
+import { getDefaultTagline } from "@/lib/brand-cover";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -84,11 +86,13 @@ export function OnboardingWizard() {
     }
   }, [storeId, store?.onboardingCompleted, store?.logo, store?.bannerImage, store?.products?.length]);
 
-  // Step 1 States: Identity (Name, Logo, Banner)
+  // Step 1 States: Identity (Name, Logo, Banner, Eslogan)
+  const isSemilla = store ? getMaxAllowedBanners(store) === 0 : true;
   const [storeName, setStoreName] = useState(store?.name || "");
   const [facebookUrl, setFacebookUrl] = useState("");
   const [logoBase64, setLogoBase64] = useState<string | null>(store?.logo || null);
   const [bannerBase64, setBannerBase64] = useState<string | null>(store?.bannerImage || null);
+  const [bannerTagline, setBannerTagline] = useState<string>(store?.bannerTagline || "");
   const [fbConnected, setFbConnected] = useState(false);
 
   // Step 2 States: Bio-Link
@@ -186,7 +190,10 @@ export function OnboardingWizard() {
       await updateStore(store.id, {
         name: storeName,
         logo: logoBase64,
-        bannerImage: bannerBase64,
+        bannerImage: isSemilla ? null : bannerBase64,
+        bannerTagline: isSemilla
+          ? (bannerTagline.trim() || getDefaultTagline(store.niche))
+          : store.bannerTagline,
       });
       setStep(2);
     } catch (err) {
@@ -421,36 +428,54 @@ export function OnboardingWizard() {
                     </div>
                   </div>
 
-                  {/* Banner Picker */}
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider block">
-                      Banner de Portada
-                    </Label>
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-border/50 hover:border-primary/30 transition-all rounded-xl p-3 bg-muted/10 h-28 relative group cursor-pointer">
-                      {bannerBase64 ? (
-                        <div className="relative h-20 w-full rounded-md overflow-hidden border border-border bg-white shadow-sm flex items-center justify-center">
-                          <img
-                            src={bannerBase64}
-                            alt="Banner preview"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center gap-1 text-center">
-                          <FileImage className="h-5 w-5 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground font-semibold">
-                            Subir Portada (16:7)
-                          </span>
-                        </div>
-                      )}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleBannerUpload}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                  {/* Banner Picker o Portada de Marca según plan (RF-45.4) */}
+                  {isSemilla ? (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider block">
+                        Eslogan de tu Marca
+                      </Label>
+                      <Input
+                        value={bannerTagline}
+                        onChange={(e) => setBannerTagline(e.target.value)}
+                        placeholder={getDefaultTagline(store?.niche)}
+                        className="h-10 text-xs"
                       />
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-1">
+                        <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span>La portada con tu foto se activa desde el plan Emprendedor.</span>
+                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider block">
+                        Banner de Portada
+                      </Label>
+                      <div className="flex flex-col items-center justify-center border-2 border-dashed border-border/50 hover:border-primary/30 transition-all rounded-xl p-3 bg-muted/10 h-28 relative group cursor-pointer">
+                        {bannerBase64 ? (
+                          <div className="relative h-20 w-full rounded-md overflow-hidden border border-border bg-white shadow-sm flex items-center justify-center">
+                            <img
+                              src={bannerBase64}
+                              alt="Banner preview"
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1 text-center">
+                            <FileImage className="h-5 w-5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground font-semibold">
+                              Subir Portada (16:7)
+                            </span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBannerUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

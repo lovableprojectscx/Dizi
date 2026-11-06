@@ -12,7 +12,7 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X, MessageCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { PLANS, type PlanId } from "@/lib/types";
@@ -22,6 +22,7 @@ import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
 import { getDesignSpec, ALL_MODELS, PALETTE_VARIANT_MODELS } from "@/lib/design-catalog";
 import { suggestPhotoFormat } from "@/lib/photo-format";
+import { getSuggestedPresetsForNiche, THEME_PRESETS } from "@/lib/theme-presets";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -894,6 +895,7 @@ function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState("general");
   const [selectedModel, setSelectedModel] = useState("grid");
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
   const [brandColor, setBrandColor] = useState("");
   const [loading, setLoading] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
@@ -981,11 +983,32 @@ function RegisterPage() {
     { id: "servicios", name: "Servicios Profesionales" },
   ];
 
-  const models = ALL_MODELS.map((m) => ({
-    ...m,
-    locked: false,
-    recommended: m.niches.includes(selectedNiche),
-  }));
+  const suggestedPresets = useMemo(() => getSuggestedPresetsForNiche(selectedNiche), [selectedNiche]);
+
+  const selectedPreset = selectedPresetId
+    ? THEME_PRESETS.find((p) => p.id === selectedPresetId)
+    : null;
+
+  const models = ALL_MODELS.map((m) => {
+    // Si hay una paleta seleccionada, aplicar sus colores a la vista previa (RF-45.8, E8)
+    const activeP = selectedPreset
+      ? {
+          bg: selectedPreset.values.bgColor,
+          card: selectedPreset.values.cardBg,
+          accent: brandColor || selectedPreset.values.brandColor,
+          dark: selectedPreset.values.isDark,
+        }
+      : brandColor
+        ? { ...m.p, accent: brandColor }
+        : m.p;
+
+    return {
+      ...m,
+      p: activeP,
+      locked: false,
+      recommended: m.niches.includes(selectedNiche),
+    };
+  });
 
   useEffect(() => {
     // Al cambiar nicho, seleccionar el primer modelo sugerido para ese nicho
@@ -1101,7 +1124,12 @@ function RegisterPage() {
           createdAt: new Date().toISOString().split("T")[0],
           whatsappClicks: 0,
           model: officialModel as any,
-          brandColor: brandColor || undefined,
+          brandColor: brandColor || selectedPreset?.values.brandColor || undefined,
+          bgColor: selectedPreset?.values.bgColor || undefined,
+          cardBg: selectedPreset?.values.cardBg || undefined,
+          textColor: selectedPreset?.values.textColor || undefined,
+          accentColor: selectedPreset?.values.accentColor || undefined,
+          isDark: selectedPreset ? selectedPreset.values.isDark : undefined,
           ownerId: userId,
           niche: selectedNiche,
           photoFormat: suggestPhotoFormat(selectedNiche),
@@ -1379,6 +1407,22 @@ function RegisterPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Rubro de tu Negocio
+                  </label>
+                  <select
+                    value={selectedNiche}
+                    onChange={(e) => setSelectedNiche(e.target.value)}
+                    className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none cursor-pointer"
+                  >
+                    {niches.map((n) => (
+                      <option key={n.id} value={n.id}>
+                        {n.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
                     WhatsApp de Ventas
                   </label>
                   <PhoneInput
@@ -1522,6 +1566,73 @@ function RegisterPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* RF-45.8: Paletas sugeridas por rubro */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                      Paletas sugeridas para tu rubro
+                    </label>
+                    <span className="text-[10px] text-muted-foreground font-normal">
+                      (Fondo, tarjeta y acento)
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {suggestedPresets.map((preset) => {
+                      const isSelected = selectedPresetId === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedPresetId(null);
+                            } else {
+                              setSelectedPresetId(preset.id);
+                              setBrandColor(preset.values.brandColor);
+                            }
+                          }}
+                          className={`p-2 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
+                            isSelected
+                              ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[11px] font-bold text-slate-800 leading-tight truncate">
+                                {preset.name}
+                              </span>
+                              {isSelected && (
+                                <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                              )}
+                            </div>
+                            <span className="text-[9px] text-slate-400 block mt-0.5">
+                              {preset.isDark ? "Oscura" : "Clara"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span
+                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs"
+                              style={{ backgroundColor: preset.values.brandColor }}
+                              title="Marca"
+                            />
+                            <span
+                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs"
+                              style={{ backgroundColor: preset.values.bgColor }}
+                              title="Fondo"
+                            />
+                            <span
+                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs"
+                              style={{ backgroundColor: preset.values.cardBg }}
+                              title="Tarjeta"
+                            />
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
