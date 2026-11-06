@@ -3979,7 +3979,7 @@ export function PublicCatalog({
                         <>
                           {bioProducts.map((p, index) => {
                             const isLastNoAd =
-                              index === bioProducts.length - 1 && bioProducts.length <= 4;
+                              index === bioProducts.length - 1 && bioProducts.length === 4;
                             return (
                               <React.Fragment key={p.id}>
                                 <article
@@ -4435,7 +4435,7 @@ export function PublicCatalog({
                     const qty = cartItem ? cartItem.qty : 0;
                     const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                     const isAdPos = index === 4;
-                    const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+                    const isLastNoAd = index === filtered.length - 1 && filtered.length === 4;
                     return (
                       <React.Fragment key={p.id}>
                         <article
@@ -4765,7 +4765,7 @@ export function PublicCatalog({
                       </div>
                     </div>
                   </article>
-                  {effectivePlan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
+                  {shouldShowGridAd(filtered.length, effectivePlan, isMockup) && (idx === 4 || (filtered.length === 4 && idx === 3)) && (
                     <DiziNativeAdCard
                       layout="editorial"
                       primaryColor={primaryColor}
@@ -5078,7 +5078,7 @@ export function PublicCatalog({
                     </div>
                   ));
                 })()}
-                {effectivePlan === "semilla" && (
+                {shouldShowGridAd(filtered.length, effectivePlan, isMockup) && (
                   <DiziNativeAdCard
                     layout="editorial"
                     primaryColor={primaryColor}
@@ -5212,7 +5212,7 @@ export function PublicCatalog({
                         </div>
                       )}
                     </article>
-                    {effectivePlan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
+                    {shouldShowGridAd(filtered.length, effectivePlan, isMockup) && (i === 4 || (filtered.length === 4 && i === 3)) && (
                       <DiziNativeAdCard
                         layout="grid"
                         primaryColor={primaryColor}
@@ -5503,7 +5503,7 @@ export function PublicCatalog({
                         </div>
                       </div>
                     </article>
-                    {effectivePlan === "semilla" && (i === 3 || (filtered.length < 4 && i === filtered.length - 1)) && (
+                    {shouldShowGridAd(filtered.length, effectivePlan, isMockup) && (i === 4 || (filtered.length === 4 && i === 3)) && (
                       <DiziNativeAdCard
                         layout="editorial"
                         primaryColor={primaryColor}
@@ -5620,7 +5620,7 @@ export function PublicCatalog({
                         </div>
                       </div>
                     </article>
-                    {effectivePlan === "semilla" && (idx === 3 || (filtered.length < 4 && idx === filtered.length - 1)) && (
+                    {shouldShowGridAd(filtered.length, effectivePlan, isMockup) && (idx === 4 || (filtered.length === 4 && idx === 3)) && (
                       <DiziNativeAdCard
                         layout="bloom"
                         primaryColor={primaryColor}
@@ -5646,7 +5646,6 @@ export function PublicCatalog({
                     );
                   }
                   const banners = activeBanners;
-                  if (banners.length === 0) return null;
                   return (
                     <div
                       style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
@@ -6110,7 +6109,7 @@ export function PublicCatalog({
                           const showAd = shouldShowGridAd(gridProducts.length, effectivePlan, isMockup);
                           const isAdPos = index === 4;
                           const isLastNoAd =
-                            index === gridProducts.length - 1 && gridProducts.length <= 4;
+                            index === gridProducts.length - 1 && gridProducts.length === 4;
 
                           return (
                             <React.Fragment key={p.id}>
@@ -6271,7 +6270,6 @@ export function PublicCatalog({
                         );
                       }
                       const banners = activeBanners;
-                      if (banners.length === 0) return null;
                       return (
                         <div className="relative w-full z-10">
                           {/* Image container: taller and curves in dynamically */}
@@ -6938,7 +6936,7 @@ export function PublicCatalog({
                               const showAd = shouldShowGridAd(gridProducts.length, effectivePlan, isMockup);
                               const isAdPos = idx === 4;
                               const isLastNoAd =
-                                idx === gridProducts.length - 1 && gridProducts.length <= 4;
+                                idx === gridProducts.length - 1 && gridProducts.length === 4;
 
                               return (
                                 <React.Fragment key={p.id}>
@@ -7151,7 +7149,6 @@ export function PublicCatalog({
                     );
                   }
                   const banners = activeBanners;
-                  if (banners.length === 0) return null;
                   const defaultBannerStyle = store.niche === "floreria" ? "curved" : "framed";
                   const bStyle = isTiendaEstiloAnterior
                     ? (store.bannerStyle || defaultBannerStyle)
@@ -7850,7 +7847,7 @@ export function PublicCatalog({
                           const showAd = shouldShowGridAd(gridProducts.length, effectivePlan, isMockup);
                           const isAdPos = index === 4;
                           const isLastNoAd =
-                            index === gridProducts.length - 1 && gridProducts.length <= 4;
+                            index === gridProducts.length - 1 && gridProducts.length === 4;
 
                           return (
                             <React.Fragment key={p.id}>
@@ -8188,7 +8185,7 @@ export function PublicCatalog({
                 {filtered.map((p, index) => {
                   const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                   const isAdPos = index === 4;
-                  const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+                  const isLastNoAd = index === filtered.length - 1 && filtered.length === 4;
 
                   return (
                     <React.Fragment key={p.id}>
@@ -8277,7 +8274,7 @@ export function PublicCatalog({
                       </article>
 
                       {/* Publicidad de Dizi en Semilla */}
-                      {showAd && isAdPos && (
+                      {showAd && (isAdPos || isLastNoAd) && (
                         <DiziNativeAdCard
                           layout="grid"
                           primaryColor={primaryColor}
@@ -8292,20 +8289,6 @@ export function PublicCatalog({
                     </React.Fragment>
                   );
                 })}
-
-                {/* Si la lista tiene <= 4 productos en Semilla, poner el anuncio al final */}
-                {effectivePlan === "semilla" && !isMockup && filtered.length > 0 && filtered.length <= 4 && (
-                  <DiziNativeAdCard
-                    layout="grid"
-                    primaryColor={primaryColor}
-                    slug={store.slug}
-                    cardRounded="0px"
-                    imgRounded="0px"
-                    cardShadow="none"
-                    cardBorder={false}
-                    photoAspect={{ ratio: "3/4" }}
-                  />
-                )}
               </div>
             ) : (
               /* ── GRID layout: standard responsive grid */
@@ -8320,7 +8303,7 @@ export function PublicCatalog({
                 {filtered.map((p, index) => {
                   const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
                   const isAdPos = index === 4;
-                  const isLastNoAd = index === filtered.length - 1 && filtered.length <= 4;
+                  const isLastNoAd = index === filtered.length - 1 && filtered.length === 4;
 
                   return (
                     <React.Fragment key={p.id}>

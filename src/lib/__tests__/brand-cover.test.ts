@@ -116,4 +116,11 @@ describe("F45 · Portada de Marca y Escenarios (brand-cover.ts)", () => {
     expect(shouldShowGridAd(5, "semilla", true)).toBe(false);
     expect(shouldShowGridAd(5, "pro")).toBe(false);
   });
+
+  it("TIENDAS_CON_ESTILO_ANTERIOR (emessentials, jhoselynperu, onfeet, aura-botanicals) no muestran BrandCover", () => {
+    expect(shouldShowBrandCover({ slug: "emessentials", plan: "semilla" } as Store)).toBe(false);
+    expect(shouldShowBrandCover({ slug: "jhoselynperu", plan: "semilla" } as Store)).toBe(false);
+    expect(shouldShowBrandCover({ slug: "onfeet", plan: "semilla" } as Store)).toBe(false);
+    expect(shouldShowBrandCover({ slug: "aura-botanicals", plan: "semilla" } as Store)).toBe(false);
+  });
 });

@@ -1,4 +1,5 @@
 import { Store, getMaxAllowedBanners, getEffectivePlan } from "./types";
+import { TIENDAS_CON_ESTILO_ANTERIOR } from "./design-catalog";
 
 /**
  * Normaliza un código hexadecimal de 3 o 6 dígitos a RGB.
@@ -46,9 +47,13 @@ export function getContrastRatio(rgb1: { r: number; g: number; b: number }, rgb2
 /**
  * RF-45.1 y RNF-45.2: Determina si una tienda debe mostrar la Portada de Marca (BrandCover).
  * Devuelve true si el plan no permite banners fotográficos (Semilla) o si no tiene ningún banner activo.
+ * Las tiendas en TIENDAS_CON_ESTILO_ANTERIOR conservan su apariencia y portada original.
  */
 export function shouldShowBrandCover(store: Partial<Store> | null | undefined): boolean {
   if (!store) return true;
+  if (store.slug && TIENDAS_CON_ESTILO_ANTERIOR.has(store.slug)) {
+    return false;
+  }
   const maxAllowed = getMaxAllowedBanners(store as Store);
   if (maxAllowed <= 0) return true;
 

@@ -150,4 +150,75 @@ test.describe("F45 · Primera Impresión (E1–E9)", () => {
     await expect(page.locator("text=Vibrante Naranja")).toBeVisible();
     await expect(page.locator("text=Claro Minimalista")).toBeVisible();
   });
+
+  test("Tienda en TIENDAS_CON_ESTILO_ANTERIOR (emessentials) no muestra BrandCover y conserva su portada", async ({ page }) => {
+    const emStore = {
+      ...BASE_STORE,
+      slug: "emessentials",
+      model: "nature",
+      banner_title: "Abraza la pureza de la naturaleza",
+      banner_image: null,
+      banners: [],
+    };
+
+    await page.route("**/rest/v1/rpc/get_public_store*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(emStore),
+      });
+    });
+
+    await page.goto("http://localhost:5173/t/emessentials");
+    await page.waitForLoadState("domcontentloaded");
+
+    const brandCover = page.locator('[data-testid="brand-cover"]');
+    await expect(brandCover).toHaveCount(0);
+    await expect(page.locator("text=Abraza la pureza de la naturaleza")).toBeVisible();
+  });
+
+  const ALL_SELECTOR_MODELS = [
+    "grid",
+    "arch",
+    "overlay",
+    "diagonal",
+    "vitrina",
+    "editorial",
+    "hero",
+    "tiles",
+    "spotlight",
+    "bite",
+    "nature",
+    "bloom",
+  ];
+
+  for (const model of ALL_SELECTOR_MODELS) {
+    test(`Con 1 producto en diseño '${model}': NO hay publicidad en grilla y SÍ hay ContactStripe`, async ({ page }) => {
+      const store1 = {
+        ...BASE_STORE,
+        model,
+        total_products_count: 1,
+        products: [BASE_STORE.products[0]],
+      };
+
+      await page.route("**/rest/v1/rpc/get_public_store*", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(store1),
+        });
+      });
+
+      await page.goto("http://localhost:5173/t/zz-audit-f45-store");
+      await page.waitForLoadState("domcontentloaded");
+
+      // No publicidad en la grilla
+      const nativeAd = page.locator('article:has-text("Crea tu catálogo gratis con Dizi")');
+      await expect(nativeAd).toHaveCount(0);
+
+      // Sí franja de contacto
+      const contactStripe = page.locator('[data-testid="contact-stripe"]');
+      await expect(contactStripe).toBeVisible();
+    });
+  }
 });
