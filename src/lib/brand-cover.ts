@@ -210,3 +210,70 @@ export function getBrandCoverStyles(
     isLightBg: isLight,
   };
 }
+
+/**
+ * R4: Extrae el nombre corto de la tienda (por ejemplo, si tiene nombre con comillas
+ * como 'Biblias y Variedades "Luz y Estilo"', extrae "Luz y Estilo").
+ */
+export function getShortStoreName(name?: string | null): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  const quoteMatch = trimmed.match(/["“'«]([^"”'»]+)["”'»]/);
+  if (quoteMatch && quoteMatch[1]?.trim()) {
+    return quoteMatch[1].trim();
+  }
+  return trimmed;
+}
+
+export interface ContactStripeStyles {
+  containerBg: string;
+  containerBorder: string;
+  titleColor: string;
+  descColor: string;
+  buttonBg: string;
+  buttonTextColor: string;
+}
+
+/**
+ * R3: Calcula los colores y estilos para la Franja de Contacto (ContactStripe).
+ * Fondo suave del color de marca, botón con el color de marca y texto con contraste AA (>= 4.5).
+ * Adaptado para tema claro y tema oscuro.
+ */
+export function getContactStripeStyles(
+  brandColor?: string | null,
+  isDark = false
+): ContactStripeStyles {
+  let hex = brandColor?.trim() || "";
+  if (!hex || !hex.startsWith("#")) {
+    hex = "#25D366";
+  }
+
+  const rgb = hexToRgb(hex) || { r: 37, g: 211, b: 102 };
+
+  // Contraste AA para el botón (WCAG 2.1 ratio >= 4.5)
+  const whiteRgb = { r: 255, g: 255, b: 255 };
+  const darkRgb = { r: 15, g: 23, b: 42 }; // #0f172a
+  const contrastWithWhite = getContrastRatio(rgb, whiteRgb);
+  const contrastWithDark = getContrastRatio(rgb, darkRgb);
+
+  // Elegir color de texto para el botón que cumpla AA (o el de mayor contraste)
+  const buttonTextColor =
+    contrastWithWhite >= 4.5
+      ? "#ffffff"
+      : contrastWithDark >= contrastWithWhite
+        ? "#0f172a"
+        : "#ffffff";
+
+  return {
+    containerBg: isDark
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.14)`
+      : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`,
+    containerBorder: isDark
+      ? `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.3)`
+      : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.22)`,
+    titleColor: isDark ? "#f8fafc" : "#0f172a",
+    descColor: isDark ? "rgba(241, 245, 249, 0.8)" : "rgba(15, 23, 42, 0.75)",
+    buttonBg: hex,
+    buttonTextColor,
+  };
+}

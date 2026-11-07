@@ -128,7 +128,7 @@ import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } fro
 import { PortadaEstandar } from "./PortadaEstandar";
 import { BrandCover } from "./BrandCover";
 import { ContactStripe } from "./ContactStripe";
-import { shouldShowBrandCover, shouldShowGridAd, shouldShowContactStripe } from "@/lib/brand-cover";
+import { shouldShowBrandCover, shouldShowGridAd, shouldShowContactStripe, getShortStoreName } from "@/lib/brand-cover";
 import { cleanDescription } from "@/lib/products";
 import { ImageZoomModal } from "./ImageZoomModal";
 import { SellerPicker } from "./SellerPicker";
@@ -1387,6 +1387,7 @@ export function PublicCatalog({
     isCheckout?: boolean;
   } | null>(null);
   const [pendingOrderSeller, setPendingOrderSeller] = useState<SellerOption | null>(null);
+  const [isContactStripeVisible, setIsContactStripeVisible] = useState(false);
 
   const activeSellers: SellerOption[] = useMemo(
     () => resolveActiveSellers(store),
@@ -1573,6 +1574,7 @@ export function PublicCatalog({
   const cfg = MODEL_CONFIGS[modelId] ?? DEFAULT_CONFIG;
   const photoAspect = getPhotoAspect(store, effectiveModel);
   const showDesktopSidebar = mode === "catalog" && !isMockup;
+  const showsBrandCover = shouldShowBrandCover(store);
 
   const isPremiumModel =
     modelId === "bloom" ||
@@ -3222,18 +3224,23 @@ export function PublicCatalog({
                   </span>
                 </div>
               )}
-              <span
-                className={cn(
-                  "text-sm truncate",
-                  cfg.headerStyle === "bold"
-                    ? "font-black tracking-tight"
-                    : cfg.headerStyle === "minimal"
-                      ? "font-light tracking-widest uppercase text-xs"
-                      : "font-bold",
-                )}
-              >
-                {store.name}
-              </span>
+              {/* R4: Si muestra portada de marca y tiene logo, no repetir el nombre en el header.
+                  Si no tiene logo, mostrar el nombre corto. Si no muestra portada de marca, mostrar store.name.
+                  Usa line-clamp-1 con elipsis en vez de truncate para no cortar palabras con comillas. */}
+              {(!showsBrandCover || !store.logo) && (
+                <span
+                  className={cn(
+                    "text-sm line-clamp-1 break-words",
+                    cfg.headerStyle === "bold"
+                      ? "font-black tracking-tight"
+                      : cfg.headerStyle === "minimal"
+                        ? "font-light tracking-widest uppercase text-xs"
+                        : "font-bold",
+                  )}
+                >
+                  {showsBrandCover ? getShortStoreName(store.name) : store.name}
+                </span>
+              )}
             </div>
 
             {store.bioLinksEnabled ? (
@@ -3971,7 +3978,7 @@ export function PublicCatalog({
                   </div>
                 ) : (
                   /* ── BIO-LINK grid: Clean 2-column mobile style grid, max width 600px (max-w-md) */
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto pb-28 sm:pb-16">
                     {(() => {
                       const bioProducts = filtered.slice(0, 5);
                       const showAd = shouldShowGridAd(filtered.length, effectivePlan, isMockup);
@@ -4112,7 +4119,7 @@ export function PublicCatalog({
               /* ── OVERLAY layout: portrait 3:4 cards with gradient text (ZARA / Instagram Shopping style) */
               <div
                 className={cn(
-                  "grid gap-2",
+                  "grid gap-2 pb-28 sm:pb-16",
                   isMockup
                     ? "grid-cols-2"
                     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2",
@@ -4196,7 +4203,7 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "lookbook" ? (
               /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
-              <div className="space-y-16 sm:space-y-24 select-none">
+              <div className="space-y-16 sm:space-y-24 select-none pb-28 sm:pb-16">
                 {/* 1. Editorial Cover Section */}
                 {!isNarrowing && mode === "catalog" && (
                   <header
@@ -4669,7 +4676,7 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "editorial" ? (
               /* ── EDITORIAL layout: horizontal list (Net-a-Porter / luxury fashion style) */
-              <div className="space-y-3">
+              <div className="space-y-3 pb-28 sm:pb-16">
                 {filtered.map((p, idx) => (
                   <React.Fragment key={p.id}>
                     <article
@@ -4779,7 +4786,7 @@ export function PublicCatalog({
             </div>
             ) : cfg.layout === "hero" ? (
               /* ── HERO layout: first product is 2-col featured, rest are small grid */
-              <div className="space-y-3">
+              <div className="space-y-3 pb-28 sm:pb-16">
                 {!isNarrowing && filtered.length > 0 && (
                   <article
                     className={cn(
@@ -4931,7 +4938,7 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "magazine" ? (
               /* ── MAGAZINE layout: fashion editorial alternating full/half width rows */
-              <div className="space-y-1">
+              <div className="space-y-1 pb-28 sm:pb-16">
                 {filtered.map((p, i) => {
                   const isFeature = i % 3 === 0; // every 3rd card is a full-width feature
                   if (isFeature) {
@@ -5090,7 +5097,7 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "tiles" ? (
               /* ── TILES layout: alternating wide (full) + square pair — inspired by Apple editorial */
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2 pb-28 sm:pb-16">
                 {filtered.map((p, i) => {
                   const isWide = i % 3 === 0;
                   const fallback =
@@ -5227,7 +5234,7 @@ export function PublicCatalog({
             </div>
             ) : cfg.layout === "spotlight" ? (
               /* ── SPOTLIGHT layout: 1 large featured + 2 stacked small — inspired by Farfetch / Mytheresa */
-              <div className="space-y-3">
+              <div className="space-y-3 pb-28 sm:pb-16">
                 {(() => {
                   const fallback =
                     NO_IMAGE_PLACEHOLDER;
@@ -5394,7 +5401,7 @@ export function PublicCatalog({
               /* ── DIAGONAL layout: slanted clip-path cuts — Nike / streetwear editorial */
               <div
                 className={cn(
-                  "grid gap-0",
+                  "grid gap-0 pb-28 sm:pb-16",
                   isMockup ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
                 )}
               >
@@ -5520,7 +5527,7 @@ export function PublicCatalog({
               /* ── ARCH layout: arched portrait frames — luxury cosmetics / Byredo / AESOP style */
               <div
                 className={cn(
-                  "grid gap-4 px-2 pb-4",
+                  "grid gap-4 px-2 pb-28 sm:pb-16",
                   isMockup ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3",
                 )}
               >
@@ -5635,7 +5642,7 @@ export function PublicCatalog({
             </div>
             ) : cfg.layout === "bite" ? (
               /* ── BITE PREMIUM RESTAURANT LAYOUT ── */
-              <div className="space-y-8 select-none">
+              <div className="space-y-8 select-none pb-28 sm:pb-16">
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
                   if (shouldShowBrandCover(store)) {
@@ -6233,7 +6240,7 @@ export function PublicCatalog({
                 const nicheTags = getNicheTaglines(store.niche);
                 return (
                   /* ── NATURE PREMIUM BOTANICAL LAYOUT ── */
-                  <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
+                  <div className={cn("space-y-8 select-none relative pb-28 sm:pb-16", finalTypographyClass)}>
                     {/* Elegant botanical watermarks in background */}
                     <div
                       className="absolute top-[8%] -left-8 w-24 h-24 opacity-[0.06] pointer-events-none select-none z-0"
@@ -7108,7 +7115,7 @@ export function PublicCatalog({
               })()
             ) : cfg.layout === "bloom" ? (
               /* ── BLOOM PREMIUM FLORIST LAYOUT ── */
-              <div className={cn("space-y-8 select-none relative", finalTypographyClass)}>
+              <div className={cn("space-y-8 select-none relative pb-28 sm:pb-16", finalTypographyClass)}>
                 {store.niche === "floreria" && (
                   <>
                     {/* Elegant floating leafy watermarks in background */}
@@ -8018,7 +8025,7 @@ export function PublicCatalog({
               </div>
             ) : cfg.layout === "banner_grid" ? (
               /* ── BANNER GRID layout: portada con imagen ajustable + grid 2 columnas estilo app */
-              <div className="space-y-4">
+              <div className="space-y-4 pb-28 sm:pb-16">
                 {/* Banner de portada */}
                 {!isNarrowing && (() => {
                   const bStyle = store.bannerStyle || "framed";
@@ -8176,7 +8183,7 @@ export function PublicCatalog({
               /* ── VITRINA layout: minimalista tipo GAP para moda y ropa (RF-41.7) */
               <div
                 className={cn(
-                  "grid gap-2.5 sm:gap-3",
+                  "grid gap-2.5 sm:gap-3 pb-28 sm:pb-16",
                   isMockup
                     ? "grid-cols-2"
                     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
@@ -8294,7 +8301,7 @@ export function PublicCatalog({
               /* ── GRID layout: standard responsive grid */
               <div
                 className={cn(
-                  "grid gap-3",
+                  "grid gap-3 pb-28 sm:pb-16",
                   isMockup
                     ? "grid-cols-2"
                     : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4",
@@ -8422,7 +8429,9 @@ export function PublicCatalog({
                 phone={store.phone}
                 countryCode={store.countryCode}
                 storeName={store.name}
+                brandColor={store.brandColor}
                 isDark={effectiveIsDark}
+                onVisibilityChange={setIsContactStripeVisible}
               />
             )}
 
@@ -8654,8 +8663,11 @@ export function PublicCatalog({
             }
           }}
           className={cn(
-            "z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition",
+            "z-40 h-14 w-14 bg-primary text-primary-foreground shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 ease-in-out",
             isMockup ? "absolute bottom-6 right-4" : "fixed bottom-8 right-4",
+            isContactStripeVisible
+              ? "opacity-0 pointer-events-none scale-90 translate-y-3"
+              : "opacity-100 pointer-events-auto scale-100 translate-y-0",
           )}
           style={{
             borderRadius: cfg.imgRounded === "9999px" ? "9999px" : "1rem",
