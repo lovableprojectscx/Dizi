@@ -40,6 +40,9 @@ import {
 } from "lucide-react";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { PLANS } from "@/lib/types";
+import { LANDING_SHOWCASE_DESIGNS } from "@/lib/landing-disenos";
+
+export { LANDING_SHOWCASE_DESIGNS };
 
 /**
  * Definición de la ruta raíz `/` en TanStack Router con metadatos SEO y OpenGraph.
@@ -75,81 +78,12 @@ export const Route = createFileRoute("/")({
  */
 function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeNiche, setActiveNiche] = useState<string>("all");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [isAnnual, setIsAnnual] = useState(false);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
   };
-
-  const showcaseModels = [
-    {
-      id: "bite",
-      name: "Bite Gastronómico",
-      niche: "Gastronomía / Restobar",
-      desc: "Categorías táctiles, especialidades de cocina y pedidos directos a tu WhatsApp.",
-      badge: "Popular",
-      category: "gastronomia",
-      image: "/images/landing/showcase-gastronomia.webp",
-      accent: "border-orange-500/30 text-orange-600 dark:text-orange-400 bg-orange-500/10",
-    },
-    {
-      id: "bloom_floral",
-      name: "Bloom Floral",
-      niche: "Florerías / Regalos",
-      desc: "Estética delicada con esquinas suaves para florerías, arreglos y detalles.",
-      badge: "Romántico",
-      category: "boutique",
-      image: "/images/landing/showcase-floreria.webp",
-      accent: "border-pink-500/30 text-pink-600 dark:text-pink-400 bg-pink-500/10",
-    },
-    {
-      id: "nature",
-      name: "Nature Orgánico",
-      niche: "Salud / Cosmética / Eco",
-      desc: "Paleta verde salvia refrescante para cosmética artesanal y productos naturales.",
-      badge: "Ecológico",
-      category: "eco",
-      image: "/images/landing/showcase-belleza.webp",
-      accent: "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10",
-    },
-    {
-      id: "overlay",
-      name: "Overlay Visual",
-      niche: "Moda / Calzado",
-      desc: "Formato 3:4 vertical inspirado en catálogos de moda con fotos de alta calidad.",
-      badge: "Tendencia",
-      category: "boutique",
-      image: "/images/landing/showcase-moda.webp",
-      accent: "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10",
-    },
-    {
-      id: "editorial",
-      name: "Estilo Editorial",
-      niche: "Corporativo / Luxe",
-      desc: "Lista horizontal minimalista Net-a-Porter para marcas exclusivas.",
-      badge: "Lujo",
-      category: "luxe",
-      image: "/images/landing/showcase-cosmetica.webp",
-      accent: "border-slate-500/30 text-slate-700 dark:text-slate-300 bg-slate-500/10",
-    },
-    {
-      id: "tiles",
-      name: "Mosaico Tiles",
-      niche: "Tecnología / Accesorios",
-      desc: "Bloques asimétricos interactivos en cuadrícula para gadgets y tecnología.",
-      badge: "Moderno",
-      category: "tech",
-      image: "/images/landing/showcase-tecnologia.webp",
-      accent: "border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10",
-    },
-  ];
-
-  const filteredModels =
-    activeNiche === "all"
-      ? showcaseModels
-      : showcaseModels.filter((m) => m.category === activeNiche);
 
   const faqs = [
     {
@@ -195,7 +129,7 @@ function LandingPage() {
               Beneficios
             </a>
             <a href="#modelos" className="hover:text-primary transition-colors">
-              Diseños (15)
+              Diseños (8)
             </a>
             <a href="#pasos" className="hover:text-primary transition-colors">
               Cómo Funciona
@@ -251,7 +185,7 @@ function LandingPage() {
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Diseños (15)
+              Diseños (8)
             </a>
             <a
               href="#pasos"
@@ -501,7 +435,7 @@ function LandingPage() {
               </div>
               <h3 className="font-bold text-base text-foreground">Catálogo Web Interactivo</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                15 estructuras de diseño profesional adaptables a tu rubro con carrito de compras integrado.
+                8 estructuras de diseño profesional adaptables a tu rubro con carrito de compras integrado.
               </p>
             </div>
 
@@ -528,114 +462,88 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. SHOWCASE DE 15 DISEÑOS CON TARJETAS VISUALES ── */}
+      {/* ── 5. SECCIÓN DE 8 DISEÑOS OFICIALES ── */}
       <section id="modelos" className="py-12 sm:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto space-y-2 mb-8 sm:mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary">
-              Modelos de Interfaz
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              15 Estructuras de Diseño Adaptables
+          <div className="text-center max-w-3xl mx-auto space-y-3 mb-6 sm:mb-12">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide uppercase font-sans">
+              <Sparkles className="w-3.5 h-3.5" />
+              Estructuras Oficiales
+            </div>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">
+              8 diseños pensados para vender en celular
             </h2>
-
-            <div className="flex items-center gap-2 pt-3 max-w-full px-2 overflow-x-auto scrollbar-none sm:flex-wrap sm:justify-center py-1">
-              <button
-                onClick={() => setActiveNiche("all")}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
-                  activeNiche === "all"
-                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
-                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Todos (15)
-              </button>
-              <button
-                onClick={() => setActiveNiche("gastronomia")}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
-                  activeNiche === "gastronomia"
-                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
-                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Gastronomía
-              </button>
-              <button
-                onClick={() => setActiveNiche("boutique")}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
-                  activeNiche === "boutique"
-                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
-                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Moda & Boutique
-              </button>
-              <button
-                onClick={() => setActiveNiche("eco")}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
-                  activeNiche === "eco"
-                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
-                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Orgánico & Eco
-              </button>
-              <button
-                onClick={() => setActiveNiche("tech")}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border shrink-0 font-sans",
-                  activeNiche === "tech"
-                    ? "bg-primary border-primary text-primary-foreground shadow-xs"
-                    : "bg-muted/50 border-border text-muted-foreground hover:text-foreground",
-                )}
-              >
-                Tecnología
-              </button>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Cada diseño responde a una forma distinta de comprar: catálogos boutique con fotos grandes, cartas gastronómicas rápidas o grillas limpias para cientos de productos.
+            </p>
+            {/* Pista visual de scroll en móvil */}
+            <div className="sm:hidden flex items-center justify-center gap-1.5 text-xs text-muted-foreground pt-1 font-sans">
+              <span>Desliza para ver más diseños</span>
+              <ArrowRight className="w-3.5 h-3.5 animate-pulse text-muted-foreground" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {filteredModels.map((model) => (
+          {/* Contenedor híbrido: Carrusel horizontal con scroll-snap en móvil, grilla de 4 en escritorio */}
+          <div
+            id="cardsContainer"
+            className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-3 pb-6 pt-1 scrollbar-none sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-6 sm:pb-0 sm:overflow-visible"
+          >
+            {LANDING_SHOWCASE_DESIGNS.map((model) => (
               <div
                 key={model.id}
-                className="group rounded-3xl border border-border/60 bg-card overflow-hidden transition-all duration-300 hover:shadow-xl active:scale-[0.99] flex flex-col justify-between"
+                className="w-[74vw] max-w-[280px] shrink-0 snap-start sm:w-auto sm:max-w-none group rounded-2xl border border-border/80 bg-card p-3 hover:border-border hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
               >
-                <div>
-                  <div className="relative h-40 sm:h-44 w-full overflow-hidden bg-muted">
+                <div className="space-y-3">
+                  {/* Mockup Celular con Captura Real */}
+                  <div className="relative w-full aspect-[9/15] rounded-xl overflow-hidden bg-muted border border-border/60 shadow-xs">
+                    <div className="absolute top-1.5 left-1/2 -translate-x-1/2 w-16 h-1 rounded-full bg-muted-foreground/30 z-20" />
                     <img
                       src={model.image}
-                      alt={model.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      alt={`Diseño ${model.name}`}
+                      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
                       loading="lazy"
+                      width={375}
+                      height={625}
                     />
-                    <div className="absolute top-3 right-3">
-                      <span className={cn("text-[9.5px] font-black uppercase tracking-widest px-3 py-1 rounded-full border shadow-md backdrop-blur-md font-sans", model.accent)}>
-                        {model.badge}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-3 left-4 right-4">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/80 font-sans">
+                  </div>
+
+                  <div className="space-y-1 px-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary font-sans">
                         {model.niche}
                       </span>
-                      <h3 className="text-lg font-bold text-white leading-tight">{model.name}</h3>
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {model.id}
+                      </span>
                     </div>
-                  </div>
-                  <div className="p-4 space-y-1">
-                    <p className="text-xs text-muted-foreground leading-relaxed">{model.desc}</p>
+                    <h3 className="text-base font-bold text-foreground">
+                      {model.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      {model.desc}
+                    </p>
                   </div>
                 </div>
 
-                <div className="px-4 pb-4 pt-2 border-t border-border/30 flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider font-sans">
-                    Semántico & Móvil
-                  </span>
-                  <Button asChild size="sm" variant="outline" className="h-8 rounded-xl text-xs font-bold gap-1 text-primary border-primary/30 hover:bg-primary/10 active:scale-95 font-sans">
+                {/* Botones de Acción */}
+                <div className="pt-3 mt-3 border-t border-border/40 flex items-center gap-2">
+                  <a
+                    href={model.demoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 rounded-lg border border-border text-foreground hover:bg-muted text-xs font-bold transition-all font-sans"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                    Ver demo
+                  </a>
+                  <Button
+                    asChild
+                    size="sm"
+                    className="flex-1 h-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold transition-all shadow-xs font-sans"
+                  >
                     <Link to="/register">
-                      Probar Modelo <ChevronRight className="h-3.5 w-3.5" />
+                      Elegir diseño
+                      <ChevronRight className="w-3 h-3 ml-0.5" />
                     </Link>
                   </Button>
                 </div>
@@ -656,7 +564,7 @@ function LandingPage() {
               Planes Transparentes en Soles
             </h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Las 15 estructuras de diseño están incluidas en todos los planes. Eliges según la cantidad de productos que necesitas exhibir.
+              Los 8 diseños están incluidos en todos los planes. Eliges según la cantidad de productos que necesitas exhibir.
             </p>
 
             {/* Toggle Mensual / Anual */}

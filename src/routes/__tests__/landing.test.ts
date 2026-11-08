@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { PLANS } from "@/lib/types";
+import { LANDING_SHOWCASE_DESIGNS } from "@/lib/landing-disenos";
+import { DESIGN_SPECS } from "@/lib/design-catalog";
+import fs from "fs";
+import path from "path";
 
 describe("Pruebas de la Landing Page Pública (Fase 2 - Precios y Límites)", () => {
   describe("Estructura de Tarifas y Descuentos Anuales", () => {
@@ -61,6 +65,27 @@ describe("Pruebas de la Landing Page Pública (Fase 2 - Precios y Límites)", ()
       expect(asistidaService.price).toBe(79);
       expect(asistidaService.type).toBe("pago_unico");
       expect(asistidaService.features).toHaveLength(4);
+    });
+  });
+
+  describe("Sección de Diseños Oficiales en Landing Page (F47a)", () => {
+    it("la sección solo lista ids con enSelector: true", () => {
+      expect(LANDING_SHOWCASE_DESIGNS).toHaveLength(8);
+      for (const item of LANDING_SHOWCASE_DESIGNS) {
+        const spec = DESIGN_SPECS[item.id];
+        expect(spec).toBeDefined();
+        expect(spec.enSelector).toBe(true);
+      }
+    });
+
+    it("ningún texto de la landing dice 15 diseños", () => {
+      const landingPath = path.resolve(__dirname, "../index.tsx");
+      const content = fs.readFileSync(landingPath, "utf-8");
+
+      expect(content).not.toMatch(/15\s+diseños/i);
+      expect(content).not.toMatch(/15\s+estructuras/i);
+      expect(content).not.toMatch(/diseños\s*\(15\)/i);
+      expect(content).not.toMatch(/todos\s*\(15\)/i);
     });
   });
 });
