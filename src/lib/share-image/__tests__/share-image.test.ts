@@ -149,6 +149,16 @@ describe("F46 · Lógica de datos de imagen para estados (data.ts)", () => {
       store: mockStorePro,
     });
     expect(dataPro.showBranding).toBe(false);
+
+    const storeIlimitado: Store = {
+      ...mockStorePro,
+      plan: "ilimitado",
+    };
+    const dataIlimitado = prepareShareImageData({
+      product: mockProductSinOferta,
+      store: storeIlimitado,
+    });
+    expect(dataIlimitado.showBranding).toBe(false);
   });
 
   it("E5: Genera URL corta con ?p=<id> para abrir directamente el producto en el catálogo", () => {
@@ -258,5 +268,22 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
     expect(res.ok).toBe(false);
     expect(res.safeZoneViolations.length).toBe(1);
     expect(res.safeZoneViolations[0]).toContain("Cabecera invade zona segura");
+  });
+
+  it("Detecta cuando la etiqueta tapa más del 15% del área de la foto", () => {
+    const photoBox = { id: "photo", x: 100, y: 100, width: 500, height: 500 }; // Área: 250,000
+    // Etiqueta que cubre 300x200 = 60,000 (24% del área de la foto)
+    const tagBox = { id: "tag", x: 200, y: 200, width: 300, height: 200 };
+    const res = validateShareImageBoxes([photoBox, tagBox], "cuadrada");
+    expect(res.ok).toBe(false);
+    expect(res.tagViolations.some((v) => v.includes("tapa el"))).toBe(true);
+  });
+
+  it("Permite cuando la etiqueta solo tapa una esquina pequeña de la foto (<= 15%)", () => {
+    const photoBox = { id: "photo", x: 40, y: 100, width: 1000, height: 700 }; // Área: 700,000
+    // Etiqueta en esquina inferior derecha que solapa 200x100 = 20,000 (2.8%)
+    const tagBox = { id: "tag", x: 800, y: 700, width: 250, height: 120 };
+    const res = validateShareImageBoxes([photoBox, tagBox], "cuadrada");
+    expect(res.tagViolations).toEqual([]);
   });
 });

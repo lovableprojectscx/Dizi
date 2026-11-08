@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toSupabaseUrl } from "@/lib/image-utils";
 import { prepareShareImageData } from "@/lib/share-image/data";
-import { drawShareImage } from "@/lib/share-image/styles";
+import { drawShareImage, ensureShareImageFontsLoaded } from "@/lib/share-image/styles";
 import type {
   ShareImageData,
   ShareImageFormat,
@@ -154,6 +154,9 @@ export function ShareImageDialog({
 
     const loadImages = async () => {
       try {
+        // Cargar tipografías oficiales (Plus Jakarta Sans y Playfair Display) antes de medir/dibujar
+        await ensureShareImageFontsLoaded();
+
         // Generar QR en memoria
         const qrCanvas = document.createElement("canvas");
         await QRCode.toCanvas(qrCanvas, shareData.catalogProductUrl, {

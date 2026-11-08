@@ -28,6 +28,42 @@ export interface DrawResult {
 }
 
 /**
+ * Carga y espera las fuentes tipográficas necesarias para el renderizado del canvas.
+ * Garantiza que Playfair Display (serif editorial) y Plus Jakarta Sans estén disponibles
+ * antes de medir y pintar textos.
+ */
+export async function ensureShareImageFontsLoaded(): Promise<void> {
+  if (typeof document === "undefined") return;
+
+  if (!document.querySelector('link[href*="Playfair+Display"]')) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,600;1,700&display=swap";
+    document.head.appendChild(link);
+  }
+
+  if (document.fonts && typeof document.fonts.load === "function") {
+    try {
+      await Promise.all([
+        document.fonts.load("700 56px 'Plus Jakarta Sans'"),
+        document.fonts.load("800 96px 'Plus Jakarta Sans'"),
+        document.fonts.load("600 34px 'Plus Jakarta Sans'"),
+        document.fonts.load("900 120px 'Plus Jakarta Sans'"),
+        document.fonts.load("700 80px 'Playfair Display'"),
+        document.fonts.load("italic 700 80px 'Playfair Display'"),
+        document.fonts.load("700 56px 'Playfair Display'"),
+        document.fonts.load("700 46px 'Playfair Display'"),
+        document.fonts.load("900 28px 'Playfair Display'"),
+        document.fonts.ready,
+      ]);
+    } catch {
+      // Continuar con fuentes del sistema si falla la red
+    }
+  }
+}
+
+/**
  * Formatea un número a moneda en soles peruanos.
  */
 export function formatCurrency(amount: number): string {
@@ -301,10 +337,10 @@ export function drawStyleEtiqueta(
   ctx.fillRect(0, 0, W, H);
 
   // Escenario de la foto
-  const stageX = 40;
-  const stageY = isStory ? 335 : 120;
-  const stageW = 1000;
-  const stageH = isStory ? 940 : 540;
+  const stageX = isStory ? 40 : 36;
+  const stageY = isStory ? 335 : 96;
+  const stageW = isStory ? 1000 : 1008;
+  const stageH = isStory ? 940 : 710;
 
   ctx.fillStyle = "#FFFFFF";
   roundRect(ctx, stageX, stageY, stageW, stageH, 36);
@@ -312,7 +348,7 @@ export function drawStyleEtiqueta(
 
   const imgW = options.productImage?.naturalWidth || options.productImage?.width || 1000;
   const imgH = options.productImage?.naturalHeight || options.productImage?.height || 1000;
-  const photoBox = getContainedBox(imgW, imgH, stageX + 24, stageY + 24, stageW - 48, stageH - 48);
+  const photoBox = getContainedBox(imgW, imgH, stageX + 12, stageY + 12, stageW - 24, stageH - 24);
 
   if (options.productImage && typeof ctx.drawImage === "function") {
     try {
@@ -347,9 +383,10 @@ export function drawStyleEtiqueta(
   const rightPadding = 32;
   const maxContentW = Math.max(measuredPrice, measuredSale);
   const tagW = Math.max(300, Math.ceil(maxContentW + ojalSpace + rightPadding));
-  const tagH = data.isOnSale ? 190 : 145;
+  const tagH = data.isOnSale ? (isStory ? 180 : 160) : (isStory ? 140 : 120);
   const tagX = W - tagW - 48;
-  const tagY = stageY + 36;
+  // En cuadrada e historia, la etiqueta se ubica en la esquina inferior del escenario para no tapar el producto
+  const tagY = stageY + stageH - tagH - (isStory ? 20 : 12);
 
   // Cordón
   ctx.strokeStyle = "#94A3B8";
@@ -379,13 +416,13 @@ export function drawStyleEtiqueta(
 
   if (data.isOnSale) {
     ctx.font = "700 28px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-    ctx.fillText(saleStr, tagX + tagW - rightPadding, tagY + 46);
+    ctx.fillText(saleStr, tagX + tagW - rightPadding, tagY + (isStory ? 44 : 38));
 
-    ctx.font = "800 88px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-    ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + 144);
+    ctx.font = `800 ${isStory ? 88 : 80}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + (isStory ? 138 : 124));
   } else {
-    ctx.font = "800 96px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-    ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + 104);
+    ctx.font = `800 ${isStory ? 96 : 88}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + (isStory ? 102 : 90));
   }
   ctx.restore();
 
@@ -406,11 +443,11 @@ export function drawStyleEtiqueta(
   });
 
   // Pie de producto y QR
-  const footerY = isStory ? 1300 : 690;
-  const footerH = isStory ? 260 : 280;
-  const qrSize = 150;
+  const footerY = isStory ? 1300 : 820;
+  const footerH = isStory ? 260 : 216;
+  const qrSize = 144;
   const qrX = W - qrSize - 60;
-  const qrY = footerY + 20;
+  const qrY = footerY + (isStory ? 20 : 14);
 
   ctx.fillStyle = "#FFFFFF";
   roundRect(ctx, 40, footerY, 1000, footerH, 28);
@@ -422,18 +459,19 @@ export function drawStyleEtiqueta(
 
   // Textos del footer
   ctx.fillStyle = "#0F172A";
-  ctx.font = "700 56px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  const titleFontPx = isStory ? 56 : 46;
+  ctx.font = `700 ${titleFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  const titleLines = wrapText(ctx, data.productName, qrX - 80, 1);
-  ctx.fillText(titleLines[0] || data.productName, 76, footerY + 28);
+  const titleLines = wrapText(ctx, data.productName, qrX - 80, 2);
+  ctx.fillText(titleLines[0] || data.productName, 76, footerY + (isStory ? 28 : 20));
 
   boxes.push({
     id: "title",
     x: 76,
-    y: footerY + 28,
+    y: footerY + (isStory ? 28 : 20),
     width: qrX - 80,
-    height: 60,
+    height: titleFontPx,
   });
 
   if (data.isOnSale && data.originalPrice) {
@@ -495,7 +533,7 @@ export function drawStyleEditorial(
   const headerY = isStory ? 268 : 44;
   ctx.save();
   ctx.fillStyle = "#0F172A";
-  ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.font = "900 28px 'Playfair Display', Georgia, serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillText(data.storeName.toUpperCase(), 48, headerY);
@@ -548,12 +586,12 @@ export function drawStyleEditorial(
   drawQrBlock(ctx, qrX, qrY, qrSize, options.qrImage);
   boxes.push({ id: "qr", x: qrX, y: qrY, width: qrSize, height: qrSize });
 
-  // Nombre del producto
+  // Nombre del producto en elegante serif Playfair Display
   const textMaxW = qrX - 48 - 32;
   const titleFontPx = isStory ? 56 : 46;
   const titleLineHeight = isStory ? 62 : 52;
   ctx.fillStyle = "#0F172A";
-  ctx.font = `700 ${titleFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.font = `700 ${titleFontPx}px 'Playfair Display', Georgia, serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   const lines = wrapText(ctx, data.productName, textMaxW, 2);
@@ -574,7 +612,7 @@ export function drawStyleEditorial(
   // Precio anterior tachado si hay oferta
   if (data.isOnSale && data.originalPrice) {
     ctx.fillStyle = "#64748B";
-    ctx.font = "800 24px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+    ctx.font = "700 24px 'Playfair Display', Georgia, serif";
     ctx.textBaseline = "top";
     const origText = `Antes ${formatCurrency(data.originalPrice)}`;
     const origY = isStory ? 1410 : 806;
@@ -590,11 +628,11 @@ export function drawStyleEditorial(
     boxes.push({ id: "origPrice", x: 48, y: origY, width: ow, height: 26 });
   }
 
-  // Precio final display
+  // Precio final display en Playfair Display Italic
   const priceFontPx = isStory ? 104 : 96;
   const priceY = isStory ? 1565 : 965;
   ctx.fillStyle = data.primaryColor || "#0F172A";
-  ctx.font = `800 ${priceFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.font = `italic 700 ${priceFontPx}px 'Playfair Display', Georgia, serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
   const priceStr = formatCurrency(data.price);
@@ -637,22 +675,22 @@ export function drawStyleMarcoColor(
   // Cabecera en franja aislada (Y = 265 en Historia, Y = 44 en Cuadrada)
   drawStoreHeader(ctx, data, format, true, boxes, options.storeLogoImage);
 
-  // Marco y contenedor blanco para la foto
-  const frameThick = 36;
+  // Marco y contenedor blanco para la foto (producto protagonista con mínimo espacio en blanco)
+  const frameThick = isStory ? 36 : 24;
   const innerX = frameThick;
   const innerW = W - frameThick * 2;
-  const stageY = isStory ? 353 : 120;
-  const bottomBlockY = isStory ? 1255 : 741;
-  const bottomBlockH = isStory ? 320 : 260;
-  const photoStageH = bottomBlockY - stageY - 14;
+  const stageY = isStory ? 353 : 96;
+  const bottomBlockH = isStory ? 320 : 230;
+  const bottomBlockY = isStory ? 1255 : H - bottomBlockH - frameThick - (data.showBranding ? 55 : 12);
+  const photoStageH = bottomBlockY - stageY - 10;
 
   ctx.fillStyle = "#FFFFFF";
-  roundRect(ctx, innerX, stageY, innerW, photoStageH, 32);
+  roundRect(ctx, innerX, stageY, innerW, photoStageH, isStory ? 32 : 24);
   ctx.fill();
 
   const imgW = options.productImage?.naturalWidth || options.productImage?.width || 1000;
   const imgH = options.productImage?.naturalHeight || options.productImage?.height || 1000;
-  const photoBox = getContainedBox(imgW, imgH, innerX + 20, stageY + 20, innerW - 40, photoStageH - 40);
+  const photoBox = getContainedBox(imgW, imgH, innerX + 12, stageY + 12, innerW - 24, photoStageH - 24);
 
   if (options.productImage && typeof ctx.drawImage === "function") {
     try {
@@ -1090,6 +1128,29 @@ export function validateShareImageBoxes(
 
     if (!isContained) {
       tagViolations.push("El precio o 'S/' sobresale de la etiqueta");
+    }
+  }
+
+  // Verificación de solapamiento: la etiqueta no debe tapar más del 15% del área de la foto
+  const photoBox = boxes.find((b) => b.id === "photo");
+  if (tagBox && photoBox) {
+    const xOverlap = Math.max(
+      0,
+      Math.min(tagBox.x + tagBox.width, photoBox.x + photoBox.width) -
+        Math.max(tagBox.x, photoBox.x)
+    );
+    const yOverlap = Math.max(
+      0,
+      Math.min(tagBox.y + tagBox.height, photoBox.y + photoBox.height) -
+        Math.max(tagBox.y, photoBox.y)
+    );
+    const overlapArea = xOverlap * yOverlap;
+    const photoArea = photoBox.width * photoBox.height;
+    const overlapRatio = photoArea > 0 ? overlapArea / photoArea : 0;
+    if (overlapRatio > 0.15) {
+      tagViolations.push(
+        `La etiqueta tapa el ${(overlapRatio * 100).toFixed(1)}% de la foto (máximo permitido: 15%)`
+      );
     }
   }
 
