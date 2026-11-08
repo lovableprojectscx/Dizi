@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { PLANS } from "@/lib/types";
+import { LANDING_SHOWCASE_DESIGNS } from "@/lib/landing-disenos";
+import { DESIGN_SPECS } from "@/lib/design-catalog";
+import fs from "fs";
+import path from "path";
 
 describe("Pruebas de la Landing Page Pública (Fase 2 - Precios y Límites)", () => {
   describe("Estructura de Tarifas y Descuentos Anuales", () => {
@@ -61,6 +65,35 @@ describe("Pruebas de la Landing Page Pública (Fase 2 - Precios y Límites)", ()
       expect(asistidaService.price).toBe(79);
       expect(asistidaService.type).toBe("pago_unico");
       expect(asistidaService.features).toHaveLength(4);
+    });
+  });
+
+  describe("Sección de Diseños Oficiales en Landing Page (F47a)", () => {
+    it("la sección solo lista ids con enSelector: true", () => {
+      // Extraer el conjunto exacto de IDs con enSelector: true desde DESIGN_SPECS
+      const expectedIds = Object.values(DESIGN_SPECS)
+        .filter((spec) => spec.enSelector)
+        .map((spec) => spec.id)
+        .sort();
+
+      const actualIds = LANDING_SHOWCASE_DESIGNS.map((item) => item.id);
+
+      // Verificar que no existan IDs duplicados en el listado de la landing
+      const uniqueActualIds = Array.from(new Set(actualIds));
+      expect(actualIds).toHaveLength(uniqueActualIds.length);
+
+      // Comparar el conjunto exacto de IDs (sin faltantes ni sobrantes)
+      expect([...actualIds].sort()).toEqual(expectedIds);
+    });
+
+    it("ningún texto de la landing dice 15 diseños", () => {
+      const landingPath = path.resolve(__dirname, "../index.tsx");
+      const content = fs.readFileSync(landingPath, "utf-8");
+
+      expect(content).not.toMatch(/15\s+diseños/i);
+      expect(content).not.toMatch(/15\s+estructuras/i);
+      expect(content).not.toMatch(/diseños\s*\(15\)/i);
+      expect(content).not.toMatch(/todos\s*\(15\)/i);
     });
   });
 });
