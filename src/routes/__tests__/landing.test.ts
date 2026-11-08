@@ -70,12 +70,20 @@ describe("Pruebas de la Landing Page Pública (Fase 2 - Precios y Límites)", ()
 
   describe("Sección de Diseños Oficiales en Landing Page (F47a)", () => {
     it("la sección solo lista ids con enSelector: true", () => {
-      expect(LANDING_SHOWCASE_DESIGNS).toHaveLength(8);
-      for (const item of LANDING_SHOWCASE_DESIGNS) {
-        const spec = DESIGN_SPECS[item.id];
-        expect(spec).toBeDefined();
-        expect(spec.enSelector).toBe(true);
-      }
+      // Extraer el conjunto exacto de IDs con enSelector: true desde DESIGN_SPECS
+      const expectedIds = Object.values(DESIGN_SPECS)
+        .filter((spec) => spec.enSelector)
+        .map((spec) => spec.id)
+        .sort();
+
+      const actualIds = LANDING_SHOWCASE_DESIGNS.map((item) => item.id);
+
+      // Verificar que no existan IDs duplicados en el listado de la landing
+      const uniqueActualIds = Array.from(new Set(actualIds));
+      expect(actualIds).toHaveLength(uniqueActualIds.length);
+
+      // Comparar el conjunto exacto de IDs (sin faltantes ni sobrantes)
+      expect([...actualIds].sort()).toEqual(expectedIds);
     });
 
     it("ningún texto de la landing dice 15 diseños", () => {

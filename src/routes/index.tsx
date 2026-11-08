@@ -42,8 +42,6 @@ import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { PLANS } from "@/lib/types";
 import { LANDING_SHOWCASE_DESIGNS } from "@/lib/landing-disenos";
 
-export { LANDING_SHOWCASE_DESIGNS };
-
 /**
  * Definición de la ruta raíz `/` en TanStack Router con metadatos SEO y OpenGraph.
  */
