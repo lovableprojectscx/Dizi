@@ -86,14 +86,39 @@ describe("Pruebas de la Landing Page Pública (Fase 2 - Precios y Límites)", ()
       expect([...actualIds].sort()).toEqual(expectedIds);
     });
 
-    it("ningún texto de la landing dice 15 diseños", () => {
-      const landingPath = path.resolve(__dirname, "../index.tsx");
-      const content = fs.readFileSync(landingPath, "utf-8");
+    it("ningún texto dice 15 diseños", () => {
+      const files = [
+        path.resolve(__dirname, "../index.tsx"),
+        path.resolve(__dirname, "../../lib/types.ts"),
+        path.resolve(__dirname, "../ayuda.tsx"),
+        path.resolve(__dirname, "../novedades.tsx"),
+      ];
 
-      expect(content).not.toMatch(/15\s+diseños/i);
-      expect(content).not.toMatch(/15\s+estructuras/i);
-      expect(content).not.toMatch(/diseños\s*\(15\)/i);
-      expect(content).not.toMatch(/todos\s*\(15\)/i);
+      for (const filePath of files) {
+        const content = fs.readFileSync(filePath, "utf-8");
+        const filename = path.basename(filePath);
+
+        expect(content, `${filename} no debe mencionar '15 diseños'`).not.toMatch(/15\s+diseños/i);
+        expect(content, `${filename} no debe mencionar '15 estructuras'`).not.toMatch(/15\s+estructuras/i);
+        expect(content, `${filename} no debe mencionar '15 modelos'`).not.toMatch(/15\s+modelos/i);
+        expect(content, `${filename} no debe mencionar 'diseños (15)'`).not.toMatch(/diseños\s*\(15\)/i);
+        expect(content, `${filename} no debe mencionar 'todos (15)'`).not.toMatch(/todos\s*\(15\)/i);
+      }
+    });
+
+    it("falla si aparece dizi.pe en src/routes", () => {
+      const routesDir = path.resolve(__dirname, "..");
+      const files = fs
+        .readdirSync(routesDir)
+        .filter((file) => (file.endsWith(".tsx") || file.endsWith(".ts")) && !file.includes(".test."));
+
+      expect(files.length).toBeGreaterThan(0);
+
+      for (const file of files) {
+        const filePath = path.join(routesDir, file);
+        const content = fs.readFileSync(filePath, "utf-8");
+        expect(content, `El archivo src/routes/${file} contiene referencia a dizi.pe`).not.toContain("dizi.pe");
+      }
     });
   });
 });

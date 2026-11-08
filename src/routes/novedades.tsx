@@ -287,7 +287,7 @@ const FAQ = [
   },
   {
     q: "¿Puedo personalizar los colores y el diseño?",
-    a: "Sí. Tienes más de 15 modelos de diseño y puedes cambiar el color de acento y el fondo del catálogo. Todos los diseños están incluidos en todos los planes para que tu tienda luzca profesional desde el primer día.",
+    a: "Sí. Tienes 8 modelos de diseño y puedes cambiar el color de acento y el fondo del catálogo. Todos los diseños están incluidos en todos los planes para que tu tienda luzca profesional desde el primer día.",
   },
   {
     q: "¿Puedo cambiar mi link personalizado después?",

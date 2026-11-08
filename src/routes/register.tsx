@@ -1342,7 +1342,9 @@ function RegisterPage() {
                     rel="noreferrer"
                     className="font-bold text-primary hover:underline"
                   >
-                    dizi.pe/{createdStoreData.slug}
+                    {(typeof window !== "undefined"
+                      ? window.location.origin.replace(/^https?:\/\//, "")
+                      : "dizi.idenza.site") + `/t/${createdStoreData.slug}`}
                   </a>
                 </p>
               </div>
