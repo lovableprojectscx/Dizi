@@ -22,7 +22,7 @@ export interface PrepareShareImageDataOptions {
  * Reglas de negocio:
  * - Descuento: calculado con getDiscount de discount.ts (F40). Solo ofertas reales con ahorro >= 5%.
  * - URL corta: formato https://dizi.idenza.site/t/<slug>?p=<id> para abrir directamente el producto.
- * - Marca blanca: el sello "Hecho con Dizi · dizi.idenza.site" solo aparece si el plan efectivo es Semilla.
+ * - Marca blanca: el sello "Hecho con Dizi · dizicatalogo.com" solo aparece si el plan efectivo es Semilla.
  * - Foto: se utiliza la URL en alta resolución (1600px), nunca la miniatura _thumb.
  */
 export function prepareShareImageData(options: PrepareShareImageDataOptions): ShareImageData {
@@ -57,6 +57,6 @@ export function prepareShareImageData(options: PrepareShareImageDataOptions): Sh
     productImageUrl,
     catalogProductUrl,
     showBranding,
-    brandingText: "Hecho con Dizi · dizi.idenza.site",
+    brandingText: "Hecho con Dizi · dizicatalogo.com",
   };
 }

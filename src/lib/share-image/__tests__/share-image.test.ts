@@ -4,7 +4,7 @@
  * Valida sobre el código real:
  * - E2: Descuento y oferta con discount.ts
  * - E3: Producto sin oferta
- * - E4: Sello "Hecho con Dizi · dizi.idenza.site" solo en Semilla
+ * - E4: Sello "Hecho con Dizi · dizicatalogo.com" solo en Semilla
  * - E5: URL corta con ?p=
  * - E7: Ajuste de fotos vertical, cuadrada y horizontal sin deformar
  * - Validación geométrica de cajas delimitadoras (0 colisiones, zonas seguras y contención)
@@ -135,14 +135,15 @@ describe("F46 · Lógica de datos de imagen para estados (data.ts)", () => {
     expect(data.price).toBe(399.0);
   });
 
-  it("E4: Tienda Semilla incluye sello oficial 'Hecho con Dizi · dizi.idenza.site'; tienda Pro no lo incluye", () => {
+  it("E4: Tienda Semilla incluye sello oficial 'Hecho con Dizi · dizicatalogo.com'; tienda Pro/Ilimitada no lo incluye", () => {
     const dataSemilla = prepareShareImageData({
       product: mockProductSinOferta,
       store: mockStoreSemilla,
     });
     expect(dataSemilla.showBranding).toBe(true);
-    expect(dataSemilla.brandingText).toBe("Hecho con Dizi · dizi.idenza.site");
+    expect(dataSemilla.brandingText).toBe("Hecho con Dizi · dizicatalogo.com");
     expect(dataSemilla.brandingText).not.toContain("dizi.pe");
+    expect(dataSemilla.brandingText).not.toContain("dizi.idenza.site");
 
     const dataPro = prepareShareImageData({
       product: mockProductSinOferta,
@@ -173,7 +174,7 @@ describe("F46 · Lógica de datos de imagen para estados (data.ts)", () => {
     );
   });
 
-  it("Obtiene la foto original en alta resolución despojando el sufijo _thumb.webp", () => {
+  it("E1: Obtiene la foto original en alta resolución despojando el sufijo _thumb.webp", () => {
     const productWithThumb: Product = {
       ...mockProductSinOferta,
       image:
@@ -212,14 +213,14 @@ describe("F46 · Ajuste de foto y reglas de contraste (styles.ts)", () => {
     expect(horiz.width / horiz.height).toBeCloseTo(1200 / 800, 2);
   });
 
-  it("Calcula contraste YIQ perfecto para colores difíciles (amarillo, negro y pastel)", () => {
+  it("E7: Calcula contraste YIQ perfecto para colores difíciles (amarillo, negro y pastel)", () => {
     expect(getContrastColor("#FACC15")).toBe("#0F172A"); // Amarillo vibrante -> texto oscuro
     expect(getContrastColor("#111111")).toBe("#FFFFFF"); // Negro profundo -> texto blanco
     expect(getContrastColor("#FFFFFF")).toBe("#0F172A"); // Blanco -> texto oscuro
     expect(getContrastColor("#C06B72")).toBe("#FFFFFF"); // Rosa pastel medio -> texto blanco
   });
 
-  it("Formatea precios en soles peruanos con 2 decimales", () => {
+  it("E2: Formatea precios en soles peruanos con 2 decimales", () => {
     expect(formatCurrency(89.9)).toBe("S/ 89.90");
     expect(formatCurrency(399)).toBe("S/ 399.00");
   });
@@ -231,7 +232,7 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
 
   styles.forEach((style) => {
     formats.forEach((format) => {
-      it(`Estilo '${style}' en formato '${format}': CERO colisiones y zonas seguras respetadas`, () => {
+      it(`E1/E7: Estilo '${style}' en formato '${format}': CERO colisiones y zonas seguras respetadas`, () => {
         const ctx = createMockCanvasContext();
         const data = prepareShareImageData({
           product: mockProductOferta,
@@ -249,7 +250,7 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
     });
   });
 
-  it("Detecta colisiones artificiales cuando dos cajas se solapan", () => {
+  it("E7: Detecta colisiones artificiales cuando dos cajas se solapan", () => {
     const invalidBoxes = [
       { id: "title", x: 60, y: 300, width: 300, height: 60 },
       { id: "price", x: 100, y: 320, width: 200, height: 80 },
@@ -260,7 +261,7 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
     expect(res.collisions[0]).toContain("Colisión entre 'title' y 'price'");
   });
 
-  it("Detecta violación de zona segura si la cabecera se ubica por encima de 250px en Historia", () => {
+  it("E7: Detecta violación de zona segura si la cabecera se ubica por encima de 250px en Historia", () => {
     const invalidBoxes = [
       { id: "header", x: 60, y: 220, width: 250, height: 60 }, // < 250px
     ];
@@ -270,7 +271,7 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
     expect(res.safeZoneViolations[0]).toContain("Cabecera invade zona segura");
   });
 
-  it("Detecta cuando la etiqueta tapa más del 15% del área de la foto", () => {
+  it("E7: Detecta cuando la etiqueta tapa más del 15% del área de la foto", () => {
     const photoBox = { id: "photo", x: 100, y: 100, width: 500, height: 500 }; // Área: 250,000
     // Etiqueta que cubre 300x200 = 60,000 (24% del área de la foto)
     const tagBox = { id: "tag", x: 200, y: 200, width: 300, height: 200 };
@@ -279,7 +280,7 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
     expect(res.tagViolations.some((v) => v.includes("tapa el"))).toBe(true);
   });
 
-  it("Permite cuando la etiqueta solo tapa una esquina pequeña de la foto (<= 15%)", () => {
+  it("E7: Permite cuando la etiqueta solo tapa una esquina pequeña de la foto (<= 15%)", () => {
     const photoBox = { id: "photo", x: 40, y: 100, width: 1000, height: 700 }; // Área: 700,000
     // Etiqueta en esquina inferior derecha que solapa 200x100 = 20,000 (2.8%)
     const tagBox = { id: "tag", x: 800, y: 700, width: 250, height: 120 };

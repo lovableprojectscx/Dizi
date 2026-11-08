@@ -392,7 +392,7 @@ test.describe("F46 · Editor de Imágenes para Estados (móvil Android)", () => 
       });
     });
 
-    test("Verifica carga de fuentes oficiales y genera imágenes SIN sello Dizi", async ({ page }) => {
+    test("E1/E4: Kickz Premium (zapatillas-demo Ilimitado) genera Cuadrada y Oferta Historia sin sello Dizi", async ({ page }) => {
       await page.goto("/admin/productos");
       await page.waitForLoadState("networkidle");
 
@@ -454,7 +454,7 @@ test.describe("F46 · Editor de Imágenes para Estados (móvil Android)", () => 
       });
     });
 
-    test("E6: Plan B de descarga directa genera archivo PNG de zapatillas", async ({ page }) => {
+    test("E6: Plan B de descarga directa genera archivo PNG cuando navigator.canShare no soporta archivos", async ({ page }) => {
       await page.goto("/admin/productos");
       await page.waitForLoadState("networkidle");
 
@@ -536,7 +536,7 @@ test.describe("F46 · Editor de Imágenes para Estados (móvil Android)", () => 
       });
     });
 
-    test("Exporta Editorial con tipografía Playfair Display y Marco de color con producto grande", async ({
+    test("E1/E7: Áurea Joyas (joyeria-demo Pro) exporta Editorial serif Playfair Display y Marco de color con producto grande", async ({
       page,
     }) => {
       await page.goto("/admin/productos");
@@ -649,7 +649,7 @@ test.describe("F46 · Editor de Imágenes para Estados (móvil Android)", () => 
       });
     });
 
-    test("Exporta imagen de tienda Semilla con sello 'Hecho con Dizi · dizi.idenza.site'", async ({
+    test("E4: Tienda Semilla incluye sello oficial 'Hecho con Dizi · dizicatalogo.com'", async ({
       page,
     }) => {
       await page.goto("/admin/productos");

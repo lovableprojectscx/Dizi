@@ -185,7 +185,7 @@ export function wrapText(
 }
 
 /**
- * Dibuja el sello oficial "Hecho con Dizi · dizi.idenza.site" en tiendas Semilla.
+ * Dibuja el sello oficial "Hecho con Dizi · dizicatalogo.com" en tiendas Semilla.
  */
 export function drawSemillaBadgeSafe(
   ctx: CanvasRenderingContext2D,
@@ -195,7 +195,7 @@ export function drawSemillaBadgeSafe(
 ): void {
   if (!data.showBranding) return;
 
-  const text = data.brandingText || "Hecho con Dizi · dizi.idenza.site";
+  const text = data.brandingText || "Hecho con Dizi · dizicatalogo.com";
   const py = format === "historia" ? 1600 : 1045;
 
   ctx.save();
