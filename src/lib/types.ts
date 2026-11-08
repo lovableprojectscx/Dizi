@@ -67,7 +67,7 @@ export const PLANS: Record<PlanId, Plan> = {
     annualPrice: 0,
     features: [
       "Hasta 20 productos",
-      "Los 15 diseños",
+      "Los 8 diseños",
       "Carrito a WhatsApp",
       "Link en Bio (3 enlaces)",
       "Visitas y clics",
