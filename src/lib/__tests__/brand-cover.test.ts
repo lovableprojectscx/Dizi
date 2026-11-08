@@ -6,6 +6,8 @@ import {
   shouldShowGridAd,
   shouldShowContactStripe,
   getBrandCoverStyles,
+  getContactStripeStyles,
+  getShortStoreName,
   getContrastRatio,
   hexToRgb,
 } from "../brand-cover";
@@ -122,5 +124,40 @@ describe("F45 · Portada de Marca y Escenarios (brand-cover.ts)", () => {
     expect(shouldShowBrandCover({ slug: "jhoselynperu", plan: "semilla" } as Store)).toBe(false);
     expect(shouldShowBrandCover({ slug: "onfeet", plan: "semilla" } as Store)).toBe(false);
     expect(shouldShowBrandCover({ slug: "aura-botanicals", plan: "semilla" } as Store)).toBe(false);
+  });
+
+  describe("F45.1: Pulido de catálogo (R3 y R4)", () => {
+    it("R4: getShortStoreName extrae el nombre corto entre comillas o retorna el nombre", () => {
+      expect(getShortStoreName('Biblias y Variedades "Luz y Estilo"')).toBe("Luz y Estilo");
+      expect(getShortStoreName('Boutique “Bella Mujer”')).toBe("Bella Mujer");
+      expect(getShortStoreName("Tienda 'Mi Rincón'")).toBe("Mi Rincón");
+      expect(getShortStoreName("Kallpa")).toBe("Kallpa");
+      expect(getShortStoreName("")).toBe("");
+      expect(getShortStoreName(null)).toBe("");
+      expect(getShortStoreName(undefined)).toBe("");
+    });
+
+    it("R3: getContactStripeStyles asegura contraste AA en el botón con color de marca", () => {
+      // Color claro (amarillo) -> texto oscuro
+      const lightStyles = getContactStripeStyles("#facc15", false);
+      expect(lightStyles.buttonTextColor).toBe("#0f172a");
+      const lightContrast = getContrastRatio(hexToRgb("#facc15")!, hexToRgb(lightStyles.buttonTextColor)!);
+      expect(lightContrast).toBeGreaterThanOrEqual(4.5);
+
+      // Color oscuro (azul marino / fucsia) -> texto blanco
+      const darkColorStyles = getContactStripeStyles("#1e3a8a", false);
+      expect(darkColorStyles.buttonTextColor).toBe("#ffffff");
+      const darkColorContrast = getContrastRatio(hexToRgb("#1e3a8a")!, hexToRgb(darkColorStyles.buttonTextColor)!);
+      expect(darkColorContrast).toBeGreaterThanOrEqual(4.5);
+
+      // Tema oscuro
+      const darkModeStyles = getContactStripeStyles("#b45309", true);
+      expect(darkModeStyles.titleColor).toBe("#f8fafc");
+      expect(darkModeStyles.containerBg).toContain("0.14");
+
+      // Fallback sin color de marca
+      const fallbackStyles = getContactStripeStyles(null, false);
+      expect(fallbackStyles.buttonBg).toBe("#25D366");
+    });
   });
 });
