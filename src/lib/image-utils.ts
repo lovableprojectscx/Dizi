@@ -351,6 +351,21 @@ export function getThumbnailUrl(url: string | null | undefined): string {
 }
 
 /**
+ * Devuelve la URL de la foto original en alta resolución (1600px).
+ * Si recibe una miniatura (_thumb.webp), la despoja para obtener el archivo original.
+ * Si el CDN está activo, la entrega desde el CDN con fallback transparente a Supabase.
+ */
+export function getOriginalImageUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  const cleanUrl = url.split("?")[0].trim();
+  let result = cleanUrl;
+  if (cleanUrl.endsWith("_thumb.webp")) {
+    result = cleanUrl.replace(/_thumb\.webp$/, ".webp");
+  }
+  return toCdnUrl(result);
+}
+
+/**
  * Ruta del placeholder neutro cuando una imagen no existe o falla su carga.
  */
 export const NO_IMAGE_PLACEHOLDER = "/images/sin-foto.svg";
