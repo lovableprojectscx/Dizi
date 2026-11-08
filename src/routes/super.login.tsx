@@ -88,7 +88,7 @@ function SuperLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="flex h-11 w-full rounded-xl border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                placeholder="superadmin@dizi.pe"
+                placeholder="superadmin@idenza.site"
                 required
                 autoComplete="username"
               />

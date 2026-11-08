@@ -16,7 +16,7 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
       id: "var_red_m",
       name: "Rojo / Talla M",
       price: 89.9,
-      image: "https://dizi.pe/storage/products/shirt_red.webp",
+      image: "https://dizi.idenza.site/storage/products/shirt_red.webp",
     };
 
     const product: Product = {
@@ -25,14 +25,14 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
       price: 79.9,
       categoryId: "cat-1",
       visible: true,
-      image: "https://dizi.pe/storage/products/shirt_black.webp",
+      image: "https://dizi.idenza.site/storage/products/shirt_black.webp",
       variations: [
         variation,
         {
           id: "var_blue_l",
           name: "Azul Marino / Talla L",
           price: null, // Hereda precio base
-          image: "https://dizi.pe/storage/products/shirt_blue.webp",
+          image: "https://dizi.idenza.site/storage/products/shirt_blue.webp",
         },
       ],
     };
@@ -51,14 +51,14 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
       id: "var-rojo",
       name: "Rojo",
       price: 95.0,
-      image: "https://dizi.pe/img/rojo.webp",
+      image: "https://dizi.idenza.site/img/rojo.webp",
     };
 
     const varAzul: ProductVariation = {
       id: "var-azul",
       name: "Azul",
       price: 90.0,
-      image: "https://dizi.pe/img/azul.webp",
+      image: "https://dizi.idenza.site/img/azul.webp",
     };
 
     // Añadir 1 Polo Rojo
@@ -280,13 +280,13 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
       price: 40.0,
       categoryId: "cat-moda",
       visible: true,
-      image: "https://dizi.pe/img/polo_base.webp",
+      image: "https://dizi.idenza.site/img/polo_base.webp",
       variations: [
         {
           id: "var-negro-m",
           name: "Negro / M",
           price: 45.0,
-          image: "https://dizi.pe/img/polo_negro.webp",
+          image: "https://dizi.idenza.site/img/polo_negro.webp",
         },
         {
           id: "var-blanco-s",
@@ -335,14 +335,14 @@ describe("Módulo de Variaciones de Producto con Imagen y Precios Dinámicos", (
     expect(lineNegro.qty).toBe(2);
     expect(lineNegro.effectivePrice).toBe(45.0);
     expect(lineNegro.lineKey).toBe("prod-polo-1_var-negro-m");
-    expect(lineNegro.itemImg).toBe("https://dizi.pe/img/polo_negro.webp");
+    expect(lineNegro.itemImg).toBe("https://dizi.idenza.site/img/polo_negro.webp");
 
     // Línea 2: Blanco / S x 1 @ 40.0 = 40.0
     const lineBlanco = cartLines.find((l) => l.variationId === "var-blanco-s")!;
     expect(lineBlanco.qty).toBe(1);
     expect(lineBlanco.effectivePrice).toBe(40.0);
     expect(lineBlanco.lineKey).toBe("prod-polo-1_var-blanco-s");
-    expect(lineBlanco.itemImg).toBe("https://dizi.pe/img/polo_base.webp");
+    expect(lineBlanco.itemImg).toBe("https://dizi.idenza.site/img/polo_base.webp");
 
     // Total: 90 + 40 = 130.0
     expect(total).toBe(130.0);
