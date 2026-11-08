@@ -62,10 +62,7 @@ DROP POLICY IF EXISTS "share_events_superadmin_select" ON public.share_events;
 CREATE POLICY "share_events_superadmin_select" ON public.share_events
 FOR SELECT TO authenticated
 USING (
-  EXISTS (
-    SELECT 1 FROM public.super_admins
-    WHERE super_admins.user_id = (SELECT auth.uid())
-  )
+  COALESCE(((SELECT auth.jwt()) -> 'app_metadata' ->> 'role'), '') = 'super_admin'
 );
 
 -- Permisos mínimos

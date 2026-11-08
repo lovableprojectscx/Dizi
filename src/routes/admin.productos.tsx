@@ -1738,6 +1738,12 @@ function ProductsPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
 
+  // F46: Estado para modal de creación de imágenes para estados (antes de cualquier early return)
+  const [sharingProduct, setSharingProduct] = useState<Product | null>(null);
+  const handleOpenShare = useCallback((p: Product) => {
+    setSharingProduct(p);
+  }, []);
+
   if (!store) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -1817,12 +1823,6 @@ function ProductsPage() {
   // Products UI state
   const [isSingleDialogOpen, setIsSingleDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-
-  // F46: Estado para modal de creación de imágenes para estados
-  const [sharingProduct, setSharingProduct] = useState<Product | null>(null);
-  const handleOpenShare = useCallback((p: Product) => {
-    setSharingProduct(p);
-  }, []);
 
   // Buscador y filtro de productos para el administrador
   const [searchQuery, setSearchQuery] = useState("");
