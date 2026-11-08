@@ -43,6 +43,14 @@ WITH CHECK (
     WHERE stores.id = share_events.store_id
       AND stores.owner_id = (SELECT auth.uid())
   )
+  AND (
+    share_events.product_id IS NULL
+    OR EXISTS (
+      SELECT 1 FROM public.products p
+      WHERE p.id = share_events.product_id
+        AND p.store_id = share_events.store_id
+    )
+  )
 );
 
 -- 3.2 Política SELECT: el dueño de la tienda puede consultar sus propios eventos
