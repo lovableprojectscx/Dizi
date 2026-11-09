@@ -1751,17 +1751,6 @@ function ProductsPage() {
     setSharingProduct(p);
   }, []);
 
-  if (!store) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          <p className="text-muted-foreground animate-pulse">Cargando productos...</p>
-        </div>
-      </div>
-    );
-  }
-
   const upsert = useApp((s) => s.upsertProduct);
   const del = useApp((s) => s.deleteProduct);
   const toggle = useApp((s) => s.toggleProductVisible);
@@ -1770,29 +1759,11 @@ function ProductsPage() {
   const deleteCategory = useApp((s) => s.deleteCategory);
   const fetchProductFresh = useApp((s) => s.fetchProductFresh);
 
-  const plan = PLANS[store.plan];
-  const effectivePlan = PLANS[getEffectivePlan(store)];
-  const effectiveLimit = getEffectiveProductLimit(store);
-  const subscriptionExpired = isSubscriptionExpired(store);
-  const imageSpec = getImageSpec(store);
-
-  const visibleProducts = store.products.filter((p) => p.visible);
-  const hiddenByExpiry = subscriptionExpired
-    ? Math.max(0, visibleProducts.length - effectiveLimit)
-    : 0;
-
-  const reachedLimit = store.products.filter((p) => p.visible && !p.isSample).length >= effectiveLimit;
   const [completeProductsOpen, setCompleteProductsOpen] = useState(false);
   const incompleteProducts = useMemo(
-    () => store.products.filter(isProductIncomplete),
-    [store.products]
+    () => (store?.products ? store.products.filter(isProductIncomplete) : []),
+    [store?.products]
   );
-
-  const handleSaveBatch = async (updatedProducts: Product[]) => {
-    for (const prod of updatedProducts) {
-      await upsert(store.id, prod);
-    }
-  };
 
   // Tabs routing logic
   const [activeTab, setActiveTab] = useState(() => {
@@ -1802,15 +1773,6 @@ function ProductsPage() {
     }
     return "productos";
   });
-
-  const handleTabChange = (val: string) => {
-    setActiveTab(val);
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href);
-      url.searchParams.set("tab", val);
-      window.history.replaceState(null, "", url.pathname + url.search);
-    }
-  };
 
   // Reusable AlertDialog state
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -1836,6 +1798,7 @@ function ProductsPage() {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
 
   const filteredProducts = useMemo(() => {
+    if (!store?.products) return [];
     const q = searchQuery.trim().toLowerCase();
     return store.products.filter((p) => {
       const matchesSearch =
@@ -1846,18 +1809,20 @@ function ProductsPage() {
         selectedCategoryFilter === "all" || p.categoryId === selectedCategoryFilter;
       return matchesSearch && matchesCategory;
     });
-  }, [store.products, searchQuery, selectedCategoryFilter]);
+  }, [store?.products, searchQuery, selectedCategoryFilter]);
 
   const categoryMap = useMemo(() => {
     const map = new Map<string, { label: string; iconKey?: string }>();
+    if (!store?.categories) return map;
     store.categories.forEach((c) => {
       map.set(c.id, parseCategoryName(c.name, c.icon));
     });
     return map;
-  }, [store.categories]);
+  }, [store?.categories]);
 
   const handleOpenEdit = useCallback(
     async (p: Product) => {
+      if (!store) return;
       if (p.id) {
         const fresh = await fetchProductFresh(store.id, p.id);
         if (fresh) {
@@ -1869,10 +1834,11 @@ function ProductsPage() {
       setEditingProduct(p);
       setIsSingleDialogOpen(true);
     },
-    [fetchProductFresh, store.id]
+    [fetchProductFresh, store?.id]
   );
 
   const handleConfirmDelete = useCallback((p: Product) => {
+    if (!store) return;
     showConfirm({
       title: "Eliminar producto",
       description: `¿Estás seguro de que deseas eliminar "${p.name}"? Esta acción no se puede deshacer.`,
@@ -1880,15 +1846,17 @@ function ProductsPage() {
       cancelText: "Cancelar",
       onAction: () => del(store.id, p.id),
     });
-  }, [del, store.id]);
+  }, [del, store?.id]);
 
   const handleToggleVisible = useCallback((productId: string, expectedVersion?: number) => {
+    if (!store) return;
     toggle(store.id, productId, expectedVersion);
-  }, [toggle, store.id]);
+  }, [toggle, store?.id]);
 
   const handleSwapOrder = useCallback((fromIdx: number, toIdx: number) => {
+    if (!store) return;
     swap(store.id, fromIdx, toIdx);
-  }, [swap, store.id]);
+  }, [swap, store?.id]);
 
   interface BulkDraft {
     id: string;
@@ -1912,6 +1880,56 @@ function ProductsPage() {
 
   const [bulkDrafts, setBulkDrafts] = useState<BulkDraft[]>([]);
   const [selectedDraftId, setSelectedDraftId] = useState<string | null>(null);
+
+  // Categories UI state
+  const [newCatName, setNewCatName] = useState("");
+  const [isAddingCat, setIsAddingCat] = useState(false);
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [editCatId, setEditCatId] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [isEditingCat, setIsEditingCat] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedIconKey, setSelectedIconKey] = useState("");
+  const [editIconKey, setEditIconKey] = useState("");
+
+  if (!store) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-muted-foreground animate-pulse">Cargando productos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const plan = PLANS[store.plan];
+  const effectivePlan = PLANS[getEffectivePlan(store)];
+  const effectiveLimit = getEffectiveProductLimit(store);
+  const subscriptionExpired = isSubscriptionExpired(store);
+  const imageSpec = getImageSpec(store);
+
+  const visibleProducts = store.products.filter((p) => p.visible);
+  const hiddenByExpiry = subscriptionExpired
+    ? Math.max(0, visibleProducts.length - effectiveLimit)
+    : 0;
+
+  const reachedLimit = store.products.filter((p) => p.visible && !p.isSample).length >= effectiveLimit;
+
+  const handleSaveBatch = async (updatedProducts: Product[]) => {
+    for (const prod of updatedProducts) {
+      await upsert(store.id, prod);
+    }
+  };
+
+  const handleTabChange = (val: string) => {
+    setActiveTab(val);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", val);
+      window.history.replaceState(null, "", url.pathname + url.search);
+    }
+  };
 
   const activeDraft = bulkDrafts.find((d) => d.id === selectedDraftId) || null;
 
@@ -2149,17 +2167,7 @@ function ProductsPage() {
     }
   };
 
-  // Categories UI state
-  const [newCatName, setNewCatName] = useState("");
-  const [isAddingCat, setIsAddingCat] = useState(false);
-  const [catDialogOpen, setCatDialogOpen] = useState(false);
-  const [editCatId, setEditCatId] = useState<string | null>(null);
-  const [editCatName, setEditCatName] = useState("");
-  const [isEditingCat, setIsEditingCat] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedIconKey, setSelectedIconKey] = useState("");
-  const [editIconKey, setEditIconKey] = useState("");
-
+  // Categories UI handlers
   const startEditCategory = (c: Category) => {
     setEditCatId(c.id);
     const { label, iconKey } = parseCategoryName(c.name, c.icon);
