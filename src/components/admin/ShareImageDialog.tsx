@@ -105,6 +105,7 @@ export function ShareImageDialog({
   const loadedProductImgRef = useRef<HTMLImageElement | null>(null);
   const loadedLogoImgRef = useRef<HTMLImageElement | null>(null);
   const loadedQrCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const captionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 1. Preparar datos de la imagen
   const shareData: ShareImageData | null = useMemo(() => {
@@ -202,6 +203,15 @@ export function ShareImageDialog({
       toast.error("No se pudo copiar el texto");
     }
   };
+
+  // Ajuste de altura del cuadro de texto: asegura al menos 8 líneas y crece dinámicamente con el copy
+  useEffect(() => {
+    if (captionTextareaRef.current) {
+      captionTextareaRef.current.style.height = "auto";
+      const scrollH = captionTextareaRef.current.scrollHeight;
+      captionTextareaRef.current.style.height = `${Math.max(165, scrollH)}px`;
+    }
+  }, [captionText]);
 
   // 3. Dibujo reactivo del canvas cuando cambia formato o estilo
   const renderCanvas = useCallback(() => {
@@ -640,13 +650,14 @@ export function ShareImageDialog({
               </div>
             </div>
 
-            {/* Texto editable con vista previa */}
+            {/* Texto editable con vista previa: altura inicial de 8 líneas (~165px) y auto-grow */}
             <Textarea
+              ref={captionTextareaRef}
               value={captionText}
               onChange={(e) => setCaptionText(e.target.value)}
-              rows={5}
+              rows={8}
               placeholder="Escribe o edita el texto para tu estado..."
-              className="text-xs resize-y bg-background font-mono leading-relaxed"
+              className="text-xs resize-y bg-background font-mono leading-relaxed min-h-[165px] transition-[height] duration-150"
             />
           </div>
         </div>

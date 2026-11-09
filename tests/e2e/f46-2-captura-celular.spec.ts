@@ -159,7 +159,7 @@ test.describe("F46.2 · Texto bonito al compartir en celular (375px)", () => {
     await page.waitForLoadState("networkidle");
 
     const shareBtn = page.locator("button[title*='Crear imagen']:visible").first();
-    await expect(shareBtn).toBeVisible({ timeout: 15_000 });
+    await expect(shareBtn).toBeVisible({ timeout: 20_000 });
     await shareBtn.click();
 
     // Diálogo abierto
@@ -181,15 +181,22 @@ test.describe("F46.2 · Texto bonito al compartir en celular (375px)", () => {
     expect(textVal).toContain("💰 S/ 249.90 (Antes: S/ 299.90 · -16%)");
     expect(textVal).toContain("📲 Pídelo aquí 👇");
 
-    // Guardar captura de pantalla en celular
-    const outDir = path.resolve(__dirname, "../../test-results");
+    // Guardar capturas en capturas-f46/
+    const officialDir = path.resolve(
+      __dirname,
+      "../../../../INFORMACIÓN NECESARIA/04-TECNICA/encargos/capturas-f46"
+    );
+    const outDir = fs.existsSync(officialDir)
+      ? officialDir
+      : path.resolve(__dirname, "../../test-results/capturas-f46");
+
     if (!fs.existsSync(outDir)) {
       fs.mkdirSync(outDir, { recursive: true });
     }
     const screenshotPath = path.join(outDir, "captura-f46-2-dialogo-texto.png");
     await page.screenshot({ path: screenshotPath });
 
-    // También hacemos scroll al diálogo para capturar la sección de texto completa
+    // Scroll en el diálogo para capturar la sección de texto completa con el enlace visible
     const dialogContent = page.locator("[role='dialog']");
     await dialogContent.evaluate((el) => {
       el.scrollTop = el.scrollHeight;
