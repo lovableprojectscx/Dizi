@@ -15,6 +15,7 @@ import { prepareShareImageData } from "../data";
 import {
   drawShareImage,
   formatCurrency,
+  getPriceDisplay,
   getContrastColor,
   getContainedBox,
   validateShareImageBoxes,
@@ -110,6 +111,28 @@ const mockProductSinOferta: Product = {
   visible: true,
 };
 
+const mockProductPrecioCero: Product = {
+  id: "prod_consult_1",
+  name: "Bicicleta Vintage Edición Especial",
+  price: 0,
+  originalPrice: 1500,
+  isOnSale: true,
+  categoryId: "cat_1",
+  image: "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/bici1.webp",
+  visible: true,
+};
+
+const mockProductPrecioNulo: Product = {
+  id: "prod_consult_2",
+  name: "Anillo de Compromiso Diamante",
+  price: null as unknown as number,
+  originalPrice: null,
+  isOnSale: false,
+  categoryId: "cat_1",
+  image: "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/anillo1.webp",
+  visible: true,
+};
+
 describe("F46 · Lógica de datos de imagen para estados (data.ts)", () => {
   it("E2: Producto en oferta calcula porcentaje de ahorro real con discount.ts (S/ 129.90 -> S/ 89.90)", () => {
     const data = prepareShareImageData({
@@ -133,6 +156,37 @@ describe("F46 · Lógica de datos de imagen para estados (data.ts)", () => {
     expect(data.originalPrice).toBeNull();
     expect(data.discountPct).toBeNull();
     expect(data.price).toBe(399.0);
+    expect(data.isConsultPrice).toBe(false);
+  });
+
+  it("E8: Producto con precio 0 se clasifica como 'A consultar' (sin 'S/', sin oferta ni precio anterior)", () => {
+    const data = prepareShareImageData({
+      product: mockProductPrecioCero,
+      store: mockStoreSemilla,
+    });
+
+    expect(data.isConsultPrice).toBe(true);
+    expect(data.price).toBe(0);
+    expect(data.isOnSale).toBe(false);
+    expect(data.originalPrice).toBeNull();
+    expect(data.discountPct).toBeNull();
+    expect(getPriceDisplay(data)).toBe("A consultar");
+    expect(getPriceDisplay(data)).not.toContain("S/");
+    expect(getPriceDisplay(data)).not.toContain("0.00");
+  });
+
+  it("E9: Producto con precio nulo/undefined se clasifica como 'A consultar'", () => {
+    const data = prepareShareImageData({
+      product: mockProductPrecioNulo,
+      store: mockStorePro,
+    });
+
+    expect(data.isConsultPrice).toBe(true);
+    expect(data.price).toBe(0);
+    expect(data.isOnSale).toBe(false);
+    expect(data.originalPrice).toBeNull();
+    expect(data.discountPct).toBeNull();
+    expect(getPriceDisplay(data)).toBe("A consultar");
   });
 
   it("E4: Tienda Semilla incluye sello oficial 'Hecho con Dizi · dizicatalogo.com'; tienda Pro/Ilimitada no lo incluye", () => {
@@ -228,7 +282,7 @@ describe("F46 · Ajuste de foto y reglas de contraste (styles.ts)", () => {
 
 describe("F46 · Validación automática de cajas delimitadoras y zonas seguras (validador integrado)", () => {
   const styles: ShareImageStyle[] = ["etiqueta", "editorial", "marco-color", "oferta"];
-  const formats: ShareImageFormat[] = ["historia", "cuadrada"];
+  const formats: ShareImageFormat[] = ["historia", "post-ig", "cuadrada"];
 
   styles.forEach((style) => {
     formats.forEach((format) => {
@@ -246,6 +300,31 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
         expect(validation.safeZoneViolations).toEqual([]);
         expect(validation.tagViolations).toEqual([]);
         expect(validation.ok).toBe(true);
+      });
+    });
+  });
+
+  styles.forEach((style) => {
+    formats.forEach((format) => {
+      it(`E8/E9: Producto 'A consultar' en estilo '${style}' y formato '${format}': CERO colisiones y texto ajustado`, () => {
+        const ctx = createMockCanvasContext();
+        const data = prepareShareImageData({
+          product: mockProductPrecioCero,
+          store: mockStoreSemilla,
+        });
+
+        const { boxes, validation } = drawShareImage(ctx, data, style, format);
+
+        expect(boxes.length).toBeGreaterThan(3);
+        expect(validation.collisions).toEqual([]);
+        expect(validation.safeZoneViolations).toEqual([]);
+        expect(validation.tagViolations).toEqual([]);
+        expect(validation.ok).toBe(true);
+
+        // Verifica que no se hayan generado cajas de precio anterior ni badges de oferta
+        expect(boxes.some((b) => b.id === "origPrice")).toBe(false);
+        expect(boxes.some((b) => b.id === "saleBadge")).toBe(false);
+        expect(boxes.some((b) => b.id === "saveBadge")).toBe(false);
       });
     });
   });

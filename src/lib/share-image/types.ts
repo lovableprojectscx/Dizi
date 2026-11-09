@@ -5,7 +5,7 @@
 
 export type ShareImageStyle = "etiqueta" | "editorial" | "marco-color" | "oferta";
 
-export type ShareImageFormat = "historia" | "cuadrada";
+export type ShareImageFormat = "historia" | "post-ig" | "cuadrada";
 
 export interface ShareImageDimensions {
   width: number;
@@ -14,6 +14,7 @@ export interface ShareImageDimensions {
 
 export const SHARE_IMAGE_SIZES: Record<ShareImageFormat, ShareImageDimensions> = {
   historia: { width: 1080, height: 1920 },
+  "post-ig": { width: 1080, height: 1350 },
   cuadrada: { width: 1080, height: 1080 },
 };
 
@@ -28,6 +29,7 @@ export interface ShareImageData {
   originalPrice: number | null;
   isOnSale: boolean;
   discountPct: number | null;
+  isConsultPrice: boolean;
   productImageUrl: string;
   catalogProductUrl: string;
   showBranding: boolean;
