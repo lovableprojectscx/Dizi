@@ -18,6 +18,8 @@ import {
   BookOpen,
   Layout,
   Percent,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -27,10 +29,19 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { toSupabaseUrl } from "@/lib/image-utils";
 import { prepareShareImageData } from "@/lib/share-image/data";
 import { drawShareImage, ensureShareImageFontsLoaded } from "@/lib/share-image/styles";
+import {
+  generateCaption,
+  getSavedProductEmoji,
+  saveProductEmoji,
+  PRODUCT_EMOJI_LIST,
+  DEFAULT_PRODUCT_EMOJI,
+  type CaptionTemplate,
+} from "@/lib/share-image/caption";
 import type {
   ShareImageData,
   ShareImageFormat,
@@ -94,6 +105,7 @@ export function ShareImageDialog({
   const loadedProductImgRef = useRef<HTMLImageElement | null>(null);
   const loadedLogoImgRef = useRef<HTMLImageElement | null>(null);
   const loadedQrCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const captionTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 1. Preparar datos de la imagen
   const shareData: ShareImageData | null = useMemo(() => {
@@ -125,6 +137,81 @@ export function ShareImageDialog({
       setCanShareFiles(false);
     }
   }, []);
+
+  // F46.2: Estados y persistencia para textos formateados (captions)
+  const [captionTemplate, setCaptionTemplate] = useState<CaptionTemplate>("novedad");
+  const [productEmoji, setProductEmoji] = useState<string>(DEFAULT_PRODUCT_EMOJI);
+  const [captionText, setCaptionText] = useState("");
+  const [copiedCaption, setCopiedCaption] = useState(false);
+
+  // Inicializar o ajustar plantilla según existencia de oferta real
+  useEffect(() => {
+    if (shareData?.isOnSale) {
+      setCaptionTemplate("oferta");
+    } else {
+      setCaptionTemplate("novedad");
+    }
+  }, [shareData?.productId, shareData?.isOnSale]);
+
+  useEffect(() => {
+    if (shareData && !shareData.isOnSale && captionTemplate === "oferta") {
+      setCaptionTemplate("novedad");
+    }
+  }, [shareData, captionTemplate]);
+
+  // Recordar emoji guardado si cambia la tienda
+  useEffect(() => {
+    if (open && store?.id) {
+      const saved = getSavedProductEmoji(store.id);
+      if (saved !== null) {
+        setProductEmoji(saved);
+      }
+    }
+  }, [open, store?.id]);
+
+  // Generar texto reactivamente al cambiar plantilla o emoji
+  useEffect(() => {
+    if (!shareData) return;
+    const txt = generateCaption({
+      storeName: shareData.storeName,
+      productName: shareData.productName,
+      price: shareData.price,
+      originalPrice: shareData.originalPrice,
+      isOnSale: shareData.isOnSale,
+      productUrl: shareData.catalogProductUrl,
+      template: captionTemplate,
+      productEmoji,
+    });
+    setCaptionText(txt);
+  }, [shareData, captionTemplate, productEmoji]);
+
+  const handleSelectEmoji = (emoji: string) => {
+    setProductEmoji(emoji);
+    if (store?.id) {
+      saveProductEmoji(store.id, emoji);
+    }
+  };
+
+  const handleCopyCaption = async () => {
+    if (!captionText) return;
+    try {
+      await navigator.clipboard.writeText(captionText);
+      setCopiedCaption(true);
+      toast.success("Texto copiado al portapapeles");
+      setTimeout(() => setCopiedCaption(false), 2000);
+    } catch {
+      toast.error("No se pudo copiar el texto");
+    }
+  };
+
+  // Ajuste de altura del cuadro de texto: asegura al menos 8 líneas y crece dinámicamente con el copy
+  useEffect(() => {
+    if (captionTextareaRef.current) {
+      captionTextareaRef.current.style.height = "auto";
+      const scrollH = captionTextareaRef.current.scrollHeight;
+      captionTextareaRef.current.style.height = `${Math.max(165, scrollH)}px`;
+    }
+  }, [captionText]);
 
   // 3. Dibujo reactivo del canvas cuando cambia formato o estilo
   const renderCanvas = useCallback(() => {
@@ -287,7 +374,7 @@ export function ShareImageDialog({
         await navigator.share({
           files: [file],
           title: shareData.productName,
-          text: `Mira ${shareData.productName} en ${shareData.storeName}: ${shareData.catalogProductUrl}`,
+          text: captionText || `Mira ${shareData.productName} en ${shareData.storeName}: ${shareData.catalogProductUrl}`,
         });
         toast.success("¡Imagen lista para compartir!");
         logShareMetric();
@@ -443,6 +530,135 @@ export function ShareImageDialog({
                 );
               })}
             </div>
+          </div>
+
+          {/* F46.2: Texto para compartir con plantillas y selector de emoji */}
+          <div className="space-y-2 pt-1 border-t">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+                Texto para compartir
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyCaption}
+                className="h-7 px-2.5 text-xs font-medium gap-1 rounded-md"
+              >
+                {copiedCaption ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    <span>Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Copiar texto</span>
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Selector de 3 Plantillas: Novedad, Oferta, Simple */}
+            <div>
+              <div className="text-[11px] text-muted-foreground mb-1">Plantilla:</div>
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/40 rounded-lg border">
+                <button
+                  type="button"
+                  onClick={() => setCaptionTemplate("novedad")}
+                  className={`py-1.5 px-2 rounded-md text-xs font-semibold transition text-center flex items-center justify-center gap-1 ${
+                    captionTemplate === "novedad"
+                      ? "bg-background text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>✨ Novedad</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!shareData.isOnSale}
+                  onClick={() => setCaptionTemplate("oferta")}
+                  title={!shareData.isOnSale ? "Disponible solo en productos con descuento" : "Plantilla de oferta"}
+                  className={`py-1.5 px-2 rounded-md text-xs font-semibold transition text-center flex items-center justify-center gap-1 ${
+                    captionTemplate === "oferta"
+                      ? "bg-background text-foreground shadow-xs border border-border"
+                      : !shareData.isOnSale
+                      ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>🔥 Oferta</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCaptionTemplate("simple")}
+                  className={`py-1.5 px-2 rounded-md text-xs font-semibold transition text-center flex items-center justify-center gap-1 ${
+                    captionTemplate === "simple"
+                      ? "bg-background text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span>Simple</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Fila opcional: Emoji de tu producto */}
+            <div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                <span>Emoji de tu producto (opcional):</span>
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                <button
+                  type="button"
+                  onClick={() => handleSelectEmoji("none")}
+                  className={`shrink-0 px-2.5 py-1 text-xs rounded-full border transition font-medium ${
+                    productEmoji === "none"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 hover:bg-muted text-muted-foreground border-border"
+                  }`}
+                >
+                  Ninguno
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSelectEmoji(DEFAULT_PRODUCT_EMOJI)}
+                  title="Emoji por defecto (bolsa)"
+                  className={`shrink-0 px-2 py-1 text-xs rounded-full border transition font-medium ${
+                    productEmoji === DEFAULT_PRODUCT_EMOJI
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 hover:bg-muted text-muted-foreground border-border"
+                  }`}
+                >
+                  {DEFAULT_PRODUCT_EMOJI}
+                </button>
+                {PRODUCT_EMOJI_LIST.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelectEmoji(item.emoji)}
+                    title={item.label}
+                    className={`shrink-0 px-2 py-1 text-xs rounded-full border transition font-medium ${
+                      productEmoji === item.emoji
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-muted/40 hover:bg-muted text-muted-foreground border-border"
+                    }`}
+                  >
+                    {item.emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Texto editable con vista previa: altura inicial de 8 líneas (~165px) y auto-grow */}
+            <Textarea
+              ref={captionTextareaRef}
+              value={captionText}
+              onChange={(e) => setCaptionText(e.target.value)}
+              rows={8}
+              placeholder="Escribe o edita el texto para tu estado..."
+              className="text-xs resize-y bg-background font-mono leading-relaxed min-h-[165px] transition-[height] duration-150"
+            />
           </div>
         </div>
 
