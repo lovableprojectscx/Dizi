@@ -167,6 +167,18 @@ const dbStoreJoyeriaPro = {
       visible: true,
       sort_order: 0,
     },
+    {
+      id: "prod_joy_02",
+      store_id: "s_joyeriademo",
+      name: "Anillo Compromiso Diamante Solitario",
+      price: 0,
+      original_price: null,
+      is_on_sale: false,
+      category_id: "cat-joyas",
+      image: "https://dizi.idenza.site/images/demos/joyeria-demo/prod_01_anillo_solitario.webp",
+      visible: true,
+      sort_order: 1,
+    },
   ],
 };
 
@@ -201,6 +213,17 @@ const localStoreJoyeriaPro = {
       image: "https://dizi.idenza.site/images/demos/joyeria-demo/prod_01_anillo_solitario.webp",
       visible: true,
       sortOrder: 0,
+    },
+    {
+      id: "prod_joy_02",
+      name: "Anillo Compromiso Diamante Solitario",
+      price: 0,
+      originalPrice: null,
+      isOnSale: false,
+      categoryId: "cat-joyas",
+      image: "https://dizi.idenza.site/images/demos/joyeria-demo/prod_01_anillo_solitario.webp",
+      visible: true,
+      sortOrder: 1,
     },
   ],
 };
@@ -585,6 +608,76 @@ test.describe("F46 · Editor de Imágenes para Estados (móvil Android)", () => 
         path.join(E2E_FINAL_DIR, "e2e-final-joyeria-marcolor-cuadrada-1080x1080.png"),
         Buffer.from(base64Marco, "base64")
       );
+    });
+
+    test("E8/E9: Áurea Joyas genera los 4 estilos para producto 'A consultar' (sin S/, sin precio anterior ni etiqueta)", async ({
+      page,
+    }) => {
+      await page.goto("/admin/productos");
+      await page.waitForLoadState("networkidle");
+
+      // Clic en 'Crear imagen' del producto con precio 0 (Anillo Compromiso Diamante Solitario)
+      const shareBtns = page.locator("button[title*='Crear imagen']:visible");
+      // El segundo producto es el de precio 0
+      const consultBtn = shareBtns.nth(1);
+      await consultBtn.click();
+
+      await expect(page.locator("text=Crear imagen para estados")).toBeVisible();
+
+      const stylesToTest: { id: string; name: string; file: string }[] = [
+        { id: "etiqueta", name: "Etiqueta", file: "e2e-final-consultar-etiqueta.png" },
+        { id: "editorial", name: "Editorial", file: "e2e-final-consultar-editorial.png" },
+        { id: "marco-color", name: "Marco de color", file: "e2e-final-consultar-marcolor.png" },
+        { id: "oferta", name: "Oferta", file: "e2e-final-consultar-oferta.png" },
+      ];
+
+      for (const st of stylesToTest) {
+        const styleBtn = page.locator(`button:has-text('${st.name}')`);
+        await styleBtn.click();
+
+        const stats = await waitForCanvasReady(page);
+        expect(stats.hasContent).toBe(true);
+
+        const base64 = stats.dataUrl.replace(/^data:image\/png;base64,/, "");
+        fs.writeFileSync(path.join(E2E_FINAL_DIR, st.file), Buffer.from(base64, "base64"));
+      }
+    });
+
+    test("E10: Áurea Joyas genera los 4 estilos en formato 'Post IG (4:5)' de 1080×1350", async ({
+      page,
+    }) => {
+      await page.goto("/admin/productos");
+      await page.waitForLoadState("networkidle");
+
+      const shareBtn = page.locator("button[title*='Crear imagen']:visible").first();
+      await shareBtn.click();
+
+      await expect(page.locator("text=Crear imagen para estados")).toBeVisible();
+
+      // Seleccionar formato Post IG (4:5)
+      const postIgBtn = page.locator("button:has-text('Post IG')");
+      await expect(postIgBtn).toBeVisible();
+      await postIgBtn.click();
+
+      const stylesToTest: { id: string; name: string; file: string }[] = [
+        { id: "etiqueta", name: "Etiqueta", file: "e2e-final-postig-etiqueta-1080x1350.png" },
+        { id: "editorial", name: "Editorial", file: "e2e-final-postig-editorial-1080x1350.png" },
+        { id: "marco-color", name: "Marco de color", file: "e2e-final-postig-marcolor-1080x1350.png" },
+        { id: "oferta", name: "Oferta", file: "e2e-final-postig-oferta-1080x1350.png" },
+      ];
+
+      for (const st of stylesToTest) {
+        const styleBtn = page.locator(`button:has-text('${st.name}')`);
+        await styleBtn.click();
+
+        const stats = await waitForCanvasReady(page);
+        expect(stats.width).toBe(1080);
+        expect(stats.height).toBe(1350);
+        expect(stats.hasContent).toBe(true);
+
+        const base64 = stats.dataUrl.replace(/^data:image\/png;base64,/, "");
+        fs.writeFileSync(path.join(E2E_FINAL_DIR, st.file), Buffer.from(base64, "base64"));
+      }
     });
   });
 

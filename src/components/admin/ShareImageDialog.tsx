@@ -105,9 +105,9 @@ export function ShareImageDialog({
     });
   }, [product, store]);
 
-  // Si el producto no tiene oferta real y estaba en estilo oferta, pasar a etiqueta
+  // Si el producto no tiene oferta real ni es a consultar y estaba en estilo oferta, pasar a etiqueta
   useEffect(() => {
-    if (shareData && !shareData.isOnSale && style === "oferta") {
+    if (shareData && !shareData.isOnSale && !shareData.isConsultPrice && style === "oferta") {
       setStyle("etiqueta");
     }
   }, [shareData, style]);
@@ -349,7 +349,11 @@ export function ShareImageDialog({
           <canvas
             ref={canvasRef}
             className={`max-h-[42vh] max-w-full rounded-md shadow-md object-contain transition-all duration-200 ${
-              format === "historia" ? "aspect-[9/16]" : "aspect-square"
+              format === "historia"
+                ? "aspect-[9/16]"
+                : format === "post-ig"
+                ? "aspect-[4/5]"
+                : "aspect-square"
             }`}
           />
         </div>
@@ -361,11 +365,11 @@ export function ShareImageDialog({
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
               Tamaño
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setFormat("historia")}
-                className={`py-2 px-3 rounded-lg text-xs font-semibold border transition text-center flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-2.5 rounded-lg text-xs font-semibold border transition text-center flex flex-col sm:flex-row items-center justify-center gap-1 ${
                   format === "historia"
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
                     : "bg-muted/40 hover:bg-muted text-foreground border-border"
@@ -376,8 +380,20 @@ export function ShareImageDialog({
               </button>
               <button
                 type="button"
+                onClick={() => setFormat("post-ig")}
+                className={`py-2 px-2.5 rounded-lg text-xs font-semibold border transition text-center flex flex-col sm:flex-row items-center justify-center gap-1 ${
+                  format === "post-ig"
+                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                    : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                }`}
+              >
+                <span>Post IG</span>
+                <span className="opacity-75 text-[10px]">(4:5)</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setFormat("cuadrada")}
-                className={`py-2 px-3 rounded-lg text-xs font-semibold border transition text-center flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-2.5 rounded-lg text-xs font-semibold border transition text-center flex flex-col sm:flex-row items-center justify-center gap-1 ${
                   format === "cuadrada"
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
                     : "bg-muted/40 hover:bg-muted text-foreground border-border"
@@ -398,7 +414,7 @@ export function ShareImageDialog({
               {STYLES_CONFIG.map((st) => {
                 const Icon = st.icon;
                 const isOferta = st.id === "oferta";
-                const isOfertaDisabled = isOferta && !shareData.isOnSale;
+                const isOfertaDisabled = isOferta && !shareData.isOnSale && !shareData.isConsultPrice;
                 const isSelected = style === st.id;
 
                 return (

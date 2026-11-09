@@ -54,6 +54,7 @@ export async function ensureShareImageFontsLoaded(): Promise<void> {
         document.fonts.load("italic 700 80px 'Playfair Display'"),
         document.fonts.load("700 56px 'Playfair Display'"),
         document.fonts.load("700 46px 'Playfair Display'"),
+        document.fonts.load("700 32px 'Playfair Display'"),
         document.fonts.load("900 28px 'Playfair Display'"),
         document.fonts.ready,
       ]);
@@ -68,6 +69,17 @@ export async function ensureShareImageFontsLoaded(): Promise<void> {
  */
 export function formatCurrency(amount: number): string {
   return `S/ ${amount.toFixed(2)}`;
+}
+
+/**
+ * Obtiene el texto representativo del precio.
+ * Si el precio es <= 0 o se definió como "A consultar", devuelve "A consultar" sin "S/".
+ */
+export function getPriceDisplay(data: ShareImageData): string {
+  if (data.isConsultPrice || !data.price || data.price <= 0) {
+    return "A consultar";
+  }
+  return formatCurrency(data.price);
 }
 
 /**
@@ -196,7 +208,7 @@ export function drawSemillaBadgeSafe(
   if (!data.showBranding) return;
 
   const text = data.brandingText || "Hecho con Dizi · dizicatalogo.com";
-  const py = format === "historia" ? 1600 : 1045;
+  const py = format === "historia" ? 1600 : format === "post-ig" ? 1315 : 1045;
 
   ctx.save();
   ctx.font = "800 28px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
@@ -242,7 +254,7 @@ export function drawStoreHeader(
   boxes?: BoundingBox[],
   logoImg?: any
 ): void {
-  const headerY = format === "historia" ? 265 : 48;
+  const headerY = format === "historia" ? 265 : 44;
 
   ctx.save();
   ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
@@ -329,8 +341,11 @@ export function drawStyleEtiqueta(
 ): BoundingBox[] {
   const boxes: BoundingBox[] = [];
   const W = 1080;
-  const H = format === "historia" ? 1920 : 1080;
+  const dims = SHARE_IMAGE_SIZES[format];
+  const H = dims.height;
   const isStory = format === "historia";
+  const isPostIg = format === "post-ig";
+  const isConsult = Boolean(data.isConsultPrice || !data.price || data.price <= 0);
 
   // Fondo cálido sutil de vitrina
   ctx.fillStyle = "#F8FAFC";
@@ -340,7 +355,7 @@ export function drawStyleEtiqueta(
   const stageX = isStory ? 40 : 36;
   const stageY = isStory ? 335 : 96;
   const stageW = isStory ? 1000 : 1008;
-  const stageH = isStory ? 940 : 710;
+  const stageH = isStory ? 940 : (isPostIg ? 920 : 710);
 
   ctx.fillStyle = "#FFFFFF";
   roundRect(ctx, stageX, stageY, stageW, stageH, 36);
@@ -371,21 +386,23 @@ export function drawStyleEtiqueta(
 
   // Etiqueta de precio colgante calculada dinámicamente
   ctx.save();
-  ctx.font = "800 96px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-  const priceStr = formatCurrency(data.price);
+  const priceStr = getPriceDisplay(data);
+  const priceFontPx = isConsult ? (isStory ? 76 : isPostIg ? 72 : 68) : (isStory ? 96 : isPostIg ? 90 : 88);
+  ctx.font = `800 ${priceFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   const measuredPrice = ctx.measureText(priceStr).width;
 
   ctx.font = "700 32px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-  const saleStr = data.isOnSale && data.discountPct ? `-${data.discountPct}% DCTO` : "";
+  const saleStr = !isConsult && data.isOnSale && data.discountPct ? `-${data.discountPct}% DCTO` : "";
   const measuredSale = saleStr ? ctx.measureText(saleStr).width : 0;
 
   const ojalSpace = 64;
   const rightPadding = 32;
   const maxContentW = Math.max(measuredPrice, measuredSale);
   const tagW = Math.max(300, Math.ceil(maxContentW + ojalSpace + rightPadding));
-  const tagH = data.isOnSale ? (isStory ? 180 : 160) : (isStory ? 140 : 120);
-  const tagX = W - tagW - 48;
-  // En cuadrada e historia, la etiqueta se ubica en la esquina inferior del escenario para no tapar el producto
+  const hasSale = !isConsult && Boolean(data.isOnSale);
+  const tagH = hasSale ? (isStory ? 180 : 160) : (isStory ? 140 : 120);
+  const tagX = Math.max(48, W - tagW - 48);
+  // En cuadrada, post-ig e historia, la etiqueta se ubica en la esquina inferior del escenario para no tapar el producto
   const tagY = stageY + stageH - tagH - (isStory ? 20 : 12);
 
   // Cordón
@@ -414,15 +431,15 @@ export function drawStyleEtiqueta(
   ctx.fillStyle = textColor;
   ctx.textAlign = "right";
 
-  if (data.isOnSale) {
+  if (hasSale) {
     ctx.font = "700 28px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
     ctx.fillText(saleStr, tagX + tagW - rightPadding, tagY + (isStory ? 44 : 38));
 
     ctx.font = `800 ${isStory ? 88 : 80}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
     ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + (isStory ? 138 : 124));
   } else {
-    ctx.font = `800 ${isStory ? 96 : 88}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
-    ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + (isStory ? 102 : 90));
+    ctx.font = `800 ${priceFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText(priceStr, tagX + tagW - rightPadding, tagY + (isStory ? (isConsult ? 92 : 102) : (isConsult ? 82 : 90)));
   }
   ctx.restore();
 
@@ -443,8 +460,8 @@ export function drawStyleEtiqueta(
   });
 
   // Pie de producto y QR
-  const footerY = isStory ? 1300 : 820;
-  const footerH = isStory ? 260 : 216;
+  const footerY = isStory ? 1300 : (isPostIg ? 1040 : 820);
+  const footerH = isStory ? 260 : (isPostIg ? 240 : 216);
   const qrSize = 144;
   const qrX = W - qrSize - 60;
   const qrY = footerY + (isStory ? 20 : 14);
@@ -459,7 +476,7 @@ export function drawStyleEtiqueta(
 
   // Textos del footer
   ctx.fillStyle = "#0F172A";
-  const titleFontPx = isStory ? 56 : 46;
+  const titleFontPx = isStory ? 56 : (isPostIg ? 50 : 46);
   ctx.font = `700 ${titleFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
@@ -474,7 +491,7 @@ export function drawStyleEtiqueta(
     height: titleFontPx,
   });
 
-  if (data.isOnSale && data.originalPrice) {
+  if (!isConsult && data.isOnSale && data.originalPrice) {
     ctx.font = "600 36px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
     ctx.fillStyle = "#94A3B8";
     const origStr = `Antes ${formatCurrency(data.originalPrice)}`;
@@ -515,8 +532,11 @@ export function drawStyleEditorial(
 ): BoundingBox[] {
   const boxes: BoundingBox[] = [];
   const W = 1080;
-  const H = format === "historia" ? 1920 : 1080;
+  const dims = SHARE_IMAGE_SIZES[format];
+  const H = dims.height;
   const isStory = format === "historia";
+  const isPostIg = format === "post-ig";
+  const isConsult = Boolean(data.isConsultPrice || !data.price || data.price <= 0);
 
   // Fondo marfil editorial elegante
   ctx.fillStyle = "#FAF8F5";
@@ -529,7 +549,7 @@ export function drawStyleEditorial(
     ctx.strokeRect(28, 28, W - 56, H - 56);
   }
 
-  // Cabecera aislada (Y = 268 en Historia, Y = 44 en Cuadrada)
+  // Cabecera aislada (Y = 268 en Historia, Y = 44 en Post-IG y Cuadrada)
   const headerY = isStory ? 268 : 44;
   ctx.save();
   ctx.fillStyle = "#0F172A";
@@ -543,7 +563,7 @@ export function drawStyleEditorial(
 
   // Foto inmersiva
   const photoTop = headerY + 36;
-  const photoBottom = isStory ? 1230 : 660;
+  const photoBottom = isStory ? 1230 : (isPostIg ? 890 : 660);
   const photoH = photoBottom - photoTop;
   const photoW = W - 96;
 
@@ -588,8 +608,8 @@ export function drawStyleEditorial(
 
   // Nombre del producto en elegante serif Playfair Display
   const textMaxW = qrX - 48 - 32;
-  const titleFontPx = isStory ? 56 : 46;
-  const titleLineHeight = isStory ? 62 : 52;
+  const titleFontPx = isStory ? 56 : (isPostIg ? 50 : 46);
+  const titleLineHeight = isStory ? 62 : (isPostIg ? 56 : 52);
   ctx.fillStyle = "#0F172A";
   ctx.font = `700 ${titleFontPx}px 'Playfair Display', Georgia, serif`;
   ctx.textAlign = "left";
@@ -609,33 +629,33 @@ export function drawStyleEditorial(
     height: titleTotalH,
   });
 
-  // Precio anterior tachado si hay oferta
-  if (data.isOnSale && data.originalPrice) {
-    ctx.fillStyle = "#64748B";
-    ctx.font = "700 24px 'Playfair Display', Georgia, serif";
+  // Precio anterior tachado si hay oferta (solo si no es A consultar)
+  if (!isConsult && data.isOnSale && data.originalPrice) {
+    ctx.fillStyle = "#1E293B"; // Slate 800: alto contraste sobre marfil #FAF8F5 (>12:1)
+    ctx.font = "700 32px 'Playfair Display', Georgia, serif";
     ctx.textBaseline = "top";
     const origText = `Antes ${formatCurrency(data.originalPrice)}`;
-    const origY = isStory ? 1410 : 806;
+    const origY = isStory ? 1400 : (isPostIg ? 1038 : 798);
     ctx.fillText(origText, 48, origY);
     const ow = ctx.measureText(origText).width;
     ctx.strokeStyle = "#DC2626";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(48, origY + 12);
-    ctx.lineTo(48 + ow, origY + 12);
+    ctx.moveTo(48, origY + 16);
+    ctx.lineTo(48 + ow, origY + 16);
     ctx.stroke();
 
-    boxes.push({ id: "origPrice", x: 48, y: origY, width: ow, height: 26 });
+    boxes.push({ id: "origPrice", x: 48, y: origY, width: ow, height: 34 });
   }
 
   // Precio final display en Playfair Display Italic
-  const priceFontPx = isStory ? 104 : 96;
-  const priceY = isStory ? 1565 : 965;
+  const priceStr = getPriceDisplay(data);
+  const priceFontPx = isConsult ? (isStory ? 84 : 76) : (isStory ? 104 : (isPostIg ? 100 : 96));
+  const priceY = isStory ? 1565 : (isPostIg ? 1220 : 965);
   ctx.fillStyle = data.primaryColor || "#0F172A";
   ctx.font = `italic 700 ${priceFontPx}px 'Playfair Display', Georgia, serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "bottom";
-  const priceStr = formatCurrency(data.price);
   ctx.fillText(priceStr, 48, priceY);
 
   const pw = ctx.measureText(priceStr).width;
@@ -665,14 +685,17 @@ export function drawStyleMarcoColor(
 ): BoundingBox[] {
   const boxes: BoundingBox[] = [];
   const W = 1080;
-  const H = format === "historia" ? 1920 : 1080;
+  const dims = SHARE_IMAGE_SIZES[format];
+  const H = dims.height;
   const isStory = format === "historia";
+  const isPostIg = format === "post-ig";
+  const isConsult = Boolean(data.isConsultPrice || !data.price || data.price <= 0);
 
   // Fondo del marco de color
   ctx.fillStyle = data.primaryColor || "#0F172A";
   ctx.fillRect(0, 0, W, H);
 
-  // Cabecera en franja aislada (Y = 265 en Historia, Y = 44 en Cuadrada)
+  // Cabecera en franja aislada (Y = 265 en Historia, Y = 44 en Post-IG y Cuadrada)
   drawStoreHeader(ctx, data, format, true, boxes, options.storeLogoImage);
 
   // Marco y contenedor blanco para la foto (producto protagonista con mínimo espacio en blanco)
@@ -680,8 +703,8 @@ export function drawStyleMarcoColor(
   const innerX = frameThick;
   const innerW = W - frameThick * 2;
   const stageY = isStory ? 353 : 96;
-  const bottomBlockH = isStory ? 320 : 230;
-  const bottomBlockY = isStory ? 1255 : H - bottomBlockH - frameThick - (data.showBranding ? 55 : 12);
+  const bottomBlockH = isStory ? 320 : (isPostIg ? 260 : 230);
+  const bottomBlockY = isStory ? 1255 : (H - bottomBlockH - frameThick - (data.showBranding ? 55 : 12));
   const photoStageH = bottomBlockY - stageY - 10;
 
   ctx.fillStyle = "#FFFFFF";
@@ -722,8 +745,8 @@ export function drawStyleMarcoColor(
 
   // Título
   const textW = qrX - innerX - 36;
-  const titleFontPx = isStory ? 56 : 46;
-  const titleLineHeight = isStory ? 64 : 52;
+  const titleFontPx = isStory ? 56 : (isPostIg ? 50 : 46);
+  const titleLineHeight = isStory ? 64 : (isPostIg ? 56 : 52);
   ctx.fillStyle = "#FFFFFF";
   ctx.font = `700 ${titleFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
@@ -743,9 +766,9 @@ export function drawStyleMarcoColor(
   });
 
   // Precio final y antes
-  const priceFontPx = isStory ? 104 : 96;
+  const priceStr = getPriceDisplay(data);
+  const priceFontPx = isConsult ? (isStory ? 84 : 76) : (isStory ? 104 : (isPostIg ? 100 : 96));
   const priceY = bottomBlockY + bottomBlockH - 16;
-  const priceStr = formatCurrency(data.price);
   ctx.font = `800 ${priceFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#FACC15"; // Acento amarillo brillante sobre bloque oscuro
   ctx.textAlign = "left";
@@ -761,7 +784,7 @@ export function drawStyleMarcoColor(
     height: priceFontPx,
   });
 
-  if (data.isOnSale && data.originalPrice) {
+  if (!isConsult && data.isOnSale && data.originalPrice) {
     const origStr = `Antes ${formatCurrency(data.originalPrice)}`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
     ctx.font = "800 24px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
@@ -798,8 +821,11 @@ export function drawStyleOferta(
 ): BoundingBox[] {
   const boxes: BoundingBox[] = [];
   const W = 1080;
-  const H = format === "historia" ? 1920 : 1080;
+  const dims = SHARE_IMAGE_SIZES[format];
+  const H = dims.height;
   const isStory = format === "historia";
+  const isPostIg = format === "post-ig";
+  const isConsult = Boolean(data.isConsultPrice || !data.price || data.price <= 0);
 
   // Fondo gris suave comercial
   ctx.fillStyle = "#F1F5F9";
@@ -810,12 +836,12 @@ export function drawStyleOferta(
   ctx.fillStyle = data.primaryColor || "#0F172A";
   ctx.fillRect(0, 0, W, bannerH);
 
-  // Cabecera aislada (Y = 265 en Historia, Y = 34 en Cuadrada)
+  // Cabecera aislada (Y = 265 en Historia, Y = 34 en Post-IG y Cuadrada)
   const headerY = isStory ? 265 : 34;
   drawStoreHeader(ctx, data, format, true, boxes, options.storeLogoImage);
 
-  // Badge "-X% DCTO"
-  if (data.isOnSale && data.discountPct) {
+  // Badge "-X% DCTO" (solo si no es A consultar y tiene oferta)
+  if (!isConsult && data.isOnSale && data.discountPct) {
     const badgeW = 240;
     const badgeH = 60;
     const badgeX = W - badgeW - 44;
@@ -845,8 +871,8 @@ export function drawStyleOferta(
   }
 
   // Tarjeta inferior de precios y llamado a la acción
-  const footerCardH = isStory ? 320 : 280;
-  const footerCardY = isStory ? 1250 : (H - footerCardH - (data.showBranding ? 55 : 20));
+  const footerCardH = isStory ? 320 : (isPostIg ? 260 : 280);
+  const footerCardY = isStory ? 1250 : (H - footerCardH - (data.showBranding ? (isPostIg ? 65 : 55) : 20));
   const photoTop = isStory ? headerY + 74 : 100;
   const photoH = footerCardY - photoTop - 14;
   const photoW = W - 88;
@@ -876,8 +902,8 @@ export function drawStyleOferta(
     height: photoBox.height,
   });
 
-  // Cucarda flotante "AHORRAS S/ ..."
-  if (data.isOnSale && data.originalPrice && data.originalPrice > data.price) {
+  // Cucarda flotante "AHORRAS S/ ..." (solo si no es A consultar)
+  if (!isConsult && data.isOnSale && data.originalPrice && data.originalPrice > data.price) {
     const saved = data.originalPrice - data.price;
     const saveText = `AHORRAS ${formatCurrency(saved)}`;
     ctx.font = "800 24px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
@@ -945,7 +971,7 @@ export function drawStyleOferta(
 
   let currentY = titleY + titleTotalH + 8;
 
-  if (data.isOnSale && data.originalPrice) {
+  if (!isConsult && data.isOnSale && data.originalPrice) {
     ctx.font = "700 28px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
     ctx.fillStyle = "#DC2626";
     const origStr = `Antes ${formatCurrency(data.originalPrice)}`;
@@ -971,10 +997,10 @@ export function drawStyleOferta(
   }
 
   // Precio display final
-  const priceFontPx = isStory ? 96 : 84;
+  const priceStr = getPriceDisplay(data);
+  const priceFontPx = isConsult ? (isStory ? 76 : 68) : (isStory ? 96 : 84);
   ctx.font = `800 ${priceFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#0F172A";
-  const priceStr = formatCurrency(data.price);
   ctx.fillText(priceStr, 68, currentY);
 
   const priceW = ctx.measureText(priceStr).width;

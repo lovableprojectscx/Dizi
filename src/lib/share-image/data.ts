@@ -29,18 +29,23 @@ export function prepareShareImageData(options: PrepareShareImageDataOptions): Sh
   const { product, store } = options;
   const baseUrl = (options.baseUrl || "https://dizi.idenza.site").replace(/\/+$/, "");
 
-  // 1. Cálculo de descuento real con discount.ts (F40)
-  const discount = getDiscount(product.price, product.originalPrice);
-  const isOnSale = Boolean(product.isOnSale && discount !== null);
+  // 1. Regla del catálogo: Si el precio es nulo o <= 0, se considera "A consultar" (sin oferta ni precio anterior)
+  const rawPrice = typeof product.price === "number" ? product.price : null;
+  const isConsultPrice = rawPrice === null || rawPrice <= 0;
+  const price = isConsultPrice ? 0 : rawPrice;
 
-  // 2. Plan efectivo de la tienda (considera días de gracia)
+  // 2. Cálculo de descuento real con discount.ts (F40). Solo aplica si el precio es mayor a 0
+  const discount = !isConsultPrice ? getDiscount(product.price, product.originalPrice) : null;
+  const isOnSale = Boolean(!isConsultPrice && product.isOnSale && discount !== null);
+
+  // 3. Plan efectivo de la tienda (considera días de gracia)
   const effectivePlan = getEffectivePlan(store);
   const showBranding = effectivePlan === "semilla";
 
-  // 3. Enlace directo al producto en el catálogo
+  // 4. Enlace directo al producto en el catálogo
   const catalogProductUrl = `${baseUrl}/t/${store.slug}?p=${product.id}`;
 
-  // 4. Foto original en alta resolución
+  // 5. Foto original en alta resolución
   const productImageUrl = getOriginalImageUrl(product.image);
 
   return {
@@ -50,10 +55,11 @@ export function prepareShareImageData(options: PrepareShareImageDataOptions): Sh
     primaryColor: store.brandColor?.trim() || "#0F172A",
     productId: product.id,
     productName: (product.name || "Producto").trim(),
-    price: typeof product.price === "number" ? product.price : 0,
+    price,
     originalPrice: isOnSale && product.originalPrice ? product.originalPrice : null,
     isOnSale,
     discountPct: isOnSale && discount ? discount.pct : null,
+    isConsultPrice,
     productImageUrl,
     catalogProductUrl,
     showBranding,
