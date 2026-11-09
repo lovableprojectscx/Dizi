@@ -257,7 +257,7 @@ export function ShareImageDialog({
         store_id: store.id,
         product_id: product.id,
         style,
-        size: format === "post-ig" ? "cuadrada" : format,
+        size: format,
       });
     } catch {
       // No bloqueante si la tabla o RLS no está disponible

@@ -54,6 +54,7 @@ export async function ensureShareImageFontsLoaded(): Promise<void> {
         document.fonts.load("italic 700 80px 'Playfair Display'"),
         document.fonts.load("700 56px 'Playfair Display'"),
         document.fonts.load("700 46px 'Playfair Display'"),
+        document.fonts.load("700 32px 'Playfair Display'"),
         document.fonts.load("900 28px 'Playfair Display'"),
         document.fonts.ready,
       ]);
@@ -630,21 +631,21 @@ export function drawStyleEditorial(
 
   // Precio anterior tachado si hay oferta (solo si no es A consultar)
   if (!isConsult && data.isOnSale && data.originalPrice) {
-    ctx.fillStyle = "#64748B";
-    ctx.font = "700 24px 'Playfair Display', Georgia, serif";
+    ctx.fillStyle = "#1E293B"; // Slate 800: alto contraste sobre marfil #FAF8F5 (>12:1)
+    ctx.font = "700 32px 'Playfair Display', Georgia, serif";
     ctx.textBaseline = "top";
     const origText = `Antes ${formatCurrency(data.originalPrice)}`;
-    const origY = isStory ? 1410 : (isPostIg ? 1040 : 806);
+    const origY = isStory ? 1400 : (isPostIg ? 1038 : 798);
     ctx.fillText(origText, 48, origY);
     const ow = ctx.measureText(origText).width;
     ctx.strokeStyle = "#DC2626";
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(48, origY + 12);
-    ctx.lineTo(48 + ow, origY + 12);
+    ctx.moveTo(48, origY + 16);
+    ctx.lineTo(48 + ow, origY + 16);
     ctx.stroke();
 
-    boxes.push({ id: "origPrice", x: 48, y: origY, width: ow, height: 26 });
+    boxes.push({ id: "origPrice", x: 48, y: origY, width: ow, height: 34 });
   }
 
   // Precio final display en Playfair Display Italic

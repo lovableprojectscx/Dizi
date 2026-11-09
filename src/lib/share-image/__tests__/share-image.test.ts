@@ -25,10 +25,10 @@ import type { Product, Store } from "@/lib/types";
 
 // Mock representativo de CanvasRenderingContext2D para entorno Node de Vitest
 function createMockCanvasContext() {
-  const currentFont = "16px sans-serif";
-  return {
+  const textCalls: { text: string; font: string; fillStyle: any }[] = [];
+  const ctx = {
     canvas: { width: 1080, height: 1920 },
-    font: currentFont,
+    font: "16px sans-serif",
     fillStyle: "#000000",
     strokeStyle: "#000000",
     lineWidth: 1,
@@ -48,16 +48,20 @@ function createMockCanvasContext() {
     strokeRect: () => {},
     clip: () => {},
     drawImage: () => {},
-    fillText: () => {},
+    fillText: (text: string) => {
+      textCalls.push({ text, font: ctx.font, fillStyle: ctx.fillStyle });
+    },
     measureText: (text: string) => {
       // Estimación fiel para fuentes sans-serif / Plus Jakarta Sans
-      const match = (currentFont || "").match(/(\d+)px/);
+      const match = (ctx.font || "").match(/(\d+)px/);
       const fontSize = match ? parseInt(match[1], 10) : 32;
       return {
         width: Math.round(text.length * fontSize * 0.56),
       };
     },
-  } as unknown as CanvasRenderingContext2D;
+    __textCalls: textCalls,
+  } as unknown as CanvasRenderingContext2D & { __textCalls: typeof textCalls };
+  return ctx;
 }
 
 const mockStoreSemilla: Store = {
@@ -277,6 +281,24 @@ describe("F46 · Ajuste de foto y reglas de contraste (styles.ts)", () => {
   it("E2: Formatea precios en soles peruanos con 2 decimales", () => {
     expect(formatCurrency(89.9)).toBe("S/ 89.90");
     expect(formatCurrency(399)).toBe("S/ 399.00");
+  });
+
+  it("E2: Editorial dibuja 'Antes S/ ...' con al menos 30px y alto contraste sobre fondo marfil", () => {
+    const ctx = createMockCanvasContext();
+    const data = prepareShareImageData({
+      product: mockProductOferta,
+      store: mockStoreSemilla,
+    });
+    drawShareImage(ctx, data, "editorial", "historia");
+    const antesCall = (ctx as any).__textCalls.find(
+      (c: any) => typeof c.text === "string" && c.text.startsWith("Antes")
+    );
+    expect(antesCall).toBeDefined();
+    const pxMatch = antesCall.font.match(/(\d+)px/);
+    expect(pxMatch).toBeTruthy();
+    const fontSize = parseInt(pxMatch[1], 10);
+    expect(fontSize).toBeGreaterThanOrEqual(30);
+    expect(antesCall.fillStyle).toBe("#1E293B");
   });
 });
 
