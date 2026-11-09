@@ -108,12 +108,18 @@ import {
   Copy,
   Percent,
   Info,
+  Share2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
 import { convertImageToWebP } from "@/lib/image-utils";
 import { getCategorySlug, buildStoreUrl } from "@/lib/category-link";
+
+// Carga perezosa (lazy) del generador de imágenes de estados (F46)
+const ShareImageDialog = React.lazy(() =>
+  import("@/components/admin/ShareImageDialog").then((m) => ({ default: m.ShareImageDialog }))
+);
 
 /**
  * @file admin.productos.tsx
@@ -1411,6 +1417,7 @@ interface ProductTableRowProps {
   onDelete: (p: Product) => void;
   onToggle: (id: string, expectedVersion?: number) => void;
   onSwap: (fromIdx: number, toIdx: number) => void;
+  onShare?: (p: Product) => void;
 }
 
 const ProductTableRow = React.memo(function ProductTableRow({
@@ -1425,6 +1432,7 @@ const ProductTableRow = React.memo(function ProductTableRow({
   onDelete,
   onToggle,
   onSwap,
+  onShare,
 }: ProductTableRowProps) {
   const [imgError, setImgError] = useState(false);
 
@@ -1545,6 +1553,18 @@ const ProductTableRow = React.memo(function ProductTableRow({
         </div>
       </TableCell>
       <TableCell className="text-right">
+        {onShare && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 hover:bg-primary hover:text-white transition-colors duration-75 cursor-pointer"
+            onClick={() => onShare(p)}
+            title="Crear imagen para estados"
+            aria-label="Crear imagen"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="icon"
@@ -1581,6 +1601,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
   onDelete,
   onToggle,
   onSwap,
+  onShare,
 }: ProductTableRowProps) {
   const [imgError, setImgError] = useState(false);
 
@@ -1679,6 +1700,18 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
               <ArrowDown className="h-3.5 w-3.5" />
             </Button>
           </div>
+          {onShare && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-primary hover:text-white transition-colors duration-75 cursor-pointer"
+              onClick={() => onShare(p)}
+              title="Crear imagen para estados"
+              aria-label="Crear imagen"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -1704,6 +1737,12 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
 function ProductsPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
+
+  // F46: Estado para modal de creación de imágenes para estados (antes de cualquier early return)
+  const [sharingProduct, setSharingProduct] = useState<Product | null>(null);
+  const handleOpenShare = useCallback((p: Product) => {
+    setSharingProduct(p);
+  }, []);
 
   if (!store) {
     return (
@@ -2516,6 +2555,7 @@ function ProductsPage() {
                           onDelete={handleConfirmDelete}
                           onToggle={handleToggleVisible}
                           onSwap={handleSwapOrder}
+                          onShare={handleOpenShare}
                         />
                       );
                     })}
@@ -2556,6 +2596,7 @@ function ProductsPage() {
                       onDelete={handleConfirmDelete}
                       onToggle={handleToggleVisible}
                       onSwap={handleSwapOrder}
+                      onShare={handleOpenShare}
                     />
                   );
                 })}
@@ -3504,6 +3545,20 @@ function ProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* F46: Modal de Generación de Imágenes para Estados e Historias */}
+      {sharingProduct && (
+        <React.Suspense fallback={null}>
+          <ShareImageDialog
+            open={sharingProduct !== null}
+            onOpenChange={(open) => {
+              if (!open) setSharingProduct(null);
+            }}
+            product={sharingProduct}
+            store={store}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 }
