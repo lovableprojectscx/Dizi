@@ -56,6 +56,58 @@ function Dashboard() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
 
+  const [catalogQr, setCatalogQr] = useState<string>("");
+  const [bioQr, setBioQr] = useState<string>("");
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [shareTab, setShareTab] = useState<"catalog" | "bio">("catalog");
+  const [surveyEligible, setSurveyEligible] = useState(false);
+  const getMySurveyResponse = useApp((s) => s.getMySurveyResponse);
+
+  const catalogUrl = store
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/t/${store.slug}`
+    : "";
+  const bioUrl = store
+    ? `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/bio/${store.slug}`
+    : "";
+
+  useEffect(() => {
+    if (!catalogUrl || !bioUrl) return;
+    QRCode.toDataURL(catalogUrl, {
+      width: 400,
+      margin: 1,
+      color: { dark: "#0f172a", light: "#ffffff" },
+    })
+      .then(setCatalogQr)
+      .catch(() => {});
+    QRCode.toDataURL(bioUrl, {
+      width: 400,
+      margin: 1,
+      color: { dark: "#0f172a", light: "#ffffff" },
+    })
+      .then(setBioQr)
+      .catch(() => {});
+  }, [catalogUrl, bioUrl]);
+
+  useEffect(() => {
+    if (!store) {
+      setSurveyEligible(false);
+      return;
+    }
+    if (!canStoreTakeSurvey(store, false)) {
+      setSurveyEligible(false);
+      return;
+    }
+    let active = true;
+    getMySurveyResponse(store.id, SURVEY_VERSION).then((resp) => {
+      if (active) {
+        setSurveyEligible(!resp);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [store?.id, store?.plan, store?.slug, store?.subscriptionStatus, getMySurveyResponse]);
+
   if (!store) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -77,30 +129,6 @@ function Dashboard() {
         Math.ceil((new Date(store.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
       )
     : 0;
-  const catalogUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/t/${store.slug}`;
-  const bioUrl = `${typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site"}/bio/${store.slug}`;
-
-  const [catalogQr, setCatalogQr] = useState<string>("");
-  const [bioQr, setBioQr] = useState<string>("");
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [shareTab, setShareTab] = useState<"catalog" | "bio">("catalog");
-
-  useEffect(() => {
-    QRCode.toDataURL(catalogUrl, {
-      width: 400,
-      margin: 1,
-      color: { dark: "#0f172a", light: "#ffffff" },
-    })
-      .then(setCatalogQr)
-      .catch(() => {});
-    QRCode.toDataURL(bioUrl, {
-      width: 400,
-      margin: 1,
-      color: { dark: "#0f172a", light: "#ffffff" },
-    })
-      .then(setBioQr)
-      .catch(() => {});
-  }, [catalogUrl, bioUrl]);
 
   const copyText = async (text: string) => {
     await navigator.clipboard.writeText(text);
@@ -121,25 +149,6 @@ function Dashboard() {
   const activeProducts = store.products.filter((p) => p.visible).length;
   const incompleteProductsCount = store.products.filter(isProductIncomplete).length;
 
-  const [surveyEligible, setSurveyEligible] = useState(false);
-  const getMySurveyResponse = useApp((s) => s.getMySurveyResponse);
-
-  useEffect(() => {
-    if (!store) return;
-    if (!canStoreTakeSurvey(store, false)) {
-      setSurveyEligible(false);
-      return;
-    }
-    let active = true;
-    getMySurveyResponse(store.id, SURVEY_VERSION).then((resp) => {
-      if (active) {
-        setSurveyEligible(!resp);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [store?.id, store?.plan, store?.slug, store?.subscriptionStatus, getMySurveyResponse]);
   const activeQr = shareTab === "catalog" ? catalogQr : bioQr;
   const activeUrl = shareTab === "catalog" ? catalogUrl : bioUrl;
 

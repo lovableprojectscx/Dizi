@@ -104,6 +104,7 @@ export function OnboardingWizard() {
   const [productName, setProductName] = useState("");
   const [productPrice, setProductPrice] = useState("");
   const [productImage, setProductImage] = useState<string | null>(null);
+  const [productThumb, setProductThumb] = useState<string>("");
   const [productLoading, setProductLoading] = useState(false);
 
   // If there's no active store, or if onboarding is already completed, don't show
@@ -141,8 +142,6 @@ export function OnboardingWizard() {
       setLoading(false);
     }
   };
-
-  const [productThumb, setProductThumb] = useState<string>("");
 
   // Image Upload helpers
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
