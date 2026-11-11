@@ -46,7 +46,8 @@ BEGIN
     RETURN NULL;
   END IF;
 
-  -- Calcular plan efectivo
+  -- Calcular plan efectivo (criterio unificado con protect_store_billing_columns / effective_product_limit:
+  -- supabase/migrations/20260929160000_fase1c_blindaje.sql L44, L144)
   IF store_row.plan = 'semilla' THEN
     store_plan := 'semilla';
   ELSIF store_row.plan_expires_at IS NOT NULL AND now() > store_row.plan_expires_at + interval '3 days' THEN
@@ -67,7 +68,8 @@ BEGIN
     effective_limit := 1000;
   END IF;
 
-  -- Regla F39b
+  -- Regla F39b: Plan bajado o vencido: si el plan solo permite 1, el catálogo usa el principal
+  -- aunque esté apagado. La tienda nunca se queda sin WhatsApp y no se borra nada guardado.
   IF store_plan IN ('semilla', 'emprendedor') THEN
     effective_main_active := true;
     max_extra_sellers := 0;

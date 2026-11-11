@@ -85,9 +85,7 @@ describe("Suite de Pruebas: Carga Bajo Demanda de Categorías y Resiliencia en T
     expect(emptyCat.productCount).toBe(0);
   });
 
-  const isLiveDbConfigured = Boolean(process.env.VITE_SUPABASE_URL && !process.env.VITE_SUPABASE_URL.includes("dummy"));
-
-  it.skipIf(!isLiveDbConfigured)("6. RPC en Vivo: get_public_store devuelve las categorías con product_count y total_products_count", async () => {
+  it("6. RPC en Vivo: get_public_store devuelve las categorías con product_count y total_products_count", async () => {
     const { data, error } = await supabase.rpc("get_public_store", {
       store_slug: "catalogo",
       page_limit: 36,
@@ -105,7 +103,7 @@ describe("Suite de Pruebas: Carga Bajo Demanda de Categorías y Resiliencia en T
     expect(acrilicoCat.product_count).toBeGreaterThanOrEqual(18);
   }, 20000);
 
-  it.skipIf(!isLiveDbConfigured)("7. RPC en Vivo: get_public_store_products filtra por category_id y devuelve sus productos exactos", async () => {
+  it("7. RPC en Vivo: get_public_store_products filtra por category_id y devuelve sus productos exactos", async () => {
     // Primero obtener el ID de la categoría Acrílico Fabric
     const { data: storeData } = await supabase.rpc("get_public_store", {
       store_slug: "catalogo",

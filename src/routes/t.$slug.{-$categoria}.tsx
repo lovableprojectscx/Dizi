@@ -216,6 +216,8 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       imgShape: data.img_shape ?? null,
       photoFormat: data.photo_format ?? null,
       photo_format: data.photo_format ?? null,
+      headerStyle: data.header_style ?? data.headerStyle ?? null,
+      header_style: data.header_style ?? null,
       isDark: typeof data.is_dark === "boolean" ? data.is_dark : undefined,
       ownerId: data.owner_id,
       active: data.active,
