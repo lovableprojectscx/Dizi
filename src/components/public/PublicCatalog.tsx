@@ -126,6 +126,7 @@ import { Link } from "@tanstack/react-router";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { getOptimizedImageUrl, getThumbnailUrl, handleImageError, toCdnUrl } from "@/lib/image-utils";
 import { PortadaEstandar } from "./PortadaEstandar";
+import { ProfileHeader } from "./ProfileHeader";
 import { BrandCover } from "./BrandCover";
 import { ContactStripe } from "./ContactStripe";
 import { shouldShowBrandCover, shouldShowGridAd, shouldShowContactStripe, getShortStoreName } from "@/lib/brand-cover";
@@ -1575,6 +1576,7 @@ export function PublicCatalog({
   const photoAspect = getPhotoAspect(store, effectiveModel);
   const showDesktopSidebar = mode === "catalog" && !isMockup;
   const showsBrandCover = shouldShowBrandCover(store);
+  const isProfileHeader = (store.headerStyle === "profile" || (store as any).header_style === "profile");
 
   const isPremiumModel =
     modelId === "bloom" ||
@@ -3271,11 +3273,12 @@ export function PublicCatalog({
             )}
           </div>
 
-          {/* Search + Filtros button: modelos SIN hero banner */}
+          {/* Search + Filtros button: modelos SIN hero banner y SIN encabezado perfil */}
           {!BANNER_MODELS.has(modelId) &&
             modelId !== "bite" &&
             modelId !== "bloom" &&
             modelId !== "lookbook" &&
+            !isProfileHeader &&
             mode === "catalog" && (
               <div className="mx-auto max-w-5xl px-4 pb-3 space-y-2">
                 {/* Search row + Filtros button */}
@@ -3650,15 +3653,24 @@ export function PublicCatalog({
         </section>
       )}
 
+      {/* ── Encabezado Perfil (F50) cuando la tienda lo activa ── */}
+      {!isNarrowing && mode === "catalog" && isProfileHeader && (
+        <ProfileHeader
+          store={store}
+          activeBanners={activeBanners}
+          supportClick={supportClick}
+        />
+      )}
+
       {/* ── Portada de Marca (RF-45.1) cuando no hay portada con foto visible ── */}
-      {!isNarrowing && mode === "catalog" && shouldShowBrandCover(store) && spec.familia === "estandar" && (
+      {!isNarrowing && !isProfileHeader && mode === "catalog" && shouldShowBrandCover(store) && spec.familia === "estandar" && (
         <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
           <BrandCover store={store} model={spec.id} isDark={effectiveIsDark} />
         </div>
       )}
 
       {/* ── Portada Estándar (diseños estándar con portada activa) ── */}
-      {!isNarrowing && !shouldShowBrandCover(store) && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
+      {!isNarrowing && !isProfileHeader && !shouldShowBrandCover(store) && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
         <PortadaEstandar
           activeBanners={activeBanners}
           bannerTitle={store.bannerTitle}
@@ -3668,8 +3680,8 @@ export function PublicCatalog({
         />
       )}
 
-      {/* ── Filtros post-banner: solo modelos con hero ──────────── */}
-      {BANNER_MODELS.has(modelId) && mode === "catalog" && (
+      {/* ── Filtros post-banner: modelos con hero o con encabezado perfil ──────────── */}
+      {(BANNER_MODELS.has(modelId) || isProfileHeader) && mode === "catalog" && (
         <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur-md border-b shadow-sm">
           <div className="mx-auto max-w-5xl px-4 py-3 space-y-2">
             {/* Search row + Filtros button */}
@@ -4205,7 +4217,7 @@ export function PublicCatalog({
               /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
               <div className="space-y-16 sm:space-y-24 select-none pb-28 sm:pb-16">
                 {/* 1. Editorial Cover Section */}
-                {!isNarrowing && mode === "catalog" && (
+                {!isNarrowing && mode === "catalog" && !isProfileHeader && (
                   <header
                     className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden border-b animate-in fade-in duration-700"
                     style={{ borderBottomColor: "var(--border)", backgroundColor: "var(--card)" }}
@@ -5645,6 +5657,7 @@ export function PublicCatalog({
               <div className="space-y-8 select-none pb-28 sm:pb-16">
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
+                  if (isProfileHeader) return null;
                   if (shouldShowBrandCover(store)) {
                     return (
                       <div className="w-full">
@@ -6269,6 +6282,7 @@ export function PublicCatalog({
 
                     {/* 1. Fluid Nature Banner */}
                     {!isNarrowing && (() => {
+                      if (isProfileHeader) return null;
                       if (shouldShowBrandCover(store)) {
                         return (
                           <div className="relative w-full z-10">
@@ -6398,7 +6412,7 @@ export function PublicCatalog({
 
                           {/* Overlapping editorial card details */}
                           {(() => {
-                            if (shouldShowBrandCover(store)) return null;
+                            if (isProfileHeader || shouldShowBrandCover(store)) return null;
                             if (isTiendaEstiloAnterior) {
                               const finalTagline = store.bannerTagline || nicheTags.tagline;
                               const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
@@ -7148,6 +7162,7 @@ export function PublicCatalog({
 
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
+                  if (isProfileHeader) return null;
                   if (shouldShowBrandCover(store)) {
                     return (
                       <div className="w-full">

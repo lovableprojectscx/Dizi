@@ -285,6 +285,12 @@ export interface Store {
   photoFormat?: "square" | "portrait" | "contain" | null;
   /** Compatibilidad snake_case directo desde base de datos (F41) */
   photo_format?: "square" | "portrait" | "contain" | null;
+  /** Estilo de encabezado del catálogo: 'standard' (cabecera clásica) o 'profile' (tipo perfil con banner, logo montado y etiquetas) (F50) */
+  headerStyle?: "standard" | "profile" | null;
+  /** Compatibilidad snake_case directo desde base de datos (F50) */
+  header_style?: "standard" | "profile" | null;
+  /** Etiquetas informativas de servicio configuradas para el encabezado perfil (F50) */
+  headerBadges?: string[] | null;
   /** Modo oscuro activo para la visualización del catálogo */
   isDark?: boolean | null;
   /** Plan de suscripción contratado actualmente por la tienda */
