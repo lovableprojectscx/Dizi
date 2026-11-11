@@ -10,9 +10,9 @@ import { hexLuminance } from "@/lib/utils";
 import { type PlanId } from "@/lib/types";
 
 describe("Parte 2: Motor de Diseño, Banners y Live Preview", () => {
-  describe("1. Las Estructuras de Diseño Unificadas (16 oficiales con Vitrina)", () => {
-    it("contiene exactamente 16 estructuras de diseño registradas (15 anteriores + vitrina F41)", () => {
-      expect(DESIGN_STRUCTURES).toHaveLength(16);
+  describe("1. Las Estructuras de Diseño Unificadas (17 oficiales con Vitrina y Perfil)", () => {
+    it("contiene exactamente 17 estructuras de diseño registradas (16 anteriores + perfil F50 v2)", () => {
+      expect(DESIGN_STRUCTURES).toHaveLength(17);
     });
 
     it("todas las estructuras poseen configuración de tema por defecto válida", () => {
@@ -45,6 +45,7 @@ describe("Parte 2: Motor de Diseño, Banners y Live Preview", () => {
       expect(resolveRenderModel("bite")).toBe("bite");
       expect(resolveRenderModel("nature")).toBe("nature");
       expect(resolveRenderModel("lookbook")).toBe("lookbook");
+      expect(resolveRenderModel("perfil")).toBe("perfil");
     });
 
     it("traduce modelos históricos heredados a las nuevas estructuras unificadas", () => {

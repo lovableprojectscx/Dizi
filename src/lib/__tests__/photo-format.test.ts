@@ -65,6 +65,11 @@ describe("F41b · Formato de fotos en más diseños (Escenarios E1–E8)", () =>
       expect(getPhotoAspect(store, "vitrina")).toEqual({ ratio: "3/4", contain: false });
     });
 
+    it("E1 Perfil con NULL retorna 4/3", () => {
+      const store: Store = { ...baseStore, model: "perfil", photoFormat: null };
+      expect(getPhotoAspect(store, "perfil")).toEqual({ ratio: "4/3", contain: false });
+    });
+
     it("E1 respeta photo_format snake_case de base de datos", () => {
       const storeDb = { ...baseStore, model: "grid", photo_format: null };
       expect(getPhotoAspect(storeDb as any, "grid")).toEqual({ ratio: "4/3", contain: false });
@@ -223,6 +228,12 @@ describe("F41b · Formato de fotos en más diseños (Escenarios E1–E8)", () =>
 
     it("E8 Grilla con NULL recomienda 4/3", () => {
       const store: Store = { ...baseStore, model: "grid", photoFormat: null };
+      const spec = getImageSpec(store);
+      expect(spec.ratio).toBe("4/3");
+    });
+
+    it("E8 Perfil con NULL recomienda 4/3", () => {
+      const store: Store = { ...baseStore, model: "perfil", photoFormat: null };
       const spec = getImageSpec(store);
       expect(spec.ratio).toBe("4/3");
     });

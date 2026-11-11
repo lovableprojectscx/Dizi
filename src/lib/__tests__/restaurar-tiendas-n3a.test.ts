@@ -196,26 +196,28 @@ describe("Encargo — Restaurar Tiendas N3a, Diagonal al Selector y Regla AGENTS
     });
   });
 
-  describe("4. Diagonal vuelve al selector oficial (8 diseños en total)", () => {
-    it("diagonal.enSelector es true", () => {
+  describe("4. Diagonal y Perfil en el selector oficial (9 diseños en total)", () => {
+    it("diagonal.enSelector es true y perfil.enSelector es true", () => {
       expect(DESIGN_SPECS.diagonal.enSelector).toBe(true);
+      expect(DESIGN_SPECS.perfil.enSelector).toBe(true);
     });
 
-    it("ALL_MODELS de registro expone exactamente 8 diseños", () => {
-      expect(ALL_MODELS).toHaveLength(8);
-      const expectedIds = ["grid", "overlay", "arch", "diagonal", "nature", "vitrina", "bloom_general", "bite"];
+    it("ALL_MODELS de registro expone exactamente 9 diseños", () => {
+      expect(ALL_MODELS).toHaveLength(9);
+      const expectedIds = ["grid", "overlay", "arch", "diagonal", "nature", "vitrina", "bloom_general", "bite", "perfil"];
       const actualIds = ALL_MODELS.map((m) => m.id);
       expect(actualIds.sort()).toEqual(expectedIds.sort());
     });
 
-    it("el selector de admin.diseno muestra 8 estructuras oficiales", () => {
+    it("el selector de admin.diseno muestra 9 estructuras oficiales", () => {
       const officialModel = "diagonal";
       const officialStructId = resolveStructureId(officialModel);
       const visibleOfficial = DESIGN_STRUCTURES.filter(
         (s) => s.spec.enSelector || s.id === officialStructId
       );
-      expect(visibleOfficial).toHaveLength(8);
+      expect(visibleOfficial).toHaveLength(9);
       expect(visibleOfficial.some((s) => s.id === "diagonal")).toBe(true);
+      expect(visibleOfficial.some((s) => s.id === "perfil")).toBe(true);
     });
   });
 });
