@@ -233,12 +233,16 @@ export function DisenoUnificadoPage() {
   const [photoFormat, setPhotoFormat] = useState<"square" | "portrait" | "contain" | null>(
     store?.photoFormat ?? (store as any)?.photo_format ?? null
   );
+  const [headerStyle, setHeaderStyle] = useState<"standard" | "profile">(
+    (store?.headerStyle ?? (store as any)?.header_style) === "profile" ? "profile" : "standard"
+  );
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
     if (store && loadedStoreId !== store.id) {
       setSelectedStructure(resolveStructureId(store.model, store.niche));
       setPhotoFormat(store.photoFormat ?? (store as any).photo_format ?? null);
+      setHeaderStyle((store.headerStyle ?? (store as any).header_style) === "profile" ? "profile" : "standard");
       setBrandColor(store.brandColor || "#4f46e5");
       setBgColor((store as any).bgColor || "#ffffff");
       setTextColor(store.textColor || "#1e293b");
@@ -356,6 +360,7 @@ export function DisenoUnificadoPage() {
       await update(store.id, {
         model: selectedStructure as any,
         photoFormat: photoFormat,
+        headerStyle: headerStyle || "standard",
         brandColor: brandColor || null,
         bgColor: bgColor || null,
         textColor: textColor || null,
@@ -396,6 +401,7 @@ export function DisenoUnificadoPage() {
     model: selectedStructure,
     photoFormat: photoFormat,
     photo_format: photoFormat,
+    headerStyle: headerStyle,
     brandColor: brandColor,
     bgColor: bgColor,
     textColor: textColor,
@@ -1433,6 +1439,47 @@ export function DisenoUnificadoPage() {
                         </select>
                       </div>
                     )}
+
+                    {/* Estilo del Encabezado (F50) */}
+                    <div className="pt-3 border-t border-zinc-200/80 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="font-bold text-xs text-zinc-800">Estilo del Encabezado</label>
+                        {headerStyle === "profile" && (
+                          <Badge variant="outline" className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 border-indigo-200">
+                            Perfil Activo
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-zinc-500">
+                        Elige entre el encabezado clásico estándar o formato Perfil (banner ancho con logo montado a la izquierda, nombre grande, eslogan y etiquetas).
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 max-w-sm pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setHeaderStyle("standard")}
+                          className={cn(
+                            "p-2.5 rounded-xl border text-xs font-bold text-center transition cursor-pointer",
+                            headerStyle === "standard"
+                              ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                              : "border-input bg-white hover:bg-zinc-50 text-zinc-700"
+                          )}
+                        >
+                          Estándar (Clásico)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHeaderStyle("profile")}
+                          className={cn(
+                            "p-2.5 rounded-xl border text-xs font-bold text-center transition cursor-pointer",
+                            headerStyle === "profile"
+                              ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
+                              : "border-input bg-white hover:bg-zinc-50 text-zinc-700"
+                          )}
+                        >
+                          Tipo Perfil
+                        </button>
+                      </div>
+                    </div>
 
                     {/* Banner Gallery Grid */}
                     {bannerList.length > 0 && (
