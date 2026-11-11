@@ -59,8 +59,5 @@ export default defineConfig({
         url: "http://localhost:5173",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
-        env: {
-          VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || "dummy-anon-key",
-        },
       },
 });
