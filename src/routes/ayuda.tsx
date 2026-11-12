@@ -343,14 +343,14 @@ function AyudaPage() {
           <Chapter {...CHAPTERS[3]} open={open === "diseno"} onToggle={() => toggle("diseno")}>
             <h3>El Panel Unificado de Diseño</h3>
             <p>
-              En la pantalla <strong>Diseño</strong> de tu panel encuentras 8 estructuras visuales y todas las opciones para personalizar la apariencia de tu catálogo en un solo lugar, divididas en tres pestañas principales:
+              En la pantalla <strong>Diseño</strong> de tu panel encuentras 9 estructuras visuales y todas las opciones para personalizar la apariencia de tu catálogo en un solo lugar, divididas en tres pestañas principales:
             </p>
 
             <ul className="space-y-2 my-3">
               <li className="flex gap-2 text-sm">
                 <span className="text-primary font-bold shrink-0">•</span>
                 <span>
-                  <strong>1. Estructura:</strong> Elige entre 8 diseños visuales únicos (Grilla Simétrica, Overlay Visual, Diagonal Dynamic, Arch Studio, Bloom Estándar, Bite Gastronómico, Nature Orgánico y Vitrina Boutique). Todos los diseños están abiertos para que elijas la estructura que mejor se adapte a tu marca.
+                  <strong>1. Estructura:</strong> Elige entre 9 diseños visuales únicos (Grilla Simétrica, Overlay Visual, Diagonal Dynamic, Arch Studio, Bloom Estándar, Bite Gastronómico, Nature Orgánico, Vitrina Boutique y Perfil). Todos los diseños están abiertos para que elijas la estructura que mejor se adapte a tu marca.
                 </span>
               </li>
               <li className="flex gap-2 text-sm">

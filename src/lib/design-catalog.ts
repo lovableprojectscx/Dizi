@@ -51,7 +51,8 @@ export type OfficialDesignId =
   | "bite"
   | "nature"
   | "lookbook"
-  | "vitrina";
+  | "vitrina"
+  | "perfil";
 
 export type CoverTextField = "titulo" | "subtitulo" | "etiqueta";
 
@@ -409,6 +410,23 @@ export const DESIGN_SPECS: Record<OfficialDesignId, DesignSpec> = {
       tarjeta: "flat",
       corteBanner: "direct",
     },
+  },
+  perfil: {
+    id: "perfil",
+    nombre: "Perfil",
+    familia: "estandar",
+    portada: "carrusel",
+    textosPortada: ["titulo", "subtitulo"],
+    textosDeEjemplo: false,
+    corteBanner: false,
+    destacados: false,
+    iconosCategoria: false,
+    temaEditable: ["colores", "tipografia", "oscuro"],
+    oscuroDeFabrica: false,
+    rubroSugerido: "Moda / Ropa / Boutique",
+    enSelector: true,
+    formatosFoto: ["square", "portrait", "contain"],
+    proporcionBase: "4/3",
   },
 };
 
@@ -807,6 +825,29 @@ export const DESIGN_STRUCTURES: StructureDef[] = [
     suggestedNiche: "Moda / Ropa",
     supportsCategoryIcons: false,
   },
+  {
+    id: "perfil",
+    name: "Perfil",
+    description: "Cabecera panorámica con banner ancho, logo superpuesto a la izquierda y grilla simétrica 2 columnas.",
+    previewImage: "/images/designs/perfil.webp",
+    layout: "perfil",
+    defaultTheme: {
+      brandColor: "#18181b",
+      bgColor: "#ffffff",
+      textColor: "#18181b",
+      cardBg: "#f8fafc",
+      accentColor: "#e0e7ff",
+      borderRadius: "16px",
+      imgShape: "rounded",
+      isDark: false,
+      typography: "sans",
+      cardStyle: "standard",
+    },
+    spec: DESIGN_SPECS.perfil,
+    supportedModules: ["watermark", "banners", "search", "pdf", "promoBar", "dualButton", "analytics"],
+    suggestedNiche: "Moda / Ropa",
+    supportsCategoryIcons: false,
+  },
 ];
 
 /* ─────────────────────────────────────────────────────────
@@ -834,6 +875,7 @@ const RENDER_MODEL_MAP: Record<string, string> = {
   nature: "nature",
   lookbook: "lookbook",
   vitrina: "vitrina",
+  perfil: "perfil",
 };
 
 export function resolveRenderModel(structureId: string | null | undefined): string {
@@ -864,6 +906,7 @@ const LEGACY_STRUCTURE_MAP: Record<string, string> = {
   nature: "nature",
   lookbook: "lookbook",
   vitrina: "vitrina",
+  perfil: "perfil",
 };
 
 export function resolveStructureId(
@@ -1079,5 +1122,14 @@ export const ALL_MODELS = [
     planLevel: 0,
     niches: ["comida", "servicios", "general"],
     p: { bg: "#0c0a09", card: "#1c1917", accent: "#f97316", dark: true },
+  },
+  {
+    id: "perfil",
+    layout: "perfil",
+    name: "Perfil",
+    desc: "Cabecera con portada amplia, logo destacado y datos de atención directa.",
+    planLevel: 0,
+    niches: ["ropa", "general", "servicios", "bisuteria"],
+    p: { bg: "#ffffff", card: "#f8fafc", accent: "#18181b", dark: false },
   },
 ];

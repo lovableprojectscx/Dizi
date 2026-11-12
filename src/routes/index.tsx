@@ -433,7 +433,7 @@ function LandingPage() {
               </div>
               <h3 className="font-bold text-base text-foreground">Catálogo Web Interactivo</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                8 estructuras de diseño profesional adaptables a tu rubro con carrito de compras integrado.
+                9 estructuras de diseño profesional adaptables a tu rubro con carrito de compras integrado.
               </p>
             </div>
 
@@ -460,7 +460,7 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* ── 5. SECCIÓN DE 8 DISEÑOS OFICIALES ── */}
+      {/* ── 5. SECCIÓN DE 9 DISEÑOS OFICIALES ── */}
       <section id="modelos" className="py-12 sm:py-24 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto space-y-3 mb-6 sm:mb-12">
@@ -469,7 +469,7 @@ function LandingPage() {
               Estructuras Oficiales
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground">
-              8 diseños pensados para vender en celular
+              9 diseños pensados para vender en celular
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Cada diseño responde a una forma distinta de comprar: catálogos boutique con fotos grandes, cartas gastronómicas rápidas o grillas limpias para cientos de productos.
@@ -562,7 +562,7 @@ function LandingPage() {
               Planes Transparentes en Soles
             </h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Los 8 diseños están incluidos en todos los planes. Eliges según la cantidad de productos que necesitas exhibir.
+              Los 9 diseños están incluidos en todos los planes. Eliges según la cantidad de productos que necesitas exhibir.
             </p>
 
             {/* Toggle Mensual / Anual */}

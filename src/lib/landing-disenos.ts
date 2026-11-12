@@ -89,4 +89,13 @@ export const LANDING_SHOWCASE_DESIGNS: LandingShowcaseDesign[] = [
     demoUrl: "https://dizi.idenza.site/t/regalos-demo",
     image: "/images/landing/disenos/bloom_general.webp",
   },
+  {
+    id: "perfil",
+    name: "Perfil",
+    niche: "Moda & Ropa",
+    desc: "Banner ancho con logo superpuesto, nombre destacado y grilla simétrica para boutiques y tiendas de autor.",
+    slug: "boutique-demo",
+    demoUrl: "https://dizi.idenza.site/t/boutique-demo",
+    image: "/images/landing/disenos/perfil.webp",
+  },
 ];

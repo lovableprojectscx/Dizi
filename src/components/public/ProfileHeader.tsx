@@ -3,7 +3,7 @@ import { Store } from "@/lib/types";
 import { getOptimizedImageUrl } from "@/lib/image-utils";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { cn } from "@/lib/utils";
-import { MapPin, Truck, Store as StoreIcon, CreditCard, Clock, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { MapPin, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface ProfileHeaderProps {
   store: Store;
@@ -24,26 +24,9 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const brandColor = store.brandColor || "#4f46e5";
   const initial = (store.name || "D").trim().charAt(0).toUpperCase();
 
-  // Badges: extraer datos reales disponibles
+  // Badges: en v1 solo muestra la dirección física registrada en location_address
   const badges: Array<{ id: string; label: string; icon: React.ReactNode }> = [];
 
-  // Si tiene badges explícitos configurados
-  if (Array.isArray(store.headerBadges) && store.headerBadges.length > 0) {
-    store.headerBadges.forEach((b, idx) => {
-      const lower = b.toLowerCase();
-      let icon = <Truck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />;
-      if (lower.includes("recojo") || lower.includes("tienda") || lower.includes("showroom")) {
-        icon = <StoreIcon className="h-3.5 w-3.5 text-blue-600 shrink-0" />;
-      } else if (lower.includes("pago") || lower.includes("yape") || lower.includes("plin") || lower.includes("tarjeta")) {
-        icon = <CreditCard className="h-3.5 w-3.5 text-purple-600 shrink-0" />;
-      } else if (lower.includes("horario") || lower.includes("lun") || lower.includes("am") || lower.includes("pm")) {
-        icon = <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />;
-      }
-      badges.push({ id: `custom-${idx}`, label: b, icon });
-    });
-  }
-
-  // Si tiene dirección física registrada en location_address
   if (store.locationAddress && store.locationAddress.trim().length > 0) {
     badges.push({
       id: "address",
@@ -73,7 +56,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }
   };
 
-  const hasBannerTexts = Boolean(store.bannerTitle || store.bannerTagline);
+  const hasBannerTexts = Boolean(store.bannerTitle);
 
   return (
     <div className={cn("w-full max-w-7xl mx-auto px-2 sm:px-4 mb-4 select-none", className)} data-testid="profile-header">
@@ -123,18 +106,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </>
               )}
 
-              {/* TEXTO DEL BANNER: Con safe-area izquierda/inferior para que el logo NO lo tape */}
+              {/* TEXTO DEL BANNER: Solo el título de temporada (el eslogan va una sola vez en la tarjeta) */}
               {hasBannerTexts && (
                 <div
                   data-testid="profile-banner-text"
                   className="absolute inset-0 z-20 flex flex-col justify-center px-4 sm:px-8 pl-24 sm:pl-36 md:pl-44 pb-2 sm:pb-0 text-left pointer-events-none"
                 >
                   <div className="max-w-xl space-y-0.5 sm:space-y-1">
-                    {store.bannerTagline && (
-                      <span className="inline-block text-[9px] sm:text-xs font-black tracking-widest uppercase text-amber-300 drop-shadow-md">
-                        {store.bannerTagline}
-                      </span>
-                    )}
                     {store.bannerTitle && (
                       <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight uppercase leading-tight drop-shadow-lg line-clamp-2">
                         {store.bannerTitle}
@@ -167,11 +145,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   data-testid="profile-banner-text"
                   className="absolute inset-0 z-10 flex flex-col justify-center px-4 sm:px-8 pl-24 sm:pl-36 md:pl-44 text-left pointer-events-none"
                 >
-                  {store.bannerTagline && (
-                    <span className="text-[10px] sm:text-xs font-bold tracking-widest uppercase text-white/80">
-                      {store.bannerTagline}
-                    </span>
-                  )}
                   {store.bannerTitle && (
                     <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight leading-tight">
                       {store.bannerTitle}

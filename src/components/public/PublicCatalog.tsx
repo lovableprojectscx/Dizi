@@ -544,6 +544,21 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
     headerStyle: "clean",
     layout: "vitrina",
   },
+  perfil: {
+    vars: {
+      "--background": "#ffffff",
+      "--card": "#f8fafc",
+      "--primary": "#0f172a",
+      "--border": "#e2e8f0",
+    } as any,
+    isDark: false,
+    imgRounded: "0.75rem",
+    cardRounded: "1rem",
+    cardShadow: "hover:shadow-md",
+    cardBorder: true,
+    headerStyle: "clean",
+    layout: "grid",
+  },
 
   sunset_glow: {
     vars: {
@@ -1576,7 +1591,18 @@ export function PublicCatalog({
   const photoAspect = getPhotoAspect(store, effectiveModel);
   const showDesktopSidebar = mode === "catalog" && !isMockup;
   const showsBrandCover = shouldShowBrandCover(store);
-  const isProfileHeader = (store.headerStyle === "profile" || (store as any).header_style === "profile");
+  const isProfileDesign = spec.id === "perfil" || modelId === "perfil";
+  const [profileBarScrolled, setProfileBarScrolled] = useState(false);
+
+  useEffect(() => {
+    if (!isProfileDesign) return;
+    const handleScroll = () => {
+      setProfileBarScrolled(window.scrollY > 160);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isProfileDesign]);
 
   const isPremiumModel =
     modelId === "bloom" ||
@@ -3206,9 +3232,28 @@ export function PublicCatalog({
 
       {/* ── Header ───────────────────────────────────── */}
       {mode === "catalog" && (
-        <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b border-border">
+        <header
+          data-testid="catalog-header"
+          className={cn(
+            "z-30 transition-all duration-300",
+            isProfileDesign
+              ? cn(
+                  "fixed top-0 inset-x-0",
+                  profileBarScrolled
+                    ? "bg-background/90 backdrop-blur-md border-b border-border shadow-sm translate-y-0 opacity-100 pointer-events-auto"
+                    : "pointer-events-none border-transparent bg-transparent -translate-y-full opacity-0",
+                )
+              : "sticky top-0 bg-background/90 backdrop-blur-md border-b border-border",
+          )}
+        >
           <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div
+              data-testid="catalog-header-brand"
+              className={cn(
+                "flex items-center gap-2.5 min-w-0 transition-opacity duration-300",
+                isProfileDesign && !profileBarScrolled ? "opacity-0 pointer-events-none" : "opacity-100",
+              )}
+            >
               {store.logo ? (
                 <img
                   src={getOptimizedImageUrl(store.logo, 200)}
@@ -3245,40 +3290,48 @@ export function PublicCatalog({
               )}
             </div>
 
-            {store.bioLinksEnabled ? (
-              <Link
-                to="/bio/$slug"
-                params={{ slug: store.slug }}
-                className={cn(
-                  "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
-                  "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
-                  "flex items-center gap-1.5 shadow-sm",
-                )}
-              >
-                <Info className="h-3.5 w-3.5" />
-                <span>Info</span>
-              </Link>
-            ) : (
-              <button
-                onClick={supportClick}
-                className={cn(
-                  "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
-                  "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
-                  "flex items-center gap-1.5 shadow-sm",
-                )}
-              >
-                <WhatsAppIcon className="h-3.5 w-3.5" />
-                <span>Contacto</span>
-              </button>
-            )}
+            <div
+              data-testid="catalog-header-actions"
+              className={cn(
+                "transition-opacity duration-300",
+                isProfileDesign && !profileBarScrolled ? "opacity-0 pointer-events-none" : "opacity-100",
+              )}
+            >
+              {store.bioLinksEnabled ? (
+                <Link
+                  to="/bio/$slug"
+                  params={{ slug: store.slug }}
+                  className={cn(
+                    "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
+                    "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
+                    "flex items-center gap-1.5 shadow-sm",
+                  )}
+                >
+                  <Info className="h-3.5 w-3.5" />
+                  <span>Info</span>
+                </Link>
+              ) : (
+                <button
+                  onClick={supportClick}
+                  className={cn(
+                    "shrink-0 h-8 px-4 rounded-full bg-primary text-primary-foreground",
+                    "text-xs font-bold hover:opacity-90 active:scale-95 transition-all duration-200",
+                    "flex items-center gap-1.5 shadow-sm",
+                  )}
+                >
+                  <WhatsAppIcon className="h-3.5 w-3.5" />
+                  <span>Contacto</span>
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Search + Filtros button: modelos SIN hero banner y SIN encabezado perfil */}
+          {/* Search + Filtros button: modelos SIN hero banner y SIN diseño perfil */}
           {!BANNER_MODELS.has(modelId) &&
             modelId !== "bite" &&
             modelId !== "bloom" &&
             modelId !== "lookbook" &&
-            !isProfileHeader &&
+            !isProfileDesign &&
             mode === "catalog" && (
               <div className="mx-auto max-w-5xl px-4 pb-3 space-y-2">
                 {/* Search row + Filtros button */}
@@ -3653,8 +3706,8 @@ export function PublicCatalog({
         </section>
       )}
 
-      {/* ── Encabezado Perfil (F50) cuando la tienda lo activa ── */}
-      {!isNarrowing && mode === "catalog" && isProfileHeader && (
+      {/* ── Encabezado Perfil (F50 v2) Diseño 9 ── */}
+      {!isNarrowing && mode === "catalog" && isProfileDesign && (
         <ProfileHeader
           store={store}
           activeBanners={activeBanners}
@@ -3663,14 +3716,14 @@ export function PublicCatalog({
       )}
 
       {/* ── Portada de Marca (RF-45.1) cuando no hay portada con foto visible ── */}
-      {!isNarrowing && !isProfileHeader && mode === "catalog" && shouldShowBrandCover(store) && spec.familia === "estandar" && (
+      {!isNarrowing && !isProfileDesign && mode === "catalog" && shouldShowBrandCover(store) && spec.familia === "estandar" && (
         <div className="w-full max-w-7xl mx-auto px-2 sm:px-4">
           <BrandCover store={store} model={spec.id} isDark={effectiveIsDark} />
         </div>
       )}
 
       {/* ── Portada Estándar (diseños estándar con portada activa) ── */}
-      {!isNarrowing && !isProfileHeader && !shouldShowBrandCover(store) && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
+      {!isNarrowing && !isProfileDesign && !shouldShowBrandCover(store) && spec.portada === "carrusel" && spec.familia === "estandar" && mode === "catalog" && (
         <PortadaEstandar
           activeBanners={activeBanners}
           bannerTitle={store.bannerTitle}
@@ -3680,8 +3733,8 @@ export function PublicCatalog({
         />
       )}
 
-      {/* ── Filtros post-banner: modelos con hero o con encabezado perfil ──────────── */}
-      {(BANNER_MODELS.has(modelId) || isProfileHeader) && mode === "catalog" && (
+      {/* ── Filtros post-banner: modelos con hero o con diseño perfil ──────────── */}
+      {(BANNER_MODELS.has(modelId) || isProfileDesign) && mode === "catalog" && (
         <div className="sticky top-[57px] z-20 bg-background/95 backdrop-blur-md border-b shadow-sm">
           <div className="mx-auto max-w-5xl px-4 py-3 space-y-2">
             {/* Search row + Filtros button */}
@@ -4217,7 +4270,7 @@ export function PublicCatalog({
               /* ── LOOKBOOK EDITORIAL layout (Dionelle / Showcase style) ── */
               <div className="space-y-16 sm:space-y-24 select-none pb-28 sm:pb-16">
                 {/* 1. Editorial Cover Section */}
-                {!isNarrowing && mode === "catalog" && !isProfileHeader && (
+                {!isNarrowing && mode === "catalog" && (
                   <header
                     className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden border-b animate-in fade-in duration-700"
                     style={{ borderBottomColor: "var(--border)", backgroundColor: "var(--card)" }}
@@ -5657,7 +5710,6 @@ export function PublicCatalog({
               <div className="space-y-8 select-none pb-28 sm:pb-16">
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
-                  if (isProfileHeader) return null;
                   if (shouldShowBrandCover(store)) {
                     return (
                       <div className="w-full">
@@ -6282,7 +6334,6 @@ export function PublicCatalog({
 
                     {/* 1. Fluid Nature Banner */}
                     {!isNarrowing && (() => {
-                      if (isProfileHeader) return null;
                       if (shouldShowBrandCover(store)) {
                         return (
                           <div className="relative w-full z-10">
@@ -6412,7 +6463,7 @@ export function PublicCatalog({
 
                           {/* Overlapping editorial card details */}
                           {(() => {
-                            if (isProfileHeader || shouldShowBrandCover(store)) return null;
+                            if (shouldShowBrandCover(store)) return null;
                             if (isTiendaEstiloAnterior) {
                               const finalTagline = store.bannerTagline || nicheTags.tagline;
                               const finalBottomTag = store.bannerBottomTag || nicheTags.bottomTag;
@@ -7162,7 +7213,6 @@ export function PublicCatalog({
 
                 {/* 1. Cover Banner Carousel */}
                 {!isNarrowing && (() => {
-                  if (isProfileHeader) return null;
                   if (shouldShowBrandCover(store)) {
                     return (
                       <div className="w-full">
