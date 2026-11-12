@@ -3233,13 +3233,22 @@ export function PublicCatalog({
       {/* ── Header ───────────────────────────────────── */}
       {mode === "catalog" && (
         <header
+          data-testid="catalog-header"
           className={cn(
-            "sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b border-border transition-all duration-300",
-            isProfileDesign && !profileBarScrolled && "border-transparent bg-transparent backdrop-blur-none pointer-events-none",
+            "z-30 transition-all duration-300",
+            isProfileDesign
+              ? cn(
+                  "fixed top-0 inset-x-0",
+                  profileBarScrolled
+                    ? "bg-background/90 backdrop-blur-md border-b border-border shadow-sm translate-y-0 opacity-100 pointer-events-auto"
+                    : "pointer-events-none border-transparent bg-transparent -translate-y-full opacity-0",
+                )
+              : "sticky top-0 bg-background/90 backdrop-blur-md border-b border-border",
           )}
         >
           <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
             <div
+              data-testid="catalog-header-brand"
               className={cn(
                 "flex items-center gap-2.5 min-w-0 transition-opacity duration-300",
                 isProfileDesign && !profileBarScrolled ? "opacity-0 pointer-events-none" : "opacity-100",
@@ -3282,6 +3291,7 @@ export function PublicCatalog({
             </div>
 
             <div
+              data-testid="catalog-header-actions"
               className={cn(
                 "transition-opacity duration-300",
                 isProfileDesign && !profileBarScrolled ? "opacity-0 pointer-events-none" : "opacity-100",

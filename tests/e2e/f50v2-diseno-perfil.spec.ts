@@ -2,15 +2,24 @@ import { test, expect, Page } from "@playwright/test";
 import path from "path";
 import fs from "fs";
 
-// Carpeta de evidencias configurable por variable de entorno o fallback a test-results/capturas-f50v2
+// Carpeta de evidencias configurable por variable de entorno o fallback
 const outputDir =
   process.env.F50V2_EVIDENCIAS_DIR ||
-  path.join(process.cwd(), "test-results", "capturas-f50v2");
+  path.join(
+    process.cwd(),
+    "..",
+    "..",
+    "INFORMACIÓN NECESARIA",
+    "04-TECNICA",
+    "encargos",
+    "capturas-f50v2"
+  );
 
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
+// 7 Fotos reales coincidentes de Atelier Lúa
 const DEMO_PRODUCTS = [
   {
     id: "prod-1",
@@ -156,6 +165,94 @@ function buildStore(overrides: Record<string, any> = {}) {
   };
 }
 
+// Tienda común determinista para la prueba píxel a píxel del Escenario 2
+export function buildAuditStore(modelId: string) {
+  return {
+    id: "audit-store-e2e",
+    slug: "audit-store",
+    name: "Audit Store Official",
+    phone: "51987654321",
+    country_code: "51",
+    country_iso: "PE",
+    logo: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='%231e293b'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='64'>A</text></svg>",
+    brand_color: "#4f46e5",
+    bg_color: "#ffffff",
+    text_color: "#1e293b",
+    card_bg: "#ffffff",
+    accent_color: "#e0e7ff",
+    border_radius: "12px",
+    img_shape: "rounded",
+    photo_format: null,
+    is_dark: false,
+    banner_image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='400'><rect width='100%' height='100%' fill='%234f46e5'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='48'>AUDIT BANNER</text></svg>",
+    banner_title: "COLECCIÓN AUDITORÍA",
+    banner_tagline: "Verificación píxel a píxel",
+    banner_style: "direct",
+    niche: "general",
+    catalog_typography: "sans",
+    card_style: "standard",
+    plan: "pro",
+    model: modelId,
+    active: true,
+    is_published: true,
+    created_at: "2026-01-01T00:00:00Z",
+    whatsapp_clicks: 0,
+    views: 0,
+    price_filter_enabled: false,
+    libro_reclamaciones_activo: false,
+    location_address: "Av. Conquistadores 410, San Isidro",
+    categories: [
+      { id: "cat-1", name: "Categoría A", product_count: 2 },
+      { id: "cat-2", name: "Categoría B", product_count: 1 },
+    ],
+    products: [
+      {
+        id: "prod-1",
+        name: "Producto A1",
+        price: 99.0,
+        category_id: "cat-1",
+        image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='100%' height='100%' fill='%236366f1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='32'>P1</text></svg>",
+        description: "Descripción A1 para prueba visual determinista.",
+        is_on_sale: false,
+        visible: true,
+        sort_order: 1,
+        variations: [],
+        wholesale_tiers: [],
+        created_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "prod-2",
+        name: "Producto A2",
+        price: 149.0,
+        category_id: "cat-1",
+        image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='100%' height='100%' fill='%238b5cf6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='32'>P2</text></svg>",
+        description: "Descripción A2 para prueba visual determinista.",
+        is_on_sale: true,
+        visible: true,
+        sort_order: 2,
+        variations: [],
+        wholesale_tiers: [],
+        created_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: "prod-3",
+        name: "Producto B1",
+        price: 199.0,
+        category_id: "cat-2",
+        image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><rect width='100%' height='100%' fill='%23ec4899'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='sans-serif' font-size='32'>P3</text></svg>",
+        description: "Descripción B1 para prueba visual determinista.",
+        is_on_sale: false,
+        visible: true,
+        sort_order: 3,
+        variations: [],
+        wholesale_tiers: [],
+        created_at: "2026-01-01T00:00:00Z",
+      },
+    ],
+    total_products_count: 3,
+  };
+}
+
 async function setupMockRoute(page: Page, storeData: any) {
   await page.addInitScript(() => {
     try {
@@ -196,20 +293,25 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/t/atelier-lua", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
+    // Verificar que la barra superior no estorba ni duplica
+    await expect(page.locator('[data-testid="catalog-header-brand"]')).toHaveCSS("opacity", "0");
     await page.waitForTimeout(500);
     await page.screenshot({
       path: path.join(outputDir, "perfil-banner-texto-375px.png"),
       fullPage: false,
+      animations: "disabled",
     });
 
     // Escritorio 1280 px
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/t/atelier-lua", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-testid="catalog-header-brand"]')).toHaveCSS("opacity", "0");
     await page.waitForTimeout(500);
     await page.screenshot({
       path: path.join(outputDir, "perfil-banner-texto-1280px.png"),
       fullPage: false,
+      animations: "disabled",
     });
   });
 
@@ -231,6 +333,7 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.screenshot({
       path: path.join(outputDir, "perfil-banner-foto-375px.png"),
       fullPage: false,
+      animations: "disabled",
     });
 
     // Escritorio 1280 px
@@ -241,6 +344,7 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.screenshot({
       path: path.join(outputDir, "perfil-banner-foto-1280px.png"),
       fullPage: false,
+      animations: "disabled",
     });
   });
 
@@ -263,6 +367,7 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.screenshot({
       path: path.join(outputDir, "perfil-sin-banner-375px.png"),
       fullPage: false,
+      animations: "disabled",
     });
 
     // Escritorio 1280 px
@@ -273,67 +378,84 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.screenshot({
       path: path.join(outputDir, "perfil-sin-banner-1280px.png"),
       fullPage: false,
+      animations: "disabled",
     });
   });
 
-  // ── Caso 4: Scroll dinámico (la barra superior revela logo y nombre) ─
-  test("Caso 4: Scroll dinámico revela logo y nombre en la barra sticky (375px y 1280px)", async ({ page }) => {
+  // ── Caso 4: Scroll dinámico con verificación expect de opacidad 0 -> 1
+  test("Caso 4: Scroll dinámico revela logo y nombre con opacidad 0 a 1 tras bajar > 160 px", async ({ page }) => {
     const store = buildStore({
       model: "perfil",
     });
     await setupMockRoute(page, store);
 
-    // Móvil 375 px con scroll
+    // Móvil 375 px
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/t/atelier-lua", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
-    // Scrollear hacia abajo para superar el encabezado (> 160 px)
+
+    // 1. Verificación en 1.er pantallazo (scrollY = 0): opacidad 0
+    const brandLocator = page.locator('[data-testid="catalog-header-brand"]');
+    const actionsLocator = page.locator('[data-testid="catalog-header-actions"]');
+    await expect(brandLocator).toHaveCSS("opacity", "0");
+    await expect(actionsLocator).toHaveCSS("opacity", "0");
+
+    // 2. Scrollear hacia abajo pasando los 160 px (hasta 350 px)
     await page.evaluate(() => window.scrollTo(0, 350));
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
+
+    // 3. Verificación tras scroll: opacidad 1
+    await expect(brandLocator).toHaveCSS("opacity", "1");
+    await expect(actionsLocator).toHaveCSS("opacity", "1");
+
+    // 4. Captura del viewport (no página completa) con la barra visible arriba
     await page.screenshot({
       path: path.join(outputDir, "perfil-scroll-barra-375px.png"),
       fullPage: false,
+      animations: "disabled",
     });
 
-    // Escritorio 1280 px con scroll
+    // Escritorio 1280 px
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/t/atelier-lua", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
+
+    const brandDesk = page.locator('[data-testid="catalog-header-brand"]');
+    await expect(brandDesk).toHaveCSS("opacity", "0");
+
     await page.evaluate(() => window.scrollTo(0, 400));
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
+    await expect(brandDesk).toHaveCSS("opacity", "1");
+
     await page.screenshot({
       path: path.join(outputDir, "perfil-scroll-barra-1280px.png"),
       fullPage: false,
+      animations: "disabled",
     });
   });
 
-  // ── Caso 5: Escenario 2: 8 capturas "después" a 375 px de las 8 demos ─
-  test("Caso 5: Escenario 2: 8 capturas 'después' a 375px de las 8 demos", async ({ page }) => {
-    const DEMOS = [
-      { id: "arch", slug: "floreria-demo" },
-      { id: "bite", slug: "burger-demo" },
-      { id: "bloom_general", slug: "pasteleria-demo" },
-      { id: "diagonal", slug: "ferreteria-demo" },
-      { id: "grid", slug: "minimarket-demo" },
-      { id: "nature", slug: "botanica-demo" },
-      { id: "overlay", slug: "cafe-demo" },
-      { id: "vitrina", slug: "zapatillas-demo" },
+  // ── Caso 5: Escenario 2: Verificación de ausencia de ProfileHeader en los 8 diseños ─
+  test("Caso 5: Escenario 2: Los 8 diseños oficiales no renderizan ProfileHeader", async ({ page }) => {
+    const LOS_8_DISENOS = [
+      "arch",
+      "bite",
+      "bloom_general",
+      "diagonal",
+      "grid",
+      "nature",
+      "overlay",
+      "vitrina",
     ];
 
     await page.setViewportSize({ width: 375, height: 812 });
 
-    for (const d of DEMOS) {
-      const storeData = buildStore({
-        slug: d.slug,
-        model: d.id,
-      });
-      await setupMockRoute(page, storeData);
-      await page.goto(`/t/${d.slug}`, { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(600);
-      await page.screenshot({
-        path: path.join(outputDir, `demo-${d.id}-despues-375px.png`),
-        fullPage: false,
-      });
+    for (const designId of LOS_8_DISENOS) {
+      const auditStore = buildAuditStore(designId);
+      await setupMockRoute(page, auditStore);
+      await page.goto("/t/audit-store", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(300);
+      await expect(page.locator('[data-testid="profile-header"]')).toHaveCount(0);
     }
   });
 
@@ -385,7 +507,6 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.goto("/admin/diseno", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1500);
 
-    // Asegurarse de estar en la pestaña estructura
     const tabEstructura = page.locator('button[value="estructura"], [role="tab"]:has-text("Estructura")');
     if (await tabEstructura.isVisible()) {
       await tabEstructura.click();
@@ -395,6 +516,7 @@ test.describe("F50 v2 · Diseño n.º 9 Perfil (Playwright E2E)", () => {
     await page.screenshot({
       path: path.join(outputDir, "panel-admin-diseno-9-modelos-1280px.png"),
       fullPage: false,
+      animations: "disabled",
     });
   });
 });

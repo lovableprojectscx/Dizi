@@ -190,9 +190,10 @@ describe("F50 v2 · Diseño n.º 9 Perfil (Escenarios 1 a 8)", () => {
       <PublicCatalog store={storePerfil} mode="catalog" isMockup={true} />
     );
 
-    // La barra superior en reposo (pantallazo 1) oculta el logo/nombre y el contacto con opacity-0 pointer-events-none
+    // La barra superior en reposo (pantallazo 1) no ocupa espacio (fixed) y oculta el logo/nombre y el contacto con opacity-0
+    expect(html).toContain("fixed top-0 inset-x-0");
+    expect(html).toContain("pointer-events-none border-transparent bg-transparent -translate-y-full opacity-0");
     expect(html).toContain("opacity-0 pointer-events-none");
-    expect(html).toContain("border-transparent bg-transparent backdrop-blur-none pointer-events-none");
   });
 
   // Escenario 7
