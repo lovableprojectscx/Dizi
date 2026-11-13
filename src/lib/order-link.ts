@@ -99,7 +99,8 @@ export function buildOrderUrl(code: string, origin?: string): string {
 export function appendOrderLinkToMessage(message: string, orderUrl: string): string {
   const trimmed = message.trimEnd();
   if (!orderUrl.trim()) return trimmed;
-  return `${trimmed}\n\n📋 Ver pedido detallado: ${orderUrl.trim()}`;
+  // Usamos flecha BMP (→, U+2192) para evitar que wa.me / WhatsApp Desktop corrompa emojis de 4 bytes en U+FFFD (rombo)
+  return `${trimmed}\n\n→ Ver pedido detallado: ${orderUrl.trim()}`;
 }
 
 /**

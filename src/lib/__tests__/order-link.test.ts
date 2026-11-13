@@ -91,13 +91,14 @@ describe("Link de Pedido por WhatsApp (order-link)", () => {
       );
     });
 
-    it("agrega el link al mensaje habitual sin alterar la lista de productos", () => {
+    it("agrega el link al mensaje habitual sin alterar la lista de productos y sin emojis de 4 bytes", () => {
       const baseMsg =
         "Hola Mi Tienda, quiero hacer este pedido:\n\n• Polo x2 — S/ 70.00\n\nTotal: S/ 70.00";
       const result = appendOrderLinkToMessage(baseMsg, "https://dizi.idenza.site/pedido/K7M9P2X4QR");
       expect(result).toBe(
-        `${baseMsg}\n\n📋 Ver pedido detallado: https://dizi.idenza.site/pedido/K7M9P2X4QR`,
+        `${baseMsg}\n\n→ Ver pedido detallado: https://dizi.idenza.site/pedido/K7M9P2X4QR`,
       );
+      expect([...result].every((ch) => (ch.codePointAt(0) ?? 0) <= 0xffff)).toBe(true);
     });
   });
 
