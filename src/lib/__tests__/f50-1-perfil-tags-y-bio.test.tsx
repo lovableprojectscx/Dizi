@@ -138,19 +138,25 @@ describe("F50.1 · Evolución nativa de Perfil (tags, redes e integración Link 
       bioLinksEnabled: true,
     };
 
-    const html = renderToStaticMarkup(
+    // En catálogo real (isMockup=false): expone tanto botón Info desktop como botón Info móvil
+    const htmlPublic = renderToStaticMarkup(
+      <PublicCatalog store={storeConBio} mode="catalog" isMockup={false} />
+    );
+
+    expect(htmlPublic).toContain("Pedir por WhatsApp");
+    expect(htmlPublic).toContain('data-testid="profile-info-button"');
+    expect(htmlPublic).toContain('data-testid="profile-info-mobile-button"');
+    expect(htmlPublic).toContain('href="/bio/keyla-import"');
+    expect(htmlPublic).toContain('data-testid="catalog-header-whatsapp"');
+    expect(htmlPublic).toContain('data-testid="catalog-header-info"');
+
+    // En simulador Live Preview (isMockup=true): fuerza vista móvil pura sin desbordar fila desktop
+    const htmlMockup = renderToStaticMarkup(
       <PublicCatalog store={storeConBio} mode="catalog" isMockup={true} />
     );
 
-    // En la tarjeta Perfil debe existir Pedir por WhatsApp + botón Info hacia /bio/:slug
-    expect(html).toContain("Pedir por WhatsApp");
-    expect(html).toContain('data-testid="profile-info-button"');
-    expect(html).toContain('data-testid="profile-info-mobile-button"');
-    expect(html).toContain('href="/bio/keyla-import"');
-
-    // En la barra superior de Perfil con bioLinksEnabled=true debe mantener WhatsApp junto a Info
-    expect(html).toContain('data-testid="catalog-header-whatsapp"');
-    expect(html).toContain('data-testid="catalog-header-info"');
+    expect(htmlMockup).toContain('data-testid="profile-info-mobile-button"');
+    expect(htmlMockup).not.toContain('data-testid="profile-info-button"');
   });
 
   it("Escenario 11: Dada Perfil en carga inicial, la barra superior permanece fija oculta sin ocupar espacio antes de salir del viewport", () => {

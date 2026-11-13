@@ -21,6 +21,8 @@ export interface ProfileHeaderProps {
   store: Store;
   activeBanners?: string[];
   supportClick: () => void;
+  /** Cuando true (Live Preview simulado en panel admin), fuerza la disposición móvil sin aplicar breakpoints sm:/md:. */
+  isMockup?: boolean;
   className?: string;
 }
 
@@ -28,6 +30,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   store,
   activeBanners = [],
   supportClick,
+  isMockup = false,
   className,
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -70,11 +73,31 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const hasBannerTexts = Boolean(store.bannerTitle);
 
   return (
-    <div className={cn("w-full max-w-7xl mx-auto px-2 sm:px-4 mb-4 select-none", className)} data-testid="profile-header">
-      <div className="bg-card rounded-2xl sm:rounded-3xl border border-border overflow-hidden shadow-xs">
-        
-        {/* 1. BANNER ANCHO ARRIBA */}
-        <div className="relative w-full aspect-[21/9] sm:aspect-[21/7] md:aspect-[3.6/1] min-h-[140px] max-h-[260px] overflow-hidden bg-muted">
+    <div
+      className={cn(
+        isMockup
+          ? "w-full mx-auto px-0 mb-4 select-none"
+          : "w-full max-w-7xl mx-auto px-0 sm:px-4 sm:mt-3 mb-4 select-none",
+        className,
+      )}
+      data-testid="profile-header"
+    >
+      <div
+        className={cn(
+          "bg-card overflow-hidden border-border",
+          isMockup
+            ? "rounded-none border-b"
+            : "rounded-none sm:rounded-3xl border-b sm:border sm:shadow-xs",
+        )}
+      >
+        {/* 1. BANNER ANCHO ARRIBA (Estándar 3:1 en desktop con tope 360px, full-bleed 5:2 en móvil) */}
+        <div
+          data-testid="profile-banner-container"
+          className={cn(
+            "relative w-full overflow-hidden bg-muted min-h-[150px] max-h-[360px]",
+            isMockup ? "aspect-[5/2]" : "aspect-[5/2] sm:aspect-[3/1]",
+          )}
+        >
           {hasBanners ? (
             <>
               {banners.map((b, idx) => (
@@ -121,11 +144,21 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               {hasBannerTexts && (
                 <div
                   data-testid="profile-banner-text"
-                  className="absolute inset-0 z-20 flex flex-col justify-center px-4 sm:px-8 pl-24 sm:pl-36 md:pl-44 pb-2 sm:pb-0 text-left pointer-events-none"
+                  className={cn(
+                    "absolute inset-0 z-20 flex flex-col justify-center pr-4 pb-3 text-left pointer-events-none",
+                    isMockup
+                      ? "px-4 pl-24"
+                      : "px-4 sm:px-8 pl-24 sm:pl-36 md:pl-44 sm:pb-0",
+                  )}
                 >
                   <div className="max-w-xl space-y-0.5 sm:space-y-1">
                     {store.bannerTitle && (
-                      <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight uppercase leading-tight drop-shadow-lg line-clamp-2">
+                      <h2
+                        className={cn(
+                          "font-extrabold text-white tracking-tight uppercase leading-tight drop-shadow-lg line-clamp-2",
+                          isMockup ? "text-base" : "text-base sm:text-2xl md:text-3xl",
+                        )}
+                      >
                         {store.bannerTitle}
                       </h2>
                     )}
@@ -154,10 +187,20 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               {hasBannerTexts && (
                 <div
                   data-testid="profile-banner-text"
-                  className="absolute inset-0 z-10 flex flex-col justify-center px-4 sm:px-8 pl-24 sm:pl-36 md:pl-44 text-left pointer-events-none"
+                  className={cn(
+                    "absolute inset-0 z-10 flex flex-col justify-center pr-4 pb-3 text-left pointer-events-none",
+                    isMockup
+                      ? "px-4 pl-24"
+                      : "px-4 sm:px-8 pl-24 sm:pl-36 md:pl-44 sm:pb-0",
+                  )}
                 >
                   {store.bannerTitle && (
-                    <h2 className="text-lg sm:text-2xl font-extrabold text-white tracking-tight leading-tight">
+                    <h2
+                      className={cn(
+                        "font-extrabold text-white tracking-tight leading-tight",
+                        isMockup ? "text-base" : "text-base sm:text-2xl",
+                      )}
+                    >
                       {store.bannerTitle}
                     </h2>
                   )}
@@ -168,13 +211,25 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </div>
 
         {/* 2. ZONA DE PERFIL SOLAPADA (Logo cuadrado redondeado + Nombre + Acciones) */}
-        <div className="relative px-4 sm:px-6 pb-5 pt-1">
-          
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 -mt-9 sm:-mt-12 md:-mt-14 mb-3">
-            
+        <div className={cn("relative pb-5 pt-1", isMockup ? "px-4" : "px-4 sm:px-6")}>
+          <div
+            className={cn(
+              "flex justify-between gap-3 -mt-9 mb-3",
+              isMockup
+                ? "flex-col"
+                : "flex-col sm:flex-row sm:items-end sm:-mt-12 md:-mt-14",
+            )}
+          >
             {/* LOGO CUADRADO CON BORDES REDONDEADOS (Montado en el borde inferior izquierdo) */}
             <div className="relative z-20 shrink-0" data-testid="profile-logo">
-              <div className="w-18 h-18 sm:w-22 sm:h-22 md:w-26 md:h-26 w-[76px] h-[76px] sm:w-[92px] sm:h-[92px] md:w-[104px] md:h-[104px] rounded-2xl bg-card p-1 shadow-lg border-2 border-background">
+              <div
+                className={cn(
+                  "rounded-2xl bg-card p-1 shadow-lg border-2 border-background",
+                  isMockup
+                    ? "w-[76px] h-[76px]"
+                    : "w-[76px] h-[76px] sm:w-[92px] sm:h-[92px] md:w-[104px] md:h-[104px]",
+                )}
+              >
                 {store.logo ? (
                   <img
                     src={getOptimizedImageUrl(store.logo, 250)}
@@ -192,44 +247,56 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </div>
             </div>
 
-            {/* BOTONES DE ACCIÓN (Desktop) */}
-            <div className="hidden sm:flex items-center gap-2 pb-1">
-              <button
-                type="button"
-                onClick={supportClick}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-xs hover:opacity-90 active:scale-95 transition"
-              >
-                <WhatsAppIcon className="h-4 w-4" />
-                <span>Pedir por WhatsApp</span>
-              </button>
-              {showBioInfo && (
-                <a
-                  href={bioHref}
-                  data-testid="profile-info-button"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition"
+            {/* BOTONES DE ACCIÓN (Desktop real, ocultos en simulador móvil isMockup) */}
+            {!isMockup && (
+              <div className="hidden sm:flex items-center gap-2 pb-1">
+                <button
+                  type="button"
+                  onClick={supportClick}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-xs hover:opacity-90 active:scale-95 transition"
                 >
-                  <Info className="h-4 w-4 text-muted-foreground" />
-                  <span>Info</span>
-                </a>
-              )}
-              <button
-                type="button"
-                onClick={handleShare}
-                className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground transition"
-                title="Compartir catálogo"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-            </div>
+                  <WhatsAppIcon className="h-4 w-4" />
+                  <span>Pedir por WhatsApp</span>
+                </button>
+                {showBioInfo && (
+                  <a
+                    href={bioHref}
+                    data-testid="profile-info-button"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition"
+                  >
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                    <span>Info</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground transition"
+                  title="Compartir catálogo"
+                >
+                  <Share2 className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* NOMBRE Y ESCLOGAN */}
           <div className="space-y-1 max-w-2xl">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight leading-tight">
+            <h1
+              className={cn(
+                "font-extrabold text-foreground tracking-tight leading-tight",
+                isMockup ? "text-xl" : "text-xl sm:text-2xl md:text-3xl",
+              )}
+            >
               {store.name}
             </h1>
             {store.bannerTagline && (
-              <p className="text-xs sm:text-sm text-muted-foreground font-medium leading-relaxed">
+              <p
+                className={cn(
+                  "text-muted-foreground font-medium leading-relaxed",
+                  isMockup ? "text-xs" : "text-xs sm:text-sm",
+                )}
+              >
                 {store.bannerTagline}
               </p>
             )}
@@ -287,8 +354,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </div>
           )}
 
-          {/* ACCIONES MÓVIL (Full width) */}
-          <div className="flex sm:hidden items-center gap-2 mt-3.5 pt-1">
+          {/* ACCIONES MÓVIL (Full width; siempre visible cuando isMockup simula teléfono) */}
+          <div className={cn("items-center gap-2 mt-3.5 pt-1", isMockup ? "flex" : "flex sm:hidden")}>
             <button
               type="button"
               onClick={supportClick}

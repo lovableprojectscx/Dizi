@@ -205,7 +205,7 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
     const store = buildProfileStore();
     await setupPublicStoreMock(page, store);
 
-    // Móvil 375 px
+    // Móvil 375 px (full-bleed borde a borde, sin marco lateral)
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/t/boutique-demo", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
@@ -218,6 +218,11 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
     await expect(page.locator('[data-testid="profile-social-instagram"]')).toBeVisible();
     await expect(page.locator('[data-testid="profile-info-mobile-button"]')).toBeVisible();
     await expect(page.locator('[data-testid="catalog-header-brand"]')).toHaveCSS("opacity", "0");
+
+    const mobileBannerBox = await page.locator('[data-testid="profile-banner-container"]').boundingBox();
+    expect(mobileBannerBox?.x).toBe(0);
+    expect(mobileBannerBox?.width).toBe(375);
+
     await page.waitForTimeout(400);
     await page.screenshot({
       path: path.join(outputDir, "f50-1-perfil-completo-375px.png"),
@@ -225,15 +230,38 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
       animations: "disabled",
     });
 
-    // Escritorio 1280 px
+    // Laptop 1280 x 800 (tarjeta enmarcada alineada, banner 3:1 máx 360px y buscador visible)
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/t/boutique-demo", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('[data-testid="profile-info-button"]')).toBeVisible();
     await expect(page.locator('[data-testid="catalog-header-brand"]')).toHaveCSS("opacity", "0");
+
+    const desktopBannerBox = await page.locator('[data-testid="profile-banner-container"]').boundingBox();
+    expect(desktopBannerBox?.height).toBeGreaterThanOrEqual(340);
+    expect(desktopBannerBox?.height).toBeLessThanOrEqual(365);
+    const searchInputDesktop = page.getByPlaceholder("¿Qué estás buscando hoy?");
+    await expect(searchInputDesktop).toBeVisible();
+    const searchBox = await searchInputDesktop.boundingBox();
+    expect((searchBox?.y || 0) + (searchBox?.height || 0)).toBeLessThanOrEqual(800);
+
     await page.waitForTimeout(400);
     await page.screenshot({
       path: path.join(outputDir, "f50-1-perfil-completo-1280px.png"),
+      fullPage: false,
+      animations: "disabled",
+    });
+
+    // PC / Laptop grande 1440 x 900 (sin estirarse de más gracias a max-w-7xl + max-h 360px)
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/t/boutique-demo", { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
+    const pcBannerBox = await page.locator('[data-testid="profile-banner-container"]').boundingBox();
+    expect(pcBannerBox?.height).toBeGreaterThanOrEqual(340);
+    expect(pcBannerBox?.height).toBeLessThanOrEqual(365);
+    await page.waitForTimeout(400);
+    await page.screenshot({
+      path: path.join(outputDir, "f50-1-perfil-completo-1440px.png"),
       fullPage: false,
       animations: "disabled",
     });
@@ -478,11 +506,13 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
     await page.locator('[data-testid="profile-tag-input-custom-3"]').fill("Venta por mayor");
     await page.locator('[data-testid="profile-tag-icon-3-package"]').click();
 
-    // Verificar Live Preview y contador (4/6)
+    // Verificar Live Preview simulado móvil y contador (4/6)
     await expect(page.locator('[data-testid="profile-tags-counter"]')).toHaveText("4/6");
     await expect(page.locator('[data-testid="profile-tag-delivery"]').first()).toContainText("Delivery gratis > S/ 99");
     await expect(page.locator('[data-testid="profile-tag-yape"]').first()).toBeVisible();
     await expect(page.locator('[data-testid="profile-tag-custom-3"]').first()).toContainText("Venta por mayor");
+    await expect(page.locator('[data-testid="profile-info-mobile-button"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="profile-info-button"]')).toHaveCount(0);
 
     // Reordenar subiendo la etiqueta propia 1 posición (de índice 3 a índice 2)
     await page.locator('[data-testid="profile-tag-move-up-3"]').click();

@@ -3492,6 +3492,7 @@ export function PublicCatalog({
             store={store}
             activeBanners={activeBanners}
             supportClick={supportClick}
+            isMockup={isMockup}
           />
         </div>
       )}
