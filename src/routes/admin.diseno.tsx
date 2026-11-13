@@ -45,6 +45,13 @@ const CatalogPdfExportButton = lazy(() =>
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId, getDesignSpec } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 import { isFlexiblePhotoLayout, suggestPhotoFormat } from "@/lib/photo-format";
+import {
+  PROFILE_TAG_PRESETS,
+  PROFILE_TAG_MAX_VALUE_LENGTH,
+  resolveProfileTags,
+  type ProfileTagItem,
+  type ProfileTagPresetId,
+} from "@/lib/profile-tags";
 
 /**
  * @file admin.diseno.tsx
@@ -233,12 +240,18 @@ export function DisenoUnificadoPage() {
   const [photoFormat, setPhotoFormat] = useState<"square" | "portrait" | "contain" | null>(
     store?.photoFormat ?? (store as any)?.photo_format ?? null
   );
+  const initialProfileTags = useMemo(
+    () => resolveProfileTags(store?.profileTags ?? store?.profile_tags),
+    [store?.profileTags, store?.profile_tags]
+  );
+  const [profileTags, setProfileTags] = useState<ProfileTagItem[]>(initialProfileTags);
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
     if (store && loadedStoreId !== store.id) {
       setSelectedStructure(resolveStructureId(store.model, store.niche));
       setPhotoFormat(store.photoFormat ?? (store as any).photo_format ?? null);
+      setProfileTags(resolveProfileTags(store.profileTags ?? store.profile_tags));
       setBrandColor(store.brandColor || "#4f46e5");
       setBgColor((store as any).bgColor || "#ffffff");
       setTextColor(store.textColor || "#1e293b");
@@ -349,11 +362,33 @@ export function DisenoUnificadoPage() {
     toast.info("Banner eliminado. Haz clic en Guardar cambios.");
   };
 
+  const toggleProfileTag = (id: ProfileTagPresetId) => {
+    setProfileTags((prev) => {
+      const exists = prev.some((item) => item.id === id);
+      if (exists) return prev.filter((item) => item.id !== id);
+      return [...prev, { id }];
+    });
+  };
+
+  const updateProfileTagValue = (id: ProfileTagPresetId, value: string) => {
+    const trimmedMax = value.slice(0, PROFILE_TAG_MAX_VALUE_LENGTH);
+    setProfileTags((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, value: trimmedMax } : item
+      )
+    );
+  };
+
   // Guardar configuración unificada
   const save = async () => {
     const toastId = toast.loading("Guardando diseño...");
     try {
-      await update(store.id, {
+      const normalizedProfileTags = resolveProfileTags(profileTags);
+      const profileTagsChanged =
+        selectedStructure === "perfil" &&
+        JSON.stringify(normalizedProfileTags) !== JSON.stringify(initialProfileTags);
+
+      const patch: Record<string, any> = {
         model: selectedStructure as any,
         photoFormat: photoFormat,
         brandColor: brandColor || null,
@@ -381,7 +416,13 @@ export function DisenoUnificadoPage() {
         showFeatured,
         showDiscountPct,
         wholesaleEnabled,
-      } as any);
+      };
+
+      if (profileTagsChanged) {
+        patch.profileTags = normalizedProfileTags;
+      }
+
+      await update(store.id, patch);
 
       toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
     } catch (err: any) {
@@ -396,6 +437,8 @@ export function DisenoUnificadoPage() {
     model: selectedStructure,
     photoFormat: photoFormat,
     photo_format: photoFormat,
+    profileTags: resolveProfileTags(profileTags),
+    profile_tags: resolveProfileTags(profileTags),
     brandColor: brandColor,
     bgColor: bgColor,
     textColor: textColor,
@@ -598,6 +641,75 @@ export function DisenoUnificadoPage() {
                   );
                 })}
               </div>
+
+              {/* Etiquetas comerciales exclusivas del diseño Perfil (F50.1) */}
+              {selectedStructure === "perfil" && (
+                <div
+                  data-testid="profile-tags-editor"
+                  className="pt-4 border-t border-zinc-200/80 space-y-3 animate-in fade-in duration-200"
+                >
+                  <div>
+                    <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                      <Tag className="h-3.5 w-3.5 text-primary" />
+                      Etiquetas de tu tarjeta Perfil
+                    </h4>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                      Selecciona solo las que correspondan a tu negocio. Si no eliges ninguna, la tarjeta no mostrará etiquetas.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {PROFILE_TAG_PRESETS.map((preset) => {
+                      const activeItem = profileTags.find((item) => item.id === preset.id);
+                      const isSelected = Boolean(activeItem);
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => toggleProfileTag(preset.id)}
+                          aria-pressed={isSelected}
+                          data-testid={`profile-tag-option-${preset.id}`}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary shadow-2xs"
+                              : "border-zinc-200 bg-zinc-50/70 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100"
+                          )}
+                        >
+                          <span>{preset.label}</span>
+                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {PROFILE_TAG_PRESETS.filter(
+                    (preset) => preset.supportsCustomValue && profileTags.some((item) => item.id === preset.id)
+                  ).map((preset) => {
+                    const activeItem = profileTags.find((item) => item.id === preset.id);
+                    return (
+                      <div key={`${preset.id}-input`} className="bg-zinc-50/70 border rounded-xl p-3 space-y-1.5">
+                        <label
+                          htmlFor={`profile-tag-input-${preset.id}`}
+                          className="block text-[11px] font-bold text-zinc-800"
+                        >
+                          Texto para "{preset.label}" (opcional, máx. {PROFILE_TAG_MAX_VALUE_LENGTH} caracteres)
+                        </label>
+                        <input
+                          id={`profile-tag-input-${preset.id}`}
+                          type="text"
+                          value={activeItem?.value || ""}
+                          maxLength={PROFILE_TAG_MAX_VALUE_LENGTH}
+                          onChange={(e) => updateProfileTagValue(preset.id, e.target.value)}
+                          placeholder={preset.placeholder || "Ej: Lun–Sáb 9am–7pm"}
+                          data-testid={`profile-tag-input-${preset.id}`}
+                          className="w-full h-9 rounded-lg border border-input bg-white px-3 text-xs font-medium"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Interruptor de destacados al inicio para diseños compatibles */}
               {currentSpec.destacados && (

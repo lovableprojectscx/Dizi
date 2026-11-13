@@ -13,6 +13,7 @@ import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
 import { findCategoryByParam, cleanCategoryName, getCategorySlug } from "@/lib/category-link";
+import { resolveProfileTags } from "@/lib/profile-tags";
 import type { Store } from "@/lib/types";
 
 /**
@@ -237,6 +238,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       locationLat: data.location_lat ? Number(data.location_lat) : undefined,
       locationLng: data.location_lng ? Number(data.location_lng) : undefined,
       locationAddress: data.location_address ?? undefined,
+      profileTags: resolveProfileTags(data.profile_tags),
       showMap: data.show_map ?? true,
       quickLinks: data.quick_links ?? [],
       bioLinksEnabled: data.bio_links_enabled ?? false,

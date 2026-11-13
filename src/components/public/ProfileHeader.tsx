@@ -1,9 +1,39 @@
 import React, { useState } from "react";
 import { Store } from "@/lib/types";
 import { getOptimizedImageUrl } from "@/lib/image-utils";
+import {
+  resolveProfileTags,
+  formatProfileTagLabel,
+  type ProfileTagPresetId,
+} from "@/lib/profile-tags";
+import { getQuickLinkBranding, normalizeQuickLinkHref } from "./quick-link-branding";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { cn } from "@/lib/utils";
-import { MapPin, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  MapPin,
+  Share2,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Truck,
+  Store as StoreIcon,
+  PackageCheck,
+  Wallet,
+  CreditCard,
+  Banknote,
+  Clock,
+} from "lucide-react";
+
+const TAG_ICONS: Record<ProfileTagPresetId, React.ReactNode> = {
+  delivery: <Truck className="h-3.5 w-3.5 text-rose-500 shrink-0" />,
+  recojo: <StoreIcon className="h-3.5 w-3.5 text-fuchsia-600 shrink-0" />,
+  envios_provincia: <PackageCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />,
+  yape: <Wallet className="h-3.5 w-3.5 text-purple-600 shrink-0" />,
+  plin: <Wallet className="h-3.5 w-3.5 text-cyan-600 shrink-0" />,
+  tarjeta: <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0" />,
+  contraentrega: <Banknote className="h-3.5 w-3.5 text-emerald-600 shrink-0" />,
+  horario: <Clock className="h-3.5 w-3.5 text-slate-600 shrink-0" />,
+};
 
 export interface ProfileHeaderProps {
   store: Store;
@@ -24,16 +54,15 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const brandColor = store.brandColor || "#4f46e5";
   const initial = (store.name || "D").trim().charAt(0).toUpperCase();
 
-  // Badges: en v1 solo muestra la dirección física registrada en location_address
-  const badges: Array<{ id: string; label: string; icon: React.ReactNode }> = [];
+  const profileTags = resolveProfileTags(store.profileTags ?? store.profile_tags);
+  const trimmedAddress = store.locationAddress?.trim() || "";
+  const hasBadgesRow = profileTags.length > 0 || trimmedAddress.length > 0;
 
-  if (store.locationAddress && store.locationAddress.trim().length > 0) {
-    badges.push({
-      id: "address",
-      label: store.locationAddress.trim(),
-      icon: <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />,
-    });
-  }
+  const validQuickLinks = (store.quickLinks || []).filter(
+    (link) => Boolean((link.url || "").trim()),
+  );
+  const showBioInfo = Boolean(store.bioLinksEnabled && store.slug);
+  const bioHref = `/bio/${store.slug}`;
 
   const handleShare = async () => {
     const shareData = {
@@ -191,6 +220,16 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <WhatsAppIcon className="h-4 w-4" />
                 <span>Pedir por WhatsApp</span>
               </button>
+              {showBioInfo && (
+                <a
+                  href={bioHref}
+                  data-testid="profile-info-button"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition"
+                >
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                  <span>Info</span>
+                </a>
+              )}
               <button
                 type="button"
                 onClick={handleShare}
@@ -214,18 +253,55 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             )}
           </div>
 
-          {/* 3. FILA DE ETIQUETAS (Delivery, Recojo, Pagos, Dirección, Horario) */}
-          {badges.length > 0 && (
-            <div data-testid="profile-badges" className="mt-3.5 pt-3 border-t border-border/60 flex flex-wrap items-center gap-2">
-              {badges.map((b) => (
+          {/* 3. FILA DE ETIQUETAS (Tags comerciales + Dirección) */}
+          {hasBadgesRow && (
+            <div
+              data-testid="profile-badges"
+              className="mt-3.5 pt-3 border-t border-border/60 flex flex-wrap items-center gap-2"
+            >
+              {profileTags.map((tag) => (
                 <div
-                  key={b.id}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-muted/70 text-foreground border border-border/50 shadow-2xs"
+                  key={tag.id}
+                  data-testid={`profile-tag-${tag.id}`}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/70 text-foreground border border-border/60 shadow-2xs"
                 >
-                  {b.icon}
-                  <span>{b.label}</span>
+                  {TAG_ICONS[tag.id]}
+                  <span>{formatProfileTagLabel(tag)}</span>
                 </div>
               ))}
+              {trimmedAddress && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-muted/70 text-foreground border border-border/50 shadow-2xs">
+                  <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+                  <span>{trimmedAddress}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4. FILA COMPACTA DE REDES SOCIALES (Link en Bio) */}
+          {validQuickLinks.length > 0 && (
+            <div
+              data-testid="profile-social-links"
+              className="mt-2.5 flex flex-wrap items-center gap-2"
+            >
+              {validQuickLinks.map((link, idx) => {
+                const labelText = link.label || (link as { title?: string }).title || "";
+                const branding = getQuickLinkBranding(labelText, link.url, "h-7 w-7");
+                return (
+                  <a
+                    key={`${branding.platform}-${idx}`}
+                    href={normalizeQuickLinkHref(link.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={labelText || branding.platform}
+                    title={labelText || branding.platform}
+                    data-testid={`profile-social-${branding.platform}`}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full overflow-hidden shadow-2xs hover:scale-105 active:scale-95 transition-transform"
+                  >
+                    {branding.coloredIcon}
+                  </a>
+                );
+              })}
             </div>
           )}
 
@@ -239,6 +315,16 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               <WhatsAppIcon className="h-4 w-4" />
               <span>Pedir por WhatsApp</span>
             </button>
+            {showBioInfo && (
+              <a
+                href={bioHref}
+                data-testid="profile-info-mobile-button"
+                className="inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-border bg-card text-foreground text-xs font-semibold hover:bg-muted transition"
+              >
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <span>Info</span>
+              </a>
+            )}
             <button
               type="button"
               onClick={handleShare}

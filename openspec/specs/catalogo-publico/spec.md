@@ -131,5 +131,26 @@ El RPC `get_public_store` DEBE calcular y entregar en el array `categories` el c
 ### Requisito: Búsqueda Global en Servidor con Debounce
 Al ingresar un término de búsqueda de 2 o más caracteres, el catálogo DEBE ejecutar una consulta debounce (300 ms) hacia `get_public_store_products` con `p_search_query` utilizando ILIKE en PostgreSQL.
 
+### Requisito: Diseño Oficial "Perfil" y Etiquetas Extensibles (RF-50.1 a RF-50.10)
+Cuando `store.model = 'perfil'`, el catálogo público DEBE renderizar arriba la tarjeta `ProfileHeader` (banner ancho de portada o degradado con `brandColor`, logo cuadrado redondeado superpuesto en la esquina inferior izquierda, nombre y eslogan único) seguida de la grilla de productos:
+- **Barra flotante por visibilidad real:** La barra superior fija permanece oculta mientras `[data-testid="profile-header"]` intersecta el viewport (`IntersectionObserver`) y se revela únicamente cuando la tarjeta sale completamente de pantalla, exhibiendo la acción principal de WhatsApp y el acceso compacto `Info` (`/bio/:slug`) si `bioLinksEnabled = true`.
+- **Integración nativa con Link en Bio:** Si `store.bioLinksEnabled = true`, `ProfileHeader` muestra el botón secundario `Info` hacia `/bio/:slug` junto a `Pedir por WhatsApp` y `Compartir`. Si `store.quickLinks` contiene enlaces sociales/rápidos, renderiza una fila compacta de íconos debajo de las etiquetas.
+- **Etiquetas comerciales extensibles:** La columna `stores.profile_tags` (`jsonb DEFAULT '[]'`) almacena las etiquetas seleccionadas del catálogo tipado (`src/lib/profile-tags.ts`: `delivery`, `recojo`, `yape`, `plin`, `tarjeta`, `contraentrega`, `envios_provincia`, `horario`). Se configuran en `/admin/diseno` únicamente cuando el diseño elegido es `perfil`. Si `profile_tags` está vacío y no existe `locationAddress`, la fila de etiquetas no se renderiza; ninguno de los otros 8 diseños oficiales cambia su presentación.
+
+#### Escenario: Scroll sin solapamiento sobre la tarjeta Perfil
+- **Dado** un catálogo con `model = 'perfil'` visible en pantalla (con o sin barra promocional superior)
+- **Cuando** el usuario realiza un desplazamiento corto manteniendo visible parte de `ProfileHeader`
+- **Entonces** la barra superior fija permanece oculta (`opacity: 0`) y solo se muestra cuando `ProfileHeader` sale completamente del viewport.
+
+#### Escenario: Integración de redes (`quickLinks`), Link en Bio y etiquetas
+- **Dado** una tienda con `model = 'perfil'`, `bioLinksEnabled = true`, `quickLinks` con TikTok/Instagram y `profile_tags` con `delivery`, `yape` y `horario`
+- **Cuando** se carga `/t/:slug`
+- **Entonces** `ProfileHeader` muestra los chips de etiquetas, los íconos de redes enlazados y el botón `Info` hacia `/bio/:slug` sin ocultar `Pedir por WhatsApp`.
+
+#### Escenario: Retrocompatibilidad en tiendas existentes
+- **Dado** una tienda en `model = 'perfil'` sin `profile_tags` ni `quickLinks` ni `locationAddress`, o una tienda en cualquiera de los otros 8 diseños
+- **Cuando** se renderiza su catálogo público
+- **Entonces** no se inventan chips ni redes vacías y los otros 8 diseños conservan intacto su encabezado y diseño.
+
 ## Trazabilidad
-Casos de prueba: CP-01 a CP-04, CP-14, SW-01 a SW-04, E2E-LL-01 a E2E-LL-08 · Vitest: `category-lazy-loading.test.ts`, `lazy-load-egress.test.ts`, `category-link.test.ts`, `discount.test.ts`, `wholesale.test.ts`, `image-utils.test.ts` · Código: `src/routes/t.$slug.tsx`, `src/routes/t.$slug.{-$categoria}.tsx`, `src/routes/bio.$slug.tsx`, `src/lib/category-link.ts`, `src/lib/image-utils.ts`, `src/lib/discount.ts`, `src/lib/wholesale.ts`, `src/components/public/PublicCatalog.tsx`, `src/components/public/WholesaleHint.tsx`, `src/components/public/WholesaleTable.tsx`, `src/components/public/WholesaleProgress.tsx`, RPC `get_public_store`, `get_public_store_products`.
+Casos de prueba: CP-01 a CP-04, CP-14, SW-01 a SW-04, E2E-LL-01 a E2E-LL-08, F50v2, F50.1 · Vitest: `category-lazy-loading.test.ts`, `lazy-load-egress.test.ts`, `category-link.test.ts`, `discount.test.ts`, `wholesale.test.ts`, `image-utils.test.ts`, `profile-tags.test.ts`, `f50v2-diseno-perfil.test.tsx`, `ProfileHeader.test.tsx` · Código: `src/routes/t.$slug.tsx`, `src/routes/t.$slug.{-$categoria}.tsx`, `src/routes/bio.$slug.tsx`, `src/lib/category-link.ts`, `src/lib/image-utils.ts`, `src/lib/discount.ts`, `src/lib/wholesale.ts`, `src/lib/profile-tags.ts`, `src/components/public/PublicCatalog.tsx`, `src/components/public/ProfileHeader.tsx`, `src/components/public/WholesaleHint.tsx`, `src/components/public/WholesaleTable.tsx`, `src/components/public/WholesaleProgress.tsx`, RPC `get_public_store`, `get_public_store_products`.
