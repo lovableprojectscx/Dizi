@@ -6,6 +6,7 @@
 
 import { getDesignSpec } from "./design-catalog";
 import { getPhotoAspect } from "./photo-format";
+import type { ProfileTagItem } from "./profile-tags";
 
 /**
  * Identificadores válidos para los planes de suscripción de DIZI.
@@ -337,6 +338,10 @@ export interface Store {
   locationLng?: number;
   /** Dirección física en texto legible */
   locationAddress?: string | null;
+  /** Etiquetas comerciales seleccionadas para el encabezado del diseño "Perfil" (F50.1) */
+  profileTags?: ProfileTagItem[];
+  /** Compatibilidad snake_case directo desde RPC/BD (F50.1) */
+  profile_tags?: ProfileTagItem[];
   /** Habilita la visualización del mapa interactivo con Leaflet en el bio-link */
   showMap?: boolean;
   /** Muestra la marca "Creado con DIZI" en el pie de página */

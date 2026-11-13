@@ -23,6 +23,7 @@ import { hexLuminance } from "./utils";
 import { getUserRole } from "./auth";
 import { SURVEY_VERSION, type SurveyResponseRecord } from "./survey";
 import { diffProduct, toDbPatch, ProductConflictError } from "./product-sync";
+import { resolveProfileTags } from "./profile-tags";
 
 /**
  * Invalida el cache público almacenado en `localStorage` y `sessionStorage` para una tienda.
@@ -141,6 +142,7 @@ export const mapStoreFromDB = (row: any): Store => {
     locationLat: row.location_lat ? Number(row.location_lat) : undefined,
     locationLng: row.location_lng ? Number(row.location_lng) : undefined,
     locationAddress: row.location_address ?? undefined,
+    profileTags: resolveProfileTags(row.profile_tags),
     showMap: row.show_map ?? true,
     showDiziBranding: row.show_dizi_branding ?? (row.plan === "semilla" ? true : false),
     referredBy: row.referred_by ?? null,
@@ -820,6 +822,9 @@ export const useApp = create<AppState>()(
         if (updatedPatch.borderRadius !== undefined) dbPatch.border_radius = updatedPatch.borderRadius;
         if (updatedPatch.imgShape !== undefined) dbPatch.img_shape = updatedPatch.imgShape;
         if (updatedPatch.photoFormat !== undefined) dbPatch.photo_format = updatedPatch.photoFormat;
+        if (updatedPatch.profileTags !== undefined) {
+          dbPatch.profile_tags = resolveProfileTags(updatedPatch.profileTags);
+        }
         if (updatedPatch.isDark !== undefined) dbPatch.is_dark = updatedPatch.isDark;
         if (updatedPatch.showFeatured !== undefined)
           dbPatch.show_featured = updatedPatch.showFeatured;

@@ -31,6 +31,9 @@ import {
   X,
   Percent,
   RotateCcw,
+  Plus,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar, planAllowsWholesale } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,7 @@ import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
+import { renderProfileTagIcon } from "@/components/public/profile-tag-icons";
 import { lazy, Suspense } from "react";
 const CatalogPdfExportButton = lazy(() =>
   import("@/components/public/CatalogPdfExport").then((m) => ({ default: m.CatalogPdfExportButton }))
@@ -45,6 +49,18 @@ const CatalogPdfExportButton = lazy(() =>
 import { DESIGN_STRUCTURES, StructureDef, resolveStructureId, getDesignSpec } from "@/lib/design-catalog";
 import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 import { isFlexiblePhotoLayout, suggestPhotoFormat } from "@/lib/photo-format";
+import {
+  PROFILE_TAG_PRESETS,
+  PROFILE_TAG_CUSTOM_ICONS,
+  PROFILE_TAG_MAX_COUNT,
+  PROFILE_TAG_MAX_VALUE_LENGTH,
+  getProfileTagPreset,
+  resolveCustomTagIcon,
+  resolveProfileTags,
+  type ProfileTagCustomIconId,
+  type ProfileTagItem,
+  type ProfileTagPresetId,
+} from "@/lib/profile-tags";
 
 /**
  * @file admin.diseno.tsx
@@ -233,12 +249,18 @@ export function DisenoUnificadoPage() {
   const [photoFormat, setPhotoFormat] = useState<"square" | "portrait" | "contain" | null>(
     store?.photoFormat ?? (store as any)?.photo_format ?? null
   );
+  const initialProfileTags = useMemo(
+    () => resolveProfileTags(store?.profileTags ?? store?.profile_tags),
+    [store?.profileTags, store?.profile_tags]
+  );
+  const [profileTags, setProfileTags] = useState<ProfileTagItem[]>(initialProfileTags);
 
   // Carga inicial y cambio de tienda sincronizada
   useEffect(() => {
     if (store && loadedStoreId !== store.id) {
       setSelectedStructure(resolveStructureId(store.model, store.niche));
       setPhotoFormat(store.photoFormat ?? (store as any).photo_format ?? null);
+      setProfileTags(resolveProfileTags(store.profileTags ?? store.profile_tags));
       setBrandColor(store.brandColor || "#4f46e5");
       setBgColor((store as any).bgColor || "#ffffff");
       setTextColor(store.textColor || "#1e293b");
@@ -349,11 +371,73 @@ export function DisenoUnificadoPage() {
     toast.info("Banner eliminado. Haz clic en Guardar cambios.");
   };
 
+  const toggleProfileTag = (id: ProfileTagPresetId) => {
+    setProfileTags((prev) => {
+      const exists = prev.some((item) => item.id === id);
+      if (exists) return prev.filter((item) => item.id !== id);
+      if (prev.length >= PROFILE_TAG_MAX_COUNT) {
+        toast.info(`Máximo ${PROFILE_TAG_MAX_COUNT} etiquetas activas para cuidar el diseño en celular.`);
+        return prev;
+      }
+      return [...prev, { id }];
+    });
+  };
+
+  const addCustomProfileTag = () => {
+    setProfileTags((prev) => {
+      if (prev.length >= PROFILE_TAG_MAX_COUNT) {
+        toast.info(`Máximo ${PROFILE_TAG_MAX_COUNT} etiquetas activas.`);
+        return prev;
+      }
+      return [...prev, { id: "custom", value: "", icon: "tag" }];
+    });
+  };
+
+  const updateProfileTagAt = (
+    index: number,
+    patch: Partial<Pick<ProfileTagItem, "value" | "icon">>
+  ) => {
+    setProfileTags((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+        const nextValue =
+          patch.value !== undefined
+            ? patch.value.slice(0, PROFILE_TAG_MAX_VALUE_LENGTH)
+            : item.value;
+        return {
+          ...item,
+          ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
+          ...(patch.value !== undefined ? { value: nextValue } : {}),
+        };
+      })
+    );
+  };
+
+  const moveProfileTag = (index: number, direction: -1 | 1) => {
+    setProfileTags((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const copy = [...prev];
+      const [moved] = copy.splice(index, 1);
+      copy.splice(target, 0, moved);
+      return copy;
+    });
+  };
+
+  const removeProfileTagAt = (index: number) => {
+    setProfileTags((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
   // Guardar configuración unificada
   const save = async () => {
     const toastId = toast.loading("Guardando diseño...");
     try {
-      await update(store.id, {
+      const normalizedProfileTags = resolveProfileTags(profileTags);
+      const profileTagsChanged =
+        selectedStructure === "perfil" &&
+        JSON.stringify(normalizedProfileTags) !== JSON.stringify(initialProfileTags);
+
+      const patch: Record<string, any> = {
         model: selectedStructure as any,
         photoFormat: photoFormat,
         brandColor: brandColor || null,
@@ -381,7 +465,13 @@ export function DisenoUnificadoPage() {
         showFeatured,
         showDiscountPct,
         wholesaleEnabled,
-      } as any);
+      };
+
+      if (profileTagsChanged) {
+        patch.profileTags = normalizedProfileTags;
+      }
+
+      await update(store.id, patch);
 
       toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
     } catch (err: any) {
@@ -396,6 +486,8 @@ export function DisenoUnificadoPage() {
     model: selectedStructure,
     photoFormat: photoFormat,
     photo_format: photoFormat,
+    profileTags: resolveProfileTags(profileTags),
+    profile_tags: resolveProfileTags(profileTags),
     brandColor: brandColor,
     bgColor: bgColor,
     textColor: textColor,
@@ -598,6 +690,195 @@ export function DisenoUnificadoPage() {
                   );
                 })}
               </div>
+
+              {/* Etiquetas comerciales exclusivas del diseño Perfil (F50.1) */}
+              {selectedStructure === "perfil" && (
+                <div
+                  data-testid="profile-tags-editor"
+                  className="pt-4 border-t border-zinc-200/80 space-y-3 animate-in fade-in duration-200"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                        <Tag className="h-3.5 w-3.5 text-primary" />
+                        Etiquetas de tu tarjeta Perfil
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        Activa opciones con un clic, edita el texto de cualquiera o agrega etiquetas propias (máx. {PROFILE_TAG_MAX_COUNT}).
+                      </p>
+                    </div>
+                    <span
+                      data-testid="profile-tags-counter"
+                      className={cn(
+                        "shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                        profileTags.length >= PROFILE_TAG_MAX_COUNT
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                      )}
+                    >
+                      {profileTags.length}/{PROFILE_TAG_MAX_COUNT}
+                    </span>
+                  </div>
+
+                  {/* Presets rápidos (1 clic para activar/desactivar) + botón Etiqueta propia */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {PROFILE_TAG_PRESETS.map((preset) => {
+                      const isSelected = profileTags.some((item) => item.id === preset.id);
+                      const isLimitReached = !isSelected && profileTags.length >= PROFILE_TAG_MAX_COUNT;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          disabled={isLimitReached}
+                          onClick={() => toggleProfileTag(preset.id)}
+                          aria-pressed={isSelected}
+                          data-testid={`profile-tag-option-${preset.id}`}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
+                            isSelected
+                              ? "border-primary bg-primary/10 text-primary shadow-2xs"
+                              : isLimitReached
+                                ? "border-zinc-200 bg-zinc-50 text-zinc-400 opacity-50 cursor-not-allowed"
+                                : "border-zinc-200 bg-zinc-50/70 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100"
+                          )}
+                        >
+                          {renderProfileTagIcon({ id: preset.id })}
+                          <span>{preset.label}</span>
+                          {isSelected && <Check className="h-3 w-3 shrink-0" />}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      disabled={profileTags.length >= PROFILE_TAG_MAX_COUNT}
+                      onClick={addCustomProfileTag}
+                      data-testid="profile-tag-add-custom"
+                      className={cn(
+                        "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed transition-all",
+                        profileTags.length >= PROFILE_TAG_MAX_COUNT
+                          ? "border-zinc-200 text-zinc-400 opacity-50 cursor-not-allowed"
+                          : "border-primary/50 text-primary bg-primary/5 hover:bg-primary/10"
+                      )}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Etiqueta propia</span>
+                    </button>
+                  </div>
+
+                  {/* Configurador por cada etiqueta activa (texto personalizable, ícono y orden) */}
+                  {profileTags.length > 0 && (
+                    <div data-testid="profile-tags-active-list" className="space-y-2 pt-1">
+                      {profileTags.map((item, idx) => {
+                        const preset = item.id === "custom" ? undefined : getProfileTagPreset(item.id);
+                        const isCustom = item.id === "custom";
+                        const resolvedIcon = isCustom ? resolveCustomTagIcon(item.icon) : undefined;
+                        return (
+                          <div
+                            key={`${item.id}-${idx}`}
+                            data-testid={`profile-tag-row-${idx}`}
+                            className="bg-zinc-50/80 border border-zinc-200/90 rounded-xl p-2.5 space-y-2"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {renderProfileTagIcon(item)}
+                                <span className="text-[11px] font-bold text-zinc-800 truncate">
+                                  {preset ? preset.label : "Etiqueta propia"}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-medium">
+                                  ({(item.value || "").length}/{PROFILE_TAG_MAX_VALUE_LENGTH})
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => moveProfileTag(idx, -1)}
+                                  title="Subir etiqueta"
+                                  data-testid={`profile-tag-move-up-${idx}`}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-35 disabled:cursor-not-allowed"
+                                >
+                                  <ArrowUp className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === profileTags.length - 1}
+                                  onClick={() => moveProfileTag(idx, 1)}
+                                  title="Bajar etiqueta"
+                                  data-testid={`profile-tag-move-down-${idx}`}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-35 disabled:cursor-not-allowed"
+                                >
+                                  <ArrowDown className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeProfileTagAt(idx)}
+                                  title="Quitar etiqueta"
+                                  data-testid={`profile-tag-remove-${idx}`}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white flex items-center justify-center text-rose-500 hover:bg-rose-50"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <input
+                              type="text"
+                              value={item.value || ""}
+                              maxLength={PROFILE_TAG_MAX_VALUE_LENGTH}
+                              onChange={(e) => updateProfileTagAt(idx, { value: e.target.value })}
+                              placeholder={
+                                preset
+                                  ? `${preset.customPlaceholder} (opcional)`
+                                  : "Escribe un texto corto, ej: Venta por mayor"
+                              }
+                              data-testid={
+                                isCustom
+                                  ? `profile-tag-input-custom-${idx}`
+                                  : `profile-tag-input-${item.id}`
+                              }
+                              className="w-full h-8 rounded-lg border border-input bg-white px-2.5 text-xs font-medium"
+                            />
+
+                            {isCustom && (
+                              <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                                <span className="text-[10px] font-semibold text-zinc-500 mr-1">
+                                  Ícono:
+                                </span>
+                                {PROFILE_TAG_CUSTOM_ICONS.map((opt) => {
+                                  const iconActive = resolvedIcon === opt.id;
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      title={opt.label}
+                                      aria-label={opt.label}
+                                      onClick={() =>
+                                        updateProfileTagAt(idx, {
+                                          icon: opt.id as ProfileTagCustomIconId,
+                                        })
+                                      }
+                                      data-testid={`profile-tag-icon-${idx}-${opt.id}`}
+                                      className={cn(
+                                        "h-6 w-6 rounded-md border flex items-center justify-center transition",
+                                        iconActive
+                                          ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                                          : "border-zinc-200 bg-white hover:bg-zinc-100"
+                                      )}
+                                    >
+                                      {renderProfileTagIcon({ id: "custom", icon: opt.id })}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Interruptor de destacados al inicio para diseños compatibles */}
               {currentSpec.destacados && (

@@ -11,6 +11,7 @@ import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl } from "@/lib/image-utils";
+import { resolveProfileTags } from "@/lib/profile-tags";
 import type { Store } from "@/lib/types";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 
@@ -194,6 +195,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       locationLat: data.location_lat ? Number(data.location_lat) : undefined,
       locationLng: data.location_lng ? Number(data.location_lng) : undefined,
       locationAddress: data.location_address ?? undefined,
+      profileTags: resolveProfileTags(data.profile_tags),
       showMap: data.show_map ?? true,
       quickLinks: data.quick_links ?? [],
       bioLinksEnabled: data.bio_links_enabled ?? false,

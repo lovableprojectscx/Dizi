@@ -131,5 +131,37 @@ describe("F50 v2 - Componente ProfileHeader (Diseño Perfil)", () => {
 
       expect(html).not.toContain('data-testid="profile-badges"');
     });
+
+    it("Estándar responsivo (PortadaEstandar) y modo isMockup: full-bleed en móvil, 3:1 máx 360px en PC", () => {
+      const htmlResponsive = renderToStaticMarkup(
+        <ProfileHeader
+          store={{ ...BASE_STORE, bioLinksEnabled: true }}
+          activeBanners={["https://example.com/banner.png"]}
+          supportClick={() => {}}
+        />
+      );
+
+      // Móvil borde a borde sin marco + escritorio tarjeta alineada max-w-7xl y banner 3:1 máx 360px
+      expect(htmlResponsive).toContain("px-0 sm:px-4");
+      expect(htmlResponsive).toContain("rounded-none sm:rounded-3xl");
+      expect(htmlResponsive).toContain("aspect-[5/2] sm:aspect-[3/1]");
+      expect(htmlResponsive).toContain("max-h-[360px]");
+      expect(htmlResponsive).not.toContain("max-h-[260px]");
+
+      // Simulador Live Preview (isMockup=true) fuerza vista móvil pura sin botones desktop ocultos ni sm:
+      const htmlMockup = renderToStaticMarkup(
+        <ProfileHeader
+          store={{ ...BASE_STORE, bioLinksEnabled: true }}
+          activeBanners={["https://example.com/banner.png"]}
+          supportClick={() => {}}
+          isMockup={true}
+        />
+      );
+
+      expect(htmlMockup).toContain('data-testid="profile-info-mobile-button"');
+      expect(htmlMockup).not.toContain('data-testid="profile-info-button"');
+      expect(htmlMockup).toContain("rounded-none border-b");
+      expect(htmlMockup).not.toContain("sm:aspect-[3/1]");
+    });
   });
 });
