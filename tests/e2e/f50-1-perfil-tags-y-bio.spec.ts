@@ -158,9 +158,10 @@ function buildProfileStore(overrides: Record<string, unknown> = {}) {
     promo_bar_text: "Envíos a todo el Perú · WhatsApp +51 987 654 321",
     location_address: "Av. Conquistadores 410, San Isidro",
     profile_tags: [
-      { id: "delivery" },
+      { id: "delivery", value: "Delivery gratis > S/ 99" },
       { id: "recojo" },
       { id: "plin" },
+      { id: "custom", value: "Venta por mayor", icon: "package" },
       { id: "horario", value: "Lun–Sáb 9am–7pm" },
     ],
     quick_links: [
@@ -208,8 +209,9 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
     await page.setViewportSize({ width: 375, height: 812 });
     await page.goto("/t/boutique-demo", { waitUntil: "domcontentloaded" });
     await expect(page.locator('[data-testid="profile-header"]')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('[data-testid="profile-tag-delivery"]')).toBeVisible();
+    await expect(page.locator('[data-testid="profile-tag-delivery"]')).toContainText("Delivery gratis > S/ 99");
     await expect(page.locator('[data-testid="profile-tag-plin"]')).toBeVisible();
+    await expect(page.locator('[data-testid="profile-tag-custom-3"]')).toContainText("Venta por mayor");
     await expect(page.locator('[data-testid="profile-tag-horario"]')).toContainText("Lun–Sáb 9am–7pm");
     await expect(page.locator('[data-testid="profile-social-links"]')).toBeVisible();
     await expect(page.locator('[data-testid="profile-social-tiktok"]')).toBeVisible();
@@ -467,13 +469,26 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
     await expect(editor).toBeVisible({ timeout: 10000 });
     await editor.scrollIntoViewIfNeeded();
 
-    // Activar Yape y Horario y escribir un horario corto
+    // Personalizar texto del preset Delivery y activar Yape
+    await page.locator('[data-testid="profile-tag-input-delivery"]').fill("Delivery gratis > S/ 99");
     await page.locator('[data-testid="profile-tag-option-yape"]').click();
-    await page.locator('[data-testid="profile-tag-option-horario"]').click();
-    await page.locator('[data-testid="profile-tag-input-horario"]').fill("Lun–Sáb 9am–7pm");
-    await expect(page.locator('[data-testid="profile-tag-yape"]').first()).toBeVisible();
-    await expect(page.locator('[data-testid="profile-tag-horario"]').first()).toContainText("Lun–Sáb 9am–7pm");
 
+    // Agregar etiqueta propia con ícono personalizado ("package")
+    await page.locator('[data-testid="profile-tag-add-custom"]').click();
+    await page.locator('[data-testid="profile-tag-input-custom-3"]').fill("Venta por mayor");
+    await page.locator('[data-testid="profile-tag-icon-3-package"]').click();
+
+    // Verificar Live Preview y contador (4/6)
+    await expect(page.locator('[data-testid="profile-tags-counter"]')).toHaveText("4/6");
+    await expect(page.locator('[data-testid="profile-tag-delivery"]').first()).toContainText("Delivery gratis > S/ 99");
+    await expect(page.locator('[data-testid="profile-tag-yape"]').first()).toBeVisible();
+    await expect(page.locator('[data-testid="profile-tag-custom-3"]').first()).toContainText("Venta por mayor");
+
+    // Reordenar subiendo la etiqueta propia 1 posición (de índice 3 a índice 2)
+    await page.locator('[data-testid="profile-tag-move-up-3"]').click();
+    await expect(page.locator('[data-testid="profile-tag-custom-2"]').first()).toContainText("Venta por mayor");
+
+    await editor.scrollIntoViewIfNeeded();
     await page.waitForTimeout(300);
     await page.screenshot({
       path: path.join(outputDir, "f50-1-admin-editor-tags-perfil-1280px.png"),

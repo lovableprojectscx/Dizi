@@ -49,22 +49,16 @@ import type { Category, Product, Store } from "@/lib/types";
 
 const MOCK_CATEGORY: Category = {
   id: "cat-f501",
-  storeId: "store-f501",
   name: "Importados",
-  order: 0,
-  createdAt: "2026-01-01T00:00:00Z",
 };
 
 const MOCK_PRODUCT: Product = {
   id: "prod-f501",
-  storeId: "store-f501",
   categoryId: "cat-f501",
   name: "Cartera Crossbody",
   price: 189,
-  images: ["https://example.com/cartera.jpg"],
-  active: true,
+  image: "https://example.com/cartera.jpg",
   visible: true,
-  createdAt: "2026-01-01T00:00:00Z",
 };
 
 const BASE_PERFIL_STORE: Store = {
@@ -88,15 +82,16 @@ const BASE_PERFIL_STORE: Store = {
 };
 
 describe("F50.1 · Evolución nativa de Perfil (tags, redes e integración Link en Bio)", () => {
-  it("Escenario 9: Dada Perfil con profileTags, locationAddress y quickLinks, renderiza tags elegidos, dirección e íconos redondos debajo", () => {
+  it("Escenario 9: Dada Perfil con profileTags configurables (presets editados + tag propio), locationAddress y quickLinks, renderiza todos en orden", () => {
     const storeConExtras: Store = {
       ...BASE_PERFIL_STORE,
       locationAddress: "Galería Bauzate - Tienda 242 - Gamarra",
       profileTags: [
-        { id: "delivery" },
+        { id: "delivery", value: "Delivery gratis > S/ 99" },
         { id: "recojo" },
         { id: "plin" },
         { id: "horario", value: "Lun-Sáb 9am-7pm" },
+        { id: "custom", value: "Venta por mayor", icon: "package" },
       ],
       quickLinks: [
         { label: "TikTok", url: "https://tiktok.com/@keylaimport" },
@@ -114,13 +109,15 @@ describe("F50.1 · Evolución nativa de Perfil (tags, redes e integración Link 
 
     expect(html).toContain('data-testid="profile-badges"');
     expect(html).toContain('data-testid="profile-tag-delivery"');
-    expect(html).toContain("Delivery");
+    expect(html).toContain("Delivery gratis &gt; S/ 99");
     expect(html).toContain('data-testid="profile-tag-recojo"');
     expect(html).toContain("Recojo en tienda");
     expect(html).toContain('data-testid="profile-tag-plin"');
     expect(html).toContain("Plin");
     expect(html).toContain('data-testid="profile-tag-horario"');
     expect(html).toContain("Lun-Sáb 9am-7pm");
+    expect(html).toContain('data-testid="profile-tag-custom-4"');
+    expect(html).toContain("Venta por mayor");
     expect(html).toContain("Galería Bauzate - Tienda 242 - Gamarra");
 
     // Fila de redes debajo de los tags usando branding compartido

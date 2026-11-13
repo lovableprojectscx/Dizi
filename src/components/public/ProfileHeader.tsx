@@ -4,8 +4,8 @@ import { getOptimizedImageUrl } from "@/lib/image-utils";
 import {
   resolveProfileTags,
   formatProfileTagLabel,
-  type ProfileTagPresetId,
 } from "@/lib/profile-tags";
+import { renderProfileTagIcon } from "./profile-tag-icons";
 import { getQuickLinkBranding, normalizeQuickLinkHref } from "./quick-link-branding";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { cn } from "@/lib/utils";
@@ -15,25 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  Truck,
-  Store as StoreIcon,
-  PackageCheck,
-  Wallet,
-  CreditCard,
-  Banknote,
-  Clock,
 } from "lucide-react";
-
-const TAG_ICONS: Record<ProfileTagPresetId, React.ReactNode> = {
-  delivery: <Truck className="h-3.5 w-3.5 text-rose-500 shrink-0" />,
-  recojo: <StoreIcon className="h-3.5 w-3.5 text-fuchsia-600 shrink-0" />,
-  envios_provincia: <PackageCheck className="h-3.5 w-3.5 text-blue-600 shrink-0" />,
-  yape: <Wallet className="h-3.5 w-3.5 text-purple-600 shrink-0" />,
-  plin: <Wallet className="h-3.5 w-3.5 text-cyan-600 shrink-0" />,
-  tarjeta: <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0" />,
-  contraentrega: <Banknote className="h-3.5 w-3.5 text-emerald-600 shrink-0" />,
-  horario: <Clock className="h-3.5 w-3.5 text-slate-600 shrink-0" />,
-};
 
 export interface ProfileHeaderProps {
   store: Store;
@@ -259,13 +241,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               data-testid="profile-badges"
               className="mt-3.5 pt-3 border-t border-border/60 flex flex-wrap items-center gap-2"
             >
-              {profileTags.map((tag) => (
+              {profileTags.map((tag, idx) => (
                 <div
-                  key={tag.id}
-                  data-testid={`profile-tag-${tag.id}`}
+                  key={`${tag.id}-${idx}`}
+                  data-testid={tag.id === "custom" ? `profile-tag-custom-${idx}` : `profile-tag-${tag.id}`}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted/70 text-foreground border border-border/60 shadow-2xs"
                 >
-                  {TAG_ICONS[tag.id]}
+                  {renderProfileTagIcon(tag)}
                   <span>{formatProfileTagLabel(tag)}</span>
                 </div>
               ))}

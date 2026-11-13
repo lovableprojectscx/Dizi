@@ -31,6 +31,9 @@ import {
   X,
   Percent,
   RotateCcw,
+  Plus,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar, planAllowsWholesale } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -38,6 +41,7 @@ import { cn, hexLuminance } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
+import { renderProfileTagIcon } from "@/components/public/profile-tag-icons";
 import { lazy, Suspense } from "react";
 const CatalogPdfExportButton = lazy(() =>
   import("@/components/public/CatalogPdfExport").then((m) => ({ default: m.CatalogPdfExportButton }))
@@ -47,8 +51,13 @@ import { THEME_PRESETS, ThemePreset } from "@/lib/theme-presets";
 import { isFlexiblePhotoLayout, suggestPhotoFormat } from "@/lib/photo-format";
 import {
   PROFILE_TAG_PRESETS,
+  PROFILE_TAG_CUSTOM_ICONS,
+  PROFILE_TAG_MAX_COUNT,
   PROFILE_TAG_MAX_VALUE_LENGTH,
+  getProfileTagPreset,
+  resolveCustomTagIcon,
   resolveProfileTags,
+  type ProfileTagCustomIconId,
   type ProfileTagItem,
   type ProfileTagPresetId,
 } from "@/lib/profile-tags";
@@ -366,17 +375,57 @@ export function DisenoUnificadoPage() {
     setProfileTags((prev) => {
       const exists = prev.some((item) => item.id === id);
       if (exists) return prev.filter((item) => item.id !== id);
+      if (prev.length >= PROFILE_TAG_MAX_COUNT) {
+        toast.info(`Máximo ${PROFILE_TAG_MAX_COUNT} etiquetas activas para cuidar el diseño en celular.`);
+        return prev;
+      }
       return [...prev, { id }];
     });
   };
 
-  const updateProfileTagValue = (id: ProfileTagPresetId, value: string) => {
-    const trimmedMax = value.slice(0, PROFILE_TAG_MAX_VALUE_LENGTH);
+  const addCustomProfileTag = () => {
+    setProfileTags((prev) => {
+      if (prev.length >= PROFILE_TAG_MAX_COUNT) {
+        toast.info(`Máximo ${PROFILE_TAG_MAX_COUNT} etiquetas activas.`);
+        return prev;
+      }
+      return [...prev, { id: "custom", value: "", icon: "tag" }];
+    });
+  };
+
+  const updateProfileTagAt = (
+    index: number,
+    patch: Partial<Pick<ProfileTagItem, "value" | "icon">>
+  ) => {
     setProfileTags((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, value: trimmedMax } : item
-      )
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+        const nextValue =
+          patch.value !== undefined
+            ? patch.value.slice(0, PROFILE_TAG_MAX_VALUE_LENGTH)
+            : item.value;
+        return {
+          ...item,
+          ...(patch.icon !== undefined ? { icon: patch.icon } : {}),
+          ...(patch.value !== undefined ? { value: nextValue } : {}),
+        };
+      })
     );
+  };
+
+  const moveProfileTag = (index: number, direction: -1 | 1) => {
+    setProfileTags((prev) => {
+      const target = index + direction;
+      if (target < 0 || target >= prev.length) return prev;
+      const copy = [...prev];
+      const [moved] = copy.splice(index, 1);
+      copy.splice(target, 0, moved);
+      return copy;
+    });
+  };
+
+  const removeProfileTagAt = (index: number) => {
+    setProfileTags((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   // Guardar configuración unificada
@@ -648,24 +697,39 @@ export function DisenoUnificadoPage() {
                   data-testid="profile-tags-editor"
                   className="pt-4 border-t border-zinc-200/80 space-y-3 animate-in fade-in duration-200"
                 >
-                  <div>
-                    <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
-                      <Tag className="h-3.5 w-3.5 text-primary" />
-                      Etiquetas de tu tarjeta Perfil
-                    </h4>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
-                      Selecciona solo las que correspondan a tu negocio. Si no eliges ninguna, la tarjeta no mostrará etiquetas.
-                    </p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                        <Tag className="h-3.5 w-3.5 text-primary" />
+                        Etiquetas de tu tarjeta Perfil
+                      </h4>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        Activa opciones con un clic, edita el texto de cualquiera o agrega etiquetas propias (máx. {PROFILE_TAG_MAX_COUNT}).
+                      </p>
+                    </div>
+                    <span
+                      data-testid="profile-tags-counter"
+                      className={cn(
+                        "shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                        profileTags.length >= PROFILE_TAG_MAX_COUNT
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-zinc-100 text-zinc-600 border-zinc-200"
+                      )}
+                    >
+                      {profileTags.length}/{PROFILE_TAG_MAX_COUNT}
+                    </span>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  {/* Presets rápidos (1 clic para activar/desactivar) + botón Etiqueta propia */}
+                  <div className="flex flex-wrap items-center gap-2">
                     {PROFILE_TAG_PRESETS.map((preset) => {
-                      const activeItem = profileTags.find((item) => item.id === preset.id);
-                      const isSelected = Boolean(activeItem);
+                      const isSelected = profileTags.some((item) => item.id === preset.id);
+                      const isLimitReached = !isSelected && profileTags.length >= PROFILE_TAG_MAX_COUNT;
                       return (
                         <button
                           key={preset.id}
                           type="button"
+                          disabled={isLimitReached}
                           onClick={() => toggleProfileTag(preset.id)}
                           aria-pressed={isSelected}
                           data-testid={`profile-tag-option-${preset.id}`}
@@ -673,41 +737,146 @@ export function DisenoUnificadoPage() {
                             "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all",
                             isSelected
                               ? "border-primary bg-primary/10 text-primary shadow-2xs"
-                              : "border-zinc-200 bg-zinc-50/70 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100"
+                              : isLimitReached
+                                ? "border-zinc-200 bg-zinc-50 text-zinc-400 opacity-50 cursor-not-allowed"
+                                : "border-zinc-200 bg-zinc-50/70 text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100"
                           )}
                         >
+                          {renderProfileTagIcon({ id: preset.id })}
                           <span>{preset.label}</span>
                           {isSelected && <Check className="h-3 w-3 shrink-0" />}
                         </button>
                       );
                     })}
+
+                    <button
+                      type="button"
+                      disabled={profileTags.length >= PROFILE_TAG_MAX_COUNT}
+                      onClick={addCustomProfileTag}
+                      data-testid="profile-tag-add-custom"
+                      className={cn(
+                        "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed transition-all",
+                        profileTags.length >= PROFILE_TAG_MAX_COUNT
+                          ? "border-zinc-200 text-zinc-400 opacity-50 cursor-not-allowed"
+                          : "border-primary/50 text-primary bg-primary/5 hover:bg-primary/10"
+                      )}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Etiqueta propia</span>
+                    </button>
                   </div>
 
-                  {PROFILE_TAG_PRESETS.filter(
-                    (preset) => preset.supportsCustomValue && profileTags.some((item) => item.id === preset.id)
-                  ).map((preset) => {
-                    const activeItem = profileTags.find((item) => item.id === preset.id);
-                    return (
-                      <div key={`${preset.id}-input`} className="bg-zinc-50/70 border rounded-xl p-3 space-y-1.5">
-                        <label
-                          htmlFor={`profile-tag-input-${preset.id}`}
-                          className="block text-[11px] font-bold text-zinc-800"
-                        >
-                          Texto para "{preset.label}" (opcional, máx. {PROFILE_TAG_MAX_VALUE_LENGTH} caracteres)
-                        </label>
-                        <input
-                          id={`profile-tag-input-${preset.id}`}
-                          type="text"
-                          value={activeItem?.value || ""}
-                          maxLength={PROFILE_TAG_MAX_VALUE_LENGTH}
-                          onChange={(e) => updateProfileTagValue(preset.id, e.target.value)}
-                          placeholder={preset.placeholder || "Ej: Lun–Sáb 9am–7pm"}
-                          data-testid={`profile-tag-input-${preset.id}`}
-                          className="w-full h-9 rounded-lg border border-input bg-white px-3 text-xs font-medium"
-                        />
-                      </div>
-                    );
-                  })}
+                  {/* Configurador por cada etiqueta activa (texto personalizable, ícono y orden) */}
+                  {profileTags.length > 0 && (
+                    <div data-testid="profile-tags-active-list" className="space-y-2 pt-1">
+                      {profileTags.map((item, idx) => {
+                        const preset = item.id === "custom" ? undefined : getProfileTagPreset(item.id);
+                        const isCustom = item.id === "custom";
+                        const resolvedIcon = isCustom ? resolveCustomTagIcon(item.icon) : undefined;
+                        return (
+                          <div
+                            key={`${item.id}-${idx}`}
+                            data-testid={`profile-tag-row-${idx}`}
+                            className="bg-zinc-50/80 border border-zinc-200/90 rounded-xl p-2.5 space-y-2"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                {renderProfileTagIcon(item)}
+                                <span className="text-[11px] font-bold text-zinc-800 truncate">
+                                  {preset ? preset.label : "Etiqueta propia"}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-medium">
+                                  ({(item.value || "").length}/{PROFILE_TAG_MAX_VALUE_LENGTH})
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => moveProfileTag(idx, -1)}
+                                  title="Subir etiqueta"
+                                  data-testid={`profile-tag-move-up-${idx}`}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-35 disabled:cursor-not-allowed"
+                                >
+                                  <ArrowUp className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === profileTags.length - 1}
+                                  onClick={() => moveProfileTag(idx, 1)}
+                                  title="Bajar etiqueta"
+                                  data-testid={`profile-tag-move-down-${idx}`}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white flex items-center justify-center text-zinc-600 hover:bg-zinc-100 disabled:opacity-35 disabled:cursor-not-allowed"
+                                >
+                                  <ArrowDown className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeProfileTagAt(idx)}
+                                  title="Quitar etiqueta"
+                                  data-testid={`profile-tag-remove-${idx}`}
+                                  className="h-6 w-6 rounded-md border border-zinc-200 bg-white flex items-center justify-center text-rose-500 hover:bg-rose-50"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <input
+                              type="text"
+                              value={item.value || ""}
+                              maxLength={PROFILE_TAG_MAX_VALUE_LENGTH}
+                              onChange={(e) => updateProfileTagAt(idx, { value: e.target.value })}
+                              placeholder={
+                                preset
+                                  ? `${preset.customPlaceholder} (opcional)`
+                                  : "Escribe un texto corto, ej: Venta por mayor"
+                              }
+                              data-testid={
+                                isCustom
+                                  ? `profile-tag-input-custom-${idx}`
+                                  : `profile-tag-input-${item.id}`
+                              }
+                              className="w-full h-8 rounded-lg border border-input bg-white px-2.5 text-xs font-medium"
+                            />
+
+                            {isCustom && (
+                              <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                                <span className="text-[10px] font-semibold text-zinc-500 mr-1">
+                                  Ícono:
+                                </span>
+                                {PROFILE_TAG_CUSTOM_ICONS.map((opt) => {
+                                  const iconActive = resolvedIcon === opt.id;
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      title={opt.label}
+                                      aria-label={opt.label}
+                                      onClick={() =>
+                                        updateProfileTagAt(idx, {
+                                          icon: opt.id as ProfileTagCustomIconId,
+                                        })
+                                      }
+                                      data-testid={`profile-tag-icon-${idx}-${opt.id}`}
+                                      className={cn(
+                                        "h-6 w-6 rounded-md border flex items-center justify-center transition",
+                                        iconActive
+                                          ? "border-primary bg-primary/10 ring-1 ring-primary/30"
+                                          : "border-zinc-200 bg-white hover:bg-zinc-100"
+                                      )}
+                                    >
+                                      {renderProfileTagIcon({ id: "custom", icon: opt.id })}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
