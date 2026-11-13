@@ -7,6 +7,8 @@ export type ShareImageStyle = "etiqueta" | "editorial" | "marco-color" | "oferta
 
 export type ShareImageFormat = "historia" | "post-ig" | "cuadrada";
 
+export type ShareEventSource = "productos" | "marketing";
+
 export interface ShareImageDimensions {
   width: number;
   height: number;

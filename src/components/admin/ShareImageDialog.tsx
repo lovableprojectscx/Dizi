@@ -42,10 +42,12 @@ import {
   DEFAULT_PRODUCT_EMOJI,
   type CaptionTemplate,
 } from "@/lib/share-image/caption";
+import { logShareEvent } from "@/lib/share-image/metrics";
 import type {
   ShareImageData,
   ShareImageFormat,
   ShareImageStyle,
+  ShareEventSource,
 } from "@/lib/share-image/types";
 import type { Product, Store } from "@/lib/types";
 
@@ -54,6 +56,7 @@ export interface ShareImageDialogProps {
   onOpenChange: (open: boolean) => void;
   product: Product | null;
   store: Store;
+  source?: ShareEventSource;
 }
 
 const STYLES_CONFIG: {
@@ -93,6 +96,7 @@ export function ShareImageDialog({
   onOpenChange,
   product,
   store,
+  source = "productos",
 }: ShareImageDialogProps) {
   const [format, setFormat] = useState<ShareImageFormat>("historia");
   const [style, setStyle] = useState<ShareImageStyle>("etiqueta");
@@ -336,15 +340,16 @@ export function ShareImageDialog({
     }
   }, [open, shareData, style, format, renderCanvas]);
 
-  // 5. Medición en share_events (RF-46.8)
+  // 5. Medición en share_events (RF-46.8 / RF-52.5)
   const logShareMetric = async () => {
     if (!store || !product) return;
     try {
-      await supabase.from("share_events").insert({
-        store_id: store.id,
-        product_id: product.id,
+      await logShareEvent(supabase, {
+        storeId: store.id,
+        productId: product.id,
         style,
         size: format,
+        source,
       });
     } catch {
       // No bloqueante si la tabla o RLS no está disponible

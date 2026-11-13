@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Users,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getEffectivePlan } from "@/lib/types";
@@ -98,6 +99,7 @@ function AdminLayout() {
 
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isMoreActive =
+    pathname === "/admin/configuracion" ||
     pathname === "/admin/diseno" ||
     pathname === "/admin/vendedores" ||
     pathname === "/admin/plan" ||
@@ -296,8 +298,8 @@ function AdminLayout() {
           <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t flex items-center justify-around px-1 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.08)]">
             <MobileNavItem to="/admin/dashboard" icon={Home} label="Inicio" />
             <MobileNavItem to="/admin/productos" icon={Package} label="Productos" />
+            <MobileNavItem to="/admin/marketing" icon={Sparkles} label="Promociona" />
             <MobileNavItem to="/admin/link-bio" icon={Link2} label="Bio-Link" />
-            <MobileNavItem to="/admin/configuracion" icon={Settings} label="Ajustes" />
             
             {/* Botón de 3 Puntos (...) para Ver Más */}
             <button
@@ -346,6 +348,23 @@ function AdminLayout() {
               </SheetHeader>
 
               <div className="grid grid-cols-1 gap-1.5 py-1">
+                <Link
+                  to="/admin/configuracion"
+                  onClick={() => setIsMoreOpen(false)}
+                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-muted/70 active:bg-muted transition-all border border-transparent hover:border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
+                      <Settings className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Ajustes y Configuración</p>
+                      <p className="text-xs text-muted-foreground">Datos del negocio, contacto y moneda</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+
                 <Link
                   to="/admin/diseno"
                   onClick={() => setIsMoreOpen(false)}

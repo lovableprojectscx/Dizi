@@ -32,6 +32,7 @@ import { Route as AdminVendedoresRouteImport } from './routes/admin.vendedores'
 import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaciones'
 import { Route as AdminProductosRouteImport } from './routes/admin.productos'
 import { Route as AdminPlanRouteImport } from './routes/admin.plan'
+import { Route as AdminMarketingRouteImport } from './routes/admin.marketing'
 import { Route as AdminLinkBioRouteImport } from './routes/admin.link-bio'
 import { Route as AdminEncuestaRouteImport } from './routes/admin.encuesta'
 import { Route as AdminDisenoPremiumRouteImport } from './routes/admin.diseno-premium'
@@ -156,6 +157,11 @@ const AdminPlanRoute = AdminPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminMarketingRoute = AdminMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminLinkBioRoute = AdminLinkBioRouteImport.update({
   id: '/link-bio',
   path: '/link-bio',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
   '/admin/encuesta': typeof AdminEncuestaRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
   '/admin/encuesta': typeof AdminEncuestaRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/admin/diseno-premium': typeof AdminDisenoPremiumRoute
   '/admin/encuesta': typeof AdminEncuestaRoute
   '/admin/link-bio': typeof AdminLinkBioRoute
+  '/admin/marketing': typeof AdminMarketingRoute
   '/admin/plan': typeof AdminPlanRoute
   '/admin/productos': typeof AdminProductosRoute
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/admin/diseno-premium'
     | '/admin/encuesta'
     | '/admin/link-bio'
+    | '/admin/marketing'
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/admin/diseno-premium'
     | '/admin/encuesta'
     | '/admin/link-bio'
+    | '/admin/marketing'
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/admin/diseno-premium'
     | '/admin/encuesta'
     | '/admin/link-bio'
+    | '/admin/marketing'
     | '/admin/plan'
     | '/admin/productos'
     | '/admin/reclamaciones'
@@ -574,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlanRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/marketing': {
+      id: '/admin/marketing'
+      path: '/marketing'
+      fullPath: '/admin/marketing'
+      preLoaderRoute: typeof AdminMarketingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/link-bio': {
       id: '/admin/link-bio'
       path: '/link-bio'
@@ -641,6 +660,7 @@ interface AdminRouteChildren {
   AdminDisenoPremiumRoute: typeof AdminDisenoPremiumRoute
   AdminEncuestaRoute: typeof AdminEncuestaRoute
   AdminLinkBioRoute: typeof AdminLinkBioRoute
+  AdminMarketingRoute: typeof AdminMarketingRoute
   AdminPlanRoute: typeof AdminPlanRoute
   AdminProductosRoute: typeof AdminProductosRoute
   AdminReclamacionesRoute: typeof AdminReclamacionesRoute
@@ -656,6 +676,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDisenoPremiumRoute: AdminDisenoPremiumRoute,
   AdminEncuestaRoute: AdminEncuestaRoute,
   AdminLinkBioRoute: AdminLinkBioRoute,
+  AdminMarketingRoute: AdminMarketingRoute,
   AdminPlanRoute: AdminPlanRoute,
   AdminProductosRoute: AdminProductosRoute,
   AdminReclamacionesRoute: AdminReclamacionesRoute,

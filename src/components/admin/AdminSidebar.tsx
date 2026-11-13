@@ -56,6 +56,7 @@ export function AdminSidebar() {
   ];
 
   const section2: NavItem[] = [
+    { title: "Promociona", url: "/admin/marketing", icon: Sparkles },
     { title: "Link en Bio", url: "/admin/link-bio", icon: Link2 },
     { title: "Diseño", url: "/admin/diseno", icon: Palette },
   ];
