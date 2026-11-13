@@ -6,7 +6,27 @@
 
 import { supabase, invokeRpcWithRetry } from "./supabase";
 import { planAllowsOrderLink, type Store } from "./types";
+import { SUPABASE_STORAGE_IMAGES_PREFIX } from "./image-utils";
 import { formatPrice } from "./whatsapp";
+
+/**
+ * Reconstruye la URL completa de Storage si la BD guardó una ruta relativa compacta.
+ */
+export function expandOrderImageUrl(rawImage: string | null | undefined): string {
+  if (!rawImage || typeof rawImage !== "string") return "";
+  const trimmed = rawImage.trim();
+  if (!trimmed) return "";
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("/")
+  ) {
+    return trimmed;
+  }
+  return `${SUPABASE_STORAGE_IMAGES_PREFIX}${trimmed.replace(/^\/+/, "")}`;
+}
 
 export interface OrderItemPayload {
   product_id: string;
@@ -44,12 +64,14 @@ export interface PublicOrderDetail {
   total: number | null;
   hasQuoteItems: boolean;
   createdAt: string;
+  expiresAt?: string | null;
 }
 
 export interface CreatePublicOrderResult {
   id: string;
   code: string;
   createdAt: string;
+  expiresAt?: string | null;
 }
 
 /**
@@ -105,7 +127,7 @@ export function mapPublicOrderFromDB(data: any): PublicOrderDetail | null {
   const items: OrderItemSnapshot[] = rawItems.map((it: any) => ({
     productId: String(it.product_id || ""),
     name: String(it.name || "Producto"),
-    image: String(it.image || ""),
+    image: expandOrderImageUrl(it.image),
     variationId: it.variation_id ?? null,
     variationName: it.variation_name ?? null,
     qty: Number(it.qty || 1),
@@ -140,6 +162,7 @@ export function mapPublicOrderFromDB(data: any): PublicOrderDetail | null {
     total: data.total !== null && data.total !== undefined ? Number(data.total) : null,
     hasQuoteItems: Boolean(data.has_quote_items),
     createdAt: String(data.created_at || new Date().toISOString()),
+    expiresAt: data.expires_at ? String(data.expires_at) : null,
   };
 }
 
@@ -171,6 +194,7 @@ export async function createPublicOrder(params: {
     id: String((data as any).id || ""),
     code: String((data as any).code),
     createdAt: String((data as any).created_at || new Date().toISOString()),
+    expiresAt: (data as any).expires_at ? String((data as any).expires_at) : null,
   };
 }
 

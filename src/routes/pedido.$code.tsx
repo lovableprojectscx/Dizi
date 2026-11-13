@@ -95,6 +95,21 @@ function formatOrderDate(iso: string): string {
   }
 }
 
+function formatOrderExpiryDate(iso?: string | null): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat("es-PE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(d);
+  } catch {
+    return "";
+  }
+}
+
 function PublicOrderPage() {
   const { code } = Route.useParams();
   const { order } = Route.useLoaderData() as { order: PublicOrderDetail | null };
@@ -148,6 +163,7 @@ function PublicOrderPage() {
   const progressPct =
     order.items.length > 0 ? Math.round((checkedCount / order.items.length) * 100) : 0;
   const formattedDate = formatOrderDate(order.createdAt);
+  const formattedExpiry = formatOrderExpiryDate(order.expiresAt);
 
   const toggleItem = (key: string) => {
     setCheckedKeys((prev) => {
@@ -193,7 +209,7 @@ function PublicOrderPage() {
                 <img
                   src={toCdnUrl(order.storeLogo)}
                   alt={order.storeName}
-                  onError={(e) => handleImageError(e, [order.storeLogo, "/images/sin-foto.svg"])}
+                  onError={(e) => handleImageError(e, [toCdnUrl(order.storeLogo), order.storeLogo])}
                   className="h-12 w-12 rounded-2xl object-cover border shrink-0 bg-muted"
                 />
               ) : (
@@ -271,7 +287,7 @@ function PublicOrderPage() {
             const isChecked = checkedKeys.has(lineKey);
             const hasPrice = item.unitPrice !== null && item.unitPrice > 0;
             const thumbSrc = item.image
-              ? getThumbnailUrl(toCdnUrl(item.image))
+              ? getThumbnailUrl(item.image)
               : "/images/sin-foto.svg";
 
             return (
@@ -310,11 +326,13 @@ function PublicOrderPage() {
                   <img
                     src={thumbSrc}
                     alt={item.name}
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) =>
                       handleImageError(e, [
+                        item.image ? getThumbnailUrl(item.image) : null,
                         item.image ? toCdnUrl(item.image) : null,
                         item.image,
-                        "/images/sin-foto.svg",
                       ])
                     }
                     className="h-full w-full object-cover"
@@ -453,6 +471,13 @@ function PublicOrderPage() {
             </Link>
           )}
         </div>
+
+        {formattedExpiry && (
+          <p className="text-center text-[11px] text-muted-foreground pt-1 print:hidden">
+            Enlace disponible hasta el <span className="font-semibold">{formattedExpiry}</span> · Usa{" "}
+            <span className="font-semibold">Imprimir / PDF</span> si deseas conservar una copia permanente.
+          </p>
+        )}
       </div>
     </div>
   );

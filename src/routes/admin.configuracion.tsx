@@ -551,7 +551,7 @@ function ConfigPage() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Crea un enlace único con fotos, variaciones, cantidades y total para ver cada
-                pedido detallado en un solo lugar.
+                pedido detallado en un solo lugar (vigencia de 90 días en Pro y 180 días en Ilimitado).
               </p>
               {!canUseOrderLink && (
                 <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">

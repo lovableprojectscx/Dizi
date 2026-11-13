@@ -32,11 +32,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
   wholesale_savings numeric NOT NULL DEFAULT 0 CHECK (wholesale_savings >= 0),
   total numeric,
   has_quote_items boolean NOT NULL DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL DEFAULT (now() + interval '90 days')
 );
 
 CREATE INDEX IF NOT EXISTS idx_orders_store_created
   ON public.orders(store_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_orders_expires_at
+  ON public.orders(expires_at);
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 
@@ -104,6 +108,11 @@ DECLARE
   v_final_regular numeric;
   v_clean_seller_name text;
   v_clean_seller_phone text;
+  v_raw_image text;
+  v_compact_image text;
+  v_storage_prefix constant text := 'https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/';
+  v_daily_limit int;
+  v_recent_daily_count int;
   v_alphabet constant text := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   v_bytes bytea;
   v_code text;
@@ -111,6 +120,7 @@ DECLARE
   v_attempts int := 0;
   v_order_id uuid;
   v_created_at timestamptz;
+  v_expires_at timestamptz;
   i int;
 BEGIN
   IF p_store_id IS NULL OR length(trim(p_store_id)) = 0 THEN
@@ -139,6 +149,16 @@ BEGIN
 
   IF store_plan NOT IN ('pro', 'ilimitado') OR COALESCE(store_row.order_link_enabled, false) IS NOT TRUE THEN
     RAISE EXCEPTION 'El link de pedido no está habilitado para esta tienda.' USING ERRCODE = '42501';
+  END IF;
+
+  -- Tope diario holgado anti-spam por tienda (sin afectar operación normal)
+  v_daily_limit := CASE WHEN store_plan = 'ilimitado' THEN 3000 ELSE 1000 END;
+  SELECT count(*)::int INTO v_recent_daily_count
+  FROM public.orders
+  WHERE store_id = store_row.id
+    AND created_at > now() - interval '24 hours';
+  IF v_recent_daily_count >= v_daily_limit THEN
+    RAISE EXCEPTION 'Límite diario temporal de enlaces de pedido alcanzado.' USING ERRCODE = 'P0001';
   END IF;
 
   IF p_items IS NULL OR jsonb_typeof(p_items) != 'array' OR jsonb_array_length(p_items) < 1 OR jsonb_array_length(p_items) > 100 THEN
@@ -255,11 +275,18 @@ BEGIN
       v_has_quote_items := true;
     END IF;
 
+    v_raw_image := COALESCE(v_var_image, prod_row.image, '');
+    IF v_raw_image LIKE v_storage_prefix || '%' THEN
+      v_compact_image := substr(split_part(v_raw_image, '?', 1), length(v_storage_prefix) + 1);
+    ELSE
+      v_compact_image := v_raw_image;
+    END IF;
+
     v_clean_items := v_clean_items || jsonb_build_array(
       jsonb_build_object(
         'product_id', prod_row.id,
         'name', left(prod_row.name, 200),
-        'image', COALESCE(v_var_image, prod_row.image, ''),
+        'image', v_compact_image,
         'variation_id', v_variation_id,
         'variation_name', v_variation_name,
         'qty', v_qty,
@@ -277,6 +304,33 @@ BEGIN
 
   v_clean_seller_name := NULLIF(left(trim(COALESCE(p_seller_name, '')), 60), '');
   v_clean_seller_phone := NULLIF(left(regexp_replace(COALESCE(p_seller_phone, ''), '[^0-9]', '', 'g'), 20), '');
+
+  -- Idempotencia ante doble clic / reintento inmediato (ventana de 15 segundos)
+  SELECT o.id, o.code, o.created_at, o.expires_at
+  INTO v_order_id, v_code, v_created_at, v_expires_at
+  FROM public.orders o
+  WHERE o.store_id = store_row.id
+    AND o.created_at > now() - interval '15 seconds'
+    AND o.items = v_clean_items
+    AND COALESCE(o.seller_name, '') = COALESCE(v_clean_seller_name, '')
+    AND COALESCE(o.seller_phone, '') = COALESCE(v_clean_seller_phone, '')
+  ORDER BY o.created_at DESC
+  LIMIT 1;
+
+  IF v_order_id IS NOT NULL THEN
+    RETURN jsonb_build_object(
+      'id', v_order_id,
+      'code', v_code,
+      'created_at', v_created_at,
+      'expires_at', v_expires_at
+    );
+  END IF;
+
+  -- Vigencia diferenciada por plan efectivo: 90 días en Pro, 180 días en Ilimitado
+  v_expires_at := CASE
+    WHEN store_plan = 'ilimitado' THEN now() + interval '180 days'
+    ELSE now() + interval '90 days'
+  END;
 
   -- Generar código único corto no predecible (10 chars base32 sin caracteres ambiguos)
   LOOP
@@ -298,7 +352,8 @@ BEGIN
         subtotal_regular,
         wholesale_savings,
         total,
-        has_quote_items
+        has_quote_items,
+        expires_at
       ) VALUES (
         v_code,
         store_row.id,
@@ -308,9 +363,10 @@ BEGIN
         v_final_regular,
         v_wholesale_savings,
         v_final_total,
-        v_has_quote_items
+        v_has_quote_items,
+        v_expires_at
       )
-      RETURNING id, created_at INTO v_order_id, v_created_at;
+      RETURNING id, created_at, expires_at INTO v_order_id, v_created_at, v_expires_at;
       EXIT;
     EXCEPTION WHEN unique_violation THEN
       IF v_attempts >= 5 THEN
@@ -322,7 +378,8 @@ BEGIN
   RETURN jsonb_build_object(
     'id', v_order_id,
     'code', v_code,
-    'created_at', v_created_at
+    'created_at', v_created_at,
+    'expires_at', v_expires_at
   );
 END;
 $function$;
@@ -362,13 +419,15 @@ BEGIN
     'wholesale_savings', o.wholesale_savings,
     'total', o.total,
     'has_quote_items', o.has_quote_items,
-    'created_at', o.created_at
+    'created_at', o.created_at,
+    'expires_at', o.expires_at
   )
   INTO v_result
   FROM public.orders o
   JOIN public.stores s ON s.id = o.store_id
   WHERE o.code = v_clean_code
     AND s.active = true
+    AND o.expires_at > now()
   LIMIT 1;
 
   RETURN v_result;
@@ -377,6 +436,57 @@ $function$;
 
 REVOKE ALL ON FUNCTION public.get_public_order(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_order(text) TO anon, authenticated;
+
+-- 4b. Limpieza por lotes de pedidos expirados + tarea semanal pg_cron
+CREATE OR REPLACE FUNCTION public.cleanup_expired_orders(p_batch_limit integer DEFAULT 2000)
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_deleted integer := 0;
+  v_limit integer := GREATEST(1, LEAST(COALESCE(p_batch_limit, 2000), 10000));
+BEGIN
+  WITH expired_batch AS (
+    SELECT id
+    FROM public.orders
+    WHERE expires_at <= now()
+    ORDER BY expires_at ASC
+    LIMIT v_limit
+  )
+  DELETE FROM public.orders o
+  USING expired_batch b
+  WHERE o.id = b.id;
+
+  GET DIAGNOSTICS v_deleted = ROW_COUNT;
+  RETURN v_deleted;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.cleanup_expired_orders(integer) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.cleanup_expired_orders(integer) FROM anon, authenticated;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_cron') THEN
+    CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+    IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'cron') THEN
+      BEGIN
+        PERFORM cron.unschedule('dizi_cleanup_expired_orders');
+      EXCEPTION WHEN OTHERS THEN
+        NULL;
+      END;
+      PERFORM cron.schedule(
+        'dizi_cleanup_expired_orders',
+        '15 4 * * 0',
+        'SELECT public.cleanup_expired_orders(2000);'
+      );
+    END IF;
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'pg_cron no programado automáticamente en este entorno: %', SQLERRM;
+END $$;
 
 -- 5. Recrear public.get_public_store desde producción agregando order_link_enabled
 CREATE OR REPLACE FUNCTION public.get_public_store(store_slug text, page_limit integer DEFAULT 36, page_offset integer DEFAULT 0)
@@ -605,12 +715,15 @@ $function$;
 -- SQL PARA REVERTIR (EN ORDEN ESTRICTO DE REVERSIÓN)
 -- ==============================================================================
 -- -- 1. Restaurar public.get_public_store sin 'order_link_enabled' (ver 20261110140000_f50_store_header_style.sql)
--- -- 2. Eliminar funciones RPC de pedidos
+-- -- 2. Desprogramar tarea pg_cron y eliminar funciones RPC de pedidos
+-- DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'cron') THEN PERFORM cron.unschedule('dizi_cleanup_expired_orders'); END IF; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+-- DROP FUNCTION IF EXISTS public.cleanup_expired_orders(integer);
 -- DROP FUNCTION IF EXISTS public.get_public_order(text);
 -- DROP FUNCTION IF EXISTS public.create_public_order(text, jsonb, text, text);
--- -- 3. Eliminar políticas, índice y tabla public.orders
+-- -- 3. Eliminar políticas, índices y tabla public.orders
 -- DROP POLICY IF EXISTS "orders_superadmin_select" ON public.orders;
 -- DROP POLICY IF EXISTS "orders_owner_select" ON public.orders;
+-- DROP INDEX IF EXISTS public.idx_orders_expires_at;
 -- DROP INDEX IF EXISTS public.idx_orders_store_created;
 -- DROP TABLE IF EXISTS public.orders;
 -- -- 4. Eliminar columna order_link_enabled de public.stores

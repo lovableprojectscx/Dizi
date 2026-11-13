@@ -331,6 +331,7 @@ test.describe("Link de pedido por WhatsApp (/pedido/:code)", () => {
     await expect(page.getByText(/Ahorro por mayor/i)).toBeVisible();
     await expect(page.getByTestId("order-item-1")).toContainText("Gorra Urban Negra");
     await expect(page.getByTestId("order-total-amount")).toContainText("S/ 235.00");
+    await expect(page.getByText(/Enlace disponible hasta el/i)).toBeVisible();
 
     // Verificar sin desbordamiento horizontal en móvil
     const noHorizontalOverflow = await page.evaluate(

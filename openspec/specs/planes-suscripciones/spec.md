@@ -1,7 +1,7 @@
 # Spec: Planes y Suscripciones
 
 ## Propósito
-Aplicar límites por plan y degradación comercial automática con periodo de gracia al vencer la suscripción, manteniendo el diseño visual libre e intacto. Cubre RF-05, RF-06 y las reglas comerciales de F39, F40 y F42.
+Aplicar límites por plan y degradación comercial automática con periodo de gracia al vencer la suscripción, manteniendo el diseño visual libre e intacto. Cubre RF-05, RF-06 y las reglas comerciales de F39, F40, F42 y F51.
 
 ## Requisitos
 
@@ -93,5 +93,11 @@ El módulo de precios por mayor (`stores.wholesale_enabled` y `products.wholesal
 - **Cuando** un comprador añade al carrito la cantidad mínima de un nivel mayorista
 - **Entonces** el catálogo cobra el precio regular normal, no aplica el nivel por mayor y no muestra mensajes de ahorro.
 
+### Requisito: Link de Pedido por WhatsApp y Vigencia por Plan (F51)
+El módulo **Link de pedido por WhatsApp** (`stores.order_link_enabled`, `false` por defecto) DEBE estar disponible exclusivamente para tiendas con plan efectivo **Catálogo Pro** o **Ilimitado** (`planAllowsOrderLink`), respetando los 3 días de gracia al vencer:
+- **Semilla / Emprendedor (o Pro/Ilimitado vencido > 3 días):** interruptor bloqueado en `/admin/configuracion` con insignia `Disponible en Pro`, `get_public_store` retorna `order_link_enabled: false` y `create_public_order` rechaza nuevas generaciones conservando intacto el parámetro en BD y sin borrar enlaces previos aún vigentes.
+- **Catálogo Pro:** generación habilitada con vigencia de enlace de **90 días** (`getOrderLinkRetentionDays = 90`).
+- **Ilimitado:** generación habilitada con vigencia extendida de **180 días** (`getOrderLinkRetentionDays = 180`).
+
 ## Trazabilidad
-Casos de prueba: CP-06 a CP-09 · E2E-05 · `src/lib/__tests__/grace-period-features.test.ts` · `src/lib/__tests__/sellers.test.ts` · `src/lib/__tests__/discount.test.ts` · `src/lib/__tests__/wholesale.test.ts` · Código: `src/lib/types.ts` (`PLANS`, `getEffectivePlan`, `getEffectiveProductLimit`, `getMaxSellers`, `getEffectiveModel`), `src/lib/sellers.ts`, `src/lib/discount.ts`, `src/lib/wholesale.ts`, RPC `get_public_store`.
+Casos de prueba: CP-06 a CP-09 · E2E-05 · `src/lib/__tests__/grace-period-features.test.ts` · `src/lib/__tests__/sellers.test.ts` · `src/lib/__tests__/discount.test.ts` · `src/lib/__tests__/wholesale.test.ts` · `src/lib/__tests__/order-link.test.ts` · Código: `src/lib/types.ts` (`PLANS`, `getEffectivePlan`, `getEffectiveProductLimit`, `getMaxSellers`, `getEffectiveModel`, `planAllowsOrderLink`, `getOrderLinkRetentionDays`), `src/lib/sellers.ts`, `src/lib/discount.ts`, `src/lib/wholesale.ts`, `src/lib/order-link.ts`, RPCs `get_public_store`, `create_public_order`, `get_public_order`.

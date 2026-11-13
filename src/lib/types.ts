@@ -625,6 +625,21 @@ export function planAllowsOrderLink(store: Store | { plan: PlanId; planExpiresAt
 }
 
 /**
+ * Retorna los días de vigencia del Link de Pedido según el plan efectivo de la tienda.
+ * - Ilimitado: 180 días
+ * - Pro: 90 días
+ * - Semilla / Emprendedor: 0
+ */
+export function getOrderLinkRetentionDays(
+  store: Store | { plan: PlanId; planExpiresAt?: string | null },
+): number {
+  const plan = getEffectivePlan(store as Store);
+  if (plan === "ilimitado") return 180;
+  if (plan === "pro") return 90;
+  return 0;
+}
+
+/**
  * Retorna el límite máximo de vendedores permitido para la tienda según su plan efectivo (F39),
  * contando el número principal de la tienda.
  * - Semilla: 1 (solo el principal)

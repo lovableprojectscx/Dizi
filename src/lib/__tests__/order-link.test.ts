@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { planAllowsOrderLink, type Store } from "@/lib/types";
+import { getOrderLinkRetentionDays, planAllowsOrderLink, type Store } from "@/lib/types";
 import { mapStoreFromDB } from "@/lib/store";
+import { getThumbnailUrl, SUPABASE_STORAGE_IMAGES_PREFIX } from "@/lib/image-utils";
 import {
   appendOrderLinkToMessage,
   buildCreateOrderItemsPayload,
   buildOrderUrl,
+  expandOrderImageUrl,
   formatOrderSummaryText,
   getOrderLineKey,
   isOrderLinkActiveForStore,
@@ -153,6 +155,31 @@ describe("Link de Pedido por WhatsApp (order-link)", () => {
       expect(summary).toContain("[S/ 28.00 c/u por mayor]");
       expect(summary).toContain("Ahorro por mayor: -S/ 21.00");
       expect(summary).toContain("Total: S/ 84.00");
+    });
+
+    it("expande rutas compactas de Storage para mantener miniaturas _thumb.webp y calcula vigencia por plan", () => {
+      const future = new Date(Date.now() + 10 * 86400_000).toISOString();
+      expect(getOrderLinkRetentionDays(makeStore({ plan: "semilla" }))).toBe(0);
+      expect(getOrderLinkRetentionDays(makeStore({ plan: "emprendedor", planExpiresAt: future }))).toBe(0);
+      expect(getOrderLinkRetentionDays(makeStore({ plan: "pro", planExpiresAt: future }))).toBe(90);
+      expect(getOrderLinkRetentionDays(makeStore({ plan: "ilimitado", planExpiresAt: future }))).toBe(180);
+
+      const expanded = expandOrderImageUrl("store_1/polo_123.webp");
+      expect(expanded).toBe(`${SUPABASE_STORAGE_IMAGES_PREFIX}store_1/polo_123.webp`);
+      expect(getThumbnailUrl(expanded)).toContain("_thumb.webp");
+
+      const mapped = mapPublicOrderFromDB({
+        id: "uuid-2",
+        code: "ABC123DEF4",
+        store_id: "store_1",
+        store_slug: "tienda",
+        store_name: "Tienda",
+        created_at: "2026-11-12T20:00:00Z",
+        expires_at: "2027-02-10T20:00:00Z",
+        items: [{ product_id: "p1", name: "Polo", image: "store_1/polo_123.webp", qty: 1 }],
+      });
+      expect(mapped!.expiresAt).toBe("2027-02-10T20:00:00Z");
+      expect(mapped!.items[0].image).toBe(`${SUPABASE_STORAGE_IMAGES_PREFIX}store_1/polo_123.webp`);
     });
   });
 });
