@@ -4345,51 +4345,23 @@ export function PublicCatalog({
                 {/* 1.5. Minimal Lookbook Search Input & Categories */}
                 {mode === "catalog" && (
                   <div className="max-w-md mx-auto px-4 w-full relative pt-4 space-y-4">
-                    <div className={cn(hasPriceFilter ? "flex gap-2 items-center" : "")}>
-                      <div className={cn("relative", hasPriceFilter && "flex-1")}>
-                        <Search
-                          style={{ color: "var(--primary)" }}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 opacity-65"
-                        />
-                        <input
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          placeholder="Buscar en la colección..."
-                          style={{
-                            backgroundColor: "var(--card)",
-                            borderColor: "var(--border)",
-                            color: "var(--foreground)",
-                            paddingLeft: "2.75rem",
-                          }}
-                          className="w-full border pr-4 py-2.5 text-xs tracking-widest uppercase outline-none focus:border-[var(--primary)] transition-colors shadow-2xs font-sans placeholder:opacity-60"
-                        />
-                      </div>
-                      {hasPriceFilter && (
-                        <button
-                          type="button"
-                          onClick={() => setIsFilterOpen(true)}
-                          style={{
-                            backgroundColor: "var(--card)",
-                            borderColor: "var(--border)",
-                            color: "var(--foreground)",
-                          }}
-                          className={cn(
-                            "relative shrink-0 min-h-[44px] items-center gap-1.5 border px-3.5 text-[10px] tracking-[0.2em] uppercase font-bold font-sans cursor-pointer transition-colors hover:border-[var(--primary)]",
-                            isMockup ? "flex" : "flex md:hidden",
-                          )}
-                        >
-                          <SlidersHorizontal className="h-3.5 w-3.5" style={{ color: "var(--primary)" }} />
-                          <span>Filtros</span>
-                          {(() => {
-                            const cnt = (activeCat !== "all" ? 1 : 0) + (activePriceFilter ? 1 : 0);
-                            return cnt > 0 ? (
-                              <span className="h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-black flex items-center justify-center">
-                                {cnt}
-                              </span>
-                            ) : null;
-                          })()}
-                        </button>
-                      )}
+                    <div className="relative">
+                      <Search
+                        style={{ color: "var(--primary)" }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 opacity-65"
+                      />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Buscar en la colección..."
+                        style={{
+                          backgroundColor: "var(--card)",
+                          borderColor: "var(--border)",
+                          color: "var(--foreground)",
+                          paddingLeft: "2.75rem",
+                        }}
+                        className="w-full border pr-4 py-2.5 text-xs tracking-widest uppercase outline-none focus:border-[var(--primary)] transition-colors shadow-2xs font-sans placeholder:opacity-60"
+                      />
                     </div>
 
                     {/* Dropdown Category Selector */}
@@ -6019,24 +5991,31 @@ export function PublicCatalog({
 
                 {/* 3. Navigation and Search Block (Search + Categories) */}
                 <div className="space-y-6">
-                  {/* Search Bar (plus Filtros button on mobile/mockup when price filter active) */}
+                  {/* Search Bar at full width */}
                   {mode === "catalog" && (
-                    <div className={cn(hasPriceFilter ? "flex gap-2 items-center" : "")}>
-                      <div className={cn("relative", hasPriceFilter ? "flex-1" : "w-full")}>
-                        <Search style={{ color: "var(--muted-foreground)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" />
-                        <input
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          placeholder="¿Qué estás buscando hoy?"
-                          style={{
-                            backgroundColor: "var(--card)",
-                            borderColor: "var(--border)",
-                            color: "var(--foreground)",
-                          }}
-                          className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition border placeholder:text-muted-foreground focus:ring-[var(--primary)] focus:border-[var(--primary)]"
-                        />
-                      </div>
-                      {hasPriceFilter && (
+                    <div className="relative w-full">
+                      <Search style={{ color: "var(--muted-foreground)" }} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4" />
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="¿Qué estás buscando hoy?"
+                        style={{
+                          backgroundColor: "var(--card)",
+                          borderColor: "var(--border)",
+                          color: "var(--foreground)",
+                        }}
+                        className="w-full rounded-full pl-10 pr-4 py-2.5 text-sm outline-none transition border placeholder:text-muted-foreground focus:ring-[var(--primary)] focus:border-[var(--primary)]"
+                      />
+                    </div>
+                  )}
+
+                  {/* Inline Horizontal Category Selector */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
+                        Categorías
+                      </h3>
+                      {mode === "catalog" && hasPriceFilter && (
                         <button
                           type="button"
                           onClick={() => setIsFilterOpen(true)}
@@ -6063,13 +6042,6 @@ export function PublicCatalog({
                         </button>
                       )}
                     </div>
-                  )}
-
-                  {/* Inline Horizontal Category Selector */}
-                  <div className="space-y-3">
-                    <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
-                      Categorías
-                    </h3>
 
                     {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
                     <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">

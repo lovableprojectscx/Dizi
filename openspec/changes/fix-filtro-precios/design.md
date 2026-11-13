@@ -35,7 +35,7 @@ Migración construida íntegramente sobre la definición real de producción (`p
   - Controles `"Limpiar"` y botones de acciones con área táctil `>= 44 px` (`min-h-11` / `h-11`), `aria-label` descriptivos (`"Precio mínimo"`, `"Precio máximo"`) y valores numéricos accesibles (`min`, `max`, `value`).
 - **Visibilidad por diseño:**
   - Desktop (`<aside>`): se reintegra `<PriceRangeSlider />` debajo del listado de categorías dentro de una tarjeta limpia solo cuando `hasPriceFilter === true`.
-  - Móvil (`375 px`): se conserva el botón `"Filtros"` existente en encabezados/barras y se agrega únicamente cuando `hasPriceFilter === true` en `bite` (`grano-miga`) junto al buscador y en `lookbook`.
+  - Móvil (`375 px`): se conserva el botón `"Filtros"` existente en encabezados/barras sin mover buscadores de sitio; en `bite` (`grano-miga`) se deja intacto el buscador a ancho completo y se coloca `"Filtros"` en la fila del encabezado `Categorías` únicamente cuando `hasPriceFilter === true` (evitando encoger el buscador o chocar con la burbuja de WhatsApp). No se modifica `lookbook` (fuera del selector activo).
   - `isMockup`: se unifican las condiciones en el header estándar y `bloom` para que cuando `isMockup = true` también previsualice el botón `"Filtros"` si la tienda tiene precios filtrables.
   - Tiendas con `price_filter_enabled = false`: `hasPriceFilter` evalúa a `false` inmediatamente → **0 nodos adicionales y 0 px de desplazamiento**.
 - **Limpieza de deuda en `PublicCatalog.tsx`:**

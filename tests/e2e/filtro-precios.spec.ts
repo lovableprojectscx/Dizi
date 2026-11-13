@@ -267,7 +267,7 @@ test.describe("Filtro de Precios (E1–E7)", () => {
     await context.close();
   });
 
-  test("E4: Diseño bite con filtro encendido muestra botón Filtros en móvil y filtra correctamente", async ({
+  test("E4: Diseño bite con filtro encendido mantiene buscador full-width, muestra Filtros junto a Categorías y filtra correctamente", async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -290,8 +290,17 @@ test.describe("Filtro de Precios (E1–E7)", () => {
 
     await setupCommonMocks(page, store);
     await page.goto("/t/zz-audit-fp-bite", { waitUntil: "domcontentloaded" });
+    const searchInput = page.getByPlaceholder("¿Qué estás buscando hoy?");
     const filterBtn = page.getByRole("button", { name: /Filtros/i }).first();
+    await expect(searchInput).toBeVisible({ timeout: 15000 });
     await expect(filterBtn).toBeVisible({ timeout: 15000 });
+
+    const searchBox = await searchInput.boundingBox();
+    const filterBox = await filterBtn.boundingBox();
+    expect(searchBox?.width ?? 0).toBeGreaterThanOrEqual(320);
+    expect(filterBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+    expect((filterBox?.y ?? 0)).toBeGreaterThan((searchBox?.y ?? 0) + (searchBox?.height ?? 0) - 2);
+
     await filterBtn.click();
     const drawer = page.getByRole("dialog");
     await setRangeValue(drawer.getByTestId("price-slider-max"), 20);

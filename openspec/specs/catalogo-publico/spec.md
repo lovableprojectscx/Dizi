@@ -55,7 +55,7 @@ Al realizar una búsqueda (`searchQuery`), seleccionar una categoría (`activeCa
 ### Requisito: Filtro por Rango de Precios (RF-FP)
 Cuando `stores.price_filter_enabled = true` y existen al menos dos precios filtrables distintos (`bounds.min < bounds.max`), el catálogo público DEBE ofrecer un control dual Min–Max (`Desde S/ min — Hasta S/ max`) con área táctil mínima de `44×44 px` (`RNF-03`) y contraste adaptativo al tema de la tienda:
 - **Apagado (`price_filter_enabled = false`):** NO debe renderizar el bloque "Rango de precio" en PC ni botones o deslizadores de precio adicionales en móvil (0 px de alteración visual).
-- **Escritorio (`>= md`) y móvil:** En escritorio se muestra dentro del `<aside>` lateral izquierdo bajo Categorías; en móvil (y vistas `isMockup`) se accede desde el Drawer mediante el botón "Filtros", incluyendo acceso condicional junto al buscador en `bite` y `lookbook` únicamente cuando `hasPriceFilter === true`.
+- **Escritorio (`>= md`) y móvil:** En escritorio se muestra dentro del `<aside>` lateral izquierdo bajo Categorías; en móvil (y vistas `isMockup`) se accede desde el Drawer mediante el botón "Filtros" ubicado en el header/barra de cada diseño (y en `bite`, dentro de la fila del título `Categorías` para conservar su buscador full-width sin chocar con el botón flotante de WhatsApp) únicamente cuando `hasPriceFilter === true`.
 - **Variaciones y "A consultar":** Al existir un rango activo (`min > bounds.min` o `max < bounds.max`), los productos "A consultar" (precio `<= 0` o nulo sin variaciones positivas) DEBEN quedar ocultos, y los productos con variaciones coinciden si su precio base positivo o alguna variación positiva pertenece a `[min, max]`. Al regresar ambos extremos a `[bounds.min, bounds.max]`, el rango se normaliza a `null` (`isNarrowing = false`), restaurando portada y productos "A consultar".
 - **Catálogos grandes (> 36 ítems):** `get_public_store` entrega `price_bounds` reales sobre el catálogo completo acotado al límite efectivo del plan, y al filtrar se consulta en servidor `get_public_store_products` con `p_min_price` y `p_max_price` (con degradación transparente a paginación de 5 argumentos ante error `PGRST202`/`42883` previo a migración).
 - **Barra de resultados y conteo combinado:** Con categoría + rango de precio simultáneos, la barra refleja las coincidencias reales de la intersección y muestra el chip unificado `"S/ min – S/ max"`.
@@ -63,7 +63,7 @@ Cuando `stores.price_filter_enabled = true` y existen al menos dos precios filtr
 #### Escenario: Preservar UX/UI con interruptor apagado
 - **Dado** una tienda con `price_filter_enabled = false`
 - **Cuando** se abre `/t/:slug` en móvil (`375 px`) o escritorio (`1280 px`)
-- **Entonces** no aparece la sección de precio en el Drawer ni en el sidebar `<aside>`, ni se añaden botones en `bite` o `lookbook`.
+- **Entonces** no aparece la sección de precio en el Drawer ni en el sidebar `<aside>`, ni se añaden botones en `bite`.
 
 #### Escenario: Filtro dual en escritorio y móvil con retorno a estado neutro
 - **Dado** una tienda con `price_filter_enabled = true` y productos desde `S/ 20` hasta `S/ 150`
