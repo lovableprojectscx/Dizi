@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { updateMock, eqMock, selectAfterUpdateMock } = vi.hoisted(() => {
@@ -165,5 +167,31 @@ describe("F50.1 - Catálogo extensible y configurable de etiquetas Perfil (profi
       { id: "recojo", value: "Recojo Tda 242" },
       { id: "custom", value: "Envíos Shalom", icon: "sparkles" },
     ]);
+  });
+
+  it("Migración SQL 20261112210000_f50_1_profile_tags.sql agrega stores.profile_tags y preserva order_link_enabled y header_style", () => {
+    const migrationsDir = path.resolve(process.cwd(), "supabase", "migrations");
+    const targetMigration = path.join(migrationsDir, "20261112210000_f50_1_profile_tags.sql");
+    const staleMigration = path.join(migrationsDir, "20261112150000_f50_1_profile_tags.sql");
+
+    expect(fs.existsSync(targetMigration)).toBe(true);
+    expect(fs.existsSync(staleMigration)).toBe(false);
+
+    const sql = fs.readFileSync(targetMigration, "utf8");
+    const nonCommentLines = sql
+      .split(/\r?\n/)
+      .filter((line) => !line.trimStart().startsWith("--"))
+      .join("\n");
+
+    expect(nonCommentLines).toContain("ADD COLUMN IF NOT EXISTS profile_tags jsonb NOT NULL DEFAULT '[]'::jsonb");
+    expect(nonCommentLines).toContain("CREATE OR REPLACE FUNCTION public.get_public_store");
+    expect(nonCommentLines).toContain("SECURITY DEFINER");
+    expect(nonCommentLines).toContain("SET search_path TO 'public', 'pg_temp'");
+    expect(nonCommentLines).toContain("'profile_tags', COALESCE(store_row.profile_tags, '[]'::jsonb)");
+    expect(nonCommentLines).toContain("'header_style', COALESCE(store_row.header_style, 'standard')");
+    expect(nonCommentLines).toContain(
+      "'order_link_enabled', CASE WHEN store_plan IN ('pro', 'ilimitado') THEN COALESCE(store_row.order_link_enabled, false) ELSE false END"
+    );
+    expect(nonCommentLines).not.toMatch(/DROP\s+FUNCTION/i);
   });
 });

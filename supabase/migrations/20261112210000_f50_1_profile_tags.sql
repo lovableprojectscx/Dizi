@@ -1,20 +1,23 @@
 -- ==============================================================================
 -- Migración F50.1: Etiquetas extensibles para diseño "Perfil" (stores.profile_tags)
--- Fecha: 2026-11-12
--- Estado: SOLO ARCHIVO (NO APLICAR EN PRODUCCIÓN HASTA EL OK DE JACK Y MERGE)
+-- Fecha: 2026-11-12 21:00 UTC
+-- Estado: SOLO ARCHIVO (NO APLICAR EN PRODUCCIÓN HASTA EL OK DE JACK POST-MERGE)
+--
+-- Origen verificado: pg_get_functiondef('public.get_public_store(text, integer, integer)'::regprocedure)
+-- en producción (zkqzdwxjthjdjchimmds, tras migración 20261112200000_order_link_whatsapp).
 --
 -- Incluye:
 -- 1. Nueva columna profile_tags jsonb NOT NULL DEFAULT '[]'::jsonb en public.stores.
--- 2. Actualización de public.get_public_store para exponer 'profile_tags'.
---    (Basado en 20261111140000_f50v2_cleanup_store_header_style.sql; ya no
---    referencia la columna eliminada header_style).
+-- 2. Actualización de public.get_public_store para exponer 'profile_tags',
+--    preservando íntegros 'header_style' (aún presente en stores) y
+--    'order_link_enabled' (aplicado en producción por 20261112200000_order_link_whatsapp).
 -- ==============================================================================
 
 -- 1. Agregar columna profile_tags a stores
 ALTER TABLE public.stores
   ADD COLUMN IF NOT EXISTS profile_tags jsonb NOT NULL DEFAULT '[]'::jsonb;
 
--- 2. Exponer profile_tags en get_public_store
+-- 2. Exponer profile_tags en get_public_store (preservando todo el contrato vivo en producción)
 CREATE OR REPLACE FUNCTION public.get_public_store(store_slug text, page_limit integer DEFAULT 36, page_offset integer DEFAULT 0)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -116,6 +119,7 @@ BEGIN
     'border_radius', store_row.border_radius,
     'img_shape', store_row.img_shape,
     'photo_format', store_row.photo_format,
+    'header_style', COALESCE(store_row.header_style, 'standard'),
     'is_dark', store_row.is_dark,
     'banner_image', effective_banner,
     'banner_title', store_row.banner_title,
@@ -186,6 +190,7 @@ BEGIN
     'show_featured', COALESCE(store_row.show_featured, true),
     'show_discount_pct', COALESCE(store_row.show_discount_pct, false),
     'wholesale_enabled', CASE WHEN store_plan = 'semilla' THEN false ELSE COALESCE(store_row.wholesale_enabled, false) END,
+    'order_link_enabled', CASE WHEN store_plan IN ('pro', 'ilimitado') THEN COALESCE(store_row.order_link_enabled, false) ELSE false END,
     'promo_bar_enabled', store_row.promo_bar_enabled,
     'promo_bar_text', store_row.promo_bar_text,
     'promo_bar_action_type', store_row.promo_bar_action_type,
@@ -237,7 +242,15 @@ END;
 $function$;
 
 -- ==============================================================================
--- INSTRUCCIONES DE REVERSIÓN (ROLLBACK):
--- 1. Restaurar get_public_store desde 20261111140000_f50v2_cleanup_store_header_style.sql
--- 2. ALTER TABLE public.stores DROP COLUMN IF EXISTS profile_tags;
+-- INSTRUCCIONES DE REVERSIÓN (ROLLBACK EN ORDEN ESTRICTO):
+-- Nota: ejecutar primero la restauración de la función para no dejar referencias
+-- huérfanas a store_row.profile_tags, y recién después eliminar la columna.
+--
+-- Paso 1: Restaurar public.get_public_store desde el respaldo previo en _respaldos/
+--   o ejecutando CREATE OR REPLACE FUNCTION public.get_public_store(...) idéntica a la
+--   versión previa (con 'header_style' y 'order_link_enabled', quitando la línea
+--   'profile_tags', COALESCE(store_row.profile_tags, '[]'::jsonb),).
+--
+-- Paso 2: Eliminar la columna agregada:
+--   ALTER TABLE public.stores DROP COLUMN IF EXISTS profile_tags;
 -- ==============================================================================

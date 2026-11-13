@@ -136,6 +136,7 @@ function buildProfileStore(overrides: Record<string, unknown> = {}) {
     border_radius: "12px",
     img_shape: "rounded",
     photo_format: "portrait",
+    header_style: "standard",
     is_dark: false,
     banner_image: "/images/demos/boutique-demo/banner.webp",
     banner_title: "NUEVA COLECCIÓN",
@@ -154,6 +155,7 @@ function buildProfileStore(overrides: Record<string, unknown> = {}) {
     price_filter_enabled: false,
     libro_reclamaciones_activo: false,
     bio_links_enabled: true,
+    order_link_enabled: false,
     promo_bar_enabled: true,
     promo_bar_text: "Envíos a todo el Perú · WhatsApp +51 987 654 321",
     location_address: "Av. Conquistadores 410, San Isidro",
@@ -360,6 +362,10 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
   });
 
   test("Admin /admin/diseno muestra editor de etiquetas únicamente cuando se elige Perfil", async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on("pageerror", (err) => pageErrors.push(err.message));
+    let capturedStorePatch: Record<string, unknown> | null = null;
+
     const mockAdminStore = {
       id: "store-f501-admin",
       slug: "boutique-demo",
@@ -468,6 +474,14 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
     });
 
     await page.route("**/rest/v1/stores*", async (route) => {
+      if (route.request().method() === "PATCH") {
+        capturedStorePatch = route.request().postDataJSON() as Record<string, unknown>;
+        await route.fulfill({
+          status: 204,
+          body: "",
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -526,8 +540,19 @@ test.describe("F50.1 · Perfil con Tags, Redes e Integración Link en Bio (Playw
       animations: "disabled",
     });
 
+    // Guardar cambios y verificar que el payload enviado a Supabase REST incluya profile_tags ordenado y personalizado
+    await page.getByRole("button", { name: "Guardar cambios" }).first().click();
+    await expect.poll(() => capturedStorePatch).not.toBeNull();
+    expect(capturedStorePatch?.profile_tags).toEqual([
+      { id: "delivery", value: "Delivery gratis > S/ 99" },
+      { id: "plin" },
+      { id: "custom", value: "Venta por mayor", icon: "package" },
+      { id: "yape" },
+    ]);
+
     // Cambiar al diseño Overlay Visual y comprobar que el editor de tags ya NO aparece
     await page.locator("h4", { hasText: "Overlay Visual" }).first().click();
     await expect(editor).toHaveCount(0);
+    expect(pageErrors).toEqual([]);
   });
 });
