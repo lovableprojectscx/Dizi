@@ -266,6 +266,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       showFeatured: data.show_featured ?? true,
       showDiscountPct: data.show_discount_pct ?? false,
       wholesaleEnabled: data.wholesale_enabled ?? false,
+      orderLinkEnabled: data.order_link_enabled ?? false,
       mainSellerName: data.main_seller_name ?? undefined,
       mainSellerActive: data.main_seller_active !== undefined ? Boolean(data.main_seller_active) : true,
       sellers: Array.isArray(data.sellers)

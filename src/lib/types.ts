@@ -400,6 +400,8 @@ export interface Store {
   showDiscountPct?: boolean;
   /** Activa el módulo y visualización de precios por mayor en el catálogo (F42) */
   wholesaleEnabled?: boolean;
+  /** Genera un link web con el detalle del pedido al enviarlo por WhatsApp (planes Pro e Ilimitado) */
+  orderLinkEnabled?: boolean;
   /** Nombre personalizado opcional para el vendedor principal (por defecto el nombre de la tienda) */
   mainSellerName?: string | null;
   /** Indica si el vendedor principal (número oficial de la tienda) está activo para recibir chats (F39b) */
@@ -611,6 +613,15 @@ export function planAllowsPromoBar(store: Store): boolean {
 export function planAllowsWholesale(store: Store): boolean {
   const plan = getEffectivePlan(store);
   return plan !== "semilla";
+}
+
+/**
+ * Determina si el plan efectivo de la tienda permite activar el Link de Pedido por WhatsApp.
+ * Disponible exclusivamente para planes "pro" e "ilimitado".
+ */
+export function planAllowsOrderLink(store: Store | { plan: PlanId; planExpiresAt?: string | null }): boolean {
+  const plan = getEffectivePlan(store as Store);
+  return plan === "pro" || plan === "ilimitado";
 }
 
 /**

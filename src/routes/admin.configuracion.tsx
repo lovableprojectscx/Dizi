@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { Input } from "@/components/ui/input";
-import { getEffectivePlan, getMaxSellers, type Seller } from "@/lib/types";
+import { getEffectivePlan, getMaxSellers, planAllowsOrderLink, type Seller } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -76,6 +76,7 @@ function ConfigPage() {
   const [showDiziBranding, setShowDiziBranding] = useState(
     store?.showDiziBranding ?? (store ? getEffectivePlan(store) === "semilla" : false)
   );
+  const [orderLinkEnabled, setOrderLinkEnabled] = useState(store?.orderLinkEnabled ?? false);
 
   const [copiedCatalog, setCopiedCatalog] = useState(false);
   const [copiedBio, setCopiedBio] = useState(false);
@@ -100,6 +101,7 @@ function ConfigPage() {
       setShowDiziBranding(
         store.showDiziBranding ?? (getEffectivePlan(store) === "semilla")
       );
+      setOrderLinkEnabled(store.orderLinkEnabled ?? false);
       setLoadedStoreId(store.id);
     }
   }, [store, loadedStoreId]);
@@ -107,6 +109,7 @@ function ConfigPage() {
   const maxTotalSellers = store ? getMaxSellers(store) : 1;
   const maxExtraSellers = Math.max(0, maxTotalSellers - 1);
   const effectivePlan = store ? getEffectivePlan(store) : "semilla";
+  const canUseOrderLink = store ? planAllowsOrderLink(store) : false;
 
   if (!store) return null;
 
@@ -190,6 +193,7 @@ function ConfigPage() {
         empresaRazonSocial: empresaRazonSocial.trim() || undefined,
         empresaDireccion: empresaDireccion.trim() || undefined,
         showDiziBranding: showDiziBranding,
+        orderLinkEnabled: canUseOrderLink ? orderLinkEnabled : (store.orderLinkEnabled ?? false),
       });
 
       const updatedStore = useApp.getState().stores.find((st) => st.id === store.id);
@@ -532,6 +536,57 @@ function ConfigPage() {
               </div>
             );
           })()}
+
+          {/* Link de Pedido Detallado en WhatsApp (Pro / Ilimitado) */}
+          <div className="pt-4 border-t border-border/30 flex items-center justify-between gap-4">
+            <div className="space-y-1 max-w-[80%]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Link2 className="h-4 w-4 text-primary shrink-0" />
+                <p className="text-sm font-semibold">Link de pedido por WhatsApp</p>
+                {!canUseOrderLink && (
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[9px] font-extrabold py-0.5">
+                    Disponible en Pro
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Crea un enlace único con fotos, variaciones, cantidades y total para ver cada
+                pedido detallado en un solo lugar.
+              </p>
+              {!canUseOrderLink && (
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                  Exclusivo para Catálogo Pro e Ilimitado.{" "}
+                  <Link to="/admin/plan" className="underline font-bold hover:opacity-80">
+                    Mejorar plan
+                  </Link>
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              role="switch"
+              data-testid="toggle-order-link"
+              aria-label="Link de pedido por WhatsApp"
+              disabled={!canUseOrderLink}
+              aria-checked={canUseOrderLink ? orderLinkEnabled : false}
+              onClick={() => {
+                if (canUseOrderLink) setOrderLinkEnabled(!orderLinkEnabled);
+              }}
+              className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${
+                !canUseOrderLink
+                  ? "opacity-50 cursor-not-allowed bg-input"
+                  : orderLinkEnabled
+                    ? "cursor-pointer bg-primary"
+                    : "cursor-pointer bg-input"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ${
+                  canUseOrderLink && orderLinkEnabled ? "translate-x-5" : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
 
           {/* Libro de reclamaciones */}
           <div className="pt-4 border-t border-border/30 space-y-4">

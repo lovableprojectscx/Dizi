@@ -173,6 +173,7 @@ export const mapStoreFromDB = (row: any): Store => {
     showFeatured: row.show_featured ?? true,
     showDiscountPct: row.show_discount_pct ?? false,
     wholesaleEnabled: row.wholesale_enabled ?? false,
+    orderLinkEnabled: row.order_link_enabled ?? false,
     mainSellerName: row.main_seller_name ?? undefined,
     mainSellerActive: row.main_seller_active !== undefined ? Boolean(row.main_seller_active) : true,
     sellers: Array.isArray(row.sellers)
@@ -826,6 +827,8 @@ export const useApp = create<AppState>()(
           dbPatch.show_discount_pct = updatedPatch.showDiscountPct;
         if (updatedPatch.wholesaleEnabled !== undefined)
           dbPatch.wholesale_enabled = updatedPatch.wholesaleEnabled;
+        if (updatedPatch.orderLinkEnabled !== undefined)
+          dbPatch.order_link_enabled = Boolean(updatedPatch.orderLinkEnabled);
         if (updatedPatch.mainSellerName !== undefined)
           dbPatch.main_seller_name = updatedPatch.mainSellerName ? updatedPatch.mainSellerName.trim() : null;
         if (updatedPatch.mainSellerActive !== undefined)

@@ -135,6 +135,13 @@ import { ImageZoomModal } from "./ImageZoomModal";
 import { SellerPicker } from "./SellerPicker";
 import { resolveActiveSellers, type SellerOption } from "@/lib/sellers";
 import {
+  isOrderLinkActiveForStore,
+  buildOrderUrl,
+  appendOrderLinkToMessage,
+  buildCreateOrderItemsPayload,
+  createPublicOrder,
+} from "@/lib/order-link";
+import {
   cleanCategoryName,
   findCategoryByParam,
   getCategorySlug,
@@ -1385,6 +1392,8 @@ export function PublicCatalog({
   const [copied, setCopied] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successOrderUrl, setSuccessOrderUrl] = useState("");
+  const [successOrderDetailUrl, setSuccessOrderDetailUrl] = useState("");
+  const [isSendingOrder, setIsSendingOrder] = useState(false);
   const [promoBarClosed, setPromoBarClosed] = useState(false);
   const [showInAppBanner, setShowInAppBanner] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -1412,14 +1421,16 @@ export function PublicCatalog({
 
   const hasMultipleSellers = activeSellers.length > 1;
 
-  const executeSellerAction = (
-    seller: SellerOption,
-    action: { msg: string; isCheckout?: boolean },
+  const completeCheckoutWithSeller = async (
+    seller: SellerOption | null,
+    greetingMsgWithoutSignature: string,
   ) => {
-    const targetPhone = seller.phone || store.phone;
-    const finalMsg = buildSellerMessage(seller.name, action.msg);
+    const targetPhone = seller?.phone || store.phone;
+    const shouldCreateOrderLink = isOrderLinkActiveForStore(store) && !isMockup;
 
-    if (action.isCheckout) {
+    if (!shouldCreateOrderLink) {
+      setSuccessOrderDetailUrl("");
+      const finalMsg = appendDiziSignature(greetingMsgWithoutSignature);
       if (isInAppBrowser()) {
         setPendingOrderMsg(finalMsg);
         setPendingOrderSeller(seller);
@@ -1435,6 +1446,64 @@ export function PublicCatalog({
         setViewingProduct(null);
         setShowSuccessModal(true);
       }
+      return;
+    }
+
+    if (isSendingOrder) return;
+    setIsSendingOrder(true);
+    // Pre-abrir pestaña de forma síncrona durante el clic para evitar bloqueo de popups en móvil
+    const preOpenedWin = !isInAppBrowser() ? window.open("", "_blank") : null;
+
+    try {
+      const itemsPayload = buildCreateOrderItemsPayload(cartLines);
+      const created = await createPublicOrder({
+        storeId: store.id,
+        items: itemsPayload,
+        sellerName: seller?.name || store.mainSellerName || store.name,
+        sellerPhone: targetPhone,
+      });
+
+      const orderDetailUrl = created?.code ? buildOrderUrl(created.code) : "";
+      setSuccessOrderDetailUrl(orderDetailUrl);
+
+      const msgWithLink = orderDetailUrl
+        ? appendOrderLinkToMessage(greetingMsgWithoutSignature, orderDetailUrl)
+        : greetingMsgWithoutSignature;
+      const finalMsg = appendDiziSignature(msgWithLink);
+
+      if (isInAppBrowser()) {
+        setPendingOrderMsg(finalMsg);
+        setPendingOrderSeller(seller);
+        setCartOpen(false);
+        setViewingProduct(null);
+        setShowInAppHelpModal(true);
+      } else {
+        const waUrl = buildWaUrl(targetPhone, finalMsg);
+        setSuccessOrderUrl(waUrl);
+        if (preOpenedWin) {
+          preOpenedWin.location.href = waUrl;
+        } else {
+          window.open(waUrl, "_blank");
+        }
+        cartClear(store.id);
+        setCartOpen(false);
+        setViewingProduct(null);
+        setShowSuccessModal(true);
+      }
+    } finally {
+      setIsSendingOrder(false);
+    }
+  };
+
+  const executeSellerAction = (
+    seller: SellerOption,
+    action: { msg: string; isCheckout?: boolean },
+  ) => {
+    const targetPhone = seller.phone || store.phone;
+    const finalMsg = buildSellerMessage(seller.name, action.msg);
+
+    if (action.isCheckout) {
+      void completeCheckoutWithSeller(seller, finalMsg);
     } else {
       if (isInAppBrowser()) {
         setPendingOrderMsg(finalMsg);
@@ -1454,25 +1523,11 @@ export function PublicCatalog({
       const single = activeSellers.length === 1 ? activeSellers[0] : null;
       const isSingleExtra = single && !single.isMain;
       const targetPhone = (isSingleExtra && single.phone) ? single.phone : store.phone;
-      const finalMsg = msg;
 
       if (isCheckout) {
-        if (isInAppBrowser()) {
-          setPendingOrderMsg(finalMsg);
-          setPendingOrderSeller(single);
-          setCartOpen(false);
-          setViewingProduct(null);
-          setShowInAppHelpModal(true);
-        } else {
-          const waUrl = buildWaUrl(targetPhone, finalMsg);
-          setSuccessOrderUrl(waUrl);
-          window.open(waUrl, "_blank");
-          cartClear(store.id);
-          setCartOpen(false);
-          setViewingProduct(null);
-          setShowSuccessModal(true);
-        }
+        void completeCheckoutWithSeller(single, msg);
       } else {
+        const finalMsg = msg;
         if (isInAppBrowser()) {
           setPendingOrderMsg(finalMsg);
           setPendingOrderSeller(single);
@@ -2490,17 +2545,14 @@ export function PublicCatalog({
 
     if (hasMultipleSellers) {
       const orderBody = `quiero hacer este pedido:\n\n${lines}${savingsMsg}\n\nTotal: ${totalMsg}`;
-      const signedMsg = appendDiziSignature(orderBody);
-      openWhatsAppAction(signedMsg, true);
+      openWhatsAppAction(orderBody, true);
     } else if (isSingleExtra) {
       const orderBody = `quiero hacer este pedido:\n\n${lines}${savingsMsg}\n\nTotal: ${totalMsg}`;
       const msg = buildSellerMessage(single.name, orderBody);
-      const signedMsg = appendDiziSignature(msg);
-      openWhatsAppAction(signedMsg, true);
+      openWhatsAppAction(msg, true);
     } else {
       const msg = `Hola ${store.name}, quiero hacer este pedido:\n\n${lines}${savingsMsg}\n\nTotal: ${totalMsg}`;
-      const signedMsg = appendDiziSignature(msg);
-      openWhatsAppAction(signedMsg, true);
+      openWhatsAppAction(msg, true);
     }
   };
 
@@ -8980,10 +9032,10 @@ export function PublicCatalog({
                   : {}),
               }}
               onClick={sendOrder}
-              disabled={cartLines.length === 0}
+              disabled={cartLines.length === 0 || isSendingOrder}
             >
               <WhatsAppIcon className="h-4 w-4" />
-              Enviar pedido por WhatsApp
+              {isSendingOrder ? "Generando link de pedido..." : "Enviar pedido por WhatsApp"}
             </button>
             {isInAppBrowser() && (
               <div
@@ -9817,6 +9869,18 @@ export function PublicCatalog({
                 <WhatsAppIcon className="h-4 w-4" />
                 ¿No se abrió WhatsApp? Volver a intentar
               </button>
+              {successOrderDetailUrl && (
+                <a
+                  href={successOrderDetailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-10 rounded-2xl border font-bold text-xs flex items-center justify-center gap-2 transition hover:bg-accent"
+                  style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                >
+                  <ClipboardList className="h-4 w-4 opacity-80" />
+                  Ver link de pedido detallado
+                </a>
+              )}
             </div>
 
             {/* Tarjeta del Loop Viral (Creación de Tiendas) - Solo para tiendas Semilla */}

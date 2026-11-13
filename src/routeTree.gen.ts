@@ -26,6 +26,7 @@ import { Route as SuperPromocionesRouteImport } from './routes/super.promociones
 import { Route as SuperLoginRouteImport } from './routes/super.login'
 import { Route as SuperEncuestasRouteImport } from './routes/super.encuestas'
 import { Route as SuperDashboardRouteImport } from './routes/super.dashboard'
+import { Route as PedidoCodeRouteImport } from './routes/pedido.$code'
 import { Route as BioSlugRouteImport } from './routes/bio.$slug'
 import { Route as AdminVendedoresRouteImport } from './routes/admin.vendedores'
 import { Route as AdminReclamacionesRouteImport } from './routes/admin.reclamaciones'
@@ -125,6 +126,11 @@ const SuperDashboardRoute = SuperDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => SuperRoute,
 } as any)
+const PedidoCodeRoute = PedidoCodeRouteImport.update({
+  id: '/pedido/$code',
+  path: '/pedido/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BioSlugRoute = BioSlugRouteImport.update({
   id: '/bio/$slug',
   path: '/bio/$slug',
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
   '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
+  '/pedido/$code': typeof PedidoCodeRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/encuestas': typeof SuperEncuestasRoute
   '/super/login': typeof SuperLoginRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
   '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
+  '/pedido/$code': typeof PedidoCodeRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/encuestas': typeof SuperEncuestasRoute
   '/super/login': typeof SuperLoginRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/admin/reclamaciones': typeof AdminReclamacionesRoute
   '/admin/vendedores': typeof AdminVendedoresRoute
   '/bio/$slug': typeof BioSlugRoute
+  '/pedido/$code': typeof PedidoCodeRoute
   '/super/dashboard': typeof SuperDashboardRoute
   '/super/encuestas': typeof SuperEncuestasRoute
   '/super/login': typeof SuperLoginRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/admin/reclamaciones'
     | '/admin/vendedores'
     | '/bio/$slug'
+    | '/pedido/$code'
     | '/super/dashboard'
     | '/super/encuestas'
     | '/super/login'
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/admin/reclamaciones'
     | '/admin/vendedores'
     | '/bio/$slug'
+    | '/pedido/$code'
     | '/super/dashboard'
     | '/super/encuestas'
     | '/super/login'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/admin/reclamaciones'
     | '/admin/vendedores'
     | '/bio/$slug'
+    | '/pedido/$code'
     | '/super/dashboard'
     | '/super/encuestas'
     | '/super/login'
@@ -395,6 +407,7 @@ export interface RootRouteChildren {
   SuperRoute: typeof SuperRouteWithChildren
   TerminosRoute: typeof TerminosRoute
   BioSlugRoute: typeof BioSlugRoute
+  PedidoCodeRoute: typeof PedidoCodeRoute
   TSlugChar123CategoriaChar125Route: typeof TSlugChar123CategoriaChar125Route
 }
 
@@ -518,6 +531,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/super/dashboard'
       preLoaderRoute: typeof SuperDashboardRouteImport
       parentRoute: typeof SuperRoute
+    }
+    '/pedido/$code': {
+      id: '/pedido/$code'
+      path: '/pedido/$code'
+      fullPath: '/pedido/$code'
+      preLoaderRoute: typeof PedidoCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/bio/$slug': {
       id: '/bio/$slug'
@@ -678,6 +698,7 @@ const rootRouteChildren: RootRouteChildren = {
   SuperRoute: SuperRouteWithChildren,
   TerminosRoute: TerminosRoute,
   BioSlugRoute: BioSlugRoute,
+  PedidoCodeRoute: PedidoCodeRoute,
   TSlugChar123CategoriaChar125Route: TSlugChar123CategoriaChar125Route,
 }
 export const routeTree = rootRouteImport
