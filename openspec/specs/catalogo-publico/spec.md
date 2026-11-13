@@ -45,12 +45,30 @@ El sistema DEBE soportar enlaces amigables por categoría en la ruta `/t/:slug/<
 - **Entonces** el sistema resuelve la categoría correspondiente y filtra sus productos.
 
 ### Requisito: Modo Resultados al Filtrar (RF-37)
-Al realizar una búsqueda (`searchQuery`), seleccionar una categoría (`activeCat !== "all"`) o aplicar un filtro de precios (`priceRange`), el catálogo público en sus 15 diseños DEBE ocultar el carrusel de banners y la sección de productos destacados, mostrando en su lugar una barra de resultados con el conteo de coincidencias y la opción de limpiar filtros. En caso de no existir resultados, DEBE desplegar un estado vacío con botón "Ver todo" y botón de contacto por WhatsApp.
+Al realizar una búsqueda (`searchQuery`), seleccionar una categoría (`activeCat !== "all"`) o aplicar un recorte activo de rango de precio (`activePriceFilter !== null`), el catálogo público en sus diseños DEBE ocultar el carrusel de banners y la sección de productos destacados, mostrando en su lugar la barra de resultados con el conteo de coincidencias reales y chips independientes para limpiar cada filtro. En caso de no existir resultados tras finalizar cualquier carga en servidor, DEBE desplegar el estado vacío con botón "Ver todo" y botón de contacto por WhatsApp.
 
 #### Escenario: Activación del modo resultados
 - **Dado** un catálogo con carrusel de banners y productos destacados visibles
-- **Cuando** el visitante busca un producto o hace clic en una categoría
+- **Cuando** el visitante busca un producto, hace clic en una categoría o ajusta el filtro de precio dentro del universo total
 - **Entonces** la portada y los destacados se ocultan para destacar de forma inmediata los productos resultantes.
+
+### Requisito: Filtro por Rango de Precios (RF-FP)
+Cuando `stores.price_filter_enabled = true` y existen al menos dos precios filtrables distintos (`bounds.min < bounds.max`), el catálogo público DEBE ofrecer un control dual Min–Max (`Desde S/ min — Hasta S/ max`) con área táctil mínima de `44×44 px` (`RNF-03`) y contraste adaptativo al tema de la tienda:
+- **Apagado (`price_filter_enabled = false`):** NO debe renderizar el bloque "Rango de precio" en PC ni botones o deslizadores de precio adicionales en móvil (0 px de alteración visual).
+- **Escritorio (`>= md`) y móvil:** En escritorio se muestra dentro del `<aside>` lateral izquierdo bajo Categorías; en móvil (y vistas `isMockup`) se accede desde el Drawer mediante el botón "Filtros" ubicado en el header/barra de cada diseño (y en `bite`, dentro de la fila del título `Categorías` para conservar su buscador full-width sin chocar con el botón flotante de WhatsApp) únicamente cuando `hasPriceFilter === true`.
+- **Variaciones y "A consultar":** Al existir un rango activo (`min > bounds.min` o `max < bounds.max`), los productos "A consultar" (precio `<= 0` o nulo sin variaciones positivas) DEBEN quedar ocultos, y los productos con variaciones coinciden si su precio base positivo o alguna variación positiva pertenece a `[min, max]`. Al regresar ambos extremos a `[bounds.min, bounds.max]`, el rango se normaliza a `null` (`isNarrowing = false`), restaurando portada y productos "A consultar".
+- **Catálogos grandes (> 36 ítems):** `get_public_store` entrega `price_bounds` reales sobre el catálogo completo acotado al límite efectivo del plan, y al filtrar se consulta en servidor `get_public_store_products` con `p_min_price` y `p_max_price` (con degradación transparente a paginación de 5 argumentos ante error `PGRST202`/`42883` previo a migración).
+- **Barra de resultados y conteo combinado:** Con categoría + rango de precio simultáneos, la barra refleja las coincidencias reales de la intersección y muestra el chip unificado `"S/ min – S/ max"`.
+
+#### Escenario: Preservar UX/UI con interruptor apagado
+- **Dado** una tienda con `price_filter_enabled = false`
+- **Cuando** se abre `/t/:slug` en móvil (`375 px`) o escritorio (`1280 px`)
+- **Entonces** no aparece la sección de precio en el Drawer ni en el sidebar `<aside>`, ni se añaden botones en `bite`.
+
+#### Escenario: Filtro dual en escritorio y móvil con retorno a estado neutro
+- **Dado** una tienda con `price_filter_enabled = true` y productos desde `S/ 20` hasta `S/ 150`
+- **Cuando** el usuario restringe mínimo o máximo y luego devuelve ambos controles a `20` y `150`
+- **Entonces** primero activa el modo resultados con chip `"S/ min – S/ max"` y, al restaurar los extremos, reaparecen la portada y los productos "A consultar".
 
 ### Requisito: Imágenes en Alta Calidad y Miniaturas Duales (RF-38)
 El procesamiento de imágenes en cliente Canvas (`src/lib/image-utils.ts`) DEBE aplicar los siguientes presets (`IMAGE_PRESETS`):
@@ -122,8 +140,8 @@ El servidor DEBE entregar en `get_public_store` el modelo visual elegido por el 
 ### Requisito: Caché Nativo de Catálogo y Zero-Egress en SessionStorage
 Las rutas públicas `/t/:slug` y `/bio/:slug` DEBEN implementar almacenamiento en `sessionStorage` (`dizi_store_cache_<slug>`, TTL 5 min) y `staleTime: 5min` en el enrutador para eliminar llamadas redundantes en sesión, garantizando 0 bytes de egress en navegación interna o recargas. El Service Worker DEBE interceptar peticiones GET de imágenes y cachearlas con *Stale-While-Revalidate*.
 
-### Requisito: Paginación Inicial Lazy Loading (36 items) y Carga Bajo Demanda por Categoría
-El RPC `get_public_store` DEBE limitar la entrega inicial a los primeros 36 productos de la tienda. Al seleccionar cualquier categoría específica, el sistema DEBE evaluar si existen productos en memoria; de no ser así, DEBE consultar `get_public_store_products` enviando `p_category_id` y desplegar de inmediato los productos sin pantallas vacías.
+### Requisito: Paginación Inicial Lazy Loading (36 items) y Carga Bajo Demanda por Categoría o Precio
+El loader público de `/t/:slug` y el RPC `get_public_store` DEBEN limitar la entrega inicial a los primeros 36 productos de la tienda, entregando además `price_bounds` globales del catálogo permitido. Al seleccionar cualquier categoría específica o aplicar un rango de precio sin tener todos los productos en memoria, el sistema DEBE consultar `get_public_store_products` enviando `p_category_id` o `p_min_price` / `p_max_price` (con fallback a paginación de 5 argumentos si aún falta la migración) y desplegar de inmediato los productos sin pantallas vacías.
 
 ### Requisito: Conteo Real de Productos en Categorías de Base de Datos
 El RPC `get_public_store` DEBE calcular y entregar en el array `categories` el campo `product_count` real por cada categoría activa desde PostgreSQL, asegurando que la barra lateral y los botones de navegación muestren el número exacto de productos disponibles sin requerir la descarga de todo el catálogo.
@@ -154,4 +172,4 @@ Cuando `store.model = 'perfil'`, el catálogo público DEBE renderizar arriba la
 - **Entonces** no se inventan chips ni redes vacías y los otros 8 diseños conservan intacto su encabezado y diseño.
 
 ## Trazabilidad
-Casos de prueba: CP-01 a CP-04, CP-14, SW-01 a SW-04, E2E-LL-01 a E2E-LL-08, F50v2, F50.1 · Vitest: `category-lazy-loading.test.ts`, `lazy-load-egress.test.ts`, `category-link.test.ts`, `discount.test.ts`, `wholesale.test.ts`, `image-utils.test.ts`, `profile-tags.test.ts`, `f50v2-diseno-perfil.test.tsx`, `ProfileHeader.test.tsx` · Código: `src/routes/t.$slug.tsx`, `src/routes/t.$slug.{-$categoria}.tsx`, `src/routes/bio.$slug.tsx`, `src/lib/category-link.ts`, `src/lib/image-utils.ts`, `src/lib/discount.ts`, `src/lib/wholesale.ts`, `src/lib/profile-tags.ts`, `src/components/public/PublicCatalog.tsx`, `src/components/public/ProfileHeader.tsx`, `src/components/public/WholesaleHint.tsx`, `src/components/public/WholesaleTable.tsx`, `src/components/public/WholesaleProgress.tsx`, RPC `get_public_store`, `get_public_store_products`.
+Casos de prueba: CP-01 a CP-04, CP-14, SW-01 a SW-04, E2E-LL-01 a E2E-LL-08, F50v2, F50.1, Filtro de Precios (E1–E7) · Vitest: `category-lazy-loading.test.ts`, `lazy-load-egress.test.ts`, `category-link.test.ts`, `discount.test.ts`, `wholesale.test.ts`, `image-utils.test.ts`, `profile-tags.test.ts`, `price-filter.test.ts`, `f50v2-diseno-perfil.test.tsx`, `ProfileHeader.test.tsx` · Playwright: `tests/e2e/filtro-precios.spec.ts` · Código: `src/routes/t.$slug.{-$categoria}.tsx`, `src/routes/bio.$slug.tsx`, `src/lib/category-link.ts`, `src/lib/image-utils.ts`, `src/lib/discount.ts`, `src/lib/wholesale.ts`, `src/lib/profile-tags.ts`, `src/lib/price-filter.ts`, `src/components/public/PublicCatalog.tsx`, `src/components/public/ProfileHeader.tsx`, `src/components/public/WholesaleHint.tsx`, `src/components/public/WholesaleTable.tsx`, `src/components/public/WholesaleProgress.tsx`, RPC `get_public_store`, `get_public_store_products`.

@@ -14,6 +14,15 @@ import { resolveRenderModel, getDesignSpec, TIENDAS_CON_ESTILO_ANTERIOR } from "
 import { getPhotoAspect, PhotoAspect } from "@/lib/photo-format";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { loadFontOnDemand } from "@/lib/fonts";
+import {
+  computePriceBounds,
+  formatPriceRangeLabel,
+  hasUsablePriceBounds,
+  isPriceRangeActive,
+  matchesPriceRange,
+  normalizePriceRange,
+  shouldFallbackToLegacyProductsRpc,
+} from "@/lib/price-filter";
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
@@ -76,6 +85,23 @@ import {
   Share2,
   Copy,
 } from "lucide-react";
+
+const mapRpcProduct = (p: any): Product => ({
+  id: p.id,
+  name: p.name,
+  price: Number(p.price),
+  categoryId: p.category_id,
+  image: p.image || "",
+  description: p.description,
+  isOnSale: p.is_on_sale,
+  originalPrice: p.original_price ? Number(p.original_price) : undefined,
+  visible: p.visible,
+  isSample: p.is_sample,
+  sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
+  variations: Array.isArray(p.variations) ? p.variations : [],
+  wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
+  createdAt: p.created_at,
+});
 
 const Tiktok = ({ className }: { className?: string }) => (
   <svg
@@ -1337,7 +1363,6 @@ export function PublicCatalog({
     document.body.removeChild(textArea);
   };
 
-  const [sortBy, setSortBy] = useState<string>("all");
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
 
   const activeBanners = useMemo(() => {
@@ -1933,15 +1958,18 @@ export function PublicCatalog({
   };
 
   /* ── Price range bounds ─────────────────────────────────────── */
-  const [priceMin, priceMax] = useMemo(() => {
-    const prices = productsWithImages
-      .filter((p) => p.visible && p.price !== null && p.price !== undefined && p.price > 0)
-      .map((p) => p.price as number);
-    if (prices.length === 0) return [0, 0];
-    return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))];
-  }, [productsWithImages]);
+  const priceBounds = useMemo(
+    () => computePriceBounds(productsWithImages, store.priceBounds),
+    [productsWithImages, store.priceBounds],
+  );
+  const priceMin = priceBounds.min;
+  const priceMax = priceBounds.max;
 
-  const hasPriceFilter = store.priceFilterEnabled && priceMin < priceMax;
+  const hasPriceFilter = Boolean(store.priceFilterEnabled) && hasUsablePriceBounds(priceBounds);
+  const activePriceFilter = useMemo(
+    () => (hasPriceFilter && isPriceRangeActive(priceRange, priceBounds) ? priceRange : null),
+    [hasPriceFilter, priceRange, priceBounds],
+  );
 
   /* ── Derived data ────────────────────────────────── */
   const hasNoProductsAtAll = useMemo(() => {
@@ -1957,61 +1985,37 @@ export function PublicCatalog({
       .filter((p) => p.visible && !p.isSample)
       .slice(0, effectiveProductLimit === Infinity ? undefined : effectiveProductLimit);
 
-    let result = visibleProducts;
-    result = result
+    return visibleProducts
       .filter((p) => {
         if (activeCat === "all") return true;
         if (activeCat === "sale") return p.isOnSale;
         return p.categoryId === activeCat;
       })
       .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
-      .filter((p) => {
-        if (!priceRange) return true;
-        return (
-          p.price !== null &&
-          p.price !== undefined &&
-          p.price >= priceRange[0] &&
-          p.price <= priceRange[1]
-        );
-      });
-
-    // Apply sorting
-    if (sortBy === "price_asc") {
-      result = [...result].sort((a, b) => (a.price || 0) - (b.price || 0));
-    } else if (sortBy === "price_desc") {
-      result = [...result].sort((a, b) => (b.price || 0) - (a.price || 0));
-    } else if (sortBy === "name_asc") {
-      result = [...result].sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortBy === "rating_desc") {
-      const getRating = (prod: Product) =>
-        (prod.price || 0) > 80 ? 4.9 : (prod.price || 0) > 15 ? 4.8 : 4.5;
-      result = [...result].sort((a, b) => getRating(b) - getRating(a));
-    }
-
-    return result;
+      .filter((p) => matchesPriceRange(p, activePriceFilter, priceBounds));
   }, [
     productsWithImages,
     activeCat,
     query,
-    priceRange,
+    activePriceFilter,
+    priceBounds,
     effectiveProductLimit,
-    sortBy,
-        modelId,
   ]);
 
   const [visibleLimit, setVisibleLimit] = useState(12);
   const [isCategoryFetching, setIsCategoryFetching] = useState(false);
+  const [isPriceFetching, setIsPriceFetching] = useState(false);
 
   // Reiniciar el límite visible a 12 al cambiar cualquier filtro, búsqueda o categoría
   useEffect(() => {
     setVisibleLimit(12);
-  }, [activeCat, query, priceRange, sortBy]);
+  }, [activeCat, query, activePriceFilter]);
 
   const filtered = useMemo(() => {
     return rawFiltered.slice(0, visibleLimit);
   }, [rawFiltered, visibleLimit]);
 
-  const isNarrowing = activeCat !== "all" || query.trim() !== "" || priceRange !== null;
+  const isNarrowing = activeCat !== "all" || query.trim() !== "" || activePriceFilter !== null;
 
   useEffect(() => {
     if (!isProfileDesign || isNarrowing || mode !== "catalog") {
@@ -2053,13 +2057,38 @@ export function PublicCatalog({
 
   const expectedCategoryCount = activeCategoryObj?.productCount;
 
+  const allProductsLengthRef = useRef(allProducts.length);
+  allProductsLengthRef.current = allProducts.length;
+  const fetchedPriceKeyRef = useRef<string | null>(null);
+  const prevPriceBoundsRef = useRef<{ min: number; max: number } | null>({ min: priceMin, max: priceMax });
+
+  useEffect(() => {
+    setPriceRange(null);
+    fetchedPriceKeyRef.current = null;
+    prevPriceBoundsRef.current = null;
+  }, [store.id]);
+
+  useEffect(() => {
+    const nextBounds = { min: priceMin, max: priceMax };
+    const prev = prevPriceBoundsRef.current;
+    prevPriceBoundsRef.current = nextBounds;
+    if (!prev || (prev.min === nextBounds.min && prev.max === nextBounds.max)) return;
+    setPriceRange((curr) => {
+      if (!curr) return curr;
+      const nextLo = nextBounds.min < prev.min && curr[0] <= prev.min ? nextBounds.min : curr[0];
+      const nextHi = nextBounds.max > prev.max && curr[1] >= prev.max ? nextBounds.max : curr[1];
+      if (nextLo === curr[0] && nextHi === curr[1]) return curr;
+      return normalizePriceRange(nextLo, nextHi, nextBounds);
+    });
+  }, [priceMin, priceMax]);
+
   const hasMoreProducts = useMemo(() => {
     if (mode === "bio") return false;
     if (visibleLimit < rawFiltered.length) return true;
     if (isMockup) return false;
 
     if (activeCat === "all") {
-      return allProducts.length < totalProductsCount && !query && !priceRange;
+      return allProducts.length < totalProductsCount && !query && !activePriceFilter;
     }
 
     if (activeCat === "sale") {
@@ -2067,11 +2096,11 @@ export function PublicCatalog({
     }
 
     // Para una categoría específica
-    if (expectedCategoryCount !== undefined) {
+    if (expectedCategoryCount !== undefined && !activePriceFilter && !query) {
       return rawFiltered.length < expectedCategoryCount;
     }
 
-    return allProducts.length < totalProductsCount;
+    return allProducts.length < totalProductsCount && !activePriceFilter && !query;
   }, [
     mode,
     visibleLimit,
@@ -2081,7 +2110,7 @@ export function PublicCatalog({
     allProducts.length,
     totalProductsCount,
     query,
-    priceRange,
+    activePriceFilter,
     expectedCategoryCount,
   ]);
 
@@ -2109,22 +2138,7 @@ export function PublicCatalog({
         });
 
         if (!error && Array.isArray(data) && data.length > 0) {
-          const newBatch: Product[] = data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            price: Number(p.price),
-            categoryId: p.category_id,
-            image: p.image || "",
-            description: p.description,
-            isOnSale: p.is_on_sale,
-            originalPrice: p.original_price ? Number(p.original_price) : undefined,
-            visible: p.visible,
-            isSample: p.is_sample,
-            sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
-            variations: Array.isArray(p.variations) ? p.variations : [],
-            wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
-            createdAt: p.created_at,
-          }));
+          const newBatch: Product[] = data.map(mapRpcProduct);
 
           setAllProducts((prev) => {
             const existingIds = new Set(prev.map((p) => p.id));
@@ -2173,21 +2187,7 @@ export function PublicCatalog({
         .then(({ data, error }: any) => {
           if (!isMounted) return;
           if (!error && Array.isArray(data) && data.length > 0) {
-            const newBatch: Product[] = data.map((p: any) => ({
-              id: p.id,
-              name: p.name,
-              price: Number(p.price),
-              categoryId: p.category_id,
-              image: p.image || "",
-              description: p.description,
-              isOnSale: p.is_on_sale,
-              originalPrice: p.original_price ? Number(p.original_price) : undefined,
-              visible: p.visible,
-              isSample: p.is_sample,
-              sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
-              variations: Array.isArray(p.variations) ? p.variations : [],
-              createdAt: p.created_at,
-            }));
+            const newBatch: Product[] = data.map(mapRpcProduct);
 
             setAllProducts((prev) => {
               const existingIds = new Set(prev.map((p) => p.id));
@@ -2225,22 +2225,7 @@ export function PublicCatalog({
         });
 
         if (!error && Array.isArray(data) && data.length > 0) {
-          const newBatch: Product[] = data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            price: Number(p.price),
-            categoryId: p.category_id,
-            image: p.image || "",
-            description: p.description,
-            isOnSale: p.is_on_sale,
-            originalPrice: p.original_price ? Number(p.original_price) : undefined,
-            visible: p.visible,
-            isSample: p.is_sample,
-            sortOrder: p.sort_order !== null && p.sort_order !== undefined ? Number(p.sort_order) : 0,
-            variations: Array.isArray(p.variations) ? p.variations : [],
-            wholesaleTiers: Array.isArray(p.wholesale_tiers) ? p.wholesale_tiers : [],
-            createdAt: p.created_at,
-          }));
+          const newBatch: Product[] = data.map(mapRpcProduct);
 
           setAllProducts((prev) => {
             const existingIds = new Set(prev.map((p) => p.id));
@@ -2255,6 +2240,123 @@ export function PublicCatalog({
 
     return () => clearTimeout(timer);
   }, [query, activeCat, isMockup, store?.slug, allProducts.length, totalProductsCount]);
+
+  // Consulta en servidor por rango de precios para catálogos grandes (>36 productos)
+  const activePriceMin = activePriceFilter ? activePriceFilter[0] : null;
+  const activePriceMax = activePriceFilter ? activePriceFilter[1] : null;
+
+  useEffect(() => {
+    if (
+      mode === "bio" ||
+      isMockup ||
+      !store.slug ||
+      activePriceMin === null ||
+      activePriceMax === null ||
+      allProductsLengthRef.current >= totalProductsCount
+    ) {
+      if (activePriceMin === null || activePriceMax === null) fetchedPriceKeyRef.current = null;
+      setIsPriceFetching(false);
+      return;
+    }
+
+    const reqKey = `${store.slug}|${activeCat}|${query.trim()}|${activePriceMin}|${activePriceMax}`;
+    if (fetchedPriceKeyRef.current === reqKey) {
+      setIsPriceFetching(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsPriceFetching(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const isFilteringCat = activeCat !== "all" && activeCat !== "sale";
+        const isSearching = query.trim().length >= 2;
+        const maxPlanLimit = effectiveProductLimit === Infinity ? 1000 : effectiveProductLimit;
+        const serverLimit = Math.min(Math.max(totalProductsCount, 48), maxPlanLimit);
+
+        const { data, error } = await invokeRpcWithRetry("get_public_store_products", {
+          p_store_slug: store.slug,
+          p_page_offset: 0,
+          p_page_limit: serverLimit,
+          p_category_id: isFilteringCat ? activeCat : null,
+          p_search_query: isSearching ? query.trim() : null,
+          p_min_price: activePriceMin,
+          p_max_price: activePriceMax,
+        });
+
+        if (cancelled) return;
+
+        if (!error && Array.isArray(data)) {
+          fetchedPriceKeyRef.current = reqKey;
+          if (data.length > 0) {
+            const newBatch: Product[] = data.map(mapRpcProduct);
+            setAllProducts((prev) => {
+              const existingIds = new Set(prev.map((p) => p.id));
+              const uniqueNew = newBatch.filter((p) => !existingIds.has(p.id));
+              return uniqueNew.length > 0 ? [...prev, ...uniqueNew] : prev;
+            });
+          }
+          return;
+        }
+
+        // Compatibilidad previa a aplicar migración SQL: paginar firma legacy de 5 args en lotes
+        if (error && shouldFallbackToLegacyProductsRpc(error)) {
+          let offset = allProductsLengthRef.current;
+          const batchSize = 48;
+          const collected: Product[] = [];
+          const maxOffset = Math.min(totalProductsCount, maxPlanLimit);
+
+          while (offset < maxOffset && !cancelled) {
+            const { data: legacyData, error: legacyError } = await invokeRpcWithRetry(
+              "get_public_store_products",
+              {
+                p_store_slug: store.slug,
+                p_page_offset: offset,
+                p_page_limit: batchSize,
+                p_category_id: null,
+                p_search_query: null,
+              },
+            );
+            if (legacyError || !Array.isArray(legacyData) || legacyData.length === 0) break;
+            collected.push(...legacyData.map(mapRpcProduct));
+            offset += legacyData.length;
+            if (legacyData.length < batchSize) break;
+          }
+
+          if (!cancelled) {
+            fetchedPriceKeyRef.current = reqKey;
+            if (collected.length > 0) {
+              setAllProducts((prev) => {
+                const existingIds = new Set(prev.map((p) => p.id));
+                const uniqueNew = collected.filter((p) => !existingIds.has(p.id));
+                return uniqueNew.length > 0 ? [...prev, ...uniqueNew] : prev;
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[priceFilterFetch] Error consultando rango de precios:", err);
+      } finally {
+        if (!cancelled) setIsPriceFetching(false);
+      }
+    }, 300);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [
+    mode,
+    isMockup,
+    store.slug,
+    activePriceMin,
+    activePriceMax,
+    activeCat,
+    query,
+    totalProductsCount,
+    effectiveProductLimit,
+  ]);
 
   const cartCount = cart.reduce((a, c) => a + c.qty, 0);
 
@@ -2626,9 +2728,11 @@ export function PublicCatalog({
     if (!isNarrowing || rawFiltered.length === 0) return null;
 
     const totalCatCount =
-      activeCat === "sale"
-        ? productsWithImages.filter((p) => p.isOnSale).length
-        : (activeCategoryObj?.productCount ?? rawFiltered.length);
+      activePriceFilter || query.trim()
+        ? rawFiltered.length
+        : activeCat === "sale"
+          ? productsWithImages.filter((p) => p.isOnSale).length
+          : (activeCategoryObj?.productCount ?? rawFiltered.length);
 
     const catName =
       activeCat === "sale"
@@ -2698,7 +2802,7 @@ export function PublicCatalog({
           )}
 
           {/* Separador si hay categoría y además búsqueda o precio */}
-          {activeCat !== "all" && (query.trim() || priceRange) && (
+          {activeCat !== "all" && (query.trim() || activePriceFilter) && (
             <span className="text-muted-foreground/40 hidden sm:inline">·</span>
           )}
 
@@ -2721,9 +2825,9 @@ export function PublicCatalog({
           )}
 
           {/* Filtro de precio activo */}
-          {priceRange && (
+          {activePriceFilter && (
             <div className="inline-flex items-center gap-1.5 bg-muted/80 px-2.5 py-1 rounded-full text-xs font-medium text-foreground">
-              <span>Filtro de precio activo</span>
+              <span>{formatPriceRangeLabel(activePriceFilter)}</span>
               <button
                 type="button"
                 onClick={handleClearPrice}
@@ -3242,13 +3346,14 @@ export function PublicCatalog({
                       color: "var(--foreground)",
                     }}
                     className={cn(
-                      "relative shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-semibold transition md:hidden hover:opacity-90",
+                      "relative shrink-0 min-h-[44px] items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-semibold transition hover:opacity-90",
+                      isMockup ? "flex" : "flex md:hidden",
                     )}
                   >
                     <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                     <span>Filtros</span>
                     {(() => {
-                      const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                      const cnt = (activeCat !== "all" ? 1 : 0) + (activePriceFilter ? 1 : 0);
                       return cnt > 0 ? (
                         <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
                           {cnt}
@@ -3259,7 +3364,7 @@ export function PublicCatalog({
                 </div>
 
                 {/* Active filter tags */}
-                {(activeCat !== "all" || priceRange) && (
+                {(activeCat !== "all" || activePriceFilter) && (
                   <div className="flex flex-wrap gap-1.5">
                     {activeCat !== "all" && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
@@ -3281,9 +3386,9 @@ export function PublicCatalog({
                       </span>
                     )}
                     
-                    {priceRange && (
+                    {activePriceFilter && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                        Hasta S/ {priceRange[1]}
+                        {formatPriceRangeLabel(activePriceFilter)}
                         <button
                           onClick={() => setPriceRange(null)}
                           className="ml-1 hover:opacity-60 transition"
@@ -3595,14 +3700,14 @@ export function PublicCatalog({
                   color: "var(--foreground)",
                 }}
                 className={cn(
-                  "relative shrink-0 items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-semibold transition hover:opacity-90",
+                  "relative shrink-0 min-h-[44px] items-center gap-2 px-4 py-2.5 rounded-full border text-sm font-semibold transition hover:opacity-90",
                   isMockup ? "flex" : "flex md:hidden"
                 )}
               >
                 <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
                 <span>Filtros</span>
                 {(() => {
-                  const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                  const cnt = (activeCat !== "all" ? 1 : 0) + (activePriceFilter ? 1 : 0);
                   return cnt > 0 ? (
                     <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
                       {cnt}
@@ -3612,7 +3717,7 @@ export function PublicCatalog({
               </button>
             </div>
             {/* Active filter tags */}
-            {(activeCat !== "all" || priceRange) && (
+            {(activeCat !== "all" || activePriceFilter) && (
               <div className="flex flex-wrap gap-1.5">
                 {activeCat !== "all" && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
@@ -3633,9 +3738,9 @@ export function PublicCatalog({
                     </button>
                   </span>
                 )}
-                {priceRange && (
+                {activePriceFilter && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                    Hasta S/ {priceRange[1]}
+                    {formatPriceRangeLabel(activePriceFilter)}
                     <button
                       onClick={() => setPriceRange(null)}
                       className="ml-1 hover:opacity-60 transition"
@@ -3728,16 +3833,35 @@ export function PublicCatalog({
                 </div>
               </div>
 
-              
+              {/* Precio */}
+              {hasPriceFilter && (
+                <div
+                  className="pt-4 border-t space-y-3"
+                  style={{ borderColor: "var(--border)" }}
+                >
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left">
+                    Rango de precio
+                  </h3>
+                  <PriceRangeSlider
+                    min={priceMin}
+                    max={priceMax}
+                    value={activePriceFilter ?? [priceMin, priceMax]}
+                    onChange={(next) =>
+                      setPriceRange(next ? normalizePriceRange(next[0], next[1], priceBounds) : null)
+                    }
+                    onReset={() => setPriceRange(null)}
+                  />
+                </div>
+              )}
 
               {/* Limpiar Filtros */}
-              {(activeCat !== "all" || priceRange) && (
+              {(activeCat !== "all" || activePriceFilter) && (
                 <button
                   onClick={() => {
                     setActiveCat("all");
                     setPriceRange(null);
                   }}
-                  className="w-full text-center py-2 border border-border hover:bg-muted text-xs font-bold rounded-lg transition"
+                  className="w-full min-h-[44px] text-center py-2 border border-border hover:bg-muted text-xs font-bold rounded-lg transition"
                   style={{ color: "var(--muted-foreground)" }}
                 >
                   Limpiar filtros
@@ -3814,7 +3938,16 @@ export function PublicCatalog({
               cfg.layout !== "bloom" &&
               cfg.layout !== "nature" &&
               cfg.layout !== "lookbook" ? (
-              renderNoResults()
+              isCategoryFetching || isPriceFetching || isLoadingMore ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Cargando productos...
+                  </p>
+                </div>
+              ) : (
+                renderNoResults()
+              )
             ) : mode === "bio" ? (
               <div className="w-full">
                 <div className="max-w-md mx-auto mb-6 px-1">
@@ -4331,7 +4464,16 @@ export function PublicCatalog({
 
                 {renderResultsBar()}
                 {filtered.length === 0 ? (
-                  renderNoResults()
+                  isCategoryFetching || isPriceFetching || isLoadingMore ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
+                      <p className="text-xs text-muted-foreground font-medium">
+                        Cargando productos...
+                      </p>
+                    </div>
+                  ) : (
+                    renderNoResults()
+                  )
                 ) : (
                   /* 2. Product List */
                   <div className="space-y-20 sm:space-y-28">
@@ -5669,16 +5811,6 @@ export function PublicCatalog({
                     featuredProducts = productsWithImages.slice(0, 4);
                     isFallback = true;
                   }
-                  // Respetar el filtro de precio activo (igual que el grid)
-                  if (priceRange) {
-                    featuredProducts = featuredProducts.filter(
-                      (p) =>
-                        p.price !== null &&
-                        p.price !== undefined &&
-                        p.price >= priceRange[0] &&
-                        p.price <= priceRange[1],
-                    );
-                  }
                   if (featuredProducts.length === 0) return null;
 
                   const headerText = isSaleOnly
@@ -5879,9 +6011,37 @@ export function PublicCatalog({
 
                   {/* Inline Horizontal Category Selector */}
                   <div className="space-y-3">
-                    <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
-                      Categorías
-                    </h3>
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 style={{ color: "var(--muted-foreground)" }} className="text-xs font-bold uppercase tracking-widest text-left">
+                        Categorías
+                      </h3>
+                      {mode === "catalog" && hasPriceFilter && (
+                        <button
+                          type="button"
+                          onClick={() => setIsFilterOpen(true)}
+                          style={{
+                            backgroundColor: "var(--card)",
+                            borderColor: "var(--border)",
+                            color: "var(--foreground)",
+                          }}
+                          className={cn(
+                            "relative shrink-0 min-h-[44px] items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold transition hover:border-[var(--primary)]",
+                            isMockup ? "flex" : "flex md:hidden",
+                          )}
+                        >
+                          <SlidersHorizontal className="h-4 w-4" style={{ color: "var(--primary)" }} />
+                          <span>Filtros</span>
+                          {(() => {
+                            const cnt = (activeCat !== "all" ? 1 : 0) + (activePriceFilter ? 1 : 0);
+                            return cnt > 0 ? (
+                              <span className="h-4 w-4 rounded-full bg-primary text-primary-foreground text-[9px] font-black flex items-center justify-center">
+                                {cnt}
+                              </span>
+                            ) : null;
+                          })()}
+                        </button>
+                      )}
+                    </div>
 
                     {/* TWO-DIV PATTERN to prevent vertical clipping on scale and shadow */}
                     <div className="overflow-x-auto scrollbar-none -mx-4 py-3 sm:-mx-4 sm:py-3">
@@ -5989,7 +6149,7 @@ export function PublicCatalog({
                         : filtered;
 
                     if (gridProducts.length === 0) {
-                      if (isCategoryFetching || isLoadingMore) {
+                      if (isCategoryFetching || isPriceFetching || isLoadingMore) {
                         return (
                           <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
                             <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
@@ -6460,16 +6620,6 @@ export function PublicCatalog({
                         featuredProducts = productsWithImages.slice(0, 4);
                         isFallback = true;
                       }
-                      // Respetar el filtro de precio activo (igual que el grid)
-                      if (priceRange) {
-                        featuredProducts = featuredProducts.filter(
-                          (p) =>
-                            p.price !== null &&
-                            p.price !== undefined &&
-                            p.price >= priceRange[0] &&
-                            p.price <= priceRange[1],
-                        );
-                      }
                       if (featuredProducts.length === 0) return null;
 
                       return (
@@ -6815,7 +6965,7 @@ export function PublicCatalog({
                             : filtered;
 
                         if (gridProducts.length === 0) {
-                          if (isCategoryFetching || isLoadingMore) {
+                          if (isCategoryFetching || isPriceFetching || isLoadingMore) {
                             return (
                               <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
                                 <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
@@ -7222,16 +7372,6 @@ export function PublicCatalog({
                     featuredProducts = productsWithImages.slice(0, 4);
                     isFallback = true;
                   }
-                  // Respetar el filtro de precio activo (igual que el grid)
-                  if (priceRange) {
-                    featuredProducts = featuredProducts.filter(
-                      (p) =>
-                        p.price !== null &&
-                        p.price !== undefined &&
-                        p.price >= priceRange[0] &&
-                        p.price <= priceRange[1],
-                    );
-                  }
                   if (featuredProducts.length === 0) return null;
 
                   return (
@@ -7525,7 +7665,10 @@ export function PublicCatalog({
                           borderColor: "var(--border)",
                           color: "var(--foreground)",
                         }}
-                        className="border px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0 md:hidden"
+                        className={cn(
+                          "border px-4 min-h-[44px] py-2.5 rounded-full text-xs font-bold transition-all duration-300 items-center gap-1.5 hover:border-[var(--primary)] hover:bg-primary/5 shadow-sm shrink-0",
+                          isMockup ? "flex" : "flex md:hidden",
+                        )}
                       >
                         <SlidersHorizontal
                           className="h-4 w-4"
@@ -7533,7 +7676,7 @@ export function PublicCatalog({
                         />
                         <span>Filtros</span>
                         {(() => {
-                          const cnt = (activeCat !== "all" ? 1 : 0) + (priceRange ? 1 : 0);
+                          const cnt = (activeCat !== "all" ? 1 : 0) + (activePriceFilter ? 1 : 0);
                           return cnt > 0 ? (
                             <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
                               {cnt}
@@ -7663,7 +7806,7 @@ export function PublicCatalog({
                     </div>
 
                     {/* Active filter tags */}
-                    {(activeCat !== "all" || priceRange) && (
+                    {(activeCat !== "all" || activePriceFilter) && (
                       <div className="flex flex-wrap gap-1.5 justify-center">
                         {activeCat !== "all" && (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
@@ -7681,9 +7824,9 @@ export function PublicCatalog({
                             </button>
                           </span>
                         )}
-                        {priceRange && (
+                        {activePriceFilter && (
                           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider bg-primary/10 text-primary border border-primary/20">
-                            Precio: S/ {priceRange[0]} - S/ {priceRange[1]}
+                            {formatPriceRangeLabel(activePriceFilter)}
                             <button
                               onClick={() => setPriceRange(null)}
                               className="ml-1 hover:opacity-60 transition"
@@ -7727,7 +7870,7 @@ export function PublicCatalog({
                         : filtered;
 
                     if (gridProducts.length === 0) {
-                      if (isCategoryFetching || isLoadingMore) {
+                      if (isCategoryFetching || isPriceFetching || isLoadingMore) {
                         return (
                           <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
                             <Loader2 className="w-8 h-8 animate-spin text-primary opacity-80" />
@@ -8872,7 +9015,8 @@ export function PublicCatalog({
               </DrawerTitle>
               <DrawerClose asChild>
                 <button
-                  className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition"
+                  aria-label="Cerrar filtros"
+                  className="h-11 w-11 flex items-center justify-center rounded-full hover:bg-muted transition"
                   style={{ color: "var(--muted-foreground)" }}
                 >
                   <X className="h-4 w-4" />
@@ -8900,7 +9044,7 @@ export function PublicCatalog({
                 {/* Todos */}
                 <button
                   onClick={() => setActiveCat("all")}
-                  className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold border transition"
+                  className="flex items-center justify-center gap-2 min-h-[44px] px-3 py-3 text-sm font-semibold border transition"
                   style={{
                     borderRadius: cfg.cardRounded,
                     backgroundColor: activeCat === "all" ? "var(--primary)" : "var(--secondary)",
@@ -8914,7 +9058,7 @@ export function PublicCatalog({
                 {/* Ofertas */}
                 <button
                   onClick={() => setActiveCat("sale")}
-                  className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold border transition"
+                  className="flex items-center justify-center gap-2 min-h-[44px] px-3 py-3 text-sm font-semibold border transition"
                   style={{
                     borderRadius: cfg.cardRounded,
                     backgroundColor: activeCat === "sale" ? "var(--primary)" : "var(--secondary)",
@@ -8931,7 +9075,7 @@ export function PublicCatalog({
                   <button
                     key={c.id}
                     onClick={() => setActiveCat(c.id)}
-                    className="flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold border transition"
+                    className="flex items-center justify-center gap-2 min-h-[44px] px-3 py-3 text-sm font-semibold border transition"
                     style={{
                       borderRadius: cfg.cardRounded,
                       backgroundColor: activeCat === c.id ? "var(--primary)" : "var(--secondary)",
@@ -8957,10 +9101,11 @@ export function PublicCatalog({
                 <PriceRangeSlider
                   min={priceMin}
                   max={priceMax}
-                  value={priceRange ?? [priceMin, priceMax]}
-                  onChange={setPriceRange}
+                  value={activePriceFilter ?? [priceMin, priceMax]}
+                  onChange={(next) =>
+                    setPriceRange(next ? normalizePriceRange(next[0], next[1], priceBounds) : null)
+                  }
                   onReset={() => setPriceRange(null)}
-                  isDark={effectiveIsDark}
                 />
               </div>
             )}
@@ -8972,13 +9117,13 @@ export function PublicCatalog({
             style={{ borderColor: "var(--border)" }}
           >
             {/* Restablecer */}
-            {(activeCat !== "all" || priceRange) && (
+            {(activeCat !== "all" || activePriceFilter) && (
               <button
                 onClick={() => {
                   setActiveCat("all");
                   setPriceRange(null);
                 }}
-                className="w-full h-10 text-sm font-semibold border rounded-full transition hover:bg-muted"
+                className="w-full h-11 text-sm font-semibold border rounded-full transition hover:bg-muted"
                 style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
               >
                 Restablecer filtros
@@ -9001,7 +9146,19 @@ export function PublicCatalog({
                     : {}),
                 }}
               >
-                Ver {rawFiltered.length} {rawFiltered.length === 1 ? "producto" : "productos"}
+                {(() => {
+                  const drawerCount =
+                    !isNarrowing && totalProductsCount > rawFiltered.length
+                      ? totalProductsCount
+                      : activeCat !== "all" &&
+                          activeCat !== "sale" &&
+                          !query.trim() &&
+                          !activePriceFilter &&
+                          expectedCategoryCount !== undefined
+                        ? expectedCategoryCount
+                        : rawFiltered.length;
+                  return `Ver ${drawerCount} ${drawerCount === 1 ? "producto" : "productos"}`;
+                })()}
               </button>
             </DrawerClose>
           </div>
@@ -10792,7 +10949,7 @@ function Chip({
 }
 
 /* ── PriceRangeSlider ────────────────────────────────────────────
-   Slider de rango de precio dual — min/max calculados de los productos reales
+   Slider dual Min–Max accesible (>=44px touch target) para rango de precio
 ──────────────────────────────────────────────────────────────── */
 function PriceRangeSlider({
   min,
@@ -10800,60 +10957,78 @@ function PriceRangeSlider({
   value,
   onChange,
   onReset,
-  isDark,
 }: {
   min: number;
   max: number;
   value: [number, number];
-  onChange: (v: [number, number]) => void;
+  onChange: (v: [number, number] | null) => void;
   onReset: () => void;
-  isDark: boolean;
 }) {
-  const [lo, hi] = value;
-  const range = max - min || 1;
-  const hiPercent = ((hi - min) / range) * 100;
-  const isFiltered = hi < max;
+  const [rawLo, rawHi] = value;
+  const lo = Math.max(min, Math.min(max, Math.floor(rawLo)));
+  const hi = Math.min(max, Math.max(lo, Math.ceil(rawHi)));
+  const span = max - min || 1;
+  const loPercent = ((lo - min) / span) * 100;
+  const hiPercent = ((hi - min) / span) * 100;
+  const isFiltered = lo > min || hi < max;
 
-  const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
+  const handleLo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextLo = Math.min(Math.max(Number(e.target.value), min), hi);
+    onChange(normalizePriceRange(nextLo, hi, { min, max }));
+  };
 
   const handleHi = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Number(e.target.value);
-    onChange([min, clamp(v, min, max)]);
+    const nextHi = Math.max(Math.min(Number(e.target.value), max), lo);
+    onChange(normalizePriceRange(lo, nextHi, { min, max }));
   };
 
   const mutedStyle: React.CSSProperties = { color: "var(--muted-foreground)" };
   const fgStyle: React.CSSProperties = { color: "var(--foreground)" };
 
   return (
-    <div className="space-y-1.5">
-      <div style={fgStyle} className="flex items-center justify-between text-xs font-medium">
-        <span>Precio Máximo</span>
-        <div className="flex items-center gap-2">
-          <span className="font-bold tabular-nums">S/ {hi.toLocaleString()}</span>
-          {isFiltered && (
-            <button
-              onClick={onReset}
-              className="text-[10px] underline opacity-60 hover:opacity-100 transition"
-            >
-              limpiar
-            </button>
-          )}
-        </div>
+    <div className="space-y-1.5" data-testid="price-range-slider">
+      <div style={fgStyle} className="flex items-center justify-between gap-2 text-xs font-medium min-h-[32px]">
+        <span className="font-bold tabular-nums">
+          S/ {lo.toLocaleString()} – S/ {hi.toLocaleString()}
+        </span>
+        {isFiltered && (
+          <button
+            type="button"
+            onClick={onReset}
+            data-testid="price-slider-reset"
+            className="min-h-[44px] px-2 -my-2 inline-flex items-center text-[11px] font-semibold underline opacity-75 hover:opacity-100 transition cursor-pointer"
+          >
+            Limpiar
+          </button>
+        )}
       </div>
 
-      {/* Track */}
-      <div className="relative h-5 flex items-center">
+      {/* Track dual (altura táctil >= 44px para RNF-03) */}
+      <div className="relative h-11 flex items-center select-none">
         {/* Rail */}
         <div
           style={{ backgroundColor: "color-mix(in srgb, var(--foreground) 15%, transparent)" }}
-          className="absolute w-full h-1.5 rounded-full"
+          className="absolute inset-x-0 h-1.5 rounded-full pointer-events-none"
         />
-        {/* Active range */}
+        {/* Rango activo entre ambos extremos */}
         <div
-          className="absolute h-1.5 rounded-full bg-primary"
-          style={{ left: `0%`, width: `${hiPercent}%` }}
+          className="absolute h-1.5 rounded-full bg-primary pointer-events-none"
+          style={{ left: `${loPercent}%`, width: `${Math.max(0, hiPercent - loPercent)}%` }}
         />
-        {/* Thumb Hi */}
+        {/* Pulgar Min */}
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={1}
+          value={lo}
+          onChange={handleLo}
+          aria-label="Precio mínimo"
+          data-testid="price-slider-min"
+          className="price-dual-range absolute inset-0 w-full h-11 m-0 appearance-none bg-transparent pointer-events-none"
+          style={{ zIndex: lo > max - span * 0.1 ? 6 : 4 }}
+        />
+        {/* Pulgar Max */}
         <input
           type="range"
           min={min}
@@ -10861,29 +11036,59 @@ function PriceRangeSlider({
           step={1}
           value={hi}
           onChange={handleHi}
-          className="absolute w-full appearance-none bg-transparent cursor-pointer"
-          style={{ zIndex: 4 }}
+          aria-label="Precio máximo"
+          data-testid="price-slider-max"
+          className="price-dual-range absolute inset-0 w-full h-11 m-0 appearance-none bg-transparent pointer-events-none"
+          style={{ zIndex: 5 }}
         />
       </div>
 
-      <div style={mutedStyle} className="flex justify-between text-[10px]">
-        <span>S/ {min.toLocaleString()}</span>
-        <span>S/ {max.toLocaleString()}</span>
+      <div style={mutedStyle} className="flex justify-between text-[10px] tabular-nums">
+        <span>Desde S/ {min.toLocaleString()}</span>
+        <span>Hasta S/ {max.toLocaleString()}</span>
       </div>
 
       <style>{`
-        input[type=range].appearance-none::-webkit-slider-thumb {
+        input[type="range"].price-dual-range {
+          -webkit-appearance: none;
           appearance: none;
-          width: 18px; height: 18px;
-          border-radius: 50%;
-          background: var(--primary, #4f46e5);
-          border: 2px solid white;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-          cursor: pointer;
         }
-        input[type=range].appearance-none::-moz-range-thumb {
-          width: 18px; height: 18px;
-       }
+        input[type="range"].price-dual-range::-webkit-slider-runnable-track {
+          background: transparent;
+          height: 6px;
+        }
+        input[type="range"].price-dual-range::-moz-range-track {
+          background: transparent;
+          height: 6px;
+        }
+        input[type="range"].price-dual-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          pointer-events: auto;
+          width: 22px;
+          height: 22px;
+          border-radius: 9999px;
+          background: var(--primary, #4f46e5);
+          border: 2px solid var(--background, #ffffff);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+          cursor: grab;
+          margin-top: -8px;
+          transition: transform 0.12s ease;
+        }
+        input[type="range"].price-dual-range::-webkit-slider-thumb:active {
+          cursor: grabbing;
+          transform: scale(1.12);
+        }
+        input[type="range"].price-dual-range::-moz-range-thumb {
+          pointer-events: auto;
+          width: 22px;
+          height: 22px;
+          border-radius: 9999px;
+          background: var(--primary, #4f46e5);
+          border: 2px solid var(--background, #ffffff);
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+          cursor: grab;
+        }
       `}</style>
     </div>
   );

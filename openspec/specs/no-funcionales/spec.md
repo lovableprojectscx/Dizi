@@ -3,10 +3,7 @@
 ## Propósito
 Definir las características de calidad del producto con métricas verificables. Cubre RNF-01 a RNF-05.
 
-> **Estado real (29 sep 2026):** son **objetivos**, no todos se cumplen. RNF-01: las cabeceras CSP/HSTS están en
-> `vercel.json` pero no llegan al navegador (Fase 2). RNF-02: LCP móvil medido 11–13 s (Fase 3). RNF-04: `ci.yml`
-> escucha la rama `main` y se trabaja en `master`, así que no corre (Fase 2). RNF-05: se cumple (`error-capture.ts`, `error-page.ts`)
-> y se reforzó con reintentos ante fallos de Supabase (Fase 1B, B7).
+> **Estado real (13 nov 2026):** son **objetivos**, no todos se cumplen aún. RNF-01: cabeceras HSTS/X-Frame/Referrer/Permissions activas en Vercel; CSP se mantiene en Report-Only hasta activación definitiva. RNF-02: optimizado con miniaturas Bunny/WebP Dual y paginación de 36 ítems (LCP móvil en mejora continua). RNF-03: objetivos táctiles `>= 44×44 px` aplicados también al slider dual de precios y controles de filtro. RNF-04: `ci.yml` escucha la rama `master` ejecutando `lint`, `vitest run` y `build` (sin umbral de cobertura automático). RNF-05: se cumple (`error-capture.ts`, `error-page.ts`) y se reforzó con reintentos ante fallos de Supabase (Fase 1B, B7) y fallback ante RPC pre-migración.
 
 ## Requisitos
 
