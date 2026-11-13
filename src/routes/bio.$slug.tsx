@@ -12,6 +12,7 @@ import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl } from "@/lib/image-utils";
 import { resolveProfileTags } from "@/lib/profile-tags";
+import { parsePriceBounds } from "@/lib/price-filter";
 import type { Store } from "@/lib/types";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 
@@ -182,6 +183,7 @@ async function fetchStoreBySlug(slug: string): Promise<Store | null> {
       whatsappClicks: data.whatsapp_clicks || 0,
       views: data.views || 0,
       priceFilterEnabled: data.price_filter_enabled ?? false,
+      priceBounds: parsePriceBounds(data.price_bounds),
       libroReclamacionesActivo: data.libro_reclamaciones_activo ?? false,
       empresaRuc: data.empresa_ruc ?? undefined,
       empresaRazonSocial: data.empresa_razon_social ?? undefined,

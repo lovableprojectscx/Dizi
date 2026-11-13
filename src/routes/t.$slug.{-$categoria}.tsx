@@ -14,6 +14,7 @@ import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
 import { findCategoryByParam, cleanCategoryName, getCategorySlug } from "@/lib/category-link";
 import { resolveProfileTags } from "@/lib/profile-tags";
+import { parsePriceBounds } from "@/lib/price-filter";
 import type { Store } from "@/lib/types";
 
 /**
@@ -156,10 +157,10 @@ export const Route = createFileRoute("/t/$slug/{-$categoria}")({
  * 4. Si la fecha difiere o no hay caché, ejecuta el RPC `get_public_store` con un timeout de 18 segundos.
  *
  * @param slug Identificador URL único de la tienda.
- * @param pageLimit Cantidad inicial de productos a cargar (por defecto 24).
+ * @param pageLimit Cantidad inicial de productos a cargar (por defecto 36).
  * @returns Promesa con el objeto `Store` o null si no se encuentra.
  */
-async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<Store | null> {
+async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<Store | null> {
   const { data, error } = await invokeRpcWithRetry("get_public_store", {
     store_slug: slug,
     page_limit: pageLimit,
@@ -225,6 +226,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 24): Promise<S
       whatsappClicks: data.whatsapp_clicks || 0,
       views: data.views || 0,
       priceFilterEnabled: data.price_filter_enabled ?? false,
+      priceBounds: parsePriceBounds(data.price_bounds),
       libroReclamacionesActivo: data.libro_reclamaciones_activo ?? false,
       empresaRuc: data.empresa_ruc ?? undefined,
       empresaRazonSocial: data.empresa_razon_social ?? undefined,

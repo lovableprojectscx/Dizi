@@ -310,6 +310,8 @@ export interface Store {
   niche?: string;
   /** Habilita el filtro de rango de precios en el catálogo público */
   priceFilterEnabled?: boolean;
+  /** Rango mínimo y máximo real de precios filtrables (> 0) del catálogo */
+  priceBounds?: { min: number; max: number };
   /** Activa la visualización del Libro de Reclamaciones virtual exigido por ley */
   libroReclamacionesActivo?: boolean;
   /** Número de Registro Único de Contribuyente (RUC) de la empresa */
