@@ -3571,6 +3571,7 @@ function ProductsPage() {
             }}
             product={sharingProduct}
             store={store}
+            source="productos"
           />
         </React.Suspense>
       )}
