@@ -425,6 +425,10 @@ export interface Store {
   termsAcceptedAt?: string | null;
   /** Plan solicitado por el comercio al momento del registro (G9) */
   requestedPlan?: PlanId | null;
+  /** Respuesta opcional "¿Cómo nos conociste?" en el registro (F49) */
+  signupSource?: string | null;
+  /** Parámetro de origen de campaña (?origen= / utm_source=) en el registro (F49) */
+  signupUtm?: string | null;
 }
 
 /**

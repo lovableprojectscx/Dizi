@@ -1,18 +1,13 @@
 /**
  * @file register.tsx
- * @description Flujo de registro y onboarding guiado para nuevos comercios en Dizi.
- * Incluye:
- * - Detección de sesión activa en `beforeLoad` con redirección automática al panel correspondiente.
- * - Validación en tiempo real de disponibilidad de slug (`/t/mi-negocio`).
- * - Soporte para canje de tokens de invitación (`?token=...`) que desbloquean planes Pro/Emprendedor de inmediato.
- * - Selección visual interactiva de plantillas de diseño y rubro con vistas previas dinámicas (`ModelLayoutPreview`).
- * - Creación simultánea de cuenta en Supabase Auth y registro en la tabla `stores` con productos y categorías iniciales.
+ * @description Flujo de registro simplificado en 2 pantallas (Tu negocio → Tu cuenta)
+ * seguido del primer producto en `/admin/productos?bienvenida=1` (F49).
  */
 
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Rocket, Eye, EyeOff, Lock, CheckCircle2, Star, X, MessageCircle } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { ArrowLeft, Rocket, Eye, EyeOff, CheckCircle2, X, MessageCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { PLANS, type PlanId } from "@/lib/types";
@@ -20,9 +15,16 @@ import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
-import { getDesignSpec, ALL_MODELS, PALETTE_VARIANT_MODELS } from "@/lib/design-catalog";
-import { suggestPhotoFormat } from "@/lib/photo-format";
-import { getSuggestedPresetsForNiche, THEME_PRESETS } from "@/lib/theme-presets";
+import { RUBROS, getRubroDefaults } from "@/lib/rubros";
+import {
+  slugifyStoreName,
+  sanitizeSlugInput,
+  extractSignupUtmFromSearch,
+  SIGNUP_SOURCES,
+  SIGNUP_SOURCE_LABELS,
+  type SignupSource,
+} from "@/lib/slug";
+import { logFunnelStep, rememberFunnelSource } from "@/lib/signup-funnel";
 
 /**
  * Definición de la ruta `/register` en TanStack Router.
@@ -62,841 +64,16 @@ export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
 
-/* ─── ModelLayoutPreview ─────────────────────────────────────
-   Renderiza una miniatura fiel a la disposición real de cada
-   layout de catálogo usando los colores propios del modelo.
-──────────────────────────────────────────────────────────── */
-type MiniModel = { layout: string; p: { bg: string; card: string; accent: string; dark: boolean } };
-
-function ModelLayoutPreview({ model: m }: { model: MiniModel }) {
-  const { bg, card, accent, dark } = m.p;
-  const muted = dark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.13)";
-  const mutedSoft = dark ? "rgba(255,255,255,0.09)" : "rgba(0,0,0,0.07)";
-  const textDark = dark ? "#fff" : "#111";
-
-  const Header = () => (
-    <div
-      className="flex items-center gap-1.5 px-2 py-1.5 shrink-0"
-      style={{ backgroundColor: bg, borderBottom: `1px solid ${accent}33` }}
-    >
-      <div
-        className="h-3.5 w-3.5 rounded-full flex items-center justify-center text-[6px] font-black text-white shrink-0"
-        style={{ backgroundColor: accent }}
-      >
-        D
-      </div>
-      <div className="h-1 rounded-full w-8 flex-1" style={{ backgroundColor: muted }} />
-      <div
-        className="h-3 rounded-full px-1.5 text-[4.5px] font-bold flex items-center"
-        style={{ backgroundColor: accent, color: "#fff" }}
-      >
-        Contacto
-      </div>
-    </div>
-  );
-
-  // GRID: rejilla 2×3 con tarjetas
-  if (m.layout === "grid") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 py-1 shrink-0">
-          <div
-            className="h-2 rounded-full w-full"
-            style={{ backgroundColor: dark ? "rgba(255,255,255,0.08)" : accent + "22" }}
-          />
-        </div>
-        <div className="grid grid-cols-3 gap-1 px-1.5 pb-1.5 flex-1 overflow-hidden">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="rounded overflow-hidden flex flex-col"
-              style={{ backgroundColor: card, border: `1px solid ${accent}33` }}
-            >
-              <div
-                style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}55` }}
-              />
-              <div className="p-0.5 space-y-0.5">
-                <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-                <div
-                  className="h-1 rounded-full w-1/2"
-                  style={{ backgroundColor: accent, opacity: 0.85 }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // OVERLAY: portrait 3:4 con texto sobre gradiente
-  if (m.layout === "overlay") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="flex gap-1 px-1.5 py-1 flex-1 overflow-hidden">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex-1 relative overflow-hidden rounded-lg">
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    i % 2 === 0
-                      ? `linear-gradient(160deg, ${accent}dd, ${card}99)`
-                      : `linear-gradient(160deg, ${card}99, ${accent}cc)`,
-                }}
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: "linear-gradient(to top, rgba(0,0,0,0.8) 40%, transparent 75%)",
-                }}
-              />
-              {i === 0 && (
-                <div
-                  className="absolute top-1 left-1 text-[4px] font-black px-1 rounded-full"
-                  style={{ backgroundColor: "#ef4444", color: "#fff" }}
-                >
-                  OFERTA
-                </div>
-              )}
-              <div className="absolute bottom-0 left-0 right-0 p-1 space-y-0.5">
-                <div
-                  className="h-0.5 rounded-full w-4/5"
-                  style={{ backgroundColor: "#fff", opacity: 0.85 }}
-                />
-                <div className="h-1 rounded-full w-2/5" style={{ backgroundColor: accent }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // HERO: banner + mini grid circular
-  if (m.layout === "hero") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 pt-1 shrink-0">
-          <div className="relative w-full overflow-hidden rounded-lg" style={{ height: "40px" }}>
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(135deg, ${accent}ee, ${accent}55)` }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 35%, transparent)" }}
-            />
-            <div className="absolute bottom-1.5 left-2 space-y-0.5">
-              <div
-                className="h-1 rounded-full w-12"
-                style={{ backgroundColor: "#fff", opacity: 0.9 }}
-              />
-              <div
-                className="h-1.5 rounded-full w-8"
-                style={{ backgroundColor: "#fff", opacity: 0.6 }}
-              />
-            </div>
-            <div
-              className="absolute bottom-1.5 right-2 h-2.5 px-1.5 rounded-full flex items-center text-[4px] font-bold"
-              style={{ backgroundColor: accent, color: "#fff" }}
-            >
-              Añadir
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-1 px-1.5 py-1 flex-1">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-              <div
-                className="w-full"
-                style={{
-                  aspectRatio: "1/1",
-                  borderRadius: "999px",
-                  background: i % 2 === 0 ? `${accent}cc` : `${accent}44`,
-                  border: `1.5px solid ${accent}66`,
-                }}
-              />
-              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // EDITORIAL: lista horizontal
-  if (m.layout === "editorial") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="flex-1 overflow-hidden px-1.5 py-1 space-y-1">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="flex gap-1.5 items-center py-1"
-              style={{ borderBottom: `1px solid ${accent}33` }}
-            >
-              <div
-                className="shrink-0 rounded overflow-hidden"
-                style={{
-                  width: "22px",
-                  height: "22px",
-                  background:
-                    i === 0
-                      ? `linear-gradient(135deg, ${accent}, ${accent}55)`
-                      : `linear-gradient(135deg, ${accent}55, ${accent}22)`,
-                }}
-              />
-              <div className="flex-1 space-y-0.5">
-                <div
-                  className="h-1 rounded-full"
-                  style={{
-                    width: i === 0 ? "80%" : i === 1 ? "65%" : "72%",
-                    backgroundColor: muted,
-                  }}
-                />
-                <div className="h-0.5 rounded-full w-full" style={{ backgroundColor: mutedSoft }} />
-              </div>
-              <div
-                className="shrink-0 h-1.5 rounded-full w-6"
-                style={{ backgroundColor: accent, opacity: 0.85 }}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // TILES: 1 banner ancho + 2 cuadros
-  if (m.layout === "tiles") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 pt-1 space-y-1 flex-1 overflow-hidden">
-          <div className="relative overflow-hidden w-full rounded-lg" style={{ height: "36px" }}>
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(120deg, ${accent}ee, ${accent}55)` }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(to right, rgba(0,0,0,0.5) 30%, transparent)" }}
-            />
-            <div
-              className="absolute top-1 right-1 h-3 px-1 flex items-center rounded text-[4px] font-bold"
-              style={{ backgroundColor: accent, color: dark ? "#000" : "#fff", opacity: 0.9 }}
-            >
-              NUEVO
-            </div>
-            <div className="absolute bottom-1 left-2 space-y-0.5">
-              <div
-                className="h-1 rounded-full w-14"
-                style={{ backgroundColor: "#fff", opacity: 0.9 }}
-              />
-            </div>
-          </div>
-          <div className="flex gap-1 flex-1 pb-1">
-            {[0, 1].map((i) => (
-              <div
-                key={i}
-                className="flex-1 relative overflow-hidden rounded-lg"
-                style={{ minHeight: "32px" }}
-              >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      i === 0
-                        ? `linear-gradient(145deg, ${accent}cc, ${accent}66)`
-                        : `linear-gradient(145deg, ${accent}77, ${accent}dd)`,
-                  }}
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: "linear-gradient(to top, rgba(0,0,0,0.65) 35%, transparent)",
-                  }}
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div
-                    className="h-0.5 rounded-full w-3/4"
-                    style={{ backgroundColor: "#fff", opacity: 0.85 }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // SPOTLIGHT: 1 grande izquierda + 2 apilados derecha
-  if (m.layout === "spotlight") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="flex gap-1 px-1.5 pb-1.5 pt-1 flex-1 overflow-hidden">
-          <div className="flex-1 relative overflow-hidden rounded-xl">
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(150deg, ${accent}dd, ${accent}66)` }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "linear-gradient(to top, rgba(0,0,0,0.8) 28%, rgba(0,0,0,0.05) 70%)",
-              }}
-            />
-            <div
-              className="absolute top-1.5 left-1.5 text-[4px] font-bold tracking-widest uppercase"
-              style={{ color: accent }}
-            >
-              Destacado
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 p-1.5 space-y-0.5">
-              <div
-                className="h-0.5 rounded-full w-4/5"
-                style={{ backgroundColor: "#fff", opacity: 0.55 }}
-              />
-              <div
-                className="h-1 rounded-full w-3/5"
-                style={{ backgroundColor: "#fff", opacity: 0.9 }}
-              />
-              <div
-                className="h-2 rounded-full w-8 mt-0.5"
-                style={{ backgroundColor: accent, opacity: 0.85 }}
-              />
-            </div>
-          </div>
-          <div className="flex-1 flex flex-col gap-1">
-            {[0, 1].map((i) => (
-              <div key={i} className="flex-1 relative overflow-hidden rounded-lg">
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      i === 0
-                        ? `linear-gradient(120deg, ${accent}99, ${accent}55)`
-                        : `linear-gradient(120deg, ${accent}cc, ${accent}88)`,
-                  }}
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: "linear-gradient(to top, rgba(0,0,0,0.7) 38%, transparent)",
-                  }}
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div
-                    className="h-0.5 rounded-full w-3/4"
-                    style={{ backgroundColor: "#fff", opacity: 0.85 }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // DIAGONAL: cortes estilo Nike
-  if (m.layout === "diagonal") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="flex-1 overflow-hidden">
-          {[0, 1].map((i) => (
-            <div key={i} className="flex" style={{ height: "40%" }}>
-              <div
-                className="flex-1 relative overflow-hidden"
-                style={{
-                  clipPath:
-                    i % 2 === 0
-                      ? "polygon(0 0, 100% 0, 100% 80%, 0 100%)"
-                      : "polygon(0 0, 100% 0, 100% 100%, 0 80%)",
-                  background:
-                    i === 0
-                      ? `linear-gradient(120deg, ${accent}dd, ${accent}66)`
-                      : `linear-gradient(120deg, ${accent}99, ${accent}cc)`,
-                }}
-              >
-                <div
-                  className="absolute top-1 left-1.5 text-[4px] font-black px-1 py-0.5 tracking-widest"
-                  style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}
-                >
-                  {i === 0 ? "NEW" : "SALE"}
-                </div>
-              </div>
-              <div
-                className="w-2/5 px-1.5 py-1 flex flex-col justify-center gap-0.5"
-                style={{ backgroundColor: card }}
-              >
-                <div className="h-0.5 rounded-full w-full" style={{ backgroundColor: muted }} />
-                <div
-                  className="h-1.5 rounded-full w-3/4"
-                  style={{ backgroundColor: accent, opacity: 0.85 }}
-                />
-                <div
-                  className="h-2 rounded w-10 flex items-center justify-center text-[4px] font-black"
-                  style={{ backgroundColor: accent, color: dark ? "#000" : "#fff" }}
-                >
-                  AÑADIR
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // BLOOM: carrusel con margen + grilla limpia
-  if (m.layout === "bloom_general" || m.layout === "bloom") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 pt-1 shrink-0">
-          <div
-            className="relative w-full overflow-hidden rounded-xl"
-            style={{
-              height: "36px",
-              background: `linear-gradient(135deg, ${accent}dd, ${accent}55)`,
-            }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-1 left-2">
-              <div className="h-1 rounded-full w-12 bg-white/90" />
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-1 px-1.5 py-1 flex-1">
-          {[0, 1].map((i) => (
-            <div
-              key={i}
-              className="rounded-lg p-1 flex gap-1 items-center"
-              style={{ backgroundColor: card, border: `1px solid ${accent}22` }}
-            >
-              <div className="w-5 h-5 rounded-md" style={{ backgroundColor: `${accent}44` }} />
-              <div className="space-y-0.5 flex-1">
-                <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: muted }} />
-                <div className="h-1 rounded-full w-1/2" style={{ backgroundColor: accent }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // NATURE: banner orgánico + tarjeta flotante
-  if (m.layout === "nature") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 pt-0.5 shrink-0">
-          <div
-            className="relative w-full overflow-hidden rounded-t-xl"
-            style={{
-              height: "28px",
-              background: `linear-gradient(135deg, ${accent}ee, #a7f3d0)`,
-            }}
-          />
-          <div
-            className="relative -mt-2.5 mx-1 rounded-xl p-1 shadow-sm flex items-center justify-between"
-            style={{ backgroundColor: card, border: `1px solid ${accent}33` }}
-          >
-            <div className="space-y-0.5">
-              <div className="h-1 rounded-full w-14" style={{ backgroundColor: accent }} />
-              <div className="h-0.5 rounded-full w-8" style={{ backgroundColor: muted }} />
-            </div>
-            <div className="w-3 h-3 rounded-full flex items-center justify-center text-[5px]" style={{ backgroundColor: `${accent}22`, color: accent }}>
-              🌿
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-1 px-1.5 pt-1 flex-1">
-          {[0, 1].map((i) => (
-            <div
-              key={i}
-              className="rounded-xl p-1 flex flex-col items-center gap-0.5"
-              style={{ backgroundColor: card, border: `1px solid ${accent}22` }}
-            >
-              <div className="w-full aspect-[4/3] rounded-lg" style={{ backgroundColor: `${accent}33` }} />
-              <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: muted }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // VITRINA: retail tipo GAP, foto 3:4 limpia, 2 columnas
-  if (m.layout === "vitrina") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="grid grid-cols-2 gap-1 px-1.5 pt-1 flex-1">
-          {[0, 1].map((i) => (
-            <div key={i} className="flex flex-col gap-0.5">
-              <div
-                className="w-full relative overflow-hidden"
-                style={{
-                  aspectRatio: "3/4",
-                  backgroundColor: card,
-                  border: `1px solid ${accent}22`,
-                }}
-              >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      i === 0
-                        ? `linear-gradient(160deg, ${accent}88, ${accent}33)`
-                        : `linear-gradient(160deg, ${accent}44, ${accent}11)`,
-                  }}
-                />
-                <div
-                  className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full flex items-center justify-center text-[5px] text-white"
-                  style={{ backgroundColor: accent }}
-                >
-                  +
-                </div>
-              </div>
-              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-              <div className="h-0.5 rounded-full w-2/5" style={{ backgroundColor: accent }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // LOOKBOOK: editorial de alta costura, tarjetas flat
-  if (m.layout === "lookbook") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1 pt-0.5 shrink-0">
-          <div
-            className="relative w-full overflow-hidden"
-            style={{
-              height: "34px",
-              background: `linear-gradient(180deg, #18181b, #09090b)`,
-              borderBottom: `1px solid ${accent}33`,
-            }}
-          >
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="h-0.5 w-10 bg-white/40 mb-0.5" />
-              <div className="h-1 w-16 bg-white/90" />
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-1 px-1.5 py-1 flex-1">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex-1 flex flex-col gap-0.5">
-              <div className="w-full aspect-[3/4]" style={{ backgroundColor: card, border: `1px solid #27272a` }} />
-              <div className="h-0.5 rounded-full w-3/4" style={{ backgroundColor: muted }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // BITE: gastronómico oscuro con acento culinario
-  if (m.layout === "bite") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 pt-1 shrink-0">
-          <div
-            className="relative w-full overflow-hidden rounded-xl"
-            style={{
-              height: "30px",
-              background: `linear-gradient(135deg, ${accent}cc, #7c2d12)`,
-            }}
-          >
-            <div className="absolute bottom-1 left-2 flex items-center gap-1">
-              <div className="h-1 rounded-full w-12 bg-white/90" />
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 px-1.5 py-1 flex-1">
-          {[0, 1].map((i) => (
-            <div
-              key={i}
-              className="rounded-lg p-1 flex items-center justify-between"
-              style={{ backgroundColor: card, border: `1px solid ${accent}33` }}
-            >
-              <div className="flex items-center gap-1">
-                <div className="w-5 h-5 rounded-md" style={{ backgroundColor: `${accent}55` }} />
-                <div className="h-0.5 rounded-full w-10" style={{ backgroundColor: muted }} />
-              </div>
-              <div className="h-1.5 rounded px-1 flex items-center text-[5px] font-bold" style={{ backgroundColor: accent, color: "#fff" }}>
-                S/ 25
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // ARCH: marcos en arco
-  if (m.layout === "arch") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="flex gap-1.5 px-2 py-1.5 flex-1 overflow-hidden items-start">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-              <div
-                className="relative overflow-hidden w-full"
-                style={{
-                  aspectRatio: "3/4",
-                  borderRadius: "999px 999px 6px 6px",
-                  background:
-                    i === 0
-                      ? `linear-gradient(160deg, ${accent}cc, ${accent}55)`
-                      : i === 1
-                        ? `linear-gradient(160deg, ${accent}55, ${accent}88)`
-                        : `linear-gradient(160deg, ${accent}88, ${accent}cc)`,
-                  border: `1px solid ${accent}55`,
-                  opacity: i === 0 ? 1 : 0.7,
-                }}
-              >
-                <div
-                  className="absolute top-0 left-0 right-0 h-1/3"
-                  style={{
-                    background: "linear-gradient(to bottom, rgba(255,255,255,0.2), transparent)",
-                  }}
-                />
-              </div>
-              <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-              <div
-                className="h-1 rounded-full w-1/2"
-                style={{ backgroundColor: accent, opacity: 0.85 }}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // MAGAZINE: full-width banner + pares 3:4
-  if (m.layout === "magazine") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="flex-1 overflow-hidden space-y-0.5 pt-1">
-          <div className="relative overflow-hidden mx-0" style={{ height: "30px" }}>
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(90deg, ${accent}cc, ${accent}44)` }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)" }}
-            />
-            <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between">
-              <div
-                className="h-1 rounded-sm w-16"
-                style={{ backgroundColor: "#fff", opacity: 0.9 }}
-              />
-              <div
-                className="h-2.5 px-1 flex items-center text-[4px] font-bold"
-                style={{ border: "0.5px solid rgba(255,255,255,0.5)", color: "#fff" }}
-              >
-                VER
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-0.5 flex-1 pb-1">
-            {[0, 1].map((i) => (
-              <div
-                key={i}
-                className="flex-1 relative overflow-hidden"
-                style={{ minHeight: "44px" }}
-              >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background:
-                      i === 0
-                        ? `linear-gradient(160deg, ${accent}99, ${accent}55)`
-                        : `linear-gradient(160deg, ${accent}dd, ${accent}88)`,
-                  }}
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    background: "linear-gradient(to top, rgba(0,0,0,0.7) 40%, transparent)",
-                  }}
-                />
-                <div className="absolute bottom-0 left-0 right-0 p-1">
-                  <div
-                    className="h-0.5 rounded-sm w-3/4 mb-0.5"
-                    style={{ backgroundColor: "#fff", opacity: 0.85 }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // BANNER_GRID: banner + grid 2 col
-  if (m.layout === "banner_grid") {
-    return (
-      <div
-        className="w-full overflow-hidden flex flex-col"
-        style={{ backgroundColor: bg, height: "100px" }}
-      >
-        <Header />
-        <div className="px-1.5 pt-1 pb-0.5 shrink-0">
-          <div
-            className="relative w-full overflow-hidden rounded-lg mb-1"
-            style={{ height: "32px" }}
-          >
-            <div
-              className="absolute inset-0"
-              style={{ background: `linear-gradient(135deg, ${accent}cc, ${accent}66)` }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 40%, transparent)" }}
-            />
-            <div className="absolute bottom-1.5 left-2 space-y-0.5">
-              <div
-                className="h-1 rounded-full w-12"
-                style={{ backgroundColor: "#fff", opacity: 0.9 }}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-1 px-1.5 pb-1.5 flex-1">
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="overflow-hidden flex flex-col rounded"
-              style={{ backgroundColor: card }}
-            >
-              <div
-                style={{
-                  aspectRatio: "1/1",
-                  background:
-                    i % 2 === 0
-                      ? `linear-gradient(135deg, ${accent}bb, ${accent}44)`
-                      : `linear-gradient(135deg, ${accent}44, ${accent}bb)`,
-                }}
-              />
-              <div className="p-0.5 space-y-0.5">
-                <div className="h-0.5 rounded-full w-4/5" style={{ backgroundColor: muted }} />
-                <div
-                  className="h-1 rounded-full w-2/5"
-                  style={{ backgroundColor: accent, opacity: 0.9 }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback grid
-  return (
-    <div
-      className="w-full overflow-hidden flex flex-col"
-      style={{ backgroundColor: bg, height: "100px" }}
-    >
-      <Header />
-      <div className="grid grid-cols-3 gap-1 px-1.5 pb-1.5 pt-1 flex-1 overflow-hidden">
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="rounded overflow-hidden flex flex-col"
-            style={{ backgroundColor: card, border: `1px solid ${accent}33`, padding: "3px" }}
-          >
-            <div
-              style={{ height: "22px", background: i % 3 === 0 ? `${accent}cc` : `${accent}44` }}
-            />
-            <div className="h-0.5 rounded-full w-4/5 mt-0.5" style={{ backgroundColor: muted }} />
-            <div
-              className="h-1 rounded-full w-1/2"
-              style={{ backgroundColor: accent, opacity: 0.85 }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function RegisterPage() {
   const navigate = useNavigate();
   const addStore = useApp((s) => s.addStore);
   const setCurrentStore = useApp((s) => s.setCurrentStore);
   const markInviteUsed = useApp((s) => s.markInviteUsed);
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<1 | 2>(1);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState("general");
-  const [selectedModel, setSelectedModel] = useState("grid");
-  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
-  const [brandColor, setBrandColor] = useState("");
+  const [signupSource, setSignupSource] = useState<SignupSource | null>(null);
   const [loading, setLoading] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
 
@@ -911,34 +88,63 @@ function RegisterPage() {
   const [inviteCustomPrice, setInviteCustomPrice] = useState<number | null>(null);
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  const BRAND_COLORS = [
-    { id: "coral", name: "Coral (Dizi)", hex: "#FF823A" },
-    { id: "menta", name: "Menta", hex: "#7bc740" },
-    { id: "lavanda", name: "Lavanda", hex: "#BC84EE" },
-    { id: "indigo", name: "Indigo", hex: "#1E293B" },
-    { id: "rose", name: "Rosa", hex: "#ec4899" },
-    { id: "sky", name: "Cielo", hex: "#0ea5e9" },
-    { id: "amber", name: "Ambar", hex: "#f59e0b" },
-    { id: "teal", name: "Teal", hex: "#14b8a6" },
-  ];
-
   // Form states
   const [storeName, setStoreName] = useState("");
   const [storeLink, setStoreLink] = useState("");
+  const [linkManuallyEdited, setLinkManuallyEdited] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [storePhone, setStorePhone] = useState("");
   const [phoneCountryIso, setPhoneCountryIso] = useState("PE");
   const [phoneCountryDial, setPhoneCountryDial] = useState("51");
   const [isPhoneValid, setIsPhoneValid] = useState(false);
 
-  // Leer parámetros de la URL
-  const inviteToken = new URLSearchParams(window.location.search).get("invite");
-  const refToken = new URLSearchParams(window.location.search).get("ref");
-  const requestedPlanParam = new URLSearchParams(window.location.search).get("plan") as PlanId | null;
+  // Leer parámetros de la URL (?ref= es intocable para referidos; ?origen= / utm_source= para campaña)
+  const searchStr = typeof window !== "undefined" ? window.location.search : "";
+  const urlParams = new URLSearchParams(searchStr);
+  const inviteToken = urlParams.get("invite");
+  const refToken = urlParams.get("ref");
+  const requestedPlanParam = urlParams.get("plan") as PlanId | null;
+  const [signupUtm] = useState<string | null>(() => extractSignupUtmFromSearch(searchStr));
   const [requestedPlan] = useState<PlanId | null>(
     requestedPlanParam && requestedPlanParam in PLANS ? requestedPlanParam : null
   );
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [createdStoreData, setCreatedStoreData] = useState<{ id: string; slug: string; plan: PlanId } | null>(null);
+
+  const hasLoggedViewRef = useRef(false);
+  useEffect(() => {
+    if (hasLoggedViewRef.current) return;
+    hasLoggedViewRef.current = true;
+    rememberFunnelSource(signupUtm);
+    void logFunnelStep("vio_registro", signupUtm);
+  }, [signupUtm]);
+
+  // Validar disponibilidad de link en tiempo real antes de enviar (RF-49.3)
+  useEffect(() => {
+    if (step !== 2 || storeLink.length < 3) {
+      setSlugStatus("idle");
+      return;
+    }
+    let cancelled = false;
+    setSlugStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.rpc("check_slug_available", { p_slug: storeLink });
+        if (cancelled) return;
+        if (error) {
+          setSlugStatus("idle");
+          return;
+        }
+        setSlugStatus(data === false ? "taken" : "available");
+      } catch {
+        if (!cancelled) setSlugStatus("idle");
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [step, storeLink]);
 
   // Validar invite contra Supabase al montar
   useEffect(() => {
@@ -972,228 +178,203 @@ function RegisterPage() {
   const plan: PlanId = invitePlan ?? "semilla";
   const isTrial =
     invitePlan !== null && (inviteDurationMonths === 0 || inviteDurationUnit === "days");
-  const isPremium = plan !== "semilla";
 
-  const niches = [
-    { id: "general", name: "General" },
-    { id: "comida", name: "Gastronomia & Fast Food" },
-    { id: "bisuteria", name: "Bisuteria & Accesorios" },
-    { id: "ropa", name: "Boutique & Moda" },
-    { id: "tech", name: "Tech & Electronica" },
-    { id: "servicios", name: "Servicios Profesionales" },
-  ];
-
-  const suggestedPresets = useMemo(() => getSuggestedPresetsForNiche(selectedNiche), [selectedNiche]);
-
-  const selectedPreset = selectedPresetId
-    ? THEME_PRESETS.find((p) => p.id === selectedPresetId)
-    : null;
-
-  const models = ALL_MODELS.map((m) => {
-    // Si hay una paleta seleccionada, aplicar sus colores a la vista previa (RF-45.8, E8)
-    const activeP = selectedPreset
-      ? {
-          bg: selectedPreset.values.bgColor,
-          card: selectedPreset.values.cardBg,
-          accent: brandColor || selectedPreset.values.brandColor,
-          dark: selectedPreset.values.isDark,
-        }
-      : brandColor
-        ? { ...m.p, accent: brandColor }
-        : m.p;
-
-    return {
-      ...m,
-      p: activeP,
-      locked: false,
-      recommended: m.niches.includes(selectedNiche),
-    };
-  });
-
-  useEffect(() => {
-    // Al cambiar nicho, seleccionar el primer modelo sugerido para ese nicho
-    const first = ALL_MODELS.find((m) => m.niches.includes(selectedNiche));
-    if (first) setSelectedModel(first.id);
-    else setSelectedModel("grid");
-  }, [selectedNiche]);
+  const handleStoreNameChange = (value: string) => {
+    setStoreName(value);
+    if (!linkManuallyEdited) {
+      setStoreLink(slugifyStoreName(value));
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step < 3) {
-      setStep(step + 1);
-    } else {
-      if (!acceptedTerms) {
+    if (step === 1) {
+      if (!linkManuallyEdited && !storeLink && storeName.trim()) {
+        setStoreLink(slugifyStoreName(storeName));
+      }
+      void logFunnelStep("completo_negocio", signupUtm);
+      setStep(2);
+      return;
+    }
+
+    if (!acceptedTerms) {
+      const { toast } = await import("sonner");
+      toast.error("Debes aceptar los Términos de Servicio y la Política de Privacidad para continuar.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cleanSlug = sanitizeSlugInput(storeLink) || slugifyStoreName(storeName) || `tienda-${Date.now()}`;
+      const { data: isAvailable, error: slugError } = await supabase
+        .rpc("check_slug_available", { p_slug: cleanSlug });
+
+      if (slugError || isAvailable === false) {
+        setSlugStatus("taken");
         const { toast } = await import("sonner");
-        toast.error("Debes aceptar los Términos de Servicio y la Política de Privacidad para continuar.");
+        toast.error("El link de la tienda ya esta en uso. Por favor, elige otro.");
+        setLoading(false);
         return;
       }
-      setLoading(true);
-      try {
-        const { data: isAvailable, error: slugError } = await supabase
-          .rpc("check_slug_available", { p_slug: storeLink });
 
-        if (slugError || isAvailable === false) {
-          const { toast } = await import("sonner");
-          toast.error("El link de la tienda ya esta en uso. Por favor, elige otro.");
-          setLoading(false);
-          return;
-        }
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: {
+          data: { full_name: storeName, role: "store_owner" },
+        },
+      });
 
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password,
-          options: {
-            data: { full_name: storeName, role: "store_owner" },
-          },
-        });
+      let userId = authData.user?.id;
 
-        let userId = authData.user?.id;
-
-        if (authError) {
-          if (authError.message?.includes("already registered") || authError.status === 422) {
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword(
-              {
-                email: email.trim(),
-                password: password,
-              },
-            );
-            if (signInError) {
-              throw new Error(
-                "Este correo ya esta registrado. Por favor, inicia sesion con tu contrasena.",
-              );
-            }
-            userId = signInData.user?.id;
-          } else {
-            throw authError;
-          }
-        }
-
-        if (!userId) throw new Error("No se pudo obtener el ID del usuario.");
-
-        const {
-          data: { session: currentSession },
-        } = await supabase.auth.getSession();
-        if (!currentSession) {
-          const { error: signInError } = await supabase.auth.signInWithPassword({
+      if (authError) {
+        if (authError.message?.includes("already registered") || authError.status === 422) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: email.trim(),
             password: password,
           });
-          if (signInError)
-            throw new Error("Cuenta creada pero no se pudo iniciar sesion automaticamente.");
-        }
-
-        const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
-        const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
-
-        // Calcular fecha de vencimiento del plan (días o meses según la invitación)
-        const planExpiresAt = (() => {
-          if (plan === "semilla") return undefined;
-          const d = new Date();
-          if (inviteDurationUnit === "days" && inviteDurationValue) {
-            d.setDate(d.getDate() + inviteDurationValue);
-            return d.toISOString();
-          } else if (inviteDurationUnit === "months" && inviteDurationValue) {
-            d.setMonth(d.getMonth() + inviteDurationValue);
-            return d.toISOString();
-          } else if (isTrial) {
-            d.setDate(d.getDate() + 15);
-            return d.toISOString();
-          } else if (inviteDurationMonths) {
-            d.setMonth(d.getMonth() + inviteDurationMonths);
-            return d.toISOString();
+          if (signInError) {
+            throw new Error(
+              "Este correo ya esta registrado. Por favor, inicia sesion con tu contrasena.",
+            );
           }
-          return undefined;
-        })();
-
-        const officialModel = PALETTE_VARIANT_MODELS.has(selectedModel)
-          ? selectedModel
-          : getDesignSpec(selectedModel, selectedNiche).id;
-
-        await addStore({
-          id: newStoreId,
-          slug: storeLink || `tienda-${Date.now()}`,
-          name: storeName || "Mi Nueva Tienda",
-          phone: storePhone,
-          countryCode: phoneCountryDial,
-          countryIso: phoneCountryIso,
-          plan: invitePlan ?? "semilla",
-          requestedPlan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : undefined,
-          termsAcceptedAt: new Date().toISOString(),
-          active: true,
-          isPublished: true,
-          createdAt: new Date().toISOString().split("T")[0],
-          whatsappClicks: 0,
-          model: officialModel as any,
-          brandColor: brandColor || selectedPreset?.values.brandColor || undefined,
-          bgColor: selectedPreset?.values.bgColor || undefined,
-          cardBg: selectedPreset?.values.cardBg || undefined,
-          textColor: selectedPreset?.values.textColor || undefined,
-          accentColor: selectedPreset?.values.accentColor || undefined,
-          isDark: selectedPreset ? selectedPreset.values.isDark : undefined,
-          ownerId: userId,
-          niche: selectedNiche,
-          photoFormat: suggestPhotoFormat(selectedNiche),
-          planExpiresAt,
-          subscriptionStatus:
-            plan === "semilla"
-              ? "trial"
-              : inviteDurationUnit === "days" || isTrial
-                ? "trial"
-                : "active",
-          planDurationMonths:
-            plan === "semilla"
-              ? undefined
-              : inviteDurationUnit === "days" || isTrial
-                ? 0
-                : (inviteDurationValue ?? inviteDurationMonths),
-          customPrice: inviteCustomPrice !== null ? inviteCustomPrice : undefined,
-          referredBy: refToken || undefined,
-          categories: [{ id: newCategoryId, name: "Principal" }],
-          products: [],
-        });
-
-        if (inviteToken && invitePlan) {
-          // Pasar el storeId para que active_subscription se llame correctamente
-          await markInviteUsed(inviteToken, newStoreId);
-        }
-
-        const { toast } = await import("sonner");
-        toast.success("Tienda creada con exito. Bienvenido a Dizi.");
-
-        setCurrentStore(newStoreId);
-
-        // Si solicitó un plan de pago en /register?plan=..., mostrar confirmación con WhatsApp a soporte
-        if (requestedPlan && requestedPlan !== "semilla") {
-          setCreatedStoreData({
-            id: newStoreId,
-            slug: storeLink || newStoreId,
-            plan: requestedPlan,
-          });
-          return;
-        }
-
-        navigate({ to: "/admin" });
-      } catch (err: any) {
-        console.error("Registration error:", err);
-        const { toast } = await import("sonner");
-
-        let errorMessage = "Error al registrarte.";
-        if (err.message?.includes("stores_slug_key")) {
-          errorMessage = "El link de la tienda ya esta en uso. Por favor, elige otro.";
-        } else if (err.message?.includes("categories_pkey")) {
-          errorMessage = "Error de sistema al crear la categoria. Por favor, intenta de nuevo.";
-        } else if (err.status === 429 || err.message?.includes("rate limit") || err.message?.includes("over_email_send_rate_limit")) {
-          errorMessage = "Límite de correos alcanzado temporalmente por el servidor. Por favor, espera unos minutos o desactiva 'Confirm email' en tu panel de Supabase.";
-        } else if (err.message?.includes("User already registered")) {
-          errorMessage = "Este correo ya tiene una cuenta. Intenta iniciar sesion.";
+          userId = signInData.user?.id;
         } else {
-          errorMessage = err.message || errorMessage;
+          throw authError;
         }
-
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
       }
+
+      if (!userId) throw new Error("No se pudo obtener el ID del usuario.");
+
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      if (!currentSession) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password: password,
+        });
+        if (signInError) {
+          throw new Error("Cuenta creada pero no se pudo iniciar sesion automaticamente.");
+        }
+      }
+
+      const newStoreId = "s_" + Math.random().toString(36).substring(2, 9);
+      const newCategoryId = "c_" + Math.random().toString(36).substring(2, 9);
+
+      const planExpiresAt = (() => {
+        if (plan === "semilla") return undefined;
+        const d = new Date();
+        if (inviteDurationUnit === "days" && inviteDurationValue) {
+          d.setDate(d.getDate() + inviteDurationValue);
+          return d.toISOString();
+        } else if (inviteDurationUnit === "months" && inviteDurationValue) {
+          d.setMonth(d.getMonth() + inviteDurationValue);
+          return d.toISOString();
+        } else if (isTrial) {
+          d.setDate(d.getDate() + 15);
+          return d.toISOString();
+        } else if (inviteDurationMonths) {
+          d.setMonth(d.getMonth() + inviteDurationMonths);
+          return d.toISOString();
+        }
+        return undefined;
+      })();
+
+      const rubroDefaults = getRubroDefaults(selectedNiche);
+      const nowIso = new Date().toISOString();
+
+      await addStore({
+        id: newStoreId,
+        slug: cleanSlug,
+        name: storeName || "Mi Nueva Tienda",
+        phone: storePhone,
+        countryCode: phoneCountryDial,
+        countryIso: phoneCountryIso,
+        plan: invitePlan ?? "semilla",
+        requestedPlan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : undefined,
+        termsAcceptedAt: nowIso,
+        onboardingCompleted: true,
+        active: true,
+        isPublished: true,
+        createdAt: nowIso,
+        whatsappClicks: 0,
+        model: rubroDefaults.model,
+        brandColor: rubroDefaults.preset.values.brandColor,
+        bgColor: rubroDefaults.preset.values.bgColor,
+        cardBg: rubroDefaults.preset.values.cardBg,
+        textColor: rubroDefaults.preset.values.textColor,
+        accentColor: rubroDefaults.preset.values.accentColor,
+        catalogTypography: rubroDefaults.preset.values.typography,
+        cardStyle: rubroDefaults.preset.values.cardStyle,
+        borderRadius: rubroDefaults.preset.values.borderRadius,
+        imgShape: rubroDefaults.preset.values.imgShape,
+        isDark: rubroDefaults.preset.values.isDark,
+        ownerId: userId,
+        niche: rubroDefaults.rubro.id,
+        photoFormat: rubroDefaults.photoFormat,
+        planExpiresAt,
+        subscriptionStatus:
+          plan === "semilla"
+            ? "trial"
+            : inviteDurationUnit === "days" || isTrial
+              ? "trial"
+              : "active",
+        planDurationMonths:
+          plan === "semilla"
+            ? undefined
+            : inviteDurationUnit === "days" || isTrial
+              ? 0
+              : (inviteDurationValue ?? inviteDurationMonths),
+        customPrice: inviteCustomPrice !== null ? inviteCustomPrice : undefined,
+        referredBy: refToken || undefined,
+        signupSource: signupSource ?? null,
+        signupUtm: signupUtm ?? null,
+        categories: [{ id: newCategoryId, name: "Principal" }],
+        products: [],
+      });
+
+      if (inviteToken && invitePlan) {
+        await markInviteUsed(inviteToken, newStoreId);
+      }
+
+      void logFunnelStep("creo_cuenta", signupUtm);
+
+      const { toast } = await import("sonner");
+      toast.success("Tienda creada con exito. Bienvenido a Dizi.");
+
+      setCurrentStore(newStoreId);
+
+      if (requestedPlan && requestedPlan !== "semilla") {
+        setCreatedStoreData({
+          id: newStoreId,
+          slug: cleanSlug,
+          plan: requestedPlan,
+        });
+        return;
+      }
+
+      navigate({ to: "/admin/productos", search: { bienvenida: 1 } as any });
+    } catch (err: any) {
+      console.error("Registration error:", err);
+      const { toast } = await import("sonner");
+
+      let errorMessage = "Error al registrarte.";
+      if (err.message?.includes("stores_slug_key")) {
+        errorMessage = "El link de la tienda ya esta en uso. Por favor, elige otro.";
+      } else if (err.message?.includes("categories_pkey")) {
+        errorMessage = "Error de sistema al crear la categoria. Por favor, intenta de nuevo.";
+      } else if (err.status === 429 || err.message?.includes("rate limit") || err.message?.includes("over_email_send_rate_limit")) {
+        errorMessage = "Límite de correos alcanzado temporalmente por el servidor. Por favor, espera unos minutos o desactiva 'Confirm email' en tu panel de Supabase.";
+      } else if (err.message?.includes("User already registered")) {
+        errorMessage = "Este correo ya tiene una cuenta. Intenta iniciar sesion.";
+      } else {
+        errorMessage = err.message || errorMessage;
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1288,18 +469,18 @@ function RegisterPage() {
         )}
 
         {/* Titulo */}
-        <div className="text-center w-full max-w-sm">
+        <div className="text-center w-full max-w-md">
           <h1 className="text-3xl font-black tracking-tight text-foreground">
             Crea tu <span className="text-primary">catálogo</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-1 font-bold uppercase tracking-widest">
-            gratis en 3 pasos
+            gratis en 2 pasos
           </p>
         </div>
 
-        {/* Stepper visual */}
-        <div className="flex items-center justify-between w-full max-w-sm px-2 relative">
-          {[1, 2, 3].map((s) => (
+        {/* Stepper visual (2 pasos: Tu negocio → Tu cuenta) */}
+        <div className="flex items-center justify-between w-full max-w-xs px-4 relative">
+          {[1, 2].map((s) => (
             <div key={s} className="flex-1 flex flex-col items-center gap-1.5 relative z-10">
               <div
                 className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black transition-all duration-300 border ${
@@ -1315,16 +496,16 @@ function RegisterPage() {
               <span
                 className={`text-[10px] font-black tracking-wider uppercase transition-colors ${step === s ? "text-primary" : "text-muted-foreground"}`}
               >
-                {s === 1 ? "Negocio" : s === 2 ? "Diseño" : "Cuenta"}
+                {s === 1 ? "Tu negocio" : "Tu cuenta"}
               </span>
             </div>
           ))}
-          {/* Conectores detrás de las burbujas */}
-          <div className="absolute top-[18px] left-[15%] right-[15%] h-0.5 bg-slate-200 -z-10" />
+          {/* Conector detrás de las burbujas */}
+          <div className="absolute top-[18px] left-[25%] right-[25%] h-0.5 bg-slate-200 -z-10" />
         </div>
 
         {/* Card del formulario o Confirmación de Plan Solicitado */}
-        <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-6 relative z-10 overflow-hidden">
+        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-5 sm:p-6 relative z-10 overflow-hidden">
           {createdStoreData ? (
             <div className="space-y-5 text-center py-2 animate-in fade-in zoom-in-95 duration-300">
               <div className="mx-auto w-16 h-16 rounded-3xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
@@ -1391,440 +572,319 @@ function RegisterPage() {
           ) : (
             <>
               <form onSubmit={handleRegister} className="space-y-4 relative">
-                {/* PASO 1 — Datos del negocio */}
-            {step === 1 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                    Nombre de tu Negocio
-                  </label>
-                  <input
-                    type="text"
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-                    placeholder="Ej. Florería María"
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                    Rubro de tu Negocio
-                  </label>
-                  <select
-                    value={selectedNiche}
-                    onChange={(e) => setSelectedNiche(e.target.value)}
-                    className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none cursor-pointer"
-                  >
-                    {niches.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                    WhatsApp de Ventas
-                  </label>
-                  <PhoneInput
-                    value={storePhone}
-                    countryIso={phoneCountryIso}
-                    onChange={({ digits, countryIso, dial, valid }) => {
-                      setStorePhone(digits);
-                      setPhoneCountryIso(countryIso);
-                      setPhoneCountryDial(dial);
-                      setIsPhoneValid(valid);
-                    }}
-                    required
-                  />
-                </div>
+                {/* PASO 1 — Tu negocio */}
+                {step === 1 && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                        Nombre de tu Negocio
+                      </label>
+                      <input
+                        type="text"
+                        autoComplete="organization"
+                        value={storeName}
+                        onChange={(e) => handleStoreNameChange(e.target.value)}
+                        className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
+                        placeholder="Ej. Florería María"
+                        required
+                      />
+                    </div>
 
-                <button
-                  type="submit"
-                  disabled={!isPhoneValid}
-                  className="w-full h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer"
-                >
-                  Siguiente paso
-                </button>
-                <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
-                  <p className="text-[11px] font-semibold text-slate-400 text-center">
-                    ¿Necesitas ayuda con tu configuración?
-                  </p>
-                  <a
-                    href={buildWaUrl(
-                      DIZI_SUPPORT_PHONE,
-                      "Hola, necesito ayuda para configurar mi tienda en Dizi"
-                    )}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-3.5 h-3.5 fill-emerald-600"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z" />
-                    </svg>
-                    Escríbenos por WhatsApp
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {/* PASO 2 — Diseño */}
-            {step === 2 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex justify-between">
-                    <span>Modelo de Catálogo</span>
-                    <span className="text-[10px] text-muted-foreground font-normal normal-case">
-                      Todos los modelos disponibles
-                    </span>
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
-                    {/* Recomendados para el nicho */}
-                    {models.filter((m) => m.recommended).length > 0 && (
-                      <>
-                        <div className="col-span-2 flex items-center gap-1.5 px-0.5">
-                          <Star className="w-3 h-3 text-primary fill-primary" />
-                          <p className="text-[10px] font-black text-primary uppercase tracking-widest">
-                            Sugeridos para tu negocio
-                          </p>
-                        </div>
-                        {models
-                          .filter((m) => m.recommended)
-                          .map((m) => (
-                            <div
-                              key={m.id + "_rec"}
-                              onClick={() => setSelectedModel(m.id)}
-                              className={`relative rounded-xl border-2 cursor-pointer transition-all overflow-hidden group ${
-                                selectedModel === m.id
-                                  ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
-                                  : "border-slate-100 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5"
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider block">
+                        Rubro de tu Negocio
+                      </label>
+                      <div
+                        role="radiogroup"
+                        aria-label="Rubro de tu Negocio"
+                        className="grid grid-cols-2 sm:grid-cols-3 gap-2"
+                      >
+                        {RUBROS.map((rubro) => {
+                          const selected = selectedNiche === rubro.id;
+                          return (
+                            <button
+                              key={rubro.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selected}
+                              data-niche={rubro.id}
+                              onClick={() => setSelectedNiche(rubro.id)}
+                              className={`min-h-[44px] px-2.5 py-2 rounded-xl border text-left transition-all flex items-center gap-2 cursor-pointer ${
+                                selected
+                                  ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary/30"
+                                  : "border-slate-200 bg-white/70 text-slate-700 hover:border-primary/40 hover:bg-white"
                               }`}
                             >
-                              {/* Thumbnail layout-fiel */}
-                              <div className="relative">
-                                <ModelLayoutPreview model={m} />
-                                {selectedModel === m.id && (
-                                  <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                  </div>
-                                )}
-                                <div className="absolute top-2 left-2 z-10">
-                                  <span className="bg-primary text-white text-[7px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full">
-                                    Ideal
-                                  </span>
-                                </div>
-                              </div>
-                              {/* Footer */}
-                              <div className="p-2 bg-white border-t border-slate-100">
-                                <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">
-                                  {m.name}
-                                </div>
-                                <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">
-                                  {m.desc}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        <div className="col-span-2">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-0.5 pt-2 pb-1">
-                            Todos los modelos
-                          </p>
-                        </div>
-                      </>
-                    )}
-                    {/* Todos los modelos */}
-                    {models.map((m) => (
+                              <span className="text-base leading-none shrink-0" aria-hidden="true">
+                                {rubro.emoji}
+                              </span>
+                              <span className="text-[11px] font-bold leading-tight">
+                                {rubro.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                        WhatsApp de Ventas
+                      </label>
+                      <PhoneInput
+                        value={storePhone}
+                        countryIso={phoneCountryIso}
+                        onChange={({ digits, countryIso, dial, valid }) => {
+                          setStorePhone(digits);
+                          setPhoneCountryIso(countryIso);
+                          setPhoneCountryDial(dial);
+                          setIsPhoneValid(valid);
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={!isPhoneValid || !storeName.trim()}
+                      className="w-full min-h-[48px] h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer"
+                    >
+                      Siguiente paso
+                    </button>
+
+                    <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
+                      <p className="text-[11px] font-semibold text-slate-400 text-center">
+                        ¿Necesitas ayuda con tu configuración?
+                      </p>
+                      <a
+                        href={buildWaUrl(
+                          DIZI_SUPPORT_PHONE,
+                          "Hola, necesito ayuda para configurar mi tienda en Dizi"
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 w-full min-h-[44px] py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="w-3.5 h-3.5 fill-emerald-600"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z" />
+                        </svg>
+                        Escríbenos por WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* PASO 2 — Tu cuenta */}
+                {step === 2 && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-xs text-primary font-bold">
+                      {isTrial
+                        ? `¡Ya casi listo! Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (Prueba de 15 días) gratis al crear tu cuenta.`
+                        : `¡Ya casi listo! Crea tu cuenta para guardar tu catálogo ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla"} (Gratuito).`}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                        Link de tu Catálogo
+                      </label>
                       <div
-                        key={m.id}
-                        onClick={() => setSelectedModel(m.id)}
-                        className={`relative rounded-xl border-2 overflow-hidden transition-all cursor-pointer hover:shadow-md hover:-translate-y-0.5 ${
-                          selectedModel === m.id
-                            ? "border-primary shadow-md shadow-primary/15 -translate-y-0.5"
-                            : "border-slate-100 hover:border-primary/40"
+                        className={`flex rounded-xl border bg-white/50 focus-within:bg-white focus-within:ring-4 transition-all overflow-hidden ${
+                          slugStatus === "taken"
+                            ? "border-destructive focus-within:border-destructive focus-within:ring-destructive/10"
+                            : "border-slate-200 focus-within:border-primary focus-within:ring-primary/10"
                         }`}
                       >
-                        {/* Checkmark */}
-                        {selectedModel === m.id && (
-                          <div className="absolute top-2 right-2 z-10 h-5 w-5 rounded-full bg-primary text-white flex items-center justify-center shadow">
-                            <CheckCircle2 className="w-3 h-3" />
-                          </div>
-                        )}
-                        {/* Thumbnail layout-fiel */}
-                        <ModelLayoutPreview model={m} />
-                        {/* Footer */}
-                        <div className="p-2 bg-white border-t border-slate-100">
-                          <div className="font-extrabold text-[11px] text-slate-800 leading-tight truncate">
-                            {m.name}
-                          </div>
-                          <div className="text-[9px] text-slate-400 leading-snug mt-0.5 line-clamp-2">
-                            {m.desc}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* RF-45.8: Paletas sugeridas por rubro */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                      Paletas sugeridas para tu rubro
-                    </label>
-                    <span className="text-[10px] text-muted-foreground font-normal">
-                      (Fondo, tarjeta y acento)
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {suggestedPresets.map((preset) => {
-                      const isSelected = selectedPresetId === preset.id;
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedPresetId(null);
-                            } else {
-                              setSelectedPresetId(preset.id);
-                              setBrandColor(preset.values.brandColor);
-                            }
+                        <span className="flex items-center px-3 sm:px-4 bg-slate-50 text-slate-400 text-xs sm:text-sm border-r border-slate-200 font-bold whitespace-nowrap">
+                          dizi.idenza.site/t/
+                        </span>
+                        <input
+                          type="text"
+                          value={storeLink}
+                          onChange={(e) => {
+                            setLinkManuallyEdited(true);
+                            setStoreLink(sanitizeSlugInput(e.target.value));
                           }}
-                          className={`p-2 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
-                            isSelected
-                              ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/30"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-1">
-                              <span className="text-[11px] font-bold text-slate-800 leading-tight truncate">
-                                {preset.name}
-                              </span>
-                              {isSelected && (
-                                <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                              )}
-                            </div>
-                            <span className="text-[9px] text-slate-400 block mt-0.5">
-                              {preset.isDark ? "Oscura" : "Clara"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span
-                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs"
-                              style={{ backgroundColor: preset.values.brandColor }}
-                              title="Marca"
-                            />
-                            <span
-                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs"
-                              style={{ backgroundColor: preset.values.bgColor }}
-                              title="Fondo"
-                            />
-                            <span
-                              className="w-3.5 h-3.5 rounded-full border border-black/10 shadow-xs"
-                              style={{ backgroundColor: preset.values.cardBg }}
-                              title="Tarjeta"
-                            />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                          className="flex h-12 w-full bg-transparent px-3 sm:px-4 text-sm focus:outline-none"
+                          placeholder="floreria-maria"
+                          minLength={3}
+                          maxLength={40}
+                          required
+                        />
+                      </div>
+                      {slugStatus === "checking" && (
+                        <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          Verificando disponibilidad...
+                        </p>
+                      )}
+                      {slugStatus === "available" && (
+                        <p data-testid="slug-available-msg" className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                          Link disponible
+                        </p>
+                      )}
+                      {slugStatus === "taken" && (
+                        <p data-testid="slug-taken-error" className="text-[11px] text-destructive font-semibold flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          Este link ya está en uso. Elige otro para continuar.
+                        </p>
+                      )}
+                    </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                    <span>Color de tu Marca</span>
-                    <span className="text-[10px] text-muted-foreground font-normal normal-case">
-                      (Opcional)
-                    </span>
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {BRAND_COLORS.map((color) => (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                        Correo Electrónico
+                      </label>
+                      <input
+                        type="email"
+                        inputMode="email"
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
+                        placeholder="tu@correo.com"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                        Contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 pl-4 pr-12 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
+                          placeholder="Mínimo 6 caracteres"
+                          required
+                          minLength={6}
+                        />
+                        <button
+                          type="button"
+                          aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* ¿Cómo nos conociste? (opcional, RF-49.4) */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                          ¿Cómo nos conociste?
+                        </label>
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          Opcional
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {SIGNUP_SOURCES.map((sourceId) => {
+                          const selected = signupSource === sourceId;
+                          return (
+                            <button
+                              key={sourceId}
+                              type="button"
+                              aria-pressed={selected}
+                              data-signup-source={sourceId}
+                              onClick={() => setSignupSource(selected ? null : sourceId)}
+                              className={`min-h-[44px] px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                                selected
+                                  ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
+                                  : "border-slate-200 bg-white/70 text-slate-700 hover:border-primary/40 hover:bg-white"
+                              }`}
+                            >
+                              {SIGNUP_SOURCE_LABELS[sourceId]}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Aceptación obligatoria de Términos y Privacidad (G7) */}
+                    <div className="flex items-start gap-2.5 pt-1">
+                      <input
+                        type="checkbox"
+                        id="acceptTerms"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        className="mt-0.5 h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer shrink-0"
+                        required
+                      />
+                      <label htmlFor="acceptTerms" className="text-xs text-slate-600 leading-snug cursor-pointer select-none">
+                        Acepto los{" "}
+                        <Link to="/terminos" target="_blank" className="text-primary font-bold hover:underline">
+                          Términos de Servicio
+                        </Link>{" "}
+                        y la{" "}
+                        <Link to="/privacidad" target="_blank" className="text-primary font-bold hover:underline">
+                          Política de Privacidad
+                        </Link>
+                        .
+                      </label>
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
                       <button
-                        key={color.id}
                         type="button"
-                        onClick={() => setBrandColor(color.hex)}
-                        title={color.name}
-                        className={`w-9 h-9 rounded-full border-2 transition-all flex items-center justify-center cursor-pointer ${brandColor === color.hex ? "border-slate-800 scale-110 shadow-lg" : "border-transparent hover:scale-105 shadow-sm hover:border-slate-300"}`}
-                        style={{ backgroundColor: color.hex }}
+                        aria-label="Volver a Tu negocio"
+                        onClick={() => setStep(1)}
+                        className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer"
                       >
-                        {brandColor === color.hex && (
-                          <CheckCircle2 className="w-4 h-4 text-white drop-shadow" />
+                        <ArrowLeft className="w-4 h-4 text-slate-600" />
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={loading || !acceptedTerms || slugStatus === "taken" || storeLink.trim().length < 3}
+                        className="flex-1 min-h-[48px] h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        {loading ? (
+                          <>
+                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                            Creando catálogo...
+                          </>
+                        ) : (
+                          <>
+                            Crear mi catálogo <Rocket className="w-4 h-4" />
+                          </>
                         )}
                       </button>
-                    ))}
+                    </div>
                   </div>
-                </div>
+                )}
+              </form>
 
-                <div className="flex gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-slate-600" />
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 cursor-pointer"
-                  >
-                    Siguiente paso
-                  </button>
+              {step === 2 && (
+                <div className="mt-4 text-center text-xs text-muted-foreground font-medium">
+                  ¿Ya tienes una cuenta?{" "}
+                  <Link to="/login" className="text-primary font-bold hover:underline">
+                    Inicia sesión
+                  </Link>
                 </div>
-              </div>
-            )}
-
-            {/* PASO 3 — Credenciales */}
-            {step === 3 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-xs text-primary font-bold">
-                  {isTrial
-                    ? `¡Ya casi listo! Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (Prueba de 15 días) gratis al crear tu cuenta.`
-                    : `¡Ya casi listo! Crea tu cuenta para guardar tu catálogo ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla"} (Gratuito).`}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                    Link de tu Catálogo
-                  </label>
-                  <div className="flex rounded-xl border border-slate-200 bg-white/50 focus-within:bg-white focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition-all overflow-hidden">
-                    <span className="flex items-center px-4 bg-slate-50 text-slate-400 text-sm border-r border-slate-200 font-bold whitespace-nowrap">
-                      dizi.idenza.site/t/
-                    </span>
-                    <input
-                      type="text"
-                      value={storeLink}
-                      onChange={(e) =>
-                        setStoreLink(
-                          e.target.value
-                            .toLowerCase()
-                            .trim()
-                            .replace(/\s+/g, "-")
-                            .replace(/[^a-z0-9-]/g, ""),
-                        )
-                      }
-                      className="flex h-12 w-full bg-transparent px-4 text-sm focus:outline-none"
-                      placeholder="floreria-maria"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                    Correo Electrónico
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-                    placeholder="tu@correo.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                    Contraseña
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 pl-4 pr-10 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-                      placeholder="Mínimo 6 caracteres"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4.5 w-4.5" />
-                      ) : (
-                        <Eye className="h-4.5 w-4.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Aceptación obligatoria de Términos y Privacidad (G7) */}
-                <div className="flex items-start gap-2.5 pt-1">
-                  <input
-                    type="checkbox"
-                    id="acceptTerms"
-                    checked={acceptedTerms}
-                    onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer shrink-0"
-                    required
-                  />
-                  <label htmlFor="acceptTerms" className="text-xs text-slate-600 leading-snug cursor-pointer select-none">
-                    Acepto los{" "}
-                    <Link to="/terminos" target="_blank" className="text-primary font-bold hover:underline">
-                      Términos de Servicio
-                    </Link>{" "}
-                    y la{" "}
-                    <Link to="/privacidad" target="_blank" className="text-primary font-bold hover:underline">
-                      Política de Privacidad
-                    </Link>
-                    .
-                  </label>
-                </div>
-
-                <div className="flex gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-slate-600" />
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading || !acceptedTerms}
-                    className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    {loading ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        Creando catálogo...
-                      </>
-                    ) : (
-                      <>
-                        Lanzar mi Catálogo <Rocket className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </form>
-
-          {step === 3 && (
-            <div className="mt-4 text-center text-xs text-muted-foreground font-medium">
-              ¿Ya tienes una cuenta?{" "}
-              <Link to="/login" className="text-primary font-bold hover:underline">
-                Inicia sesión
-              </Link>
-            </div>
+              )}
+            </>
           )}
-        </>
-      )}
-    </div>
+        </div>
 
         {/* Ejemplos — solo paso 1 */}
         {step === 1 && (
-          <div className="w-full max-w-sm relative z-10">
+          <div className="w-full max-w-md relative z-10">
             <p className="text-center text-[10px] text-slate-400 mb-3.5 font-black uppercase tracking-widest">
-              Negocios que ya usan Dizi
+              Mira cómo se ven las tiendas en Dizi
             </p>
             <div className="grid grid-cols-2 gap-3">
               {[

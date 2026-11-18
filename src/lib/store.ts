@@ -32,6 +32,16 @@ import { resolveProfileTags } from "./profile-tags";
  *
  * @param slug Identificador único (slug) de la tienda.
  */
+export function isMissingOriginColumnError(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  const code = (error.code || "").toUpperCase();
+  const msg = (error.message || "").toLowerCase();
+  if (code === "PGRST204" || code === "42703") {
+    return msg.includes("signup_source") || msg.includes("signup_utm") || msg.includes("column");
+  }
+  return msg.includes("signup_source") || msg.includes("signup_utm");
+}
+
 export function invalidateStorePublicCache(slug?: string | null) {
   if (typeof window === "undefined" || !slug) return;
   try {
@@ -172,6 +182,8 @@ export const mapStoreFromDB = (row: any): Store => {
     onboardingCompleted: row.onboarding_completed ?? false,
     termsAcceptedAt: row.terms_accepted_at ?? null,
     requestedPlan: row.requested_plan ?? null,
+    signupSource: row.signup_source ?? null,
+    signupUtm: row.signup_utm ?? null,
     showFeatured: row.show_featured ?? true,
     showDiscountPct: row.show_discount_pct ?? false,
     wholesaleEnabled: row.wholesale_enabled ?? false,
@@ -936,12 +948,35 @@ export const useApp = create<AppState>()(
         if (store.niche) initialUpdates.niche = store.niche;
         if (store.referredBy) initialUpdates.referred_by = store.referredBy;
         if (store.requestedPlan) initialUpdates.requested_plan = store.requestedPlan;
+        initialUpdates.onboarding_completed = store.onboardingCompleted ?? true;
+        if (store.signupSource) initialUpdates.signup_source = store.signupSource;
+        if (store.signupUtm) initialUpdates.signup_utm = store.signupUtm;
 
         if (Object.keys(initialUpdates).length > 0) {
-          const { error: updateError } = await supabase
+          let { error: updateError } = await supabase
             .from("stores")
             .update(initialUpdates)
             .eq("id", store.id);
+
+          if (
+            updateError &&
+            (initialUpdates.signup_source !== undefined || initialUpdates.signup_utm !== undefined) &&
+            isMissingOriginColumnError(updateError)
+          ) {
+            const fallbackUpdates = { ...initialUpdates };
+            delete fallbackUpdates.signup_source;
+            delete fallbackUpdates.signup_utm;
+            if (Object.keys(fallbackUpdates).length > 0) {
+              const retryRes = await supabase
+                .from("stores")
+                .update(fallbackUpdates)
+                .eq("id", store.id);
+              updateError = retryRes.error;
+            } else {
+              updateError = null;
+            }
+          }
+
           if (updateError) {
             console.error("[addStore] Error al guardar brandColor/niche/referredBy:", updateError);
           }
@@ -985,7 +1020,10 @@ export const useApp = create<AppState>()(
         const finalStoredStore: Store = {
           ...store,
           plan: store.plan || "semilla",
+          onboardingCompleted: store.onboardingCompleted ?? true,
           requestedPlan: store.requestedPlan || undefined,
+          signupSource: store.signupSource ?? null,
+          signupUtm: store.signupUtm ?? null,
         };
         set((s) => ({ stores: [...s.stores, finalStoredStore] }));
       },

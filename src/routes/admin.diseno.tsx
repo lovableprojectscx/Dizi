@@ -38,6 +38,7 @@ import {
 import { type PlanId, getEffectivePlan, getMaxAllowedBanners, planAllowsPromoBar, planAllowsWholesale } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { cn, hexLuminance } from "@/lib/utils";
+import { markDesignConfirmed } from "@/components/admin/CompletaTuTienda";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
@@ -472,6 +473,7 @@ export function DisenoUnificadoPage() {
       }
 
       await update(store.id, patch);
+      markDesignConfirmed(store.id);
 
       toast.success("🎨 Diseño guardado con éxito. Ya está activo en tu catálogo.", { id: toastId });
     } catch (err: any) {

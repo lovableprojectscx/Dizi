@@ -16,6 +16,8 @@ import { useApp } from "@/lib/store";
 import { PLANS, type PlanId, daysUntilExpiry, daysSinceExpiry, formatDate, calculateStoreEgress } from "@/lib/types";
 import { SubscriptionManager } from "@/components/admin/SubscriptionManager";
 import { validatePhone } from "@/lib/phone";
+import { RUBROS, getNicheLabel } from "@/lib/rubros";
+import { SIGNUP_SOURCE_LABELS, type SignupSource } from "@/lib/slug";
 import {
   Table,
   TableBody,
@@ -367,13 +369,11 @@ function TenantsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los giros</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
-                  <SelectItem value="comida">Comida / Gastronomía</SelectItem>
-                  <SelectItem value="bisuteria">Bisutería & Acc.</SelectItem>
-                  <SelectItem value="ropa">Moda & Ropa</SelectItem>
-                  <SelectItem value="tech">Tecnología</SelectItem>
-                  <SelectItem value="servicios">Servicios</SelectItem>
-                  <SelectItem value="floreria">Florería</SelectItem>
+                  {RUBROS.map((rubro) => (
+                    <SelectItem key={rubro.id} value={rubro.id}>
+                      {rubro.emoji} {rubro.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -470,6 +470,7 @@ function TenantsPage() {
               <TableHead className="font-bold text-foreground">Vencimiento</TableHead>
               <TableHead className="font-bold text-foreground">Estado</TableHead>
               <TableHead className="font-bold text-foreground">Egress Estimado</TableHead>
+              <TableHead className="font-bold text-foreground">Origen</TableHead>
               <TableHead className="font-bold text-foreground">Fecha Registro</TableHead>
               <TableHead className="text-right pr-6 font-bold text-foreground">Acciones</TableHead>
             </TableRow>
@@ -577,6 +578,30 @@ function TenantsPage() {
                       </div>
                     </TableCell>
 
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5 text-xs">
+                        {s.signupSource || s.signupUtm ? (
+                          <>
+                            {s.signupSource && (
+                              <span className="font-semibold text-foreground">
+                                {SIGNUP_SOURCE_LABELS[s.signupSource as SignupSource] || s.signupSource}
+                              </span>
+                            )}
+                            {s.signupUtm && (
+                              <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded w-fit">
+                                ?origen={s.signupUtm}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                        <span className="text-[10px] text-muted-foreground">
+                          {getNicheLabel(s.niche)}
+                        </span>
+                      </div>
+                    </TableCell>
+
                     <TableCell className="text-xs text-muted-foreground font-medium">
                       {new Date(s.createdAt).toLocaleDateString("es-PE", {
                         day: "2-digit",
@@ -613,7 +638,7 @@ function TenantsPage() {
 
             {sorted.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
+                <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-12">
                   No se encontraron tiendas con los criterios de búsqueda.
                 </TableCell>
               </TableRow>
@@ -696,6 +721,22 @@ function TenantsPage() {
                   <ExpiryBadge store={s} />
                 </div>
               </div>
+              {(s.signupSource || s.signupUtm || s.niche) && (
+                <div className="col-span-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-muted-foreground">
+                    Rubro: <strong className="text-foreground">{getNicheLabel(s.niche)}</strong>
+                  </span>
+                  {(s.signupSource || s.signupUtm) && (
+                    <span className="text-primary font-semibold truncate">
+                      {s.signupSource
+                        ? SIGNUP_SOURCE_LABELS[s.signupSource as SignupSource] || s.signupSource
+                        : ""}
+                      {s.signupSource && s.signupUtm ? " · " : ""}
+                      {s.signupUtm ? `?origen=${s.signupUtm}` : ""}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Panel de Gestión del Comercio */}

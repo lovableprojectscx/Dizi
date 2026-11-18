@@ -27,6 +27,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { isProductIncomplete } from "@/lib/products";
 import { ShareCatalogCard } from "@/components/admin/ShareCatalogCard";
+import { CompletaTuTienda } from "@/components/admin/CompletaTuTienda";
 
 /**
  * Definición de la ruta de TanStack Router para `/admin/dashboard`.
@@ -108,6 +109,9 @@ function Dashboard() {
           </span>
         </div>
       </div>
+
+      {/* Tarjeta de progreso inicial F49 (solo tiendas nuevas post-despliegue) */}
+      <CompletaTuTienda store={store} />
 
       {/* Alerta de productos incompletos (sin precio o con nombre de foto) */}
       {incompleteProductsCount > 0 && (

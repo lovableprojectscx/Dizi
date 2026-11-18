@@ -11,6 +11,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useApp } from "@/lib/store";
+import { getNicheLabel, getNicheColor } from "@/lib/rubros";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Store as StoreIcon,
@@ -116,31 +117,11 @@ function SuperDashboard() {
     nicheMap[niche] = (nicheMap[niche] || 0) + 1;
   });
 
-  const nicheLabels: Record<string, string> = {
-    general: "General",
-    comida: "Comida",
-    bisuteria: "Bisutería",
-    ropa: "Moda & Ropa",
-    tech: "Tecnología",
-    servicios: "Servicios",
-    floreria: "Florería",
-  };
-
-  const nicheColors: Record<string, string> = {
-    general: "#64748b", // slate
-    comida: "#f97316", // orange
-    bisuteria: "#ec4899", // pink
-    ropa: "#a855f7", // purple
-    tech: "#06b6d4", // cyan
-    servicios: "#3b82f6", // blue
-    floreria: "#f43f5e", // rose
-  };
-
   const nicheData = Object.entries(nicheMap)
     .map(([niche, count]) => ({
-      niche: nicheLabels[niche] || niche,
+      niche: getNicheLabel(niche),
       Cantidad: count,
-      fill: nicheColors[niche] || "#64748b",
+      fill: getNicheColor(niche),
     }))
     .sort((a, b) => b["Cantidad"] - a["Cantidad"]);
 
@@ -342,7 +323,7 @@ function SuperDashboard() {
                           <div className="min-w-0">
                             <p className="font-semibold truncate max-w-[120px]">{s.name}</p>
                             <span className="text-[10px] text-muted-foreground uppercase">
-                              {nicheLabels[s.niche || "general"]}
+                              {getNicheLabel(s.niche)}
                             </span>
                           </div>
                         </div>
