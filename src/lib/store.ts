@@ -37,9 +37,14 @@ export function isMissingOriginColumnError(error: { code?: string; message?: str
   const code = (error.code || "").toUpperCase();
   const msg = (error.message || "").toLowerCase();
   if (code === "PGRST204" || code === "42703") {
-    return msg.includes("signup_source") || msg.includes("signup_utm") || msg.includes("column");
+    return (
+      msg.includes("signup_source") ||
+      msg.includes("signup_utm") ||
+      msg.includes("signup_city") ||
+      msg.includes("column")
+    );
   }
-  return msg.includes("signup_source") || msg.includes("signup_utm");
+  return msg.includes("signup_source") || msg.includes("signup_utm") || msg.includes("signup_city");
 }
 
 export function invalidateStorePublicCache(slug?: string | null) {
@@ -184,6 +189,7 @@ export const mapStoreFromDB = (row: any): Store => {
     requestedPlan: row.requested_plan ?? null,
     signupSource: row.signup_source ?? null,
     signupUtm: row.signup_utm ?? null,
+    signupCity: row.signup_city ?? null,
     showFeatured: row.show_featured ?? true,
     showDiscountPct: row.show_discount_pct ?? false,
     wholesaleEnabled: row.wholesale_enabled ?? false,
@@ -951,6 +957,7 @@ export const useApp = create<AppState>()(
         initialUpdates.onboarding_completed = store.onboardingCompleted ?? true;
         if (store.signupSource) initialUpdates.signup_source = store.signupSource;
         if (store.signupUtm) initialUpdates.signup_utm = store.signupUtm;
+        if (store.signupCity) initialUpdates.signup_city = store.signupCity;
 
         if (Object.keys(initialUpdates).length > 0) {
           let { error: updateError } = await supabase
@@ -960,12 +967,15 @@ export const useApp = create<AppState>()(
 
           if (
             updateError &&
-            (initialUpdates.signup_source !== undefined || initialUpdates.signup_utm !== undefined) &&
+            (initialUpdates.signup_source !== undefined ||
+              initialUpdates.signup_utm !== undefined ||
+              initialUpdates.signup_city !== undefined) &&
             isMissingOriginColumnError(updateError)
           ) {
             const fallbackUpdates = { ...initialUpdates };
             delete fallbackUpdates.signup_source;
             delete fallbackUpdates.signup_utm;
+            delete fallbackUpdates.signup_city;
             if (Object.keys(fallbackUpdates).length > 0) {
               const retryRes = await supabase
                 .from("stores")
@@ -1024,6 +1034,7 @@ export const useApp = create<AppState>()(
           requestedPlan: store.requestedPlan || undefined,
           signupSource: store.signupSource ?? null,
           signupUtm: store.signupUtm ?? null,
+          signupCity: store.signupCity ?? null,
         };
         set((s) => ({ stores: [...s.stores, finalStoredStore] }));
       },
