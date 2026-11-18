@@ -80,7 +80,7 @@ export const DEFAULT_TAGLINES: Record<string, string> = {
   tecnologia: "Tecnología con garantía, a un mensaje",
   electronica: "Tecnología con garantía, a un mensaje",
   servicios: "Reserva tu cita en un toque",
-  belleza: "Reserva tu cita en un toque",
+  belleza: "Cuidado y belleza listos para pedir",
   salud: "Reserva tu cita en un toque",
   floreria: "Flores y detalles para cada ocasión",
   flores: "Flores y detalles para cada ocasión",

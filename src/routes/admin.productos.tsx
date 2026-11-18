@@ -1,6 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/store";
+import { logFunnelStep } from "@/lib/signup-funnel";
+import { getProductNameExample } from "@/lib/rubros";
+import { isStoreEligibleForCompletaTuTienda } from "@/components/admin/CompletaTuTienda";
 import { cn } from "@/lib/utils";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import {
@@ -133,6 +136,13 @@ const ShareImageDialog = React.lazy(() =>
  */
 
 export const Route = createFileRoute("/admin/productos")({
+  validateSearch: (search: Record<string, unknown>): { bienvenida?: number } => {
+    const raw = search.bienvenida;
+    if (raw === 1 || raw === "1" || raw === '"1"') {
+      return { bienvenida: 1 };
+    }
+    return {};
+  },
   component: ProductsPage,
 });
 
@@ -509,6 +519,8 @@ interface SingleProductDialogProps {
   imageSpec: any;
   onSave: (product: Product, baseProduct?: Product) => Promise<void>;
   onCreateCategory: (name: string) => Promise<string | null>;
+  welcomeMode?: boolean;
+  onSkipWelcome?: () => void;
   showConfirm: (config: {
     title: string;
     description: string;
@@ -527,6 +539,8 @@ function SingleProductDialog({
   imageSpec,
   onSave,
   onCreateCategory,
+  welcomeMode = false,
+  onSkipWelcome,
   showConfirm,
 }: SingleProductDialogProps) {
   const [baseSnapshot, setBaseSnapshot] = useState<Product>(product);
@@ -765,17 +779,32 @@ function SingleProductDialog({
           <div className="pr-6">
             <DialogTitle className="text-lg font-extrabold tracking-tight flex items-center gap-2 text-foreground">
               <span className="h-5 w-1 rounded bg-primary" />
-              {!editing.id || editing.id === "" || !store?.products?.some((p: any) => p.id === editing.id)
-                ? "Nuevo Producto"
-                : "Editar Producto"}
+              {welcomeMode
+                ? "Sube tu primer producto"
+                : !editing.id || editing.id === "" || !store?.products?.some((p: any) => p.id === editing.id)
+                  ? "Nuevo Producto"
+                  : "Editar Producto"}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-              Configura los detalles del artículo para publicarlo en tu catálogo digital.
+              {welcomeMode
+                ? `¡Bienvenido a ${store?.name || "tu tienda"}! Publica tu primer artículo o hazlo después.`
+                : "Configura los detalles del artículo para publicarlo en tu catálogo digital."}
             </DialogDescription>
           </div>
         </DialogHeader>
 
         <div className="overflow-y-auto flex-1 p-5 md:p-6">
+          {welcomeMode && (
+            <div
+              data-testid="first-product-welcome-banner"
+              className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-primary/5 border border-primary/20 text-foreground text-xs"
+            >
+              <Sparkles className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+              <span>
+                <strong>¡Tu tienda ya está creada!</strong> Agrega tu primer producto para que tus clientes puedan comprar por WhatsApp, o toca <em>Lo hago después</em> para ir a Inicio.
+              </span>
+            </div>
+          )}
           {editing.isSample && (
             <div className="flex items-center gap-2.5 p-3.5 mb-5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -811,7 +840,10 @@ function SingleProductDialog({
                   Nombre del producto
                 </Label>
                 <Input
-                  placeholder="Ej. iPhone 15 Pro Max 256GB"
+                  placeholder={getProductNameExample(
+                    store?.niche,
+                    welcomeMode && isStoreEligibleForCompletaTuTienda(store),
+                  )}
                   className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
                   value={editing.name}
                   onChange={(e) => setEditing((prev) => ({ ...prev, name: e.target.value }))}
@@ -1184,17 +1216,31 @@ function SingleProductDialog({
         </div>
 
         <DialogFooter className="px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 justify-end w-full">
+          {welcomeMode && onSkipWelcome ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving}
+              className="flex-1 sm:flex-none min-h-[44px] rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
+              onClick={onSkipWelcome}
+            >
+              Lo hago después
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving}
+              className="flex-1 sm:flex-none min-h-[44px] h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
+              onClick={() => handleCloseAttempt(false)}
+            >
+              Cancelar
+            </Button>
+          )}
           <Button
-            variant="outline"
-            disabled={saving}
-            className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
-            onClick={() => handleCloseAttempt(false)}
-          >
-            Cancelar
-          </Button>
-          <Button
+            type="button"
             disabled={saving || !editing.name.trim() || !editing.categoryId}
-            className="flex-1 sm:flex-none h-10 rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-xs text-white"
+            className="flex-1 sm:flex-none min-h-[44px] h-10 rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-xs text-white"
             onClick={handleSave}
           >
             {saving ? (
@@ -1742,6 +1788,7 @@ const ProductMobileCard = React.memo(function ProductMobileCard({
 });
 
 function ProductsPage() {
+  const navigate = useNavigate();
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
 
@@ -1792,6 +1839,20 @@ function ProductsPage() {
   // Products UI state
   const [isSingleDialogOpen, setIsSingleDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [welcomeMode, setWelcomeMode] = useState(false);
+  const welcomeHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (welcomeHandledRef.current || !store || !store.categories?.length) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("bienvenida")?.replace(/"/g, "") === "1") {
+      welcomeHandledRef.current = true;
+      setWelcomeMode(true);
+      setEditingProduct({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
+      setIsSingleDialogOpen(true);
+    }
+  }, [store?.id, store?.categories?.length]);
 
   // Buscador y filtro de productos para el administrador
   const [searchQuery, setSearchQuery] = useState("");
@@ -2206,11 +2267,13 @@ function ProductsPage() {
       toast.error("Has alcanzado el límite de tu plan");
       return;
     }
+    setWelcomeMode(false);
     setEditingProduct({ ...empty(), categoryId: store.categories[0]?.id ?? "" });
     setIsSingleDialogOpen(true);
   };
 
   const openEdit = async (p: Product) => {
+    setWelcomeMode(false);
     if (p.id) {
       const fresh = await fetchProductFresh(store.id, p.id);
       if (fresh) {
@@ -2225,6 +2288,18 @@ function ProductsPage() {
 
   const handleSaveProduct = async (productToSave: Product, baseProduct?: Product) => {
     await upsert(store.id, productToSave, baseProduct);
+    if (welcomeMode) {
+      void logFunnelStep("creo_producto", store.signupUtm);
+      setWelcomeMode(false);
+      navigate({ to: "/admin/dashboard" });
+    }
+  };
+
+  const handleSkipWelcome = () => {
+    void logFunnelStep("salto_producto", store.signupUtm);
+    setWelcomeMode(false);
+    setIsSingleDialogOpen(false);
+    navigate({ to: "/admin/dashboard" });
   };
 
   /* Crea categoría inline y devuelve el nuevo id */
@@ -2941,12 +3016,19 @@ function ProductsPage() {
       {/* Modal optimizado de producto */}
       <SingleProductDialog
         open={isSingleDialogOpen}
-        onOpenChange={setIsSingleDialogOpen}
+        onOpenChange={(open) => {
+          setIsSingleDialogOpen(open);
+          if (!open && welcomeMode) {
+            setWelcomeMode(false);
+          }
+        }}
         product={editingProduct || empty()}
         store={store}
         imageSpec={imageSpec}
         onSave={handleSaveProduct}
         onCreateCategory={handleCreateCategory}
+        welcomeMode={welcomeMode}
+        onSkipWelcome={handleSkipWelcome}
         showConfirm={showConfirm}
       />
 
