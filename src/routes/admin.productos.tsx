@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useApp } from "@/lib/store";
 import { logFunnelStep } from "@/lib/signup-funnel";
+import { getProductNameExample } from "@/lib/rubros";
+import { isStoreEligibleForCompletaTuTienda } from "@/components/admin/CompletaTuTienda";
 import { cn } from "@/lib/utils";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import {
@@ -838,7 +840,10 @@ function SingleProductDialog({
                   Nombre del producto
                 </Label>
                 <Input
-                  placeholder="Ej. iPhone 15 Pro Max 256GB"
+                  placeholder={getProductNameExample(
+                    store?.niche,
+                    welcomeMode && isStoreEligibleForCompletaTuTienda(store),
+                  )}
                   className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
                   value={editing.name}
                   onChange={(e) => setEditing((prev) => ({ ...prev, name: e.target.value }))}

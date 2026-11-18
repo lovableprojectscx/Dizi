@@ -27,7 +27,13 @@ vi.mock("@/lib/supabase", () => ({
   invokeRpcWithRetry: vi.fn(async () => ({ data: null, error: null })),
 }));
 
-import { RUBROS, getRubroDefaults, getNicheLabel } from "@/lib/rubros";
+import {
+  RUBROS,
+  DEFAULT_PRODUCT_NAME_EXAMPLE,
+  getRubroDefaults,
+  getNicheLabel,
+  getProductNameExample,
+} from "@/lib/rubros";
 import { getDefaultTagline } from "@/lib/brand-cover";
 import {
   slugifyStoreName,
@@ -239,5 +245,16 @@ describe("F49 · Registro simple: lógica pura y persistencia", () => {
     expect(partialTasks.filter((t) => t.done)).toHaveLength(4);
     expect(partialTasks.find((t) => t.id === "productos")?.done).toBe(false);
     expect(partialTasks.find((t) => t.id === "productos")?.detail).toBe("1/3");
+  });
+
+  it("Ejemplo de nombre en primer producto: cada rubro define ejemploProducto; tiendas existentes y Otro conservan el de siempre", () => {
+    for (const rubro of RUBROS) {
+      expect(rubro.ejemploProducto.startsWith("Ej. ")).toBe(true);
+    }
+    expect(getProductNameExample("floreria", true)).toBe("Ej. Ramo de 12 rosas rojas");
+    expect(getProductNameExample("comida", true)).toBe("Ej. Combo hamburguesa clásica + papas");
+    expect(getProductNameExample("general", true)).toBe(DEFAULT_PRODUCT_NAME_EXAMPLE);
+    expect(getProductNameExample("floreria", false)).toBe(DEFAULT_PRODUCT_NAME_EXAMPLE);
+    expect(getProductNameExample("hamburgueseria", true)).toBe(DEFAULT_PRODUCT_NAME_EXAMPLE);
   });
 });

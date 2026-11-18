@@ -16,7 +16,10 @@ export interface RubroDefinition {
   defaultModel: string;
   defaultPresetId: string;
   photoFormat: PhotoFormat;
+  ejemploProducto: string;
 }
+
+export const DEFAULT_PRODUCT_NAME_EXAMPLE = "Ej. iPhone 15 Pro Max 256GB";
 
 /**
  * Los 12 rubros oficiales en el registro (RF-49.2).
@@ -35,6 +38,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "bloom_general",
     defaultPresetId: "menta",
     photoFormat: "square",
+    ejemploProducto: "Ej. Ramo de 12 rosas rojas",
   },
   {
     id: "ropa",
@@ -43,6 +47,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "vitrina",
     defaultPresetId: "claro",
     photoFormat: "portrait",
+    ejemploProducto: "Ej. Vestido midi de lino beige",
   },
   {
     id: "calzado",
@@ -51,6 +56,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Zapatillas urbanas blancas",
   },
   {
     id: "bisuteria",
@@ -59,6 +65,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Collar minimalista bañado en oro",
   },
   {
     id: "belleza",
@@ -67,6 +74,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Sérum facial con vitamina C",
   },
   {
     id: "hogar",
@@ -75,6 +83,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Lámpara de mesa nórdica",
   },
   {
     id: "comida",
@@ -83,6 +92,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "bite",
     defaultPresetId: "calido",
     photoFormat: "square",
+    ejemploProducto: "Ej. Combo hamburguesa clásica + papas",
   },
   {
     id: "pasteleria",
@@ -91,6 +101,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Torta de chocolate 12 porciones",
   },
   {
     id: "tech",
@@ -99,6 +110,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "nocturno",
     photoFormat: "square",
+    ejemploProducto: "Ej. Audífonos inalámbricos Pro",
   },
   {
     id: "regalos",
@@ -107,6 +119,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Box sorpresa desayuno especial",
   },
   {
     id: "servicios",
@@ -115,6 +128,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: "Ej. Sesión de asesoría 60 min",
   },
   {
     id: "general",
@@ -123,6 +137,7 @@ export const RUBROS: readonly RubroDefinition[] = [
     defaultModel: "grid",
     defaultPresetId: "claro",
     photoFormat: "square",
+    ejemploProducto: DEFAULT_PRODUCT_NAME_EXAMPLE,
   },
 ] as const;
 
@@ -220,4 +235,20 @@ export function getNicheLabel(niche?: string | null): string {
 export function getNicheColor(niche?: string | null): string {
   const clean = (niche || "").trim().toLowerCase();
   return RUBRO_CHART_COLORS[clean] || "#64748b";
+}
+
+/**
+ * Devuelve el ejemplo de nombre para el formulario de primer producto según el rubro.
+ * En tiendas existentes (fuera del flujo de primer producto) y en "Otro" (`general`)
+ * mantiene el ejemplo tradicional.
+ */
+export function getProductNameExample(
+  niche?: string | null,
+  useRubroExample = true,
+): string {
+  if (!useRubroExample) return DEFAULT_PRODUCT_NAME_EXAMPLE;
+  const clean = (niche || "").trim().toLowerCase();
+  if (!clean || clean === "general") return DEFAULT_PRODUCT_NAME_EXAMPLE;
+  const official = RUBROS.find((r) => r.id === clean);
+  return official ? official.ejemploProducto : DEFAULT_PRODUCT_NAME_EXAMPLE;
 }
