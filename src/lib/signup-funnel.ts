@@ -10,6 +10,10 @@ import { sanitizeSignupUtm } from "./slug";
 export type FunnelStep =
   | "vio_registro"
   | "completo_negocio"
+  | "completo_nombre"
+  | "completo_rubro"
+  | "completo_whatsapp"
+  | "completo_datos"
   | "creo_cuenta"
   | "creo_producto"
   | "salto_producto";

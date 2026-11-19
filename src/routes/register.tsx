@@ -1,35 +1,118 @@
 /**
  * @file register.tsx
- * @description Flujo de registro simplificado en 2 pantallas (Tu negocio → Tu cuenta)
- * seguido del primer producto en `/admin/productos?bienvenida=1` (F49).
+ * @description Flujo de registro en 6 pantallas (slides) con vista previa en vivo (F53):
+ * 1. Nombre del negocio → 2. Rubro (12 tarjetas) → 3. WhatsApp →
+ * 4. Dos datos rápidos (ciudad opcional en Perú + cómo nos conociste) →
+ * 5. Crea tu cuenta → 6. Celebración.
+ * Conserva todas las reglas de F49 (invitaciones, referidos, plan pedido, origen, link y reintento)
+ * y activa modo prueba automáticamente en dominios distintos de producción.
  */
 
-import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Rocket, Eye, EyeOff, CheckCircle2, X, MessageCircle, AlertCircle, Loader2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
+import {
+  Briefcase,
+  Cake,
+  Camera,
+  Compass,
+  Eye,
+  EyeOff,
+  Flower2,
+  Footprints,
+  Gem,
+  Gift,
+  Lamp,
+  MapPin,
+  Rocket,
+  Share2,
+  Shirt,
+  ShoppingBag,
+  Smartphone,
+  Sparkles,
+  Users,
+  Utensils,
+  Video,
+} from "lucide-react";
+import { toast } from "sonner";
+import { PhoneInput } from "@/components/PhoneInput";
+import { CelebrationSlide } from "@/components/register/CelebrationSlide";
+import { ChoiceCard } from "@/components/register/ChoiceCard";
+import { PreviewHeaderStub, SlideShell } from "@/components/register/SlideShell";
+import { getActiveSession, getSessionSync, getUserRole } from "@/lib/auth";
+import { CIUDADES } from "@/lib/ciudades";
+import { isPreviewTestMode } from "@/lib/register-preview";
+import { RUBROS, getRubroDefaults } from "@/lib/rubros";
+import { logFunnelStep, rememberFunnelSource, type FunnelStep } from "@/lib/signup-funnel";
+import {
+  SIGNUP_SOURCES,
+  SIGNUP_SOURCE_LABELS,
+  extractSignupUtmFromSearch,
+  resolveAvailableStoreSlug,
+  slugifyStoreName,
+  type SignupSource,
+} from "@/lib/slug";
 import { useApp } from "@/lib/store";
 import { supabase } from "@/lib/supabase";
 import { PLANS, type PlanId } from "@/lib/types";
-import { getUserRole, getActiveSession, getSessionSync } from "@/lib/auth";
-import { PhoneInput } from "@/components/PhoneInput";
-import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
-import { SHOWCASE_REGISTER_ITEMS, getShowcaseUrl } from "@/lib/showcase";
-import { RUBROS, getRubroDefaults } from "@/lib/rubros";
-import {
-  slugifyStoreName,
-  sanitizeSlugInput,
-  extractSignupUtmFromSearch,
-  SIGNUP_SOURCES,
-  SIGNUP_SOURCE_LABELS,
-  type SignupSource,
-} from "@/lib/slug";
-import { logFunnelStep, rememberFunnelSource } from "@/lib/signup-funnel";
 
-/**
- * Definición de la ruta `/register` en TanStack Router.
- * Redirige usuarios ya autenticados a su consola de administración.
- */
+const LazyLivePreview = lazy(() => import("@/components/register/LivePreview"));
+
+type RegisterStep = 1 | 2 | 3 | 4 | 5 | 6;
+
+const RUBRO_ICONS: Record<string, React.ReactNode> = {
+  floreria: <Flower2 className="w-5 h-5" />,
+  ropa: <Shirt className="w-5 h-5" />,
+  calzado: <Footprints className="w-5 h-5" />,
+  bisuteria: <Gem className="w-5 h-5" />,
+  belleza: <Sparkles className="w-5 h-5" />,
+  hogar: <Lamp className="w-5 h-5" />,
+  comida: <Utensils className="w-5 h-5" />,
+  pasteleria: <Cake className="w-5 h-5" />,
+  tech: <Smartphone className="w-5 h-5" />,
+  regalos: <Gift className="w-5 h-5" />,
+  servicios: <Briefcase className="w-5 h-5" />,
+  general: <ShoppingBag className="w-5 h-5" />,
+};
+
+const SOURCE_ICONS: Record<SignupSource, React.ReactNode> = {
+  tiktok: <Video className="w-4 h-4" />,
+  facebook: <Share2 className="w-4 h-4" />,
+  instagram: <Camera className="w-4 h-4" />,
+  recomendacion: <Users className="w-4 h-4" />,
+  otro: <Compass className="w-4 h-4" />,
+};
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function handleRadioGroupArrowKey(
+  e: React.KeyboardEvent<HTMLButtonElement>,
+  index: number,
+  refs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
+  onArrowFocusSelect: (nextIndex: number) => void,
+  onConfirmEnter?: () => void,
+) {
+  const total = refs.current.length;
+  if (total === 0) return;
+
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+    e.preventDefault();
+    const next = (index + 1) % total;
+    refs.current[next]?.focus();
+    onArrowFocusSelect(next);
+  } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+    e.preventDefault();
+    const prev = (index - 1 + total) % total;
+    refs.current[prev]?.focus();
+    onArrowFocusSelect(prev);
+  } else if (e.key === "Enter" && onConfirmEnter) {
+    e.preventDefault();
+    onConfirmEnter();
+  }
+}
+
 export const Route = createFileRoute("/register")({
   beforeLoad: async () => {
     try {
@@ -70,17 +153,22 @@ function RegisterPage() {
   const setCurrentStore = useApp((s) => s.setCurrentStore);
   const markInviteUsed = useApp((s) => s.markInviteUsed);
 
-  const [step, setStep] = useState<1 | 2>(1);
+  const previewTestMode = useMemo(() => isPreviewTestMode(), []);
+
+  const [step, setStep] = useState<RegisterStep>(1);
+  const [hasLoadedPreview, setHasLoadedPreview] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [selectedNiche, setSelectedNiche] = useState("general");
+  const [hasChosenNiche, setHasChosenNiche] = useState(false);
+  const [signupCity, setSignupCity] = useState<string | null>(null);
   const [signupSource, setSignupSource] = useState<SignupSource | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showBanner, setShowBanner] = useState(true);
+  const [showTrialBanner, setShowTrialBanner] = useState(true);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Invite state — se valida contra Supabase al montar el componente
+  // Invite state
   const [invitePlan, setInvitePlan] = useState<PlanId | null>(null);
   const [inviteDurationMonths, setInviteDurationMonths] = useState<number>(1);
   const [inviteDurationValue, setInviteDurationValue] = useState<number | null>(null);
@@ -90,15 +178,12 @@ function RegisterPage() {
 
   // Form states
   const [storeName, setStoreName] = useState("");
-  const [storeLink, setStoreLink] = useState("");
-  const [linkManuallyEdited, setLinkManuallyEdited] = useState(false);
-  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [storePhone, setStorePhone] = useState("");
   const [phoneCountryIso, setPhoneCountryIso] = useState("PE");
   const [phoneCountryDial, setPhoneCountryDial] = useState("51");
   const [isPhoneValid, setIsPhoneValid] = useState(false);
 
-  // Leer parámetros de la URL (?ref= es intocable para referidos; ?origen= / utm_source= para campaña)
+  // Leer parámetros URL (?invite=, ?ref=, ?plan=, ?origen= / utm_source=)
   const searchStr = typeof window !== "undefined" ? window.location.search : "";
   const urlParams = new URLSearchParams(searchStr);
   const inviteToken = urlParams.get("invite");
@@ -106,45 +191,56 @@ function RegisterPage() {
   const requestedPlanParam = urlParams.get("plan") as PlanId | null;
   const [signupUtm] = useState<string | null>(() => extractSignupUtmFromSearch(searchStr));
   const [requestedPlan] = useState<PlanId | null>(
-    requestedPlanParam && requestedPlanParam in PLANS ? requestedPlanParam : null
+    requestedPlanParam && requestedPlanParam in PLANS ? requestedPlanParam : null,
   );
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [createdStoreData, setCreatedStoreData] = useState<{ id: string; slug: string; plan: PlanId } | null>(null);
+  const [createdStoreData, setCreatedStoreData] = useState<{
+    id: string;
+    slug: string;
+    plan: PlanId;
+  } | null>(null);
 
-  const hasLoggedViewRef = useRef(false);
-  useEffect(() => {
-    if (hasLoggedViewRef.current) return;
-    hasLoggedViewRef.current = true;
-    rememberFunnelSource(signupUtm);
-    void logFunnelStep("vio_registro", signupUtm);
-  }, [signupUtm]);
+  const rubroRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const cityRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const sourceRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const autoAdvanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const loggedStepsRef = useRef<Set<FunnelStep>>(new Set());
 
-  // Validar disponibilidad de link en tiempo real antes de enviar (RF-49.3)
+  const trackFunnelStep = useCallback(
+    (funnelStep: FunnelStep) => {
+      if (previewTestMode) return;
+      if (loggedStepsRef.current.has(funnelStep)) return;
+      loggedStepsRef.current.add(funnelStep);
+      void logFunnelStep(funnelStep, signupUtm);
+    },
+    [previewTestMode, signupUtm],
+  );
+
   useEffect(() => {
-    if (step !== 2 || storeLink.length < 3) {
-      setSlugStatus("idle");
-      return;
+    if (!previewTestMode) {
+      rememberFunnelSource(signupUtm);
     }
-    let cancelled = false;
-    setSlugStatus("checking");
-    const timer = setTimeout(async () => {
-      try {
-        const { data, error } = await supabase.rpc("check_slug_available", { p_slug: storeLink });
-        if (cancelled) return;
-        if (error) {
-          setSlugStatus("idle");
-          return;
-        }
-        setSlugStatus(data === false ? "taken" : "available");
-      } catch {
-        if (!cancelled) setSlugStatus("idle");
-      }
-    }, 300);
+    trackFunnelStep("vio_registro");
     return () => {
-      cancelled = true;
-      clearTimeout(timer);
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
     };
-  }, [step, storeLink]);
+  }, [previewTestMode, signupUtm, trackFunnelStep]);
+
+  // Cargar PublicCatalog en diferido recién al salir de la pantalla 1 (RNF-53.3)
+  useEffect(() => {
+    if (step >= 2 && !hasLoadedPreview) {
+      setHasLoadedPreview(true);
+    }
+  }, [step, hasLoadedPreview]);
+
+  // Si cambia a un país distinto de Perú, limpiar ciudad seleccionada (RF-53.4)
+  useEffect(() => {
+    if (phoneCountryIso !== "PE" && signupCity !== null) {
+      setSignupCity(null);
+    }
+  }, [phoneCountryIso, signupCity]);
 
   // Validar invite contra Supabase al montar
   useEffect(() => {
@@ -154,10 +250,8 @@ function RegisterPage() {
       const inviteArray = data as any[];
       if (error || !inviteArray || inviteArray.length === 0) {
         console.warn("[register] Invite no encontrado, expirado o ya usado:", error?.message);
-        import("sonner").then(({ toast }) => {
-          toast.warning("Esta invitación ya no es válida. Puedes crear tu tienda gratis igual.", {
-            duration: 6000,
-          });
+        toast.warning("Esta invitación ya no es válida. Puedes crear tu tienda gratis igual.", {
+          duration: 6000,
         });
       } else {
         const invite = inviteArray[0];
@@ -179,47 +273,129 @@ function RegisterPage() {
   const isTrial =
     invitePlan !== null && (inviteDurationMonths === 0 || inviteDurationUnit === "days");
 
-  const handleStoreNameChange = (value: string) => {
-    setStoreName(value);
-    if (!linkManuallyEdited) {
-      setStoreLink(slugifyStoreName(value));
+  const inviteBannerText = useMemo(() => {
+    if (!invitePlan) return null;
+    const priceText =
+      inviteCustomPrice !== null ? ` (Precio especial: S/ ${inviteCustomPrice.toFixed(2)})` : "";
+    if (inviteDurationUnit === "days" && inviteDurationValue) {
+      return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} días${priceText}`;
+    }
+    if (inviteDurationUnit === "months" && inviteDurationValue) {
+      return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} ${inviteDurationValue === 1 ? "mes" : "meses"}${priceText}`;
+    }
+    if (isTrial) {
+      return `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}${priceText}`;
+    }
+    return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? "mes" : "meses"}${priceText}`;
+  }, [invitePlan, inviteCustomPrice, inviteDurationUnit, inviteDurationValue, isTrial, inviteDurationMonths, plan]);
+
+  const scheduleAutoAdvance = (targetStep: RegisterStep, funnelStep?: FunnelStep) => {
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+    }
+    const delay = prefersReducedMotion() ? 0 : 220;
+    autoAdvanceTimerRef.current = setTimeout(() => {
+      if (funnelStep) trackFunnelStep(funnelStep);
+      setStep(targetStep);
+    }, delay);
+  };
+
+  const goFromStep1 = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storeName.trim()) return;
+    trackFunnelStep("completo_nombre");
+    setStep(2);
+  };
+
+  const handleSelectRubro = (rubroId: string, advance = true) => {
+    setSelectedNiche(rubroId);
+    setHasChosenNiche(true);
+    if (advance) {
+      scheduleAutoAdvance(3, "completo_rubro");
+    }
+  };
+
+  const goFromStep2 = () => {
+    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    trackFunnelStep("completo_rubro");
+    setStep(3);
+  };
+
+  const goFromStep3 = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isPhoneValid) return;
+    trackFunnelStep("completo_whatsapp");
+    setStep(4);
+  };
+
+  const goFromStep4 = (skip = false) => {
+    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    if (skip) {
+      setSignupCity(null);
+      setSignupSource(null);
+    }
+    trackFunnelStep("completo_datos");
+    setStep(5);
+  };
+
+  const handleSelectCity = (cityId: string) => {
+    const next = signupCity === cityId ? null : cityId;
+    setSignupCity(next);
+  };
+
+  const handleSelectSource = (sourceId: SignupSource, isKeyboardNav = false) => {
+    const next = signupSource === sourceId ? null : sourceId;
+    setSignupSource(next);
+    if (!isKeyboardNav && next !== null && (phoneCountryIso !== "PE" || signupCity !== null)) {
+      scheduleAutoAdvance(5, "completo_datos");
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step === 1) {
-      if (!linkManuallyEdited && !storeLink && storeName.trim()) {
-        setStoreLink(slugifyStoreName(storeName));
-      }
-      void logFunnelStep("completo_negocio", signupUtm);
-      setStep(2);
-      return;
-    }
+    if (step !== 5) return;
 
     if (!acceptedTerms) {
-      const { toast } = await import("sonner");
       toast.error("Debes aceptar los Términos de Servicio y la Política de Privacidad para continuar.");
       return;
     }
 
+    const effectiveCity = phoneCountryIso === "PE" ? signupCity : null;
+    const isSlugAvailableRemote = async (candidate: string): Promise<boolean> => {
+      try {
+        const { data, error } = await supabase.rpc("check_slug_available", {
+          p_slug: candidate,
+        });
+        if (error) return true;
+        return data !== false;
+      } catch {
+        return true;
+      }
+    };
+
     setLoading(true);
     try {
-      const cleanSlug = sanitizeSlugInput(storeLink) || slugifyStoreName(storeName) || `tienda-${Date.now()}`;
-      const { data: isAvailable, error: slugError } = await supabase
-        .rpc("check_slug_available", { p_slug: cleanSlug });
+      const triedSlugs = new Set<string>();
+      let cleanSlug = await resolveAvailableStoreSlug({
+        storeName,
+        city: effectiveCity,
+        isAvailable: isSlugAvailableRemote,
+      });
 
-      if (slugError || isAvailable === false) {
-        setSlugStatus("taken");
-        const { toast } = await import("sonner");
-        toast.error("El link de la tienda ya esta en uso. Por favor, elige otro.");
-        setLoading(false);
+      // En cualquier dominio distinto de producción: modo prueba sin llamadas de escritura
+      if (previewTestMode) {
+        setCreatedStoreData({
+          id: "preview-store",
+          slug: cleanSlug,
+          plan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : plan,
+        });
+        setStep(6);
         return;
       }
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim(),
-        password: password,
+        password,
         options: {
           data: { full_name: storeName, role: "store_owner" },
         },
@@ -231,7 +407,7 @@ function RegisterPage() {
         if (authError.message?.includes("already registered") || authError.status === 422) {
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: email.trim(),
-            password: password,
+            password,
           });
           if (signInError) {
             throw new Error(
@@ -252,7 +428,7 @@ function RegisterPage() {
       if (!currentSession) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
-          password: password,
+          password,
         });
         if (signInError) {
           throw new Error("Cuenta creada pero no se pudo iniciar sesion automaticamente.");
@@ -268,13 +444,16 @@ function RegisterPage() {
         if (inviteDurationUnit === "days" && inviteDurationValue) {
           d.setDate(d.getDate() + inviteDurationValue);
           return d.toISOString();
-        } else if (inviteDurationUnit === "months" && inviteDurationValue) {
+        }
+        if (inviteDurationUnit === "months" && inviteDurationValue) {
           d.setMonth(d.getMonth() + inviteDurationValue);
           return d.toISOString();
-        } else if (isTrial) {
+        }
+        if (isTrial) {
           d.setDate(d.getDate() + 15);
           return d.toISOString();
-        } else if (inviteDurationMonths) {
+        }
+        if (inviteDurationMonths) {
           d.setMonth(d.getMonth() + inviteDurationMonths);
           return d.toISOString();
         }
@@ -284,10 +463,9 @@ function RegisterPage() {
       const rubroDefaults = getRubroDefaults(selectedNiche);
       const nowIso = new Date().toISOString();
 
-      await addStore({
+      const baseStorePayload = {
         id: newStoreId,
-        slug: cleanSlug,
-        name: storeName || "Mi Nueva Tienda",
+        name: storeName.trim() || "Mi Nueva Tienda",
         phone: storePhone,
         countryCode: phoneCountryDial,
         countryIso: phoneCountryIso,
@@ -314,12 +492,13 @@ function RegisterPage() {
         niche: rubroDefaults.rubro.id,
         photoFormat: rubroDefaults.photoFormat,
         planExpiresAt,
-        subscriptionStatus:
+        subscriptionStatus: (
           plan === "semilla"
             ? "trial"
             : inviteDurationUnit === "days" || isTrial
               ? "trial"
-              : "active",
+              : "active"
+        ) as "trial" | "active",
         planDurationMonths:
           plan === "semilla"
             ? undefined
@@ -330,923 +509,506 @@ function RegisterPage() {
         referredBy: refToken || undefined,
         signupSource: signupSource ?? null,
         signupUtm: signupUtm ?? null,
+        signupCity: effectiveCity ?? null,
         categories: [{ id: newCategoryId, name: "Principal" }],
         products: [],
-      });
+      };
+
+      const maxSlugRetries = 6;
+      for (let attempt = 0; attempt < maxSlugRetries; attempt++) {
+        try {
+          await addStore({
+            ...baseStorePayload,
+            slug: cleanSlug,
+          });
+          break;
+        } catch (storeErr: any) {
+          const isDuplicateSlug =
+            storeErr?.message?.includes("stores_slug_key") || storeErr?.code === "23505";
+          if (!isDuplicateSlug || attempt === maxSlugRetries - 1) {
+            throw storeErr;
+          }
+          triedSlugs.add(cleanSlug);
+          cleanSlug = await resolveAvailableStoreSlug({
+            storeName,
+            city: effectiveCity,
+            isAvailable: async (candidate) =>
+              !triedSlugs.has(candidate) && (await isSlugAvailableRemote(candidate)),
+          });
+        }
+      }
 
       if (inviteToken && invitePlan) {
         await markInviteUsed(inviteToken, newStoreId);
       }
 
-      void logFunnelStep("creo_cuenta", signupUtm);
-
-      const { toast } = await import("sonner");
-      toast.success("Tienda creada con exito. Bienvenido a Dizi.");
-
+      trackFunnelStep("creo_cuenta");
       setCurrentStore(newStoreId);
-
-      if (requestedPlan && requestedPlan !== "semilla") {
-        setCreatedStoreData({
-          id: newStoreId,
-          slug: cleanSlug,
-          plan: requestedPlan,
-        });
-        return;
-      }
-
-      navigate({ to: "/admin/productos", search: { bienvenida: 1 } as any });
+      setCreatedStoreData({
+        id: newStoreId,
+        slug: cleanSlug,
+        plan: requestedPlan ?? plan,
+      });
+      setStep(6);
     } catch (err: any) {
       console.error("Registration error:", err);
-      const { toast } = await import("sonner");
-
       let errorMessage = "Error al registrarte.";
       if (err.message?.includes("stores_slug_key")) {
         errorMessage = "El link de la tienda ya esta en uso. Por favor, elige otro.";
       } else if (err.message?.includes("categories_pkey")) {
         errorMessage = "Error de sistema al crear la categoria. Por favor, intenta de nuevo.";
-      } else if (err.status === 429 || err.message?.includes("rate limit") || err.message?.includes("over_email_send_rate_limit")) {
-        errorMessage = "Límite de correos alcanzado temporalmente por el servidor. Por favor, espera unos minutos o desactiva 'Confirm email' en tu panel de Supabase.";
+      } else if (
+        err.status === 429 ||
+        err.message?.includes("rate limit") ||
+        err.message?.includes("over_email_send_rate_limit")
+      ) {
+        errorMessage =
+          "Límite de correos alcanzado temporalmente por el servidor. Por favor, espera unos minutos o desactiva 'Confirm email' en tu panel de Supabase.";
       } else if (err.message?.includes("User already registered")) {
         errorMessage = "Este correo ya tiene una cuenta. Intenta iniciar sesion.";
       } else {
         errorMessage = err.message || errorMessage;
       }
-
       toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const slideMeta: Record<
+    RegisterStep,
+    { titleLead: string; titleMuted: string; hint: string }
+  > = {
+    1: {
+      titleLead: "¿Cómo se llama",
+      titleMuted: "tu negocio?",
+      hint: "Así aparecerá en el encabezado y en el link de tu catálogo.",
+    },
+    2: {
+      titleLead: "¿Qué",
+      titleMuted: "vendes?",
+      hint: "Elegimos un diseño y colores pensados para tu rubro.",
+    },
+    3: {
+      titleLead: "¿A qué WhatsApp te escriben",
+      titleMuted: "tus clientes?",
+      hint: "Tus clientes te enviarán sus pedidos directo a este número.",
+    },
+    4: {
+      titleLead: "Dos datos",
+      titleMuted: "rápidos",
+      hint: "Opcional: nos ayuda a mejorar Dizi para tu ciudad.",
+    },
+    5: {
+      titleLead: "Crea",
+      titleMuted: "tu cuenta",
+      hint: "Tu catálogo queda listo al instante, gratis.",
+    },
+    6: {
+      titleLead: "",
+      titleMuted: "",
+      hint: "",
+    },
+  };
+
+  const currentMeta = slideMeta[step];
+  const resolvedSlugForPreview = slugifyStoreName(storeName) || "tu-negocio";
+
+  const handleBack = () => {
+    if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
+    if (step > 1 && step < 6) {
+      setStep((step - 1) as RegisterStep);
+    }
+  };
+
   return (
-    <div
-      className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-b from-[#fffaf7] via-background to-background"
-      translate="no"
-    >
-      {isTrial && showBanner && (
-        <div className="w-full bg-slate-950 text-white text-xs py-2 px-8 flex items-center justify-center gap-2 relative z-50 text-center animate-in slide-in-from-top duration-300">
-          <span className="inline-flex items-center gap-1.5 flex-wrap justify-center">
-            <span className="px-1.5 py-0.5 rounded bg-primary text-white text-[9px] font-black uppercase tracking-wider">
-              Prueba Gratis
-            </span>
-            <strong className="text-white font-extrabold">
-              15 días de Plan Emprendedor Gratis:
-            </strong>
-            <span className="text-slate-300">activado mediante tu enlace de invitación.</span>
-          </span>
+    <SlideShell
+      step={step}
+      totalSteps={5}
+      titleLead={currentMeta.titleLead}
+      titleMuted={currentMeta.titleMuted}
+      hintText={currentMeta.hint}
+      onBack={step > 1 && step < 6 ? handleBack : undefined}
+      isPreviewTestMode={previewTestMode}
+      showTrialBanner={isTrial && showTrialBanner}
+      onDismissTrialBanner={() => setShowTrialBanner(false)}
+      inviteLoading={inviteLoading}
+      inviteBannerText={inviteBannerText}
+      invalidInviteBanner={!inviteLoading && Boolean(inviteToken) && !invitePlan}
+      rightAction={
+        step === 4 ? (
           <button
             type="button"
-            onClick={() => setShowBanner(false)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1 transition-colors cursor-pointer"
-            aria-label="Cerrar"
+            data-testid="step4-skip-btn"
+            onClick={() => goFromStep4(true)}
+            className="min-h-[44px] px-3 rounded-xl text-[15px] font-semibold text-[#312E81] hover:bg-[#312E81]/8 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
           >
-            <X className="w-3.5 h-3.5" />
+            Saltar
+          </button>
+        ) : undefined
+      }
+      renderPreview={(compact) =>
+        !hasLoadedPreview && step === 1 ? (
+          <PreviewHeaderStub storeName={storeName} />
+        ) : (
+          <Suspense fallback={<PreviewHeaderStub storeName={storeName} />}>
+            <LazyLivePreview
+              storeName={storeName}
+              niche={selectedNiche}
+              phone={isPhoneValid ? storePhone : ""}
+              countryCode={phoneCountryDial}
+              countryIso={phoneCountryIso}
+              slug={resolvedSlugForPreview}
+              showWhatsappButton={isPhoneValid || step >= 4}
+              compact={compact}
+            />
+          </Suspense>
+        )
+      }
+    >
+      {/* PANTALLA 1: Nombre del negocio */}
+      {step === 1 && (
+        <form onSubmit={goFromStep1} className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="register-store-name"
+              className="block text-[16px] font-medium text-[#1E1B4B]"
+            >
+              Nombre de tu negocio
+            </label>
+            <input
+              id="register-store-name"
+              type="text"
+              autoComplete="organization"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              placeholder="Ej. Florería María"
+              className="w-full min-h-[52px] rounded-2xl border border-[#312E81]/25 bg-white px-4 text-[16px] text-[#1E1B4B] placeholder:text-[#312E81]/45 focus:border-[#312E81] focus:ring-2 focus:ring-[#312E81]/20 focus:outline-none"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={!storeName.trim()}
+            className="w-full min-h-[52px] rounded-2xl bg-[#FF5C39] hover:bg-[#ff4b24] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-[#1E1B4B] text-[16px] font-bold transition-all motion-reduce:transition-none cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
+          >
+            Continuar
+          </button>
+        </form>
+      )}
+
+      {/* PANTALLA 2: Rubro (12 tarjetas, avance automático con un toque) */}
+      {step === 2 && (
+        <div className="space-y-4">
+          <div
+            role="radiogroup"
+            aria-label="¿Qué vendes?"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+          >
+            {RUBROS.map((rubro, idx) => {
+              const isChecked = hasChosenNiche && selectedNiche === rubro.id;
+              return (
+                <ChoiceCard
+                  key={rubro.id}
+                  ref={(el) => {
+                    rubroRefs.current[idx] = el;
+                  }}
+                  label={rubro.label}
+                  icon={RUBRO_ICONS[rubro.id] ?? <ShoppingBag className="w-5 h-5" />}
+                  selected={isChecked}
+                  compact
+                  dataAttrs={{ "data-niche": rubro.id }}
+                  onSelect={() => handleSelectRubro(rubro.id, true)}
+                  onKeyDown={(e) =>
+                    handleRadioGroupArrowKey(
+                      e,
+                      idx,
+                      rubroRefs,
+                      (nextIdx) => handleSelectRubro(RUBROS[nextIdx].id, false),
+                      () => goFromStep2(),
+                    )
+                  }
+                />
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={goFromStep2}
+            className="w-full min-h-[48px] rounded-2xl bg-[#FF5C39] hover:bg-[#ff4b24] text-[#1E1B4B] text-[16px] font-bold transition-colors motion-reduce:transition-none cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
+          >
+            Continuar
           </button>
         </div>
       )}
 
-      {/* Animated Background Mesh Gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[50%] rounded-full bg-primary/10 blur-[120px] animate-morph pointer-events-none" />
-      <div
-        className="absolute bottom-[10%] right-[-15%] w-[55%] h-[50%] rounded-full bg-lavender/10 blur-[120px] animate-morph pointer-events-none"
-        style={{ animationDelay: "-4s" }}
-      />
-
-      {/* Light Grid Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-
-      {/* Header minimalista */}
-      <div className="relative z-10 flex items-center justify-between px-5 pt-5 pb-2">
-        <Link
-          to="/"
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-all duration-200 hover:-translate-x-0.5"
-        >
-          <ArrowLeft className="w-4 h-4 text-primary" />
-          <span className="text-sm font-semibold">Inicio</span>
-        </Link>
-        <img
-          src="/images/icono-96.webp"
-          alt="Dizi"
-          width="32"
-          height="32"
-          className="h-8 w-8 object-contain transition-transform hover:rotate-12 duration-300"
-        />
-      </div>
-
-      <div className="relative z-10 flex-1 flex flex-col items-center px-4 pt-4 pb-8 gap-6">
-        {/* Banners de invite */}
-        {inviteLoading && (
-          <div className="w-full max-w-sm rounded-2xl bg-muted/60 backdrop-blur-md text-muted-foreground text-xs font-semibold text-center py-2.5 px-4 border shadow-sm">
-            Verificando invitación...
+      {/* PANTALLA 3: WhatsApp */}
+      {step === 3 && (
+        <form onSubmit={goFromStep3} className="space-y-4">
+          <div className="space-y-2">
+            <label className="block text-[16px] font-medium text-[#1E1B4B]">
+              Número de WhatsApp de ventas
+            </label>
+            <PhoneInput
+              value={storePhone}
+              countryIso={phoneCountryIso}
+              inputClassName="h-12 text-[16px] border-[#312E81]/25 bg-white text-[#1E1B4B] focus:border-[#312E81]"
+              triggerClassName="h-12 border-[#312E81]/25 bg-white text-[#1E1B4B]"
+              onChange={({ digits, countryIso, dial, valid }) => {
+                setStorePhone(digits);
+                setPhoneCountryIso(countryIso);
+                setPhoneCountryDial(dial);
+                setIsPhoneValid(valid);
+              }}
+              required
+            />
           </div>
-        )}
-        {!inviteLoading && invitePlan && (
-          <div className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-primary/20">
-            {(() => {
-              const priceText =
-                inviteCustomPrice !== null
-                  ? ` (Precio especial: S/ ${inviteCustomPrice.toFixed(2)})`
-                  : "";
-              if (inviteDurationUnit === "days" && inviteDurationValue) {
-                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} días${priceText}`;
-              } else if (inviteDurationUnit === "months" && inviteDurationValue) {
-                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} ${inviteDurationValue === 1 ? "mes" : "meses"}${priceText}`;
-              } else if (isTrial) {
-                return `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}${priceText}`;
-              } else {
-                return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? "mes" : "meses"}${priceText}`;
-              }
-            })()}
-          </div>
-        )}
-        {!inviteLoading && inviteToken && !invitePlan && (
-          <div
-            data-testid="invalid-invite-banner"
-            className="w-full max-w-sm rounded-2xl bg-destructive text-white text-xs font-bold text-center py-2.5 px-4 shadow-md shadow-destructive/20 animate-bounce"
+
+          <button
+            type="submit"
+            disabled={!isPhoneValid}
+            className="w-full min-h-[52px] rounded-2xl bg-[#FF5C39] hover:bg-[#ff4b24] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-[#1E1B4B] text-[16px] font-bold transition-all motion-reduce:transition-none cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
           >
-            Esta invitación ya no es válida. Puedes crear tu tienda gratis igual.
-          </div>
-        )}
+            Continuar
+          </button>
+        </form>
+      )}
 
-        {/* Titulo */}
-        <div className="text-center w-full max-w-md">
-          <h1 className="text-3xl font-black tracking-tight text-foreground">
-            Crea tu <span className="text-primary">catálogo</span>
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1 font-bold uppercase tracking-widest">
-            gratis en 2 pasos
-          </p>
-        </div>
-
-        {/* Stepper visual (2 pasos: Tu negocio → Tu cuenta) */}
-        <div className="flex items-center justify-between w-full max-w-xs px-4 relative">
-          {[1, 2].map((s) => (
-            <div key={s} className="flex-1 flex flex-col items-center gap-1.5 relative z-10">
+      {/* PANTALLA 4: Dos datos rápidos (ciudad en Perú + cómo nos conociste, opcionales) */}
+      {step === 4 && (
+        <div className="space-y-5">
+          {phoneCountryIso === "PE" && (
+            <div data-testid="step4-city-section" className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[16px] font-semibold text-[#1E1B4B]">
+                  ¿En qué ciudad vendes?
+                </span>
+                <span className="text-[13px] text-[#312E81]/75">Opcional</span>
+              </div>
               <div
-                className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black transition-all duration-300 border ${
-                  step === s
-                    ? "bg-gradient-to-br from-primary to-[#ff7043] text-white border-transparent shadow-lg shadow-primary/20 scale-110 ring-4 ring-primary/10"
-                    : step > s
-                      ? "bg-emerald-50 text-emerald-600 border-emerald-200/60"
-                      : "bg-white text-muted-foreground border-slate-200 shadow-sm"
-                }`}
+                role="radiogroup"
+                aria-label="¿En qué ciudad vendes?"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2"
               >
-                {step > s ? <CheckCircle2 className="w-4 h-4" /> : s}
-              </div>
-              <span
-                className={`text-[10px] font-black tracking-wider uppercase transition-colors ${step === s ? "text-primary" : "text-muted-foreground"}`}
-              >
-                {s === 1 ? "Tu negocio" : "Tu cuenta"}
-              </span>
-            </div>
-          ))}
-          {/* Conector detrás de las burbujas */}
-          <div className="absolute top-[18px] left-[25%] right-[25%] h-0.5 bg-slate-200 -z-10" />
-        </div>
-
-        {/* Card del formulario o Confirmación de Plan Solicitado */}
-        <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl shadow-slate-200/50 border border-white/60 p-5 sm:p-6 relative z-10 overflow-hidden">
-          {createdStoreData ? (
-            <div className="space-y-5 text-center py-2 animate-in fade-in zoom-in-95 duration-300">
-              <div className="mx-auto w-16 h-16 rounded-3xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-9 h-9" />
-              </div>
-              <div className="space-y-1.5">
-                <h2 className="text-xl font-black text-slate-900 tracking-tight">
-                  ¡Tu tienda ha sido creada!
-                </h2>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                  Tu catálogo está listo en{" "}
-                  <a
-                    href={`/t/${createdStoreData.slug}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="font-bold text-primary hover:underline"
-                  >
-                    {(typeof window !== "undefined"
-                      ? window.location.origin.replace(/^https?:\/\//, "")
-                      : "dizi.idenza.site") + `/t/${createdStoreData.slug}`}
-                  </a>
-                </p>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-black text-slate-400 tracking-wider">
-                    Plan elegido
-                  </span>
-                  <span className="text-xs font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    {PLANS[createdStoreData.plan]?.name || createdStoreData.plan}
-                  </span>
-                </div>
-                <div className="text-sm font-bold text-slate-800">
-                  S/ {PLANS[createdStoreData.plan]?.price.toFixed(2)}/mes
-                </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Tu tienda se creó en el Plan Semilla. Para activar tu plan y desbloquear todas sus funciones, comunícate con nosotros por WhatsApp:
-                </p>
-              </div>
-
-              <div className="space-y-2.5 pt-2">
-                <a
-                  href={buildWaUrl(
-                    DIZI_SUPPORT_PHONE,
-                    `Hola, acabo de crear mi tienda ${createdStoreData.slug} y quiero activar el plan ${PLANS[createdStoreData.plan]?.name || createdStoreData.plan} (S/ ${PLANS[createdStoreData.plan]?.price.toFixed(2)}/mes)`
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full h-12 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer text-sm"
-                >
-                  <MessageCircle className="w-5 h-5" /> Activar Plan por WhatsApp
-                </a>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate({ to: "/admin" })}
-                  className="w-full h-11 rounded-2xl font-bold text-xs text-slate-600 hover:text-slate-900 border-slate-200"
-                >
-                  Ir al Panel de Administración
-                </Button>
+                {CIUDADES.map((city, idx) => (
+                  <ChoiceCard
+                    key={city.id}
+                    ref={(el) => {
+                      cityRefs.current[idx] = el;
+                    }}
+                    label={city.label}
+                    icon={<MapPin className="w-4 h-4" />}
+                    selected={signupCity === city.id}
+                    compact
+                    dataAttrs={{ "data-signup-city": city.id }}
+                    onSelect={() => handleSelectCity(city.id)}
+                    onKeyDown={(e) =>
+                      handleRadioGroupArrowKey(
+                        e,
+                        idx,
+                        cityRefs,
+                        (nextIdx) => setSignupCity(CIUDADES[nextIdx].id),
+                        () => goFromStep4(false),
+                      )
+                    }
+                  />
+                ))}
               </div>
             </div>
-          ) : (
-            <>
-              <form onSubmit={handleRegister} className="space-y-4 relative">
-                {/* PASO 1 — Tu negocio */}
-                {step === 1 && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                        Nombre de tu Negocio
-                      </label>
-                      <input
-                        type="text"
-                        autoComplete="organization"
-                        value={storeName}
-                        onChange={(e) => handleStoreNameChange(e.target.value)}
-                        className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-                        placeholder="Ej. Florería María"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider block">
-                        Rubro de tu Negocio
-                      </label>
-                      <div
-                        role="radiogroup"
-                        aria-label="Rubro de tu Negocio"
-                        className="grid grid-cols-2 sm:grid-cols-3 gap-2"
-                      >
-                        {RUBROS.map((rubro) => {
-                          const selected = selectedNiche === rubro.id;
-                          return (
-                            <button
-                              key={rubro.id}
-                              type="button"
-                              role="radio"
-                              aria-checked={selected}
-                              data-niche={rubro.id}
-                              onClick={() => setSelectedNiche(rubro.id)}
-                              className={`min-h-[44px] px-2.5 py-2 rounded-xl border text-left transition-all flex items-center gap-2 cursor-pointer ${
-                                selected
-                                  ? "border-primary bg-primary/10 text-primary shadow-xs ring-1 ring-primary/30"
-                                  : "border-slate-200 bg-white/70 text-slate-700 hover:border-primary/40 hover:bg-white"
-                              }`}
-                            >
-                              <span className="text-base leading-none shrink-0" aria-hidden="true">
-                                {rubro.emoji}
-                              </span>
-                              <span className="text-[11px] font-bold leading-tight">
-                                {rubro.label}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                        WhatsApp de Ventas
-                      </label>
-                      <PhoneInput
-                        value={storePhone}
-                        countryIso={phoneCountryIso}
-                        onChange={({ digits, countryIso, dial, valid }) => {
-                          setStorePhone(digits);
-                          setPhoneCountryIso(countryIso);
-                          setPhoneCountryDial(dial);
-                          setIsPhoneValid(valid);
-                        }}
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={!isPhoneValid || !storeName.trim()}
-                      className="w-full min-h-[48px] h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 mt-1 cursor-pointer"
-                    >
-                      Siguiente paso
-                    </button>
-
-                    <div className="pt-3 border-t border-slate-100 flex flex-col items-center gap-2">
-                      <p className="text-[11px] font-semibold text-slate-400 text-center">
-                        ¿Necesitas ayuda con tu configuración?
-                      </p>
-                      <a
-                        href={buildWaUrl(
-                          DIZI_SUPPORT_PHONE,
-                          "Hola, necesito ayuda para configurar mi tienda en Dizi"
-                        )}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-2 w-full min-h-[44px] py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-50/50 hover:bg-emerald-50 hover:border-emerald-500/40 text-emerald-600 text-xs font-black transition-all shadow-sm cursor-pointer"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="w-3.5 h-3.5 fill-emerald-600"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.554 4.118 1.528 5.852L0 24l6.324-1.508A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.002-1.366l-.358-.213-3.752.894.952-3.653-.233-.374A9.818 9.818 0 1112 21.818z" />
-                        </svg>
-                        Escríbenos por WhatsApp
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* PASO 2 — Tu cuenta */}
-                {step === 2 && (
-                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                    <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-xs text-primary font-bold">
-                      {isTrial
-                        ? `¡Ya casi listo! Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (Prueba de 15 días) gratis al crear tu cuenta.`
-                        : `¡Ya casi listo! Crea tu cuenta para guardar tu catálogo ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla"} (Gratuito).`}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                        Link de tu Catálogo
-                      </label>
-                      <div
-                        className={`flex rounded-xl border bg-white/50 focus-within:bg-white focus-within:ring-4 transition-all overflow-hidden ${
-                          slugStatus === "taken"
-                            ? "border-destructive focus-within:border-destructive focus-within:ring-destructive/10"
-                            : "border-slate-200 focus-within:border-primary focus-within:ring-primary/10"
-                        }`}
-                      >
-                        <span className="flex items-center px-3 sm:px-4 bg-slate-50 text-slate-400 text-xs sm:text-sm border-r border-slate-200 font-bold whitespace-nowrap">
-                          dizi.idenza.site/t/
-                        </span>
-                        <input
-                          type="text"
-                          value={storeLink}
-                          onChange={(e) => {
-                            setLinkManuallyEdited(true);
-                            setStoreLink(sanitizeSlugInput(e.target.value));
-                          }}
-                          className="flex h-12 w-full bg-transparent px-3 sm:px-4 text-sm focus:outline-none"
-                          placeholder="floreria-maria"
-                          minLength={3}
-                          maxLength={40}
-                          required
-                        />
-                      </div>
-                      {slugStatus === "checking" && (
-                        <p className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          Verificando disponibilidad...
-                        </p>
-                      )}
-                      {slugStatus === "available" && (
-                        <p data-testid="slug-available-msg" className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                          Link disponible
-                        </p>
-                      )}
-                      {slugStatus === "taken" && (
-                        <p data-testid="slug-taken-error" className="text-[11px] text-destructive font-semibold flex items-center gap-1">
-                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                          Este link ya está en uso. Elige otro para continuar.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                        Correo Electrónico
-                      </label>
-                      <input
-                        type="email"
-                        inputMode="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 px-4 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-                        placeholder="tu@correo.com"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                        Contraseña
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="flex h-12 w-full rounded-xl border border-slate-200 bg-white/50 pl-4 pr-12 text-sm shadow-sm transition-all focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-                          placeholder="Mínimo 6 caracteres"
-                          required
-                          minLength={6}
-                        />
-                        <button
-                          type="button"
-                          aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-1.5 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* ¿Cómo nos conociste? (opcional, RF-49.4) */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                          ¿Cómo nos conociste?
-                        </label>
-                        <span className="text-[10px] text-muted-foreground font-medium">
-                          Opcional
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {SIGNUP_SOURCES.map((sourceId) => {
-                          const selected = signupSource === sourceId;
-                          return (
-                            <button
-                              key={sourceId}
-                              type="button"
-                              aria-pressed={selected}
-                              data-signup-source={sourceId}
-                              onClick={() => setSignupSource(selected ? null : sourceId)}
-                              className={`min-h-[44px] px-3 py-2 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                                selected
-                                  ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
-                                  : "border-slate-200 bg-white/70 text-slate-700 hover:border-primary/40 hover:bg-white"
-                              }`}
-                            >
-                              {SIGNUP_SOURCE_LABELS[sourceId]}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Aceptación obligatoria de Términos y Privacidad (G7) */}
-                    <div className="flex items-start gap-2.5 pt-1">
-                      <input
-                        type="checkbox"
-                        id="acceptTerms"
-                        checked={acceptedTerms}
-                        onChange={(e) => setAcceptedTerms(e.target.checked)}
-                        className="mt-0.5 h-5 w-5 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer shrink-0"
-                        required
-                      />
-                      <label htmlFor="acceptTerms" className="text-xs text-slate-600 leading-snug cursor-pointer select-none">
-                        Acepto los{" "}
-                        <Link to="/terminos" target="_blank" className="text-primary font-bold hover:underline">
-                          Términos de Servicio
-                        </Link>{" "}
-                        y la{" "}
-                        <Link to="/privacidad" target="_blank" className="text-primary font-bold hover:underline">
-                          Política de Privacidad
-                        </Link>
-                        .
-                      </label>
-                    </div>
-
-                    <div className="flex gap-2 pt-1">
-                      <button
-                        type="button"
-                        aria-label="Volver a Tu negocio"
-                        onClick={() => setStep(1)}
-                        className="h-12 w-12 shrink-0 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center shadow-sm cursor-pointer"
-                      >
-                        <ArrowLeft className="w-4 h-4 text-slate-600" />
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={loading || !acceptedTerms || slugStatus === "taken" || storeLink.trim().length < 3}
-                        className="flex-1 min-h-[48px] h-12 rounded-2xl bg-gradient-to-r from-primary to-[#ff7043] hover:opacity-95 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-bold tracking-wide shadow-lg shadow-primary/20 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        {loading ? (
-                          <>
-                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                            Creando catálogo...
-                          </>
-                        ) : (
-                          <>
-                            Crear mi catálogo <Rocket className="w-4 h-4" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </form>
-
-              {step === 2 && (
-                <div className="mt-4 text-center text-xs text-muted-foreground font-medium">
-                  ¿Ya tienes una cuenta?{" "}
-                  <Link to="/login" className="text-primary font-bold hover:underline">
-                    Inicia sesión
-                  </Link>
-                </div>
-              )}
-            </>
           )}
-        </div>
 
-        {/* Ejemplos — solo paso 1 */}
-        {step === 1 && (
-          <div className="w-full max-w-md relative z-10">
-            <p className="text-center text-[10px] text-slate-400 mb-3.5 font-black uppercase tracking-widest">
-              Mira cómo se ven las tiendas en Dizi
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  id: "floreria",
-                  icon: (
-                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <radialGradient id="fg1" cx="50%" cy="30%" r="60%">
-                          <stop offset="0%" stopColor="#ff9de2" />
-                          <stop offset="100%" stopColor="#e040a0" />
-                        </radialGradient>
-                        <radialGradient id="fg2" cx="50%" cy="30%" r="60%">
-                          <stop offset="0%" stopColor="#ffb3ec" />
-                          <stop offset="100%" stopColor="#c2185b" />
-                        </radialGradient>
-                        <radialGradient id="fg3" cx="50%" cy="30%" r="60%">
-                          <stop offset="0%" stopColor="#ffe0f0" />
-                          <stop offset="100%" stopColor="#f06292" />
-                        </radialGradient>
-                        <linearGradient id="fstem" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#81c784" />
-                          <stop offset="100%" stopColor="#2e7d32" />
-                        </linearGradient>
-                      </defs>
-                      <ellipse cx="24" cy="20" rx="5" ry="7" fill="url(#fg1)" opacity="0.95" />
-                      <ellipse
-                        cx="14"
-                        cy="18"
-                        rx="4.5"
-                        ry="6.5"
-                        fill="url(#fg2)"
-                        opacity="0.9"
-                        transform="rotate(-30 14 18)"
-                      />
-                      <ellipse
-                        cx="34"
-                        cy="18"
-                        rx="4.5"
-                        ry="6.5"
-                        fill="url(#fg2)"
-                        opacity="0.9"
-                        transform="rotate(30 34 18)"
-                      />
-                      <ellipse
-                        cx="10"
-                        cy="26"
-                        rx="4"
-                        ry="6"
-                        fill="url(#fg3)"
-                        opacity="0.85"
-                        transform="rotate(-55 10 26)"
-                      />
-                      <ellipse
-                        cx="38"
-                        cy="26"
-                        rx="4"
-                        ry="6"
-                        fill="url(#fg3)"
-                        opacity="0.85"
-                        transform="rotate(55 38 26)"
-                      />
-                      <circle cx="24" cy="22" r="5" fill="url(#fg1)" />
-                      <circle cx="24" cy="22" r="3" fill="#fff9" opacity="0.6" />
-                      <path
-                        d="M24 30 Q22 36 21 42"
-                        stroke="url(#fstem)"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                      <ellipse
-                        cx="19"
-                        cy="37"
-                        rx="4"
-                        ry="2.5"
-                        fill="#66bb6a"
-                        opacity="0.85"
-                        transform="rotate(-30 19 37)"
-                      />
-                    </svg>
-                  ),
-                },
-                {
-                  id: "wehome",
-                  icon: (
-                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <linearGradient id="vpot" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#d7ccc8" />
-                          <stop offset="100%" stopColor="#8d6e63" />
-                        </linearGradient>
-                        <linearGradient id="vleaf" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#a1887f" />
-                          <stop offset="100%" stopColor="#5d4037" />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        d="M24,28 Q18,18 20,8"
-                        stroke="#5d4037"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        fill="none"
-                      />
-                      <ellipse
-                        cx="17"
-                        cy="14"
-                        rx="4"
-                        ry="2"
-                        fill="url(#vleaf)"
-                        transform="rotate(-30 17 14)"
-                      />
-                      <ellipse
-                        cx="23"
-                        cy="11"
-                        rx="4"
-                        ry="2"
-                        fill="url(#vleaf)"
-                        transform="rotate(30 23 11)"
-                      />
-                      <ellipse
-                        cx="19"
-                        cy="8"
-                        rx="3.5"
-                        ry="1.8"
-                        fill="url(#vleaf)"
-                        transform="rotate(-15 19 8)"
-                      />
-                      <path
-                        d="M16,24 L32,24 Q36,32 34,39 Q32,42 24,42 Q16,42 14,39 Q12,32 16,24"
-                        fill="url(#vpot)"
-                        filter="drop-shadow(0 3px 4px rgba(0,0,0,0.15))"
-                      />
-                      <ellipse cx="24" cy="24" rx="8" ry="2" fill="#b0bec5" />
-                    </svg>
-                  ),
-                },
-                {
-                  id: "restaurante",
-                  icon: (
-                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <radialGradient id="rplate" cx="50%" cy="40%" r="55%">
-                          <stop offset="0%" stopColor="#f5f5f5" />
-                          <stop offset="100%" stopColor="#bdbdbd" />
-                        </radialGradient>
-                        <radialGradient id="rfood" cx="50%" cy="40%" r="60%">
-                          <stop offset="0%" stopColor="#ffcc80" />
-                          <stop offset="100%" stopColor="#ef6c00" />
-                        </radialGradient>
-                        <linearGradient id="rfork" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#e0e0e0" />
-                          <stop offset="100%" stopColor="#9e9e9e" />
-                        </linearGradient>
-                      </defs>
-                      <ellipse
-                        cx="24"
-                        cy="26"
-                        rx="16"
-                        ry="14"
-                        fill="url(#rplate)"
-                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
-                      />
-                      <ellipse cx="24" cy="25" rx="11" ry="9.5" fill="url(#rfood)" />
-                      <ellipse cx="21" cy="22" rx="3.5" ry="2.5" fill="#fff3e0" opacity="0.6" />
-                      <rect x="8" y="10" width="2.5" height="20" rx="1.25" fill="url(#rfork)" />
-                      <rect x="7" y="10" width="1.2" height="8" rx="0.6" fill="url(#rfork)" />
-                      <rect x="10" y="10" width="1.2" height="8" rx="0.6" fill="url(#rfork)" />
-                      <rect x="37" y="10" width="2.5" height="20" rx="1.25" fill="url(#rfork)" />
-                      <path
-                        d="M37 10 Q40 14 38.5 18"
-                        stroke="#9e9e9e"
-                        strokeWidth="1.5"
-                        fill="none"
-                      />
-                    </svg>
-                  ),
-                },
-                {
-                  id: "ortopedicos",
-                  icon: (
-                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <linearGradient id="cross1" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#ef5350" />
-                          <stop offset="100%" stopColor="#b71c1c" />
-                        </linearGradient>
-                        <linearGradient id="bag1" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#e3f2fd" />
-                          <stop offset="100%" stopColor="#90caf9" />
-                        </linearGradient>
-                      </defs>
-                      <rect
-                        x="8"
-                        y="18"
-                        width="32"
-                        height="22"
-                        rx="4"
-                        fill="url(#bag1)"
-                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
-                      />
-                      <path
-                        d="M17 18 Q17 10 24 10 Q31 10 31 18"
-                        stroke="#64b5f6"
-                        strokeWidth="2.5"
-                        fill="none"
-                        strokeLinecap="round"
-                      />
-                      <rect x="20" y="24" width="8" height="2.5" rx="1.25" fill="url(#cross1)" />
-                      <rect
-                        x="22.75"
-                        y="21.25"
-                        width="2.5"
-                        height="8"
-                        rx="1.25"
-                        fill="url(#cross1)"
-                      />
-                    </svg>
-                  ),
-                },
-                {
-                  id: "gigatech",
-                  icon: (
-                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <linearGradient id="phoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#00E5FF" />
-                          <stop offset="100%" stopColor="#00838F" />
-                        </linearGradient>
-                        <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                          <stop offset="0%" stopColor="#1e293b" />
-                          <stop offset="100%" stopColor="#0f172a" />
-                        </linearGradient>
-                      </defs>
-                      <rect
-                        x="14"
-                        y="4"
-                        width="20"
-                        height="40"
-                        rx="4"
-                        fill="url(#phoneGrad)"
-                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
-                      />
-                      <rect x="16" y="6" width="16" height="34" rx="2.5" fill="url(#screenGrad)" />
-                      <rect
-                        x="21"
-                        y="7"
-                        width="6"
-                        height="1.5"
-                        rx="0.75"
-                        fill="#00E5FF"
-                        opacity="0.6"
-                      />
-                      <circle cx="24" cy="22" r="2.5" fill="#00E5FF" opacity="0.8" />
-                      <path
-                        d="M20 28 L28 28"
-                        stroke="#00E5FF"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        opacity="0.7"
-                      />
-                      <path
-                        d="M21 32 L27 32"
-                        stroke="#00E5FF"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        opacity="0.5"
-                      />
-                      <rect
-                        x="22.5"
-                        y="37"
-                        width="3"
-                        height="0.8"
-                        rx="0.4"
-                        fill="#ffffff"
-                        opacity="0.7"
-                      />
-                    </svg>
-                  ),
-                },
-                {
-                  id: "kickz",
-                  icon: (
-                    <svg viewBox="0 0 48 48" className="w-9 h-9" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <linearGradient id="shoeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#ff416c" />
-                          <stop offset="100%" stopColor="#ff4b2b" />
-                        </linearGradient>
-                        <linearGradient id="soleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#ffffff" />
-                          <stop offset="100%" stopColor="#e2e8f0" />
-                        </linearGradient>
-                      </defs>
-                      <path
-                        d="M10 26 L14 18 Q18 14 26 19 L38 21 Q40 21.5 41 23 L42 27 L38 29 L12 29 Z"
-                        fill="url(#shoeGrad)"
-                        filter="drop-shadow(0 3px 5px rgba(0,0,0,0.2))"
-                      />
-                      <path
-                        d="M10 28 L40 28 C41 28 42 29 41 31 L38 33 C37 33.5 12 33.5 10 32 Z"
-                        fill="url(#soleGrad)"
-                      />
-                      <path
-                        d="M20 18 L26 22 L32 21"
-                        stroke="#ffffff"
-                        strokeWidth="2.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                        opacity="0.9"
-                      />
-                      <line
-                        x1="22"
-                        y1="16"
-                        x2="25"
-                        y2="19"
-                        stroke="#ffffff"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                      />
-                      <line
-                        x1="24"
-                        y1="14"
-                        x2="27"
-                        y2="17"
-                        stroke="#ffffff"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  ),
-                },
-              ].map((ex) => {
-                const item = SHOWCASE_REGISTER_ITEMS.find((s) => s.id === ex.id);
-                if (!item) return null;
-                return (
-                  <a
-                    key={item.slug}
-                    href={getShowcaseUrl(item)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2.5 rounded-2xl border border-white/60 bg-white/40 backdrop-blur-md hover:bg-white hover:border-primary/30 hover:shadow-lg transition-all duration-300 px-3.5 py-3 group"
-                  >
-                    <div className="w-10 h-10 shrink-0 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
-                      {ex.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-black leading-tight text-slate-800 truncate group-hover:text-primary transition-colors">
-                        {item.name}
-                      </div>
-                      <div className="text-[10px] font-medium text-slate-500 truncate mt-0.5">
-                        {item.desc}
-                      </div>
-                    </div>
-                  </a>
-                );
-              })}
+          <div data-testid="step4-source-section" className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[16px] font-semibold text-[#1E1B4B]">
+                ¿Cómo nos conociste?
+              </span>
+              <span className="text-[13px] text-[#312E81]/75">Opcional</span>
+            </div>
+            <div
+              role="radiogroup"
+              aria-label="¿Cómo nos conociste?"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+            >
+              {SIGNUP_SOURCES.map((sourceId, idx) => (
+                <ChoiceCard
+                  key={sourceId}
+                  ref={(el) => {
+                    sourceRefs.current[idx] = el;
+                  }}
+                  label={SIGNUP_SOURCE_LABELS[sourceId]}
+                  icon={SOURCE_ICONS[sourceId]}
+                  selected={signupSource === sourceId}
+                  compact
+                  dataAttrs={{ "data-signup-source": sourceId }}
+                  onSelect={() => handleSelectSource(sourceId, false)}
+                  onKeyDown={(e) =>
+                    handleRadioGroupArrowKey(
+                      e,
+                      idx,
+                      sourceRefs,
+                      (nextIdx) => setSignupSource(SIGNUP_SOURCES[nextIdx]),
+                      () => goFromStep4(false),
+                    )
+                  }
+                />
+              ))}
             </div>
           </div>
-        )}
-      </div>
-    </div>
+
+          <button
+            type="button"
+            onClick={() => goFromStep4(false)}
+            className="w-full min-h-[52px] rounded-2xl bg-[#FF5C39] hover:bg-[#ff4b24] active:scale-[0.99] text-[#1E1B4B] text-[16px] font-bold transition-all motion-reduce:transition-none cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
+          >
+            Continuar
+          </button>
+        </div>
+      )}
+
+      {/* PANTALLA 5: Crea tu cuenta */}
+      {step === 5 && (
+        <form onSubmit={handleRegister} className="space-y-4">
+          <div className="rounded-2xl border border-[#312E81]/15 bg-white px-4 py-3 text-[13px] font-medium text-[#312E81]">
+            {isTrial
+              ? `Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (prueba de 15 días) gratis al crear tu cuenta.`
+              : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla (gratuito)"}.`}
+          </div>
+
+          {/* Correo */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="register-email"
+              className="block text-[16px] font-medium text-[#1E1B4B]"
+            >
+              Correo electrónico
+            </label>
+            <input
+              id="register-email"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full min-h-[48px] rounded-2xl border border-[#312E81]/25 bg-white px-4 text-[16px] text-[#1E1B4B] focus:border-[#312E81] focus:ring-2 focus:ring-[#312E81]/20 focus:outline-none"
+              placeholder="tu@correo.com"
+              required
+            />
+          </div>
+
+          {/* Contraseña */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="register-password"
+              className="block text-[16px] font-medium text-[#1E1B4B]"
+            >
+              Contraseña
+            </label>
+            <div className="relative">
+              <input
+                id="register-password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full min-h-[48px] rounded-2xl border border-[#312E81]/25 bg-white pl-4 pr-12 text-[16px] text-[#1E1B4B] focus:border-[#312E81] focus:ring-2 focus:ring-[#312E81]/20 focus:outline-none"
+                placeholder="Mínimo 6 caracteres"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 h-11 w-11 flex items-center justify-center text-[#312E81]/70 hover:text-[#312E81] cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Términos y privacidad */}
+          <div className="flex items-start gap-3 pt-1">
+            <input
+              type="checkbox"
+              id="acceptTerms"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-1 h-5 w-5 rounded border-[#312E81]/40 text-[#312E81] focus:ring-[#312E81] cursor-pointer shrink-0"
+              required
+            />
+            <label
+              htmlFor="acceptTerms"
+              className="text-[14px] text-[#1E1B4B] leading-snug cursor-pointer select-none"
+            >
+              Acepto los{" "}
+              <Link
+                to="/terminos"
+                target="_blank"
+                className="text-[#312E81] font-semibold underline underline-offset-2"
+              >
+                Términos de Servicio
+              </Link>{" "}
+              y la{" "}
+              <Link
+                to="/privacidad"
+                target="_blank"
+                className="text-[#312E81] font-semibold underline underline-offset-2"
+              >
+                Política de Privacidad
+              </Link>
+              .
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || !acceptedTerms}
+            className="w-full min-h-[52px] rounded-2xl bg-[#FF5C39] hover:bg-[#ff4b24] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-[#1E1B4B] text-[16px] font-bold flex items-center justify-center gap-2 transition-all motion-reduce:transition-none cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
+          >
+            {loading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-[#1E1B4B]/40 border-t-[#1E1B4B] rounded-full animate-spin" />
+                <span>Creando catálogo...</span>
+              </>
+            ) : (
+              <>
+                <span>Crear mi catálogo</span>
+                <Rocket className="w-4 h-4" aria-hidden="true" />
+              </>
+            )}
+          </button>
+
+          <div className="text-center text-[14px] text-[#312E81]/80 pt-1">
+            ¿Ya tienes una cuenta?{" "}
+            <Link
+              to="/login"
+              className="text-[#312E81] font-semibold underline underline-offset-2"
+            >
+              Inicia sesión
+            </Link>
+          </div>
+        </form>
+      )}
+
+      {/* PANTALLA 6: Celebración */}
+      {step === 6 && createdStoreData && (
+        <CelebrationSlide
+          storeName={storeName}
+          slug={createdStoreData.slug}
+          requestedPlan={requestedPlan}
+          isPreviewTestMode={previewTestMode}
+          onGoToFirstProduct={() => {
+            if (previewTestMode) {
+              toast.info("Modo prueba: en producción este botón te lleva a subir tu primer producto.");
+              return;
+            }
+            navigate({ to: "/admin/productos", search: { bienvenida: 1 } as any });
+          }}
+          onGoToAdmin={() => navigate({ to: "/admin" })}
+        />
+      )}
+    </SlideShell>
   );
 }

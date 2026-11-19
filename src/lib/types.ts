@@ -429,6 +429,8 @@ export interface Store {
   signupSource?: string | null;
   /** Parámetro de origen de campaña (?origen= / utm_source=) en el registro (F49) */
   signupUtm?: string | null;
+  /** Ciudad opcional elegida en el registro cuando el país es Perú (F53) */
+  signupCity?: string | null;
 }
 
 /**
