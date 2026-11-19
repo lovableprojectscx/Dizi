@@ -272,4 +272,14 @@ describe("F53 · Registro en slides: lógica pura, modo prueba, ciudades y contr
     expect(urls[0]).toContain("s_restaurantedemo/products/");
     expect(new Set(urls).size).toBe(urls.length);
   });
+
+  it("Otro (general) usa productos coherentes de una sola demo (regalos-demo) y eslogan corto", () => {
+    const generalStore = buildPreviewStore({ storeName: "Bazar Central", niche: "general" });
+    expect(generalStore.products).toHaveLength(3);
+    for (const p of generalStore.products) {
+      expect(p.name).not.toMatch(/Producto Destacado/i);
+      expect(p.image).toContain("/images/demos/regalos-demo/");
+    }
+    expect(generalStore.bannerTagline?.length ?? 0).toBeLessThanOrEqual(36);
+  });
 });

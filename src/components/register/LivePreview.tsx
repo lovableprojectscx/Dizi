@@ -115,11 +115,19 @@ export default function LivePreview({
   return (
     <div
       data-testid="live-preview-desktop"
-      className="f53-live-preview relative w-full h-full flex flex-col overflow-hidden pointer-events-none select-none"
+      className="f53-live-preview f53-desktop-preview relative w-full h-full flex flex-col overflow-hidden pointer-events-none select-none"
     >
       <style>{placeholderCss}</style>
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        <PublicCatalog store={previewStore} mode="catalog" isMockup={true} />
+      <div className="flex-1 overflow-hidden">
+        <div
+          className="origin-top-left"
+          style={{
+            width: "390px",
+            transform: "scale(0.8615)",
+          }}
+        >
+          <PublicCatalog store={previewStore} mode="catalog" isMockup={true} />
+        </div>
       </div>
 
       {showWhatsappButton && (

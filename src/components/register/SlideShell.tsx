@@ -162,10 +162,10 @@ export function SlideShell({
       </header>
 
       {/* Cuerpo principal: partido en escritorio (lg+), apilado en celular */}
-      <main className="flex-1 w-full mx-auto max-w-6xl px-4 sm:px-6 py-4 sm:py-8 flex flex-col">
-        {/* Banners informativos (modo prueba / invitación) */}
-        <div className="space-y-2 mb-4 empty:hidden">
-          {isPreviewTestMode && (
+      <main className="flex-1 w-full mx-auto max-w-6xl px-4 sm:px-6 py-4 lg:py-5 flex flex-col">
+        {/* Banners informativos (modo prueba en pasos 1..5 / invitación) */}
+        <div className="space-y-2 mb-3 empty:hidden">
+          {isPreviewTestMode && !isCelebration && (
             <div
               data-testid="preview-test-mode-banner"
               role="status"
@@ -205,12 +205,13 @@ export function SlideShell({
           {/* Columna izquierda escritorio: vista previa en vivo dentro de marco de celular */}
           {isDesktopSplit && (
             <aside
+              data-testid="desktop-preview-phone-frame"
               aria-label="Vista previa en vivo de tu tienda"
-              className="lg:col-span-5 flex justify-center sticky top-24"
+              className="lg:col-span-5 flex justify-center"
             >
-              <div className="w-[348px] rounded-[34px] border-2 border-[#312E81]/15 bg-white p-2.5 shadow-xl shadow-[#312E81]/10">
-                <div className="mx-auto mb-2 h-1.5 w-16 rounded-full bg-[#312E81]/15" />
-                <div className="h-[600px] w-full rounded-[24px] overflow-hidden border border-[#312E81]/10 bg-[#FAF7F2] relative">
+              <div className="w-[356px] rounded-[34px] border-2 border-[#312E81]/15 bg-white p-2 shadow-xl shadow-[#312E81]/10">
+                <div className="mx-auto mb-1.5 h-1.5 w-16 rounded-full bg-[#312E81]/15" />
+                <div className="h-[550px] w-full rounded-[24px] overflow-hidden border border-[#312E81]/10 bg-[#FAF7F2] relative">
                   {renderPreview(false)}
                 </div>
               </div>
@@ -218,7 +219,10 @@ export function SlideShell({
           )}
 
           {/* Columna derecha escritorio / única en móvil */}
-          <section className="lg:col-span-7 w-full max-w-xl mx-auto flex flex-col gap-4">
+          <section
+            data-testid="register-slide-content-column"
+            className="lg:col-span-7 w-full max-w-xl mx-auto flex flex-col gap-4"
+          >
             {/* Vista previa compacta en celular */}
             {!isDesktopSplit && (
               <div className="w-full" aria-label="Vista previa compacta de tu tienda">
@@ -289,8 +293,8 @@ export function PreviewHeaderStub({ storeName }: { storeName: string }) {
           >
             {display}
           </div>
-          <div className="text-[12px] text-[#FAF7F2]/80 truncate">
-            Mira nuestro catálogo y pide por WhatsApp
+          <div className="text-[12px] text-[#FAF7F2]/80 line-clamp-2 leading-snug">
+            Pide fácil directo por WhatsApp
           </div>
         </div>
       </div>

@@ -527,12 +527,42 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     await saveCaptura(page, "f53-p1-nombre-1280px.png", true);
     await page.getByRole("button", { name: "Continuar" }).click();
 
-    // Pantalla 2 (1280 px)
+    // Pantalla 2 (1280x800): Otro y Florería
     await expect(page.getByTestId("live-preview-desktop")).toBeVisible({ timeout: 5000 });
+    await page.locator('button[data-niche="general"]').focus();
+    await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("live-preview-desktop")).toContainText("Taza de Cerámica Artesanal");
+    await expect(page.getByTestId("live-preview-desktop")).toContainText("Mini Torta Decorada");
+    const phone1280 = await page.getByTestId("desktop-preview-phone-frame").boundingBox();
+    expect(phone1280).not.toBeNull();
+    expect(phone1280!.y).toBeGreaterThanOrEqual(0);
+    expect(phone1280!.y + phone1280!.height).toBeLessThanOrEqual(800);
+    await saveCaptura(page, "f53-p2-otro-1280x800.png", false);
+
     await page.locator('button[data-niche="floreria"]').focus();
     await page.keyboard.press("ArrowRight");
     await page.keyboard.press("ArrowLeft");
+    await expect(page.getByTestId("live-preview-desktop")).toContainText("50 Rosas");
     await saveCaptura(page, "f53-p2-rubro-1280px.png", true);
+    await saveCaptura(page, "f53-p2-floreria-1280x800.png", false);
+
+    // Verificar también en 1440x900 Pantalla 2 (Otro y Florería)
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator('button[data-niche="general"]').focus();
+    await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("ArrowRight");
+    const phone1440 = await page.getByTestId("desktop-preview-phone-frame").boundingBox();
+    expect(phone1440!.y).toBeGreaterThanOrEqual(0);
+    expect(phone1440!.y + phone1440!.height).toBeLessThanOrEqual(900);
+    await saveCaptura(page, "f53-p2-otro-1440x900.png", false);
+
+    await page.locator('button[data-niche="floreria"]').focus();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowLeft");
+    await saveCaptura(page, "f53-p2-floreria-1440x900.png", false);
+
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.locator('button[data-niche="floreria"]').click();
     await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 3 de 5", {
       timeout: 5000,
@@ -709,6 +739,8 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     await page.getByRole("button", { name: /crear mi catálogo/i }).click();
 
     await expect(page.getByTestId("register-celebration-slide")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("preview-test-mode-banner")).toHaveCount(0);
+    await expect(page.getByTestId("celebration-preview-notice")).toHaveCount(1);
     await expect(page.getByTestId("celebration-preview-notice")).toContainText(
       "Modo prueba: no se crea ninguna cuenta",
     );
@@ -716,6 +748,45 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     await expect(page.getByText(/Catálogo publicado/i)).toHaveCount(0);
     await expect(page.getByText(/Florería Preview ya está/i)).toBeVisible();
     await saveCaptura(page, "f53-p6-celebracion-preview-375px.png", true);
+
+    // Escritorio 1280x800 y 1440x900 en Celebración (Florería + Otro)
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(page.getByTestId("preview-test-mode-banner")).toHaveCount(0);
+    await expect(page.getByTestId("celebration-preview-notice")).toHaveCount(1);
+    const phone1280 = await page.getByTestId("desktop-preview-phone-frame").boundingBox();
+    const content1280 = await page.getByTestId("register-slide-content-column").boundingBox();
+    expect(phone1280!.y + phone1280!.height).toBeLessThanOrEqual(800);
+    expect(
+      Math.abs(phone1280!.y + phone1280!.height / 2 - (content1280!.y + content1280!.height / 2)),
+    ).toBeLessThanOrEqual(8);
+    await saveCaptura(page, "f53-p6-celebracion-floreria-1280x800.png", false);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const phone1440 = await page.getByTestId("desktop-preview-phone-frame").boundingBox();
+    const content1440 = await page.getByTestId("register-slide-content-column").boundingBox();
+    expect(phone1440!.y + phone1440!.height).toBeLessThanOrEqual(900);
+    expect(
+      Math.abs(phone1440!.y + phone1440!.height / 2 - (content1440!.y + content1440!.height / 2)),
+    ).toBeLessThanOrEqual(8);
+    await saveCaptura(page, "f53-p6-celebracion-floreria-1440x900.png", false);
+
+    // Recorrido rápido rubro Otro ("general") en escritorio Preview 1280x800 y 1440x900
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/register", { waitUntil: "networkidle" });
+    await advanceStep1(page, "Bazar Otro");
+    await advanceStep2(page, "general");
+    await advanceStep3(page, "987654321");
+    await page.getByTestId("step4-skip-btn").click();
+    await page.locator("#register-email").fill("otro@testdizi.com");
+    await page.locator("#register-password").fill("clave123");
+    await page.locator("#acceptTerms").check();
+    await page.getByRole("button", { name: /crear mi catálogo/i }).click();
+    await expect(page.getByTestId("register-celebration-slide")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("preview-test-mode-banner")).toHaveCount(0);
+    await expect(page.getByTestId("celebration-preview-notice")).toHaveCount(1);
+    await saveCaptura(page, "f53-p6-celebracion-otro-1280x800.png", false);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await saveCaptura(page, "f53-p6-celebracion-otro-1440x900.png", false);
 
     expect(tracker.signUpCalls).toBe(0);
     expect(tracker.initializeStoreBody).toBeNull();

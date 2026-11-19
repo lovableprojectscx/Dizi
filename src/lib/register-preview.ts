@@ -340,21 +340,21 @@ export const PREVIEW_PRODUCTS_BY_RUBRO: Record<string, readonly PreviewProductSe
   general: [
     {
       id: "prev_general_1",
-      name: "Producto Destacado 1",
-      price: 89,
-      image: "/images/demos/celulares-demo/prod_03_auriculares_pro.webp",
+      name: "Taza de Cerámica Artesanal",
+      price: 49,
+      image: "/images/demos/regalos-demo/prod_04_taza_ceramica.webp",
     },
     {
       id: "prev_general_2",
-      name: "Producto Destacado 2",
-      price: 65,
-      image: "/images/demos/joyeria-demo/prod_02_collar_cadena.webp",
+      name: "Mini Torta Decorada",
+      price: 58,
+      image: "/images/demos/regalos-demo/prod_06_mini_torta.webp",
     },
     {
       id: "prev_general_3",
-      name: "Producto Destacado 3",
-      price: 49,
-      image: "/images/demos/regalos-demo/prod_04_taza_ceramica.webp",
+      name: "Arreglo de Rosas en Caja",
+      price: 95,
+      image: "/images/demos/regalos-demo/prod_03_arreglo_rosas.webp",
     },
   ],
 };
@@ -446,7 +446,10 @@ export function buildPreviewStore({
     isDark: defaults.preset.values.isDark,
     niche: defaults.rubro.id,
     photoFormat: defaults.photoFormat,
-    bannerTagline: getDefaultTagline(defaults.rubro.id),
+    bannerTagline:
+      defaults.rubro.id === "general"
+        ? "Pide fácil directo por WhatsApp"
+        : getDefaultTagline(defaults.rubro.id),
     active: true,
     isPublished: true,
     showFeatured: false,
