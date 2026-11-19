@@ -81,3 +81,75 @@ export function extractSignupUtmFromSearch(search: string): string | null {
   const raw = params.get("origen") ?? params.get("utm_source");
   return sanitizeSignupUtm(raw);
 }
+
+const FALLBACK_SLUG_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+/**
+ * Genera un slug de respaldo `mi-tienda-xxxx` con 4 caracteres al azar.
+ */
+export function generateFallbackStoreSlug(randomFn: () => number = Math.random): string {
+  let suffix = "";
+  for (let i = 0; i < 4; i++) {
+    const idx = Math.floor(randomFn() * FALLBACK_SLUG_CHARS.length) % FALLBACK_SLUG_CHARS.length;
+    suffix += FALLBACK_SLUG_CHARS[idx];
+  }
+  return `mi-tienda-${suffix}`;
+}
+
+function appendSlugSuffix(base: string, suffix: string): string {
+  const cleanSuffix = slugifyStoreName(suffix);
+  if (!cleanSuffix) return base;
+  const maxBaseLen = Math.max(1, MAX_SLUG_LENGTH - cleanSuffix.length - 1);
+  const trimmedBase = base.slice(0, maxBaseLen).replace(/-+$/g, "");
+  return trimmedBase ? `${trimmedBase}-${cleanSuffix}` : cleanSuffix.slice(0, MAX_SLUG_LENGTH);
+}
+
+export interface ResolveSlugOptions {
+  storeName: string;
+  city?: string | null;
+  isAvailable: (candidate: string) => Promise<boolean>;
+  maxNumericAttempts?: number;
+  randomFn?: () => number;
+}
+
+/**
+ * Genera candidatos de link automático desde el nombre del negocio:
+ * 1. `slugifyStoreName(nombre)`
+ * 2. Si está ocupado y hay ciudad: `nombre-ciudad`
+ * 3. Luego `nombre-2`, `nombre-3`, ...
+ * 4. Si el nombre no produce un slug válido (< 3 caracteres), usa `mi-tienda-xxxx`.
+ */
+export async function resolveAvailableStoreSlug({
+  storeName,
+  city,
+  isAvailable,
+  maxNumericAttempts = 15,
+  randomFn = Math.random,
+}: ResolveSlugOptions): Promise<string> {
+  const base = slugifyStoreName(storeName);
+  if (!base || base.length < 3) {
+    for (let i = 0; i < 5; i++) {
+      const candidate = generateFallbackStoreSlug(randomFn);
+      if (await isAvailable(candidate)) return candidate;
+    }
+    return generateFallbackStoreSlug(randomFn);
+  }
+
+  const candidates: string[] = [base];
+  const cleanCity = city ? slugifyStoreName(city) : "";
+  if (cleanCity) {
+    const withCity = appendSlugSuffix(base, cleanCity);
+    if (withCity !== base) candidates.push(withCity);
+  }
+  for (let n = 2; n <= maxNumericAttempts + 1; n++) {
+    candidates.push(appendSlugSuffix(base, String(n)));
+  }
+
+  for (const candidate of candidates) {
+    if (await isAvailable(candidate)) {
+      return candidate;
+    }
+  }
+
+  return generateFallbackStoreSlug(randomFn);
+}

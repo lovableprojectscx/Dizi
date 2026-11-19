@@ -11,11 +11,9 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import {
-  AlertCircle,
   Briefcase,
   Cake,
   Camera,
-  CheckCircle2,
   Compass,
   Eye,
   EyeOff,
@@ -24,7 +22,6 @@ import {
   Gem,
   Gift,
   Lamp,
-  Loader2,
   MapPin,
   Rocket,
   Share2,
@@ -50,7 +47,7 @@ import {
   SIGNUP_SOURCES,
   SIGNUP_SOURCE_LABELS,
   extractSignupUtmFromSearch,
-  sanitizeSlugInput,
+  resolveAvailableStoreSlug,
   slugifyStoreName,
   type SignupSource,
 } from "@/lib/slug";
@@ -181,9 +178,6 @@ function RegisterPage() {
 
   // Form states
   const [storeName, setStoreName] = useState("");
-  const [storeLink, setStoreLink] = useState("");
-  const [linkManuallyEdited, setLinkManuallyEdited] = useState(false);
-  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [storePhone, setStorePhone] = useState("");
   const [phoneCountryIso, setPhoneCountryIso] = useState("PE");
   const [phoneCountryDial, setPhoneCountryDial] = useState("51");
@@ -248,33 +242,6 @@ function RegisterPage() {
     }
   }, [phoneCountryIso, signupCity]);
 
-  // Validar disponibilidad de link en tiempo real en Pantalla 5 (RF-49.3 / RF-53.7)
-  useEffect(() => {
-    if (step !== 5 || storeLink.length < 3) {
-      setSlugStatus("idle");
-      return;
-    }
-    let cancelled = false;
-    setSlugStatus("checking");
-    const timer = setTimeout(async () => {
-      try {
-        const { data, error } = await supabase.rpc("check_slug_available", { p_slug: storeLink });
-        if (cancelled) return;
-        if (error) {
-          setSlugStatus("idle");
-          return;
-        }
-        setSlugStatus(data === false ? "taken" : "available");
-      } catch {
-        if (!cancelled) setSlugStatus("idle");
-      }
-    }, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [step, storeLink]);
-
   // Validar invite contra Supabase al montar
   useEffect(() => {
     if (!inviteToken) return;
@@ -322,13 +289,6 @@ function RegisterPage() {
     return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? "mes" : "meses"}${priceText}`;
   }, [invitePlan, inviteCustomPrice, inviteDurationUnit, inviteDurationValue, isTrial, inviteDurationMonths, plan]);
 
-  const handleStoreNameChange = (value: string) => {
-    setStoreName(value);
-    if (!linkManuallyEdited) {
-      setStoreLink(slugifyStoreName(value));
-    }
-  };
-
   const scheduleAutoAdvance = (targetStep: RegisterStep, funnelStep?: FunnelStep) => {
     if (autoAdvanceTimerRef.current) {
       clearTimeout(autoAdvanceTimerRef.current);
@@ -343,9 +303,6 @@ function RegisterPage() {
   const goFromStep1 = (e: React.FormEvent) => {
     e.preventDefault();
     if (!storeName.trim()) return;
-    if (!linkManuallyEdited && !storeLink && storeName.trim()) {
-      setStoreLink(slugifyStoreName(storeName));
-    }
     trackFunnelStep("completo_nombre");
     setStep(2);
   };
@@ -403,30 +360,36 @@ function RegisterPage() {
       return;
     }
 
-    const cleanSlug =
-      sanitizeSlugInput(storeLink) || slugifyStoreName(storeName) || `tienda-${Date.now()}`;
-
-    // En cualquier dominio distinto de producción: modo prueba sin llamadas de escritura
-    if (previewTestMode) {
-      setCreatedStoreData({
-        id: "preview-store",
-        slug: cleanSlug,
-        plan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : plan,
-      });
-      setStep(6);
-      return;
-    }
+    const effectiveCity = phoneCountryIso === "PE" ? signupCity : null;
+    const isSlugAvailableRemote = async (candidate: string): Promise<boolean> => {
+      try {
+        const { data, error } = await supabase.rpc("check_slug_available", {
+          p_slug: candidate,
+        });
+        if (error) return true;
+        return data !== false;
+      } catch {
+        return true;
+      }
+    };
 
     setLoading(true);
     try {
-      const { data: isAvailable, error: slugError } = await supabase.rpc("check_slug_available", {
-        p_slug: cleanSlug,
+      const triedSlugs = new Set<string>();
+      let cleanSlug = await resolveAvailableStoreSlug({
+        storeName,
+        city: effectiveCity,
+        isAvailable: isSlugAvailableRemote,
       });
 
-      if (slugError || isAvailable === false) {
-        setSlugStatus("taken");
-        toast.error("El link de la tienda ya esta en uso. Por favor, elige otro.");
-        setLoading(false);
+      // En cualquier dominio distinto de producción: modo prueba sin llamadas de escritura
+      if (previewTestMode) {
+        setCreatedStoreData({
+          id: "preview-store",
+          slug: cleanSlug,
+          plan: requestedPlan && requestedPlan !== "semilla" ? requestedPlan : plan,
+        });
+        setStep(6);
         return;
       }
 
@@ -500,9 +463,8 @@ function RegisterPage() {
       const rubroDefaults = getRubroDefaults(selectedNiche);
       const nowIso = new Date().toISOString();
 
-      await addStore({
+      const baseStorePayload = {
         id: newStoreId,
-        slug: cleanSlug,
         name: storeName.trim() || "Mi Nueva Tienda",
         phone: storePhone,
         countryCode: phoneCountryDial,
@@ -530,12 +492,13 @@ function RegisterPage() {
         niche: rubroDefaults.rubro.id,
         photoFormat: rubroDefaults.photoFormat,
         planExpiresAt,
-        subscriptionStatus:
+        subscriptionStatus: (
           plan === "semilla"
             ? "trial"
             : inviteDurationUnit === "days" || isTrial
               ? "trial"
-              : "active",
+              : "active"
+        ) as "trial" | "active",
         planDurationMonths:
           plan === "semilla"
             ? undefined
@@ -546,10 +509,34 @@ function RegisterPage() {
         referredBy: refToken || undefined,
         signupSource: signupSource ?? null,
         signupUtm: signupUtm ?? null,
-        signupCity: phoneCountryIso === "PE" ? (signupCity ?? null) : null,
+        signupCity: effectiveCity ?? null,
         categories: [{ id: newCategoryId, name: "Principal" }],
         products: [],
-      });
+      };
+
+      const maxSlugRetries = 6;
+      for (let attempt = 0; attempt < maxSlugRetries; attempt++) {
+        try {
+          await addStore({
+            ...baseStorePayload,
+            slug: cleanSlug,
+          });
+          break;
+        } catch (storeErr: any) {
+          const isDuplicateSlug =
+            storeErr?.message?.includes("stores_slug_key") || storeErr?.code === "23505";
+          if (!isDuplicateSlug || attempt === maxSlugRetries - 1) {
+            throw storeErr;
+          }
+          triedSlugs.add(cleanSlug);
+          cleanSlug = await resolveAvailableStoreSlug({
+            storeName,
+            city: effectiveCity,
+            isAvailable: async (candidate) =>
+              !triedSlugs.has(candidate) && (await isSlugAvailableRemote(candidate)),
+          });
+        }
+      }
 
       if (inviteToken && invitePlan) {
         await markInviteUsed(inviteToken, newStoreId);
@@ -626,8 +613,7 @@ function RegisterPage() {
   };
 
   const currentMeta = slideMeta[step];
-  const resolvedSlugForPreview =
-    storeLink.trim() || slugifyStoreName(storeName) || "tu-negocio";
+  const resolvedSlugForPreview = slugifyStoreName(storeName) || "tu-negocio";
 
   const handleBack = () => {
     if (autoAdvanceTimerRef.current) clearTimeout(autoAdvanceTimerRef.current);
@@ -696,7 +682,7 @@ function RegisterPage() {
               type="text"
               autoComplete="organization"
               value={storeName}
-              onChange={(e) => handleStoreNameChange(e.target.value)}
+              onChange={(e) => setStoreName(e.target.value)}
               placeholder="Ej. Florería María"
               className="w-full min-h-[52px] rounded-2xl border border-[#312E81]/25 bg-white px-4 text-[16px] text-[#1E1B4B] placeholder:text-[#312E81]/45 focus:border-[#312E81] focus:ring-2 focus:ring-[#312E81]/20 focus:outline-none"
               required
@@ -891,66 +877,6 @@ function RegisterPage() {
               : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla (gratuito)"}.`}
           </div>
 
-          {/* Link editable */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="register-store-link"
-              className="block text-[16px] font-medium text-[#1E1B4B]"
-            >
-              Link de tu catálogo
-            </label>
-            <div
-              className={`flex rounded-2xl border bg-white focus-within:ring-2 transition-all overflow-hidden ${
-                slugStatus === "taken"
-                  ? "border-red-600 focus-within:border-red-600 focus-within:ring-red-200"
-                  : "border-[#312E81]/25 focus-within:border-[#312E81] focus-within:ring-[#312E81]/20"
-              }`}
-            >
-              <span className="flex items-center px-3 bg-[#FAF7F2] text-[#312E81]/80 text-[14px] border-r border-[#312E81]/15 font-semibold whitespace-nowrap">
-                dizi.idenza.site/t/
-              </span>
-              <input
-                id="register-store-link"
-                type="text"
-                value={storeLink}
-                onChange={(e) => {
-                  setLinkManuallyEdited(true);
-                  setStoreLink(sanitizeSlugInput(e.target.value));
-                }}
-                className="flex min-h-[48px] w-full bg-transparent px-3 text-[16px] text-[#1E1B4B] focus:outline-none"
-                placeholder="floreria-maria"
-                minLength={3}
-                maxLength={40}
-                required
-              />
-            </div>
-
-            {slugStatus === "checking" && (
-              <p className="text-[13px] text-[#312E81]/75 flex items-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Verificando disponibilidad...
-              </p>
-            )}
-            {slugStatus === "available" && (
-              <p
-                data-testid="slug-available-msg"
-                className="text-[13px] text-emerald-800 font-semibold flex items-center gap-1.5"
-              >
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                Link disponible
-              </p>
-            )}
-            {slugStatus === "taken" && (
-              <p
-                data-testid="slug-taken-error"
-                className="text-[13px] text-red-700 font-semibold flex items-center gap-1.5"
-              >
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                Este link ya está en uso. Elige otro para continuar.
-              </p>
-            )}
-          </div>
-
           {/* Correo */}
           <div className="space-y-1.5">
             <label
@@ -1039,12 +965,7 @@ function RegisterPage() {
 
           <button
             type="submit"
-            disabled={
-              loading ||
-              !acceptedTerms ||
-              slugStatus === "taken" ||
-              storeLink.trim().length < 3
-            }
+            disabled={loading || !acceptedTerms}
             className="w-full min-h-[52px] rounded-2xl bg-[#FF5C39] hover:bg-[#ff4b24] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-[#1E1B4B] text-[16px] font-bold flex items-center justify-center gap-2 transition-all motion-reduce:transition-none cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#312E81]"
           >
             {loading ? (

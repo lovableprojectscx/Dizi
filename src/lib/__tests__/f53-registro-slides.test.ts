@@ -33,11 +33,13 @@ import {
   PREVIEW_PRODUCTS_BY_RUBRO,
   REGISTER_BRAND_TOKENS,
   buildPreviewStore,
+  getAllPreviewImageUrls,
   getContrastRatioHex,
   isPreviewTestMode,
   isProductionRegisterHost,
 } from "@/lib/register-preview";
 import { logFunnelStep } from "@/lib/signup-funnel";
+import { resolveAvailableStoreSlug } from "@/lib/slug";
 import { isMissingOriginColumnError, useApp } from "@/lib/store";
 
 describe("F53 · Registro en slides: lógica pura, modo prueba, ciudades y contraste", () => {
@@ -204,5 +206,70 @@ describe("F53 · Registro en slides: lógica pura, modo prueba, ciudades y contr
     const whiteOnCoral = getContrastRatioHex(white, coral);
     expect(whiteOnCoral).toBeGreaterThanOrEqual(3.0);
     expect(whiteOnCoral).toBeLessThan(4.5);
+  });
+
+  it("Link automático: link libre, ocupado con ciudad, ocupado sin ciudad y nombre inválido", async () => {
+    // 1. Link libre
+    const checkedFree: string[] = [];
+    const freeSlug = await resolveAvailableStoreSlug({
+      storeName: "Florería María",
+      city: "lima",
+      isAvailable: async (slug) => {
+        checkedFree.push(slug);
+        return true;
+      },
+    });
+    expect(freeSlug).toBe("floreria-maria");
+    expect(checkedFree).toEqual(["floreria-maria"]);
+
+    // 2. Link ocupado con ciudad -> prueba nombre-ciudad y luego nombre-2
+    const takenWithCity = new Set(["floreria-maria"]);
+    const slugWithCity = await resolveAvailableStoreSlug({
+      storeName: "Florería María",
+      city: "lima",
+      isAvailable: async (slug) => !takenWithCity.has(slug),
+    });
+    expect(slugWithCity).toBe("floreria-maria-lima");
+
+    takenWithCity.add("floreria-maria-lima");
+    const slugWithCityThenNumber = await resolveAvailableStoreSlug({
+      storeName: "Florería María",
+      city: "lima",
+      isAvailable: async (slug) => !takenWithCity.has(slug),
+    });
+    expect(slugWithCityThenNumber).toBe("floreria-maria-2");
+
+    // 3. Link ocupado sin ciudad -> prueba nombre-2, nombre-3
+    const takenNoCity = new Set(["floreria-maria", "floreria-maria-2"]);
+    const slugNoCity = await resolveAvailableStoreSlug({
+      storeName: "Florería María",
+      city: null,
+      isAvailable: async (slug) => !takenNoCity.has(slug),
+    });
+    expect(slugNoCity).toBe("floreria-maria-3");
+
+    // 4. Nombre inválido (sin alfanuméricos o menor a 3 caracteres) -> mi-tienda-xxxx
+    const invalidShortSlug = await resolveAvailableStoreSlug({
+      storeName: "!!!",
+      city: "cusco",
+      isAvailable: async () => true,
+      randomFn: () => 0,
+    });
+    expect(invalidShortSlug).toMatch(/^mi-tienda-[a-z0-9]{4}$/);
+    expect(invalidShortSlug).toBe("mi-tienda-aaaa");
+
+    const twoCharSlug = await resolveAvailableStoreSlug({
+      storeName: "AB",
+      isAvailable: async () => true,
+      randomFn: () => 0.5,
+    });
+    expect(twoCharSlug).toMatch(/^mi-tienda-[a-z0-9]{4}$/);
+  });
+
+  it("Precarga de fotos: getAllPreviewImageUrls prioriza el rubro elegido e incluye fotos de ejemplo", () => {
+    const urls = getAllPreviewImageUrls("comida");
+    expect(urls.length).toBeGreaterThan(3);
+    expect(urls[0]).toContain("s_restaurantedemo/products/");
+    expect(new Set(urls).size).toBe(urls.length);
   });
 });

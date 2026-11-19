@@ -73,19 +73,40 @@ export interface PreviewProductSeed {
 
 /**
  * Genera una tarjeta SVG en crema (#FAF7F2) con ícono de línea en índigo (#312E81)
- * para rubros sin foto local ni demo asignada (servicios, pastelería, hogar).
+ * para rubros sin foto ni demo asignada (servicios, pastelería, hogar) y como placeholder
+ * mientras cargan las fotos de ejemplo de cualquier rubro.
  */
-export function buildRubroIconCardSvg(rubroId: "servicios" | "pasteleria" | "hogar"): string {
-  const iconMarkup: Record<"servicios" | "pasteleria" | "hogar", string> = {
-    servicios:
-      '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
-    pasteleria:
-      '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/>',
+export function buildRubroIconCardSvg(rubroId: string): string {
+  const iconMarkup: Record<string, string> = {
+    floreria:
+      '<circle cx="12" cy="12" r="3"/><path d="M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5"/><path d="M12 7.5V9"/><path d="M7.5 12H9"/><path d="M16.5 12H15"/><path d="M12 16.5V15"/><path d="M12 22v-5.5"/>',
+    ropa:
+      '<path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>',
+    calzado:
+      '<path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/>',
+    bisuteria:
+      '<path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/>',
+    belleza:
+      '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
     hogar:
       '<path d="M8 2h8l4 10H4L8 2Z"/><path d="M12 12v6"/><path d="M8 22v-2c0-1.1.9-2 2-2h4a2 2 0 0 1 2 2v2H8Z"/>',
+    comida:
+      '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+    pasteleria:
+      '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/>',
+    tech:
+      '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+    regalos:
+      '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>',
+    servicios:
+      '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+    general:
+      '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
   };
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" width="240" height="180"><rect width="240" height="180" fill="#FAF7F2"/><circle cx="120" cy="90" r="44" fill="#312E81" fill-opacity="0.07"/><g transform="translate(96 66) scale(2)" fill="none" stroke="#312E81" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${iconMarkup[rubroId]}</g></svg>`;
+  const cleanId = getRubroById(rubroId).id;
+  const markup = iconMarkup[cleanId] ?? iconMarkup.general;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" width="240" height="180"><rect width="240" height="180" fill="#FAF7F2"/><circle cx="120" cy="90" r="44" fill="#312E81" fill-opacity="0.07"/><g transform="translate(96 66) scale(2)" fill="none" stroke="#312E81" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${markup}</g></svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
@@ -351,6 +372,31 @@ export function getPreviewProductsForRubro(niche?: string | null): Product[] {
     visible: true,
     isSample: false,
   }));
+}
+
+/**
+ * Devuelve todas las URLs de fotos reales (HTTP o locales) de los 12 rubros para precarga,
+ * priorizando el rubro activo primero y omitiendo tarjetas vectoriales inline.
+ */
+export function getAllPreviewImageUrls(priorityNiche?: string | null): string[] {
+  const activeId = getRubroById(priorityNiche).id;
+  const orderedKeys = [
+    activeId,
+    ...Object.keys(PREVIEW_PRODUCTS_BY_RUBRO).filter((k) => k !== activeId),
+  ];
+  const seen = new Set<string>();
+  const urls: string[] = [];
+
+  for (const key of orderedKeys) {
+    const items = PREVIEW_PRODUCTS_BY_RUBRO[key] ?? [];
+    for (const item of items) {
+      if (item.image && !item.image.startsWith("data:") && !seen.has(item.image)) {
+        seen.add(item.image);
+        urls.push(item.image);
+      }
+    }
+  }
+  return urls;
 }
 
 export interface BuildPreviewStoreParams {

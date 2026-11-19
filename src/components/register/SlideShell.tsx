@@ -243,7 +243,7 @@ export function SlideShell({
                 key={step}
                 className={cn(
                   "w-full",
-                  step < 6 && "animate-in fade-in duration-150 motion-reduce:animate-none motion-reduce:duration-0",
+                  step > 1 && step < 6 && "animate-in fade-in duration-150 motion-reduce:animate-none motion-reduce:duration-0",
                 )}
               >
               {children}

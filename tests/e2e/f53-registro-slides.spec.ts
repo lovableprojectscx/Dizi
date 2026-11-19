@@ -249,8 +249,18 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     // Pantalla 1
     await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 1 de 5");
     await page.locator("#register-store-name").fill("Florería María");
+    const step1Continuar = page.getByRole("button", { name: "Continuar" });
+    await expect(step1Continuar).toBeEnabled();
+    await expect
+      .poll(() =>
+        step1Continuar.evaluate((el) => {
+          const s = window.getComputedStyle(el);
+          return { opacity: s.opacity, bg: s.backgroundColor };
+        }),
+      )
+      .toEqual({ opacity: "1", bg: "rgb(255, 92, 57)" });
     await saveCaptura(page, "f53-p1-nombre-375px.png", true);
-    await page.getByRole("button", { name: "Continuar" }).click();
+    await step1Continuar.click();
 
     // Pantalla 2
     await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 2 de 5");
@@ -263,8 +273,18 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     // Pantalla 3
     await page.locator('input[type="tel"]').fill("987654321");
     await expect(page.getByTestId("live-preview-whatsapp-btn")).toBeVisible({ timeout: 5000 });
+    const step3Continuar = page.getByRole("button", { name: "Continuar" });
+    await expect(step3Continuar).toBeEnabled();
+    await expect
+      .poll(() =>
+        step3Continuar.evaluate((el) => {
+          const s = window.getComputedStyle(el);
+          return { opacity: s.opacity, bg: s.backgroundColor };
+        }),
+      )
+      .toEqual({ opacity: "1", bg: "rgb(255, 92, 57)" });
     await saveCaptura(page, "f53-p3-whatsapp-375px.png", true);
-    await page.getByRole("button", { name: "Continuar" }).click();
+    await step3Continuar.click();
 
     // Pantalla 4
     await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 4 de 5");
@@ -275,18 +295,28 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
       timeout: 5000,
     });
 
-    // Pantalla 5
-    await expect(page.locator("#register-store-link")).toHaveValue("floreria-maria");
+    // Pantalla 5 (sin campo editable de link)
+    await expect(page.locator("#register-store-link")).toHaveCount(0);
     await page.locator("#register-email").fill("maria@testdizi.com");
     await page.locator("#register-password").fill("clave123");
     await page.locator("#acceptTerms").check();
+    const createBtn375 = page.getByRole("button", { name: /crear mi catálogo/i });
+    await expect(createBtn375).toBeEnabled();
+    await expect
+      .poll(() => createBtn375.evaluate((el) => window.getComputedStyle(el).opacity))
+      .toBe("1");
     await saveCaptura(page, "f53-p5-cuenta-375px.png", true);
-    await page.getByRole("button", { name: /crear mi catálogo/i }).click();
+    await createBtn375.click();
 
     // Pantalla 6
     await expect(page.getByTestId("register-celebration-slide")).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(/Florería María ya está/i)).toBeVisible();
+    await expect(page.getByTestId("celebration-store-link")).toContainText(
+      /Tu link:\s*dizi\.idenza\.site\/t\/floreria-maria/,
+    );
+    await expect(page.getByText("Puedes cambiarlo cuando quieras en Configuración")).toBeVisible();
     await expect(page.getByTestId("preview-test-mode-banner")).toHaveCount(0);
+    await expect(page.getByTestId("celebration-preview-notice")).toHaveCount(0);
     await page.waitForTimeout(200);
     await saveCaptura(page, "f53-p6-celebracion-375px.png", true);
 
@@ -522,14 +552,32 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     });
 
     // Pantalla 5 (1280 px)
+    await expect(page.locator("#register-store-link")).toHaveCount(0);
     await page.locator("#register-email").fill("escritorio@testdizi.com");
     await page.locator("#register-password").fill("clave123");
     await page.locator("#acceptTerms").check();
+    const createBtn1280 = page.getByRole("button", { name: /crear mi catálogo/i });
+    await expect(createBtn1280).toBeEnabled();
+    await expect
+      .poll(() => createBtn1280.evaluate((el) => window.getComputedStyle(el).opacity))
+      .toBe("1");
     await saveCaptura(page, "f53-p5-cuenta-1280px.png", true);
-    await page.getByRole("button", { name: /crear mi catálogo/i }).click();
+    await createBtn1280.click();
 
     // Pantalla 6 (1280 px)
     await expect(page.getByTestId("register-celebration-slide")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("celebration-store-link")).toContainText(
+      /Tu link:\s*dizi\.idenza\.site\/t\/floreria-maria/,
+    );
+    // El emoji 🎉 debe quedar en la misma línea que "en línea!" (sin quedar solo en una línea)
+    const nowrapRects = await page
+      .locator('[data-testid="register-celebration-slide"] h1 .whitespace-nowrap')
+      .evaluate((el) => {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        return range.getClientRects().length;
+      });
+    expect(nowrapRects).toBe(1);
     await saveCaptura(page, "f53-p6-celebracion-1280px.png", true);
   });
 
@@ -660,8 +708,13 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     await page.getByRole("button", { name: /crear mi catálogo/i }).click();
 
     await expect(page.getByTestId("register-celebration-slide")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId("preview-test-mode-banner")).toBeVisible();
+    await expect(page.getByTestId("celebration-preview-notice")).toContainText(
+      "Modo prueba: no se crea ninguna cuenta",
+    );
+    await expect(page.getByText(/Tienda creada con éxito/i)).toHaveCount(0);
+    await expect(page.getByText(/Catálogo publicado/i)).toHaveCount(0);
     await expect(page.getByText(/Florería Preview ya está/i)).toBeVisible();
+    await saveCaptura(page, "f53-p6-celebracion-preview-375px.png", true);
 
     expect(tracker.signUpCalls).toBe(0);
     expect(tracker.initializeStoreBody).toBeNull();

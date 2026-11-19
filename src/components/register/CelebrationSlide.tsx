@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Check, Copy, ExternalLink, PackagePlus, Share2 } from "lucide-react";
+import { Check, Copy, ExternalLink, PackagePlus, Share2, Sparkles } from "lucide-react";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { DIZI_SUPPORT_PHONE, buildWaUrl } from "@/lib/whatsapp";
 import { PLANS, type PlanId } from "@/lib/types";
@@ -30,9 +30,8 @@ export function CelebrationSlide({
 
   const origin =
     typeof window !== "undefined" ? window.location.origin : "https://dizi.idenza.site";
-  const displayHost = origin.replace(/^https?:\/\//, "");
   const publicUrl = `${origin}/t/${slug}`;
-  const displayUrl = `${displayHost}/t/${slug}`;
+  const canonicalDisplayUrl = `dizi.idenza.site/t/${slug}`;
 
   const handleCopy = async () => {
     try {
@@ -57,13 +56,23 @@ export function CelebrationSlide({
       className="w-full space-y-6 py-2"
     >
       <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#FF5C39]/20 border border-[#FF5C39]/40 px-3.5 py-1 text-[13px] font-semibold text-[#1E1B4B]">
-          <span>Catálogo publicado</span>
-        </div>
+        {isPreviewTestMode ? (
+          <div
+            data-testid="celebration-preview-notice"
+            className="inline-flex items-center gap-2 rounded-full bg-[#312E81] px-4 py-1.5 text-[13px] font-semibold text-[#FAF7F2]"
+          >
+            <Sparkles className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span>Modo prueba: no se crea ninguna cuenta</span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 rounded-full bg-[#FF5C39]/20 border border-[#FF5C39]/40 px-3.5 py-1 text-[13px] font-semibold text-[#1E1B4B]">
+            <span>Catálogo publicado</span>
+          </div>
+        )}
 
         <h1 className="font-heading font-bold text-[28px] lg:text-[36px] leading-[1.15] tracking-tight text-[#312E81]">
-          <span>¡{cleanName} ya está</span>
-          <span className="text-[#312E81]/60"> en línea! 🎉</span>
+          <span>¡{cleanName} ya está </span>
+          <span className="text-[#312E81]/60 whitespace-nowrap">en línea! 🎉</span>
         </h1>
 
         <p className="text-[16px] text-[#1E1B4B]/85 leading-relaxed">
@@ -71,20 +80,26 @@ export function CelebrationSlide({
         </p>
       </div>
 
-      {/* Link de la tienda */}
-      <div className="rounded-2xl border border-[#312E81]/18 bg-white p-4 space-y-2">
-        <div className="text-[13px] font-medium text-[#312E81]/75">Tu link de catálogo</div>
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+      {/* Link automático generado */}
+      <div className="rounded-2xl border border-[#312E81]/18 bg-white p-4 space-y-1.5">
+        <div
+          data-testid="celebration-store-link"
+          className="text-[16px] text-[#1E1B4B] flex items-center gap-1.5 flex-wrap"
+        >
+          <span className="font-medium text-[#312E81]/80">Tu link:</span>
           <a
             href={`/t/${slug}`}
             target="_blank"
             rel="noreferrer"
-            className="text-[16px] font-semibold text-[#312E81] underline underline-offset-2 inline-flex items-center gap-1.5 break-all"
+            className="font-semibold text-[#312E81] underline underline-offset-2 inline-flex items-center gap-1.5 break-all"
           >
-            <span>{displayUrl}</span>
+            <span>{canonicalDisplayUrl}</span>
             <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />
           </a>
         </div>
+        <p className="text-[13px] text-[#312E81]/75">
+          Puedes cambiarlo cuando quieras en Configuración
+        </p>
       </div>
 
       {/* Aviso si eligió un plan de pago vía ?plan= */}

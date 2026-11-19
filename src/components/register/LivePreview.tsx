@@ -1,7 +1,30 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { buildPreviewStore } from "@/lib/register-preview";
+import {
+  buildPreviewStore,
+  buildRubroIconCardSvg,
+  getAllPreviewImageUrls,
+} from "@/lib/register-preview";
+import { getThumbnailUrl } from "@/lib/image-utils";
+
+const preloadedUrls = new Set<string>();
+
+function preloadPreviewAssets(niche: string) {
+  if (typeof window === "undefined" || typeof Image === "undefined") return;
+  const urls = getAllPreviewImageUrls(niche);
+  for (const rawUrl of urls) {
+    const thumb = getThumbnailUrl(rawUrl) || rawUrl;
+    for (const candidate of [thumb, rawUrl]) {
+      if (candidate && !preloadedUrls.has(candidate)) {
+        preloadedUrls.add(candidate);
+        const img = new Image();
+        img.decoding = "async";
+        img.src = candidate;
+      }
+    }
+  }
+}
 
 export interface LivePreviewProps {
   storeName: string;
@@ -18,7 +41,8 @@ export interface LivePreviewProps {
 
 /**
  * Vista previa en vivo del catálogo durante el registro F53.
- * Reutiliza `<PublicCatalog isMockup={true} />` con una tienda en memoria
+ * Reutiliza `<PublicCatalog isMockup={true} />` con una tienda en memoria,
+ * precarga las fotos de los rubros mostrando tarjeta crema con ícono mientras llegan,
  * y superpone la capa visual "Pedir por WhatsApp" sin modificar `PublicCatalog`.
  */
 export default function LivePreview({
@@ -31,6 +55,12 @@ export default function LivePreview({
   showWhatsappButton,
   compact = false,
 }: LivePreviewProps) {
+  useEffect(() => {
+    preloadPreviewAssets(niche);
+  }, [niche]);
+
+  const placeholderCardUrl = useMemo(() => buildRubroIconCardSvg(niche), [niche]);
+
   const previewStore = useMemo(
     () =>
       buildPreviewStore({
@@ -44,13 +74,16 @@ export default function LivePreview({
     [storeName, niche, phone, countryCode, countryIso, slug],
   );
 
+  const placeholderCss = `.f53-live-preview article img { background-color: #FAF7F2; background-image: url("${placeholderCardUrl}"); background-size: cover; background-position: center; }`;
+
   if (compact) {
     return (
       <div
         data-testid="live-preview-compact"
-        className="f53-compact-preview relative w-full h-[238px] rounded-2xl border border-[#312E81]/18 bg-white overflow-hidden shadow-sm pointer-events-none select-none"
+        className="f53-live-preview f53-compact-preview relative w-full h-[238px] rounded-2xl border border-[#312E81]/18 bg-white overflow-hidden shadow-sm pointer-events-none select-none"
       >
         <style>{`
+          ${placeholderCss}
           .f53-compact-preview header[data-testid="catalog-header"] { display: none !important; }
           .f53-compact-preview div.flex.gap-2:has(input),
           .f53-compact-preview div.relative:has(> input),
@@ -82,8 +115,9 @@ export default function LivePreview({
   return (
     <div
       data-testid="live-preview-desktop"
-      className="relative w-full h-full flex flex-col overflow-hidden pointer-events-none select-none"
+      className="f53-live-preview relative w-full h-full flex flex-col overflow-hidden pointer-events-none select-none"
     >
+      <style>{placeholderCss}</style>
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <PublicCatalog store={previewStore} mode="catalog" isMockup={true} />
       </div>
