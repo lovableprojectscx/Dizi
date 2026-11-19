@@ -317,6 +317,7 @@ test.describe("F53 · Registro en slides con vista previa en vivo (Escenarios 1 
     await expect(page.getByText("Puedes cambiarlo cuando quieras en Configuración")).toBeVisible();
     await expect(page.getByTestId("preview-test-mode-banner")).toHaveCount(0);
     await expect(page.getByTestId("celebration-preview-notice")).toHaveCount(0);
+    await expect(page.getByText(/Tienda creada con éxito/i)).toHaveCount(0);
     await page.waitForTimeout(200);
     await saveCaptura(page, "f53-p6-celebracion-375px.png", true);
 

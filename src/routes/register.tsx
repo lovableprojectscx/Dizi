@@ -543,7 +543,6 @@ function RegisterPage() {
       }
 
       trackFunnelStep("creo_cuenta");
-      toast.success("Tienda creada con éxito. Bienvenido a Dizi.");
       setCurrentStore(newStoreId);
       setCreatedStoreData({
         id: newStoreId,
