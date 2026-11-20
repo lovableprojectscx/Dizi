@@ -220,7 +220,7 @@ export function getNextStep(store: Store, ctx: NextStepContext): NextStepResult 
         to: "/admin/productos",
         tone: "brand",
       },
-      tambien: [],
+      tambien: secondaryCandidates.slice(0, 2).map((entry) => entry.link),
     };
   }
 

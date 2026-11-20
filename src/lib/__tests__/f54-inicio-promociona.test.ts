@@ -15,6 +15,7 @@ import {
   resolveIdeaStyle,
 } from "@/lib/promo-ideas";
 import { prepareShareImageData } from "@/lib/share-image/data";
+import { drawStoreHeader } from "@/lib/share-image/styles";
 import type { Product, Store } from "@/lib/types";
 
 function makeProduct(overrides: Partial<Product> & { id: string }): Product {
@@ -227,5 +228,64 @@ describe("F54 · Lógica pura de Inicio y Promociona (Escenarios 1–8, 10, 13)"
       const ratio = getHexContrastRatio(pair.fg, pair.bg);
       expect(ratio, `Par ${name} (${pair.fg} sobre ${pair.bg})`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it("Corrección 1 · getNextStep sin productos + prueba con 2 días incluye 'Elige tu plan' en tambien", () => {
+    const now = new Date("2026-11-20T12:00:00-05:00");
+    const expires = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString();
+    const store = makeStore({
+      products: [],
+      plan: "emprendedor",
+      subscriptionStatus: "trial",
+      planExpiresAt: expires,
+    });
+
+    const res = getNextStep(store, { surveyEligible: true, now });
+    expect(res.principal.id).toBe("no-products");
+    expect(res.principal.title).toBe("Agrega tu primer producto");
+    expect(res.tambien.map((t) => t.id)).toEqual(["trial-ending", "survey"]);
+    expect(res.tambien[0].label).toContain("Elige tu plan");
+  });
+
+  it("Corrección 2 · drawStoreHeader sin logo ubica el texto después del ícono (x >= iconX + iconSize)", () => {
+    const store = makeStore({ logo: null, name: "Regalos Fiorella" });
+    const data = prepareShareImageData({
+      product: makeProduct({ id: "p1" }),
+      store,
+    });
+
+    const fillTextCalls: Array<{ text: string; x: number; y: number }> = [];
+    const mockCtx = {
+      save: () => {},
+      restore: () => {},
+      beginPath: () => {},
+      moveTo: () => {},
+      lineTo: () => {},
+      quadraticCurveTo: () => {},
+      closePath: () => {},
+      fill: () => {},
+      stroke: () => {},
+      measureText: (text: string) => ({ width: text.length * 18 }),
+      fillText: (text: string, x: number, y: number) => {
+        fillTextCalls.push({ text, x, y });
+      },
+      font: "",
+      fillStyle: "",
+      strokeStyle: "",
+      lineWidth: 1,
+      textAlign: "left",
+      textBaseline: "middle",
+    } as unknown as CanvasRenderingContext2D;
+
+    const boxes: Array<{ id: string; x: number; y: number; width: number; height: number }> = [];
+    drawStoreHeader(mockCtx, data, "historia", false, boxes, null);
+
+    const pillX = 60;
+    const iconX = pillX + 16;
+    const iconSize = 36;
+    const nameCall = fillTextCalls.find((c) => c.text === "Regalos Fiorella");
+    expect(nameCall).toBeDefined();
+    expect(nameCall!.x).toBeGreaterThanOrEqual(iconX + iconSize);
+    expect(boxes[0]?.width).toBe(Math.round("Regalos Fiorella".length * 18 + 80));
   });
 });
