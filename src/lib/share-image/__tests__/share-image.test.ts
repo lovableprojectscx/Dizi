@@ -389,3 +389,168 @@ describe("F46 · Validación automática de cajas delimitadoras y zonas seguras 
     expect(res.tagViolations).toEqual([]);
   });
 });
+
+describe("Fix Sello Semilla · Franja propia, sin colisiones, 24px de aire y paridad con planes pagados", () => {
+  const styles: ShareImageStyle[] = ["etiqueta", "editorial", "marco-color", "oferta"];
+  const formats: ShareImageFormat[] = ["historia", "post-ig", "cuadrada"];
+
+  // Producto con nombre de exactamente 40 caracteres
+  const mockProductLargo40Oferta: Product = {
+    id: "prod_largo_40",
+    name: "Zapatillas Urban Platform Verdes Edición", // 40 caracteres exactos
+    price: 149.9,
+    originalPrice: 189.9,
+    isOnSale: true,
+    categoryId: "cat_1",
+    image: "https://zkqzdwxjthjdjchimmds.supabase.co/storage/v1/object/public/images/zapas1.webp",
+    visible: true,
+  };
+
+  const mockProductLargo40Consultar: Product = {
+    ...mockProductLargo40Oferta,
+    price: 0,
+    originalPrice: null,
+    isOnSale: false,
+  };
+
+  // 12 casos con precio con oferta (4 estilos × 3 formatos)
+  styles.forEach((style) => {
+    formats.forEach((format) => {
+      it(`Con sello, nombre largo (40 chars) y oferta: '${style}' en '${format}' no se cruza, tiene >=24px de aire y >=24px margen abajo`, () => {
+        expect(mockProductLargo40Oferta.name.length).toBe(40);
+        const ctx = createMockCanvasContext();
+        const data = prepareShareImageData({
+          product: mockProductLargo40Oferta,
+          store: mockStoreSemilla,
+        });
+        expect(data.showBranding).toBe(true);
+
+        const { boxes, validation } = drawShareImage(ctx, data, style, format);
+        const badge = boxes.find((b) => b.id === "semillaBadge");
+        expect(badge).toBeDefined();
+
+        // 1. CERO colisiones con ninguna otra caja
+        const otherBoxes = boxes.filter((b) => b.id !== "semillaBadge");
+        for (const other of otherBoxes) {
+          const collides =
+            badge!.x < other.x + other.width &&
+            badge!.x + badge!.width > other.x &&
+            badge!.y < other.y + other.height &&
+            badge!.y + badge!.height > other.y;
+          expect(collides, `semillaBadge colisiona con '${other.id}' en ${style}/${format}`).toBe(false);
+        }
+
+        // 2. Al menos 24 px de margen abajo del lienzo
+        const dims = { historia: 1920, "post-ig": 1350, cuadrada: 1080 }[format];
+        const bottomMargin = dims - (badge!.y + badge!.height);
+        expect(bottomMargin, `Margen inferior ${bottomMargin}px es menor a 24px en ${style}/${format}`).toBeGreaterThanOrEqual(24);
+        expect(badge!.y).toBeGreaterThanOrEqual(0);
+
+        // 3. El contenido del estilo termina por encima con al menos 24 px de aire
+        const contentBoxes = boxes.filter(
+          (b) => b.id !== "photo" && b.id !== "tag" && b.id !== "priceInTag" && b.id !== "semillaBadge"
+        );
+        for (const cb of contentBoxes) {
+          const air = badge!.y - (cb.y + cb.height);
+          expect(air, `Caja '${cb.id}' tiene ${air}px de aire con el sello (<24px) en ${style}/${format}`).toBeGreaterThanOrEqual(24);
+        }
+
+        // 4. Validador geométrico en ok
+        expect(validation.collisions).toEqual([]);
+        expect(validation.safeZoneViolations).toEqual([]);
+        expect(validation.ok).toBe(true);
+      });
+    });
+  });
+
+  // 12 casos con precio "A consultar" (4 estilos × 3 formatos)
+  styles.forEach((style) => {
+    formats.forEach((format) => {
+      it(`Con sello, nombre largo (40 chars) y 'A consultar': '${style}' en '${format}' no se cruza, tiene >=24px de aire y >=24px margen abajo`, () => {
+        const ctx = createMockCanvasContext();
+        const data = prepareShareImageData({
+          product: mockProductLargo40Consultar,
+          store: mockStoreSemilla,
+        });
+        expect(data.showBranding).toBe(true);
+
+        const { boxes, validation } = drawShareImage(ctx, data, style, format);
+        const badge = boxes.find((b) => b.id === "semillaBadge");
+        expect(badge).toBeDefined();
+
+        // 1. CERO colisiones con ninguna otra caja
+        const otherBoxes = boxes.filter((b) => b.id !== "semillaBadge");
+        for (const other of otherBoxes) {
+          const collides =
+            badge!.x < other.x + other.width &&
+            badge!.x + badge!.width > other.x &&
+            badge!.y < other.y + other.height &&
+            badge!.y + badge!.height > other.y;
+          expect(collides, `semillaBadge colisiona con '${other.id}' en ${style}/${format}`).toBe(false);
+        }
+
+        // 2. Al menos 24 px de margen abajo del lienzo
+        const dims = { historia: 1920, "post-ig": 1350, cuadrada: 1080 }[format];
+        const bottomMargin = dims - (badge!.y + badge!.height);
+        expect(bottomMargin, `Margen inferior ${bottomMargin}px es menor a 24px en ${style}/${format}`).toBeGreaterThanOrEqual(24);
+
+        // 3. El contenido del estilo termina por encima con al menos 24 px de aire
+        const contentBoxes = boxes.filter(
+          (b) => b.id !== "photo" && b.id !== "tag" && b.id !== "priceInTag" && b.id !== "semillaBadge"
+        );
+        for (const cb of contentBoxes) {
+          const air = badge!.y - (cb.y + cb.height);
+          expect(air, `Caja '${cb.id}' tiene ${air}px de aire con el sello (<24px) en ${style}/${format}`).toBeGreaterThanOrEqual(24);
+        }
+
+        expect(validation.collisions).toEqual([]);
+        expect(validation.safeZoneViolations).toEqual([]);
+        expect(validation.ok).toBe(true);
+      });
+    });
+  });
+
+  // Paridad estricta con master en planes pagados (sin sello)
+  styles.forEach((style) => {
+    formats.forEach((format) => {
+      it(`Sin sello (planes pagados): '${style}' en '${format}' no tiene sello y mantiene coordenadas originales`, () => {
+        const ctx = createMockCanvasContext();
+        const data = prepareShareImageData({
+          product: mockProductOferta,
+          store: mockStorePro,
+        });
+        expect(data.showBranding).toBe(false);
+
+        const { boxes } = drawShareImage(ctx, data, style, format);
+
+        // No existe la caja semillaBadge
+        expect(boxes.some((b) => b.id === "semillaBadge")).toBe(false);
+
+        // Verificación de estabilidad frente a baseline de master sin branding
+        const header = boxes.find((b) => b.id === "header");
+        const qr = boxes.find((b) => b.id === "qr");
+        expect(header).toBeDefined();
+        expect(qr).toBeDefined();
+
+        if (style === "etiqueta") {
+          const expectedFooterY = format === "historia" ? 1300 : format === "post-ig" ? 1040 : 820;
+          expect(qr!.y).toBe(expectedFooterY + (format === "historia" ? 20 : 14));
+        } else if (style === "editorial") {
+          const expectedPhotoBottom = format === "historia" ? 1230 : format === "post-ig" ? 890 : 660;
+          expect(qr!.y).toBe(expectedPhotoBottom + 32);
+        } else if (style === "marco-color") {
+          const H = { historia: 1920, "post-ig": 1350, cuadrada: 1080 }[format];
+          const bottomBlockH = format === "historia" ? 320 : format === "post-ig" ? 260 : 230;
+          const frameThick = format === "historia" ? 36 : 24;
+          const expectedBottomBlockY = format === "historia" ? 1255 : H - bottomBlockH - frameThick - 12;
+          expect(qr!.y).toBe(expectedBottomBlockY + (bottomBlockH - 136) / 2 - 8);
+        } else if (style === "oferta") {
+          const H = { historia: 1920, "post-ig": 1350, cuadrada: 1080 }[format];
+          const footerCardH = format === "historia" ? 320 : format === "post-ig" ? 260 : 280;
+          const expectedFooterCardY = format === "historia" ? 1250 : H - footerCardH - 20;
+          expect(qr!.y).toBe(expectedFooterCardY + (footerCardH - 140) / 2 - 8);
+        }
+      });
+    });
+  });
+});
