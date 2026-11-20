@@ -555,10 +555,10 @@ function AyudaPage() {
 
             <h3>Gana meses invitando</h3>
             <p>
-              En <strong>Mi Plan</strong> tienes tu enlace personal de invitación. Si un negocio se
-              registra con tu enlace y activa un plan de pago,{" "}
-              <strong>los dos reciben 30 días premium gratis</strong>. Si estás en el plan gratuito,
-              se te sube el plan por esos 30 días; si ya pagas, se te suman al vencimiento.
+              En <strong>Mi Plan</strong> tienes tu enlace personal de invitación. Por cada tienda
+              que recomiendes y contrate un plan de pago,{" "}
+              <strong>ambos reciben 1 mes gratis</strong>. Si estás en el plan gratuito, se te sube
+              el plan por ese mes; si ya pagas, se te suma al vencimiento.
             </p>
             <p>La recompensa es siempre tiempo de servicio, no dinero.</p>
           </Chapter>

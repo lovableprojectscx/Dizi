@@ -71,8 +71,10 @@ export const PLANS: Record<PlanId, Plan> = {
       "Los 9 diseños",
       "Carrito a WhatsApp",
       "Link en Bio (3 enlaces)",
+      "Libro de Reclamaciones",
+      "Imágenes para estados e historias",
       "Visitas y clics",
-      "Incluye publicidad de Dizi",
+      "Con el sello «Hecho con Dizi»",
     ],
   },
   emprendedor: {
@@ -82,6 +84,7 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 19.9,
     annualPrice: 179,
     features: [
+      "Todo lo de Semilla, sin el sello",
       "Hasta 100 productos",
       "Precios por mayor",
       "Sin marca ni publicidad de Dizi",
@@ -98,6 +101,7 @@ export const PLANS: Record<PlanId, Plan> = {
     annualPrice: 359,
     features: [
       "Hasta 300 productos",
+      "Link de pedido para tus clientes",
       "Varios vendedores (hasta 3)",
       "Carrusel de 3 banners",
       "Cintillo de anuncios",
@@ -114,7 +118,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "Hasta 1,000 productos",
       "Varios vendedores (hasta 5)",
       "Carrusel de 5 banners",
-      "Soporte prioritario 24/7",
+      "Soporte prioritario por WhatsApp",
       "Todo lo de Pro",
     ],
   },

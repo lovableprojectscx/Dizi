@@ -20,6 +20,8 @@ export const Route = createFileRoute("/admin/plan")({
   component: PlanPage,
 });
 
+const PLAN_ORDER: readonly PlanId[] = ["semilla", "emprendedor", "pro", "ilimitado"];
+
 function PlanPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
@@ -179,8 +181,10 @@ function PlanPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {(Object.keys(PLANS) as PlanId[]).map((p) => {
+        {PLAN_ORDER.map((p, planIndex) => {
+          const currentPlanIndex = PLAN_ORDER.indexOf(store.plan);
           const isCurrent = store.plan === p;
+          const isLowerPlan = planIndex < currentPlanIndex;
           const planInfo = PLANS[p];
           const displayPrice = isAnnual && planInfo.annualPrice > 0 ? planInfo.annualPrice : planInfo.price;
           const periodLabel = isAnnual && planInfo.annualPrice > 0 ? "/año" : "/mes";
@@ -225,7 +229,23 @@ function PlanPage() {
                 </div>
 
                 <div className="pt-3">
-                  {!isCurrent ? (
+                  {isCurrent ? (
+                    <div className="h-9 w-full flex items-center justify-center text-xs font-bold text-muted-foreground bg-muted/60 rounded-lg">
+                      Plan Activo
+                    </div>
+                  ) : isLowerPlan ? (
+                    <a
+                      href={buildWaUrl(
+                        DIZI_SUPPORT_PHONE,
+                        `Hola Dizi, me gustaría cambiar al plan ${planInfo.name} (${isAnnual ? "Anual" : "Mensual"}) para mi tienda "${store.name}".`
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-9 w-full items-center justify-center rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                    >
+                      Cambiar a {planInfo.name}
+                    </a>
+                  ) : (
                     <a
                       href={buildWaUrl(
                         DIZI_SUPPORT_PHONE,
@@ -237,10 +257,6 @@ function PlanPage() {
                     >
                       Solicitar {planInfo.name}
                     </a>
-                  ) : (
-                    <div className="h-9 w-full flex items-center justify-center text-xs font-bold text-muted-foreground bg-muted/60 rounded-lg">
-                      Plan Activo
-                    </div>
                   )}
                 </div>
               </CardContent>
@@ -291,10 +307,8 @@ function PlanPage() {
                 </h3>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Comparte Dizi con otros negocios y emprendedores. Por cada tienda recomendada que
-                adquiera cualquier plan de pago,{" "}
-                <strong>ambos recibirán 1 mes gratis adicional</strong> de suscripción de forma
-                automática.
+                Por cada tienda que recomiendes y contrate un plan de pago,{" "}
+                <strong>ambos reciben 1 mes gratis</strong>.
               </p>
               <div className="pt-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
                 <div className="bg-background border rounded-xl px-3.5 h-10 flex items-center text-xs font-mono text-muted-foreground select-all truncate flex-1 min-w-0">

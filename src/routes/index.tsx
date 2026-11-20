@@ -127,7 +127,7 @@ function LandingPage() {
               Beneficios
             </a>
             <a href="#modelos" className="hover:text-primary transition-colors">
-              Diseños (8)
+              Diseños ({LANDING_SHOWCASE_DESIGNS.length})
             </a>
             <a href="#pasos" className="hover:text-primary transition-colors">
               Cómo Funciona
@@ -183,7 +183,7 @@ function LandingPage() {
               className="block px-4 py-2.5 rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors"
               onClick={() => setMenuOpen(false)}
             >
-              Diseños (8)
+              Diseños ({LANDING_SHOWCASE_DESIGNS.length})
             </a>
             <a
               href="#pasos"
@@ -422,7 +422,7 @@ function LandingPage() {
               Catálogo Web + Link en Bio + Libro de Reclamaciones
             </h2>
             <p className="text-sm text-muted-foreground">
-              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú desde S/ {PLANS.emprendedor.price.toFixed(2)} / mes.
+              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú, desde el plan gratuito.
             </p>
           </div>
 
