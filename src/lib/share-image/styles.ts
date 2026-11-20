@@ -260,8 +260,7 @@ export function drawStoreHeader(
   ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   const storeName = data.storeName;
   const textW = ctx.measureText(storeName).width;
-  const hasLogo = Boolean(logoImg || data.storeLogoUrl);
-  const pillW = Math.round(textW + (hasLogo ? 80 : 44));
+  const pillW = Math.round(textW + 80);
   const pillH = 60;
   const pillX = 60;
   const pillY = Math.round(headerY - 6);
@@ -296,7 +295,7 @@ export function drawStoreHeader(
   ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(storeName, pillX + (hasLogo ? 62 : 22), headerY + 24);
+  ctx.fillText(storeName, pillX + 62, headerY + 24);
   ctx.restore();
 
   if (boxes) {

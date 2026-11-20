@@ -7,7 +7,6 @@
  */
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import QRCode from "qrcode";
 import { toast } from "sonner";
 import {
   Share2,
@@ -31,9 +30,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
-import { toSupabaseUrl } from "@/lib/image-utils";
+import { loadShareImageAssets } from "@/lib/share-image/assets";
 import { prepareShareImageData } from "@/lib/share-image/data";
-import { drawShareImage, ensureShareImageFontsLoaded } from "@/lib/share-image/styles";
+import { drawShareImage } from "@/lib/share-image/styles";
 import {
   generateCaption,
   getSavedProductEmoji,
@@ -57,6 +56,10 @@ export interface ShareImageDialogProps {
   product: Product | null;
   store: Store;
   source?: ShareEventSource;
+  /** Estilo inicial opcional (RF-54.8). Sin él, abre en "etiqueta" como siempre. */
+  initialStyle?: ShareImageStyle;
+  /** Plantilla de texto inicial opcional (RF-54.9). */
+  initialCaptionTemplate?: CaptionTemplate;
 }
 
 const STYLES_CONFIG: {
@@ -97,9 +100,11 @@ export function ShareImageDialog({
   product,
   store,
   source = "productos",
+  initialStyle,
+  initialCaptionTemplate,
 }: ShareImageDialogProps) {
   const [format, setFormat] = useState<ShareImageFormat>("historia");
-  const [style, setStyle] = useState<ShareImageStyle>("etiqueta");
+  const [style, setStyle] = useState<ShareImageStyle>(initialStyle ?? "etiqueta");
   const [rendering, setRendering] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -120,6 +125,16 @@ export function ShareImageDialog({
       baseUrl: typeof window !== "undefined" ? window.location.origin : undefined,
     });
   }, [product, store]);
+
+  // Sincronizar estilo inicial al abrir el diálogo (RF-54.8)
+  useEffect(() => {
+    if (!open) return;
+    if (initialStyle) {
+      setStyle(initialStyle);
+    } else {
+      setStyle("etiqueta");
+    }
+  }, [open, initialStyle, product?.id]);
 
   // Si el producto no tiene oferta real ni es a consultar y estaba en estilo oferta, pasar a etiqueta
   useEffect(() => {
@@ -148,14 +163,22 @@ export function ShareImageDialog({
   const [captionText, setCaptionText] = useState("");
   const [copiedCaption, setCopiedCaption] = useState(false);
 
-  // Inicializar o ajustar plantilla según existencia de oferta real
+  // Inicializar o ajustar plantilla según existencia de oferta real o plantilla inicial
   useEffect(() => {
+    if (initialCaptionTemplate) {
+      if (initialCaptionTemplate === "oferta" && !shareData?.isOnSale) {
+        setCaptionTemplate("novedad");
+      } else {
+        setCaptionTemplate(initialCaptionTemplate);
+      }
+      return;
+    }
     if (shareData?.isOnSale) {
       setCaptionTemplate("oferta");
     } else {
       setCaptionTemplate("novedad");
     }
-  }, [shareData?.productId, shareData?.isOnSale]);
+  }, [open, initialCaptionTemplate, shareData?.productId, shareData?.isOnSale]);
 
   useEffect(() => {
     if (shareData && !shareData.isOnSale && captionTemplate === "oferta") {
@@ -239,98 +262,35 @@ export function ShareImageDialog({
   useEffect(() => {
     if (!open || !shareData) return;
 
-    let isMounted = true;
+    const controller = new AbortController();
     setRendering(true);
     setImageError(null);
 
     const loadImages = async () => {
       try {
-        // Cargar tipografías oficiales (Plus Jakarta Sans y Playfair Display) antes de medir/dibujar
-        await ensureShareImageFontsLoaded();
-
-        // Generar QR en memoria
-        const qrCanvas = document.createElement("canvas");
-        await QRCode.toCanvas(qrCanvas, shareData.catalogProductUrl, {
-          width: 300,
-          margin: 1,
-          color: {
-            dark: "#0F172A",
-            light: "#FFFFFF",
-          },
+        const assets = await loadShareImageAssets(shareData, {
+          qrSize: 300,
+          signal: controller.signal,
         });
-        if (isMounted) loadedQrCanvasRef.current = qrCanvas;
+        if (controller.signal.aborted) return;
 
-        // Cargar logo si existe
-        if (shareData.storeLogoUrl) {
-          try {
-            const logo = new Image();
-            logo.crossOrigin = "anonymous";
-            await new Promise<void>((resolve, reject) => {
-              logo.onload = () => resolve();
-              logo.onerror = () => reject();
-              logo.src = shareData.storeLogoUrl!;
-            });
-            if (isMounted) loadedLogoImgRef.current = logo;
-          } catch {
-            if (isMounted) loadedLogoImgRef.current = null;
-          }
-        } else {
-          if (isMounted) loadedLogoImgRef.current = null;
-        }
+        loadedQrCanvasRef.current = assets.qrImage;
+        loadedLogoImgRef.current = assets.storeLogoImage;
+        loadedProductImgRef.current = assets.productImage;
+        setImageError(assets.imageError);
 
-        // Cargar foto del producto
-        if (shareData.productImageUrl) {
-          const loadProductImageWithFallback = async (url: string): Promise<HTMLImageElement> => {
-            return new Promise((resolve, reject) => {
-              const img = new Image();
-              img.crossOrigin = "anonymous";
-              img.onload = () => resolve(img);
-              img.onerror = () => reject(new Error("Error de carga de imagen"));
-              img.src = url;
-            });
-          };
-
-          try {
-            const pImg = await loadProductImageWithFallback(shareData.productImageUrl);
-            if (isMounted) loadedProductImgRef.current = pImg;
-          } catch (err) {
-            // Intentar fallback a Supabase directo si Bunny falla por CORS
-            const fallbackUrl = toSupabaseUrl(shareData.productImageUrl);
-            if (fallbackUrl && fallbackUrl !== shareData.productImageUrl) {
-              try {
-                const pImg = await loadProductImageWithFallback(fallbackUrl);
-                if (isMounted) loadedProductImgRef.current = pImg;
-              } catch {
-                if (isMounted) {
-                  setImageError("No se pudo cargar la foto con permisos de exportación.");
-                  loadedProductImgRef.current = null;
-                }
-              }
-            } else {
-              if (isMounted) {
-                setImageError("No se pudo cargar la foto del producto.");
-                loadedProductImgRef.current = null;
-              }
-            }
-          }
-        } else {
-          if (isMounted) loadedProductImgRef.current = null;
-        }
-
-        if (isMounted) {
-          renderCanvas();
-        }
+        renderCanvas();
       } catch (e) {
         console.error("Error al preparar recursos de imagen:", e);
       } finally {
-        if (isMounted) setRendering(false);
+        if (!controller.signal.aborted) setRendering(false);
       }
     };
 
     loadImages();
 
     return () => {
-      isMounted = false;
+      controller.abort();
     };
   }, [open, shareData, renderCanvas]);
 

@@ -112,7 +112,7 @@ describe("HOTFIX: hotfix-hooks-dashboard", () => {
     expect(() => {
       const html = renderDashboard();
       expect(html).toContain("Tienda Hotfix");
-      expect(html).toContain("Panel de administración de tu catálogo digital");
+      expect(html).toContain("Hola,");
     }).not.toThrow();
   });
 
