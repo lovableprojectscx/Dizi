@@ -275,15 +275,30 @@ export function isSurveyClosed(now: Date = new Date()): boolean {
 }
 
 /**
- * Determina si la tienda puede ver la tarjeta y responder la encuesta (RF-43.1, RF-43.11, RF-43.12).
+ * Determina si la tienda puede ver la tarjeta y responder la encuesta (RF-43.1, RF-43.11, RF-43.12, RF-55.9).
+ * En versiones posteriores a "2026-11", exige al menos 14 días desde la creación y 3 o más productos reales.
  */
 export function canStoreTakeSurvey(
   store: Store,
   hasAnswered: boolean,
-  now: Date = new Date()
+  now: Date = new Date(),
+  version: string = SURVEY_VERSION
 ): boolean {
   if (hasAnswered) return false;
   if (isSurveyClosed(now)) return false;
+
+  // RF-55.9: Para próximas versiones de encuesta (> "2026-11")
+  if (version > "2026-11") {
+    if (!store.createdAt) return false;
+    const createdAtMs = new Date(store.createdAt).getTime();
+    const daysSinceCreated = Math.floor((now.getTime() - createdAtMs) / (1000 * 60 * 60 * 24));
+    if (daysSinceCreated < 14) return false;
+
+    const realProductsCount =
+      store.products?.filter((p) => p.visible && !p.isSample).length ?? 0;
+    if (realProductsCount < 3) return false;
+  }
+
   const group = getSurveyGroup(store);
   return group !== null;
 }

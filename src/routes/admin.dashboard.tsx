@@ -25,6 +25,12 @@ import {
 import { PanelHero } from "@/components/admin/PanelHero";
 import { ProductMosaic } from "@/components/admin/ProductMosaic";
 import { NextStepCard } from "@/components/admin/NextStepCard";
+import {
+  CatalogImageCard,
+  isCatalogCardDismissed,
+  dismissCatalogCard,
+} from "@/components/admin/CatalogImageCard";
+import { claimTrialRewards } from "@/lib/trial-rewards";
 import { getMosaicProducts, getNextStep, getTrialStatus } from "@/lib/panel-home";
 
 export const Route = createFileRoute("/admin/dashboard")({
@@ -34,9 +40,17 @@ export const Route = createFileRoute("/admin/dashboard")({
 function Dashboard() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
+  const fetchData = useApp((s) => s.fetchData);
 
   const [surveyEligible, setSurveyEligible] = useState(false);
+  const [catalogCardDismissed, setCatalogCardDismissed] = useState(false);
   const getMySurveyResponse = useApp((s) => s.getMySurveyResponse);
+
+  useEffect(() => {
+    if (store?.id) {
+      setCatalogCardDismissed(isCatalogCardDismissed(store.id));
+    }
+  }, [store?.id]);
 
   useEffect(() => {
     if (!store) {
@@ -58,6 +72,19 @@ function Dashboard() {
     };
   }, [store?.id, store?.plan, store?.slug, store?.subscriptionStatus, getMySurveyResponse]);
 
+  const { isTrial, daysLeft } = store ? getTrialStatus(store) : { isTrial: false, daysLeft: 0 };
+
+  // Evaluar logros de prueba Pro al entrar a Inicio (RF-55.7)
+  useEffect(() => {
+    if (store?.id && isTrial) {
+      claimTrialRewards(store.id).then((res) => {
+        if (res.totalDaysAdded > 0) {
+          fetchData();
+        }
+      });
+    }
+  }, [store?.id, isTrial, fetchData]);
+
   const mosaicProducts = useMemo(
     () => (store ? getMosaicProducts(store, 4) : []),
     [store],
@@ -77,12 +104,17 @@ function Dashboard() {
   }
 
   const plan = PLANS[store.plan];
-  const { isTrial, daysLeft } = getTrialStatus(store);
+  const trialPlanName = store.plan === "pro" ? "Pro" : (PLANS[store.plan]?.name || "Pro");
   const planBadgeText = isTrial
     ? daysLeft === 1
-      ? "Prueba · queda 1 día"
-      : `Prueba · quedan ${daysLeft} días`
+      ? `Prueba ${trialPlanName} · queda 1 día`
+      : `Prueba ${trialPlanName} · quedan ${daysLeft} días`
     : `Plan ${plan.name}`;
+
+  const productsWithPhotoCount = (store.products || []).filter(
+    (p) => !p.isSample && p.visible && p.image && p.image.trim().length > 0,
+  ).length;
+  const showCatalogImageCard = productsWithPhotoCount >= 3 && !catalogCardDismissed;
 
   const completaEligible = isStoreEligibleForCompletaTuTienda(store);
   const completaDismissed = isCompletaTuTiendaDismissed(store.id);
@@ -144,6 +176,18 @@ function Dashboard() {
 
       {/* 2. Una sola tarjeta "Tu siguiente paso" + "También pendiente" */}
       <NextStepCard store={store} nextStep={nextStep} />
+
+      {/* 2.5 Tarjeta "Tu imagen de catálogo está lista" (RF-55.13) */}
+      {showCatalogImageCard && (
+        <CatalogImageCard
+          store={store}
+          dismissible
+          onDismiss={() => {
+            dismissCatalogCard(store.id);
+            setCatalogCardDismissed(true);
+          }}
+        />
+      )}
 
       {/* 3. Comparte tu negocio (ShareCatalogCard actual, sin cambios de lógica) */}
       <ShareCatalogCard store={store} title="Comparte tu negocio" />

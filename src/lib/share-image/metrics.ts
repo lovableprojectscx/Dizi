@@ -9,7 +9,7 @@ import type { ShareEventSource, ShareImageFormat, ShareImageStyle } from "./type
 
 export interface LogShareEventParams {
   storeId: string;
-  productId: string;
+  productId?: string | null;
   style: ShareImageStyle;
   size: ShareImageFormat;
   source?: ShareEventSource;
@@ -45,7 +45,7 @@ export async function logShareEvent(
 
   const payload: Record<string, any> = {
     store_id: storeId,
-    product_id: productId,
+    product_id: productId ?? null,
     style,
     size,
     source,

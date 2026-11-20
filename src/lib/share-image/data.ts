@@ -66,3 +66,34 @@ export function prepareShareImageData(options: PrepareShareImageDataOptions): Sh
     brandingText: "Hecho con Dizi · dizicatalogo.com",
   };
 }
+
+/**
+ * Prepara los datos para la imagen de catálogo general (RF-55.12).
+ */
+export function prepareCatalogShareData(store: Store, baseUrl?: string): ShareImageData {
+  const origin = (baseUrl || (typeof window !== "undefined" ? window.location.origin : "https://dizi.la")).replace(/\/+$/, "");
+  const effectivePlan = getEffectivePlan(store);
+  const showBranding = effectivePlan === "semilla";
+  const catalogUrl = `${origin}/t/${store.slug}`;
+
+  const firstWithPhoto = (store.products || []).find((p) => !p.isSample && p.visible && p.image && p.image.trim().length > 0);
+  const productImageUrl = firstWithPhoto ? getOriginalImageUrl(firstWithPhoto.image) : "";
+
+  return {
+    storeName: (store.name || "Mi Tienda").trim(),
+    storeSlug: store.slug,
+    storeLogoUrl: store.logo?.trim() || null,
+    primaryColor: store.brandColor?.trim() || "#0F172A",
+    productId: firstWithPhoto?.id || "",
+    productName: "Catálogo completo",
+    price: 0,
+    originalPrice: null,
+    isOnSale: false,
+    discountPct: null,
+    isConsultPrice: true,
+    productImageUrl,
+    catalogProductUrl: catalogUrl,
+    showBranding,
+    brandingText: "Hecho con Dizi · dizicatalogo.com",
+  };
+}

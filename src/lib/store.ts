@@ -24,6 +24,7 @@ import { getUserRole } from "./auth";
 import { SURVEY_VERSION, type SurveyResponseRecord } from "./survey";
 import { diffProduct, toDbPatch, ProductConflictError } from "./product-sync";
 import { resolveProfileTags } from "./profile-tags";
+import { claimTrialRewards } from "./trial-rewards";
 
 /**
  * Invalida el cache público almacenado en `localStorage` y `sessionStorage` para una tienda.
@@ -904,6 +905,15 @@ export const useApp = create<AppState>()(
           const updatedStore = get().stores.find((st) => st.id === id);
           if (updatedStore?.slug) invalidateStorePublicCache(updatedStore.slug);
           if (updatedPatch.slug) invalidateStorePublicCache(updatedPatch.slug);
+
+          // Evaluar logros de prueba Pro al actualizar marca (RF-55.7)
+          if (updatedStore?.subscriptionStatus === "trial") {
+            claimTrialRewards(id).then((res) => {
+              if (res.totalDaysAdded > 0) {
+                get().fetchData();
+              }
+            }).catch(() => {});
+          }
         } catch (error) {
           console.error("[updateStore] Error:", error);
           toast.error("No se pudo actualizar la configuración");
@@ -1507,6 +1517,15 @@ export const useApp = create<AppState>()(
           }));
 
           if (st?.slug) invalidateStorePublicCache(st.slug);
+
+          // Evaluar logros de prueba Pro al publicar productos (RF-55.7)
+          if (st?.subscriptionStatus === "trial") {
+            claimTrialRewards(storeId).then((res) => {
+              if (res.totalDaysAdded > 0) {
+                get().fetchData();
+              }
+            }).catch(() => {});
+          }
         } catch (error) {
           console.error("[upsertProduct] Error:", error);
           throw error;
