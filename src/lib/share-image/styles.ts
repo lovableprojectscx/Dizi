@@ -208,15 +208,33 @@ export function drawSemillaBadgeSafe(
   if (!data.showBranding) return;
 
   const text = data.brandingText || "Hecho con Dizi · dizicatalogo.com";
-  const py = format === "historia" ? 1600 : format === "post-ig" ? 1315 : 1045;
+  const dims = SHARE_IMAGE_SIZES[format];
+  const H = dims.height;
+  const pillH = 46;
+  const maxAllowedPillY = H - 24 - pillH; // Mínimo 24 px de margen abajo del lienzo
+
+  // Posición nominal según formato
+  let nominalPillY = format === "historia" ? 1577 : format === "post-ig" ? 1280 : 1010;
+
+  // Si hay cajas de contenido previo, asegurar al menos 24 px de aire por debajo de ellas
+  if (boxes && boxes.length > 0) {
+    const contentBoxes = boxes.filter(
+      (b) => b.id !== "photo" && b.id !== "tag" && b.id !== "priceInTag" && b.id !== "semillaBadge"
+    );
+    if (contentBoxes.length > 0) {
+      const maxContentBottom = Math.max(...contentBoxes.map((b) => b.y + b.height));
+      nominalPillY = Math.max(nominalPillY, maxContentBottom + 24);
+    }
+  }
+
+  const pillY = Math.min(nominalPillY, maxAllowedPillY);
+  const py = Math.round(pillY + pillH / 2);
 
   ctx.save();
   ctx.font = "800 28px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   const textW = ctx.measureText(text).width;
   const pillW = Math.round(textW + 48);
-  const pillH = 46;
   const pillX = Math.round((1080 - pillW) / 2);
-  const pillY = Math.round(py - pillH / 2);
 
   ctx.fillStyle = "rgba(15, 23, 42, 0.88)";
   roundRect(ctx, pillX, pillY, pillW, pillH, 23);
@@ -350,11 +368,14 @@ export function drawStyleEtiqueta(
   ctx.fillStyle = "#F8FAFC";
   ctx.fillRect(0, 0, W, H);
 
+  // Espacio inferior para sello en Semilla
+  const brandingShift = data.showBranding ? (isStory ? 20 : isPostIg ? 30 : 60) : 0;
+
   // Escenario de la foto
   const stageX = isStory ? 40 : 36;
   const stageY = isStory ? 335 : 96;
   const stageW = isStory ? 1000 : 1008;
-  const stageH = isStory ? 940 : (isPostIg ? 920 : 710);
+  const stageH = (isStory ? 940 : (isPostIg ? 920 : 710)) - brandingShift;
 
   ctx.fillStyle = "#FFFFFF";
   roundRect(ctx, stageX, stageY, stageW, stageH, 36);
@@ -459,7 +480,7 @@ export function drawStyleEtiqueta(
   });
 
   // Pie de producto y QR
-  const footerY = isStory ? 1300 : (isPostIg ? 1040 : 820);
+  const footerY = (isStory ? 1300 : (isPostIg ? 1040 : 820)) - brandingShift;
   const footerH = isStory ? 260 : (isPostIg ? 240 : 216);
   const qrSize = 144;
   const qrX = W - qrSize - 60;
@@ -562,7 +583,7 @@ export function drawStyleEditorial(
 
   // Foto inmersiva
   const photoTop = headerY + 36;
-  const photoBottom = isStory ? 1230 : (isPostIg ? 890 : 660);
+  const photoBottom = isStory ? (data.showBranding ? 1200 : 1230) : (isPostIg ? 890 : 660);
   const photoH = photoBottom - photoTop;
   const photoW = W - 96;
 
@@ -634,7 +655,7 @@ export function drawStyleEditorial(
     ctx.font = "700 32px 'Playfair Display', Georgia, serif";
     ctx.textBaseline = "top";
     const origText = `Antes ${formatCurrency(data.originalPrice)}`;
-    const origY = isStory ? 1400 : (isPostIg ? 1038 : 798);
+    const origY = (isStory ? 1400 : (isPostIg ? 1038 : 798)) - (isStory && data.showBranding ? 30 : 0);
     ctx.fillText(origText, 48, origY);
     const ow = ctx.measureText(origText).width;
     ctx.strokeStyle = "#DC2626";
@@ -650,7 +671,7 @@ export function drawStyleEditorial(
   // Precio final display en Playfair Display Italic
   const priceStr = getPriceDisplay(data);
   const priceFontPx = isConsult ? (isStory ? 84 : 76) : (isStory ? 104 : (isPostIg ? 100 : 96));
-  const priceY = isStory ? 1565 : (isPostIg ? 1220 : 965);
+  const priceY = (isStory ? 1565 : (isPostIg ? 1220 : 965)) - (isStory && data.showBranding ? 30 : 0);
   ctx.fillStyle = data.primaryColor || "#0F172A";
   ctx.font = `italic 700 ${priceFontPx}px 'Playfair Display', Georgia, serif`;
   ctx.textAlign = "left";
@@ -703,7 +724,9 @@ export function drawStyleMarcoColor(
   const innerW = W - frameThick * 2;
   const stageY = isStory ? 353 : 96;
   const bottomBlockH = isStory ? 320 : (isPostIg ? 260 : 230);
-  const bottomBlockY = isStory ? 1255 : (H - bottomBlockH - frameThick - (data.showBranding ? 55 : 12));
+  const bottomBlockY = isStory
+    ? (data.showBranding ? 1220 : 1255)
+    : (H - bottomBlockH - frameThick - (data.showBranding ? 72 : 12));
   const photoStageH = bottomBlockY - stageY - 10;
 
   ctx.fillStyle = "#FFFFFF";
@@ -766,7 +789,9 @@ export function drawStyleMarcoColor(
 
   // Precio final y antes
   const priceStr = getPriceDisplay(data);
-  const priceFontPx = isConsult ? (isStory ? 84 : 76) : (isStory ? 104 : (isPostIg ? 100 : 96));
+  const priceFontPx = isConsult
+    ? (isStory ? 84 : 76)
+    : (isStory ? 104 : (isPostIg ? 100 : (data.showBranding ? 84 : 96)));
   const priceY = bottomBlockY + bottomBlockH - 16;
   ctx.font = `800 ${priceFontPx}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.fillStyle = "#FACC15"; // Acento amarillo brillante sobre bloque oscuro
@@ -871,7 +896,9 @@ export function drawStyleOferta(
 
   // Tarjeta inferior de precios y llamado a la acción
   const footerCardH = isStory ? 320 : (isPostIg ? 260 : 280);
-  const footerCardY = isStory ? 1250 : (H - footerCardH - (data.showBranding ? (isPostIg ? 65 : 55) : 20));
+  const footerCardY = isStory
+    ? (data.showBranding ? 1220 : 1250)
+    : (H - footerCardH - (data.showBranding ? 96 : 20));
   const photoTop = isStory ? headerY + 74 : 100;
   const photoH = footerCardY - photoTop - 14;
   const photoW = W - 88;
