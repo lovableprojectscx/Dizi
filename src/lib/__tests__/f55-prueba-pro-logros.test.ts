@@ -37,6 +37,7 @@ import { prepareCatalogShareData } from "../share-image/data";
 import { drawShareImage, validateShareImageBoxes } from "../share-image/styles";
 import { logShareEvent } from "../share-image/metrics";
 import { isCatalogCardDismissed, dismissCatalogCard } from "@/components/admin/CatalogImageCard";
+import { getCompletaTuTiendaTasks } from "@/components/admin/CompletaTuTienda";
 
 // Mock helper para crear tiendas de prueba
 function createMockStore(overrides: Partial<Store> = {}): Store {
@@ -506,5 +507,113 @@ describe("F55 · Prueba Pro de 7 días + Logros + Imagen de Catálogo (Escenario
 
     const updatedStatus = getTrialStatus(updatedStore, now);
     expect(updatedStatus.daysLeft).toBe(10);
+  });
+
+  it("Ajuste 4: CompletaTuTienda muestra el logro marca solo una vez en portada como 'logo + portada: +2 días'", () => {
+    const trialStore = createMockStore({
+      plan: "pro",
+      subscriptionStatus: "trial",
+      logo: null,
+      banners: [],
+    });
+
+    const tasks = getCompletaTuTiendaTasks(trialStore, false);
+    const logoTask = tasks.find((t) => t.id === "logo");
+    const portadaTask = tasks.find((t) => t.id === "portada");
+    const productosTask = tasks.find((t) => t.id === "productos");
+
+    // Logo NO debe mostrar recompensa individual para no duplicar la percepción a +4 días
+    expect(logoTask).toBeDefined();
+    expect(logoTask?.reward).toBeUndefined();
+
+    // Portada muestra la recompensa combinada unificada
+    expect(portadaTask).toBeDefined();
+    expect(portadaTask?.reward).toBe("logo + portada: +2 días");
+    expect(portadaTask?.rewardEarned).toBe(false);
+
+    // Productos muestra su recompensa de +3 días
+    expect(productosTask?.reward).toBe("+3 días");
+
+    // Si la tienda ya tiene logo y portada, portadaTask marca el logro ganado
+    const completeBrandStore = createMockStore({
+      plan: "pro",
+      subscriptionStatus: "trial",
+      logo: "https://example.com/logo.webp",
+      bannerTitle: "Bienvenidos a Florería Pétalos",
+    });
+    const completeTasks = getCompletaTuTiendaTasks(completeBrandStore, false);
+    const completePortada = completeTasks.find((t) => t.id === "portada");
+    expect(completePortada?.rewardEarned).toBe(true);
+
+    // En tiendas que NO están en prueba, no hay recompensas mostradas
+    const paidStore = createMockStore({
+      plan: "pro",
+      subscriptionStatus: "active",
+    });
+    const paidTasks = getCompletaTuTiendaTasks(paidStore, false);
+    expect(paidTasks.find((t) => t.id === "portada")?.reward).toBeUndefined();
+    expect(paidTasks.find((t) => t.id === "logo")?.reward).toBeUndefined();
+    expect(paidTasks.find((t) => t.id === "productos")?.reward).toBeUndefined();
+  });
+
+  it("Ajuste 5: Imagen de catálogo en formato Historia distribuye el espacio vertical en toda la altura", () => {
+    const createMockCtx = () => {
+      const gradientMock = { addColorStop: vi.fn() };
+      return {
+        canvas: { width: 1080, height: 1920 },
+        font: "16px sans-serif",
+        fillStyle: "#000000",
+        strokeStyle: "#000000",
+        lineWidth: 1,
+        textAlign: "left",
+        textBaseline: "alphabetic",
+        createLinearGradient: vi.fn().mockReturnValue(gradientMock),
+        fillRect: vi.fn(),
+        fillText: vi.fn(),
+        measureText: vi.fn().mockReturnValue({ width: 300 }),
+        save: vi.fn(),
+        restore: vi.fn(),
+        beginPath: vi.fn(),
+        closePath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        quadraticCurveTo: vi.fn(),
+        arc: vi.fn(),
+        stroke: vi.fn(),
+        fill: vi.fn(),
+        clip: vi.fn(),
+        drawImage: vi.fn(),
+      } as any;
+    };
+
+    const store = createMockStore({ plan: "semilla" });
+    const dataConSello = prepareCatalogShareData(store);
+    const ctx = createMockCtx();
+    const { boxes, validation } = drawShareImage(ctx, dataConSello, "catalogo", "historia");
+
+    expect(validation.ok).toBe(true);
+    expect(validation.collisions).toEqual([]);
+    expect(validation.safeZoneViolations).toEqual([]);
+
+    const titleBox = boxes.find((b) => b.id === "title");
+    const photoBoxes = boxes.filter((b) => b.id === "photo");
+    const ctaCard = boxes.find((b) => b.id === "ctaCard");
+    const badge = boxes.find((b) => b.id === "semillaBadge");
+
+    expect(titleBox).toBeDefined();
+    expect(titleBox!.y).toBe(360);
+    expect(titleBox!.height).toBe(160);
+
+    expect(photoBoxes.length).toBeGreaterThan(0);
+    expect(photoBoxes[0].y).toBe(560);
+
+    expect(ctaCard).toBeDefined();
+    expect(ctaCard!.y).toBe(1450);
+    expect(ctaCard!.height).toBe(260); // Bloque CTA ampliado
+
+    // Sello abajo sin choques, con al menos 24px de aire con la tarjeta CTA y antes del fin del lienzo
+    expect(badge).toBeDefined();
+    expect(badge!.y).toBeGreaterThanOrEqual(ctaCard!.y + ctaCard!.height + 24);
+    expect(badge!.y + badge!.height).toBeLessThanOrEqual(1850);
   });
 });

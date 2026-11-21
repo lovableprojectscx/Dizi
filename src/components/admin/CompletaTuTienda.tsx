@@ -110,15 +110,13 @@ export function getCompletaTuTiendaTasks(
       label: "Sube el logo de tu negocio",
       done: hasLogo,
       to: "/admin/configuracion",
-      reward: isTrial ? "+2 días" : undefined,
-      rewardEarned: marcaEarned,
     },
     {
       id: "portada",
       label: "Agrega portada o eslogan",
       done: hasPortada,
       to: "/admin/diseno",
-      reward: isTrial ? "+2 días" : undefined,
+      reward: isTrial ? "logo + portada: +2 días" : undefined,
       rewardEarned: marcaEarned,
     },
     {
@@ -283,7 +281,9 @@ export function CompletaTuTienda({ store }: { store: Store }) {
                         : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/40"
                     )}
                   >
-                    {task.rewardEarned ? `✓ ${task.reward} ganado` : task.reward}
+                    {task.rewardEarned
+                      ? (task.id === "portada" ? "✓ +2 días ganado" : `✓ ${task.reward} ganado`)
+                      : task.reward}
                   </span>
                 )}
               </Link>

@@ -282,10 +282,10 @@ describe("F54 · Lógica pura de Inicio y Promociona (Escenarios 1–8, 10, 13)"
 
     const pillX = 60;
     const iconX = pillX + 16;
-    const iconSize = 36;
+    const iconSize = 40;
     const nameCall = fillTextCalls.find((c) => c.text === "Regalos Fiorella");
     expect(nameCall).toBeDefined();
     expect(nameCall!.x).toBeGreaterThanOrEqual(iconX + iconSize);
-    expect(boxes[0]?.width).toBe(Math.round("Regalos Fiorella".length * 18 + 80));
+    expect(boxes[0]?.width).toBe(Math.round("Regalos Fiorella".length * 18 + 88));
   });
 });

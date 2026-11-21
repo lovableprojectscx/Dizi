@@ -1173,31 +1173,44 @@ export function drawStyleCatalogo(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  let titleY = 360;
-  let titleH = 65;
-  let titleFontSize = 52;
+  if (format === "historia") {
+    // En Historia vertical (1080×1920) titular prominente a >= 72px en 2 líneas
+    const titleFontSize = 74;
+    ctx.font = `800 ${titleFontSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText("¡Ya tenemos nuestro", 540, 405);
+    ctx.fillText("catálogo! 🎉", 540, 490);
+    ctx.restore();
 
-  if (format === "cuadrada") {
-    titleY = 130;
-    titleH = 50;
-    titleFontSize = 44;
-  } else if (format === "post-ig") {
-    titleY = 145;
-    titleH = 54;
-    titleFontSize = 46;
+    boxes.push({
+      id: "title",
+      x: 60,
+      y: 360,
+      width: 960,
+      height: 160,
+    });
+  } else {
+    let titleY = 130;
+    let titleH = 50;
+    let titleFontSize = 44;
+
+    if (format === "post-ig") {
+      titleY = 145;
+      titleH = 54;
+      titleFontSize = 46;
+    }
+
+    ctx.font = `800 ${titleFontSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText(titleText, 540, titleY);
+    ctx.restore();
+
+    boxes.push({
+      id: "title",
+      x: 60,
+      y: Math.round(titleY - titleH / 2),
+      width: 960,
+      height: titleH,
+    });
   }
-
-  ctx.font = `800 ${titleFontSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
-  ctx.fillText(titleText, 540, titleY);
-  ctx.restore();
-
-  boxes.push({
-    id: "title",
-    x: 60,
-    y: Math.round(titleY - titleH / 2),
-    width: 960,
-    height: titleH,
-  });
 
   // 4. Collage de 1 a 4 fotos de productos
   const rawPhotos: any[] = [];
@@ -1210,9 +1223,9 @@ export function drawStyleCatalogo(
   const photos = rawPhotos.slice(0, 4);
 
   const collageX = 60;
-  let collageY = 415;
+  let collageY = 560;
   const collageW = 960;
-  let collageH = 850;
+  let collageH = 865;
 
   if (format === "cuadrada") {
     collageY = 175;
@@ -1268,9 +1281,9 @@ export function drawStyleCatalogo(
   }
 
   // 5. Tarjeta CTA inferior con QR y link corto
-  let ctaY = collageY + collageH + 25;
-  let ctaH = 220;
-  let qrSize = 160;
+  let ctaY = 1450;
+  let ctaH = 260;
+  let qrSize = 200;
 
   if (format === "cuadrada") {
     ctaY = collageY + collageH + 20;
@@ -1292,7 +1305,7 @@ export function drawStyleCatalogo(
   ctx.stroke();
 
   // QR a la derecha dentro de la tarjeta
-  const qrX = collageX + collageW - qrSize - 24;
+  const qrX = collageX + collageW - qrSize - 28;
   const qrY = Math.round(ctaY + (ctaH - qrSize) / 2);
 
   if (options.qrImage && typeof ctx.drawImage === "function") {
@@ -1309,25 +1322,25 @@ export function drawStyleCatalogo(
   const textLeftX = collageX + 36;
   const textMaxW = qrX - textLeftX - 20;
 
-  const titleSize = format === "historia" ? 42 : 38;
-  const linkSize = format === "historia" ? 36 : 32;
-  const subSize = format === "historia" ? 24 : 22;
+  const titleSize = format === "historia" ? 48 : 38;
+  const linkSize = format === "historia" ? 42 : 32;
+  const subSize = format === "historia" ? 28 : 22;
 
   ctx.fillStyle = "#1E1B4B";
   ctx.font = `800 ${titleSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("Míralo aquí 👇", textLeftX, ctaY + (format === "historia" ? 55 : 50));
+  ctx.fillText("Míralo aquí 👇", textLeftX, ctaY + (format === "historia" ? 60 : 50));
 
   const rawUrl = data.catalogProductUrl || `https://dizi.la/t/${data.storeSlug}`;
   const cleanUrl = rawUrl.split("?")[0].replace(/^https?:\/\//, "");
   ctx.fillStyle = "#312E81";
   ctx.font = `800 ${linkSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
-  ctx.fillText(cleanUrl, textLeftX, ctaY + (format === "historia" ? 116 : 108), textMaxW);
+  ctx.fillText(cleanUrl, textLeftX, ctaY + (format === "historia" ? 132 : 108), textMaxW);
 
   ctx.fillStyle = "#64748B";
   ctx.font = `600 ${subSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
-  ctx.fillText("Pide directo por WhatsApp", textLeftX, ctaY + (format === "historia" ? 172 : 162));
+  ctx.fillText("Pide directo por WhatsApp", textLeftX, ctaY + (format === "historia" ? 200 : 162));
   ctx.restore();
 
   boxes.push({
@@ -1468,10 +1481,12 @@ export function validateShareImageBoxes(
         }
       }
       if (b.id === "semillaBadge") {
-        if (b.y + b.height > 1630) {
-          safeZoneViolations.push(`Sello Semilla invade zona segura inferior: y=${b.y + b.height} > 1630`);
+        const isCatalogo = boxes.some((box) => box.id === "ctaCard");
+        const maxBottom = isCatalogo ? 1850 : 1630;
+        if (b.y + b.height > maxBottom) {
+          safeZoneViolations.push(`Sello Semilla invade zona segura inferior: y=${b.y + b.height} > ${maxBottom}`);
         }
-        if (b.y < 1550) {
+        if (!isCatalogo && b.y < 1550) {
           safeZoneViolations.push(`Sello Semilla muy arriba: y=${b.y} < 1550`);
         }
       }
