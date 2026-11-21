@@ -125,7 +125,7 @@ export function CelebrationSlide({
             </span>
           </div>
           <p className="text-[13px] text-[#1E1B4B]/80 leading-relaxed">
-            Tu catálogo inició en Plan Semilla. Activa tu plan elegido escribiéndonos por WhatsApp:
+            Tu catálogo inició con 7 días de Pro gratis. Cuando quieras quedarte con el Plan {requestedPlan === "pro" ? "Pro" : (PLANS[requestedPlan]?.name || requestedPlan)}, lo activas desde Mi Plan o por WhatsApp:
           </p>
           <a
             href={buildWaUrl(

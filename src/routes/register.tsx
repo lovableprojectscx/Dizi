@@ -273,6 +273,23 @@ function RegisterPage() {
   const isTrial =
     invitePlan !== null && (inviteDurationMonths === 0 || inviteDurationUnit === "days");
 
+  const inviteDurationText = useMemo(() => {
+    if (!invitePlan) return "";
+    if (inviteDurationUnit === "days" && inviteDurationValue) {
+      return `${inviteDurationValue} ${inviteDurationValue === 1 ? "día" : "días"}`;
+    }
+    if (inviteDurationUnit === "months" && inviteDurationValue) {
+      return `${inviteDurationValue} ${inviteDurationValue === 1 ? "mes" : "meses"}`;
+    }
+    if (inviteDurationMonths && inviteDurationMonths > 0) {
+      return `${inviteDurationMonths} ${inviteDurationMonths === 1 ? "mes" : "meses"}`;
+    }
+    if (inviteDurationValue) {
+      return `${inviteDurationValue} días`;
+    }
+    return "15 días";
+  }, [invitePlan, inviteDurationUnit, inviteDurationValue, inviteDurationMonths]);
+
   const inviteBannerText = useMemo(() => {
     if (!invitePlan) return null;
     const priceText =
@@ -284,10 +301,10 @@ function RegisterPage() {
       return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationValue} ${inviteDurationValue === 1 ? "mes" : "meses"}${priceText}`;
     }
     if (isTrial) {
-      return `Invitación activa: 15 días de Prueba en Plan ${plan.toUpperCase()}${priceText}`;
+      return `Invitación activa: ${inviteDurationText} de Prueba en Plan ${plan.toUpperCase()}${priceText}`;
     }
     return `Invitación activa: Plan ${plan.toUpperCase()} por ${inviteDurationMonths} ${inviteDurationMonths === 1 ? "mes" : "meses"}${priceText}`;
-  }, [invitePlan, inviteCustomPrice, inviteDurationUnit, inviteDurationValue, isTrial, inviteDurationMonths, plan]);
+  }, [invitePlan, inviteCustomPrice, inviteDurationUnit, inviteDurationValue, isTrial, inviteDurationMonths, plan, inviteDurationText]);
 
   const scheduleAutoAdvance = (targetStep: RegisterStep, funnelStep?: FunnelStep) => {
     if (autoAdvanceTimerRef.current) {
@@ -632,6 +649,11 @@ function RegisterPage() {
       isPreviewTestMode={previewTestMode}
       showTrialBanner={isTrial && showTrialBanner}
       onDismissTrialBanner={() => setShowTrialBanner(false)}
+      trialBannerText={
+        invitePlan
+          ? `${inviteDurationText} de Plan ${PLANS[plan]?.name || plan.toUpperCase()} Gratis`
+          : undefined
+      }
       inviteLoading={inviteLoading}
       inviteBannerText={inviteBannerText}
       invalidInviteBanner={!inviteLoading && Boolean(inviteToken) && !invitePlan}
@@ -871,9 +893,15 @@ function RegisterPage() {
       {step === 5 && (
         <form onSubmit={handleRegister} className="space-y-4">
           <div className="rounded-2xl border border-[#312E81]/15 bg-white px-4 py-3 text-[13px] font-medium text-[#312E81]">
-            {isTrial
-              ? `Se activará tu Plan ${plan === "emprendedor" ? "Emprendedor" : plan.toUpperCase()} (prueba de 15 días) gratis al crear tu cuenta.`
-              : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${plan.toUpperCase()}` : "bajo el Plan Semilla (gratuito)"}.`}
+            {invitePlan ? (
+              isTrial
+                ? `Se activará tu Plan ${PLANS[plan]?.name || plan.toUpperCase()} (prueba de ${inviteDurationText}) gratis al crear tu cuenta.`
+                : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${PLANS[plan]?.name || plan.toUpperCase()}` : "bajo el Plan Semilla (gratuito)"}.`
+            ) : requestedPlan && requestedPlan !== "semilla" ? (
+              `Empiezas con 7 días de Pro gratis. Cuando quieras quedarte con el Plan ${requestedPlan === "pro" ? "Pro" : (PLANS[requestedPlan]?.name || requestedPlan)}, lo activas desde Mi Plan.`
+            ) : (
+              "Empiezas con 7 días de Pro gratis y puedes ganar hasta 7 más. Después sigues gratis en el Plan Semilla, sin tarjeta."
+            )}
           </div>
 
           {/* Correo */}

@@ -102,7 +102,7 @@ function LandingPage() {
     },
     {
       q: "¿Puedo empezar gratis sin pagar nada?",
-      a: "Sí. Puedes registrarte y crear tu catálogo con el Plan Semilla Gratuito (S/ 0.00) por tiempo ilimitado, sin necesidad de ingresar tarjeta de crédito.",
+      a: "Sí. Empiezas con 7 días de Pro gratis, sin tarjeta, y puedes ganar hasta 7 días más completando tu tienda. Después sigues gratis en el Plan Semilla por tiempo ilimitado.",
     },
   ];
 

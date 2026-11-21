@@ -543,4 +543,78 @@ test.describe("F55 · E2E & Capturas oficiales (Ajustes)", () => {
     await page.waitForTimeout(1200);
     await exportFullCanvas(page, "imagen-catalogo-con-sello-1080x1080.png");
   });
+
+  test.describe("Pantalla 5 de registro en celular (375 px) - Textos de prueba Pro", () => {
+    async function advanceToStep5(page: Page, storeName = "Florería Rosas") {
+      await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 1 de 5", { timeout: 10000 });
+      await page.locator("#register-store-name").fill(storeName);
+      await page.getByRole("button", { name: "Continuar" }).click();
+
+      await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 2 de 5", { timeout: 10000 });
+      await page.locator('button[data-niche="floreria"]').click();
+
+      await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 3 de 5", { timeout: 10000 });
+      await page.locator('input[type="tel"]').fill("987654321");
+      await page.getByRole("button", { name: "Continuar" }).click();
+
+      await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 4 de 5", { timeout: 10000 });
+      await page.locator('button[data-signup-city="lima"]').click();
+      await page.locator('button[data-signup-source="tiktok"]').click();
+
+      await expect(page.getByTestId("register-step-counter")).toHaveText("Paso 5 de 5", { timeout: 10000 });
+    }
+
+    test("Caso 1: Registro normal (sin invitación, sin ?plan) muestra texto Semilla sin tarjeta (375 px)", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto("/register", { waitUntil: "networkidle" });
+      await advanceToStep5(page, "Florería Normal");
+
+      const expectedText =
+        "Empiezas con 7 días de Pro gratis y puedes ganar hasta 7 más. Después sigues gratis en el Plan Semilla, sin tarjeta.";
+      await expect(page.getByText(expectedText)).toBeVisible({ timeout: 10000 });
+
+      await saveCaptura(page, "pantalla5-normal-375.png", true);
+    });
+
+    test("Caso 2: Registro con ?plan=pro muestra aviso de activación desde Mi Plan (375 px)", async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto("/register?plan=pro", { waitUntil: "networkidle" });
+      await advanceToStep5(page, "Florería Pro");
+
+      const expectedText =
+        "Empiezas con 7 días de Pro gratis. Cuando quieras quedarte con el Plan Pro, lo activas desde Mi Plan.";
+      await expect(page.getByText(expectedText)).toBeVisible({ timeout: 10000 });
+
+      await saveCaptura(page, "pantalla5-plan-pro-375.png", true);
+    });
+
+    test("Caso 3: Registro con invitación activa muestra duración real de la prueba (375 px)", async ({ page }) => {
+      await page.route("**/rest/v1/rpc/check_invite*", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify([
+            {
+              plan: "emprendedor",
+              duration_months: 0,
+              duration_unit: "days",
+              duration_value: 14,
+              custom_price: null,
+              notes: "Invitación 14 días",
+            },
+          ]),
+        });
+      });
+
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto("/register?invite=tok_invitacion_14d", { waitUntil: "networkidle" });
+      await advanceToStep5(page, "Florería Invitada");
+
+      const expectedText =
+        "Se activará tu Plan Emprendedor (prueba de 14 días) gratis al crear tu cuenta.";
+      await expect(page.getByText(expectedText)).toBeVisible({ timeout: 10000 });
+
+      await saveCaptura(page, "pantalla5-invite-375.png", true);
+    });
+  });
 });
