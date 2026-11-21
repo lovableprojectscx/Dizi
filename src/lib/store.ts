@@ -134,7 +134,7 @@ export const mapStoreFromDB = (row: any): Store => {
     photoFormat: row.photo_format ?? null,
     isDark: isDarkVal,
     ownerId: row.owner_id,
-    active: row.active,
+    active: row.active ?? true,
     isPublished: row.is_published,
     createdAt: row.created_at,
     whatsappClicks: row.whatsapp_clicks || 0,
@@ -303,6 +303,8 @@ interface AppState {
   ) => Promise<void>;
   /** Concede un periodo de prueba gratuito a una tienda */
   setTrialPlan: (storeId: string, plan: PlanId, durationDays?: number) => Promise<void>;
+  /** Extiende inmediatamente la fecha de vencimiento de la prueba Pro al otorgar logros (F55) */
+  applyGrantedTrialDays: (storeId: string, daysAdded: number) => void;
   /** Alterna el estado activo/desactivado de la tienda */
   toggleStoreActive: (storeId: string) => void;
   /** Inicia la sesión en modo suplantación (impersonation) para soporte técnico */
@@ -910,7 +912,8 @@ export const useApp = create<AppState>()(
           if (updatedStore?.subscriptionStatus === "trial") {
             claimTrialRewards(id).then((res) => {
               if (res.totalDaysAdded > 0) {
-                get().fetchData();
+                get().applyGrantedTrialDays(id, res.totalDaysAdded);
+                get().fetchData(true);
               }
             }).catch(() => {});
           }
@@ -1243,6 +1246,18 @@ export const useApp = create<AppState>()(
         }
       },
 
+      applyGrantedTrialDays: (storeId: string, daysAdded: number) => {
+        if (!storeId || daysAdded <= 0) return;
+        set((s) => ({
+          stores: s.stores.map((st) => {
+            if (st.id !== storeId) return st;
+            const baseMs = st.planExpiresAt ? new Date(st.planExpiresAt).getTime() : Date.now();
+            const newExpiry = new Date(baseMs + daysAdded * 24 * 60 * 60 * 1000).toISOString();
+            return { ...st, planExpiresAt: newExpiry };
+          }),
+        }));
+      },
+
       upsertProduct: async (storeId, product, baseProduct) => {
         const prodId = product.id || uid();
         let imageUrl = product.image;
@@ -1522,7 +1537,8 @@ export const useApp = create<AppState>()(
           if (st?.subscriptionStatus === "trial") {
             claimTrialRewards(storeId).then((res) => {
               if (res.totalDaysAdded > 0) {
-                get().fetchData();
+                get().applyGrantedTrialDays(storeId, res.totalDaysAdded);
+                get().fetchData(true);
               }
             }).catch(() => {});
           }

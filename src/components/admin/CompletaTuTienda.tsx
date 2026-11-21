@@ -165,7 +165,7 @@ export function CompletaTuTienda({ store }: { store: Store }) {
         setGrantedRewards(rewards);
       });
     }
-  }, [store?.id, store?.subscriptionStatus]);
+  }, [store?.id, store?.subscriptionStatus, store?.planExpiresAt]);
 
   if (!isStoreEligibleForCompletaTuTienda(store) || dismissed) {
     return null;

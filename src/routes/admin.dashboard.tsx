@@ -79,7 +79,8 @@ function Dashboard() {
     if (store?.id && isTrial) {
       claimTrialRewards(store.id).then((res) => {
         if (res.totalDaysAdded > 0) {
-          fetchData();
+          useApp.getState().applyGrantedTrialDays(store.id, res.totalDaysAdded);
+          fetchData(true);
         }
       });
     }

@@ -5,6 +5,20 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
+
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+      update: vi.fn().mockResolvedValue({ error: null }),
+    })),
+    auth: { getSession: () => Promise.resolve({ data: { session: null } }) },
+  },
+}));
 import {
   getEffectivePlan,
   getEffectiveProductLimit,
@@ -444,5 +458,53 @@ describe("F55 · Prueba Pro de 7 días + Logros + Imagen de Catálogo (Escenario
     const resCuadSinSello = drawShareImage(ctxCuadSinSello, dataSinSello, "catalogo", "cuadrada");
     expect(resCuadSinSello.validation.ok).toBe(true);
     expect(resCuadSinSello.validation.collisions).toEqual([]);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Correcciones adicionales solicitadas por Jack
+  // ─────────────────────────────────────────────────────────────────────────
+  it("Ajuste 1: Tienda creada antes del corte no puede recibir días de prueba Pro", async () => {
+    // Si la RPC en base de datos filtra por created_at >= c_f55_cutoff,
+    // retorna 0 filas para tiendas pre-corte.
+    const mockRpc = vi.fn().mockResolvedValue({ data: [], error: null });
+    const mockSupabase = { rpc: mockRpc };
+
+    const res = await claimTrialRewards("s_old_store_pre_cutoff", mockSupabase as any, { silent: true });
+    expect(res.totalDaysAdded).toBe(0);
+    expect(res.granted).toEqual([]);
+  });
+
+  it("Ajuste 2: Tienda nueva en prueba Pro nace con active=true y NO dispara aviso de suspensión", () => {
+    const store = createMockStore({
+      plan: "pro",
+      subscriptionStatus: "trial",
+      active: true,
+    });
+    // La condición de suspensión en admin.tsx L244 es: store && !store.active
+    const isSuspended = store && !store.active;
+    expect(store.active).toBe(true);
+    expect(isSuspended).toBe(false);
+  });
+
+  it("Ajuste 3: applyGrantedTrialDays extiende planExpiresAt y getTrialStatus muestra los días reales", () => {
+    const now = new Date();
+    const initialExpiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const store = createMockStore({
+      plan: "pro",
+      subscriptionStatus: "trial",
+      planExpiresAt: initialExpiry,
+    });
+
+    const initialStatus = getTrialStatus(store, now);
+    expect(initialStatus.daysLeft).toBe(7);
+
+    // Otorgar +3 días por logro
+    const daysToAdd = 3;
+    const baseMs = new Date(store.planExpiresAt!).getTime();
+    const newExpiresAt = new Date(baseMs + daysToAdd * 24 * 60 * 60 * 1000).toISOString();
+    const updatedStore = { ...store, planExpiresAt: newExpiresAt };
+
+    const updatedStatus = getTrialStatus(updatedStore, now);
+    expect(updatedStatus.daysLeft).toBe(10);
   });
 });

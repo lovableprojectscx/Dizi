@@ -166,8 +166,8 @@ export function CatalogImageCard({
     // 2. Evaluar y otorgar logros de prueba Pro
     const result = await claimTrialRewards(store.id, supabase);
     if (result.totalDaysAdded > 0) {
-      // Forzar actualización de la tienda
-      useApp.getState().fetchData();
+      useApp.getState().applyGrantedTrialDays(store.id, result.totalDaysAdded);
+      useApp.getState().fetchData(true);
     }
   };
 

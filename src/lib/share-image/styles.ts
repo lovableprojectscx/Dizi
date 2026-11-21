@@ -276,16 +276,16 @@ export function drawStoreHeader(
   const headerY = format === "historia" ? 265 : 44;
 
   ctx.save();
-  ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.font = "700 36px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   const storeName = data.storeName;
   const textW = ctx.measureText(storeName).width;
-  const pillW = Math.round(textW + 80);
-  const pillH = 60;
+  const pillW = Math.round(textW + 88);
+  const pillH = 64;
   const pillX = 60;
-  const pillY = Math.round(headerY - 6);
+  const pillY = Math.round(headerY - 8);
 
   ctx.fillStyle = dark ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.95)";
-  roundRect(ctx, pillX, pillY, pillW, pillH, 30);
+  roundRect(ctx, pillX, pillY, pillW, pillH, 32);
   ctx.fill();
 
   ctx.lineWidth = 1;
@@ -294,12 +294,12 @@ export function drawStoreHeader(
 
   const iconX = pillX + 16;
   const iconY = pillY + 12;
-  const iconSize = 36;
+  const iconSize = 40;
 
   if (logoImg && typeof ctx.drawImage === "function") {
     try {
       ctx.save();
-      roundRect(ctx, iconX, iconY, iconSize, iconSize, 18);
+      roundRect(ctx, iconX, iconY, iconSize, iconSize, 20);
       ctx.clip();
       ctx.drawImage(logoImg, iconX, iconY, iconSize, iconSize);
       ctx.restore();
@@ -311,10 +311,10 @@ export function drawStoreHeader(
   }
 
   ctx.fillStyle = dark ? "#FFFFFF" : "#0F172A";
-  ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.font = "700 36px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(storeName, pillX + 62, headerY + 24);
+  ctx.fillText(storeName, pillX + 68, headerY + 24);
   ctx.restore();
 
   if (boxes) {
@@ -1173,18 +1173,18 @@ export function drawStyleCatalogo(
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  let titleY = 380;
-  let titleH = 60;
-  let titleFontSize = 46;
+  let titleY = 360;
+  let titleH = 65;
+  let titleFontSize = 52;
 
   if (format === "cuadrada") {
-    titleY = 135;
-    titleH = 46;
-    titleFontSize = 38;
+    titleY = 130;
+    titleH = 50;
+    titleFontSize = 44;
   } else if (format === "post-ig") {
     titleY = 145;
-    titleH = 50;
-    titleFontSize = 42;
+    titleH = 54;
+    titleFontSize = 46;
   }
 
   ctx.font = `800 ${titleFontSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
@@ -1210,16 +1210,16 @@ export function drawStyleCatalogo(
   const photos = rawPhotos.slice(0, 4);
 
   const collageX = 60;
-  let collageY = 425;
+  let collageY = 415;
   const collageW = 960;
-  let collageH = 890;
+  let collageH = 850;
 
   if (format === "cuadrada") {
     collageY = 175;
-    collageH = 560;
+    collageH = 550;
   } else if (format === "post-ig") {
-    collageY = 185;
-    collageH = 780;
+    collageY = 190;
+    collageH = 760;
   }
 
   const gap = 16;
@@ -1268,18 +1268,18 @@ export function drawStyleCatalogo(
   }
 
   // 5. Tarjeta CTA inferior con QR y link corto
-  let ctaY = collageY + collageH + 24;
-  let ctaH = 180;
-  let qrSize = 136;
+  let ctaY = collageY + collageH + 25;
+  let ctaH = 220;
+  let qrSize = 160;
 
   if (format === "cuadrada") {
-    ctaY = collageY + collageH + 18;
-    ctaH = 170;
-    qrSize = 126;
-  } else if (format === "post-ig") {
     ctaY = collageY + collageH + 20;
-    ctaH = 180;
-    qrSize = 132;
+    ctaH = 210;
+    qrSize = 150;
+  } else if (format === "post-ig") {
+    ctaY = collageY + collageH + 22;
+    ctaH = 215;
+    qrSize = 155;
   }
 
   ctx.save();
@@ -1306,24 +1306,28 @@ export function drawStyleCatalogo(
   }
 
   // Textos a la izquierda dentro de la tarjeta
-  const textLeftX = collageX + 32;
-  const textMaxW = qrX - textLeftX - 16;
+  const textLeftX = collageX + 36;
+  const textMaxW = qrX - textLeftX - 20;
+
+  const titleSize = format === "historia" ? 42 : 38;
+  const linkSize = format === "historia" ? 36 : 32;
+  const subSize = format === "historia" ? 24 : 22;
 
   ctx.fillStyle = "#1E1B4B";
-  ctx.font = "800 32px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.font = `800 ${titleSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("Míralo aquí 👇", textLeftX, ctaY + 45);
+  ctx.fillText("Míralo aquí 👇", textLeftX, ctaY + (format === "historia" ? 55 : 50));
 
   const rawUrl = data.catalogProductUrl || `https://dizi.la/t/${data.storeSlug}`;
   const cleanUrl = rawUrl.split("?")[0].replace(/^https?:\/\//, "");
   ctx.fillStyle = "#312E81";
-  ctx.font = "700 26px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-  ctx.fillText(cleanUrl, textLeftX, ctaY + 95, textMaxW);
+  ctx.font = `800 ${linkSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.fillText(cleanUrl, textLeftX, ctaY + (format === "historia" ? 116 : 108), textMaxW);
 
   ctx.fillStyle = "#64748B";
-  ctx.font = "500 20px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-  ctx.fillText("Pide directo por WhatsApp", textLeftX, ctaY + 138);
+  ctx.font = `600 ${subSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.fillText("Pide directo por WhatsApp", textLeftX, ctaY + (format === "historia" ? 172 : 162));
   ctx.restore();
 
   boxes.push({

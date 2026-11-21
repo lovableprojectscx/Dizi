@@ -155,6 +155,10 @@ CREATE OR REPLACE FUNCTION public.claim_trial_rewards(p_store_id text)
  SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
+  -- Constante de corte de despliegue F55: solo tiendas creadas a partir de esta fecha
+  -- son elegibles para la prueba Pro y sus logros
+  c_f55_cutoff CONSTANT timestamptz := '2026-11-20 00:00:00+00';
+
   v_store RECORD;
   v_is_super BOOLEAN;
   v_has_prod3 BOOLEAN := false;
@@ -163,19 +167,27 @@ DECLARE
   v_total_granted INT := 0;
   v_max_additional INT := 0;
   v_days_to_add INT := 0;
+  v_inserted_days INT := 0;
+  v_total_days_added INT := 0;
   v_granted_prod3 BOOLEAN := false;
   v_granted_share BOOLEAN := false;
   v_granted_marca BOOLEAN := false;
 BEGIN
-  -- Validar que la tienda exista
-  SELECT * INTO v_store FROM public.stores WHERE id = p_store_id;
+  -- 1. Validar que la tienda exista y bloquear su fila contra concurrencia (FOR UPDATE)
+  SELECT * INTO v_store
+  FROM public.stores
+  WHERE id = p_store_id
+  FOR UPDATE;
+
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Tienda no encontrada.' USING ERRCODE = 'P0002';
   END IF;
 
-  -- Validar permisos: super_admin o dueño autenticado
+  -- 2. Validar permisos: super_admin, roles del sistema o dueña autenticada
   v_is_super := (COALESCE(((SELECT auth.jwt()) -> 'app_metadata' ->> 'role'), '') = 'super_admin');
-  IF (SELECT auth.role()) = 'service_role' OR v_is_super THEN
+  IF current_user IN ('postgres', 'supabase_admin', 'service_role')
+     OR (SELECT auth.role()) = 'service_role' 
+     OR v_is_super THEN
     NULL;
   ELSE
     IF (SELECT auth.uid()) IS NULL OR (SELECT auth.uid()) != v_store.owner_id THEN
@@ -183,7 +195,12 @@ BEGIN
     END IF;
   END IF;
 
-  -- Validar que esté en período de prueba activo y vigente
+  -- 3. Solo aplica a tiendas creadas desde que se despliega F55
+  IF v_store.created_at < c_f55_cutoff THEN
+    RETURN;
+  END IF;
+
+  -- 4. Validar que esté en período de prueba activo y vigente con plan Pro
   IF v_store.subscription_status != 'trial' OR v_store.plan != 'pro' THEN
     RETURN;
   END IF;
@@ -192,7 +209,7 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Consultar logros ya otorgados
+  -- 5. Consultar logros ya otorgados previamente a esta tienda
   SELECT 
     COALESCE(sum(sr.days), 0),
     bool_or(sr.milestone = 'productos_3'),
@@ -211,15 +228,15 @@ BEGIN
   v_granted_share := COALESCE(v_granted_share, false);
   v_granted_marca := COALESCE(v_granted_marca, false);
 
-  -- Si ya alcanzó el tope de 7 días adicionales, salir
+  -- Si ya alcanzó el tope de 7 días adicionales, salir inmediatamente
   IF v_total_granted >= 7 THEN
     RETURN;
   END IF;
 
   v_max_additional := 7 - v_total_granted;
 
-  -- Evaluar 1: Sube 3 productos con foto (+3 días)
-  IF NOT v_granted_prod3 THEN
+  -- 6. Evaluar Logro 1: Sube 3 productos con foto (+3 días)
+  IF NOT v_granted_prod3 AND v_max_additional > 0 THEN
     SELECT (count(*) >= 3) INTO v_has_prod3
     FROM public.products p
     WHERE p.store_id = p_store_id
@@ -230,20 +247,24 @@ BEGIN
     IF v_has_prod3 THEN
       v_days_to_add := LEAST(3, v_max_additional);
       IF v_days_to_add > 0 THEN
+        v_inserted_days := 0;
         INSERT INTO public.store_rewards(store_id, milestone, days)
         VALUES (p_store_id, 'productos_3', v_days_to_add)
-        ON CONFLICT ON CONSTRAINT store_rewards_store_milestone_key DO NOTHING;
+        ON CONFLICT ON CONSTRAINT store_rewards_store_milestone_key DO NOTHING
+        RETURNING store_rewards.days INTO v_inserted_days;
 
-        milestone := 'productos_3';
-        days := v_days_to_add;
-        v_total_granted := v_total_granted + v_days_to_add;
-        v_max_additional := 7 - v_total_granted;
-        RETURN NEXT;
+        IF v_inserted_days > 0 THEN
+          milestone := 'productos_3';
+          days := v_inserted_days;
+          v_total_days_added := v_total_days_added + v_inserted_days;
+          v_max_additional := v_max_additional - v_inserted_days;
+          RETURN NEXT;
+        END IF;
       END IF;
     END IF;
   END IF;
 
-  -- Evaluar 2: Comparte tu tienda (+2 días)
+  -- 7. Evaluar Logro 2: Comparte tu tienda (+2 días)
   IF NOT v_granted_share AND v_max_additional > 0 THEN
     SELECT EXISTS (
       SELECT 1 FROM public.share_events se WHERE se.store_id = p_store_id
@@ -252,20 +273,24 @@ BEGIN
     IF v_has_share THEN
       v_days_to_add := LEAST(2, v_max_additional);
       IF v_days_to_add > 0 THEN
+        v_inserted_days := 0;
         INSERT INTO public.store_rewards(store_id, milestone, days)
         VALUES (p_store_id, 'compartir', v_days_to_add)
-        ON CONFLICT ON CONSTRAINT store_rewards_store_milestone_key DO NOTHING;
+        ON CONFLICT ON CONSTRAINT store_rewards_store_milestone_key DO NOTHING
+        RETURNING store_rewards.days INTO v_inserted_days;
 
-        milestone := 'compartir';
-        days := v_days_to_add;
-        v_total_granted := v_total_granted + v_days_to_add;
-        v_max_additional := 7 - v_total_granted;
-        RETURN NEXT;
+        IF v_inserted_days > 0 THEN
+          milestone := 'compartir';
+          days := v_inserted_days;
+          v_total_days_added := v_total_days_added + v_inserted_days;
+          v_max_additional := v_max_additional - v_inserted_days;
+          RETURN NEXT;
+        END IF;
       END IF;
     END IF;
   END IF;
 
-  -- Evaluar 3: Ponle tu marca (+2 días: logo + [portada o eslogan])
+  -- 8. Evaluar Logro 3: Ponle tu marca (+2 días: logo + [portada o eslogan])
   IF NOT v_granted_marca AND v_max_additional > 0 THEN
     v_has_marca := (
       v_store.logo IS NOT NULL AND trim(v_store.logo) <> ''
@@ -280,30 +305,28 @@ BEGIN
     IF v_has_marca THEN
       v_days_to_add := LEAST(2, v_max_additional);
       IF v_days_to_add > 0 THEN
+        v_inserted_days := 0;
         INSERT INTO public.store_rewards(store_id, milestone, days)
         VALUES (p_store_id, 'marca', v_days_to_add)
-        ON CONFLICT ON CONSTRAINT store_rewards_store_milestone_key DO NOTHING;
+        ON CONFLICT ON CONSTRAINT store_rewards_store_milestone_key DO NOTHING
+        RETURNING store_rewards.days INTO v_inserted_days;
 
-        milestone := 'marca';
-        days := v_days_to_add;
-        v_total_granted := v_total_granted + v_days_to_add;
-        v_max_additional := 7 - v_total_granted;
-        RETURN NEXT;
+        IF v_inserted_days > 0 THEN
+          milestone := 'marca';
+          days := v_inserted_days;
+          v_total_days_added := v_total_days_added + v_inserted_days;
+          v_max_additional := v_max_additional - v_inserted_days;
+          RETURN NEXT;
+        END IF;
       END IF;
     END IF;
   END IF;
 
-  -- Si se otorgaron días nuevos, extender plan_expires_at de la tienda
-  IF v_total_granted > 0 THEN
-    -- Recalcular extensión exacta según la suma real de store_rewards
-    SELECT COALESCE(sum(sr.days), 0) INTO v_days_to_add
-    FROM public.store_rewards sr
-    WHERE sr.store_id = p_store_id;
-
-    -- Se calcula desde la fecha de expiración base de la tienda (created_at + 7 días)
-    -- para garantizar idempotencia exacta frente a reintentos o llamadas concurrentes
+  -- 9. Extender plan_expires_at ÚNICAMENTE si se insertaron nuevos logros
+  -- Extiende sumando directamente sobre el plan_expires_at actual (NUNCA desde created_at)
+  IF v_total_days_added > 0 THEN
     UPDATE public.stores
-    SET plan_expires_at = (v_store.created_at + interval '7 days') + (v_days_to_add || ' days')::interval
+    SET plan_expires_at = plan_expires_at + (v_total_days_added || ' days')::interval
     WHERE id = p_store_id;
   END IF;
 
