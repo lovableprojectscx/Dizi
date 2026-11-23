@@ -1184,9 +1184,13 @@ function ThemeCard({
 export function CatalogPdfExportButton({
   store,
   variant = "admin",
+  label,
+  className,
 }: {
   store: Store;
-  variant?: "admin" | "catalog";
+  variant?: "admin" | "catalog" | "compact";
+  label?: string;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<string>("moderno");
@@ -1225,7 +1229,21 @@ export function CatalogPdfExportButton({
 
   return (
     <>
-      {variant === "admin" ? (
+      {variant === "compact" ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(true)}
+          className={cn(
+            "h-9 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground",
+            className,
+          )}
+        >
+          <Download className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span>{label || "PDF"}</span>
+        </Button>
+      ) : variant === "admin" ? (
         <Button variant="outline" onClick={() => setOpen(true)} className="gap-2">
           <Download className="h-4 w-4" />
           Descargar PDF
