@@ -1,9 +1,9 @@
 /**
  * @file admin.dashboard.tsx
- * @description Pantalla Inicio (/admin/dashboard) renovada en F54:
+ * @description Pantalla Inicio (/admin/dashboard) renovada en F54 y F55.1:
  * 1. Franja índigo de bienvenida con plan/prueba, mosaico de hasta 4 fotos y "Ver mi catálogo".
  * 2. Tarjeta única "Tu siguiente paso" (RF-54.3 / RF-54.4) con "También pendiente".
- * 3. "Comparte tu negocio" (ShareCatalogCard sin cambios de lógica).
+ * 3. "Comparte tu tienda" (ShareStoreCard compacto, F55.1).
  * 4. Números en total (Productos activos, Visitas, Clics a WhatsApp): 1 tarjeta con 3 columnas
  *    divididas en celular (<640 px) y 3 tarjetas en escritorio (≥640 px), sin "Plan actual".
  */
@@ -15,7 +15,7 @@ import { useApp } from "@/lib/store";
 import { PLANS } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { canStoreTakeSurvey, SURVEY_VERSION } from "@/lib/survey";
-import { ShareCatalogCard } from "@/components/admin/ShareCatalogCard";
+import { ShareStoreCard } from "@/components/admin/ShareStoreCard";
 import {
   getCompletaTuTiendaTasks,
   isCompletaTuTiendaDismissed,
@@ -25,11 +25,6 @@ import {
 import { PanelHero } from "@/components/admin/PanelHero";
 import { ProductMosaic } from "@/components/admin/ProductMosaic";
 import { NextStepCard } from "@/components/admin/NextStepCard";
-import {
-  CatalogImageCard,
-  isCatalogCardDismissed,
-  dismissCatalogCard,
-} from "@/components/admin/CatalogImageCard";
 import { claimTrialRewards } from "@/lib/trial-rewards";
 import { getMosaicProducts, getNextStep, getTrialStatus } from "@/lib/panel-home";
 
@@ -43,14 +38,7 @@ function Dashboard() {
   const fetchData = useApp((s) => s.fetchData);
 
   const [surveyEligible, setSurveyEligible] = useState(false);
-  const [catalogCardDismissed, setCatalogCardDismissed] = useState(false);
   const getMySurveyResponse = useApp((s) => s.getMySurveyResponse);
-
-  useEffect(() => {
-    if (store?.id) {
-      setCatalogCardDismissed(isCatalogCardDismissed(store.id));
-    }
-  }, [store?.id]);
 
   useEffect(() => {
     if (!store) {
@@ -111,11 +99,6 @@ function Dashboard() {
       ? `Prueba ${trialPlanName} · queda 1 día`
       : `Prueba ${trialPlanName} · quedan ${daysLeft} días`
     : `Plan ${plan.name}`;
-
-  const productsWithPhotoCount = (store.products || []).filter(
-    (p) => !p.isSample && p.visible && p.image && p.image.trim().length > 0,
-  ).length;
-  const showCatalogImageCard = productsWithPhotoCount >= 3 && !catalogCardDismissed;
 
   const completaEligible = isStoreEligibleForCompletaTuTienda(store);
   const completaDismissed = isCompletaTuTiendaDismissed(store.id);
@@ -178,20 +161,8 @@ function Dashboard() {
       {/* 2. Una sola tarjeta "Tu siguiente paso" + "También pendiente" */}
       <NextStepCard store={store} nextStep={nextStep} />
 
-      {/* 2.5 Tarjeta "Tu imagen de catálogo está lista" (RF-55.13) */}
-      {showCatalogImageCard && (
-        <CatalogImageCard
-          store={store}
-          dismissible
-          onDismiss={() => {
-            dismissCatalogCard(store.id);
-            setCatalogCardDismissed(true);
-          }}
-        />
-      )}
-
-      {/* 3. Comparte tu negocio (ShareCatalogCard actual, sin cambios de lógica) */}
-      <ShareCatalogCard store={store} title="Comparte tu negocio" />
+      {/* 3. "Comparte tu tienda" — Bloque único y compacto (F55.1) */}
+      <ShareStoreCard store={store} />
 
       {/* 4. Números: 3 valores con "en total", sin "Plan actual" */}
       <section aria-label="Números de tu tienda" data-testid="dashboard-metrics">
