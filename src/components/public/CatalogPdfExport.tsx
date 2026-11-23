@@ -1236,11 +1236,11 @@ export function CatalogPdfExportButton({
           size="sm"
           onClick={() => setOpen(true)}
           className={cn(
-            "h-9 rounded-xl gap-1.5 font-bold text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground",
+            "h-9 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground",
             className,
           )}
         >
-          <Download className="h-4 w-4 text-primary" />
+          <Download className="h-3.5 w-3.5 text-primary shrink-0" />
           <span>{label || "PDF"}</span>
         </Button>
       ) : variant === "admin" ? (

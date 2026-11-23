@@ -266,16 +266,21 @@ test.describe("F55.1 · Capturas DESPUÉS y Verificaciones", () => {
     await expect(page.getByText("Comparte tu tienda")).toBeVisible();
     await expect(page.getByText("Compártelo en tus estados y redes")).toBeVisible();
 
-    // Miniatura 9:16 y botón principal presentes
+    // Miniatura 9:16 y botón principal presentes (coral)
     await expect(page.getByTestId("catalog-thumb-canvas")).toBeVisible();
-    await expect(page.getByTestId("main-share-button")).toBeVisible();
+    const mainBtn = page.getByTestId("main-share-button");
+    await expect(mainBtn).toBeVisible();
+    await expect(mainBtn).toHaveClass(/bg-primary/);
     await expect(page.getByText("Imagen lista")).toBeVisible();
 
-    // 4 botones secundarios presentes
+    // 4 botones secundarios presentes con etiquetas cortas
     await expect(page.getByTestId("btn-copy-link")).toBeVisible();
+    await expect(page.getByTestId("btn-copy-link")).toContainText("Link");
     await expect(page.getByTestId("btn-qr")).toBeVisible();
+    await expect(page.getByTestId("btn-qr")).toContainText("QR");
     await expect(page.getByText("PDF")).toBeVisible();
     await expect(page.getByTestId("btn-bio-link")).toBeVisible();
+    await expect(page.getByTestId("btn-bio-link")).toContainText("Bio");
 
     // Verificación de ausencia de bloques antiguos repetitivos
     await expect(page.getByText("¿Qué es el Catálogo Digital?")).not.toBeVisible();
@@ -326,13 +331,19 @@ test.describe("F55.1 · Capturas DESPUÉS y Verificaciones", () => {
 
     // Sin miniatura canvas al tener 0 productos con foto
     await expect(page.getByTestId("catalog-thumb-canvas")).not.toBeVisible();
-    // Botón principal presente para compartir link
-    await expect(page.getByTestId("main-share-button")).toBeVisible();
-    // 4 botones secundarios presentes
+    // Botón principal presente para compartir link: SECUNDARIO (OUTLINE), no coral
+    const mainBtn0 = page.getByTestId("main-share-button");
+    await expect(mainBtn0).toBeVisible();
+    await expect(mainBtn0).not.toHaveClass(/bg-primary/);
+    await expect(mainBtn0).toHaveClass(/border/);
+    // 4 botones secundarios presentes con etiquetas cortas
     await expect(page.getByTestId("btn-copy-link")).toBeVisible();
+    await expect(page.getByTestId("btn-copy-link")).toContainText("Link");
     await expect(page.getByTestId("btn-qr")).toBeVisible();
+    await expect(page.getByTestId("btn-qr")).toContainText("QR");
     await expect(page.getByText("PDF")).toBeVisible();
     await expect(page.getByTestId("btn-bio-link")).toBeVisible();
+    await expect(page.getByTestId("btn-bio-link")).toContainText("Bio");
 
     await page.waitForTimeout(1000);
     await saveCaptura(page, "inicio-0-prods-375-despues.png", true);
@@ -347,9 +358,44 @@ test.describe("F55.1 · Capturas DESPUÉS y Verificaciones", () => {
     const shareCard = page.getByTestId("share-store-card");
     await expect(shareCard).toBeVisible();
     await expect(page.getByTestId("catalog-thumb-canvas")).not.toBeVisible();
+    const mainBtn0 = page.getByTestId("main-share-button");
+    await expect(mainBtn0).toBeVisible();
+    await expect(mainBtn0).not.toHaveClass(/bg-primary/);
 
     await page.waitForTimeout(1000);
     await saveCaptura(page, "inicio-0-prods-1280-despues.png", false);
+  });
+
+  test("Después 5: Tienda con 3+ productos - 360px móvil (verificación sin truncado)", async ({ page }) => {
+    await setupSession(page);
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("/admin/dashboard", { waitUntil: "networkidle" });
+    await expect(page.getByText(/Florería Pétalos & Detalles/i)).toBeVisible({ timeout: 15000 });
+
+    // Verificaciones de no truncado a 360 px
+    await expect(page.getByTestId("btn-copy-link")).toContainText("Link");
+    await expect(page.getByTestId("btn-qr")).toContainText("QR");
+    await expect(page.getByText("PDF")).toBeVisible();
+    await expect(page.getByTestId("btn-bio-link")).toContainText("Bio");
+
+    await page.waitForTimeout(1000);
+    await saveCaptura(page, "inicio-3-prods-360-despues.png", true);
+  });
+
+  test("Después 6: Tienda con 0 productos - 360px móvil (verificación sin truncado)", async ({ page }) => {
+    await setupSession(page, { products: [] });
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("/admin/dashboard", { waitUntil: "networkidle" });
+    await expect(page.getByText(/Florería Pétalos & Detalles/i)).toBeVisible({ timeout: 15000 });
+
+    const mainBtn0 = page.getByTestId("main-share-button");
+    await expect(mainBtn0).toBeVisible();
+    await expect(mainBtn0).not.toHaveClass(/bg-primary/);
+    await expect(page.getByTestId("btn-copy-link")).toContainText("Link");
+    await expect(page.getByTestId("btn-bio-link")).toContainText("Bio");
+
+    await page.waitForTimeout(1000);
+    await saveCaptura(page, "inicio-0-prods-360-despues.png", true);
   });
 
   test("Interacción: Diálogo de QR y Copiar Link", async ({ page }) => {

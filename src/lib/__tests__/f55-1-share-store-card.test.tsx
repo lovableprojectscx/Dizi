@@ -129,8 +129,8 @@ describe("F55.1 · ShareStoreCard — Bloque único y compacto para compartir en
     expect(html).toContain("Compartir");
   });
 
-  it("E2 · Con < 3 productos con foto: NO renderiza canvas ni miniatura; solo botón principal", () => {
-    const store = makeStore(2); // Solo 2 productos
+  it("E2 · Con 1 o 2 productos: botón principal es coral (bg-primary) y comparte link sin miniatura", () => {
+    const store = makeStore(2); // 2 productos
     const html = renderToStaticMarkup(<ShareStoreCard store={store} />);
 
     // NO debe contener canvas de miniatura
@@ -140,39 +140,49 @@ describe("F55.1 · ShareStoreCard — Bloque único y compacto para compartir en
     // Texto alternativo conciso
     expect(html).toContain("Envía el enlace directo a tus clientes por WhatsApp o redes sociales");
 
-    // Botón principal sigue presente para compartir link
+    // Botón principal es coral (bg-primary) porque hay >= 1 producto
     expect(html).toContain('data-testid="main-share-button"');
+    expect(html).toContain("bg-primary");
     expect(html).toContain("Compartir");
   });
 
-  it("E3 · Tienda con 0 productos: funciona igual que < 3 sin romper", () => {
+  it("E3 · Tienda con 0 productos visibles: botón Compartir es secundario (outline), NO coral", () => {
     const store = makeStore(0);
     const html = renderToStaticMarkup(<ShareStoreCard store={store} />);
 
     expect(html).not.toContain('data-testid="catalog-thumb-canvas"');
     expect(html).toContain('data-testid="main-share-button"');
+
+    // Botón secundario outline para que la única acción coral sea "Agregar primer producto"
+    const buttonHtml = html.match(/<button[^>]*data-testid="main-share-button"[^>]*>[\s\S]*?<\/button>/)?.[0] || "";
+    expect(buttonHtml).not.toContain("bg-primary");
+    expect(buttonHtml).toContain("border-border/80");
+    expect(buttonHtml).toContain("bg-background");
+    expect(buttonHtml).toContain("Compartir");
   });
 
-  it("E4 · Fila de 4 botones secundarios chicos presente en cualquier caso", () => {
+  it("E4 · Fila de 4 botones secundarios con etiquetas cortas sin truncar ('Link', 'QR', 'PDF', 'Bio')", () => {
     const store = makeStore(3);
     const html = renderToStaticMarkup(<ShareStoreCard store={store} />);
 
-    // 1. Copiar link
+    // 1. Link (etiqueta corta)
     expect(html).toContain('data-testid="btn-copy-link"');
-    expect(html).toContain("Copiar link");
+    expect(html).toContain(">Link</span>");
+    expect(html).not.toContain("Copiar link");
 
     // 2. QR
     expect(html).toContain('data-testid="btn-qr"');
-    expect(html).toContain("QR");
+    expect(html).toContain(">QR</span>");
 
     // 3. PDF
     expect(html).toContain('data-testid="btn-pdf"');
     expect(html).toContain("PDF");
 
-    // 4. Link en Bio con enlace correcto
+    // 4. Bio (etiqueta corta con enlace correcto)
     expect(html).toContain('data-testid="btn-bio-link"');
     expect(html).toContain('href="/admin/link-bio"');
-    expect(html).toContain("Link en Bio");
+    expect(html).toContain(">Bio</span>");
+    expect(html).not.toContain("Link en Bio");
   });
 
   it("E5 · Cabecera compacta: sin cajas de texto ni párrafos explicativos largos de ShareCatalogCard", () => {

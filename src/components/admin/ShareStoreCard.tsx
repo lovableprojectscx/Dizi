@@ -70,7 +70,13 @@ export function ShareStoreCard({ store, className }: ShareStoreCardProps) {
     );
   }, [store.products]);
 
+  // Productos visibles totales (para evaluar si la tienda tiene 0 productos)
+  const visibleProducts = useMemo(() => {
+    return (store.products || []).filter((p) => p.visible);
+  }, [store.products]);
+
   const has3OrMore = eligibleProducts.length >= 3;
+  const hasZeroProducts = visibleProducts.length === 0;
 
   // Generar QR para el diálogo de QR
   useEffect(() => {
@@ -338,33 +344,51 @@ export function ShareStoreCard({ store, className }: ShareStoreCardProps) {
             <p className="text-[13px] font-medium text-muted-foreground leading-snug">
               Envía el enlace directo a tus clientes por WhatsApp o redes sociales
             </p>
-            <Button
-              type="button"
-              onClick={handleMainShare}
-              disabled={sharing}
-              data-testid="main-share-button"
-              className="w-full sm:w-auto min-h-[42px] px-5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[14px] sm:text-[15px] shadow-xs gap-2 shrink-0 transition-all cursor-pointer"
-            >
-              {sharing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Share2 className="h-4 w-4" />
-              )}
-              <span>Compartir</span>
-            </Button>
+            {hasZeroProducts ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleMainShare}
+                disabled={sharing}
+                data-testid="main-share-button"
+                className="w-full sm:w-auto min-h-[42px] px-5 rounded-xl border-border/80 bg-background hover:bg-muted text-foreground font-semibold text-[14px] sm:text-[15px] shadow-none gap-2 shrink-0 transition-all cursor-pointer"
+              >
+                {sharing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+                <span>Compartir</span>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleMainShare}
+                disabled={sharing}
+                data-testid="main-share-button"
+                className="w-full sm:w-auto min-h-[42px] px-5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-[14px] sm:text-[15px] shadow-xs gap-2 shrink-0 transition-all cursor-pointer"
+              >
+                {sharing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Share2 className="h-4 w-4" />
+                )}
+                <span>Compartir</span>
+              </Button>
+            )}
           </div>
         )}
 
         {/* 3. Fila de 4 botones secundarios chicos con ícono + etiqueta corta */}
         <div className="pt-2 border-t border-border/40 grid grid-cols-4 gap-1.5 sm:gap-2">
-          {/* Botón 1: Copiar link */}
+          {/* Botón 1: Link */}
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={handleCopyLink}
             data-testid="btn-copy-link"
-            className="h-9 px-1 sm:px-3 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground cursor-pointer"
+            className="h-9 px-1.5 sm:px-3 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground cursor-pointer"
             title="Copiar enlace del catálogo"
           >
             {copiedLink ? (
@@ -372,7 +396,7 @@ export function ShareStoreCard({ store, className }: ShareStoreCardProps) {
             ) : (
               <Copy className="h-3.5 w-3.5 text-primary shrink-0" />
             )}
-            <span className="truncate">{copiedLink ? "¡Copiado!" : "Copiar link"}</span>
+            <span className="whitespace-nowrap">{copiedLink ? "Copiado" : "Link"}</span>
           </Button>
 
           {/* Botón 2: QR */}
@@ -382,11 +406,11 @@ export function ShareStoreCard({ store, className }: ShareStoreCardProps) {
             size="sm"
             onClick={() => setQrOpen(true)}
             data-testid="btn-qr"
-            className="h-9 px-1 sm:px-3 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground cursor-pointer"
+            className="h-9 px-1.5 sm:px-3 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground cursor-pointer"
             title="Ver código QR del catálogo"
           >
             <QrCode className="h-3.5 w-3.5 text-primary shrink-0" />
-            <span className="truncate">QR</span>
+            <span className="whitespace-nowrap">QR</span>
           </Button>
 
           {/* Botón 3: PDF */}
@@ -395,22 +419,22 @@ export function ShareStoreCard({ store, className }: ShareStoreCardProps) {
               store={store}
               variant="compact"
               label="PDF"
-              className="w-full px-1 sm:px-3 text-[11px] sm:text-xs cursor-pointer"
+              className="w-full px-1.5 sm:px-3 text-[11px] sm:text-xs cursor-pointer whitespace-nowrap"
             />
           </Suspense>
 
-          {/* Botón 4: Link en Bio */}
+          {/* Botón 4: Bio */}
           <Button
             asChild
             variant="outline"
             size="sm"
             data-testid="btn-bio-link"
-            className="h-9 px-1 sm:px-3 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground cursor-pointer"
-            title="Ir a configuración de Link en Bio"
+            className="h-9 px-1.5 sm:px-3 rounded-xl gap-1 sm:gap-1.5 font-bold text-[11px] sm:text-xs shadow-none border-border/60 bg-white hover:bg-muted text-foreground cursor-pointer"
+            title="Ir a configuración de Bio"
           >
             <Link to="/admin/link-bio">
               <Link2 className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="truncate">Link en Bio</span>
+              <span className="whitespace-nowrap">Bio</span>
             </Link>
           </Button>
         </div>
