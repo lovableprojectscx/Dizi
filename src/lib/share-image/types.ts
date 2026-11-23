@@ -3,11 +3,11 @@
  * @description Tipos e interfaces para el generador de imágenes de estados e historias (F46).
  */
 
-export type ShareImageStyle = "etiqueta" | "editorial" | "marco-color" | "oferta";
+export type ShareImageStyle = "etiqueta" | "editorial" | "marco-color" | "oferta" | "catalogo";
 
 export type ShareImageFormat = "historia" | "post-ig" | "cuadrada";
 
-export type ShareEventSource = "productos" | "marketing";
+export type ShareEventSource = "productos" | "marketing" | "catalogo";
 
 export interface ShareImageDimensions {
   width: number;

@@ -19,6 +19,7 @@ import { getUpcomingIdeas, resolveIdeaStyle, type PromoIdea } from "@/lib/promo-
 import { prepareShareImageData } from "@/lib/share-image/data";
 import { PanelHero } from "@/components/admin/PanelHero";
 import { PromoIdeas } from "@/components/admin/PromoIdeas";
+import { CatalogImageCard } from "@/components/admin/CatalogImageCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { CaptionTemplate } from "@/lib/share-image/caption";
@@ -162,6 +163,14 @@ function AdminMarketingPage() {
         </div>
       ) : (
         <>
+          {/* 1.5 "Comparte tu catálogo completo" (RF-55.12 / RF-55.13) */}
+          <CatalogImageCard
+            store={store}
+            dismissible={false}
+            title="Comparte tu catálogo completo"
+            subtitle="Descarga o comparte una imagen promocional con tus productos para publicar en tus estados"
+          />
+
           {/* 2. "Así se ve tu producto" (miniaturas en canvas cargadas en diferido) */}
           {heroProduct && (
             <React.Suspense fallback={<StylePreviewFallback />}>

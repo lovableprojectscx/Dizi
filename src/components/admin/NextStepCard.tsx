@@ -48,6 +48,16 @@ export function NextStepCard({ store, nextStep }: NextStepCardProps) {
 
   const Icon = getStepIcon(principal.id);
   const isWarning = principal.tone === "warning";
+  const isTrial = store.subscriptionStatus === "trial";
+
+  let stepRewardText: string | null = null;
+  if (isTrial) {
+    if (principal.id === "no-products" || principal.id === "incomplete-products") {
+      stepRewardText = "+3 días de Pro";
+    } else if (principal.id === "promote") {
+      stepRewardText = "+2 días de Pro";
+    }
+  }
 
   return (
     <section
@@ -78,9 +88,19 @@ export function NextStepCard({ store, nextStep }: NextStepCardProps) {
             </div>
 
             <div className="space-y-1 min-w-0">
-              <p className="text-[13px] font-semibold uppercase tracking-wide text-brand">
-                Tu siguiente paso
-              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-[13px] font-semibold uppercase tracking-wide text-brand">
+                  Tu siguiente paso
+                </p>
+                {stepRewardText && (
+                  <span
+                    data-testid="next-step-reward-badge"
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-2 py-0.5 text-[11px] font-bold"
+                  >
+                    Premio: {stepRewardText}
+                  </span>
+                )}
+              </div>
               <h2 className="font-heading font-semibold text-[20px] sm:text-[24px] leading-snug text-foreground">
                 {principal.title}
               </h2>

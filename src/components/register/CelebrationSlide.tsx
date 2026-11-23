@@ -80,6 +80,19 @@ export function CelebrationSlide({
         </p>
       </div>
 
+      {/* Aviso de prueba Pro y logros (RF-55.10) */}
+      <div
+        data-testid="celebration-trial-notice"
+        className="rounded-2xl border border-[#312E81]/20 bg-gradient-to-br from-[#312E81]/[0.06] to-[#312E81]/[0.02] p-4 flex items-center gap-3.5"
+      >
+        <div className="h-10 w-10 rounded-xl bg-[#312E81]/15 text-[#312E81] flex items-center justify-center shrink-0">
+          <Sparkles className="w-5 h-5" aria-hidden="true" />
+        </div>
+        <p className="text-[14px] sm:text-[15px] text-[#1E1B4B] font-semibold leading-snug">
+          Tienes 7 días de Pro gratis. Gana hasta 7 días más completando tu tienda.
+        </p>
+      </div>
+
       {/* Link automático generado */}
       <div className="rounded-2xl border border-[#312E81]/18 bg-white p-4 space-y-1.5">
         <div
@@ -112,7 +125,7 @@ export function CelebrationSlide({
             </span>
           </div>
           <p className="text-[13px] text-[#1E1B4B]/80 leading-relaxed">
-            Tu catálogo inició en Plan Semilla. Activa tu plan elegido escribiéndonos por WhatsApp:
+            Tu catálogo inició con 7 días de Pro gratis. Cuando quieras quedarte con el Plan {requestedPlan === "pro" ? "Pro" : (PLANS[requestedPlan]?.name || requestedPlan)}, lo activas desde Mi Plan o por WhatsApp:
           </p>
           <a
             href={buildWaUrl(

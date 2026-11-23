@@ -33,6 +33,7 @@ export interface SlideShellProps {
   isPreviewTestMode?: boolean;
   showTrialBanner?: boolean;
   onDismissTrialBanner?: () => void;
+  trialBannerText?: string;
   inviteLoading?: boolean;
   inviteBannerText?: string | null;
   invalidInviteBanner?: boolean;
@@ -56,6 +57,7 @@ export function SlideShell({
   isPreviewTestMode = false,
   showTrialBanner = false,
   onDismissTrialBanner,
+  trialBannerText,
   inviteLoading = false,
   inviteBannerText = null,
   invalidInviteBanner = false,
@@ -77,7 +79,9 @@ export function SlideShell({
             <span className="px-2 py-0.5 rounded bg-[#FF5C39] text-[#1E1B4B] text-[11px] font-bold uppercase tracking-wider">
               Prueba Gratis
             </span>
-            <strong className="font-bold">15 días de Plan Emprendedor Gratis</strong>
+            <strong className="font-bold">
+              {trialBannerText ?? "Prueba gratis"}
+            </strong>
             <span className="text-[#FAF7F2]/85">activado con tu invitación.</span>
           </span>
           {onDismissTrialBanner && (

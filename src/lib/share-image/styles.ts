@@ -17,6 +17,7 @@ import { SHARE_IMAGE_SIZES } from "./types";
 
 export interface DrawOptions {
   productImage?: any;
+  productImages?: any[];
   storeLogoImage?: any;
   qrImage?: any;
   collectBoxes?: boolean;
@@ -275,16 +276,16 @@ export function drawStoreHeader(
   const headerY = format === "historia" ? 265 : 44;
 
   ctx.save();
-  ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.font = "700 36px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   const storeName = data.storeName;
   const textW = ctx.measureText(storeName).width;
-  const pillW = Math.round(textW + 80);
-  const pillH = 60;
+  const pillW = Math.round(textW + 88);
+  const pillH = 64;
   const pillX = 60;
-  const pillY = Math.round(headerY - 6);
+  const pillY = Math.round(headerY - 8);
 
   ctx.fillStyle = dark ? "rgba(15, 23, 42, 0.85)" : "rgba(255, 255, 255, 0.95)";
-  roundRect(ctx, pillX, pillY, pillW, pillH, 30);
+  roundRect(ctx, pillX, pillY, pillW, pillH, 32);
   ctx.fill();
 
   ctx.lineWidth = 1;
@@ -293,12 +294,12 @@ export function drawStoreHeader(
 
   const iconX = pillX + 16;
   const iconY = pillY + 12;
-  const iconSize = 36;
+  const iconSize = 40;
 
   if (logoImg && typeof ctx.drawImage === "function") {
     try {
       ctx.save();
-      roundRect(ctx, iconX, iconY, iconSize, iconSize, 18);
+      roundRect(ctx, iconX, iconY, iconSize, iconSize, 20);
       ctx.clip();
       ctx.drawImage(logoImg, iconX, iconY, iconSize, iconSize);
       ctx.restore();
@@ -310,10 +311,10 @@ export function drawStoreHeader(
   }
 
   ctx.fillStyle = dark ? "#FFFFFF" : "#0F172A";
-  ctx.font = "600 34px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+  ctx.font = "700 36px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText(storeName, pillX + 62, headerY + 24);
+  ctx.fillText(storeName, pillX + 68, headerY + 24);
   ctx.restore();
 
   if (boxes) {
@@ -1095,7 +1096,269 @@ function drawMockQrPattern(
 }
 
 /**
- * Renderizador central para cualquiera de los 4 estilos aprobados.
+ * Dibuja una imagen recortada con proporción 'cover' dentro de un rectángulo con bordes redondeados.
+ */
+function drawCoverPhoto(
+  ctx: CanvasRenderingContext2D,
+  img: any,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  radius: number = 24
+): void {
+  ctx.save();
+  roundRect(ctx, x, y, w, h, radius);
+  ctx.clip();
+
+  if (img && typeof ctx.drawImage === "function") {
+    try {
+      const imgW = (img.width && img.width > 0) ? img.width : w;
+      const imgH = (img.height && img.height > 0) ? img.height : h;
+      const scale = Math.max(w / imgW, h / imgH);
+      const sw = w / scale;
+      const sh = h / scale;
+      const sx = Math.max(0, (imgW - sw) / 2);
+      const sy = Math.max(0, (imgH - sh) / 2);
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    } catch {
+      ctx.fillStyle = "#E2E8F0";
+      ctx.fillRect(x, y, w, h);
+    }
+  } else {
+    ctx.fillStyle = "#E2E8F0";
+    ctx.fillRect(x, y, w, h);
+  }
+
+  ctx.restore();
+
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = "rgba(15, 23, 42, 0.08)";
+  roundRect(ctx, x, y, w, h, radius);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * Estilo 'catalogo': "¡Ya tenemos nuestro catálogo! 🎉" (RF-55.12).
+ * Collage armónico de 1 a 4 productos, cabecera de tienda, titular destacado,
+ * tarjeta de llamada a la acción con QR + enlace corto, y sello Semilla seguro al pie si aplica.
+ */
+export function drawStyleCatalogo(
+  ctx: CanvasRenderingContext2D,
+  data: ShareImageData,
+  format: ShareImageFormat,
+  options: DrawOptions = {}
+): BoundingBox[] {
+  const boxes: BoundingBox[] = [];
+  const dims = SHARE_IMAGE_SIZES[format];
+  const W = dims.width;
+  const H = dims.height;
+
+  // 1. Fondo suave con gradiente cálido de marca
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, "#FAF7F2");
+  bgGrad.addColorStop(1, "#F1ECE4");
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 2. Cabecera de tienda (Logo + Nombre)
+  drawStoreHeader(ctx, data, format, false, boxes, options.storeLogoImage);
+
+  // 3. Titular destacado
+  const titleText = "¡Ya tenemos nuestro catálogo! 🎉";
+  ctx.save();
+  ctx.fillStyle = "#1E1B4B";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if (format === "historia") {
+    // En Historia vertical (1080×1920) titular prominente a >= 72px en 2 líneas
+    const titleFontSize = 74;
+    ctx.font = `800 ${titleFontSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText("¡Ya tenemos nuestro", 540, 405);
+    ctx.fillText("catálogo! 🎉", 540, 490);
+    ctx.restore();
+
+    boxes.push({
+      id: "title",
+      x: 60,
+      y: 360,
+      width: 960,
+      height: 160,
+    });
+  } else {
+    let titleY = 130;
+    let titleH = 50;
+    let titleFontSize = 44;
+
+    if (format === "post-ig") {
+      titleY = 145;
+      titleH = 54;
+      titleFontSize = 46;
+    }
+
+    ctx.font = `800 ${titleFontSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+    ctx.fillText(titleText, 540, titleY);
+    ctx.restore();
+
+    boxes.push({
+      id: "title",
+      x: 60,
+      y: Math.round(titleY - titleH / 2),
+      width: 960,
+      height: titleH,
+    });
+  }
+
+  // 4. Collage de 1 a 4 fotos de productos
+  const rawPhotos: any[] = [];
+  if (Array.isArray(options.productImages) && options.productImages.length > 0) {
+    rawPhotos.push(...options.productImages.filter(Boolean));
+  } else if (options.productImage) {
+    rawPhotos.push(options.productImage);
+  }
+  const photoCount = Math.min(4, Math.max(1, rawPhotos.length));
+  const photos = rawPhotos.slice(0, 4);
+
+  const collageX = 60;
+  let collageY = 560;
+  const collageW = 960;
+  let collageH = 865;
+
+  if (format === "cuadrada") {
+    collageY = 175;
+    collageH = 550;
+  } else if (format === "post-ig") {
+    collageY = 190;
+    collageH = 760;
+  }
+
+  const gap = 16;
+  const rad = 24;
+
+  if (photoCount === 4) {
+    // 2x2 grid
+    const cellW = Math.round((collageW - gap) / 2);
+    const cellH = Math.round((collageH - gap) / 2);
+    const coords = [
+      { x: collageX, y: collageY },
+      { x: collageX + cellW + gap, y: collageY },
+      { x: collageX, y: collageY + cellH + gap },
+      { x: collageX + cellW + gap, y: collageY + cellH + gap },
+    ];
+    coords.forEach((coord, i) => {
+      drawCoverPhoto(ctx, photos[i], coord.x, coord.y, cellW, cellH, rad);
+      boxes.push({ id: "photo", x: coord.x, y: coord.y, width: cellW, height: cellH });
+    });
+  } else if (photoCount === 3) {
+    // 1 foto hero arriba + 2 abajo
+    const topH = Math.round((collageH - gap) * 0.54);
+    const botH = Math.round((collageH - gap) * 0.46);
+    const botW = Math.round((collageW - gap) / 2);
+
+    drawCoverPhoto(ctx, photos[0], collageX, collageY, collageW, topH, rad);
+    boxes.push({ id: "photo", x: collageX, y: collageY, width: collageW, height: topH });
+
+    drawCoverPhoto(ctx, photos[1], collageX, collageY + topH + gap, botW, botH, rad);
+    boxes.push({ id: "photo", x: collageX, y: collageY + topH + gap, width: botW, height: botH });
+
+    drawCoverPhoto(ctx, photos[2], collageX + botW + gap, collageY + topH + gap, botW, botH, rad);
+    boxes.push({ id: "photo", x: collageX + botW + gap, y: collageY + topH + gap, width: botW, height: botH });
+  } else if (photoCount === 2) {
+    // 2 columnas verticales lado a lado
+    const cellW = Math.round((collageW - gap) / 2);
+    drawCoverPhoto(ctx, photos[0], collageX, collageY, cellW, collageH, rad);
+    boxes.push({ id: "photo", x: collageX, y: collageY, width: cellW, height: collageH });
+
+    drawCoverPhoto(ctx, photos[1], collageX + cellW + gap, collageY, cellW, collageH, rad);
+    boxes.push({ id: "photo", x: collageX + cellW + gap, y: collageY, width: cellW, height: collageH });
+  } else {
+    // 1 foto centrada
+    drawCoverPhoto(ctx, photos[0], collageX, collageY, collageW, collageH, rad);
+    boxes.push({ id: "photo", x: collageX, y: collageY, width: collageW, height: collageH });
+  }
+
+  // 5. Tarjeta CTA inferior con QR y link corto
+  let ctaY = 1450;
+  let ctaH = 260;
+  let qrSize = 200;
+
+  if (format === "cuadrada") {
+    ctaY = collageY + collageH + 20;
+    ctaH = 210;
+    qrSize = 150;
+  } else if (format === "post-ig") {
+    ctaY = collageY + collageH + 22;
+    ctaH = 215;
+    qrSize = 155;
+  }
+
+  ctx.save();
+  ctx.fillStyle = "#FFFFFF";
+  roundRect(ctx, collageX, ctaY, collageW, ctaH, 24);
+  ctx.fill();
+
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(49, 46, 129, 0.12)";
+  ctx.stroke();
+
+  // QR a la derecha dentro de la tarjeta
+  const qrX = collageX + collageW - qrSize - 28;
+  const qrY = Math.round(ctaY + (ctaH - qrSize) / 2);
+
+  if (options.qrImage && typeof ctx.drawImage === "function") {
+    try {
+      ctx.drawImage(options.qrImage, qrX, qrY, qrSize, qrSize);
+    } catch {
+      drawMockQrPattern(ctx, qrX, qrY, qrSize);
+    }
+  } else {
+    drawMockQrPattern(ctx, qrX, qrY, qrSize);
+  }
+
+  // Textos a la izquierda dentro de la tarjeta
+  const textLeftX = collageX + 36;
+  const textMaxW = qrX - textLeftX - 20;
+
+  const titleSize = format === "historia" ? 48 : 38;
+  const linkSize = format === "historia" ? 42 : 32;
+  const subSize = format === "historia" ? 28 : 22;
+
+  ctx.fillStyle = "#1E1B4B";
+  ctx.font = `800 ${titleSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("Míralo aquí 👇", textLeftX, ctaY + (format === "historia" ? 60 : 50));
+
+  const rawUrl = data.catalogProductUrl || `https://dizi.la/t/${data.storeSlug}`;
+  const cleanUrl = rawUrl.split("?")[0].replace(/^https?:\/\//, "");
+  ctx.fillStyle = "#312E81";
+  ctx.font = `800 ${linkSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.fillText(cleanUrl, textLeftX, ctaY + (format === "historia" ? 132 : 108), textMaxW);
+
+  ctx.fillStyle = "#64748B";
+  ctx.font = `600 ${subSize}px 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`;
+  ctx.fillText("Pide directo por WhatsApp", textLeftX, ctaY + (format === "historia" ? 200 : 162));
+  ctx.restore();
+
+  boxes.push({
+    id: "ctaCard",
+    x: collageX,
+    y: ctaY,
+    width: collageW,
+    height: ctaH,
+  });
+
+  // 6. Sello Semilla seguro
+  drawSemillaBadgeSafe(ctx, data, format, boxes);
+
+  return boxes;
+}
+
+/**
+ * Renderizador central para cualquiera de los estilos aprobados.
  */
 export function drawShareImage(
   ctx: CanvasRenderingContext2D,
@@ -1124,6 +1387,9 @@ export function drawShareImage(
       break;
     case "oferta":
       boxes = drawStyleOferta(ctx, data, format, options);
+      break;
+    case "catalogo":
+      boxes = drawStyleCatalogo(ctx, data, format, options);
       break;
     default:
       boxes = drawStyleEtiqueta(ctx, data, format, options);
@@ -1215,10 +1481,12 @@ export function validateShareImageBoxes(
         }
       }
       if (b.id === "semillaBadge") {
-        if (b.y + b.height > 1630) {
-          safeZoneViolations.push(`Sello Semilla invade zona segura inferior: y=${b.y + b.height} > 1630`);
+        const isCatalogo = boxes.some((box) => box.id === "ctaCard");
+        const maxBottom = isCatalogo ? 1850 : 1630;
+        if (b.y + b.height > maxBottom) {
+          safeZoneViolations.push(`Sello Semilla invade zona segura inferior: y=${b.y + b.height} > ${maxBottom}`);
         }
-        if (b.y < 1550) {
+        if (!isCatalogo && b.y < 1550) {
           safeZoneViolations.push(`Sello Semilla muy arriba: y=${b.y} < 1550`);
         }
       }

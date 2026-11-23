@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Store } from "@/lib/types";
 import { getRubroDefaults } from "@/lib/rubros";
+import { getGrantedRewards } from "@/lib/trial-rewards";
 
 /**
  * Fecha de corte del despliegue de F49: tiendas creadas antes de este instante
@@ -75,11 +76,14 @@ export interface CompletaTask {
   done: boolean;
   to: string;
   detail?: string;
+  reward?: string;
+  rewardEarned?: boolean;
 }
 
 export function getCompletaTuTiendaTasks(
   store: Store,
   designConfirmed = false,
+  grantedRewards?: { productos_3?: boolean; marca?: boolean; compartir?: boolean },
 ): CompletaTask[] {
   const defaults = getRubroDefaults(store.niche);
   const realProductsCount = (store.products || []).filter((p) => !p.isSample).length;
@@ -95,6 +99,10 @@ export function getCompletaTuTiendaTasks(
     designConfirmed || (Boolean(store.model) && store.model !== defaults.model);
   const hasBio = Boolean(store.bioLinksEnabled);
   const hasThreeProducts = realProductsCount >= 3;
+  const isTrial = store.subscriptionStatus === "trial";
+
+  const marcaEarned = Boolean(grantedRewards?.marca) || (hasLogo && hasPortada);
+  const productosEarned = Boolean(grantedRewards?.productos_3) || hasThreeProducts;
 
   return [
     {
@@ -108,6 +116,8 @@ export function getCompletaTuTiendaTasks(
       label: "Agrega portada o eslogan",
       done: hasPortada,
       to: "/admin/diseno",
+      reward: isTrial ? "logo + portada: +2 días" : undefined,
+      rewardEarned: marcaEarned,
     },
     {
       id: "diseno",
@@ -127,6 +137,8 @@ export function getCompletaTuTiendaTasks(
       detail: `${Math.min(realProductsCount, 3)}/3`,
       done: hasThreeProducts,
       to: "/admin/productos",
+      reward: isTrial ? "+3 días" : undefined,
+      rewardEarned: productosEarned,
     },
   ];
 }
@@ -134,17 +146,30 @@ export function getCompletaTuTiendaTasks(
 export function CompletaTuTienda({ store }: { store: Store }) {
   const [dismissed, setDismissed] = useState(() => isCompletaTuTiendaDismissed(store.id));
   const [designConfirmed, setDesignConfirmed] = useState(() => isDesignConfirmed(store.id));
+  const [grantedRewards, setGrantedRewards] = useState<{
+    productos_3?: boolean;
+    marca?: boolean;
+    compartir?: boolean;
+  }>({});
 
   useEffect(() => {
     setDismissed(isCompletaTuTiendaDismissed(store.id));
     setDesignConfirmed(isDesignConfirmed(store.id));
   }, [store.id]);
 
+  useEffect(() => {
+    if (store?.id && store.subscriptionStatus === "trial") {
+      getGrantedRewards(store.id).then((rewards) => {
+        setGrantedRewards(rewards);
+      });
+    }
+  }, [store?.id, store?.subscriptionStatus, store?.planExpiresAt]);
+
   if (!isStoreEligibleForCompletaTuTienda(store) || dismissed) {
     return null;
   }
 
-  const tasks = getCompletaTuTiendaTasks(store, designConfirmed);
+  const tasks = getCompletaTuTiendaTasks(store, designConfirmed, grantedRewards);
   const completedCount = tasks.filter((t) => t.done).length;
 
   if (completedCount === tasks.length) {
@@ -244,6 +269,21 @@ export function CompletaTuTienda({ store }: { store: Store }) {
                 {task.detail && (
                   <span className="text-[10px] font-bold text-muted-foreground shrink-0">
                     ({task.detail})
+                  </span>
+                )}
+                {task.reward && (
+                  <span
+                    data-testid={`task-reward-${task.id}`}
+                    className={cn(
+                      "text-[10px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 whitespace-nowrap ml-auto mr-1",
+                      task.rewardEarned
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300/40"
+                    )}
+                  >
+                    {task.rewardEarned
+                      ? (task.id === "portada" ? "✓ +2 días ganado" : `✓ ${task.reward} ganado`)
+                      : task.reward}
                   </span>
                 )}
               </Link>

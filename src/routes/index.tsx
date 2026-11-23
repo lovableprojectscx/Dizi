@@ -102,7 +102,7 @@ function LandingPage() {
     },
     {
       q: "¿Puedo empezar gratis sin pagar nada?",
-      a: "Sí. Puedes registrarte y crear tu catálogo con el Plan Semilla Gratuito (S/ 0.00) por tiempo ilimitado, sin necesidad de ingresar tarjeta de crédito.",
+      a: "Sí. Empiezas con 7 días de Pro gratis, sin tarjeta, y puedes ganar hasta 7 días más completando tu tienda. Después sigues gratis en el Plan Semilla por tiempo ilimitado.",
     },
   ];
 
@@ -249,7 +249,7 @@ function LandingPage() {
                   className="w-full sm:w-auto h-12 sm:h-14 px-8 rounded-2xl font-black text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
                 >
                   <Link to="/register">
-                    Crear Mi Catálogo Gratis <ArrowRight className="h-4 w-4" />
+                    Empieza con 7 días de Pro gratis <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
 
@@ -614,7 +614,7 @@ function LandingPage() {
                 </ul>
               </div>
               <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
-                <Link to="/register" search={{ plan: "semilla" }}>Crear Cuenta Gratis</Link>
+                <Link to="/register" search={{ plan: "semilla" }}>Empieza con 7 días de Pro gratis</Link>
               </Button>
             </div>
 
