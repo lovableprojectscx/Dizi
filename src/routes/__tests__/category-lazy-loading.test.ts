@@ -92,10 +92,6 @@ describe("Suite de Pruebas: Carga Bajo Demanda de Categorías y Resiliencia en T
       page_offset: 0,
     });
 
-    if (error && (error.message?.includes("Invalid API key") || error.message?.includes("fetch") || error.message?.includes("anon"))) {
-      return;
-    }
-
     expect(error).toBeNull();
     expect(data).toBeDefined();
     expect(data.slug).toBe("catalogo");
@@ -109,18 +105,14 @@ describe("Suite de Pruebas: Carga Bajo Demanda de Categorías y Resiliencia en T
 
   it("7. RPC en Vivo: get_public_store_products filtra por category_id y devuelve sus productos exactos", async () => {
     // Primero obtener el ID de la categoría Acrílico Fabric
-    const { data: storeData, error: storeError } = await supabase.rpc("get_public_store", {
+    const { data: storeData } = await supabase.rpc("get_public_store", {
       store_slug: "catalogo",
       page_limit: 10,
       page_offset: 0,
     });
 
-    if (storeError && (storeError.message?.includes("Invalid API key") || storeError.message?.includes("fetch") || storeError.message?.includes("anon"))) {
-      return;
-    }
-
-    const acrilicoCat = storeData?.categories?.find((c: any) => c.name.includes("Acrílico Fabric"));
-    if (!acrilicoCat) return;
+    const acrilicoCat = storeData.categories.find((c: any) => c.name.includes("Acrílico Fabric"));
+    expect(acrilicoCat).toBeDefined();
 
     const { data: prodData, error } = await supabase.rpc("get_public_store_products", {
       p_store_slug: "catalogo",
@@ -129,10 +121,6 @@ describe("Suite de Pruebas: Carga Bajo Demanda de Categorías y Resiliencia en T
       p_category_id: acrilicoCat.id,
       p_search_query: null,
     });
-
-    if (error && (error.message?.includes("Invalid API key") || error.message?.includes("fetch") || error.message?.includes("anon"))) {
-      return;
-    }
 
     expect(error).toBeNull();
     expect(Array.isArray(prodData)).toBe(true);

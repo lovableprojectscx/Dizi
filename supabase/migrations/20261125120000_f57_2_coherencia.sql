@@ -68,6 +68,7 @@ DECLARE
   v_plan text;
   v_requested_plan text;
   v_is_super boolean;
+  v_semilla_fin date;
 BEGIN
   -- 1. Exigir que auth.uid() coincida con p_owner_id, o que quien llama sea super_admin
   v_is_super := (COALESCE(((auth.jwt() -> 'app_metadata'::text) ->> 'role'::text), ''::text) = 'super_admin'::text);
@@ -76,30 +77,44 @@ BEGIN
     RAISE EXCEPTION 'No autorizado. Solo el dueño autenticado o un super_admin pueden inicializar la tienda.';
   END IF;
 
-  -- 2. Si es super_admin, se respeta el plan solicitado o nace Pro con 7 días de prueba (RF-57.2.8).
-  --    Si no es super_admin, la tienda nace con 7 días de prueba Pro (F55).
+  -- 2. Rama super_admin vs usuario normal (RF-57.2.8)
   IF v_is_super THEN
-    v_plan := COALESCE(p_plan, 'pro');
-    v_requested_plan := NULL;
-
-    IF v_plan = 'semilla' THEN
-      INSERT INTO public.stores (
-        id, slug, name, phone, country_code, country_iso, plan, requested_plan, terms_accepted_at, owner_id, model, active, is_published
-      ) VALUES (
-        p_id, p_slug, p_name, p_phone, p_country_code, COALESCE(p_country_iso, 'PE'), v_plan, v_requested_plan, now(), p_owner_id, p_model, true, true
-      );
-    ELSE
+    IF p_plan IS NULL THEN
+      -- (a) Superadmin sin plan especificado -> pro / trial / +7 días (RF-57.2.8)
       INSERT INTO public.stores (
         id, slug, name, phone, country_code, country_iso, plan, subscription_status, plan_expires_at, show_dizi_branding, requested_plan, terms_accepted_at, owner_id, model, active, is_published
       ) VALUES (
-        p_id, p_slug, p_name, p_phone, p_country_code, COALESCE(p_country_iso, 'PE'), v_plan, 'trial', now() + interval '7 days', NULL, v_requested_plan, now(), p_owner_id, p_model, true, true
+        p_id, p_slug, p_name, p_phone, p_country_code, COALESCE(p_country_iso, 'PE'), 'pro', 'trial', now() + interval '7 days', NULL, NULL, now(), p_owner_id, p_model, true, true
+      );
+    ELSIF p_plan = 'semilla' THEN
+      -- (b) Superadmin con 'semilla': verificar fecha límite semilla_fin en hora Lima
+      SELECT NULLIF(TRIM(BOTH '"' FROM (value::text)), '')::date
+        INTO v_semilla_fin
+        FROM public.app_config
+       WHERE key = 'semilla_fin';
+
+      IF v_semilla_fin IS NOT NULL AND (now() AT TIME ZONE 'America/Lima')::date >= v_semilla_fin THEN
+        RAISE EXCEPTION 'El plan Semilla ya no está disponible desde el %', v_semilla_fin;
+      END IF;
+
+      INSERT INTO public.stores (
+        id, slug, name, phone, country_code, country_iso, plan, requested_plan, terms_accepted_at, owner_id, model, active, is_published
+      ) VALUES (
+        p_id, p_slug, p_name, p_phone, p_country_code, COALESCE(p_country_iso, 'PE'), 'semilla', NULL, now(), p_owner_id, p_model, true, true
+      );
+    ELSE
+      -- (c) Superadmin con cualquier otro plan -> exactamente como hoy en producción (sin subscription_status ni plan_expires_at)
+      INSERT INTO public.stores (
+        id, slug, name, phone, country_code, country_iso, plan, requested_plan, terms_accepted_at, owner_id, model, active, is_published
+      ) VALUES (
+        p_id, p_slug, p_name, p_phone, p_country_code, COALESCE(p_country_iso, 'PE'), p_plan, NULL, now(), p_owner_id, p_model, true, true
       );
     END IF;
   ELSE
+    -- Rama usuario normal (F55): nace con 7 días de prueba Pro
     v_plan := 'pro';
     v_requested_plan := CASE WHEN p_plan IS NOT NULL AND p_plan != 'semilla' THEN p_plan ELSE NULL END;
 
-    -- 3b. Insertar tienda con prueba Pro de 7 días (F55)
     INSERT INTO public.stores (
       id, slug, name, phone, country_code, country_iso, plan, subscription_status, plan_expires_at, show_dizi_branding, requested_plan, terms_accepted_at, owner_id, model, active, is_published
     ) VALUES (

@@ -308,9 +308,64 @@ test.describe("F57.2 · Pruebas E2E Móvil (movil-android)", () => {
     });
 
     await page.goto("/super/tiendas", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1000);
+    await page.getByRole("button", { name: "Gestionar Tienda" }).first().click();
+    await expect(page.getByText("Gestión de Comercio")).toBeVisible({ timeout: 5000 });
+    await page.getByRole("tab", { name: "Planes" }).click();
+
+    await page.getByRole("button", { name: /Renovar Contrato/i }).click();
+    await expect(page.getByRole("heading", { name: "Renovar Contrato" })).toBeVisible();
+    await expect(page.locator("select option[value='semilla']")).toContainText("(hasta el 24 de diciembre)");
 
     const capturePath = path.join(CAPTURAS_DIR, "f57-2-escenario-08-super-semilla-vigente.png");
+    await page.screenshot({ path: capturePath, fullPage: false });
+    expect(fs.existsSync(capturePath)).toBe(true);
+  });
+
+  // --------------------------------------------------------------------------
+  // Escenario 8b: Superadmin con semilla_fin pasado oculta Semilla en renovar, cambiar plan e invitaciones
+  // --------------------------------------------------------------------------
+  test("Escenario 8b: Superadmin con semilla_fin pasado oculta Semilla en renovar, cambiar plan e invitaciones", async ({ page }) => {
+    const store = buildMockStore({
+      slug: "tienda-super-e8b",
+      name: "Tienda Super E8b",
+      plan: "pro",
+      planExpiresAt: "2026-12-20T12:00:00.000Z",
+    });
+
+    await setupPageSessionAndMocks(page, {
+      role: "super_admin",
+      fixedTimeIso: "2026-11-24T12:00:00.000Z",
+      stores: [store],
+      pausaActiva: true,
+      semillaFin: "2026-11-20",
+    });
+
+    // 1. En /super/tiendas -> Renovar Contrato
+    await page.goto("/super/tiendas", { waitUntil: "domcontentloaded" });
+    await page.getByRole("button", { name: "Gestionar Tienda" }).first().click();
+    await expect(page.getByText("Gestión de Comercio")).toBeVisible({ timeout: 5000 });
+    await page.getByRole("tab", { name: "Planes" }).click();
+
+    await page.getByRole("button", { name: /Renovar Contrato/i }).click();
+    await expect(page.getByRole("heading", { name: "Renovar Contrato" })).toBeVisible();
+    await expect(page.locator("select option[value='semilla']")).toHaveCount(0);
+    await page.getByRole("button", { name: "Cancelar" }).click();
+
+    // 2. En /super/tiendas -> Cambiar Plan
+    await page.getByRole("button", { name: /Cambiar Plan/i }).click();
+    await expect(page.getByRole("heading", { name: /Cambiar Plan/i })).toBeVisible();
+    await expect(page.locator("select option[value='semilla']")).toHaveCount(0);
+    await page.getByRole("button", { name: "Cancelar" }).click();
+
+    // 3. En /super/promociones -> Generador de Invitaciones no ofrece Semilla
+    await page.goto("/super/promociones", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("Generar Nuevo Enlace")).toBeVisible({ timeout: 5000 });
+    const generatorCard = page.locator(".rounded-xl", { hasText: "Generar Nuevo Enlace" });
+    await expect(generatorCard.locator("select option[value='semilla']")).toHaveCount(0);
+    await expect(generatorCard.locator("select option[value='emprendedor']")).toHaveCount(1);
+    await expect(generatorCard.locator("select option[value='pro']")).toHaveCount(1);
+
+    const capturePath = path.join(CAPTURAS_DIR, "f57-2-escenario-08b-super-semilla-vencida.png");
     await page.screenshot({ path: capturePath, fullPage: false });
     expect(fs.existsSync(capturePath)).toBe(true);
   });

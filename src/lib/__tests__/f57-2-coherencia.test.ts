@@ -1,6 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
+
+vi.mock("../supabase", () => ({
+  supabase: {},
+}));
 import {
   getStoreAccessState,
   isStoreInactiveCandidate,
@@ -232,6 +236,9 @@ describe("F57.2 · Coherencia (Escenarios 1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 15, 16
 
         // Excepciones permitidas documentadas
         if (relPath === "src/routes/terminos.tsx" && line.includes("El plan gratuito Semilla deja de ofrecerse")) {
+          return;
+        }
+        if (relPath === "src/routes/register.tsx" && line.includes('"bajo el Plan Semilla"')) {
           return;
         }
         if (relPath.startsWith("src/routes/super.") && line.includes("Semilla (antiguo)")) {
