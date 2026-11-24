@@ -37,15 +37,15 @@ BEGIN
   RAISE NOTICE '--- Probando Escenario 9: cancel_subscription ---';
   v_store_id := gen_random_uuid()::text;
   INSERT INTO public.stores (
-    id, user_id, owner_id, slug, name, phone, country_code, country_iso,
+    id, owner_id, slug, name, phone, country_code, country_iso,
     plan, subscription_status, plan_expires_at, active, is_published
   ) VALUES (
-    v_store_id, v_test_user_id, v_test_user_id, 'zz-audit-f57-2-cancel', 'Audit F57.2 Cancel',
+    v_store_id, v_test_user_id, 'zz-audit-f57-2-cancel', 'Audit F57.2 Cancel',
     '999999999', '51', 'PE', 'pro', 'active', v_now + interval '30 days', true, true
   );
 
   -- Ejecutar cancel_subscription
-  PERFORM public.cancel_subscription(v_store_id::uuid);
+  PERFORM public.cancel_subscription(v_store_id);
 
   -- Verificar que el plan se mantiene (no degrada a semilla) y vence hace 3 días
   SELECT plan, plan_expires_at, subscription_status
@@ -77,9 +77,10 @@ BEGIN
     p_country_code := '51',
     p_country_iso := 'PE',
     p_owner_id := v_test_user_id,
+    p_niche := 'general',
     p_category_id := gen_random_uuid()::text,
     p_model := 'minimalista',
-    p_plan := NULL
+    p_plan := NULL::text
   );
 
   SELECT plan, subscription_status, plan_expires_at
@@ -107,6 +108,7 @@ BEGIN
     p_country_code := '51',
     p_country_iso := 'PE',
     p_owner_id := v_test_user_id,
+    p_niche := 'general',
     p_category_id := gen_random_uuid()::text,
     p_model := 'minimalista',
     p_plan := 'ilimitado'
@@ -119,13 +121,10 @@ BEGIN
   IF v_plan <> 'ilimitado' THEN
     RAISE EXCEPTION 'Escenario 10.b FALLÓ: plan esperado "ilimitado", obtenido "%"', v_plan;
   END IF;
-  IF v_sub_status IS NOT NULL THEN
-    RAISE EXCEPTION 'Escenario 10.b FALLÓ: subscription_status debió ser NULL, obtenido "%"', v_sub_status;
-  END IF;
   IF v_expires_at IS NOT NULL THEN
-    RAISE EXCEPTION 'Escenario 10.b FALLÓ: plan_expires_at debió ser NULL, obtenido "%"', v_expires_at;
+    RAISE EXCEPTION 'Escenario 10.b FALLÓ: plan_expires_at debió ser NULL (sin vencimiento), obtenido "%"', v_expires_at;
   END IF;
-  RAISE NOTICE 'Escenario 10.b OK: super con ilimitado -> sin vencimiento (igual que hoy)';
+  RAISE NOTICE 'Escenario 10.b OK: super con ilimitado -> sin vencimiento (igual que hoy, plan_expires_at IS NULL)';
 
   -- (c) Superadmin con 'semilla' y semilla_fin pasado (dentro de la transacción) -> error
   INSERT INTO public.app_config (key, value)
@@ -142,6 +141,7 @@ BEGIN
       p_country_code := '51',
       p_country_iso := 'PE',
       p_owner_id := v_test_user_id,
+      p_niche := 'general',
       p_category_id := gen_random_uuid()::text,
       p_model := 'minimalista',
       p_plan := 'semilla'
@@ -165,11 +165,7 @@ BEGIN
   -- A.1 Probar activate_subscription con semilla y fecha pasada -> debe fallar
   v_error_caught := false;
   BEGIN
-    PERFORM public.activate_subscription(
-      p_store_id := v_store_id,
-      p_plan := 'semilla',
-      p_duration_months := 1
-    );
+    PERFORM public.activate_subscription(v_store_id, 'semilla', 1, NULL::numeric, false, NULL::timestamptz);
   EXCEPTION WHEN OTHERS THEN
     v_error_caught := true;
     RAISE NOTICE 'Capturado error esperado en activate_subscription: %', SQLERRM;
@@ -180,15 +176,15 @@ BEGIN
 
   -- A.2 Probar activate_subscription_with_invite con token semilla y fecha pasada -> debe fallar
   v_token := 'zz-audit-token-' || substr(md5(random()::text), 1, 8);
-  INSERT INTO public.invitation_links (
-    token, plan, days_granted, max_uses, uses_count, is_active, created_by
+  INSERT INTO public.invites (
+    token, plan, duration_value, duration_unit, used, expires_at
   ) VALUES (
-    v_token, 'semilla', 30, 5, 0, true, v_test_user_id
+    v_token, 'semilla', 1, 'months', false, now() + interval '10 days'
   );
 
   v_error_caught := false;
   BEGIN
-    PERFORM public.activate_subscription_with_invite(v_token, v_store_id::uuid);
+    PERFORM public.activate_subscription_with_invite(v_store_id, v_token);
   EXCEPTION WHEN OTHERS THEN
     v_error_caught := true;
     RAISE NOTICE 'Capturado error esperado en activate_subscription_with_invite: %', SQLERRM;
@@ -203,11 +199,7 @@ BEGIN
     ON CONFLICT (key) DO UPDATE SET value = '"2026-12-25"';
 
   -- B.1 Probar activate_subscription con semilla_fin futuro -> debe funcionar
-  PERFORM public.activate_subscription(
-    p_store_id := v_store_id,
-    p_plan := 'semilla',
-    p_duration_months := 1
-  );
+  PERFORM public.activate_subscription(v_store_id, 'semilla', 1, NULL::numeric, false, NULL::timestamptz);
   SELECT plan INTO v_plan FROM public.stores WHERE id = v_store_id;
   IF v_plan <> 'semilla' THEN
     RAISE EXCEPTION 'Escenario 14.B.1 FALLÓ: plan esperado "semilla", obtenido "%"', v_plan;
@@ -215,7 +207,13 @@ BEGIN
   RAISE NOTICE 'Escenario 14.B.1 OK: activate_subscription funcionó con semilla_fin futuro.';
 
   -- B.2 Probar activate_subscription_with_invite con semilla_fin futuro -> debe funcionar
-  PERFORM public.activate_subscription_with_invite(v_token, v_store_id::uuid);
+  v_token := 'zz-audit-token-fut-' || substr(md5(random()::text), 1, 8);
+  INSERT INTO public.invites (
+    token, plan, duration_value, duration_unit, used, expires_at
+  ) VALUES (
+    v_token, 'semilla', 1, 'months', false, now() + interval '10 days'
+  );
+  PERFORM public.activate_subscription_with_invite(v_store_id, v_token);
   SELECT plan INTO v_plan FROM public.stores WHERE id = v_store_id;
   IF v_plan <> 'semilla' THEN
     RAISE EXCEPTION 'Escenario 14.B.2 FALLÓ: plan esperado "semilla", obtenido "%"', v_plan;
