@@ -618,9 +618,9 @@ $function$;
 COMMENT ON FUNCTION public.apply_semilla_sunset() IS
   'Aplica la transición de Semilla y vencidas pre-pausa a prueba Pro de 7 días. Idempotente. Solo actúa si semilla_fin ya pasó en hora Lima.';
 
--- Seguridad: REVOKE EXECUTE a PUBLIC y anon
-REVOKE EXECUTE ON FUNCTION public.apply_semilla_sunset() FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.apply_semilla_sunset() TO service_role, postgres;
+-- Seguridad: REVOKE EXECUTE a PUBLIC, anon y authenticated
+REVOKE EXECUTE ON FUNCTION public.apply_semilla_sunset() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.apply_semilla_sunset() TO service_role;
 
 -- 6. Programación automática con pg_cron (~06:00 AM Lima = 11:00 UTC)
 DO $$
