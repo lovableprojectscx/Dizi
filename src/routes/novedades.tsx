@@ -271,11 +271,11 @@ const FAQ = [
   },
   {
     q: "¿Cuántos productos puedo subir?",
-    a: "Depende de tu plan: Semilla (gratis) permite hasta 20 productos, Emprendedor hasta 100, Pro hasta 300, e Ilimitado hasta 1,000. Puedes cambiar de plan en cualquier momento.",
+    a: "Depende de tu plan: Emprendedor permite hasta 100 productos, Pro hasta 300, e Ilimitado hasta 1,000. Cuentas con 7 días de prueba Pro gratis para comenzar y puedes cambiar de plan en cualquier momento.",
   },
   {
     q: "¿Qué pasa si mi suscripción vence?",
-    a: "Tienes 3 días de gracia donde todo sigue igual. Luego, los productos que excedan el límite del plan gratuito (20) se ocultan del catálogo público, pero no se borran de tu panel. Tu diseño se mantiene siempre intacto. Al renovar, todo vuelve a la normalidad automáticamente.",
+    a: "Tienes 3 días de gracia donde todo sigue igual. Si no renuevas, tu catálogo entra en pausa comercial: tus clientes ven una página en pausa con botón directo a tu WhatsApp. Tus productos y diseño siguen seguros en tu panel y se reactivan al instante al renovar desde S/ 19.90.",
   },
   {
     q: "¿Cómo realizan el pedido mis clientes?",

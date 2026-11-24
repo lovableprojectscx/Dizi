@@ -900,7 +900,7 @@ function RegisterPage() {
             ) : requestedPlan && requestedPlan !== "semilla" ? (
               `Empiezas con 7 días de Pro gratis. Cuando quieras quedarte con el Plan ${requestedPlan === "pro" ? "Pro" : (PLANS[requestedPlan]?.name || requestedPlan)}, lo activas desde Mi Plan.`
             ) : (
-              "Empiezas con 7 días de Pro gratis y puedes ganar hasta 7 más. Después sigues gratis en el Plan Semilla, sin tarjeta."
+              `Empiezas con 7 días de Pro gratis, sin tarjeta. Después eliges tu plan desde S/ ${PLANS.emprendedor.price.toFixed(2)} para mantener tu catálogo activo (no se borra nada).`
             )}
           </div>
 

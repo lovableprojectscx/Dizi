@@ -91,7 +91,7 @@ describe("Textos de planes (landing + Mi Plan + Ayuda)", () => {
     expect(PLANS.semilla.features).toContain("Libro de Reclamaciones");
     expect(PLANS.semilla.features).toContain("Imágenes para estados e historias");
 
-    expect(PLANS.emprendedor.features[0]).toBe("Todo lo de Semilla, sin el sello");
+    expect(PLANS.emprendedor.features[0]).toBe("Catálogo activo sin interrupciones");
 
     expect(PLANS.pro.features[1]).toBe("Link de pedido para tus clientes");
     expect(planAllowsOrderLink({ plan: "semilla" })).toBe(false);
@@ -126,11 +126,11 @@ describe("Textos de planes (landing + Mi Plan + Ayuda)", () => {
     expect(ayudaNormalized).not.toContain("de forma automática");
   });
 
-  it("5. Mi Plan: planes inferiores usan enlace discreto 'Cambiar a <plan>' (sin bg-primary), actual 'Plan Activo' y superiores coral 'Solicitar <plan>'", () => {
+  it("5. Mi Plan: planes inferiores usan enlace discreto 'Cambiar a <plan>' (sin bg-primary), actual 'Plan Actual' y superiores coral 'Solicitar <plan>' (F57: sin Semilla)", () => {
     const semillaStore = makeStore("semilla", "zz-audit-semilla");
     useApp.setState({ stores: [semillaStore], currentStoreId: semillaStore.id });
     const semillaHtml = renderToStaticMarkup(<PlanPage />);
-    expect(semillaHtml).toContain("Plan Activo");
+    expect(semillaHtml).toContain("Plan actual: <strong>Semilla</strong>");
     expect(semillaHtml).toContain("Solicitar Emprendedor");
     expect(semillaHtml).toContain("Solicitar Catálogo Pro");
     expect(semillaHtml).toContain("Solicitar Ilimitado");
@@ -139,16 +139,16 @@ describe("Textos de planes (landing + Mi Plan + Ayuda)", () => {
     const proStore = makeStore("pro", "zz-audit-pro");
     useApp.setState({ stores: [proStore], currentStoreId: proStore.id });
     const proHtml = renderToStaticMarkup(<PlanPage />);
-    expect(proHtml).toContain("Plan Activo");
-    expect(proHtml).toContain("Cambiar a Semilla");
+    expect(proHtml).toContain("Plan Actual");
+    expect(proHtml).not.toContain("Cambiar a Semilla");
     expect(proHtml).toContain("Cambiar a Emprendedor");
     expect(proHtml).not.toContain("Solicitar Semilla");
     expect(proHtml).not.toContain("Solicitar Emprendedor");
     expect(proHtml).toContain("Solicitar Ilimitado");
 
-    // Verificar que los enlaces 'Cambiar a ...' no llevan la clase coral bg-primary
+    // En F57 Semilla no está en PLAN_ORDER, por lo que solo Emprendedor es plan inferior para Pro
     const lowerLinks = proHtml.match(/<a[^>]*>Cambiar a [^<]+<\/a>/g) ?? [];
-    expect(lowerLinks).toHaveLength(2);
+    expect(lowerLinks).toHaveLength(1);
     for (const linkHtml of lowerLinks) {
       expect(linkHtml).not.toContain("bg-primary");
     }

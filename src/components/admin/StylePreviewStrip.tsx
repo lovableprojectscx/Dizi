@@ -24,6 +24,7 @@ const STYLE_LABELS: Record<ShareImageStyle, string> = {
   editorial: "Editorial",
   "marco-color": "Marco de color",
   oferta: "Oferta",
+  catalogo: "Catálogo",
 };
 
 export interface StylePreviewStripProps {

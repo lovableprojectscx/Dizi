@@ -11,6 +11,7 @@
  */
 
 import { resolveRenderModel, getDesignSpec, TIENDAS_CON_ESTILO_ANTERIOR } from "@/lib/design-catalog";
+import { PausedStorePage } from "./PausedStorePage";
 import { getPhotoAspect, PhotoAspect } from "@/lib/photo-format";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { loadFontOnDemand } from "@/lib/fonts";
@@ -3001,6 +3002,10 @@ export function PublicCatalog({
   }, [store.id, store.products]);
 
   /* ── Render ──────────────────────────────────────── */
+  if (store.paused) {
+    return <PausedStorePage store={store} />;
+  }
+
   return (
     <div
       className={cn(

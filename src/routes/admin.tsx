@@ -37,9 +37,13 @@ import {
   Users,
   Loader2,
   Sparkles,
+  PauseCircle,
+  Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getEffectivePlan } from "@/lib/types";
+import { getEffectivePlan, PLANS } from "@/lib/types";
+import { getStoreAccessState, useAppConfig, type AppConfigState } from "@/lib/access-state";
+import { supabase } from "@/lib/supabase";
 import {
   Sheet,
   SheetContent,
@@ -135,7 +139,10 @@ function AdminLayout() {
     }
   }, [stores, storeId, setStore]);
 
+  const appConfig = useAppConfig();
+
   const store = stores.find((s) => s.id === storeId) ?? stores[0];
+  const accessState = store ? getStoreAccessState(store, appConfig) : "activa";
   const isPhoneValid = store ? validatePhone(store.countryIso || "PE", store.phone).ok : true;
 
   if (stores.length === 0) {
@@ -269,6 +276,87 @@ function AdminLayout() {
                 >
                   Contactar a Soporte
                 </a>
+              </Button>
+            </div>
+          )}
+          {store && store.active && accessState === "pausa" && (
+            <div
+              data-testid="admin-paused-banner"
+              className="bg-amber-500/10 text-amber-950 dark:text-amber-200 border-b border-amber-500/30 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30"
+            >
+              <span className="flex items-start gap-2 leading-tight flex-1">
+                <PauseCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-amber-900 dark:text-amber-200">
+                    Tu catálogo está en pausa. Reactívalo desde S/ {PLANS.emprendedor.price.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-amber-800 dark:text-amber-300">
+                    Tu período de vigencia finalizó. Puedes seguir editando tus productos y tienda, pero tus clientes ven el catálogo en pausa.
+                  </p>
+                </div>
+              </span>
+              <Button
+                size="sm"
+                asChild
+                className="h-8 font-bold text-xs shrink-0 bg-amber-600 hover:bg-amber-700 text-white self-start sm:self-center"
+              >
+                <Link to="/admin/plan">
+                  Elegir mi plan
+                </Link>
+              </Button>
+            </div>
+          )}
+          {store && store.active && accessState === "gracia" && (
+            <div
+              data-testid="admin-grace-banner"
+              className="bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200 border-b border-amber-200 dark:border-amber-800 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30"
+            >
+              <span className="flex items-start gap-2 leading-tight flex-1">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-amber-800 dark:text-amber-200">
+                    Tu plan venció, renueva para no pausar tu catálogo
+                  </p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Estás dentro de los 3 días de tolerancia. Renueva tu plan para mantener tu catálogo activo sin pausas.
+                  </p>
+                </div>
+              </span>
+              <Button
+                size="sm"
+                asChild
+                className="h-8 font-bold text-xs shrink-0 bg-amber-600 hover:bg-amber-700 text-white self-start sm:self-center"
+              >
+                <Link to="/admin/plan">
+                  Renovar plan
+                </Link>
+              </Button>
+            </div>
+          )}
+          {store && store.active && store.plan === "semilla" && appConfig.semillaFin && (
+            <div
+              data-testid="admin-semilla-countdown-banner"
+              className="bg-indigo-50 text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-200 border-b border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30"
+            >
+              <span className="flex items-start gap-2 leading-tight flex-1">
+                <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold text-indigo-900 dark:text-indigo-200">
+                    El plan gratis termina el {new Date(appConfig.semillaFin).toLocaleDateString("es-PE", { day: "numeric", month: "long" })}
+                  </p>
+                  <p className="text-xs text-indigo-800 dark:text-indigo-300">
+                    Ese día te regalamos 7 días de Pro; después eliges tu plan desde S/ {PLANS.emprendedor.price.toFixed(2)} para mantener tu catálogo activo.
+                  </p>
+                </div>
+              </span>
+              <Button
+                size="sm"
+                asChild
+                className="h-8 font-bold text-xs shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white self-start sm:self-center"
+              >
+                <Link to="/admin/plan">
+                  Ver planes
+                </Link>
               </Button>
             </div>
           )}

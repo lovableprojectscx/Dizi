@@ -160,8 +160,8 @@ function TerminosPage() {
                 "Los precios están expresados en soles (S/) e incluyen los impuestos que correspondan.",
                 "Los precios promocionales de lanzamiento son temporales y pueden cambiar. Cualquier cambio se avisará con al menos 30 días de anticipación y no afecta un período ya pagado.",
                 "La suscripción no se renueva automáticamente: se renueva cuando confirmas el pago del siguiente período.",
-                "El plan gratuito (Semilla) muestra una marca de agua de Dizi en tu catálogo.",
-                "Si tu plan vence, tu catálogo entra en un período de gracia breve antes de aplicar las restricciones del plan gratuito. Tus productos no se borran por vencimiento.",
+                "Al registrarte cuentas con 7 días de prueba Pro sin costo ni tarjeta de crédito requerida.",
+                "Si tu plan vence, tu catálogo cuenta con un período de gracia de 3 días antes de pasar a pausa comercial. Tus productos, enlaces y configuración no se borran por vencimiento.",
               ]}
             />
             <p className="mt-3">

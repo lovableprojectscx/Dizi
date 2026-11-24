@@ -539,11 +539,10 @@ function AyudaPage() {
 
             <h3>Qué pasa si vence</h3>
             <p>
-              <strong>No se borra nada.</strong> Hay unos días de gracia y después tu catálogo pasa a
-              funcionar con las condiciones del plan gratuito: los productos que exceden ese límite
-              se dejan de mostrar al público, pero siguen guardados y vuelven a aparecer en cuanto
-              renuevas. El modelo de diseño premium también vuelve al modelo básico después de un
-              tiempo.
+              <strong>No se borra nada.</strong> Cuentas con 3 días de tolerancia (gracia). Si no
+              renuevas, tu catálogo entra en pausa comercial: tus clientes ven una página en pausa
+              con tu logo, nombre y botón directo a tu WhatsApp. Tus productos, enlaces y diseño
+              quedan 100% seguros y vuelven a estar activos al instante al elegir tu plan desde S/ 19.90.
             </p>
 
             <h3>Cómo renovar</h3>
