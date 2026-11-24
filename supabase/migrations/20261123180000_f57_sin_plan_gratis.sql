@@ -565,8 +565,8 @@ BEGIN
     );
   END IF;
 
-  -- 4. Expiración calculada a 7 días en hora Lima
-  v_new_expiry := (now() AT TIME ZONE 'America/Lima') + interval '7 days';
+  -- 4. Expiración calculada a 7 días en UTC timestamptz
+  v_new_expiry := now() + interval '7 days';
 
   -- 5. Migrar tiendas Semilla y tiendas pagadas vencidas antes de pausa_desde
   WITH targets AS (
