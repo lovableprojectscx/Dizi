@@ -3,21 +3,19 @@
 -- Archivo: supabase/migrations/20261124120000_f57_1_sunset_targets.sql
 -- Fecha: 2026-11-24
 --
--- NOTA: Preparada SOLO como archivo en Paso 1 (NO APLICAR HASTA OK DE CLAUDE Y JACK).
---
 -- Cambios:
 --   1. Nueva función public.semilla_sunset_targets(p_s date) RETURNS SETOF text
---      - STABLE, SECURITY DEFINER, SET search_path = public, pg_temp.
+--      - STABLE, SECURITY DEFINER, SET search_path TO 'public', 'pg_temp'.
 --      - Devuelve los IDs de las tiendas que pasan a prueba Pro el día S:
 --        plan = 'semilla' O (plan <> 'semilla' y venció + 3 días antes del inicio
 --        del día S en hora Lima), excluyendo *-demo, zz-* e ilimitado sin vencimiento.
 --      - EXECUTE restringido exclusivamente a postgres y service_role.
---   2. Recreación de public.apply_semilla_sunset() partiendo de pg_get_functiondef
---      de producción (2026-11-23), delegando la selección a semilla_sunset_targets(v_semilla_fin)
---      sin depender de pausa_desde.
+--   2. Recreación de public.apply_semilla_sunset() partiendo literalmente del
+--      pg_get_functiondef de producción (2026-11-24), delegando la selección a
+--      semilla_sunset_targets(v_semilla_fin) sin depender de pausa_desde.
 --      - Conserva REVOKE EXECUTE a PUBLIC, anon y authenticated; GRANT a service_role.
---   3. Script de reversión comentado al final (restaura primero apply_semilla_sunset
---      a la definición exacta de producción y luego elimina semilla_sunset_targets).
+--   3. Script de reversión comentado al final con el pg_get_functiondef literal
+--      de producción + REVOKE/GRANT + DROP de semilla_sunset_targets.
 -- ==============================================================================
 
 -- 1. Función de selección única del grupo de transición el día S
@@ -51,13 +49,13 @@ COMMENT ON FUNCTION public.semilla_sunset_targets(date) IS
 REVOKE EXECUTE ON FUNCTION public.semilla_sunset_targets(date) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.semilla_sunset_targets(date) TO service_role;
 
--- 2. Función public.apply_semilla_sunset() usando public.semilla_sunset_targets(v_semilla_fin)
--- Basada en pg_get_functiondef de producción (2026-11-23), eliminando la dependencia de pausa_desde.
+-- 2. Función public.apply_semilla_sunset() partiendo del pg_get_functiondef exacto de producción,
+-- reemplazando únicamente el filtro con v_pausa_desde por public.semilla_sunset_targets(v_semilla_fin).
 CREATE OR REPLACE FUNCTION public.apply_semilla_sunset()
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public', 'pg_temp'
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_semilla_fin date := NULL;
@@ -77,32 +75,30 @@ BEGIN
         v_semilla_fin := NULL;
       END;
     END IF;
-  EXCEPTION WHEN OTHERS THEN
-    v_semilla_fin := NULL;
+  EXCEPTION WHEN undefined_table THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Tabla public.app_config no existe');
   END;
 
-  -- 2. Si semilla_fin es NULL, no hacer nada (idempotente y seguro)
+  -- 2. Si semilla_fin es NULL, no hay transición
   IF v_semilla_fin IS NULL THEN
     RETURN jsonb_build_object(
-      'success', false,
-      'reason', 'semilla_fin_is_null',
-      'migrated_count', 0
+      'success', true,
+      'migrated_count', 0,
+      'reason', 'semilla_fin no configurada (NULL); no se aplica transición'
     );
   END IF;
 
-  -- 3. Si la fecha actual en Lima es anterior a semilla_fin, no hacer nada
+  -- 3. Evaluar con fecha oficial de Lima
   v_today_lima := (now() AT TIME ZONE 'America/Lima')::date;
   IF v_today_lima < v_semilla_fin THEN
     RETURN jsonb_build_object(
-      'success', false,
-      'reason', 'semilla_fin_not_reached',
-      'today_lima', v_today_lima,
-      'semilla_fin', v_semilla_fin,
-      'migrated_count', 0
+      'success', true,
+      'migrated_count', 0,
+      'reason', format('Fecha actual de Lima (%s) es anterior a semilla_fin (%s)', v_today_lima, v_semilla_fin)
     );
   END IF;
 
-  -- 4. Nueva fecha de vencimiento: exactamente 7 días desde la ejecución (now() + 7 días)
+  -- 4. Expiración calculada a 7 días en UTC timestamptz
   v_new_expiry := now() + interval '7 days';
 
   -- 5. Migrar el grupo único definido por public.semilla_sunset_targets(v_semilla_fin)
@@ -135,21 +131,20 @@ END;
 $function$;
 
 COMMENT ON FUNCTION public.apply_semilla_sunset() IS
-  'F57.1: Convierte las tiendas de semilla_sunset_targets(semilla_fin) a prueba Pro de 7 días. Idempotente y sin bucle posterior. Solo actúa si semilla_fin ya llegó en hora Lima.';
+  'Aplica la transición de Semilla y vencidas al inicio del día S a prueba Pro de 7 días usando semilla_sunset_targets. Idempotente. Solo actúa si semilla_fin ya llegó en hora Lima.';
 
 REVOKE EXECUTE ON FUNCTION public.apply_semilla_sunset() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.apply_semilla_sunset() TO service_role;
 
 -- ==============================================================================
--- SCRIPT DE REVERSIÓN (EN ORDEN: 1º RESTAURAR apply_semilla_sunset, 2º BORRAR semilla_sunset_targets)
+-- SCRIPT DE REVERSIÓN (1.º pg_get_functiondef EXACTO DE PRODUCCIÓN + REVOKE/GRANT, 2.º DROP semilla_sunset_targets)
 -- ==============================================================================
 /*
--- 1. Restaurar public.apply_semilla_sunset() a la definición exacta de producción previa a F57.1
 CREATE OR REPLACE FUNCTION public.apply_semilla_sunset()
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public', 'pg_temp'
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_semilla_fin date := NULL;
@@ -179,33 +174,30 @@ BEGIN
         v_pausa_desde := NULL;
       END;
     END IF;
-  EXCEPTION WHEN OTHERS THEN
-    v_semilla_fin := NULL;
-    v_pausa_desde := NULL;
+  EXCEPTION WHEN undefined_table THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Tabla public.app_config no existe');
   END;
 
-  -- 2. Si semilla_fin es NULL, no hacer nada (idempotente y seguro)
+  -- 2. Si semilla_fin es NULL, no hay transición
   IF v_semilla_fin IS NULL THEN
     RETURN jsonb_build_object(
-      'success', false,
-      'reason', 'semilla_fin_is_null',
-      'migrated_count', 0
+      'success', true,
+      'migrated_count', 0,
+      'reason', 'semilla_fin no configurada (NULL); no se aplica transición'
     );
   END IF;
 
-  -- 3. Si la fecha actual en Lima es anterior a semilla_fin, no hacer nada
+  -- 3. Evaluar con fecha oficial de Lima
   v_today_lima := (now() AT TIME ZONE 'America/Lima')::date;
   IF v_today_lima < v_semilla_fin THEN
     RETURN jsonb_build_object(
-      'success', false,
-      'reason', 'semilla_fin_not_reached',
-      'today_lima', v_today_lima,
-      'semilla_fin', v_semilla_fin,
-      'migrated_count', 0
+      'success', true,
+      'migrated_count', 0,
+      'reason', format('Fecha actual de Lima (%s) es anterior a semilla_fin (%s)', v_today_lima, v_semilla_fin)
     );
   END IF;
 
-  -- 4. Nueva fecha de vencimiento: exactamente 7 días desde la ejecución (now() + 7 días)
+  -- 4. Expiración calculada a 7 días en UTC timestamptz
   v_new_expiry := now() + interval '7 days';
 
   -- 5. Migrar tiendas Semilla y tiendas pagadas vencidas antes de pausa_desde
@@ -246,6 +238,5 @@ $function$;
 REVOKE EXECUTE ON FUNCTION public.apply_semilla_sunset() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.apply_semilla_sunset() TO service_role;
 
--- 2. Eliminar la función nueva de F57.1
 DROP FUNCTION IF EXISTS public.semilla_sunset_targets(date);
 */

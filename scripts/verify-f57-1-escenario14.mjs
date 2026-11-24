@@ -26,26 +26,19 @@ const repoRoot = path.resolve(__dirname, "..");
 const linkedSupabaseDir = path.resolve(repoRoot, "..", "catalog-connect-main");
 
 const READ_ONLY_SQL = `
+WITH real_targets AS (
+  SELECT target_id AS id
+  FROM public.semilla_sunset_targets('2026-12-09'::date) AS target_id
+)
 SELECT
   s.id,
   s.slug,
   s.plan,
   s.plan_expires_at,
   s.active,
-  (
-    (
-      s.plan = 'semilla'
-      OR (
-        s.plan <> 'semilla'
-        AND s.plan_expires_at IS NOT NULL
-        AND (s.plan_expires_at + interval '3 days') < ('2026-12-09'::date::timestamp AT TIME ZONE 'America/Lima')
-      )
-    )
-    AND s.slug NOT LIKE '%-demo'
-    AND s.slug NOT LIKE 'zz-%'
-    AND NOT (s.plan = 'ilimitado' AND s.plan_expires_at IS NULL)
-  ) AS sql_rule_matches
+  (rt.id IS NOT NULL) AS sql_rule_matches
 FROM public.stores s
+LEFT JOIN real_targets rt ON rt.id = s.id
 ORDER BY s.id;
 `
   .replace(/\s+/g, " ")
