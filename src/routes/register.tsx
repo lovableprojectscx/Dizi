@@ -896,7 +896,7 @@ function RegisterPage() {
             {invitePlan ? (
               isTrial
                 ? `Se activará tu Plan ${PLANS[plan]?.name || plan.toUpperCase()} (prueba de ${inviteDurationText}) gratis al crear tu cuenta.`
-                : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${PLANS[plan]?.name || plan.toUpperCase()}` : "bajo el Plan Semilla (gratuito)"}.`
+                : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${PLANS[plan]?.name || plan.toUpperCase()}` : "bajo el Plan Semilla"}.`
             ) : requestedPlan && requestedPlan !== "semilla" ? (
               `Empiezas con 7 días de Pro gratis. Cuando quieras quedarte con el Plan ${requestedPlan === "pro" ? "Pro" : (PLANS[requestedPlan]?.name || requestedPlan)}, lo activas desde Mi Plan.`
             ) : (

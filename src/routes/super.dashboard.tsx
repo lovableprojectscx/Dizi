@@ -139,7 +139,7 @@ function SuperDashboard() {
   });
 
   const planLabels: Record<string, string> = {
-    semilla: "Gratis (Semilla)",
+    semilla: "Semilla (antiguo)",
     emprendedor: "Emprendedor",
     pro: "Catálogo Pro",
     ilimitado: "Ilimitado",
@@ -502,7 +502,7 @@ function SuperDashboard() {
 
             <p className="text-[11px] text-muted-foreground leading-relaxed">
               Cumplimiento con las normativas de protección al consumidor del INDECOPI en Perú. Los
-              comercios activos que superen su plan gratuito semilla pueden activar este módulo en
+              comercios activos con plan de pago pueden activar este módulo en
               sus configuraciones.
             </p>
           </CardContent>

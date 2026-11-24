@@ -1320,7 +1320,7 @@ function LinkBioPage() {
                                   Añadir enlace
                                 </Button>
                                 <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block text-right leading-tight max-w-[240px]">
-                                  Límite del plan gratuito alcanzado. Actualiza tu plan para añadir
+                                  Límite de tu plan alcanzado. Actualiza tu plan para añadir
                                   enlaces ilimitados.
                                 </span>
                               </div>
@@ -1333,7 +1333,7 @@ function LinkBioPage() {
                                     customLinks.length >= getBioLinksLimit(store)
                                   ) {
                                     toast.error(
-                                      `El Plan Semilla está limitado a un máximo de ${getBioLinksLimit(store)} enlaces. Sube de plan para agregar más.`,
+                                      `Tu plan actual está limitado a un máximo de ${getBioLinksLimit(store)} enlaces. Sube de plan para agregar más.`,
                                     );
                                     return;
                                   }
@@ -2097,7 +2097,7 @@ function LinkBioPage() {
                             </p>
                             <p>
                               Personalizar libremente el color del botón o del texto requiere el
-                              Plan Emprendedor o superior. En el Plan Semilla se utiliza el color de
+                              Plan Emprendedor o superior. En tu plan actual se utiliza el color de
                               tu marca por defecto.
                             </p>
                           </div>

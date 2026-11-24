@@ -169,7 +169,7 @@ function ReferidosPage() {
 
     if (storeToExtend.plan === "semilla") {
       toast.error(
-        "No se puede extender una tienda en el plan Semilla (Gratis) ya que no tiene fecha de expiración.",
+        "No se puede extender una tienda Semilla (antiguo) ya que no tiene fecha de expiración.",
       );
       return;
     }

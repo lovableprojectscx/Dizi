@@ -517,7 +517,7 @@ function ConfigPage() {
                   </p>
                   {isSemilla && (
                     <p className="text-[10px] text-amber-600 font-medium mt-1">
-                      * Obligatorio en el Plan Semilla. Actualiza tu plan para poder desactivarlo.
+                      * Obligatorio en tu plan actual. Actualiza tu plan para poder desactivarlo.
                     </p>
                   )}
                 </div>

@@ -63,7 +63,7 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { SuperRefreshButton } from "@/components/super/SuperRefreshButton";
 import { Switch } from "@/components/ui/switch";
-import { getStoreAccessState, type AppConfigState } from "@/lib/access-state";
+import { getStoreAccessState, isStoreInactiveCandidate, type AppConfigState } from "@/lib/access-state";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -178,32 +178,7 @@ function AccessStateBadge({ state }: { state: "activa" | "gracia" | "pausa" }) {
   }
 }
 
-/**
- * Determina si una tienda es candidata a ser considerada inactiva/abandonada:
- * - Es plan semilla o lleva más de 15 días con el plan vencido.
- * - Fue creada hace más de 15 días.
- * - Posee menos de 10 visitas y 0 clics de WhatsApp.
- */
-function isStoreInactiveCandidate(store: any): boolean {
-  if (!store.active) return false;
 
-  const isSemilla = store.plan === "semilla";
-  const daysExpired = daysSinceExpiry(store);
-  const isExpiredLongTime = daysExpired !== null && daysExpired > 15;
-
-  if (!isSemilla && !isExpiredLongTime) return false;
-
-  const createdDaysAgo = Math.ceil(
-    (Date.now() - new Date(store.createdAt).getTime()) / (1000 * 60 * 60 * 24),
-  );
-  if (createdDaysAgo <= 15) return false;
-
-  const views = store.views || 0;
-  const clicks = store.whatsappClicks || 0;
-  if (views >= 10 || clicks > 0) return false;
-
-  return true;
-}
 
 /**
  * Componente principal de la tabla de comercios de la plataforma.
@@ -305,7 +280,7 @@ function TenantsPage() {
       } else if (selectedStatus === "expired") {
         matchesStatus = s.active && isExpired;
       } else if (selectedStatus === "inactive_candidate") {
-        matchesStatus = isStoreInactiveCandidate(s);
+        matchesStatus = isStoreInactiveCandidate(s, appConfig);
       }
     }
 
@@ -346,7 +321,7 @@ function TenantsPage() {
     return d !== null && d <= 7 && d >= 0;
   });
 
-  const inactiveStores = stores.filter(isStoreInactiveCandidate);
+  const inactiveStores = stores.filter((s) => isStoreInactiveCandidate(s, appConfig));
 
   const storesActiveCount = stores.filter((s) => s.active).length;
   const storesSuspendedCount = stores.filter((s) => !s.active).length;
@@ -441,7 +416,7 @@ function TenantsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los planes</SelectItem>
-                  <SelectItem value="semilla">Semilla (Gratis)</SelectItem>
+                  <SelectItem value="semilla">Semilla (antiguo)</SelectItem>
                   <SelectItem value="emprendedor">Emprendedor</SelectItem>
                   <SelectItem value="pro">Pro</SelectItem>
                   <SelectItem value="ilimitado">Ilimitado</SelectItem>
@@ -562,9 +537,8 @@ function TenantsPage() {
         <div className="rounded-xl border border-amber-200 bg-amber-500/5 p-4 space-y-2.5 shadow-sm">
           <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400 font-bold text-sm">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-            {inactiveStores.length} tienda{inactiveStores.length > 1 ? "s" : ""} registra
-            {inactiveStores.length > 1 ? "n" : ""} inactividad de 15+ días (candidatas a
-            suspender/liberar URL)
+            {inactiveStores.length} tienda{inactiveStores.length > 1 ? "s" : ""} en
+            pausa por 90+ días (candidatas a liberar URL)
           </div>
           <div className="flex flex-wrap gap-2">
             {inactiveStores.map((s) => (
@@ -628,13 +602,12 @@ function TenantsPage() {
                                 <ClipboardList className="h-2.5 w-2.5" /> Libro
                               </span>
                             )}
-                            {isStoreInactiveCandidate(s) && (
+                            {isStoreInactiveCandidate(s, appConfig) && (
                               <span
-                                title="Tienda inactiva sin visitas por más de 15 días"
+                                title="Tienda en pausa por 90+ días sin visitas"
                                 className="inline-flex items-center gap-1 text-[9px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
                               >
-                                <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> Inactiva
-                                (15d+)
+                                <AlertTriangle className="h-2.5 w-2.5 text-amber-500" /> En pausa 90d+
                               </span>
                             )}
                             {!validatePhone(s.countryIso || "PE", s.phone).ok && (
@@ -782,12 +755,12 @@ function TenantsPage() {
                 <div>
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="font-bold text-sm text-foreground leading-tight">{s.name}</p>
-                    {isStoreInactiveCandidate(s) && (
+                    {isStoreInactiveCandidate(s, appConfig) && (
                       <span
-                        title="Tienda inactiva"
+                        title="Tienda en pausa por 90+ días"
                         className="inline-flex items-center gap-0.5 text-[8px] bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-1.5 py-0.2 font-bold uppercase tracking-wider dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/30"
                       >
-                        Inactiva (15d+)
+                        En pausa 90d+
                       </span>
                     )}
                   </div>

@@ -121,6 +121,63 @@ export function isStoreInGrace(
   return getStoreAccessState(store, config, now) === "gracia";
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Calcula cuántos días lleva una tienda en pausa comercial efectiva (RF-57.2.11).
+ * Inicio de la pausa = el mayor entre (vencimiento + 3 días de gracia) y pausa_desde.
+ * Si la tienda no está en pausa efectiva, retorna 0.
+ */
+export function getDaysInPause(
+  store: Pick<Store, "slug" | "plan"> & {
+    planExpiresAt?: string | null;
+    subscriptionStatus?: string | null;
+    active?: boolean;
+  },
+  config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null },
+  now: Date = new Date(),
+): number {
+  const accessState = getStoreAccessState(store, config, now);
+  if (accessState !== "pausa") {
+    return 0;
+  }
+
+  if (!store.planExpiresAt) return 0;
+  const expiresMs = new Date(store.planExpiresAt).getTime();
+  if (Number.isNaN(expiresMs)) return 0;
+
+  const graceEndMs = expiresMs + GRACE_PERIOD_MS;
+  const pausaDesdeMs = config.pausaDesde ? new Date(config.pausaDesde).getTime() : 0;
+  const pauseStartMs = Math.max(graceEndMs, Number.isNaN(pausaDesdeMs) ? 0 : pausaDesdeMs);
+
+  const diffMs = now.getTime() - pauseStartMs;
+  if (diffMs <= 0) return 0;
+
+  return Math.floor(diffMs / DAY_MS);
+}
+
+/**
+ * Determina si una tienda es candidata a ser considerada inactiva para liberación de enlace (RF-57.2.11):
+ * - Catálogo en pausa hace 90 días o más.
+ * - Poca actividad: menos de 10 visitas y 0 clics de WhatsApp.
+ */
+export function isStoreInactiveCandidate(
+  store: any,
+  config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null },
+  now: Date = new Date(),
+): boolean {
+  if (!store || !store.active) return false;
+
+  const daysInPause = getDaysInPause(store, config, now);
+  if (daysInPause < 90) return false;
+
+  const views = store.views || 0;
+  const clicks = store.whatsappClicks || 0;
+  if (views >= 10 || clicks > 0) return false;
+
+  return true;
+}
+
 let cachedConfig: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null };
 
 /**

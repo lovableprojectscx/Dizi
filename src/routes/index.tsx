@@ -4,7 +4,7 @@
  * Presenta la propuesta de valor del SaaS para digitalizar catálogos de MYPES y comercios:
  * - Propuesta de valor: catálogo digital interactivo, pedidos directos por WhatsApp, Link in Bio y Libro de Reclamaciones legal.
  * - Demostración en vivo de plantillas por rubro (Gastronomía, Moda, Florería, Servicios, Tecnología).
- * - Comparativa de planes y precios (Semilla, Emprendedor, Pro, Ilimitado) con selector mensual/anual.
+ * - Comparativa de planes y precios (Emprendedor, Pro, Ilimitado) con selector mensual/anual y prueba Pro gratis.
  * - Preguntas frecuentes (FAQ) interactivas, testimonios de clientes y optimización SEO con metadatos OpenGraph.
  */
 
@@ -422,7 +422,7 @@ function LandingPage() {
               Catálogo Web + Link en Bio + Libro de Reclamaciones
             </h2>
             <p className="text-sm text-muted-foreground">
-              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú, desde el plan gratuito.
+              Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú, desde tu prueba gratis.
             </p>
           </div>
 

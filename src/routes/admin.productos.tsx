@@ -2599,7 +2599,7 @@ function ProductsPage() {
                       {hiddenByExpiry > 1 ? "s" : ""} en tu catálogo público
                     </p>
                     <p className="text-sm text-amber-700 mt-0.5">
-                      Tu suscripción venció. El plan Semilla permite hasta {effectiveLimit} productos
+                      Tu suscripción venció. Tu catálogo muestra hasta {effectiveLimit} productos
                       visibles. Tus productos están guardados — renueva para mostrarlos todos de nuevo.
                     </p>
                     <a

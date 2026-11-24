@@ -439,9 +439,9 @@ function AyudaPage() {
               Elígelo corto, fácil de dictar por teléfono y sin números raros.
             </p>
             <Warn>
-              Tu enlace es tuyo <strong>mientras tu cuenta esté en uso</strong>. Una cuenta sin
-              actividad real por más de 15 días puede pausarse y liberar el enlace para otro negocio
-              — te avisamos por WhatsApp antes. Está en los{" "}
+              Tu enlace es tuyo <strong>mientras tu cuenta esté en uso</strong>. Un catálogo en
+              pausa conserva su enlace por al menos 90 días; pasado ese plazo y sin actividad en la
+              cuenta, podremos liberar el enlace avisándote antes por WhatsApp. Está en los{" "}
               <Link to="/terminos" className="underline font-medium">
                 Términos y Condiciones
               </Link>
@@ -556,8 +556,8 @@ function AyudaPage() {
             <p>
               En <strong>Mi Plan</strong> tienes tu enlace personal de invitación. Por cada tienda
               que recomiendes y contrate un plan de pago,{" "}
-              <strong>ambos reciben 1 mes gratis</strong>. Si estás en el plan gratuito, se te sube
-              el plan por ese mes; si ya pagas, se te suma al vencimiento.
+              <strong>ambos reciben 1 mes gratis</strong>. Si estás en prueba o con el plan vencido,
+              se te activa ese mes; si ya pagas, se te suma al vencimiento.
             </p>
             <p>La recompensa es siempre tiempo de servicio, no dinero.</p>
           </Chapter>

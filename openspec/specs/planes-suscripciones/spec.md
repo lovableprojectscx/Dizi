@@ -1,3 +1,6 @@
+> 🔴 **ACTUALIZACIÓN 23 nov 2026 (F55/F57):** **Regla vigente desde el 23 nov 2026 (F55 + F57, verificada por Claude en código y base):** (1) quien se registra empieza con **7 días de Pro gratis** (+ hasta 7 días por premios), sin tarjeta; (2) el **plan Semilla gratis se termina el 25 dic 2026**: ese día las tiendas que siguen en plan gratis pasan a 7 días de Pro; (3) cuando un plan vence hay **3 días de gracia** y después el catálogo queda **en pausa** (no se borra nada; vuelve al pagar), una vez que se encienda el interruptor `pausa_activa`. Detalle: `03-PRODUCTO-Y-REQUISITOS/F57-sin-plan-gratis/` y `04-TECNICA/FUENTE-DE-VERDAD.md` §10.
+> Los escenarios de "degradación a Semilla" de abajo valen mientras el interruptor esté apagado; con el interruptor encendido, pasada la gracia la tienda queda **en pausa**. El espejo del repo (`openspec/specs/`) se actualiza en el encargo F57.2.
+
 # Spec: Planes y Suscripciones
 
 ## Propósito
@@ -7,7 +10,7 @@ Aplicar límites por plan y degradación comercial automática con periodo de gr
 
 ### Requisito: Estructura Tarifaria y Límites por Plan (RF-05)
 Cada plan DEBE definir su precio mensual, tarifa anual (con 25% de ahorro) y el límite máximo de productos activos:
-- **Semilla**: Gratis (S/ 0) — Límite de **20 productos**.
+- **Semilla**: Gratis (S/ 0) — Límite de **20 productos**. **Solo tiendas antiguas; termina el 25 dic 2026 (F57).** Registros nuevos: 7 días de Pro (F55).
 - **Emprendedor**: S/ 19.90 /mes — S/ 179 /año (Ahorras S/ 60) — Límite de **100 productos**.
 - **Catálogo Pro**: S/ 39.90 /mes — S/ 359 /año (Ahorras S/ 120) — Límite de **300 productos**.
 - **Ilimitado**: S/ 69.90 /mes — S/ 629 /año (Ahorras S/ 210) — Límite de **1,000 productos**.

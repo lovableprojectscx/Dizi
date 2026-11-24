@@ -109,6 +109,22 @@ export function daysUntilSemillaFin(
 }
 
 /**
+ * Determina si el plan Semilla puede ser asignado por el Superadmin (RF-57.2.6).
+ * - Si `config.semillaFin` está vacío o no es válido: retorna `true` (por compatibilidad previa).
+ * - Si hoy en hora Lima es estrictamente antes de `semillaFin` (`daysLeft > 0`): retorna `true`.
+ * - Desde el día S (hoy en hora Lima >= `semillaFin`, `daysLeft <= 0`): retorna `false`.
+ */
+export function isSemillaAssignable(
+  config: Pick<AppConfigState, "semillaFin"> | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  if (!config?.semillaFin) return true;
+  const daysLeft = daysUntilSemillaFin(config, now);
+  if (daysLeft === null) return true;
+  return daysLeft > 0;
+}
+
+/**
  * Formatea `config.semillaFin` en español sin desfase de zona horaria (ej. `'2026-12-09'` -> `"9 de diciembre"`).
  */
 export function formatSemillaFin(

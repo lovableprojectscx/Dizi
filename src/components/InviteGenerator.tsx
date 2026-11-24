@@ -4,13 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Copy, Check, Link2, Calendar, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { PLANS, type PlanId } from "@/lib/types";
-
-const PLAN_OPTIONS: { value: PlanId; label: string }[] = [
-  { value: "emprendedor", label: `${PLANS.emprendedor.name} (S/ ${PLANS.emprendedor.price.toFixed(2)} / mes)` },
-  { value: "pro", label: `${PLANS.pro.name} (S/ ${PLANS.pro.price.toFixed(2)} / mes)` },
-  { value: "ilimitado", label: `${PLANS.ilimitado.name} (S/ ${PLANS.ilimitado.price.toFixed(2)} / mes)` },
-  { value: "semilla", label: `${PLANS.semilla.name} (Gratis)` },
-];
+import { useAppConfig } from "@/lib/access-state";
+import { isSemillaAssignable, formatDayBeforeSemillaFin } from "@/lib/semilla-notice";
 
 interface GeneratedLink {
   token: string;
@@ -35,6 +30,22 @@ function formatShortDate(date: Date): string {
 
 export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
   const addInvite = useApp((s) => s.addInvite);
+  const appConfig = useAppConfig();
+  const allowSemilla = isSemillaAssignable(appConfig);
+
+  const planOptions: { value: PlanId; label: string }[] = [
+    { value: "emprendedor", label: `${PLANS.emprendedor.name} (S/ ${PLANS.emprendedor.price.toFixed(2)} / mes)` },
+    { value: "pro", label: `${PLANS.pro.name} (S/ ${PLANS.pro.price.toFixed(2)} / mes)` },
+    { value: "ilimitado", label: `${PLANS.ilimitado.name} (S/ ${PLANS.ilimitado.price.toFixed(2)} / mes)` },
+    ...(allowSemilla
+      ? [
+          {
+            value: "semilla" as PlanId,
+            label: `${PLANS.semilla.name} ${appConfig.semillaFin ? `(hasta el ${formatDayBeforeSemillaFin(appConfig)})` : "(Gratis)"}`,
+          },
+        ]
+      : []),
+  ];
   const [selectedPlan, setSelectedPlan] = useState<PlanId>("emprendedor");
   const [durationValue, setDurationValue] = useState<number>(1);
   const [durationUnit, setDurationUnit] = useState<"days" | "months">("months");
@@ -127,7 +138,7 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
             }}
             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
           >
-            {PLAN_OPTIONS.map((o) => (
+            {planOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -248,7 +259,7 @@ export function InviteGenerator({ onGenerate }: { onGenerate?: () => void }) {
             {" "}
             El plan{" "}
             <strong>
-              {PLAN_OPTIONS.find((o) => o.value === selectedPlan)?.label.split(" (")[0]}
+              {planOptions.find((o) => o.value === selectedPlan)?.label.split(" (")[0]}
             </strong>{" "}
             durará{" "}
             <strong>

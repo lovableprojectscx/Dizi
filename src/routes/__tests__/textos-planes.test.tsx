@@ -77,12 +77,13 @@ describe("Textos de planes (landing + Mi Plan + Ayuda)", () => {
     expect(html).not.toContain("Diseños (8)");
   });
 
-  it("2. Landing bloque Catálogo Web + Link en Bio + Libro de Reclamaciones indica desde el plan gratuito", () => {
+  it("2. Landing bloque Catálogo Web + Link en Bio + Libro de Reclamaciones indica desde tu prueba gratis", () => {
     const html = renderToStaticMarkup(<LandingPage />);
     expect(html).toContain(
-      "Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú, desde el plan gratuito.",
+      "Todo lo que tu negocio necesita para vender y cumplir con la normativa del Perú, desde tu prueba gratis.",
     );
     expect(html).not.toContain("cumplir con la normativa del Perú desde S/");
+    expect(html).not.toContain("desde el plan gratuito");
   });
 
   it("3. Features de planes en PLANS coinciden con lo pedido y planAllowsOrderLink sigue siendo solo pro/ilimitado", () => {
