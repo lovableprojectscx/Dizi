@@ -27,6 +27,7 @@ import { ProductMosaic } from "@/components/admin/ProductMosaic";
 import { NextStepCard } from "@/components/admin/NextStepCard";
 import { claimTrialRewards } from "@/lib/trial-rewards";
 import { getMosaicProducts, getNextStep, getTrialStatus } from "@/lib/panel-home";
+import { getStoreAccessState, useAppConfig } from "@/lib/access-state";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -74,6 +75,8 @@ function Dashboard() {
     }
   }, [store?.id, isTrial, fetchData]);
 
+  const appConfig = useAppConfig();
+
   const mosaicProducts = useMemo(
     () => (store ? getMosaicProducts(store, 4) : []),
     [store],
@@ -92,13 +95,18 @@ function Dashboard() {
     );
   }
 
+  const accessState = store ? getStoreAccessState(store, appConfig) : "activa";
+  const isPaused = accessState === "pausa";
+
   const plan = PLANS[store.plan];
   const trialPlanName = store.plan === "pro" ? "Pro" : (PLANS[store.plan]?.name || "Pro");
-  const planBadgeText = isTrial
-    ? daysLeft === 1
-      ? `Prueba ${trialPlanName} · queda 1 día`
-      : `Prueba ${trialPlanName} · quedan ${daysLeft} días`
-    : `Plan ${plan.name}`;
+  const planBadgeText = isPaused
+    ? "En pausa"
+    : isTrial
+      ? daysLeft === 1
+        ? `Prueba ${trialPlanName} · queda 1 día`
+        : `Prueba ${trialPlanName} · quedan ${daysLeft} días`
+      : `Plan ${plan.name}`;
 
   const completaEligible = isStoreEligibleForCompletaTuTienda(store);
   const completaDismissed = isCompletaTuTiendaDismissed(store.id);
@@ -114,7 +122,9 @@ function Dashboard() {
   });
 
   const activeProducts = store.products.filter((p) => p.visible).length;
-  const activeProductsValue = `${activeProducts}/${plan.productLimit === Infinity ? "∞" : plan.productLimit}`;
+  const activeProductsValue = isPaused
+    ? String(activeProducts)
+    : `${activeProducts}/${plan.productLimit === Infinity ? "∞" : plan.productLimit}`;
 
   const metrics = [
     {

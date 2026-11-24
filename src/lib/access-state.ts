@@ -1,16 +1,19 @@
 /**
  * @file access-state.ts
  * @description Fuente única de verdad en TypeScript para el estado de acceso de tiendas (F57).
- * Espejo exacto de la función SQL `public.store_access_state(p_store_id)` y su tabla de 11 casos.
+ * Espejo exacto de la función SQL `public.store_access_state(p_store_id)` y su matriz de casos.
  */
 
+import { useState, useEffect } from "react";
 import type { Store } from "./types";
+import { supabase } from "./supabase";
 
 export type StoreAccessState = "activa" | "gracia" | "pausa";
 
 export interface AppConfigState {
   pausaActiva: boolean;
-  semillaFin: string | null;
+  pausaDesde?: string | null;
+  semillaFin?: string | null;
 }
 
 const GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000; // 3 días
@@ -20,7 +23,7 @@ const GRACE_PERIOD_MS = 3 * 24 * 60 * 60 * 1000; // 3 días
  * Espejo fiel de public.store_access_state() en Postgres.
  *
  * @param store Datos de la tienda (plan, slug, planExpiresAt).
- * @param config Configuración global de la plataforma (pausaActiva, semillaFin).
+ * @param config Configuración global de la plataforma (pausaActiva, pausaDesde, semillaFin).
  * @param now Instante temporal de evaluación (permite pruebas deterministas).
  */
 export function getStoreAccessState(
@@ -28,7 +31,7 @@ export function getStoreAccessState(
     planExpiresAt?: string | null;
     subscriptionStatus?: string | null;
   },
-  config: AppConfigState = { pausaActiva: false, semillaFin: null },
+  config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null },
   now: Date = new Date(),
 ): StoreAccessState {
   if (!store) return "pausa";
@@ -49,94 +52,122 @@ export function getStoreAccessState(
     return "activa";
   }
 
-  const { pausaActiva, semillaFin } = config;
-  const nowMs = now.getTime();
-
-  // 2. Si el interruptor general está apagado (false), nadie entra en pausa
-  if (!pausaActiva) {
-    if (store.plan === "semilla") {
-      return "activa";
-    }
-    if (!store.planExpiresAt) {
-      return "activa";
-    }
-    const expiryMs = new Date(store.planExpiresAt).getTime();
-    if (isNaN(expiryMs) || nowMs <= expiryMs) {
-      return "activa";
-    }
-    if (nowMs <= expiryMs + GRACE_PERIOD_MS) {
-      return "gracia";
-    }
-    // Con interruptor apagado, la tienda vencida no se pausa (degrada a Semilla libre)
+  // 2. Regla Semilla (F57.2): Una Semilla NUNCA pasa a 'pausa' directamente.
+  // La pausa solo llega después de que apply_semilla_sunset la convierte en prueba y esa prueba vence + 3 días.
+  if (store.plan === "semilla") {
     return "activa";
   }
 
-  // 3. Interruptor encendido (true):
-  // (a) Plan Semilla
-  if (store.plan === "semilla") {
-    // Si semillaFin es null, no hay transición activa para Semilla: se mantiene activa
-    if (!semillaFin) {
-      return "activa";
-    }
+  const { pausaActiva, pausaDesde } = config;
 
-    // Comparar fecha en zona horaria local/UTC (YYYY-MM-DD)
-    const todayStr = now.toISOString().slice(0, 10);
-    const targetDateStr = semillaFin.slice(0, 10);
-
-    if (todayStr < targetDateStr) {
-      return "activa";
-    }
-    return "pausa";
+  // 3. Si el interruptor general está apagado (false), todo es idéntico a hoy (nadie entra en pausa)
+  if (!pausaActiva) {
+    return "activa";
   }
 
-  // (b) Planes de pago o prueba Pro (plan !== 'semilla')
+  // 4. Tiendas sin fecha de expiración
   if (!store.planExpiresAt) {
     return "activa";
   }
 
-  const expiryMs = new Date(store.planExpiresAt).getTime();
-  if (isNaN(expiryMs)) {
-    return "activa";
+  const expiresMs = new Date(store.planExpiresAt).getTime();
+  const graceEndMs = expiresMs + GRACE_PERIOD_MS;
+  const nowMs = now.getTime();
+
+  // 5. Tiendas pagadas que vencieron ANTES de que se active la pausa (Milance, Giosathi, etc.)
+  // Si plan <> 'semilla' y (plan_expires_at + 3 días) < pausa_desde -> 'activa' (régimen anterior: como Semilla efectiva)
+  if (pausaDesde) {
+    const pausaDesdeMs = new Date(pausaDesde).getTime();
+    if (graceEndMs < pausaDesdeMs) {
+      return "activa";
+    }
   }
 
-  // Vigente
-  if (nowMs <= expiryMs) {
+  // 6. Régimen nuevo (con pausa_activa = true):
+  if (nowMs <= expiresMs) {
     return "activa";
   }
-
-  // En tolerancia (gracia) hasta 3 días
-  if (nowMs <= expiryMs + GRACE_PERIOD_MS) {
+  if (nowMs <= graceEndMs) {
     return "gracia";
   }
-
-  // Superó los 3 días de gracia: pausa comercial
   return "pausa";
 }
 
 /**
- * Indica si una tienda se encuentra en pausa comercial según la configuración activa.
+ * Retorna true si la tienda se encuentra en pausa comercial efectiva.
  */
 export function isStorePaused(
   store: Pick<Store, "slug" | "plan"> & {
     planExpiresAt?: string | null;
     subscriptionStatus?: string | null;
   },
-  config?: AppConfigState,
-  now?: Date,
+  config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null },
+  now: Date = new Date(),
 ): boolean {
   return getStoreAccessState(store, config, now) === "pausa";
 }
 
 /**
- * Indica si una tienda se encuentra en sus 3 días de gracia.
+ * Retorna true si la tienda se encuentra en período de gracia de 3 días.
  */
 export function isStoreInGrace(
   store: Pick<Store, "slug" | "plan"> & {
     planExpiresAt?: string | null;
     subscriptionStatus?: string | null;
   },
-  config?: AppConfigState,
-  now?: Date,
+  config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null },
+  now: Date = new Date(),
 ): boolean {
   return getStoreAccessState(store, config, now) === "gracia";
+}
+
+let cachedConfig: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null };
+
+/**
+ * Consulta la configuración global de app_config en Supabase con caché en memoria.
+ */
+export async function fetchAppConfig(): Promise<AppConfigState> {
+  try {
+    const { data, error } = await supabase.from("app_config").select("key, value");
+    if (!error && data) {
+      const config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null };
+      for (const row of data as any[]) {
+        if (row.key === "pausa_activa") {
+          config.pausaActiva = row.value === true || row.value === "true";
+        }
+        if (row.key === "pausa_desde") {
+          config.pausaDesde = row.value ? String(row.value).replace(/"/g, "") : null;
+        }
+        if (row.key === "semilla_fin") {
+          config.semillaFin = row.value ? String(row.value).replace(/"/g, "") : null;
+        }
+      }
+      cachedConfig = config;
+      return config;
+    }
+  } catch {
+    // Si la tabla aún no existe o hay falla de red, mantiene valor seguro
+  }
+  return cachedConfig;
+}
+
+/**
+ * Hook de React para consumir la configuración global de app_config de manera reactiva.
+ */
+export function useAppConfig(): AppConfigState {
+  const [config, setConfig] = useState<AppConfigState>(cachedConfig);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchAppConfig().then((cfg) => {
+      if (isMounted) {
+        setConfig(cfg);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return config;
 }

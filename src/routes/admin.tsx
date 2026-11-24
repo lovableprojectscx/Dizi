@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getEffectivePlan, PLANS } from "@/lib/types";
-import { getStoreAccessState, type AppConfigState } from "@/lib/access-state";
+import { getStoreAccessState, useAppConfig, type AppConfigState } from "@/lib/access-state";
 import { supabase } from "@/lib/supabase";
 import {
   Sheet,
@@ -139,31 +139,7 @@ function AdminLayout() {
     }
   }, [stores, storeId, setStore]);
 
-  const [appConfig, setAppConfig] = useState<AppConfigState>({ pausaActiva: false, semillaFin: null });
-
-  useEffect(() => {
-    let isMounted = true;
-    supabase
-      .from("app_config")
-      .select("key, value")
-      .then(({ data, error }) => {
-        if (!error && data && isMounted) {
-          const config: AppConfigState = { pausaActiva: false, semillaFin: null };
-          for (const row of data as any[]) {
-            if (row.key === "pausa_activa") {
-              config.pausaActiva = row.value === true || row.value === "true";
-            }
-            if (row.key === "semilla_fin") {
-              config.semillaFin = row.value ? String(row.value).replace(/"/g, "") : null;
-            }
-          }
-          setAppConfig(config);
-        }
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const appConfig = useAppConfig();
 
   const store = stores.find((s) => s.id === storeId) ?? stores[0];
   const accessState = store ? getStoreAccessState(store, appConfig) : "activa";

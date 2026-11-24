@@ -222,7 +222,7 @@ function TenantsPage() {
 
   const selectedStore = stores.find((s) => s.id === selectedStoreId);
 
-  const [appConfig, setAppConfig] = useState<AppConfigState>({ pausaActiva: false, semillaFin: null });
+  const [appConfig, setAppConfig] = useState<AppConfigState>({ pausaActiva: false, pausaDesde: null, semillaFin: null });
   const [isUpdatingPausa, setIsUpdatingPausa] = useState(false);
 
   React.useEffect(() => {
@@ -232,10 +232,13 @@ function TenantsPage() {
       .select("key, value")
       .then(({ data, error }) => {
         if (!error && data && isMounted) {
-          const config: AppConfigState = { pausaActiva: false, semillaFin: null };
+          const config: AppConfigState = { pausaActiva: false, pausaDesde: null, semillaFin: null };
           for (const row of data as any[]) {
             if (row.key === "pausa_activa") {
               config.pausaActiva = row.value === true || row.value === "true";
+            }
+            if (row.key === "pausa_desde") {
+              config.pausaDesde = row.value ? String(row.value).replace(/"/g, "") : null;
             }
             if (row.key === "semilla_fin") {
               config.semillaFin = row.value ? String(row.value).replace(/"/g, "") : null;
@@ -252,11 +255,18 @@ function TenantsPage() {
   const handleTogglePausaActiva = async (checked: boolean) => {
     setIsUpdatingPausa(true);
     try {
-      const { error } = await supabase
-        .from("app_config")
-        .upsert({ key: "pausa_activa", value: checked, updated_at: new Date().toISOString() });
+      const nowIso = new Date().toISOString();
+      const updates: Array<{ key: string; value: any; updated_at: string }> = [
+        { key: "pausa_activa", value: checked, updated_at: nowIso },
+      ];
+      let newPausaDesde = appConfig.pausaDesde;
+      if (checked && !appConfig.pausaDesde) {
+        newPausaDesde = nowIso;
+        updates.push({ key: "pausa_desde", value: nowIso, updated_at: nowIso });
+      }
+      const { error } = await supabase.from("app_config").upsert(updates);
       if (error) throw error;
-      setAppConfig((prev) => ({ ...prev, pausaActiva: checked }));
+      setAppConfig((prev) => ({ ...prev, pausaActiva: checked, pausaDesde: newPausaDesde }));
       toast.success(`Interruptor pausa_activa: ${checked ? "ACTIVADO" : "DESACTIVADO"}`);
     } catch (err: any) {
       toast.error("Error al actualizar pausa_activa: " + (err.message || "desconocido"));

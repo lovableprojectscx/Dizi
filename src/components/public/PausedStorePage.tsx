@@ -74,9 +74,9 @@ export function PausedStorePage({ store }: PausedStorePageProps) {
         ) : (
           <div
             style={{ backgroundColor: brandColor }}
-            className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-black shadow-sm"
+            className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-black shadow-sm"
           >
-            {store.name ? store.name.slice(0, 2).toUpperCase() : "DI"}
+            {(store.name || "").trim().charAt(0).toUpperCase() || "D"}
           </div>
         )}
 

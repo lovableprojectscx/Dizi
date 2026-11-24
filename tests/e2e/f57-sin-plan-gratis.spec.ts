@@ -113,6 +113,7 @@ async function setupAdminSessionAndMocks(page: Page, options: SetupOptions) {
         body: JSON.stringify([
           { key: "pausa_activa", value: pausa_activa },
           { key: "semilla_fin", value: semilla_fin },
+          { key: "pausa_desde", value: "2026-11-18T00:00:00.000Z" },
         ]),
       });
     }
@@ -226,6 +227,46 @@ test.describe("F57: Sin Plan Gratis (Playwright E2E)", () => {
     });
   }
 
+  // 1b. Página en pausa sin logo (inicial con brand_color)
+  test("Página en pausa pública sin logo muestra inicial con brand_color", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.route("**/rest/v1/rpc/get_public_store*", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "s_f57_paused_no_logo",
+          slug: "zz-f57-sin-logo",
+          name: "Zapatería Central",
+          phone: "987654321",
+          country_code: "51",
+          country_iso: "PE",
+          logo: null,
+          brand_color: "#10B981",
+          active: true,
+          is_published: true,
+          plan: "pro",
+          paused: true,
+          products: [],
+          categories: [],
+        }),
+      });
+    });
+
+    await page.goto("/t/zz-f57-sin-logo", { waitUntil: "domcontentloaded" });
+
+    const pausedPage = page.locator('[data-testid="paused-store-page"]');
+    await expect(pausedPage).toBeVisible({ timeout: 10000 });
+
+    const initialElement = pausedPage.getByText("Z", { exact: true });
+    await expect(initialElement).toBeVisible();
+
+    const shotPath = path.join(CAPTURAS_DIR, "10-pagina-pausa-sin-logo-inicial.png");
+    await page.screenshot({ path: shotPath, fullPage: true });
+    expect(fs.existsSync(shotPath)).toBe(true);
+  });
+
   // 2. Panel en pausa (aviso fijo con reactivación desde S/ 19.90) a 375px y 1280px
   for (const viewport of [
     { width: 375, height: 667, name: "375" },
@@ -278,6 +319,10 @@ test.describe("F57: Sin Plan Gratis (Playwright E2E)", () => {
       await expect(pausedBanner).toBeVisible({ timeout: 10000 });
       await expect(pausedBanner).toContainText("Tu catálogo está en pausa. Reactívalo desde S/ 19.90");
       await expect(pausedBanner.getByRole("link", { name: "Elegir mi plan" })).toBeVisible();
+
+      // Verificar etiqueta en la franja y ausencia de /300 (Regla F57.5)
+      await expect(page.getByText("En pausa").first()).toBeVisible();
+      await expect(page.locator("text=/300")).toHaveCount(0);
 
       // Captura de pantalla
       const shotPath = path.join(CAPTURAS_DIR, `0${viewport.name === "375" ? "3" : "4"}-panel-en-pausa-${viewport.name}.png`);
