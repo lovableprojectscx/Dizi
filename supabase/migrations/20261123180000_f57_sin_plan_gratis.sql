@@ -241,7 +241,7 @@ $$;
 COMMENT ON FUNCTION public.effective_product_limit(text) IS
   'Calcula el límite máximo de productos permitidos según el plan y periodo de gracia (3 días). Vencida > 3 días retorna 20.';
 
--- 4. Recrear public.get_public_store con soporte de catálogo en pausa
+-- 4. Recrear public.get_public_store con soporte de catálogo en pausa (partiendo de producción real)
 CREATE OR REPLACE FUNCTION public.get_public_store(store_slug text, page_limit integer DEFAULT 36, page_offset integer DEFAULT 0)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -258,8 +258,8 @@ DECLARE
   actual_limit int;
   effective_main_active boolean;
   max_extra_sellers int;
-  v_access_state text;
   result jsonb;
+  v_access_state text;
 BEGIN
   SELECT * INTO store_row FROM stores WHERE slug = store_slug AND active = true LIMIT 1;
   IF store_row IS NULL THEN
@@ -268,31 +268,30 @@ BEGIN
 
   -- F57: Evaluar estado de acceso comercial
   v_access_state := public.store_access_state(store_row.id);
-
-  -- Si la tienda está en 'pausa', retornar payload mínimo para la página en pausa
   IF v_access_state = 'pausa' THEN
-    result := jsonb_build_object(
+    RETURN jsonb_build_object(
       'id', store_row.id,
       'name', store_row.name,
       'slug', store_row.slug,
       'phone', store_row.phone,
       'country_code', store_row.country_code,
-      'country_iso', store_row.country_iso,
+      'country_iso', COALESCE(store_row.country_iso, 'PE'),
       'logo', store_row.logo,
       'brand_color', store_row.brand_color,
+      'bg_color', store_row.bg_color,
+      'text_color', store_row.text_color,
       'active', store_row.active,
       'is_published', store_row.is_published,
       'plan', store_row.plan,
       'paused', true,
-      'categories', '[]'::jsonb,
       'products', '[]'::jsonb,
-      'total_products_count', 0,
-      'price_range', jsonb_build_object('min', 0, 'max', 0)
+      'categories', '[]'::jsonb,
+      'total_products_count', 0
     );
-    RETURN result;
   END IF;
 
-  -- Calcular plan efectivo (criterio unificado de producción: fase1c_blindaje)
+  -- Calcular plan efectivo (criterio unificado con protect_store_billing_columns / effective_product_limit:
+  -- supabase/migrations/20260929160000_fase1c_blindaje.sql L44, L144)
   IF store_row.plan = 'semilla' THEN
     store_plan := 'semilla';
   ELSIF store_row.plan_expires_at IS NOT NULL AND now() > store_row.plan_expires_at + interval '3 days' THEN
@@ -314,6 +313,7 @@ BEGIN
   END IF;
 
   -- Regla F39b: Plan bajado o vencido: si el plan solo permite 1, el catálogo usa el principal
+  -- aunque esté apagado. La tienda nunca se queda sin WhatsApp y no se borra nada guardado.
   IF store_plan IN ('semilla', 'emprendedor') THEN
     effective_main_active := true;
     max_extra_sellers := 0;
@@ -336,171 +336,183 @@ BEGIN
     max_extra_sellers := 0;
   END IF;
 
-  IF store_row.model IS NOT NULL AND store_row.model LIKE '%_premium' AND store_plan = 'semilla' THEN
-    effective_model := replace(store_row.model, '_premium', '_general');
-  ELSE
-    effective_model := store_row.model;
-  END IF;
+  effective_model := COALESCE(store_row.model, 'minimalista');
 
-  IF store_plan = 'semilla' THEN
-    effective_banner := NULL;
+  IF store_row.banners IS NOT NULL AND array_length(store_row.banners, 1) > 0 THEN
+    effective_banner := array_to_string(store_row.banners, '|||');
   ELSE
     effective_banner := store_row.banner_image;
   END IF;
 
-  SELECT count(*) INTO total_prod_count
+  SELECT LEAST(count(*), effective_limit) INTO total_prod_count
   FROM products
-  WHERE store_id = store_row.id AND visible = true;
+  WHERE store_id = store_row.id AND visible = true AND COALESCE(is_sample, false) = false;
 
-  actual_limit := LEAST(page_limit, effective_limit);
+  actual_limit := LEAST(COALESCE(page_limit, 36), effective_limit);
 
-  result := jsonb_build_object(
+  SELECT jsonb_build_object(
     'id', store_row.id,
-    'name', store_row.name,
     'slug', store_row.slug,
+    'name', store_row.name,
+    'main_seller_name', store_row.main_seller_name,
+    'main_seller_active', effective_main_active,
     'phone', store_row.phone,
     'country_code', store_row.country_code,
-    'country_iso', store_row.country_iso,
+    'country_iso', COALESCE(store_row.country_iso, 'PE'),
     'logo', store_row.logo,
     'brand_color', store_row.brand_color,
     'bg_color', store_row.bg_color,
     'text_color', store_row.text_color,
-    'banners', CASE WHEN store_plan = 'semilla' THEN '[]'::jsonb ELSE COALESCE(store_row.banners, '[]'::jsonb) END,
-    'banner_image', effective_banner,
-    'banner_title', CASE WHEN store_plan = 'semilla' THEN NULL ELSE store_row.banner_title END,
-    'banner_style', store_row.banner_style,
-    'niche', store_row.niche,
-    'catalog_typography', store_row.catalog_typography,
-    'card_style', store_row.card_style,
     'card_bg', store_row.card_bg,
     'accent_color', store_row.accent_color,
     'border_radius', store_row.border_radius,
     'img_shape', store_row.img_shape,
     'photo_format', store_row.photo_format,
+    'header_style', COALESCE(store_row.header_style, 'standard'),
     'is_dark', store_row.is_dark,
+    'banner_image', effective_banner,
+    'banner_title', store_row.banner_title,
+    'banner_style', COALESCE(store_row.banner_style, 'direct'),
+    'niche', COALESCE(store_row.niche, 'general'),
+    'catalog_typography', COALESCE(store_row.catalog_typography, 'sans'),
+    'card_style', COALESCE(store_row.card_style, 'standard'),
+    'plan', store_plan,
+    'model', effective_model,
     'active', store_row.active,
     'is_published', store_row.is_published,
-    'plan', store_plan,
-    'show_dizi_branding', CASE
-      WHEN store_plan = 'semilla' THEN true
-      WHEN store_plan = 'emprendedor' THEN true
-      ELSE COALESCE(store_row.show_dizi_branding, false)
-    END,
-    'model', effective_model,
-    'price_filter_enabled', COALESCE(store_row.price_filter_enabled, false),
-    'libro_reclamaciones_activo', COALESCE(store_row.libro_reclamaciones_activo, false),
+    'created_at', store_row.created_at,
+    'whatsapp_clicks', COALESCE(store_row.whatsapp_clicks, 0),
+    'views', COALESCE(store_row.views, 0),
+    'price_filter_enabled', store_row.price_filter_enabled,
+    'libro_reclamaciones_activo', store_row.libro_reclamaciones_activo,
     'empresa_ruc', store_row.empresa_ruc,
     'empresa_razon_social', store_row.empresa_razon_social,
     'empresa_direccion', store_row.empresa_direccion,
-    'description', store_row.description,
-    'bio_logo', store_row.bio_logo,
-    'bio_banner', store_row.bio_banner,
-    'bio_tagline', store_row.bio_tagline,
+    'total_products_count', COALESCE(total_prod_count, 0)
+  ) || jsonb_build_object(
+    'plan_expires_at', store_row.plan_expires_at,
+    'subscription_status', store_row.subscription_status,
+    'cancelled_at', store_row.cancelled_at,
+    'cancel_reason', store_row.cancel_reason,
+    'plan_duration_months', store_row.plan_duration_months,
     'bio_description', store_row.bio_description,
-    'bio_show_phone', store_row.bio_show_phone,
-    'bio_show_social', store_row.bio_show_social,
-    'bio_show_address', store_row.bio_show_address,
-    'bio_show_hours', store_row.bio_show_hours,
-    'social_facebook', store_row.social_facebook,
-    'social_instagram', store_row.social_instagram,
-    'social_tiktok', store_row.social_tiktok,
-    'store_hours', store_row.store_hours,
+    'bio_links_enabled', COALESCE(store_row.bio_links_enabled, false),
+    'bio_banner', store_row.bio_banner,
+    'bio_logo', store_row.bio_logo,
+    'bio_theme', store_row.bio_theme,
+    'bio_typography', store_row.bio_typography,
+    'bio_show_catalog_button', store_row.bio_show_catalog_button,
+    'bio_button_style', store_row.bio_button_style,
+    'bio_button_color', store_row.bio_button_color,
+    'bio_button_text_color', store_row.bio_button_text_color,
+    'bio_bg_image', store_row.bio_bg_image,
+    'bio_bg_color', store_row.bio_bg_color,
+    'quick_links', (
+      CASE WHEN store_plan = 'semilla' THEN
+          COALESCE((SELECT jsonb_agg(value) FROM (SELECT value FROM jsonb_array_elements(COALESCE(store_row.quick_links, '[]'::jsonb)) LIMIT 3) t), '[]'::jsonb)
+      ELSE
+          COALESCE(store_row.quick_links, '[]'::jsonb)
+      END
+    ),
+    'sellers', (
+      CASE
+        WHEN max_extra_sellers <= 0 THEN '[]'::jsonb
+        ELSE COALESCE((
+          SELECT jsonb_agg(elem.val)
+          FROM (
+            SELECT val
+            FROM jsonb_array_elements(COALESCE(store_row.sellers, '[]'::jsonb)) WITH ORDINALITY AS t(val, ord)
+            WHERE (val->>'active')::boolean IS TRUE
+            ORDER BY ord ASC
+            LIMIT max_extra_sellers
+          ) elem
+        ), '[]'::jsonb)
+      END
+    ),
     'location_lat', store_row.location_lat,
     'location_lng', store_row.location_lng,
     'location_address', store_row.location_address,
-    'main_seller_name', store_row.main_seller_name,
-    'main_seller_active', effective_main_active,
-    'show_featured', COALESCE(store_row.show_featured, false),
-    'featured_title', COALESCE(store_row.featured_title, 'Destacados'),
-    'show_discount_pct', CASE WHEN store_plan = 'semilla' THEN false ELSE COALESCE(store_row.show_discount_pct, false) END,
-    'order_link_enabled', CASE
-      WHEN store_plan IN ('pro', 'ilimitado') THEN COALESCE(store_row.order_link_enabled, false)
-      ELSE false
-    END,
-    'header_style', COALESCE(store_row.header_style, 'clasico'),
-    'cover_image', store_row.cover_image,
-    'cover_layout', COALESCE(store_row.cover_layout, 'ancho_completo'),
     'profile_tags', COALESCE(store_row.profile_tags, '[]'::jsonb),
-    'paused', false,
-    'categories', COALESCE((
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'id', c.id,
-          'name', c.name,
-          'sort_order', c.sort_order,
-          'product_count', (
-            SELECT count(*)
-            FROM products p
-            WHERE p.category_id = c.id
-              AND p.store_id = store_row.id
-              AND p.visible = true
-          )
-        ) ORDER BY c.sort_order ASC
+    'banner_tagline', store_row.banner_tagline,
+    'banner_bottom_tag', store_row.banner_bottom_tag,
+    'show_dizi_branding', store_row.show_dizi_branding,
+    'show_featured', COALESCE(store_row.show_featured, true),
+    'show_discount_pct', COALESCE(store_row.show_discount_pct, false),
+    'wholesale_enabled', CASE WHEN store_plan = 'semilla' THEN false ELSE COALESCE(store_row.wholesale_enabled, false) END,
+    'order_link_enabled', CASE WHEN store_plan IN ('pro', 'ilimitado') THEN COALESCE(store_row.order_link_enabled, false) ELSE false END,
+    'promo_bar_enabled', store_row.promo_bar_enabled,
+    'promo_bar_text', store_row.promo_bar_text,
+    'promo_bar_action_type', store_row.promo_bar_action_type,
+    'promo_bar_action_value', store_row.promo_bar_action_value,
+    'promo_bar_bg_color', store_row.promo_bar_bg_color,
+    'promo_bar_text_color', store_row.promo_bar_text_color,
+    'promo_bar_is_marquee', store_row.promo_bar_is_marquee,
+    'price_bounds', (
+      WITH bounded_prods AS (
+        SELECT price, variations
+        FROM products
+        WHERE store_id = store_row.id AND visible = true AND COALESCE(is_sample, false) = false
+        ORDER BY sort_order ASC NULLS LAST, created_at DESC
+        LIMIT effective_limit
+      ),
+      price_vals AS (
+        SELECT price::numeric AS val
+        FROM bounded_prods
+        WHERE price IS NOT NULL AND price > 0
+        UNION ALL
+        SELECT TRIM(v->>'price')::numeric AS val
+        FROM bounded_prods
+        CROSS JOIN LATERAL jsonb_array_elements(
+          CASE WHEN jsonb_typeof(variations) = 'array' THEN variations ELSE '[]'::jsonb END
+        ) v
+        WHERE (v->>'price') ~ '^\s*[0-9]+(\.[0-9]+)?\s*$'
+          AND TRIM(v->>'price')::numeric > 0
       )
+      SELECT CASE
+        WHEN MIN(val) IS NOT NULL AND MAX(val) IS NOT NULL
+          THEN jsonb_build_object('min', FLOOR(MIN(val)), 'max', CEIL(MAX(val)))
+        ELSE NULL
+      END
+      FROM price_vals
+    ),
+    'categories', (
+      SELECT COALESCE(jsonb_agg(jsonb_build_object(
+        'id', c.id,
+        'name', c.name,
+        'product_count', (
+          SELECT count(*)::int FROM products p
+          WHERE p.store_id = store_row.id AND p.category_id = c.id AND p.visible = true AND COALESCE(p.is_sample, false) = false
+        )
+      )), '[]'::jsonb)
       FROM categories c
       WHERE c.store_id = store_row.id
-    ), '[]'::jsonb),
-    'sellers', COALESCE((
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'id', vs.id,
-          'name', vs.name,
-          'phone', vs.phone,
-          'active', vs.active,
-          'sort_order', vs.sort_order
-        ) ORDER BY vs.sort_order ASC
-      )
-      FROM (
-        SELECT * FROM store_sellers
-        WHERE store_id = store_row.id AND active = true
-        ORDER BY sort_order ASC
-        LIMIT max_extra_sellers
-      ) vs
-    ), '[]'::jsonb),
-    'total_products_count', total_prod_count,
-    'products', COALESCE((
-      SELECT jsonb_agg(
-        jsonb_build_object(
-          'id', p.id,
-          'name', p.name,
-          'price', p.price,
-          'original_price', p.original_price,
-          'image', p.image,
-          'category_id', p.category_id,
-          'sort_order', p.sort_order,
-          'visible', p.visible,
-          'is_on_sale', p.is_on_sale,
-          'description', p.description,
-          'is_sample', p.is_sample,
-          'is_featured', p.is_featured,
-          'wholesale_enabled', p.wholesale_enabled,
-          'wholesale_min_qty', p.wholesale_min_qty,
-          'wholesale_price', p.wholesale_price,
-          'has_variations', p.has_variations,
-          'variations', p.variations
-        ) ORDER BY p.sort_order ASC, p.created_at ASC
-      )
+    ),
+    'products', (
+      SELECT COALESCE(jsonb_agg(jsonb_build_object(
+        'id', id,
+        'name', name,
+        'price', price,
+        'category_id', category_id,
+        'image', image,
+        'description', description,
+        'is_on_sale', is_on_sale,
+        'original_price', original_price,
+        'visible', visible,
+        'is_sample', is_sample,
+        'sort_order', sort_order,
+        'variations', COALESCE(variations, '[]'::jsonb),
+        'wholesale_tiers', COALESCE(wholesale_tiers, '[]'::jsonb),
+        'created_at', created_at
+      )), '[]'::jsonb)
       FROM (
         SELECT * FROM products
-        WHERE store_id = store_row.id AND visible = true
-        ORDER BY sort_order ASC, created_at ASC
+        WHERE store_id = store_row.id AND visible = true AND COALESCE(is_sample, false) = false
+        ORDER BY sort_order ASC NULLS LAST, created_at DESC
         LIMIT actual_limit
-        OFFSET page_offset
+        OFFSET COALESCE(page_offset, 0)
       ) p
-    ), '[]'::jsonb),
-    'price_range', jsonb_build_object(
-      'min', COALESCE((
-        SELECT floor(min(p.price))
-        FROM products p
-        WHERE p.store_id = store_row.id AND p.visible = true
-      ), 0),
-      'max', COALESCE((
-        SELECT ceil(max(p.price))
-        FROM products p
-        WHERE p.store_id = store_row.id AND p.visible = true
-      ), 0)
     )
-  );
+  ) INTO result;
 
   RETURN result;
 END;
