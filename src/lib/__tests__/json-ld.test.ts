@@ -39,12 +39,15 @@ describe("index.html JSON-LD Structured Data", () => {
       offersByName[offer.name] = offer;
     }
 
-    // 1. Plan Semilla
-    const semilla = offersByName["Plan Semilla"];
-    expect(semilla).toBeDefined();
-    expect(Number(semilla.price)).toBe(PLANS.semilla.price);
-    expect(semilla.priceCurrency).toBe("PEN");
-    expect(semilla.description).toContain(`${PLANS.semilla.productLimit} productos`);
+    // F57.2: Plan Semilla ya no se ofrece públicamente; se ofrece Prueba 7 días de Pro gratis
+    expect(offersByName["Plan Semilla"]).toBeUndefined();
+
+    // 1. Prueba Pro gratis (7 días)
+    const prueba = offersByName["Prueba 7 días de Pro gratis"];
+    expect(prueba).toBeDefined();
+    expect(Number(prueba.price)).toBe(0);
+    expect(prueba.priceCurrency).toBe("PEN");
+    expect(prueba.description).toContain("Prueba gratis por 7 días");
 
     // 2. Plan Emprendedor
     const emprendedor = offersByName["Plan Emprendedor"];

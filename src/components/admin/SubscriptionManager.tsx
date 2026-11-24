@@ -53,6 +53,9 @@ import {
 } from "lucide-react";
 import type { Store, PlanId, SubscriptionStatus } from "@/lib/types";
 import { PLANS, PLAN_DURATION_OPTIONS, daysUntilExpiry, formatDate } from "@/lib/types";
+import { useAppConfig, getDaysInPause } from "@/lib/access-state";
+import { isSemillaAssignable, formatDayBeforeSemillaFin } from "@/lib/semilla-notice";
+import { cn } from "@/lib/utils";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -128,6 +131,8 @@ interface SubscriptionManagerProps {
  */
 export function SubscriptionManager({ store }: SubscriptionManagerProps) {
   const navigate = useNavigate();
+  const appConfig = useAppConfig();
+  const allowSemilla = isSemillaAssignable(appConfig);
   const setPlan = useApp((s) => s.setPlan);
   const cancelSubscription = useApp((s) => s.cancelSubscription);
   const extendSubscription = useApp((s) => s.extendSubscription);
@@ -355,7 +360,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
       return;
     }
 
-    const text = `Hola *${store.name}*, te saludamos de *Dizi*. 👋\n\nNotamos que tu catálogo digital no registra visitas ni actividad reciente y se encuentra en nuestro *plan Semilla* gratuito.\n\nPara garantizar el uso eficiente del sistema y liberar enlaces que no se usan, nuestro sistema suspenderá la tienda y liberará el enlace */t/${store.slug}* para que otros comercios puedan utilizarlo en los próximos días.\n\nSi deseas mantener activo tu catálogo y conservar tu enlace, por favor responde a este mensaje o actualiza tu plan ingresando a tu panel de administración. ¡Estamos para ayudarte! 🚀`;
+    const text = `Hola *${store.name}*, te saludamos de *Dizi*. 👋\n\nNotamos que tu catálogo digital no registra visitas ni actividad reciente y se encuentra actualmente en pausa comercial.\n\nDe acuerdo con nuestros Términos y Condiciones, los catálogos en pausa conservan su enlace por al menos 90 días. Pasado ese plazo sin actividad en la cuenta, podremos liberar el enlace */t/${store.slug}* para que otros comercios puedan utilizarlo.\n\nSi deseas mantener activo tu catálogo y conservar tu enlace, por favor responde a este mensaje o renueva tu plan ingresando a tu panel de administración. ¡Estamos para ayudarte! 🚀`;
 
     const url = buildWaUrl(store.phone, text);
     window.open(url, "_blank");
@@ -428,7 +433,7 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               ) : (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
                   <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-                  <span>Sin límite de expiración (Catálogo Gratis)</span>
+                  <span>Sin vencimiento</span>
                 </div>
               )}
             </div>
@@ -671,15 +676,26 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
               )}
 
               {store.active ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full h-10 text-xs gap-2 border-amber-200 bg-background text-amber-700 hover:bg-amber-100/50 justify-start px-4 font-bold"
-                  onClick={() => setPauseOpen(true)}
-                >
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
-                  Liberar URL / Pausar Tienda
-                </Button>
+                (() => {
+                  const daysInPause = getDaysInPause(store, appConfig);
+                  const isEligible = daysInPause >= 90;
+                  return (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!isEligible}
+                      className={cn(
+                        "w-full h-10 text-xs gap-2 border-amber-200 bg-background text-amber-700 hover:bg-amber-100/50 justify-start px-4 font-bold",
+                        !isEligible && "opacity-60 cursor-not-allowed text-muted-foreground border-zinc-200"
+                      )}
+                      onClick={() => setPauseOpen(true)}
+                      title={!isEligible ? `Requiere al menos 90 días en pausa (actual: ${daysInPause}d)` : undefined}
+                    >
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
+                      Liberar URL / Pausar Tienda {daysInPause > 0 ? `(${daysInPause}d en pausa)` : "(0d en pausa)"}
+                    </Button>
+                  );
+                })()
               ) : (
                 <div className="inline-flex items-center gap-1.5 text-xs text-amber-600 bg-amber-500/5 px-3 py-2 rounded-lg border border-amber-500/10 font-bold dark:text-amber-400">
                   <CheckCircle2 className="w-4 h-4 text-amber-500" />
@@ -720,7 +736,11 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 onChange={(e) => setRenewPlan(e.target.value as PlanId)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium"
               >
-                <option value="semilla">{PLANS.semilla.name} (Gratis)</option>
+                {allowSemilla && (
+                  <option value="semilla">
+                    {PLANS.semilla.name} {appConfig.semillaFin ? `(hasta el ${formatDayBeforeSemillaFin(appConfig)})` : "(Gratis)"}
+                  </option>
+                )}
                 <option value="emprendedor">{PLANS.emprendedor.name} (S/ {PLANS.emprendedor.price.toFixed(2)}/mes)</option>
                 <option value="pro">{PLANS.pro.name} (S/ {PLANS.pro.price.toFixed(2)}/mes)</option>
                 <option value="ilimitado">{PLANS.ilimitado.name} (S/ {PLANS.ilimitado.price.toFixed(2)}/mes)</option>
@@ -849,7 +869,11 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
                 onChange={(e) => setChangePlanPlan(e.target.value as PlanId)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary font-medium"
               >
-                <option value="semilla">{PLANS.semilla.name} (Gratis)</option>
+                {allowSemilla && (
+                  <option value="semilla">
+                    {PLANS.semilla.name} {appConfig.semillaFin ? `(hasta el ${formatDayBeforeSemillaFin(appConfig)})` : "(Gratis)"}
+                  </option>
+                )}
                 <option value="emprendedor">{PLANS.emprendedor.name} (S/ {PLANS.emprendedor.price.toFixed(2)}/mes)</option>
                 <option value="pro">{PLANS.pro.name} (S/ {PLANS.pro.price.toFixed(2)}/mes)</option>
                 <option value="ilimitado">{PLANS.ilimitado.name} (S/ {PLANS.ilimitado.price.toFixed(2)}/mes)</option>
@@ -1038,8 +1062,8 @@ export function SubscriptionManager({ store }: SubscriptionManagerProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar suscripción</AlertDialogTitle>
             <AlertDialogDescription>
-              La tienda <strong>{store.name}</strong> volverá al plan Semilla (gratis) de forma
-              inmediata. Esta acción puede revertirse renovando el plan.
+              La suscripción de la tienda <strong>{store.name}</strong> quedará cancelada de forma
+              inmediata y su catálogo pasará a pausa. Esta acción puede revertirse renovando el plan.
             </AlertDialogDescription>
           </AlertDialogHeader>
 

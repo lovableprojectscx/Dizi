@@ -44,7 +44,7 @@ function Bullets({ items }: { items: string[] }) {
 }
 
 function TerminosPage() {
-  const lastUpdated = "Julio 2026";
+  const lastUpdated = "Noviembre 2026";
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -143,8 +143,8 @@ function TerminosPage() {
 
           <Section title="4. Planes, precios y pagos">
             <p>
-              Dizi funciona con un plan gratuito y planes de suscripción mensual. Los límites y
-              precios vigentes se publican en la página de inicio.
+              Dizi ofrece una prueba gratuita de 7 días del plan Pro y planes de suscripción
+              mensual o anual. Los límites y precios vigentes se publican en la página de inicio.
             </p>
             <div className="mt-3 rounded-xl border bg-muted/40 p-4 text-sm space-y-2">
               <p className="font-medium text-foreground">Cómo se cobra hoy</p>
@@ -155,10 +155,22 @@ function TerminosPage() {
                 cuenta una vez confirmado.
               </p>
             </div>
+            <div className="mt-3 rounded-xl border bg-muted/40 p-4 text-sm space-y-2">
+              <p className="font-medium text-foreground">Etapa de lanzamiento</p>
+              <p>
+                Dizi se encuentra en etapa de lanzamiento y mejora continua. Por ello, los planes,
+                sus funciones, límites y precios pueden ajustarse a medida que el servicio
+                evoluciona. Cuando eso ocurra, nos comprometemos a: (i) avisarte cualquier cambio
+                sustancial con al menos 30 días de anticipación, a través del panel de tu cuenta,
+                WhatsApp o correo electrónico; (ii) respetar las condiciones de cualquier período que
+                ya hayas pagado; y (iii) no eliminar tus productos, tu configuración ni tu
+                información como consecuencia de un cambio de plan. Si un cambio no se ajusta a tus
+                necesidades, puedes dejar de usar el servicio en cualquier momento.
+              </p>
+            </div>
             <Bullets
               items={[
                 "Los precios están expresados en soles (S/) e incluyen los impuestos que correspondan.",
-                "Los precios promocionales de lanzamiento son temporales y pueden cambiar. Cualquier cambio se avisará con al menos 30 días de anticipación y no afecta un período ya pagado.",
                 "La suscripción no se renueva automáticamente: se renueva cuando confirmas el pago del siguiente período.",
                 "Al registrarte cuentas con 7 días de prueba Pro sin costo ni tarjeta de crédito requerida.",
                 "Si tu plan vence, tu catálogo cuenta con un período de gracia de 3 días antes de pasar a pausa comercial. Tus productos, enlaces y configuración no se borran por vencimiento.",
@@ -174,10 +186,18 @@ function TerminosPage() {
 
           <Section title="5. Período de prueba e invitaciones">
             <p>
-              Podemos otorgar períodos de prueba de planes de pago (habitualmente 15 días) mediante
-              enlaces de invitación. Al terminar la prueba, si no se activa un plan pagado, la
-              cuenta pasa al plan gratuito conservando tus datos, con las limitaciones que ese plan
-              implique.
+              Al registrarte recibes 7 días de prueba del plan Pro, sin costo y sin tarjeta, y
+              puedes ganar días adicionales completando tu tienda. También podemos otorgar períodos
+              de prueba mediante enlaces de invitación. Al terminar la prueba, si no se activa un
+              plan de pago, tu catálogo cuenta con 3 días de gracia y luego pasa a pausa: deja de
+              mostrarse al público, pero tus productos, enlaces y configuración se conservan y se
+              reactivan al contratar un plan.
+            </p>
+            <p className="mt-3">
+              <strong>Cuentas del plan Semilla.</strong> El plan gratuito Semilla deja de ofrecerse.
+              Las cuentas que lo usan lo mantienen hasta el 24 de diciembre de 2026; el 25 de
+              diciembre de 2026 reciben 7 días de prueba del plan Pro y, desde entonces, se aplica lo
+              descrito en el párrafo anterior.
             </p>
           </Section>
 
@@ -216,7 +236,7 @@ function TerminosPage() {
             </p>
             <Bullets
               items={[
-                "Se considera inactiva una cuenta sin actividad real (visitas mínimas y ningún pedido por WhatsApp) durante al menos 15 días, estando en plan gratuito o con la suscripción vencida hace más de 15 días.",
+                "Un catálogo en pausa conserva su enlace personalizado por al menos 90 días. Pasado ese plazo, si no se ha contratado un plan y no hay actividad en la cuenta, podremos liberar el enlace, avisándote antes por WhatsApp. Tus productos y tu información no se eliminan.",
                 "Antes de cualquier medida intentamos contactarte por WhatsApp al número registrado.",
                 "Si no hay respuesta ni reactivación, la cuenta puede pausarse y el enlace liberarse para que otro negocio pueda usarlo.",
                 "Tus datos y productos no se eliminan al pausar la cuenta: puedes solicitar la reactivación, aunque el enlace original podría ya estar tomado por otro negocio.",

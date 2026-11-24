@@ -895,8 +895,8 @@ function RegisterPage() {
           <div className="rounded-2xl border border-[#312E81]/15 bg-white px-4 py-3 text-[13px] font-medium text-[#312E81]">
             {invitePlan ? (
               isTrial
-                ? `Se activará tu Plan ${PLANS[plan]?.name || plan.toUpperCase()} (prueba de ${inviteDurationText}) gratis al crear tu cuenta.`
-                : `Tu catálogo se creará ${plan !== "semilla" ? `bajo el Plan ${PLANS[plan]?.name || plan.toUpperCase()}` : "bajo el Plan Semilla (gratuito)"}.`
+                ? `Se activará tu prueba de ${inviteDurationText} al crear tu cuenta.`
+                : `Tu catálogo se creará con tu acceso activo al crear tu cuenta.`
             ) : requestedPlan && requestedPlan !== "semilla" ? (
               `Empiezas con 7 días de Pro gratis. Cuando quieras quedarte con el Plan ${requestedPlan === "pro" ? "Pro" : (PLANS[requestedPlan]?.name || requestedPlan)}, lo activas desde Mi Plan.`
             ) : (

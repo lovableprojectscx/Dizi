@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useApp } from "@/lib/store";
 import { PLANS, type PlanId, daysUntilExpiry, formatDate } from "@/lib/types";
+import { getStoreAccessState, useAppConfig } from "@/lib/access-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Star, AlertTriangle, Calendar, CheckCircle2, Clock, Sparkles, Zap } from "lucide-react";
@@ -26,8 +27,14 @@ function PlanPage() {
   const id = useApp((s) => s.currentStoreId);
   const store = useApp((s) => s.stores.find((st) => st.id === id) ?? s.stores[0]);
   const [isAnnual, setIsAnnual] = useState(false);
+  const appConfig = useAppConfig();
 
   if (!store) return null;
+
+  const accessState = store ? getStoreAccessState(store, appConfig) : "activa";
+  const isCancelled = store.subscriptionStatus === "cancelled";
+  const isPaused = accessState === "pausa" || store.active === false;
+  const showNoActivePlan = isCancelled || isPaused;
 
   const used = store.products.length;
   const days = daysUntilExpiry(store);
@@ -40,18 +47,22 @@ function PlanPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Mi Plan</h1>
         <p className="text-sm text-muted-foreground">
-          Plan actual: <strong>{PLANS[store.plan].name}</strong>
+          Plan actual: <strong>{showNoActivePlan ? "Sin plan activo" : PLANS[store.plan].name}</strong>
         </p>
       </div>
 
-      {/* ── Banner de vencimiento ── */}
-      {isPaid && isExpired && (
-        <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
+      {/* ── Banners de estado de suscripción ── */}
+      {showNoActivePlan && (
+        <div data-testid="plan-paused-banner" className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-destructive text-sm">Tu suscripción ha vencido</p>
+            <p className="font-semibold text-destructive text-sm">
+              {isCancelled ? "Suscripción cancelada" : "Tu suscripción ha vencido"}
+            </p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Tu plan venció el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Tu catálogo se encuentra en pausa. Para reactivarlo desde S/ {PLANS.emprendedor.price.toFixed(2)}, elige tu plan o contacta con soporte.
+              {isCancelled
+                ? `Tu suscripción fue cancelada. Tu catálogo se encuentra en pausa. Para reactivarlo desde S/ ${PLANS.emprendedor.price.toFixed(2)}, elige tu plan o contacta con soporte.`
+                : `Tu plan venció el ${store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Tu catálogo se encuentra en pausa. Para reactivarlo desde S/ ${PLANS.emprendedor.price.toFixed(2)}, elige tu plan o contacta con soporte.`}
             </p>
             <a
               href={buildWaUrl(
@@ -68,7 +79,53 @@ function PlanPage() {
         </div>
       )}
 
-      {isPaid && isExpiringSoon && !isExpired && (
+      {!showNoActivePlan && accessState === "gracia" && (
+        <div data-testid="plan-grace-banner" className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-amber-800 text-sm">Tu plan venció, tienes 3 días de gracia</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Tu plan venció el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Estás dentro de los 3 días de tolerancia antes de pausar tu catálogo. Para mantenerlo activo sin pausas desde S/ ${PLANS.emprendedor.price.toFixed(2)}, renueva tu plan o contacta con soporte.
+            </p>
+            <a
+              href={buildWaUrl(
+                DIZI_SUPPORT_PHONE,
+                `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-medium text-white shadow hover:bg-amber-700 transition-colors"
+            >
+              Renovar ahora por WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
+      {!showNoActivePlan && accessState === "activa" && isPaid && isExpired && (
+        <div data-testid="plan-expired-limited-banner" className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-amber-800 text-sm">Tu suscripción ha vencido</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Tu plan venció el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Tu catálogo conserva tu diseño y muestra hasta 20 productos. Para mostrar todos tus productos desde S/ ${PLANS.emprendedor.price.toFixed(2)}, renueva tu plan o contacta con soporte.
+            </p>
+            <a
+              href={buildWaUrl(
+                DIZI_SUPPORT_PHONE,
+                `Hola Dizi, quiero renovar mi plan de la tienda "${store.name}".`
+              )}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex mt-2 h-8 items-center justify-center rounded-md bg-amber-600 px-4 text-xs font-medium text-white shadow hover:bg-amber-700 transition-colors"
+            >
+              Renovar ahora por WhatsApp
+            </a>
+          </div>
+        </div>
+      )}
+
+      {isPaid && isExpiringSoon && !isExpired && !showNoActivePlan && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>

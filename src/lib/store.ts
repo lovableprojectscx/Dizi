@@ -276,7 +276,7 @@ interface AppState {
   addInvite: (invite: Omit<Invite, "createdAt">) => Promise<void>;
   /** Canjea una invitación llamando al RPC `activate_subscription_with_invite` */
   markInviteUsed: (token: string, storeId?: string) => Promise<void>;
-  /** Cancela la suscripción de una tienda y degrada a plan semilla */
+  /** Cancela la suscripción de una tienda, conservando el plan y venciendo la vigencia */
   cancelSubscription: (storeId: string, reason?: string) => Promise<void>;
   /** Extiende la vigencia del plan de una tienda en N meses adicionales */
   extendSubscription: (storeId: string, monthsToAdd: number) => Promise<void>;
@@ -1147,11 +1147,11 @@ export const useApp = create<AppState>()(
               st.id === storeId
                 ? {
                     ...st,
-                    plan: "semilla" as PlanId,
+                    plan: st.plan,
                     subscriptionStatus: "cancelled" as SubscriptionStatus,
                     cancelledAt: new Date().toISOString(),
                     cancelReason: reason,
-                    planExpiresAt: new Date().toISOString(),
+                    planExpiresAt: new Date(Date.now() - 3 * 86_400_000).toISOString(),
                   }
                 : st,
             ),

@@ -1587,7 +1587,7 @@ export function DisenoUnificadoPage() {
                       <h4 className="font-bold text-xs text-zinc-900">Marca de Agua Dizi</h4>
                       <p className="text-[11px] text-zinc-550">
                         {currentPlanLevel === 0
-                          ? "Visible al pie en Plan Semilla"
+                          ? "Visible al pie en tu plan actual"
                           : (store?.showDiziBranding ?? false)
                             ? "Visible en tu catálogo (puedes ocultarla en Configuración)"
                             : "Oculta automáticamente en tu plan activo"}
@@ -1652,7 +1652,7 @@ export function DisenoUnificadoPage() {
                             Banners en Portada
                             <Badge className="bg-blue-100 text-blue-800 border-blue-200 text-[9px] font-extrabold py-0.5">
                               {effectivePlan === "semilla"
-                                ? "0 Banners (Plan Semilla)"
+                                ? "0 Banners en tu plan actual"
                                 : effectivePlan === "emprendedor"
                                   ? "1 Banner Max"
                                   : effectivePlan === "pro"
@@ -1662,7 +1662,7 @@ export function DisenoUnificadoPage() {
                           </h4>
                           <p className="text-[11px] text-zinc-550">
                             {maxAllowedBanners === 0
-                              ? "El Plan Semilla no incluye imágenes personalizadas en portada. Actualiza a Emprendedor (1 banner) o Pro/Ilimitado (hasta 5 en carrusel)."
+                              ? "Tu plan actual no incluye imágenes personalizadas en portada. Actualiza a Emprendedor (1 banner) o Pro/Ilimitado (hasta 5 en carrusel)."
                               : `Gestiona hasta ${maxAllowedBanners} banner(s) para la portada de tu catálogo. (${bannerList.length}/${maxAllowedBanners} subidos)`}
                           </p>
                           <div className="flex items-center gap-1.5 mt-1.5 text-[10px] sm:text-[11px] font-bold text-amber-900 bg-amber-50 border border-amber-200/80 px-2.5 py-1 rounded-lg w-fit shadow-2xs">

@@ -1,3 +1,5 @@
+> 🔴 **ACTUALIZACIÓN 23 nov 2026:** el registro ya no crea tiendas Semilla. `initialize_store` (no super) crea `pro`/`trial`/+7 días (F55, migración `20261122120000`); F53 cambió el registro a 6 pantallas. Ver `F53-registro-slides/`, `F55-prueba-pro-y-logros/` y F57.
+
 # Spec: Registro e Invitaciones
 
 > Corregido el 29 sep 2026 contra el código real (`src/routes/register.tsx`). Ver `REQUISITOS-FUNCIONALES.md` F10.
@@ -15,7 +17,7 @@ en plan Semilla con catálogo limpio sin productos de ejemplo (Fase 3A).
 #### Escenario: Registro sin invitación
 - **Dado** un visitante en `/register`
 - **Cuando** completa los 3 pasos
-- **Entonces** se crea su tienda en plan Semilla y entra a `/admin`
+- **Entonces** se crea su tienda en Pro de prueba por 7 días (F55) y entra a `/admin`
 
 ### Requisito: Invitación opcional de un solo uso
 Con `?invite=<token>` el registro DEBE validar el token con `check_invite` y, al crear la tienda, aplicar el plan, la duración

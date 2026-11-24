@@ -267,7 +267,7 @@ function AdminLayout() {
                     Tu catálogo digital está actualmente suspendido
                   </p>
                   <p className="text-xs text-red-700">
-                    Tu tienda ha sido pausada temporalmente debido a inactividad en tu plan Semilla.
+                    Tu tienda ha sido pausada temporalmente debido a inactividad.
                     Tu enlace original ha sido liberado, y actualmente tu catálogo está accesible
                     bajo el enlace de soporte temporal <code>/t/{store.slug}</code>.
                   </p>
