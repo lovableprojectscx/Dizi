@@ -7,7 +7,7 @@
  */
 
 import { useState, useRef, useCallback } from "react";
-import { ImageIcon, CheckCircle2, AlertTriangle, Info, UploadCloud, Loader2 } from "lucide-react";
+import { ImageIcon, CheckCircle2, AlertTriangle, Info, UploadCloud, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { convertImageToWebP, convertImageUrlToWebP } from "@/lib/image-utils";
 import type { ImageSpec } from "@/lib/types";
@@ -28,6 +28,8 @@ interface ImageUploadGuidedProps {
   spec: ImageSpec;
   /** Etiqueta descriptiva del campo */
   label?: string;
+  /** Modo simplificado F56: oculta guía de proporción, badge y URL avanzada */
+  simplified?: boolean;
 }
 
 type RatioStatus = "ok" | "warning" | null;
@@ -41,6 +43,7 @@ export function ImageUploadGuided({
   onChange,
   spec,
   label = "Imagen del producto",
+  simplified = false,
 }: ImageUploadGuidedProps) {
   const [drag, setDrag] = useState(false);
   const [converting, setConverting] = useState(false);
@@ -160,22 +163,24 @@ export function ImageUploadGuided({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-          {label}
-        </Label>
-        <button
-          type="button"
-          onClick={() => setShowHint(!showHint)}
-          className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:opacity-90 transition-opacity"
-        >
-          <Info className="w-3.5 h-3.5" />
-          {showHint ? "Ocultar guía" : "Ver proporción"}
-        </button>
-      </div>
+      {!simplified && (
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
+            {label}
+          </Label>
+          <button
+            type="button"
+            onClick={() => setShowHint(!showHint)}
+            className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:opacity-90 transition-opacity"
+          >
+            <Info className="w-3.5 h-3.5" />
+            {showHint ? "Ocultar guía" : "Ver proporción"}
+          </button>
+        </div>
+      )}
 
       {/* ── Guia de proporcion ── */}
-      {showHint && (
+      {!simplified && showHint && (
         <div className="rounded-xl border border-primary/10 bg-primary/5 p-3 space-y-2">
           <div className="flex items-start gap-3">
             {/* Visualizacion de proporcion */}
@@ -255,6 +260,15 @@ export function ImageUploadGuided({
             className="absolute inset-0 w-full h-full object-cover"
             onLoad={(e) => checkRatioAfterLoad(e.currentTarget)}
           />
+        ) : simplified ? (
+          <div className="flex flex-col items-center gap-2 text-muted-foreground px-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+              <Camera className="w-6 h-6" />
+            </div>
+            <p className="text-base font-semibold text-foreground">
+              Toca para subir una foto
+            </p>
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-1.5 text-muted-foreground px-4 text-center">
             <UploadCloud className="w-6 h-6 text-muted-foreground/60" />
@@ -280,12 +294,16 @@ export function ImageUploadGuided({
         )}
 
         {/* Badge de proporcion recomendada (siempre visible) */}
-        {!hasImage && !converting && !importing && (
+        {!simplified && !hasImage && !converting && !importing && (
           <div className="absolute bottom-2 right-2 z-10 bg-background/90 backdrop-blur-sm border border-slate-100 dark:border-slate-800 rounded-full px-2 py-0.5 flex items-center gap-1 shadow-sm">
             <span className="text-[9px] font-bold text-muted-foreground">{spec.label}</span>
           </div>
         )}
       </div>
+
+      {simplified && !hasImage && (
+        <p className="text-xs text-muted-foreground">Se ve mejor cuadrada</p>
+      )}
 
       {/* ── Indicador de ratio ── */}
       {ratioStatus === "ok" && hasImage && (
@@ -307,6 +325,7 @@ export function ImageUploadGuided({
       )}
 
       {/* ── URL manual ── */}
+      {!simplified && (
       <div className="space-y-1.5">
         {!showUrlInput ? (
           <button
@@ -351,6 +370,7 @@ export function ImageUploadGuided({
           </p>
         )}
       </div>
+      )}
     </div>
   );
 }

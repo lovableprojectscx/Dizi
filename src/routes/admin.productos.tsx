@@ -19,6 +19,13 @@ import {
 import { WholesaleEditor } from "@/components/admin/WholesaleEditor";
 import { validateTiers } from "@/lib/wholesale";
 import { isProductIncomplete, isPlaceholderOrFilename } from "@/lib/products";
+import {
+  initialPriceState,
+  usedOptionsCount,
+  needsConsultConfirm,
+  validateEssentials,
+  countBulkWithoutPrice,
+} from "@/lib/product-form";
 import { ProductConflictError } from "@/lib/product-sync";
 import { ImageUploadGuided } from "@/components/admin/ImageUploadGuided";
 import { Button } from "@/components/ui/button";
@@ -91,6 +98,9 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Link2,
   ArrowUp,
   ArrowDown,
   Shirt,
@@ -116,7 +126,7 @@ import {
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/whatsapp";
 import type { Category } from "@/lib/types";
-import { convertImageToWebP } from "@/lib/image-utils";
+import { convertImageToWebP, convertImageUrlToWebP } from "@/lib/image-utils";
 import { getCategorySlug, buildStoreUrl } from "@/lib/category-link";
 
 // Carga perezosa (lazy) del generador de imágenes de estados (F46)
@@ -388,12 +398,14 @@ function CategorySelect({
   onChange,
   onCreateCategory,
   storeModel,
+  hasError = false,
 }: {
   value: string;
   categories: Category[];
   onChange: (id: string) => void;
   onCreateCategory: (name: string) => Promise<string | null>;
   storeModel?: string;
+  hasError?: boolean;
 }) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -442,18 +454,18 @@ function CategorySelect({
               setNewName("");
             }
           }}
-          className="h-9 text-sm"
+          className="h-12 min-h-[48px] text-base rounded-xl"
         />
         <button
           type="button"
           onClick={handleCreate}
           disabled={saving || !newName.trim()}
-          className="h-9 w-9 shrink-0 rounded-md bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition"
+          className="h-12 min-w-[44px] px-3 shrink-0 rounded-xl bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-50 hover:opacity-90 transition"
         >
           {saving ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Check className="h-3.5 w-3.5" />
+            <Check className="h-4 w-4" />
           )}
         </button>
         <button
@@ -462,7 +474,7 @@ function CategorySelect({
             setCreating(false);
             setNewName("");
           }}
-          className="h-9 px-2 shrink-0 rounded-md border text-xs text-muted-foreground hover:bg-muted transition"
+          className="h-12 min-w-[44px] px-3 shrink-0 rounded-xl border text-sm text-muted-foreground hover:bg-muted transition"
         >
           ✕
         </button>
@@ -471,9 +483,14 @@ function CategorySelect({
   }
 
   return (
-    <div className="flex gap-1.5">
+    <div className="flex gap-2">
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="flex-1 min-w-0">
+        <SelectTrigger
+          className={cn(
+            "flex-1 min-w-0 h-[52px] min-h-[52px] text-base rounded-xl",
+            hasError && "border-red-500 focus:ring-red-500",
+          )}
+        >
           <SelectValue placeholder="Selecciona una..." />
         </SelectTrigger>
         <SelectContent>
@@ -502,9 +519,9 @@ function CategorySelect({
         type="button"
         onClick={() => setCreating(true)}
         title="Nueva categoría"
-        className="h-9 w-9 shrink-0 rounded-md border border-dashed border-primary/40 text-primary flex items-center justify-center hover:bg-primary/5 transition"
+        className="min-h-[52px] px-3.5 shrink-0 rounded-xl border border-dashed border-indigo-400/60 text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center justify-center gap-1 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition cursor-pointer"
       >
-        <Plus className="h-3.5 w-3.5" />
+        + Nueva
       </button>
     </div>
   );
@@ -521,6 +538,7 @@ interface SingleProductDialogProps {
   onCreateCategory: (name: string) => Promise<string | null>;
   welcomeMode?: boolean;
   onSkipWelcome?: () => void;
+  onAddAnother?: (categoryId: string) => void;
   showConfirm: (config: {
     title: string;
     description: string;
@@ -541,6 +559,7 @@ function SingleProductDialog({
   onCreateCategory,
   welcomeMode = false,
   onSkipWelcome,
+  onAddAnother,
   showConfirm,
 }: SingleProductDialogProps) {
   const [baseSnapshot, setBaseSnapshot] = useState<Product>(product);
@@ -548,10 +567,25 @@ function SingleProductDialog({
   const [variations, setVariations] = useState<ProductVariation[]>(product.variations || []);
   const [wholesaleTiers, setWholesaleTiers] = useState<WholesaleTier[]>(product.wholesaleTiers || []);
   const [priceInput, setPriceInput] = useState("");
+  const [isConsultOnly, setIsConsultOnly] = useState(false);
   const [originalPriceInput, setOriginalPriceInput] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
+  const [showConsultConfirm, setShowConsultConfirm] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; category?: string }>({});
+  const [showRatioGuide, setShowRatioGuide] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
+  const [importingUrl, setImportingUrl] = useState(false);
   const [saving, setSaving] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
+  const categoryBoxRef = useRef<HTMLDivElement>(null);
   const fetchProductFresh = useApp((s) => s.fetchProductFresh);
+
+  const isNewProduct =
+    !product.id ||
+    product.id === "" ||
+    !store?.products?.some((p: any) => p.id === product.id);
 
   useEffect(() => {
     if (open) {
@@ -563,14 +597,23 @@ function SingleProductDialog({
       });
       setVariations(product.variations || []);
       setWholesaleTiers(product.wholesaleTiers || []);
-      setPriceInput(
-        product.price === null || product.price === undefined || product.price === 0
-          ? ""
-          : product.price.toString()
-      );
+      const priceState = initialPriceState(product, isNewProduct);
+      setPriceInput(priceState.priceInput);
+      setIsConsultOnly(priceState.isConsultOnly);
       setOriginalPriceInput(product.originalPrice ? product.originalPrice.toString() : "");
       setIsFeatured(
         product.description?.includes("#destacado") || product.name?.includes("#destacado") || false
+      );
+      setMoreOptionsOpen(!isNewProduct && usedOptionsCount(product) > 0);
+      setShowConsultConfirm(false);
+      setFieldErrors({});
+      setShowRatioGuide(false);
+      setImageUrlInput(
+        typeof product.image === "string" &&
+          product.image.startsWith("http") &&
+          !product.image.includes(".supabase.co/")
+          ? product.image
+          : "",
       );
     }
   }, [open, product.id]);
@@ -646,8 +689,8 @@ function SingleProductDialog({
     onOpenChange(isOpen);
   };
 
-  const handleSave = async () => {
-    const cleanPrice = priceInput.replace(",", ".");
+  const handleSave = async (forceConsult = false) => {
+    const cleanPrice = forceConsult || isConsultOnly ? "" : priceInput.replace(",", ".");
     const cleanOriginalPrice = originalPriceInput.replace(",", ".");
 
     const parsedPrice = cleanPrice === "" ? null : parseFloat(cleanPrice);
@@ -717,6 +760,16 @@ function SingleProductDialog({
       onOpenChange(false);
       if (isStillSampleName) {
         toast.info("Guardado. Sigue marcado como ejemplo porque conserva el nombre de muestra.");
+      } else if (isNewProduct) {
+        toast.success("Producto agregado ✓", {
+          duration: 8000,
+          action: onAddAnother
+            ? {
+                label: "Agregar otro",
+                onClick: () => onAddAnother(updatedProduct.categoryId),
+              }
+            : undefined,
+        });
       } else {
         toast.success("Producto guardado correctamente");
       }
@@ -737,11 +790,9 @@ function SingleProductDialog({
           });
           setVariations(fresh.variations || []);
           setWholesaleTiers(fresh.wholesaleTiers || []);
-          setPriceInput(
-            fresh.price === null || fresh.price === undefined || fresh.price === 0
-              ? ""
-              : fresh.price.toString()
-          );
+          const freshPriceState = initialPriceState(fresh, false);
+          setPriceInput(freshPriceState.priceInput);
+          setIsConsultOnly(freshPriceState.isConsultOnly);
           setOriginalPriceInput(fresh.originalPrice ? fresh.originalPrice.toString() : "");
           setIsFeatured(
             fresh.description?.includes("#destacado") || fresh.name?.includes("#destacado") || false
@@ -768,6 +819,52 @@ function SingleProductDialog({
     }
   };
 
+  const handleSubmitClick = () => {
+    const check = validateEssentials(editing.name, editing.categoryId);
+    if (!check.valid) {
+      if (check.missingField === "name") {
+        setFieldErrors({ name: check.message || "Falta el nombre" });
+        nameInputRef.current?.focus();
+      } else {
+        setFieldErrors({ category: check.message || "Elige una categoría" });
+        categoryBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+    setFieldErrors({});
+    if (needsConsultConfirm(priceInput, isConsultOnly)) {
+      setShowConsultConfirm(true);
+      return;
+    }
+    void handleSave(false);
+  };
+
+  const handleMoreOptionsUrlChange = async (url: string) => {
+    setImageUrlInput(url);
+    setEditing((prev) => ({ ...prev, image: url }));
+    const trimmed = url.trim();
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) return;
+    setImportingUrl(true);
+    try {
+      const webpDataUrl = await convertImageUrlToWebP(trimmed, "product");
+      setEditing((prev) => ({ ...prev, image: webpDataUrl }));
+      toast.success("Imagen importada y optimizada");
+    } catch {
+      // Mantiene la URL si hay CORS
+    } finally {
+      setImportingUrl(false);
+    }
+  };
+
+  const activeOptionsCount = usedOptionsCount(
+    {
+      ...editing,
+      variations,
+      wholesaleTiers,
+    },
+    isFeatured,
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleCloseAttempt}>
       <DialogContent
@@ -775,21 +872,20 @@ function SingleProductDialog({
         onEscapeKeyDown={(e) => e.preventDefault()}
         className="max-w-3xl max-h-[95dvh] md:max-h-[90dvh] flex flex-col p-0 gap-0 border-none shadow-2xl rounded-2xl overflow-hidden bg-background"
       >
-        <DialogHeader className="px-6 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
+        <DialogHeader className="px-5 py-4 border-b bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
           <div className="pr-6">
-            <DialogTitle className="text-lg font-extrabold tracking-tight flex items-center gap-2 text-foreground">
-              <span className="h-5 w-1 rounded bg-primary" />
+            <DialogTitle className="font-display text-xl font-bold tracking-tight flex items-center gap-2 text-foreground">
               {welcomeMode
                 ? "Sube tu primer producto"
-                : !editing.id || editing.id === "" || !store?.products?.some((p: any) => p.id === editing.id)
-                  ? "Nuevo Producto"
-                  : "Editar Producto"}
+                : isNewProduct
+                  ? "Agregar producto"
+                  : "Editar producto"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-              {welcomeMode
-                ? `¡Bienvenido a ${store?.name || "tu tienda"}! Publica tu primer artículo o hazlo después.`
-                : "Configura los detalles del artículo para publicarlo en tu catálogo digital."}
-            </DialogDescription>
+            {welcomeMode && (
+              <DialogDescription className="text-sm text-muted-foreground mt-0.5">
+                {`¡Bienvenido a ${store?.name || "tu tienda"}! Publica tu primer artículo o hazlo después.`}
+              </DialogDescription>
+            )}
           </div>
         </DialogHeader>
 
@@ -797,7 +893,7 @@ function SingleProductDialog({
           {welcomeMode && (
             <div
               data-testid="first-product-welcome-banner"
-              className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-primary/5 border border-primary/20 text-foreground text-xs"
+              className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-primary/5 border border-primary/20 text-foreground text-sm"
             >
               <Sparkles className="w-4 h-4 shrink-0 text-primary mt-0.5" />
               <span>
@@ -806,7 +902,7 @@ function SingleProductDialog({
             </div>
           )}
           {editing.isSample && (
-            <div className="flex items-center gap-2.5 p-3.5 mb-5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs">
+            <div className="flex items-center gap-2.5 p-3.5 mb-5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-sm">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
               <span>
                 <strong>Este es un producto de ejemplo;</strong> cámbiale nombre, foto y precio para usarlo como tuyo.
@@ -814,17 +910,10 @@ function SingleProductDialog({
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Columna Izquierda: Imagen y Multimedia (col-span 5) */}
-            <div className="md:col-span-5 space-y-3.5">
-              <div className="space-y-0.5">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                  Imagen del Producto
-                </h3>
-                <p className="text-[10px] text-muted-foreground/60 leading-normal hidden sm:block">
-                  Formatos JPG, PNG, WebP con compresión automática.
-                </p>
-              </div>
+            {/* Columna Izquierda: Foto */}
+            <div className="md:col-span-5">
               <ImageUploadGuided
+                simplified
                 value={editing.image}
                 onChange={(image, thumb) => setEditing((prev) => ({ ...prev, image, ...(thumb ? { thumbnail: thumb } : {}) }))}
                 spec={imageSpec}
@@ -832,110 +921,85 @@ function SingleProductDialog({
               />
             </div>
 
-            {/* Columna Derecha: Parámetros del Producto (col-span 7) */}
-            <div className="md:col-span-7 space-y-4">
-              {/* Nombre */}
+            {/* Columna Derecha: Lo esencial primero */}
+            <div className="md:col-span-7 space-y-5">
+              {/* 1. ¿Cómo se llama? */}
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                  Nombre del producto
+                <Label
+                  htmlFor="f56-product-name"
+                  className="text-[15px] font-semibold text-foreground"
+                >
+                  ¿Cómo se llama?
                 </Label>
                 <Input
-                  placeholder={getProductNameExample(
-                    store?.niche,
-                    welcomeMode && isStoreEligibleForCompletaTuTienda(store),
+                  id="f56-product-name"
+                  ref={nameInputRef}
+                  placeholder={getProductNameExample(store?.niche, true)}
+                  aria-invalid={Boolean(fieldErrors.name)}
+                  className={cn(
+                    "focus-visible:ring-primary h-[52px] min-h-[52px] rounded-xl text-base border-slate-200 dark:border-slate-800",
+                    fieldErrors.name && "border-red-500 focus-visible:ring-red-500",
                   )}
-                  className="focus-visible:ring-primary h-10 rounded-xl text-sm border-slate-200 dark:border-slate-800"
                   value={editing.name}
-                  onChange={(e) => setEditing((prev) => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setEditing((prev) => ({ ...prev, name: val }));
+                    if (fieldErrors.name && val.trim()) {
+                      setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                    }
+                  }}
                   onKeyDown={(e) => {
-                    if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                    if (e.key === " ") e.stopPropagation();
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      priceInputRef.current?.focus();
+                    }
                   }}
                 />
-              </div>
-
-              {/* Card de Interruptores (Oferta y Destacado) */}
-              <div className="border border-slate-100 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/10 p-4 rounded-xl space-y-3.5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-xs text-slate-700 dark:text-slate-200">
-                      ¿Este producto está en oferta?
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Muestra un precio de oferta junto al original tachado.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={editing.isOnSale ?? false}
-                    onCheckedChange={(v) => {
-                      setEditing((prev) => ({
-                        ...prev,
-                        isOnSale: v,
-                        originalPrice: v ? prev.originalPrice : null,
-                      }));
-                      if (!v) setOriginalPriceInput("");
-                    }}
-                  />
-                </div>
-
-                {supportsFeaturedProducts(store.model, store.niche) && (
-                  <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-xs text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-orange-500" /> ¿Destacar este producto?
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Aparecerá en la sección de recomendados y carrusel superior.
-                      </p>
-                    </div>
-                    <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
-                  </div>
+                {fieldErrors.name && (
+                  <p className="text-xs font-medium text-red-600">{fieldErrors.name}</p>
                 )}
               </div>
 
-              {/* Precios y Categoría */}
-              {editing.isOnSale ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                      Precio Original
-                    </Label>
-                    <div className="relative flex items-center mt-1">
-                      <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
-                        S/
-                      </span>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm"
-                        value={originalPriceInput}
-                        onChange={(e) => {
-                          let val = e.target.value.replace(",", ".");
-                          val = val.replace(/[^0-9.]/g, "");
-                          const parts = val.split(".");
-                          if (parts.length > 2) return;
-                          setOriginalPriceInput(val);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === " ") e.stopPropagation();
-                        }}
-                      />
-                    </div>
+              {/* 2. ¿Cuánto cuesta? */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="f56-product-price"
+                  className="text-[15px] font-semibold text-foreground"
+                >
+                  ¿Cuánto cuesta?
+                </Label>
+                {isConsultOnly ? (
+                  <div className="min-h-[48px] px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 flex items-center justify-between gap-2">
+                    <span className="text-base text-muted-foreground">
+                      Precio a consultar
+                    </span>
+                    <button
+                      type="button"
+                      className="min-h-[44px] px-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      onClick={() => {
+                        setIsConsultOnly(false);
+                        setPriceInput("");
+                        setTimeout(() => priceInputRef.current?.focus(), 0);
+                      }}
+                    >
+                      Cambiar
+                    </button>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-red-500 flex items-center gap-1">
-                      Precio Oferta
-                    </Label>
-                    <div className="relative flex items-center mt-1">
-                      <span className="absolute left-3 text-sm text-red-400 font-semibold select-none">
+                ) : (
+                  <>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-base text-muted-foreground font-semibold select-none">
                         S/
                       </span>
                       <Input
+                        id="f56-product-price"
+                        ref={priceInputRef}
                         type="text"
                         inputMode="decimal"
                         placeholder="0.00"
-                        className="pl-8 h-10 rounded-xl border-red-200 dark:border-red-900/50 bg-red-50/30 dark:bg-red-950/10 focus-visible:ring-red-500 text-sm text-red-600 dark:text-red-400 font-bold"
+                        className="pl-10 h-[52px] min-h-[52px] rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-base"
                         value={priceInput}
                         onChange={(e) => {
                           let val = e.target.value.replace(",", ".");
@@ -943,315 +1007,416 @@ function SingleProductDialog({
                           const parts = val.split(".");
                           if (parts.length > 2) return;
                           setPriceInput(val);
+                          if (showConsultConfirm) setShowConsultConfirm(false);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === " ") e.stopPropagation();
                         }}
                       />
                     </div>
-                  </div>
+                    <button
+                      type="button"
+                      className="min-h-[44px] inline-flex items-center text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      onClick={() => {
+                        setIsConsultOnly(true);
+                        setPriceInput("");
+                        setShowConsultConfirm(false);
+                      }}
+                    >
+                      No quiero mostrar el precio
+                    </button>
+                  </>
+                )}
+              </div>
 
-                  {/* Calculadora en vivo de descuento (F40) */}
-                  {(() => {
-                    const parsedPrice = parseFloat(priceInput);
-                    const parsedOrig = parseFloat(originalPriceInput);
-                    if (!parsedPrice || !parsedOrig || isNaN(parsedPrice) || isNaN(parsedOrig) || parsedOrig <= 0 || parsedPrice <= 0) {
-                      return null;
+              {/* 3. Categoría */}
+              <div ref={categoryBoxRef} className="space-y-1.5">
+                <Label className="text-[15px] font-semibold text-foreground">
+                  Categoría
+                </Label>
+                <CategorySelect
+                  value={editing.categoryId}
+                  categories={store.categories}
+                  onChange={(v) => {
+                    setEditing((prev) => ({ ...prev, categoryId: v }));
+                    if (fieldErrors.category && v) {
+                      setFieldErrors((prev) => ({ ...prev, category: undefined }));
                     }
-                    if (parsedOrig <= parsedPrice) {
-                      return (
-                        <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5">
-                          <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                          <span>El precio original debe ser mayor al precio de oferta para aplicar descuento.</span>
-                        </div>
-                      );
-                    }
-                    const diff = parsedOrig - parsedPrice;
-                    const pct = Math.floor((diff / parsedOrig) * 100);
-                    if (pct >= 80) {
-                      return (
-                        <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 font-medium">
-                            <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                            <span>Descuento: <strong className="font-bold">{pct}%</strong> · ahorras <strong className="font-bold">{formatPrice(diff)}</strong></span>
-                          </div>
-                          <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full shrink-0">
-                            ¿Seguro? Revisa el precio
-                          </span>
-                        </div>
-                      );
-                    }
-                    if (pct < 5) {
-                      return (
-                        <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs flex items-center gap-1.5">
-                          <Info className="h-4 w-4 shrink-0 text-slate-400" />
-                          <span>Descuento: {pct}% · ahorras {formatPrice(diff)} (con menos de 5% no se muestra la etiqueta).</span>
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className="sm:col-span-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-1.5 font-medium">
-                        <Percent className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                        <span>Descuento: <strong className="font-bold">{pct}%</strong> · ahorras <strong className="font-bold">{formatPrice(diff)}</strong></span>
-                      </div>
-                    );
-                  })()}
+                  }}
+                  onCreateCategory={onCreateCategory}
+                  storeModel={store.model}
+                  hasError={Boolean(fieldErrors.category)}
+                />
+                {fieldErrors.category && (
+                  <p className="text-xs font-medium text-red-600">{fieldErrors.category}</p>
+                )}
+              </div>
 
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
-                      <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
-                    </Label>
-                    <CategorySelect
-                      value={editing.categoryId}
-                      categories={store.categories}
-                      onChange={(v) => setEditing((prev) => ({ ...prev, categoryId: v }))}
-                      onCreateCategory={onCreateCategory}
-                      storeModel={store.model}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                        Precio
+              {/* 4. Más opciones */}
+              <div className="pt-1 border-t border-slate-200/80 dark:border-slate-800/80">
+                <button
+                  type="button"
+                  aria-expanded={moreOptionsOpen}
+                  onClick={() => setMoreOptionsOpen((v) => !v)}
+                  className="w-full min-h-[44px] flex items-center justify-between py-2 text-left cursor-pointer"
+                >
+                  <span className="text-[15px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                    Más opciones
+                    {activeOptionsCount > 0 && (
+                      <Badge variant="secondary" className="text-xs font-medium">
+                        {activeOptionsCount}{" "}
+                        {activeOptionsCount === 1 ? "opción usada" : "opciones usadas"}
+                      </Badge>
+                    )}
+                  </span>
+                  {moreOptionsOpen ? (
+                    <ChevronUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  )}
+                </button>
+
+                {moreOptionsOpen && (
+                  <div className="pt-3 space-y-5">
+                    {/* 4.1 Descripción */}
+                    <div className="space-y-1.5">
+                      <Label className="text-[15px] font-semibold text-foreground">
+                        Descripción (opcional)
                       </Label>
-                      <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          className="rounded border-slate-300 text-primary focus:ring-primary h-3.5 w-3.5"
-                          checked={priceInput === ""}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setPriceInput("");
-                            } else {
-                              setPriceInput("10.00");
-                            }
+                      <Textarea
+                        rows={2}
+                        placeholder="Ej. Medidas, materiales o detalles..."
+                        className="focus-visible:ring-primary rounded-xl min-h-[84px] text-base py-2.5 resize-none border-slate-200 dark:border-slate-800"
+                        value={editing.description ?? ""}
+                        onChange={(e) => setEditing((prev) => ({ ...prev, description: e.target.value }))}
+                        onKeyDown={(e) => {
+                          if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                        }}
+                      />
+                    </div>
+
+                    {/* 4.2 Oferta (precio antes) */}
+                    <div className="border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/40 dark:bg-slate-900/10 p-4 rounded-xl space-y-3.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-[15px] text-foreground">
+                            ¿Este producto está en oferta?
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Muestra el precio anterior tachado.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={editing.isOnSale ?? false}
+                          onCheckedChange={(v) => {
+                            setEditing((prev) => ({
+                              ...prev,
+                              isOnSale: v,
+                              originalPrice: v ? prev.originalPrice : null,
+                            }));
+                            if (!v) setOriginalPriceInput("");
                           }}
                         />
-                        <span>A consultar</span>
-                      </label>
-                    </div>
-                    <div className="relative flex items-center mt-1">
-                      <span className="absolute left-3 text-sm text-muted-foreground/60 font-semibold select-none">
-                        S/
-                      </span>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        placeholder={priceInput === "" ? "A consultar" : "0.00"}
-                        disabled={priceInput === ""}
-                        className="pl-8 h-10 rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-sm disabled:bg-muted/50 disabled:text-muted-foreground"
-                        value={priceInput}
-                        onChange={(e) => {
-                          let val = e.target.value.replace(",", ".");
-                          val = val.replace(/[^0-9.]/g, "");
-                          const parts = val.split(".");
-                          if (parts.length > 2) return;
-                          setPriceInput(val);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === " ") e.stopPropagation();
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1">
-                      <Tag className="h-3.5 w-3.5 text-muted-foreground/60" /> Categoría
-                    </Label>
-                    <CategorySelect
-                      value={editing.categoryId}
-                      categories={store.categories}
-                      onChange={(v) => setEditing((prev) => ({ ...prev, categoryId: v }))}
-                      onCreateCategory={onCreateCategory}
-                      storeModel={store.model}
-                    />
-                  </div>
-                </div>
-              )}
+                      </div>
 
-              {/* Descripción */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">
-                  Descripción (opcional)
-                </Label>
-                <Textarea
-                  rows={2}
-                  placeholder="Ej. Especificaciones técnicas, detalles o notas..."
-                  className="focus-visible:ring-primary rounded-xl min-h-[75px] text-sm py-2 resize-none border-slate-200 dark:border-slate-800"
-                  value={editing.description ?? ""}
-                  onChange={(e) => setEditing((prev) => ({ ...prev, description: e.target.value }))}
-                  onKeyDown={(e) => {
-                    if (e.key === " " || e.key === "Enter") e.stopPropagation();
-                  }}
-                />
-              </div>
-
-              {/* ── Variaciones del Producto (Colores, Tallas, Presentaciones) ── */}
-              <div className="space-y-3 pt-3 border-t border-slate-200/80 dark:border-slate-800/80">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-                      <Layers className="h-3.5 w-3.5 text-primary" /> Variaciones (Opciones)
-                    </Label>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      Colores, tallas o presentaciones con foto y precio opcional.
-                    </p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs font-semibold rounded-lg gap-1 border-dashed hover:border-primary hover:text-primary cursor-pointer"
-                    onClick={handleAddVariation}
-                  >
-                    <Plus className="h-3 w-3" /> Agregar Opción
-                  </Button>
-                </div>
-
-                {/* Lista de Variaciones */}
-                {variations.length > 0 && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {variations.map((v, index) => (
-                      <div
-                        key={v.id || index}
-                        className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30"
-                      >
-                        {/* Subida / Preview de Foto de Variante */}
-                        <div className="relative shrink-0">
-                          {v.image ? (
-                            <div className="relative group w-9 h-9 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-white">
-                              <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveVarImage(index)}
-                                className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
-                                title="Quitar foto"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ) : (
-                            <label className="w-9 h-9 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary" title="Subir foto de esta variante">
-                              <Camera className="h-3.5 w-3.5" />
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
+                      {editing.isOnSale && (
+                        <div className="space-y-3 pt-2 border-t border-slate-200/60 dark:border-slate-800/60">
+                          <div className="space-y-1.5">
+                            <Label className="text-[15px] font-semibold text-foreground">
+                              Precio antes (tachado)
+                            </Label>
+                            <div className="relative flex items-center">
+                              <span className="absolute left-3.5 text-base text-muted-foreground font-semibold select-none">
+                                S/
+                              </span>
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="0.00"
+                                className="pl-10 h-[52px] min-h-[52px] rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-primary text-base"
+                                value={originalPriceInput}
                                 onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleUploadVarImage(index, file);
+                                  let val = e.target.value.replace(",", ".");
+                                  val = val.replace(/[^0-9.]/g, "");
+                                  const parts = val.split(".");
+                                  if (parts.length > 2) return;
+                                  setOriginalPriceInput(val);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === " ") e.stopPropagation();
                                 }}
                               />
-                            </label>
-                          )}
-                        </div>
+                            </div>
+                          </div>
 
-                        {/* Nombre de la Variante */}
-                        <div className="flex-1 min-w-[100px]">
-                          <Input
-                            placeholder="Ej: Rojo, XL, 1 Litro..."
-                            value={v.name}
-                            onChange={(e) => handleVarChange(index, "name", e.target.value)}
-                            className="h-8 text-xs rounded-lg border-slate-200 dark:border-slate-700"
-                            onKeyDown={(e) => {
-                              if (e.key === " " || e.key === "Enter") e.stopPropagation();
-                            }}
-                          />
+                          {(() => {
+                            const parsedPrice = parseFloat(priceInput);
+                            const parsedOrig = parseFloat(originalPriceInput);
+                            if (!parsedPrice || !parsedOrig || isNaN(parsedPrice) || isNaN(parsedOrig) || parsedOrig <= 0 || parsedPrice <= 0) {
+                              return null;
+                            }
+                            if (parsedOrig <= parsedPrice) {
+                              return (
+                                <div className="px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-1.5">
+                                  <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                  <span>El precio anterior debe ser mayor al precio actual.</span>
+                                </div>
+                              );
+                            }
+                            const diff = parsedOrig - parsedPrice;
+                            const pct = Math.floor((diff / parsedOrig) * 100);
+                            return (
+                              <div className="px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/40 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-1.5 font-medium">
+                                <Percent className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                <span>Descuento: <strong className="font-bold">{pct}%</strong> · ahorras <strong className="font-bold">{formatPrice(diff)}</strong></span>
+                              </div>
+                            );
+                          })()}
                         </div>
+                      )}
 
-                        {/* Precio Opcional */}
-                        <div className="w-24 shrink-0 relative">
-                          <span className="absolute left-2 top-2 text-[10px] text-muted-foreground/60 font-semibold select-none">
-                            S/
-                          </span>
-                          <Input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder="Precio"
-                            value={v.price !== null && v.price !== undefined ? v.price.toString() : ""}
-                            onChange={(e) => {
-                              const val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
-                              const num = val === "" ? null : parseFloat(val);
-                              handleVarChange(index, "price", isNaN(num as any) ? null : num);
-                            }}
-                            className="pl-6 h-8 text-xs rounded-lg border-slate-200 dark:border-slate-700"
-                            onKeyDown={(e) => {
-                              if (e.key === " ") e.stopPropagation();
-                            }}
-                          />
+                      {/* 4.3 Destacar */}
+                      {supportsFeaturedProducts(store.model, store.niche) && (
+                        <div className="pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-[15px] text-foreground flex items-center gap-1.5">
+                              <Sparkles className="h-4 w-4 text-orange-500" /> ¿Destacar este producto?
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Aparecerá en recomendados.
+                            </p>
+                          </div>
+                          <Switch checked={isFeatured} onCheckedChange={setIsFeatured} />
                         </div>
+                      )}
+                    </div>
 
-                        {/* Eliminar Variante */}
+                    {/* 4.4 Tallas, colores y variaciones */}
+                    <div className="space-y-3 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <Label className="text-[15px] font-semibold text-foreground flex items-center gap-1.5">
+                            <Layers className="h-4 w-4 text-primary" /> Tallas, colores y variaciones
+                          </Label>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Opciones con foto y precio opcional.
+                          </p>
+                        </div>
                         <Button
                           type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveVariation(index)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
-                          title="Eliminar opción"
+                          variant="outline"
+                          size="sm"
+                          className="min-h-[44px] px-3 text-sm font-semibold rounded-xl gap-1 border-dashed hover:border-primary hover:text-primary cursor-pointer"
+                          onClick={handleAddVariation}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Plus className="h-4 w-4" /> Agregar opción
                         </Button>
                       </div>
-                    ))}
+
+                      {variations.length > 0 && (
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                          {variations.map((v, index) => (
+                            <div
+                              key={v.id || index}
+                              className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/30"
+                            >
+                              <div className="relative shrink-0">
+                                {v.image ? (
+                                  <div className="relative group w-11 h-11 rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 bg-white">
+                                    <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveVarImage(index)}
+                                      className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer"
+                                      title="Quitar foto"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <label className="w-11 h-11 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-colors text-muted-foreground hover:text-primary" title="Subir foto de esta variante">
+                                    <Camera className="h-4 w-4" />
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleUploadVarImage(index, file);
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                              </div>
+
+                              <div className="flex-1 min-w-[100px]">
+                                <Input
+                                  placeholder="Ej: Rojo, XL..."
+                                  value={v.name}
+                                  onChange={(e) => handleVarChange(index, "name", e.target.value)}
+                                  className="h-12 min-h-[48px] text-base rounded-lg border-slate-200 dark:border-slate-700"
+                                  onKeyDown={(e) => {
+                                    if (e.key === " " || e.key === "Enter") e.stopPropagation();
+                                  }}
+                                />
+                              </div>
+
+                              <div className="w-24 shrink-0 relative flex items-center">
+                                <span className="absolute left-2.5 text-xs text-muted-foreground/70 font-semibold select-none">
+                                  S/
+                                </span>
+                                <Input
+                                  type="text"
+                                  inputMode="decimal"
+                                  placeholder="Precio"
+                                  value={v.price !== null && v.price !== undefined ? v.price.toString() : ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(",", ".").replace(/[^0-9.]/g, "");
+                                    const num = val === "" ? null : parseFloat(val);
+                                    handleVarChange(index, "price", isNaN(num as any) ? null : num);
+                                  }}
+                                  className="pl-7 h-12 min-h-[48px] text-base rounded-lg border-slate-200 dark:border-slate-700"
+                                  onKeyDown={(e) => {
+                                    if (e.key === " ") e.stopPropagation();
+                                  }}
+                                />
+                              </div>
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveVariation(index)}
+                                className="h-11 w-11 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                title="Eliminar opción"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 4.5 Precio por mayor */}
+                    {store?.wholesaleEnabled && (
+                      <WholesaleEditor
+                        tiers={wholesaleTiers}
+                        onChange={setWholesaleTiers}
+                        productPrice={isConsultOnly || priceInput === "" ? null : parseFloat(priceInput.replace(",", "."))}
+                        variations={variations}
+                        disabled={saving}
+                      />
+                    )}
+
+                    {/* 4.6 Pegar enlace de imagen */}
+                    <div className="space-y-1.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                      <Label className="text-[15px] font-semibold text-foreground flex items-center gap-1.5">
+                        <Link2 className="h-4 w-4 text-muted-foreground" /> Pegar enlace de imagen
+                      </Label>
+                      <div className="relative flex items-center">
+                        <Input
+                          placeholder="https://..."
+                          value={imageUrlInput}
+                          onChange={(e) => handleMoreOptionsUrlChange(e.target.value)}
+                          disabled={importingUrl}
+                          className="h-12 min-h-[48px] text-base rounded-xl pr-9"
+                        />
+                        {importingUrl && (
+                          <Loader2 className="absolute right-3 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 4.7 Ver proporción */}
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowRatioGuide((v) => !v)}
+                        className="min-h-[44px] inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      >
+                        <Info className="h-4 w-4" />
+                        {showRatioGuide ? "Ocultar proporción" : "Ver proporción recomendada"}
+                      </button>
+                      {showRatioGuide && (
+                        <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-xs text-muted-foreground">
+                          <p className="font-semibold text-foreground">
+                            {imageSpec.label} — {imageSpec.width} × {imageSpec.height} px
+                          </p>
+                          <p className="mt-0.5">{imageSpec.hint}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
-
-              {/* ── Precios por Mayor (F42) ── */}
-              {store?.wholesaleEnabled && (
-                <WholesaleEditor
-                  tiers={wholesaleTiers}
-                  onChange={setWholesaleTiers}
-                  productPrice={priceInput === "" ? null : parseFloat(priceInput.replace(",", "."))}
-                  variations={variations}
-                  disabled={saving}
-                />
-              )}
             </div>
           </div>
+
+          {/* Confirmación en la misma ventana si falta el precio y no marcó "No quiero mostrar el precio" */}
+          {showConsultConfirm && (
+            <div
+              data-testid="consult-confirm-box"
+              className="mt-5 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 space-y-3"
+            >
+              <p className="text-sm font-semibold text-foreground">
+                ¿Lo dejas como &quot;A consultar&quot;?
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-[44px] rounded-xl text-sm font-semibold cursor-pointer"
+                  onClick={() => {
+                    setShowConsultConfirm(false);
+                    setTimeout(() => priceInputRef.current?.focus(), 0);
+                  }}
+                >
+                  Poner precio
+                </Button>
+                <Button
+                  type="button"
+                  className="min-h-[44px] rounded-xl text-sm font-bold bg-primary text-white cursor-pointer"
+                  onClick={() => {
+                    setShowConsultConfirm(false);
+                    setIsConsultOnly(true);
+                    void handleSave(true);
+                  }}
+                >
+                  Sí, a consultar
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 justify-end w-full">
-          {welcomeMode && onSkipWelcome ? (
+        <DialogFooter className="px-5 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 w-full">
+          {welcomeMode && onSkipWelcome && (
             <Button
               type="button"
               variant="outline"
               disabled={saving}
-              className="flex-1 sm:flex-none min-h-[44px] rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
+              className="min-h-[48px] rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-sm px-4"
               onClick={onSkipWelcome}
             >
               Lo hago después
             </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saving}
-              className="flex-1 sm:flex-none min-h-[44px] h-10 rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-xs"
-              onClick={() => handleCloseAttempt(false)}
-            >
-              Cancelar
-            </Button>
           )}
           <Button
             type="button"
-            disabled={saving || !editing.name.trim() || !editing.categoryId}
-            className="flex-1 sm:flex-none min-h-[44px] h-10 rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-xs text-white"
-            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 min-h-[48px] rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-base text-white"
+            onClick={handleSubmitClick}
           >
             {saving ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
                 Guardando producto...
               </>
-            ) : editing.id ? (
-              "Guardar cambios"
-            ) : (
+            ) : isNewProduct ? (
               "Guardar producto"
+            ) : (
+              "Guardar cambios"
             )}
           </Button>
         </DialogFooter>
@@ -1414,7 +1579,7 @@ function CompleteProductsDialog({
                       updateItem(item.id, "price", val);
                     }}
                     placeholder={item.isConsultOnly ? "A consultar" : "0.00"}
-                    className="pl-7 h-9 text-xs rounded-lg disabled:bg-muted/50 disabled:text-muted-foreground"
+                    className="pl-8 h-12 min-h-[48px] text-base rounded-xl disabled:bg-muted/50 disabled:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -1427,14 +1592,14 @@ function CompleteProductsDialog({
             variant="outline"
             disabled={saving}
             onClick={() => onOpenChange(false)}
-            className="h-9 text-xs rounded-xl cursor-pointer"
+            className="min-h-[44px] text-sm rounded-xl cursor-pointer"
           >
             Hacerlo más tarde
           </Button>
           <Button
             disabled={saving || items.length === 0}
             onClick={handleSave}
-            className="h-9 text-xs rounded-xl font-bold bg-primary text-white cursor-pointer"
+            className="min-h-[44px] text-sm rounded-xl font-bold bg-primary text-white cursor-pointer"
           >
             {saving ? (
               <>
@@ -1935,6 +2100,7 @@ function ProductsPage() {
   // Bulk Draft Upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkConsultConfirmCount, setBulkConsultConfirmCount] = useState<number | null>(null);
   const [uploadingDrafts, setUploadingDrafts] = useState(false);
   const [draftsTotal, setDraftsTotal] = useState(0);
   const [draftsProcessed, setDraftsProcessed] = useState(0);
@@ -3029,6 +3195,11 @@ function ProductsPage() {
         onCreateCategory={handleCreateCategory}
         welcomeMode={welcomeMode}
         onSkipWelcome={handleSkipWelcome}
+        onAddAnother={(categoryId) => {
+          setWelcomeMode(false);
+          setEditingProduct({ ...empty(), categoryId });
+          setIsSingleDialogOpen(true);
+        }}
         showConfirm={showConfirm}
       />
 
@@ -3563,11 +3734,45 @@ function ProductsPage() {
             </div>
           )}
 
+          {bulkConsultConfirmCount !== null && (
+            <div
+              data-testid="bulk-consult-confirm-box"
+              className="mx-5 mb-3 p-3.5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+            >
+              <p className="text-sm font-semibold text-foreground">
+                {bulkConsultConfirmCount}{" "}
+                {bulkConsultConfirmCount === 1
+                  ? "producto se verá como 'A consultar'"
+                  : "productos se verán como 'A consultar'"}
+              </p>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-[44px] rounded-xl text-sm font-semibold cursor-pointer"
+                  onClick={() => setBulkConsultConfirmCount(null)}
+                >
+                  Revisar
+                </Button>
+                <Button
+                  type="button"
+                  className="min-h-[44px] rounded-xl text-sm font-bold bg-primary text-white cursor-pointer"
+                  onClick={() => {
+                    setBulkConsultConfirmCount(null);
+                    void handleStartImport();
+                  }}
+                >
+                  Guardar igual
+                </Button>
+              </div>
+            </div>
+          )}
+
           <DialogFooter className="px-5 py-4 border-t shrink-0 flex flex-row gap-2 sm:justify-end bg-zinc-50 dark:bg-zinc-950/20">
             {!uploadingDrafts && (
               <Button
                 variant="outline"
-                className="flex-1 sm:flex-none text-xs rounded-xl cursor-pointer"
+                className="flex-1 sm:flex-none min-h-[44px] text-xs rounded-xl cursor-pointer"
                 onClick={() => {
                   showConfirm({
                     title: "Cancelar Carga Masiva",
@@ -3579,6 +3784,7 @@ function ProductsPage() {
                       bulkDrafts.forEach((d) => URL.revokeObjectURL(d.previewUrl));
                       setBulkDrafts([]);
                       setSelectedDraftId(null);
+                      setBulkConsultConfirmCount(null);
                       setBulkOpen(false);
                     },
                   });
@@ -3588,9 +3794,16 @@ function ProductsPage() {
               </Button>
             )}
             <Button
-              className="flex-1 sm:flex-none text-xs font-bold gap-1.5 rounded-xl cursor-pointer bg-primary"
+              className="flex-1 sm:flex-none min-h-[44px] text-xs font-bold gap-1.5 rounded-xl cursor-pointer bg-primary"
               disabled={bulkDrafts.length === 0 || uploadingDrafts}
-              onClick={handleStartImport}
+              onClick={() => {
+                const withoutPrice = countBulkWithoutPrice(bulkDrafts);
+                if (withoutPrice > 0) {
+                  setBulkConsultConfirmCount(withoutPrice);
+                  return;
+                }
+                void handleStartImport();
+              }}
             >
               {uploadingDrafts ? (
                 <>
