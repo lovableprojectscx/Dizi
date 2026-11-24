@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock } from "lucide-react";
 import { PublicCatalog } from "@/components/public/PublicCatalog";
+import { PausedStorePage } from "@/components/public/PausedStorePage";
 import { StoreErrorComponent } from "@/components/public/StoreErrorComponent";
 import { supabase, invokeRpcWithRetry } from "@/lib/supabase";
 import { toCdnUrl, getThumbnailUrl } from "@/lib/image-utils";
@@ -130,6 +131,7 @@ export const Route = createFileRoute("/t/$slug/{-$categoria}")({
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
+        ...(store?.paused ? [{ name: "robots", content: "noindex, nofollow" }] : []),
       ],
       links: preloadImage
         ? [
@@ -267,6 +269,7 @@ async function fetchStoreBySlug(slug: string, pageLimit: number = 36): Promise<S
       promoBarBgColor: data.promo_bar_bg_color ?? undefined,
       promoBarTextColor: data.promo_bar_text_color ?? undefined,
       promoBarIsMarquee: data.promo_bar_is_marquee ?? false,
+      paused: Boolean(data.paused),
       showFeatured: data.show_featured ?? true,
       showDiscountPct: data.show_discount_pct ?? false,
       wholesaleEnabled: data.wholesale_enabled ?? false,
@@ -420,6 +423,10 @@ function StorePublic() {
         </div>
       </div>
     );
+  }
+
+  if (store.paused) {
+    return <PausedStorePage store={store} />;
   }
 
   return (

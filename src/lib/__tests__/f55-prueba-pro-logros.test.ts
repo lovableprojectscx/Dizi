@@ -54,6 +54,9 @@ function createMockStore(overrides: Partial<Store> = {}): Store {
     categories: [],
     products: [],
     showDiziBranding: false,
+    active: true,
+    isPublished: true,
+    whatsappClicks: 0,
     ...overrides,
   };
 }
@@ -275,7 +278,7 @@ describe("F55 · Prueba Pro de 7 días + Logros + Imagen de Catálogo (Escenario
     const storeSemillaOld = createMockStore({
       plan: "semilla",
       subscriptionStatus: "trial",
-      planExpiresAt: null,
+      planExpiresAt: undefined,
       createdAt: "2026-10-01T12:00:00.000Z",
     });
 

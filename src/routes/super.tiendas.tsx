@@ -56,10 +56,15 @@ import {
   SlidersHorizontal,
   Store as StoreIcon,
   ShieldCheck,
+  PauseCircle,
+  Loader2,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { SuperRefreshButton } from "@/components/super/SuperRefreshButton";
+import { Switch } from "@/components/ui/switch";
+import { getStoreAccessState, type AppConfigState } from "@/lib/access-state";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Definición de la ruta `/super/tiendas` en TanStack Router.
@@ -141,6 +146,38 @@ function ExpiryBadge({ store }: { store: ReturnType<typeof useApp.getState>["sto
   );
 }
 
+function AccessStateBadge({ state }: { state: "activa" | "gracia" | "pausa" }) {
+  switch (state) {
+    case "activa":
+      return (
+        <span
+          data-testid="access-state-badge"
+          className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+        >
+          <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Activa
+        </span>
+      );
+    case "gracia":
+      return (
+        <span
+          data-testid="access-state-badge"
+          className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800"
+        >
+          <AlertTriangle className="w-3 h-3 text-amber-500" /> Gracia
+        </span>
+      );
+    case "pausa":
+      return (
+        <span
+          data-testid="access-state-badge"
+          className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800"
+        >
+          <PauseCircle className="w-3 h-3 text-rose-500" /> Pausa
+        </span>
+      );
+  }
+}
+
 /**
  * Determina si una tienda es candidata a ser considerada inactiva/abandonada:
  * - Es plan semilla o lleva más de 15 días con el plan vencido.
@@ -184,6 +221,49 @@ function TenantsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const selectedStore = stores.find((s) => s.id === selectedStoreId);
+
+  const [appConfig, setAppConfig] = useState<AppConfigState>({ pausaActiva: false, semillaFin: null });
+  const [isUpdatingPausa, setIsUpdatingPausa] = useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    supabase
+      .from("app_config")
+      .select("key, value")
+      .then(({ data, error }) => {
+        if (!error && data && isMounted) {
+          const config: AppConfigState = { pausaActiva: false, semillaFin: null };
+          for (const row of data as any[]) {
+            if (row.key === "pausa_activa") {
+              config.pausaActiva = row.value === true || row.value === "true";
+            }
+            if (row.key === "semilla_fin") {
+              config.semillaFin = row.value ? String(row.value).replace(/"/g, "") : null;
+            }
+          }
+          setAppConfig(config);
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleTogglePausaActiva = async (checked: boolean) => {
+    setIsUpdatingPausa(true);
+    try {
+      const { error } = await supabase
+        .from("app_config")
+        .upsert({ key: "pausa_activa", value: checked, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      setAppConfig((prev) => ({ ...prev, pausaActiva: checked }));
+      toast.success(`Interruptor pausa_activa: ${checked ? "ACTIVADO" : "DESACTIVADO"}`);
+    } catch (err: any) {
+      toast.error("Error al actualizar pausa_activa: " + (err.message || "desconocido"));
+    } finally {
+      setIsUpdatingPausa(false);
+    }
+  };
 
   // Advanced filter states
   const [selectedPlan, setSelectedPlan] = useState<string>("all");
@@ -299,6 +379,35 @@ function TenantsPage() {
           <span className="text-2xl font-black text-blue-700">
             {stores.filter((s) => s.libroReclamacionesActivo).length}
           </span>
+        </div>
+      </div>
+
+      {/* ── Control Maestro F57 · Pausa Comercial ── */}
+      <div className="bg-background rounded-xl p-4 border border-zinc-200/80 dark:border-zinc-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-sm text-foreground">
+              Interruptor Global: Pausa Comercial (F57)
+            </span>
+            <Badge variant={appConfig.pausaActiva ? "default" : "outline"} className="text-[10px]">
+              {appConfig.pausaActiva ? "ENCENDIDO" : "APAGADO"}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Cuando está encendido, las tiendas con plan vencido (+3 días de gracia) muestran la página pública en pausa. Si está apagado, ninguna tienda se pausa.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 self-end sm:self-center">
+          {isUpdatingPausa && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+          <span className="text-xs font-semibold text-muted-foreground">
+            {appConfig.pausaActiva ? "Pausa activa" : "Pausa desactivada"}
+          </span>
+          <Switch
+            data-testid="pausa-activa-switch"
+            checked={appConfig.pausaActiva}
+            disabled={isUpdatingPausa}
+            onCheckedChange={handleTogglePausaActiva}
+          />
         </div>
       </div>
 
@@ -558,16 +667,13 @@ function TenantsPage() {
                     </TableCell>
 
                     <TableCell>
-                      {s.active ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400 font-semibold">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                          Activa
-                        </span>
-                      ) : (
+                      {!s.active ? (
                         <span className="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 font-semibold">
                           <span className="h-2 w-2 rounded-full bg-zinc-400" />
                           Suspendida
                         </span>
+                      ) : (
+                        <AccessStateBadge state={getStoreAccessState(s, appConfig)} />
                       )}
                     </TableCell>
 
@@ -685,14 +791,12 @@ function TenantsPage() {
                   </Link>
                 </div>
               </div>
-              {s.active ? (
-                <span className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-500/5 px-2.5 py-0.5 rounded-full border border-emerald-500/10">
-                  Activa
-                </span>
-              ) : (
+              {!s.active ? (
                 <span className="inline-flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400 font-semibold bg-zinc-500/5 px-2.5 py-0.5 rounded-full border border-zinc-500/10">
                   Susp.
                 </span>
+              ) : (
+                <AccessStateBadge state={getStoreAccessState(s, appConfig)} />
               )}
             </div>
 

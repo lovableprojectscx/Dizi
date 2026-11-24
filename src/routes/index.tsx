@@ -102,7 +102,7 @@ function LandingPage() {
     },
     {
       q: "¿Puedo empezar gratis sin pagar nada?",
-      a: "Sí. Empiezas con 7 días de Pro gratis, sin tarjeta, y puedes ganar hasta 7 días más completando tu tienda. Después sigues gratis en el Plan Semilla por tiempo ilimitado.",
+      a: `Sí: 7 días de Pro gratis, sin tarjeta. Después eliges tu plan desde S/ ${PLANS.emprendedor.price.toFixed(2)}; si no, tu catálogo queda en pausa (no se borra nada).`,
     },
   ];
 
@@ -249,7 +249,7 @@ function LandingPage() {
                   className="w-full sm:w-auto h-12 sm:h-14 px-8 rounded-2xl font-black text-sm sm:text-base bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:scale-105 active:scale-95 gap-2 font-sans"
                 >
                   <Link to="/register">
-                    Empieza con 7 días de Pro gratis <ArrowRight className="h-4 w-4" />
+                    Prueba 7 días gratis <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
 
@@ -592,32 +592,7 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch font-sans">
-            {/* PLAN SEMILLA */}
-            <div className="p-6 rounded-3xl border border-border/60 bg-card flex flex-col justify-between space-y-6">
-              <div className="space-y-4">
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  Gratuito
-                </span>
-                <h3 className="text-xl font-bold text-foreground">Plan Semilla</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-foreground">S/ {PLANS.semilla.price}</span>
-                  <span className="text-xs text-muted-foreground">/mes</span>
-                </div>
-                <ul className="space-y-2.5 text-xs text-foreground pt-1">
-                  {PLANS.semilla.features.map((feat, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-emerald-500 shrink-0" />
-                      <span className={i === 0 ? "font-bold" : ""}>{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Button asChild variant="outline" className="w-full font-bold text-xs rounded-xl h-10 text-foreground hover:bg-muted active:scale-95">
-                <Link to="/register" search={{ plan: "semilla" }}>Empieza con 7 días de Pro gratis</Link>
-              </Button>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch font-sans max-w-5xl mx-auto">
             {/* PLAN EMPRENDEDOR */}
             <div className="p-6 rounded-3xl border border-border/60 bg-card flex flex-col justify-between space-y-6">
               <div className="space-y-4">
@@ -849,11 +824,11 @@ function LandingPage() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-xl border-t border-border/40 p-3 flex items-center justify-between gap-3 shadow-2xl font-sans">
         <div className="flex flex-col">
           <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Dizi Catálogos</span>
-          <span className="text-[11px] font-extrabold text-foreground">Plan Semilla S/ 0</span>
+          <span className="text-[11px] font-extrabold text-foreground">7 días de prueba Pro gratis</span>
         </div>
         <Button asChild className="h-10 px-5 rounded-xl text-xs font-extrabold bg-primary text-primary-foreground shadow-lg shadow-primary/25 active:scale-95">
           <Link to="/register">
-            Crear Gratis <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            Probar 7 días gratis <ArrowRight className="ml-1 h-3.5 w-3.5" />
           </Link>
         </Button>
       </div>

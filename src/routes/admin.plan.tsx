@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/plan")({
   component: PlanPage,
 });
 
-const PLAN_ORDER: readonly PlanId[] = ["semilla", "emprendedor", "pro", "ilimitado"];
+const PLAN_ORDER: readonly PlanId[] = ["emprendedor", "pro", "ilimitado"];
 
 function PlanPage() {
   const id = useApp((s) => s.currentStoreId);
@@ -51,8 +51,7 @@ function PlanPage() {
           <div>
             <p className="font-semibold text-destructive text-sm">Tu suscripción ha vencido</p>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Tu plan venció el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Ahora
-              tienes las funciones del plan Semilla. Para renovar, contacta con soporte.
+              Tu plan venció el {store.planExpiresAt ? formatDate(store.planExpiresAt) : ""}. Tu catálogo se encuentra en pausa. Para reactivarlo desde S/ {PLANS.emprendedor.price.toFixed(2)}, elige tu plan o contacta con soporte.
             </p>
             <a
               href={buildWaUrl(
@@ -180,7 +179,7 @@ function PlanPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {PLAN_ORDER.map((p, planIndex) => {
           const currentPlanIndex = PLAN_ORDER.indexOf(store.plan);
           const isCurrent = store.plan === p;

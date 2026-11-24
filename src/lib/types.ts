@@ -84,7 +84,7 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 19.9,
     annualPrice: 179,
     features: [
-      "Todo lo de Semilla, sin el sello",
+      "Catálogo activo sin interrupciones",
       "Hasta 100 productos",
       "Precios por mayor",
       "Sin marca ni publicidad de Dizi",
@@ -296,6 +296,8 @@ export interface Store {
   plan: PlanId;
   /** Estado de activación del comercio en la plataforma */
   active: boolean;
+  /** Indica si la tienda se encuentra en pausa comercial (F57) */
+  paused?: boolean;
   /** Fecha de registro de la tienda en formato ISO 8601 */
   createdAt: string;
   /** Contador acumulado de clics hacia WhatsApp generados desde el catálogo */
