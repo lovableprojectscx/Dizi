@@ -43,6 +43,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getEffectivePlan, PLANS } from "@/lib/types";
 import { getStoreAccessState, useAppConfig, type AppConfigState } from "@/lib/access-state";
+import {
+  daysUntilSemillaFin,
+  formatSemillaCountdown,
+  formatSemillaFin,
+  shouldShowSemillaNotice,
+} from "@/lib/semilla-notice";
+import { SemillaNoticeDialog } from "@/components/admin/SemillaNoticeDialog";
 import { supabase } from "@/lib/supabase";
 import {
   Sheet,
@@ -143,6 +150,9 @@ function AdminLayout() {
 
   const store = stores.find((s) => s.id === storeId) ?? stores[0];
   const accessState = store ? getStoreAccessState(store, appConfig) : "activa";
+  const showSemillaNotice = store ? shouldShowSemillaNotice(store, appConfig) : false;
+  const semillaFinFormatted = formatSemillaFin(appConfig);
+  const semillaDaysLeft = daysUntilSemillaFin(appConfig);
   const isPhoneValid = store ? validatePhone(store.countryIso || "PE", store.phone).ok : true;
 
   if (stores.length === 0) {
@@ -333,7 +343,7 @@ function AdminLayout() {
               </Button>
             </div>
           )}
-          {store && store.active && store.plan === "semilla" && appConfig.semillaFin && (
+          {showSemillaNotice && semillaFinFormatted && semillaDaysLeft !== null && (
             <div
               data-testid="admin-semilla-countdown-banner"
               className="bg-indigo-50 text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-200 border-b border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm relative z-30"
@@ -341,8 +351,14 @@ function AdminLayout() {
               <span className="flex items-start gap-2 leading-tight flex-1">
                 <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="font-bold text-indigo-900 dark:text-indigo-200">
-                    El plan gratis termina el {new Date(appConfig.semillaFin).toLocaleDateString("es-PE", { day: "numeric", month: "long" })}
+                  <p className="font-heading font-bold text-indigo-900 dark:text-indigo-200 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span>El plan gratis termina el {semillaFinFormatted}</span>
+                    <span
+                      data-testid="admin-semilla-countdown-days"
+                      className="inline-flex items-center rounded-full bg-indigo-600/15 dark:bg-indigo-400/20 px-2 py-0.5 text-[11px] font-bold text-indigo-900 dark:text-indigo-100"
+                    >
+                      {formatSemillaCountdown(semillaDaysLeft)}
+                    </span>
                   </p>
                   <p className="text-xs text-indigo-800 dark:text-indigo-300">
                     Ese día te regalamos 7 días de Pro; después eliges tu plan desde S/ {PLANS.emprendedor.price.toFixed(2)} para mantener tu catálogo activo.
@@ -352,7 +368,7 @@ function AdminLayout() {
               <Button
                 size="sm"
                 asChild
-                className="h-8 font-bold text-xs shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white self-start sm:self-center"
+                className="h-8 font-bold text-xs shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground self-start sm:self-center"
               >
                 <Link to="/admin/plan">
                   Ver planes
@@ -360,6 +376,7 @@ function AdminLayout() {
               </Button>
             </div>
           )}
+          <SemillaNoticeDialog store={store} config={appConfig} />
           <header className="hidden md:flex h-14 border-b items-center px-3 gap-3 bg-card sticky top-0 z-20">
             <SidebarTrigger />
             <div className="flex-1" />
