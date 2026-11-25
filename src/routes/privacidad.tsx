@@ -187,6 +187,11 @@ function PrivacidadPage() {
               (autenticación de sesión, preferencias de usuario). No utilizamos cookies de rastreo
               publicitario de terceros dentro de la plataforma.
             </p>
+            <p>
+              Usamos el píxel de Meta solo en las páginas de DIZI (inicio, registro, ayuda y
+              similares) para medir nuestros anuncios. Nunca en los catálogos de las tiendas ni en
+              sus pedidos. No enviamos tu nombre, teléfono ni correo.
+            </p>
           </Section>
 
           <Section title="8. Servicios de terceros">

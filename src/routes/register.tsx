@@ -40,6 +40,7 @@ import { ChoiceCard } from "@/components/register/ChoiceCard";
 import { PreviewHeaderStub, SlideShell } from "@/components/register/SlideShell";
 import { getActiveSession, getSessionSync, getUserRole } from "@/lib/auth";
 import { CIUDADES } from "@/lib/ciudades";
+import { trackCompleteRegistration, trackLead } from "@/lib/meta-pixel";
 import { isPreviewTestMode } from "@/lib/register-preview";
 import { RUBROS, getRubroDefaults } from "@/lib/rubros";
 import { logFunnelStep, rememberFunnelSource, type FunnelStep } from "@/lib/signup-funnel";
@@ -154,6 +155,8 @@ function RegisterPage() {
   const markInviteUsed = useApp((s) => s.markInviteUsed);
 
   const previewTestMode = useMemo(() => isPreviewTestMode(), []);
+  const leadTrackedRef = useRef(false);
+  const completeRegTrackedRef = useRef(false);
 
   const [step, setStep] = useState<RegisterStep>(1);
   const [hasLoadedPreview, setHasLoadedPreview] = useState(false);
@@ -342,6 +345,10 @@ function RegisterPage() {
     e.preventDefault();
     if (!isPhoneValid) return;
     trackFunnelStep("completo_whatsapp");
+    if (!leadTrackedRef.current) {
+      leadTrackedRef.current = true;
+      trackLead("/register");
+    }
     setStep(4);
   };
 
@@ -560,6 +567,10 @@ function RegisterPage() {
       }
 
       trackFunnelStep("creo_cuenta");
+      if (!completeRegTrackedRef.current) {
+        completeRegTrackedRef.current = true;
+        trackCompleteRegistration(rubroDefaults.rubro.id, "/register");
+      }
       setCurrentStore(newStoreId);
       setCreatedStoreData({
         id: newStoreId,
