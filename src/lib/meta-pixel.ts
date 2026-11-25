@@ -140,6 +140,7 @@ export function ensureMetaPixelLoaded(): boolean {
   }
 
   if (!pixelInitialized) {
+    w.fbq("set", "autoConfig", false, META_PIXEL_ID);
     w.fbq("init", META_PIXEL_ID);
     pixelInitialized = true;
   }

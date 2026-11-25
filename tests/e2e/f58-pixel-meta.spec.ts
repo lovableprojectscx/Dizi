@@ -83,8 +83,17 @@ async function setupMetaAndProdHostRoutes(
     await page.route(`${PROD_ORIGIN}/**`, async (route) => {
       const reqUrl = route.request().url();
       const targetUrl = reqUrl.replace(PROD_ORIGIN, LOCAL_ORIGIN);
-      const response = await route.fetch({ url: targetUrl });
-      await route.fulfill({ response });
+      try {
+        const response = await route.fetch({ url: targetUrl });
+        await route.fulfill({ response });
+      } catch {
+        try {
+          const retryResponse = await route.fetch({ url: targetUrl });
+          await route.fulfill({ response: retryResponse });
+        } catch {
+          await route.abort().catch(() => {});
+        }
+      }
     });
   }
 
@@ -300,16 +309,29 @@ test.describe("F58 · Píxel de Meta en DIZI (movil-android)", () => {
     expect(completeUrls).toHaveLength(1);
     expect(completeUrls[0]).toContain("cd[content_category]=floreria");
 
-    // Verificar que ninguna URL de evento a Meta contenga teléfono, correo, nombre ni slug
+    // Verificar que ninguna URL de evento a Meta (incluidos parámetros ud[...] y cd[...])
+    // contenga teléfono, correo, nombre ni slug
     for (const url of captured.eventUrls) {
-      const decoded = decodeURIComponent(url).toLowerCase();
-      expect(decoded).not.toContain(phone);
-      expect(decoded).not.toContain(email.toLowerCase());
-      expect(decoded).not.toContain("secreta");
-      expect(decoded).not.toContain("floreria-secreta-audit");
+      const parsed = new URL(url);
+      const decodedFull = decodeURIComponent(url).toLowerCase();
+      expect(decodedFull).not.toContain(phone);
+      expect(decodedFull).not.toContain(email.toLowerCase());
+      expect(decodedFull).not.toContain("secreta");
+      expect(decodedFull).not.toContain("floreria-secreta-audit");
+
+      for (const [key, val] of parsed.searchParams.entries()) {
+        if (key.startsWith("ud[") || key.startsWith("cd[")) {
+          const decodedVal = decodeURIComponent(val).toLowerCase();
+          expect(decodedVal).not.toContain(phone);
+          expect(decodedVal).not.toContain(email.toLowerCase());
+          expect(decodedVal).not.toContain("secreta");
+          expect(decodedVal).not.toContain("floreria-secreta-audit");
+        }
+        expect(key.startsWith("ud[")).toBe(false);
+      }
     }
 
-    await page.screenshot({ path: "capturas-f58/e6-registro-completo.png" });
+    await page.screenshot({ path: "test-results/f58-e6-registro-completo.png" });
   });
 
   test("E7 navegación SPA entre rutas permitidas dispara PageView por cada ruta sin recargar fbevents.js", async ({
@@ -385,6 +407,6 @@ test.describe("F58 · Píxel de Meta en DIZI (movil-android)", () => {
     );
     await expect(notice).toBeVisible();
     await notice.scrollIntoViewIfNeeded();
-    await page.screenshot({ path: "capturas-f58/e10-privacidad.png" });
+    await page.screenshot({ path: "test-results/f58-e10-privacidad.png" });
   });
 });

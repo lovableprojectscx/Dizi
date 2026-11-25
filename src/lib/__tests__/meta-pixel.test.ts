@@ -180,6 +180,7 @@ describe("meta-pixel (F58)", () => {
 
     const fbq = windowMock.fbq as { queue: unknown[][] };
     expect(fbq.queue).toEqual([
+      ["set", "autoConfig", false, "1453347423533488"],
       ["init", "1453347423533488"],
       ["track", "PageView"],
       ["track", "Lead"],
