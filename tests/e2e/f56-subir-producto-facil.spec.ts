@@ -44,13 +44,18 @@ const mockSession = {
   },
 };
 
-function buildMockStore(niche: string | null = "floreria", model = "boutique") {
+function buildMockStore(
+  niche: string | null = "floreria",
+  model = "boutique",
+  photoFormat: "portrait" | "square" | null = null,
+) {
   return {
     id: "s_zz_audit_f56",
     slug: "zz-audit-f56",
     name: "Florería Audit F56",
     niche: niche ?? undefined,
     model,
+    photoFormat: photoFormat ?? undefined,
     plan: "pro",
     effectivePlan: "pro",
     ownerId: "00000000-0000-0000-0000-000000000099",
@@ -101,8 +106,13 @@ function buildMockStore(niche: string | null = "floreria", model = "boutique") {
   };
 }
 
-async function mountMocks(page: Page, niche: string | null = "floreria", model = "boutique") {
-  const store = buildMockStore(niche, model);
+async function mountMocks(
+  page: Page,
+  niche: string | null = "floreria",
+  model = "boutique",
+  photoFormat: "portrait" | "square" | null = null,
+) {
+  const store = buildMockStore(niche, model, photoFormat);
   const savedPayloads: any[] = [];
 
   await page.addInitScript(
@@ -131,6 +141,7 @@ async function mountMocks(page: Page, niche: string | null = "floreria", model =
           name: store.name,
           niche: niche,
           model: store.model,
+          photo_format: photoFormat,
           plan: store.plan,
           owner_id: store.ownerId,
           phone: store.phone,
@@ -213,7 +224,7 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
   });
 
   test("E1b tienda cuadrada muestra 'Se ve mejor cuadrada'", async ({ page }) => {
-    await mountMocks(page, "floreria", "diagonal");
+    await mountMocks(page, "floreria", "diagonal", "square");
     await page.goto("/admin/productos");
     await page.locator("button:has-text('Nuevo Producto'):visible").first().click();
 
