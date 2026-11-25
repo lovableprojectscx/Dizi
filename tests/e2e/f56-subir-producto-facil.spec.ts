@@ -86,7 +86,8 @@ function buildMockStore(niche: string | null = "floreria") {
         price: 89.9,
         originalPrice: 120,
         isOnSale: true,
-        image: "",
+        image:
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
         description: "Rosas frescas #destacado",
         visible: true,
         isSample: false,
@@ -250,7 +251,20 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
     expect(last.price).toBeNull();
   });
 
-  test("E4 precio vacío sin marcar 'No quiero mostrar el precio' muestra confirmación en el diálogo", async ({ page }) => {
+  test("E3b hasChanges (F44): cambiar solo a 'No quiero mostrar el precio' en producto con precio avisa al cerrar", async ({ page }) => {
+    await mountMocks(page);
+    await page.goto("/admin/productos");
+    await page.locator("button:has(.lucide-pencil):visible").nth(1).click();
+
+    const dialog = page.locator("[role='dialog']");
+    await dialog.getByRole("button", { name: "No quiero mostrar el precio" }).click();
+    await expect(dialog.getByText("Precio a consultar")).toBeVisible();
+
+    await dialog.locator("button:has(.lucide-x)").click();
+    await expect(page.getByRole("heading", { name: "Cambios sin guardar" })).toBeVisible();
+  });
+
+  test("E4 precio vacío sin marcar 'No quiero mostrar el precio' muestra confirmación en el footer del diálogo", async ({ page }) => {
     const { savedPayloads } = await mountMocks(page);
     await page.goto("/admin/productos");
     await page.locator("button:has-text('Nuevo Producto'):visible").first().click();
@@ -262,6 +276,11 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
     const confirmBox = dialog.getByTestId("consult-confirm-box");
     await expect(confirmBox).toBeVisible();
     await expect(confirmBox.getByText('¿Lo dejas como "A consultar"?')).toBeVisible();
+    const box = await confirmBox.boundingBox();
+    const vp = page.viewportSize()!;
+    expect(box).not.toBeNull();
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(vp.height);
     await saveShot(page, "f56-despues-confirm-precio.png");
 
     await confirmBox.getByRole("button", { name: "Poner precio" }).click();
@@ -284,6 +303,18 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
     const dialog = page.locator("[role='dialog']");
     await expect(dialog.getByText("Editar producto")).toBeVisible();
     await expect(dialog.getByText("Precio a consultar")).toBeVisible();
+  });
+
+  test("E5b editar producto CON foto muestra la imagen en el recuadro y permite cambiarla", async ({ page }) => {
+    await mountMocks(page);
+    await page.goto("/admin/productos");
+    await page.locator("button:has(.lucide-pencil):visible").nth(1).click();
+
+    const dialog = page.locator("[role='dialog']");
+    await expect(dialog.locator("img[alt='preview']")).toBeVisible();
+    await expect(dialog.getByText("Toca la foto para cambiarla")).toBeVisible();
+    await expect(dialog.locator("input[type='file']").first()).toBeAttached();
+    await saveShot(page, "f56-despues-editar-con-foto.png");
   });
 
   test("E6 editar producto con oferta y variaciones abre 'Más opciones' con contador", async ({ page }) => {

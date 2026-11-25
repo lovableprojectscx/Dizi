@@ -519,7 +519,7 @@ function CategorySelect({
         type="button"
         onClick={() => setCreating(true)}
         title="Nueva categoría"
-        className="min-h-[52px] px-3.5 shrink-0 rounded-xl border border-dashed border-indigo-400/60 text-indigo-600 dark:text-indigo-400 font-semibold text-sm flex items-center justify-center gap-1 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition cursor-pointer"
+        className="min-h-[52px] px-3.5 shrink-0 rounded-xl border border-dashed border-dizi-indigo/30 text-dizi-indigo font-semibold text-sm flex items-center justify-center gap-1 hover:bg-dizi-indigo/5 transition cursor-pointer"
       >
         + Nueva
       </button>
@@ -665,9 +665,12 @@ function SingleProductDialog({
 
   const handleCloseAttempt = (isOpen: boolean) => {
     if (!isOpen) {
+      const hadNoPrice =
+        product.price === null || product.price === undefined || product.price === 0;
       const hasChanges =
         (editing.name || "").trim() !== (product.name || "").trim() ||
         priceInput.trim() !== (product.price ? product.price.toString() : "") ||
+        isConsultOnly !== hadNoPrice ||
         editing.image !== (product.image || "") ||
         JSON.stringify(variations) !== JSON.stringify(product.variations || []) ||
         JSON.stringify(wholesaleTiers) !== JSON.stringify(product.wholesaleTiers || []) ||
@@ -977,7 +980,7 @@ function SingleProductDialog({
                     </span>
                     <button
                       type="button"
-                      className="min-h-[44px] px-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      className="min-h-[44px] px-2 text-sm font-semibold text-dizi-indigo hover:underline cursor-pointer"
                       onClick={() => {
                         setIsConsultOnly(false);
                         setPriceInput("");
@@ -1016,7 +1019,7 @@ function SingleProductDialog({
                     </div>
                     <button
                       type="button"
-                      className="min-h-[44px] inline-flex items-center text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      className="min-h-[44px] inline-flex items-center text-sm font-medium text-dizi-indigo hover:underline cursor-pointer"
                       onClick={() => {
                         setIsConsultOnly(true);
                         setPriceInput("");
@@ -1060,7 +1063,7 @@ function SingleProductDialog({
                   onClick={() => setMoreOptionsOpen((v) => !v)}
                   className="w-full min-h-[44px] flex items-center justify-between py-2 text-left cursor-pointer"
                 >
-                  <span className="text-[15px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                  <span className="text-[15px] font-semibold text-dizi-indigo flex items-center gap-2">
                     Más opciones
                     {activeOptionsCount > 0 && (
                       <Badge variant="secondary" className="text-xs font-medium">
@@ -1070,9 +1073,9 @@ function SingleProductDialog({
                     )}
                   </span>
                   {moreOptionsOpen ? (
-                    <ChevronUp className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <ChevronUp className="h-4 w-4 text-dizi-indigo" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <ChevronDown className="h-4 w-4 text-dizi-indigo" />
                   )}
                 </button>
 
@@ -1333,7 +1336,7 @@ function SingleProductDialog({
                       <button
                         type="button"
                         onClick={() => setShowRatioGuide((v) => !v)}
-                        className="min-h-[44px] inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                        className="min-h-[44px] inline-flex items-center gap-1.5 text-sm font-medium text-dizi-indigo hover:underline cursor-pointer"
                       >
                         <Info className="h-4 w-4" />
                         {showRatioGuide ? "Ocultar proporción" : "Ver proporción recomendada"}
@@ -1353,20 +1356,22 @@ function SingleProductDialog({
             </div>
           </div>
 
-          {/* Confirmación en la misma ventana si falta el precio y no marcó "No quiero mostrar el precio" */}
-          {showConsultConfirm && (
+        </div>
+
+        <DialogFooter className="px-5 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 w-full">
+          {showConsultConfirm ? (
             <div
               data-testid="consult-confirm-box"
-              className="mt-5 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-900/50 space-y-3"
+              className="w-full flex flex-col gap-2.5"
             >
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-foreground text-center">
                 ¿Lo dejas como &quot;A consultar&quot;?
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-row gap-2.5 w-full">
                 <Button
                   type="button"
                   variant="outline"
-                  className="min-h-[44px] rounded-xl text-sm font-semibold cursor-pointer"
+                  className="flex-1 min-h-[48px] rounded-xl text-sm font-semibold cursor-pointer"
                   onClick={() => {
                     setShowConsultConfirm(false);
                     setTimeout(() => priceInputRef.current?.focus(), 0);
@@ -1376,7 +1381,7 @@ function SingleProductDialog({
                 </Button>
                 <Button
                   type="button"
-                  className="min-h-[44px] rounded-xl text-sm font-bold bg-primary text-white cursor-pointer"
+                  className="flex-1 min-h-[48px] rounded-xl text-sm font-bold bg-primary text-white cursor-pointer"
                   onClick={() => {
                     setShowConsultConfirm(false);
                     setIsConsultOnly(true);
@@ -1387,38 +1392,38 @@ function SingleProductDialog({
                 </Button>
               </div>
             </div>
+          ) : (
+            <>
+              {welcomeMode && onSkipWelcome && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={saving}
+                  className="min-h-[48px] rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-sm px-4"
+                  onClick={onSkipWelcome}
+                >
+                  Lo hago después
+                </Button>
+              )}
+              <Button
+                type="button"
+                disabled={saving}
+                className="flex-1 min-h-[48px] rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-base text-white"
+                onClick={handleSubmitClick}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
+                    Guardando producto...
+                  </>
+                ) : isNewProduct ? (
+                  "Guardar producto"
+                ) : (
+                  "Guardar cambios"
+                )}
+              </Button>
+            </>
           )}
-        </div>
-
-        <DialogFooter className="px-5 py-4 border-t bg-slate-50/50 dark:bg-slate-900/20 shrink-0 flex flex-row gap-3 w-full">
-          {welcomeMode && onSkipWelcome && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saving}
-              className="min-h-[48px] rounded-xl cursor-pointer hover:bg-slate-100 font-semibold text-sm px-4"
-              onClick={onSkipWelcome}
-            >
-              Lo hago después
-            </Button>
-          )}
-          <Button
-            type="button"
-            disabled={saving}
-            className="flex-1 min-h-[48px] rounded-xl cursor-pointer bg-primary hover:opacity-95 font-bold px-6 shadow-sm shadow-primary/20 text-base text-white"
-            onClick={handleSubmitClick}
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin inline" />
-                Guardando producto...
-              </>
-            ) : isNewProduct ? (
-              "Guardar producto"
-            ) : (
-              "Guardar cambios"
-            )}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

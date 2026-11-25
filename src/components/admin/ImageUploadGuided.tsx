@@ -304,6 +304,9 @@ export function ImageUploadGuided({
       {simplified && !hasImage && (
         <p className="text-xs text-muted-foreground">Se ve mejor cuadrada</p>
       )}
+      {simplified && hasImage && (
+        <p className="text-xs text-muted-foreground">Toca la foto para cambiarla</p>
+      )}
 
       {/* ── Indicador de ratio ── */}
       {ratioStatus === "ok" && hasImage && (
