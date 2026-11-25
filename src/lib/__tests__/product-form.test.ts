@@ -66,7 +66,7 @@ describe("F56 · product-form (lógica pura)", () => {
       description: "Rosas importadas #destacado",
       isOnSale: true,
       variations: [{ id: "v1", name: "Rojo", price: null, image: null }],
-      wholesaleTiers: [{ minQty: 6, price: 20 }],
+      wholesaleTiers: [{ min_qty: 6, price: 20 }],
     });
     expect(count).toBe(5);
   });

@@ -124,7 +124,12 @@ export function ImageUploadGuided({
 
   // Parse ratio for the preview box
   const [rW, rH] = spec.ratio.split("/").map(Number);
-  const previewHeightPercent = (rH / rW) * 100;
+  const ratioRecommendationText =
+    rW === rH
+      ? "Se ve mejor cuadrada"
+      : rH > rW
+        ? "Se ve mejor vertical"
+        : "Se ve mejor horizontal";
 
   const checkRatioAfterLoad = useCallback(
     (img: HTMLImageElement) => {
@@ -238,9 +243,13 @@ export function ImageUploadGuided({
             ? "border-primary bg-primary/5 scale-[1.01]"
             : "border-slate-200 dark:border-slate-800",
           converting || importing ? "opacity-70" : "",
-          hasImage ? "w-full" : "w-full h-32 sm:h-auto sm:aspect-square",
+          hasImage
+            ? simplified
+              ? "w-full h-[185px] max-h-[200px] sm:h-[260px] sm:max-h-[280px]"
+              : "w-full"
+            : "w-full h-32 sm:h-auto sm:aspect-square",
         )}
-        style={hasImage ? { aspectRatio: `${rW} / ${rH}` } : undefined}
+        style={hasImage && !simplified ? { aspectRatio: `${rW} / ${rH}` } : undefined}
       >
         {converting || importing ? (
           <div className="flex flex-col items-center gap-2 text-muted-foreground text-center px-4">
@@ -257,7 +266,10 @@ export function ImageUploadGuided({
             ref={imgRef}
             src={value}
             alt="preview"
-            className="absolute inset-0 w-full h-full object-cover"
+            className={cn(
+              "w-full h-full",
+              simplified ? "object-contain p-1" : "absolute inset-0 object-cover",
+            )}
             onLoad={(e) => checkRatioAfterLoad(e.currentTarget)}
           />
         ) : simplified ? (
@@ -302,7 +314,7 @@ export function ImageUploadGuided({
       </div>
 
       {simplified && !hasImage && (
-        <p className="text-xs text-muted-foreground">Se ve mejor cuadrada</p>
+        <p className="text-xs text-muted-foreground">{ratioRecommendationText}</p>
       )}
       {simplified && hasImage && (
         <p className="text-xs text-muted-foreground">Toca la foto para cambiarla</p>
@@ -312,19 +324,27 @@ export function ImageUploadGuided({
       {ratioStatus === "ok" && hasImage && (
         <div className="flex items-center gap-1.5 text-xs text-emerald-700">
           <CheckCircle2 className="w-3.5 h-3.5" />
-          Proporcion correcta ({spec.label})
+          Proporción correcta ({spec.label})
         </div>
       )}
       {ratioStatus === "warning" && (
-        <div className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          <div>
-            <span className="font-semibold">Proporcion diferente:</span> {ratioMessage}
-            <span className="text-amber-600 block mt-0.5">
-              Recomendamos {spec.label} ({spec.width} x {spec.height} px) para este modelo.
-            </span>
+        simplified ? (
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 truncate">
+            {ratioMessage.includes("más ancha")
+              ? "Tu foto es más ancha de lo ideal; se recortarán los lados."
+              : "Tu foto es más alta de lo ideal; se recortará arriba y abajo."}
+          </p>
+        ) : (
+          <div className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <div>
+              <span className="font-semibold">Proporción diferente:</span> {ratioMessage}
+              <span className="text-amber-600 block mt-0.5">
+                Recomendamos {spec.label} ({spec.width} x {spec.height} px) para este modelo.
+              </span>
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* ── URL manual ── */}

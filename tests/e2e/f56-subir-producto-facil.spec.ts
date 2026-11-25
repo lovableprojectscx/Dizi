@@ -44,13 +44,13 @@ const mockSession = {
   },
 };
 
-function buildMockStore(niche: string | null = "floreria") {
+function buildMockStore(niche: string | null = "floreria", model = "boutique") {
   return {
     id: "s_zz_audit_f56",
     slug: "zz-audit-f56",
     name: "Florería Audit F56",
     niche: niche ?? undefined,
-    model: "boutique",
+    model,
     plan: "pro",
     effectivePlan: "pro",
     ownerId: "00000000-0000-0000-0000-000000000099",
@@ -101,8 +101,8 @@ function buildMockStore(niche: string | null = "floreria") {
   };
 }
 
-async function mountMocks(page: Page, niche: string | null = "floreria") {
-  const store = buildMockStore(niche);
+async function mountMocks(page: Page, niche: string | null = "floreria", model = "boutique") {
+  const store = buildMockStore(niche, model);
   const savedPayloads: any[] = [];
 
   await page.addInitScript(
@@ -192,15 +192,15 @@ async function mountMocks(page: Page, niche: string | null = "floreria") {
 }
 
 test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
-  test("E1 nuevo producto arranca con precio habilitado, vacío y sin marcar A consultar", async ({ page }) => {
-    await mountMocks(page);
+  test("E1 nuevo producto arranca con precio habilitado, vacío y sin marcar A consultar (tienda vertical)", async ({ page }) => {
+    await mountMocks(page, "floreria", "boutique");
     await page.goto("/admin/productos");
     await page.locator("button:has-text('Nuevo Producto'):visible").first().click();
 
     const dialog = page.locator("[role='dialog']");
     await expect(dialog.getByText("Agregar producto")).toBeVisible();
     await expect(dialog.getByText("Toca para subir una foto")).toBeVisible();
-    await expect(dialog.getByText("Se ve mejor cuadrada")).toBeVisible();
+    await expect(dialog.getByText("Se ve mejor vertical")).toBeVisible();
     await expect(dialog.getByText("¿Cómo se llama?")).toBeVisible();
     await expect(dialog.getByText("¿Cuánto cuesta?")).toBeVisible();
 
@@ -208,7 +208,18 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
     await expect(priceInput).toBeEnabled();
     await expect(priceInput).toHaveValue("");
     await expect(dialog.getByText("No quiero mostrar el precio")).toBeVisible();
+    await saveShot(page, "f56-despues-nuevo-vertical.png");
     await saveShot(page, "f56-despues-nuevo.png");
+  });
+
+  test("E1b tienda cuadrada muestra 'Se ve mejor cuadrada'", async ({ page }) => {
+    await mountMocks(page, "floreria", "diagonal");
+    await page.goto("/admin/productos");
+    await page.locator("button:has-text('Nuevo Producto'):visible").first().click();
+
+    const dialog = page.locator("[role='dialog']");
+    await expect(dialog.getByText("Se ve mejor cuadrada")).toBeVisible();
+    await saveShot(page, "f56-despues-nuevo-cuadrada.png");
   });
 
   test("E2 escribir precio 25 y guardar envía price = 25", async ({ page }) => {
@@ -305,7 +316,7 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
     await expect(dialog.getByText("Precio a consultar")).toBeVisible();
   });
 
-  test("E5b editar producto CON foto muestra la imagen en el recuadro y permite cambiarla", async ({ page }) => {
+  test("E5b editar producto CON foto muestra la imagen, nombre y precio sin scroll en Pixel 7", async ({ page }) => {
     await mountMocks(page);
     await page.goto("/admin/productos");
     await page.locator("button:has(.lucide-pencil):visible").nth(1).click();
@@ -313,7 +324,19 @@ test.describe("F56 · Subir un producto fácil (Pixel 7)", () => {
     const dialog = page.locator("[role='dialog']");
     await expect(dialog.locator("img[alt='preview']")).toBeVisible();
     await expect(dialog.getByText("Toca la foto para cambiarla")).toBeVisible();
+    await expect(dialog.getByText("Tu foto es más ancha de lo ideal; se recortarán los lados.")).toBeVisible();
     await expect(dialog.locator("input[type='file']").first()).toBeAttached();
+
+    const vp = page.viewportSize()!;
+    const nameBox = await dialog.locator("#f56-product-name").boundingBox();
+    const priceBox = await dialog.locator("#f56-product-price").boundingBox();
+    expect(nameBox).not.toBeNull();
+    expect(priceBox).not.toBeNull();
+    expect(nameBox!.y).toBeGreaterThanOrEqual(0);
+    expect(nameBox!.y + nameBox!.height).toBeLessThanOrEqual(vp.height);
+    expect(priceBox!.y).toBeGreaterThanOrEqual(0);
+    expect(priceBox!.y + priceBox!.height).toBeLessThanOrEqual(vp.height);
+
     await saveShot(page, "f56-despues-editar-con-foto.png");
   });
 
