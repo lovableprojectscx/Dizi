@@ -1,8 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { Outlet, Link, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { trackPageView } from "@/lib/meta-pixel";
 import { useApp } from "@/lib/store";
 
 import appCss from "../styles.css?url";
@@ -177,6 +184,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const lastTrackedPathRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (lastTrackedPathRef.current === pathname) return;
+    lastTrackedPathRef.current = pathname;
+    trackPageView(pathname);
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
